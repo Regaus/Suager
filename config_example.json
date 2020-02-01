@@ -1,0 +1,21 @@
+{
+  "token": "token_here",
+  "owners": [
+    302851022790066185
+  ],
+  "join_message": "Huh? Hm, wait what? What is this? I've come to another server again? Weird. Thanks for inviting me here, though \u0440\u045f\u040a\u045f \ud83d\udc40",
+  "prefix": [
+    ",/",
+    "//",
+    ",,"
+  ],
+  "changeplaying": true,
+  "changeavatars": true,
+  "changesenkolair": true,
+  "playing_rate": 90,
+  "playing": "Sample Text",
+  "version": "4.0i",
+  "full_version": "4.0i",
+  "last_update": 1579993869,
+  "logs": true
+}

@@ -1,0 +1,12 @@
+discord
+aiohttp<3.6
+python-dateutil
+discord.py
+psutil
+asyncio
+timeago
+yarl<1.2
+pytz
+luas.py
+country_converter
+requests
