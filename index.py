@@ -2,7 +2,6 @@ import json
 import os
 
 import discord
-from discord.ext.commands import when_mentioned_or
 
 from utils import generic, time, botdata
 
@@ -19,12 +18,13 @@ async def get_prefix(bot, message):
         prefixes = default + config.prefix
     else:
         try:
-            use_default = json.loads(open(os.path.join(generic.prefixes, f'{message.guild.id}.json')).read())['default']
+            data = json.loads(open(f"{generic.prefixes}/{message.guild.id}.json", 'r').read())
+            pre = data['prefixes']
+            ud = data['default']
+            pre += config.prefix if ud else []
+            prefixes = default + pre
         except FileNotFoundError:
-            use_default = True
-        prefixes = default + bot.prefixes.get(str(message.guild.id), [])
-        if use_default:
-            prefixes += config.prefix
+            prefixes = default + config.prefix
     return prefixes
     # if not message.guild:
     #     return config.prefix
@@ -32,26 +32,18 @@ async def get_prefix(bot, message):
     # return when_mentioned_or(prefix)
 
 
-def get_prefixes():
-    try:
-        res = {}
-        dir = generic.prefixes
-        files = os.listdir(dir)
-        for f in files:
-            data = json.loads(open(os.path.join(dir, f)).read())
-            res[f"{f[:-5]}"] = data['prefixes']
-        return res
-    except FileNotFoundError:
-        os.mkdir('data')
-        os.mkdir(generic.prefixes)
-        return {}
+try:
+    files = os.listdir(generic.prefixes)
+except FileNotFoundError:
+    os.mkdir('data')
+    os.mkdir(generic.prefixes)
 
 
 bot = botdata.Bot(command_prefix=get_prefix, prefix=config.prefix, command_attrs=dict(hidden=True),
                   case_insensitive=True, help_command=botdata.HelpFormat(), description=desc, owner_ids=config.owners,
                   activity=discord.Activity(type=discord.ActivityType.playing, name=config.playing),
                   status=discord.Status.dnd)
-bot.prefixes = get_prefixes()
+# bot.prefixes = get_prefixes()
 for file in os.listdir("cogs"):
     if file.endswith(".py"):
         name = file[:-3]

@@ -1,15 +1,12 @@
 def log_channel(bot, log: str = "main"):
-    ch = 0
-    if log == "main":
-        ch = 673247776234012674
-    elif log == "playing":
-        ch = 673247799504011284
-    elif log == "senko":
-        ch = 673248425269264545
-    elif log == "errors":
-        ch = 673247912746287134
-    elif log == "servers":
-        ch = 673249399379460126
-    elif log == "uptime":
-        ch = 673255207567622148
+    ch = channels.get(log, 673247912746287134)
     return bot.get_channel(ch)
+
+
+channels = {'main': 673247776234012674,
+            'playing': 673247799504011284,
+            'senko': 673248425269264545,
+            'errors': 673247912746287134,
+            'servers': 673249399379460126,
+            'uptime': 673255207567622148,
+            'changes': 673620954915536906}

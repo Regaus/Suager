@@ -1,51 +1,216 @@
+from datetime import datetime
+
+import aiohttp
+import discord
 from discord.ext import commands
 
-from utils import generic
+from utils import generic, time, logs, permissions, data_io, http, prev
 
 
-class Admin(commands.Cog):
+class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = generic.get_config()
+        self.admin_mod = ["cogs.admin"]
+
+    @commands.command(name='eval')
+    @commands.check(permissions.is_owner)
+    async def eval_cmd(self, ctx, *, cmd):
+        """Evaluates input.
+        Input is interpreted as newline separated statements.
+        If the last statement is an expression, that is the return value.
+        Usable globals:
+          - `bot`: the bot instance
+          - `discord`: the discord module
+          - `commands`: the discord.ext.commands module
+          - `ctx`: the invocation context
+          - `__import__`: the builtin `__import__` function
+        Such that `>eval 1 + 1` gives `2` as the result.
+        """
+        return await prev.eval_cmd(ctx, cmd)
+
+    @commands.command(name="amiadmin")
+    async def are_you_admin(self, ctx):
+        """ Are you admin? """
+        return await prev.are_you_admin(ctx)
 
     @commands.command()
-    @commands.is_owner()
+    @commands.check(permissions.is_owner)
     async def reload(self, ctx, name: str):
         """ Reloads an extension. """
-        try:
-            self.bot.unload_extension(f"cogs.{name}")
-            self.bot.load_extension(f"cogs.{name}")
-        except Exception as e:
-            return await ctx.send(f"```\n{e}```")
-        await ctx.send(f"Reloaded extension **{name}.py**")
+        return await prev.reload(self, ctx, name, "cogs")
 
     @commands.command()
-    @commands.is_owner()
+    @commands.check(permissions.is_owner)
+    async def reload_all(self, ctx):
+        """ Reloads all extensions. """
+        return await prev.reload_all(self, ctx, "cogs")
+
+    @commands.command()
+    @commands.check(permissions.is_owner)
     async def shutdown(self, ctx):
-        """ Reboot the bot """
-        await ctx.send('Shutting down...')
-        await self.bot.logout()
+        """ Shut down the bot """
+        return await prev.shutdown(self, ctx)
 
     @commands.command()
-    @commands.is_owner()
+    @commands.check(permissions.is_owner)
     async def load(self, ctx, name: str):
-        """ Reloads an extension. """
-        try:
-            self.bot.load_extension(f"cogs.{name}")
-        except Exception as e:
-            return await ctx.send(f"```diff\n- {e}```")
-        await ctx.send(f"Loaded extension **{name}.py**")
+        """ Loads an extension. """
+        return await prev.load(self, ctx, name, "cogs")
 
     @commands.command()
-    @commands.is_owner()
+    @commands.check(permissions.is_owner)
     async def unload(self, ctx, name: str):
-        """ Reloads an extension. """
+        """ Unloads an extension. """
+        return await prev.unload(self, ctx, name, "cogs")
+
+    @commands.command(name="reloadutil")
+    @commands.check(permissions.is_owner)
+    async def reload_utils(self, ctx, name: str):
+        """ Reloads a utility module. """
+        return await prev.reload_utils(self, ctx, name)
+
+    @commands.command(name="exec", aliases=["execute"])
+    @commands.check(permissions.is_owner)
+    async def execute(self, ctx, *, text: str):
+        """ Do a shell command. """
+        return await prev.execute(ctx, text)
+
+    @commands.group()
+    @commands.check(permissions.is_owner)
+    async def change(self, ctx):
+        """ Change bot's data """
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(str(ctx.command))
+
+    @change.command(name="playing")
+    @commands.check(permissions.is_owner)
+    async def change_playing(self, ctx, *, playing: str):
+        """ Change playing status. """
         try:
-            self.bot.unload_extension(f"cogs.{name}")
+            await self.bot.change_presence(
+                activity=discord.Activity(type=discord.ActivityType.watching, name=playing),
+                status=discord.Status.dnd
+            )
+            data_io.change_value("config.json", "playing", playing)
+            await ctx.send(f"Successfully changed playing status to **{playing}**")
+        except discord.InvalidArgument as err:
+            await ctx.send(err)
         except Exception as e:
-            return await ctx.send(f"```diff\n- {e}```")
-        await ctx.send(f"Unloaded extension **{name}.py**")
+            await ctx.send(e)
+
+    @change.command(name="username")
+    @commands.check(permissions.is_owner)
+    async def change_username(self, ctx, *, name: str):
+        """ Change username. """
+        try:
+            await self.bot.user.edit(username=name)
+            await ctx.send(f"Successfully changed username to **{name}**")
+        except discord.HTTPException as err:
+            await ctx.send(err)
+
+    @change.command(name="nickname")
+    @commands.check(permissions.is_owner)
+    async def change_nickname(self, ctx, *, name: str = None):
+        """ Change nickname. """
+        try:
+            await ctx.guild.me.edit(nick=name)
+            if name:
+                await ctx.send(f"Successfully changed nickname to **{name}**")
+            else:
+                await ctx.send("Successfully removed nickname")
+        except Exception as err:
+            await ctx.send(err)
+
+    @change.command(name="avatar")
+    @commands.check(permissions.is_owner)
+    async def change_avatar(self, ctx, url: str = None):
+        """ Change avatar. """
+        if url is None and len(ctx.message.attachments) == 1:
+            url = ctx.message.attachments[0].url
+        else:
+            url = url.strip('<>') if url else None
+
+        try:
+            bio = await http.get(url, res_method="read")
+            await self.bot.user.edit(avatar=bio)
+            await ctx.send(f"Successfully changed the avatar. Currently using:\n{url}")
+        except aiohttp.InvalidURL:
+            await ctx.send("The URL is invalid...")
+        except discord.InvalidArgument:
+            await ctx.send("This URL does not contain a useable image")
+        except discord.HTTPException as err:
+            await ctx.send(err)
+        except TypeError:
+            await ctx.send("You need to either provide an image URL or upload one with the command")
+
+    @change.command(name="fullversion", aliases=["fversion", "version"])
+    @commands.check(permissions.is_owner)
+    async def change_full_version(self, ctx, new_version: str):
+        """ Change version (full) """
+        try:
+            old_version = self.config.full_version
+            data_io.change_value("config.json", "full_version", new_version)
+            data_io.change_value("config_example.json", "full_version", new_version)
+        except Exception as e:
+            return await ctx.send(e)
+        try:
+            for cog in self.admin_mod:
+                self.bot.reload_extension(cog)
+                # await ctx.send(f"_Reloaded **{cog[5:]}.py** for config update_")
+        except Exception as e:
+            return await ctx.send(e)
+        to_send = f"Changed full version from **{old_version}** to **{new_version}**"
+        if generic.get_config().logs:
+            await logs.log_channel(self.bot, 'changes').send(to_send)
+        return await ctx.send(to_send)
+
+    @change.command(name="shortversion", aliases=["sversion"])
+    @commands.check(permissions.is_owner)
+    async def change_short_version(self, ctx, new_version: str):
+        """ Change version (short) """
+        try:
+            old_version = self.config.version
+            data_io.change_value("config.json", "version", new_version)
+            data_io.change_value("config_example.json", "version", new_version)
+        except Exception as e:
+            return await ctx.send(e)
+        try:
+            for cog in self.admin_mod:
+                self.bot.reload_extension(cog)
+                # await ctx.send(f"_Reloaded **{cog[5:]}.py** for config update_")
+        except Exception as e:
+            return await ctx.send(e)
+        to_send = f"Changed short version from **{old_version}** to **{new_version}**"
+        if generic.get_config().logs:
+            await logs.log_channel(self.bot, 'changes').send(to_send)
+        return await ctx.send(to_send)
+
+    @change.command(name="lastupdate")
+    @commands.check(permissions.is_owner)
+    async def change_last_update_value(self, ctx):
+        """ Change last update time """
+        now = time.now(False)
+        try:
+            last_update = self.config.last_update
+            data_io.change_value("config.json", "last_update", int(datetime.timestamp(now)))
+            data_io.change_value("config_example.json", "last_update", int(datetime.timestamp(now)))
+            # self.config.last_update = int(datetime.timestamp(now))
+        except Exception as e:
+            return await ctx.send(e)
+        try:
+            for cog in self.admin_mod:
+                self.bot.reload_extension(cog)
+                # await ctx.send(f"_Reloaded **{cog[5:]}.py** for config update_")
+        except Exception as e:
+            return await ctx.send(e)
+        _lu = time.time_output(time.from_ts(last_update))
+        _nu = time.time_output(now)
+        to_send = f"Changed last update from **{_lu}** to **{_nu}**"
+        if generic.get_config().logs:
+            await logs.log_channel(self.bot, 'changes').send(to_send)
+        return await ctx.send(to_send)
 
 
 def setup(bot):
-    bot.add_cog(Admin(bot))
+    bot.add_cog(AdminCommands(bot))

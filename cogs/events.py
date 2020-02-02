@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import re
 
 import discord
 import psutil
@@ -33,7 +34,7 @@ class Events(commands.Cog):
                 )
             # await self.bot.get_user(302851022790066185).send(error)
             _error = generic.traceback_maker(err.original, advance=False)
-            await ctx.send(f"There has been an {_error}, try again later...")
+            await ctx.send(f"There has been an error, try again later...\n`{_error}`")
             if self.config.logs:
                 await logs.log_channel(self.bot, "errors").send(error)
 
@@ -78,6 +79,15 @@ class Events(commands.Cog):
         except AttributeError:
             g = "Private Message"
         send = f"{time.time()} > {g} > {ctx.author} > {ctx.message.content}"
+        r = re.findall(r'(<@!?[0-9]{17,18}>)', send)
+        if r:
+            for i in r:
+                if i[2] != '!':
+                    j = list(i)
+                    j.insert(2, '!')
+                    i = ''.join(j)
+                if i[3:-1] == "302851022790066185":
+                    send = send.replace(i, '<Regaus mention>')
         if self.config.logs:
             await logs.log_channel(self.bot).send(send)
         print(send)
@@ -107,6 +117,9 @@ class Events(commands.Cog):
         cs = self.config.changesenkolair
         while cp or ca or cs:
             self.config = generic.get_config()
+            cp = self.config.changeplaying
+            ca = self.config.changeavatars
+            cs = self.config.changesenkolair
             log = self.config.logs
             now = time.now()
             try:
