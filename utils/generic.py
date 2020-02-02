@@ -1,8 +1,11 @@
 import json
+import random
 import traceback
 from collections import namedtuple
 from io import BytesIO
 import discord
+
+from utils import time
 
 
 def get(file):
@@ -14,6 +17,10 @@ def get(file):
         raise AttributeError("Unknown argument")
     except FileNotFoundError:
         raise FileNotFoundError("JSON file wasn't found")
+
+
+def random_colour():
+    return random.randint(0, 0xffffff)
 
 
 def get_config():
@@ -113,3 +120,4 @@ async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here'
 # invite = "https://discordapp.com/invite/UrHhtWE"
 invite = "https://senko.weeb.services/lair"
 owners = get("config.json").owners
+prefixes = 'data/prefixes'

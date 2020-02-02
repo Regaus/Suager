@@ -29,6 +29,7 @@ share/python-wheels/
 config.json
 changes.json
 MANIFEST
+data/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
