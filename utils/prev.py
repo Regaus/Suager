@@ -205,3 +205,15 @@ async def execute(ctx, text: str):
             return await ctx.send(e)
     else:
         await message.edit(content=f"```fix\n{content}\n```")
+
+
+async def status(ctx, _type: int):
+    """ Offline / Online / Restart """
+    try:
+        await ctx.message.delete()
+    except discord.NotFound:
+        pass
+    updates = ["Server is offline", "Server is online", "Restart incoming"]
+    update = updates[_type]
+    now = time.time()
+    return await ctx.send(f"{now}: **{update}**")

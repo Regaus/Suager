@@ -23,8 +23,8 @@ server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/64213
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139584326533130/10.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
 playing = ["with Regaus", "Custom Status", "Aqos", "TBL", ",/help"]
-image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 671890334065885184, 'l': 672098660418584586}
-error = ["https://cdn.discordapp.com/attachments/603309239884185647/673638035321258004/error.png"]
+image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586}
+error = ["https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"]
 
 
 async def get_images(bot, what: str):
@@ -34,5 +34,5 @@ async def get_images(bot, what: str):
         return error
     images = []
     async for message in channel.history(limit=None):
-        images.append(attachment.url for attachment in message.attachments)
+        images.append(message.attachments[0].url)
     return images

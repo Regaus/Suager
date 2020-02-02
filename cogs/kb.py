@@ -5,11 +5,11 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import lists, emotes, generic
+from utils import lists, emotes, generic, logs
 
 
 def is_fucked(something):
-    return something == [] or something == lists.error
+    return something == [] or something == lists.error or something == lists.error[0]
 
 
 but_why = "https://cdn.discordapp.com/attachments/610482988123422750/673642028357386241/butwhy.gif"
@@ -18,7 +18,7 @@ but_why = "https://cdn.discordapp.com/attachments/610482988123422750/67364202835
 class KawaiiBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pat, self.hug, self.kiss, self.lick = lists.error * 4
+        self.pat, self.hug, self.kiss, self.lick = [lists.error, lists.error, lists.error, lists.error]
 
     @commands.command(name="pat")
     async def pat(self, ctx, user: discord.Member):
@@ -87,6 +87,17 @@ class KawaiiBot(commands.Cog):
         if user.id == self.bot.user.id:
             return await ctx.send(f"{ctx.author.name}, we can no longer be friends. ;-; {emotes.AlexHeartBroken}")
         return await ctx.send(f"Violence is never the answer, {ctx.author.name}!")
+
+    @commands.command(name="reloadimages")
+    @commands.is_owner()
+    async def reload_images(self, ctx):
+        self.pat = await lists.get_images(self.bot, 'p')
+        self.hug = await lists.get_images(self.bot, 'h')
+        self.kiss = await lists.get_images(self.bot, 'k')
+        self.lick = await lists.get_images(self.bot, 'l')
+        if generic.get_config().logs:
+            await logs.log_channel(self.bot, 'changes').send('Reloaded KawaiiBot images')
+        return await ctx.send("Successfully reloaded images")
 
 
 def setup(bot):
