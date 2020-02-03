@@ -28,6 +28,10 @@ def from_ts(timestamp, utc=True):
         return datetime.fromtimestamp(timestamp)
 
 
+def now_ts(utc: bool = False):
+    return datetime.timestamp(now(utc))
+
+
 def file_ts(name):
     return f"{name}_{int(datetime.timestamp(datetime.now()))}.txt"
 

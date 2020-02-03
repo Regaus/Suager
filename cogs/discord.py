@@ -82,7 +82,7 @@ class Discord(commands.Cog):
     @server_prefix.command(name="remove", aliases=["delete"])
     @permissions.has_permissions(manage_server=True)
     async def sp_remove(self, ctx, *, what: str):
-        """ Add a custom prefix """
+        """ Remove a custom prefix """
         f = f'{generic.prefixes}/{ctx.guild.id}.json'
         try:
             data = json.loads(open(f, 'r').read())
@@ -99,6 +99,20 @@ class Discord(commands.Cog):
                                       "including all spaces where necessary")
         open(f, 'w+').write(json.dumps(data))
         return await ctx.send(f"Removed `{new}` from server prefixes")
+
+    @server_prefix.command(name="default")
+    @permissions.has_permissions(manage_server=True)
+    async def sp_default(self, ctx, toggle: bool):
+        """ Toggle use of default prefixes """
+        f = f'{generic.prefixes}/{ctx.guild.id}.json'
+        try:
+            data = json.loads(open(f, 'r').read())
+        except FileNotFoundError:
+            data = prefix_template.copy()
+        data['default'] = toggle
+        open(f, 'w+').write(json.dumps(data))
+        return await ctx.send(f"Use of default prefixes is now set to {toggle}")
+
 
 
 def setup(bot):
