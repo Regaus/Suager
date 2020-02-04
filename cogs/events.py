@@ -5,9 +5,12 @@ import re
 
 import discord
 import psutil
+from aiohttp import ClientConnectorError
 from discord.ext import commands
 
+from cogs.genders import genders
 from utils import generic, time, logs, lists, http
+from utils.emotes import AlexHeartBroken
 
 changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1]}
 
@@ -93,6 +96,37 @@ class Events(commands.Cog):
         print(send)
 
     @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        if self.config.spyware:
+            await logs.log_channel(self.bot, "spyware").send(f"{member} just joined {member.guild.name}")
+        if member.guild.id == 568148147457490954:
+            try:
+                gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
+            except FileNotFoundError:
+                gender = genders.copy()
+            roles = [651339885013106688, 651339932681371659, 651339982652571648]
+            snowflakes = [discord.Object(id=i) for i in roles]
+            reason = "Gender assignments - Joined Senko Lair"
+            if gender['male']:
+                await member.add_roles(snowflakes[0], reason=reason)
+            if gender['female']:
+                await member.add_roles(snowflakes[1], reason=reason)
+            if gender['invalid']:
+                await member.add_roles(snowflakes[2], reason=reason)
+            await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
+            await self.bot.get_channel(650774303192776744).send(
+                f"{member.name} just joined Senko Lair.\nJoined at: {time.time_output(member.joined_at)}\n"
+                f"Created at: {time.time_output(member.created_at)}")
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member: discord.Member):
+        if self.config.spyware:
+            await logs.log_channel(self.bot, "spyware").send(f"{member} just left {member.guild.name}")
+        if member.guild.id == 568148147457490954:
+            await self.bot.get_channel(610836120321785869).send(
+                f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
+
+    @commands.Cog.listener()
     async def on_ready(self):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(True)
@@ -144,7 +178,7 @@ class Events(commands.Cog):
                         ch = logs.log_channel(self.bot, "playing")
                         try:
                             await ch.send(f"{time.time()} > Updated playing to `{playing}` - {a+1}/{len(plays)}")
-                        except discord.errors.HTTPException:
+                        except discord.errors.HTTPException or ClientConnectorError:
                             print(f"{time.time()} > Updated playing to `{playing}`, but failed to send message.")
             hour = now.hour
             if ca:

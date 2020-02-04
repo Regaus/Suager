@@ -56,7 +56,7 @@ async def eval_(ctx, cmd):
 
     result = (await eval(f"{fn_name}()", env))
     # return await ctx.send(result)
-    if len(str(result)) == 0:
+    if len(str(result)) == 0 or result is None:
         return await ctx.send("Code has been run, however returned no result.")
     elif len(str(result)) in range(1900, 8000001):
         async with ctx.typing():
@@ -105,7 +105,7 @@ async def reload(self, ctx, name: str, where: str):
     reloaded = f"Reloaded extension **{name}.py**"
     await ctx.send(reloaded)
     if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} - {reloaded}")
+        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
 
 
 async def reload_all(self, ctx, where: str):
@@ -130,7 +130,7 @@ async def shutdown(self, ctx):
     import sys
     await ctx.send('Shutting down...')
     if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'uptime').send(f"{time.time()} - Shutting down from command...")
+        await logs.log_channel(self.bot, 'uptime').send(f"{time.time()} > Shutting down from command...")
     _time.sleep(1)
     sys.exit(0)
 
@@ -144,7 +144,7 @@ async def load(self, ctx, name: str, where: str):
     reloaded = f"Loaded extension **{name}.py**"
     await ctx.send(reloaded)
     if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} - {reloaded}")
+        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
 
 
 async def unload(self, ctx, name: str, where: str):
@@ -156,7 +156,7 @@ async def unload(self, ctx, name: str, where: str):
     reloaded = f"Unloaded extension **{name}.py**"
     await ctx.send(reloaded)
     if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} - {reloaded}")
+        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
 
 
 async def reload_utils(self, ctx, name: str):
@@ -173,7 +173,7 @@ async def reload_utils(self, ctx, name: str):
     reloaded = f"Reloaded module **{name_maker}**"
     await ctx.send(reloaded)
     if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} - {reloaded}")
+        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
 
 
 async def execute(ctx, text: str):
