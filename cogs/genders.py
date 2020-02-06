@@ -40,6 +40,12 @@ class HumanInfo(commands.Cog):
         """ Pickle size! """
         if user is None:
             user = ctx.author
+        if user.id == self.bot.user.id:
+            message = await ctx.send(
+                f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
+            await asyncio.sleep(3)
+            result = self.pb_size(user)
+            return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result:.2f}cm**")
         try:
             gender = json.loads(open(f"data/gender/{user.id}.json", "r").read())
             if gender["male"]:

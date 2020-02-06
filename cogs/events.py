@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import re
 
 import discord
 import psutil
@@ -81,16 +80,8 @@ class Events(commands.Cog):
             g = ctx.guild.name
         except AttributeError:
             g = "Private Message"
-        send = f"{time.time()} > {g} > {ctx.author} > {ctx.message.content}"
-        r = re.findall(r'(<@!?[0-9]{17,18}>)', send)
-        if r:
-            for i in r:
-                if i[2] != '!':
-                    j = list(i)
-                    j.insert(2, '!')
-                    i = ''.join(j)
-                if i[3:-1] == "302851022790066185":
-                    send = send.replace(i, '<Regaus mention>')
+        send = f"{time.time()} > {g} > {ctx.author} > {ctx.message.content}"\
+            .replace("<@302851022790066185>", "<Regaus mention>").replace("<@!302851022790066185>", "<Regaus mention>")
         if self.config.logs:
             await logs.log_channel(self.bot).send(send)
         print(send)
