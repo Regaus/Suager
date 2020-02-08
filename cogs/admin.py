@@ -11,7 +11,7 @@ class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = generic.get_config()
-        self.admin_mod = ["cogs.admin"]
+        self.admin_mod = ["cogs.admin", "cogs.birthdays"]
 
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)

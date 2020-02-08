@@ -30,6 +30,7 @@ config.json
 changes.json
 MANIFEST
 data/
+storage.db
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

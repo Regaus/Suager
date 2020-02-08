@@ -3,6 +3,8 @@ import random
 import discord
 from discord.ext import commands
 
+from utils import generic
+
 
 class Fun(commands.Cog):
     @commands.command(name="rate")
@@ -41,6 +43,18 @@ class Fun(commands.Cog):
         except Exception as e:
             return await ctx.send(f"An error has occurred... {e}")
         return await ctx.send(f"{ctx.author.name} - I'm done torturing {who.name}, you motherfucker")
+
+    @commands.command(name="babyrate")
+    @commands.guild_only()
+    async def baby_rate(self, ctx, user1: discord.Member, user2: discord.Member):
+        """ Chance of 2 users having a baby """
+        seed = user1.id + user2.id
+        random.seed(seed)
+        rate = random.randint(0, 100)
+        embed = discord.Embed(colour=generic.random_colour(),
+                              description=f"The chance of {user1.mention} and {user2.mention} "
+                                          f"having a baby is **{rate}**%")
+        return await ctx.send(embed=embed)
 
 
 def setup(bot):

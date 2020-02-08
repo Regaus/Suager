@@ -1,2 +1,4 @@
 AlexHeart = "<:AlexHeart:619838746979991582>"
 AlexHeartBroken = "<:AlexHeartBroken:659516336749150211>"
+NotLikeThis = "<:blobcatnotlikethis:675843446283436033>"
+Loading = "<a:loading:651883385878478858>"

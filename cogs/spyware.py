@@ -41,7 +41,8 @@ class Spyware(commands.Cog):
         a1, a2 = [before.avatar, after.avatar]
         if a1 != a2:
             send = f"{to} > `{n2}` changed their avatar"
-            await senko.send(send)
+            if after.id != 520042197391769610:  # Suager v3
+                await senko.send(send)
             await log.send(f"{send}. New avatar: {after.avatar_url_as(size=1024, format='png')}")
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:

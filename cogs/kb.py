@@ -9,7 +9,7 @@ from utils import lists, emotes, generic, logs
 
 
 def is_fucked(something):
-    return something == [] or something == lists.error or something == lists.error[0]
+    return something == [] or something == lists.error or something == lists.error
 
 
 but_why = "https://cdn.discordapp.com/attachments/610482988123422750/673642028357386241/butwhy.gif"
@@ -18,7 +18,7 @@ but_why = "https://cdn.discordapp.com/attachments/610482988123422750/67364202835
 class KawaiiBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pat, self.hug, self.kiss, self.lick = [lists.error, lists.error, lists.error, lists.error]
+        self.pat, self.hug, self.kiss, self.lick, self.cuddle = [lists.error] * 5
 
     @commands.command(name="pat")
     async def pat(self, ctx, user: discord.Member):
@@ -47,6 +47,20 @@ class KawaiiBot(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"{user.name} got a hug from {ctx.author.name}"
         embed.set_image(url=random.choice(self.hug))
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="cuddle")
+    async def cuddle(self, ctx, user: discord.Member):
+        """ Hug someone """
+        if is_fucked(self.cuddle):
+            self.cuddle = await lists.get_images(self.bot, 'c')
+        if ctx.author == user:
+            return await ctx.send("Alone? ;-;")
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"*Cuddles {ctx.author.name} back* {emotes.AlexHeart}")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"{user.name} got a cuddle from {ctx.author.name}"
+        embed.set_image(url=random.choice(self.cuddle))
         return await ctx.send(embed=embed)
 
     @commands.command(name="lick")

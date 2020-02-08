@@ -117,7 +117,6 @@ async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here'
 
 
 # version = get("config.json").version
-# invite = "https://discordapp.com/invite/UrHhtWE"
-invite = "https://senko.weeb.services/lair"
+invite = "https://discordapp.com/invite/UrHhtWE"
 owners = get("config.json").owners
 prefixes = 'data/prefixes'

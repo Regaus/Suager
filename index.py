@@ -1,18 +1,24 @@
 import json
 import os
+import sys
 
 import discord
 
-from utils import generic, time, botdata
+from utils import generic, time, botdata, create_tables
 
 config = generic.get_config()
 desc = """Suager v4 - A bot by Regaus
 Originates from AlexFlipnote's code"""
 print(time.time(False, True, True) + " > Initialisation Started")
 
+# Test DB before launching
+tables = create_tables.creation(debug=True)
+if not tables:
+    sys.exit(1)
 
-async def get_prefix(bot, message):
-    uid = bot.user.id
+
+async def get_prefix(_bot, message):
+    uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
     if not message.guild:
         prefixes = default + config.prefix

@@ -23,8 +23,11 @@ server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/64213
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139584326533130/10.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
 playing = ["with Regaus", "Custom Status", "Aqos", "TBL", ",/help"]
-image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586}
-error = ["https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"]
+phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
+                        "Hey, how's your day going?", "Ever wanted to take a break from all this hard work? I can't."]
+image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586,
+                  'c': 675769002613669918}
+error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
 
 
 async def get_images(bot, what: str):
