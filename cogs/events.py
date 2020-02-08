@@ -89,7 +89,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         if self.config.spyware:
-            await logs.log_channel(self.bot, "spyware").send(f"{member} just joined {member.guild.name}")
+            await logs.log_channel(self.bot, "spyware").send(
+                f"{time.time()} > {member} just joined {member.guild.name}")
         if member.guild.id == 568148147457490954:
             try:
                 gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
@@ -104,15 +105,18 @@ class Events(commands.Cog):
                 await member.add_roles(snowflakes[1], reason=reason)
             if gender['invalid']:
                 await member.add_roles(snowflakes[2], reason=reason)
+            embed = discord.Embed(colour=generic.random_colour())
+            embed.add_field(name="User ID", value=member.id)
+            embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
+            embed.add_field(name="Created at", value=time.time_output(member.created_at))
             await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
             await self.bot.get_channel(650774303192776744).send(
-                f"{member.name} just joined Senko Lair.\nJoined at: {time.time_output(member.joined_at)}\n"
-                f"Created at: {time.time_output(member.created_at)}")
+                f"{member.name} just joined Senko Lair.", embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if self.config.spyware:
-            await logs.log_channel(self.bot, "spyware").send(f"{member} just left {member.guild.name}")
+            await logs.log_channel(self.bot, "spyware").send(f"{time.time()} > {member} just left {member.guild.name}")
         if member.guild.id == 568148147457490954:
             await self.bot.get_channel(610836120321785869).send(
                 f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
