@@ -21,6 +21,7 @@ class KawaiiBot(commands.Cog):
         self.pat, self.hug, self.kiss, self.lick, self.cuddle = [lists.error] * 5
 
     @commands.command(name="pat")
+    @commands.guild_only()
     async def pat(self, ctx, user: discord.Member):
         """ Pat someone """
         if is_fucked(self.pat):
@@ -35,6 +36,7 @@ class KawaiiBot(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hug")
+    @commands.guild_only()
     async def hug(self, ctx, user: discord.Member):
         """ Hug someone """
         if is_fucked(self.hug):
@@ -50,6 +52,7 @@ class KawaiiBot(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="cuddle")
+    @commands.guild_only()
     async def cuddle(self, ctx, user: discord.Member):
         """ Hug someone """
         if is_fucked(self.cuddle):
@@ -64,6 +67,7 @@ class KawaiiBot(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="lick")
+    @commands.guild_only()
     async def lick(self, ctx, user: discord.Member):
         """ Lick someone """
         if is_fucked(self.lick):
@@ -79,6 +83,7 @@ class KawaiiBot(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="kiss")
+    @commands.guild_only()
     async def kiss(self, ctx, user: discord.Member):
         """ Kiss someone """
         if is_fucked(self.kiss):
@@ -94,6 +99,7 @@ class KawaiiBot(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="slap")
+    @commands.guild_only()
     async def slap(self, ctx, user: discord.Member):
         """ Violence! """
         if user == ctx.author:

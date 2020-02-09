@@ -3,8 +3,7 @@ import re
 import discord
 from discord.ext import commands
 
-from utils import generic as default, permissions
-
+from utils import generic as default, permissions, emotes
 
 template = {
     "warn_limit": 4,
@@ -72,9 +71,9 @@ class Moderation(commands.Cog):
         invalid = [o for o in self.config.owners]
         invalid.append(self.bot.user.id)
         if member == ctx.author:
-            return await ctx.send(f"Self harm is bad <:blobcatpolice:648243791769239571>")
+            return await ctx.send(f"Self harm bad {emotes.BlobCatPolice}")
         elif member.id in invalid:
-            return await ctx.send(f"I can't kick myself, or my owners... <:blobcatpolice:648243791769239571>")
+            return await ctx.send(f"I can't kick myself, or my owners... {emotes.BlobCatPolice}")
         try:
             await member.kick(reason=default.reason(ctx.author, reason))
             return await ctx.send(default.action("kicked", who=member, why=reason))
@@ -89,9 +88,9 @@ class Moderation(commands.Cog):
         invalid = [o for o in self.config.owners]
         invalid.append(self.bot.user.id)
         if member == ctx.author.id:
-            return await ctx.send(f"Self harm is bad <:blobcatpolice:648243791769239571>")
+            return await ctx.send(f"Self harm bad {emotes.BlobCatPolice}")
         elif member in invalid:
-            return await ctx.send(f"I can't ban myself, or my owners... <:blobcatpolice:648243791769239571>")
+            return await ctx.send(f"I can't ban myself, nor my owners... {emotes.BlobCatPolice}")
         try:
             await ctx.guild.ban(discord.Object(id=member), reason=default.reason(ctx.author, reason))
             return await ctx.send(default.action("banned", why=reason, emote="<:blobcatcoffee:651864579856662568>"))

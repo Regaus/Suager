@@ -26,7 +26,7 @@ class Fun(commands.Cog):
         r = random.randint(r1, r2) / 10
         return await ctx.send(f"I'd rate {who} a {r}/100")
 
-    @commands.command(name="pingspam")
+    @commands.command(name="pingspam", hidden=True)
     @commands.guild_only()
     async def ping_spam(self, ctx, who: discord.Member, times: int, *, message: str = None):
         """ Ping Spam """
@@ -42,7 +42,7 @@ class Fun(commands.Cog):
                 await ctx.send(f"{who.mention} - Get pinged! ({i}/{times}){add}")
         except Exception as e:
             return await ctx.send(f"An error has occurred... {e}")
-        return await ctx.send(f"{ctx.author.name} - I'm done torturing {who.name}, you motherfucker")
+        return await ctx.send(f"{ctx.author.mention} - I'm done torturing {who.name}, you motherfucker")
 
     @commands.command(name="babyrate")
     @commands.guild_only()

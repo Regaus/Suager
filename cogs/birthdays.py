@@ -116,6 +116,8 @@ class Birthdays(commands.Cog):
                 f"You've already set your birth date to **{has_birthday.strftime('%d %B %Y')}**\n"
                 f"To change this, please contact the owner of the bot."
             )
+        if ctx.guild.id != self.config.guild_id:
+            return await ctx.send(f"This command is only available in {self.bot.get_guild(self.config.guild_id).name}.")
 
         start_msg = await ctx.send(f"Hello there **{ctx.author.name}**, please enter when you were born. "
                                    f"`[ DD/MM/YYYY ]`")

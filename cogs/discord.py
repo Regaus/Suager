@@ -10,6 +10,9 @@ prefix_template = {'prefixes': [], 'default': True}
 
 
 class Discord(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
     async def server(self, ctx):
@@ -51,12 +54,12 @@ class Discord(commands.Cog):
             try:
                 data = json.loads(open(f'{generic.prefixes}/{ctx.guild.id}.json', 'r').read())
             except FileNotFoundError:
-                data = None
+                data = prefix_template.copy()
             dp = generic.get_config().prefix
             defaults = dp if data['default'] else []
             defaults.append(ctx.bot.user.mention)
             embed.add_field(name="Default Prefixes", value='\n'.join(defaults), inline=True)
-            if data is not None:
+            if data['prefixes']:
                 embed.add_field(name="Custom Prefixes", value='\n'.join(data['prefixes']), inline=True)
             p = ctx.prefix
             i = ctx.invoked_with
@@ -102,17 +105,32 @@ class Discord(commands.Cog):
 
     @server_prefix.command(name="default")
     @permissions.has_permissions(manage_server=True)
-    async def sp_default(self, ctx, toggle: bool):
+    async def sp_default(self, ctx, toggle: bool = None):
         """ Toggle use of default prefixes """
         f = f'{generic.prefixes}/{ctx.guild.id}.json'
         try:
             data = json.loads(open(f, 'r').read())
         except FileNotFoundError:
             data = prefix_template.copy()
-        data['default'] = toggle
+        data['default'] = toggle if toggle is not None else not data['default']
         open(f, 'w+').write(json.dumps(data))
-        return await ctx.send(f"Use of default prefixes is now set to {toggle}")
+        return await ctx.send(f"Use of default prefixes is now set to {data['default']}")
 
+    @commands.command(name="emojis")
+    @commands.is_owner()
+    async def get_all_emotes(self, ctx):
+        """ Yoink all emotes """
+        channel = self.bot.get_channel(676154789159239740)
+        await channel.send(f"This stash of emotes was made on {time.time()}")
+        for guild in self.bot.guilds:
+            emotes = sorted([e for e in guild.emojis if len(e.roles) == 0 and e.available], key=lambda e: e.name)
+            paginator = commands.Paginator(suffix='', prefix='')
+            for emote in emotes:
+                paginator.add_line(f'{emote.name} = "`{emote}`"')
+            await channel.send(f"Next lot -> {guild.name}\n\n\n")
+            for page in paginator.pages:
+                await channel.send(page)
+        return await ctx.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.")
 
 
 def setup(bot):

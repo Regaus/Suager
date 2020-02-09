@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 
+from utils import permissions
+
 
 class Speech(commands.Cog):
     def __init__(self, bot):
@@ -25,7 +27,7 @@ class Speech(commands.Cog):
 
     @commands.command(name="tell")
     @commands.guild_only()
-    @commands.has_permissions(manage_messages=True)
+    @permissions.has_permissions(manage_messages=True)
     async def tell(self, ctx, channel: discord.TextChannel, *, message: str):
         """ Say something to a channel """
         try:
