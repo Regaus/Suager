@@ -54,11 +54,11 @@ class Birthdays(commands.Cog):
                     self.db.execute("UPDATE birthdays SET has_role=1 WHERE user_id=?", (g["user_id"],))
                     try:
                         user = guild.get_member(g["user_id"])
-                        await user.add_roles(birthday_role, reason=f"{user} has birthday! 🎂🎉")
                         await self.bot.get_channel(self.config.announce_channel_id).send(
                             f"Happy birthday {user.mention}, have a nice birthday and enjoy your role "
                             f"today 🎂🎉"
                         )
+                        await user.add_roles(birthday_role, reason=f"{user} has birthday! 🎂🎉")
                         print(f"Gave role to {user.name}")
                     except Exception as e:
                         print(e)
@@ -169,22 +169,33 @@ class Birthdays(commands.Cog):
         self.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (ctx.author.id, timestamp, False))
         await ctx.send(f"Done, your birth date is now saved in my database at **{timestamp_clean}** 🎂")
 
-    @commands.command()
+    @commands.command(name="forceset", aliases=["force"])
     @commands.check(permissions.is_owner)
-    async def forceset(self, ctx, user: discord.Member, *, time: str):
+    async def force_set(self, ctx, user: discord.Member, *, time: str):
+        """ Force-set someone's birthday """
         timestamp = datetime.strptime(time, "%d/%m/%Y")
         data = self.db.execute("UPDATE birthdays SET birthday=? WHERE user_id=?", (timestamp, user.id))
+        await ctx.send(data)
+
+    @commands.command(name="insert")
+    @commands.check(permissions.is_owner)
+    async def insert(self, ctx, user: discord.Member, *, time: str):
+        """ Insert someone's birthday """
+        timestamp = datetime.strptime(time, "%d/%m/%Y")
+        data = self.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (user.id, timestamp, False))
         await ctx.send(data)
 
     @commands.command()
     @commands.check(permissions.is_owner)
     async def db(self, ctx, *, query: str):
+        """ Database query """
         data = self.db.execute(query)
         await ctx.send(f"{data}")
 
     @commands.command()
     @commands.check(permissions.is_owner)
     async def dropall(self, ctx):
+        """ Delete everything """
         data = self.db.execute("DELETE FROM birthdays")
         await ctx.send(f"DEBUG: {data}")
 
