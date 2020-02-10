@@ -3,21 +3,21 @@ from discord.ext import commands
 from utils import time, generic, logs
 
 
-# async def status_gen(log, to, who, what, old, new, guild, uid):
-#     send = f"{to} > `{guild}` > `{who}`'s {what} is now `{new}` (from `{old}`)"
-#     now = time.now_ts()
-#     _last = recently_logged.get(uid, [0, ''])
-#     last, _what = _last
-#     if what == _what:
-#         if now > last + 15:
-#             await log.send(send)
-#             recently_logged[uid] = [now, what]
-#     else:
-#         await log.send(send)
-#         recently_logged[uid] = [now, what]
+async def status_gen(log, to, who, what, old, new, guild, uid):
+    send = f"{to} > `{guild}` > `{who}`'s {what} is now `{new}` (from `{old}`)"
+    now = time.now_ts()
+    _last = recently_logged.get(uid, [0, ''])
+    last, _what = _last
+    if what == _what:
+        if now > last + 15:
+            await log.send(send)
+            recently_logged[uid] = [now, what]
+    else:
+        await log.send(send)
+        recently_logged[uid] = [now, what]
 
 
-# recently_logged = {}
+recently_logged = {}
 
 
 class Spyware(commands.Cog):
@@ -60,13 +60,13 @@ class Spyware(commands.Cog):
         log = logs.log_channel(self.bot, 'spyware')
         guild = after.guild.name
         n = after.name
-        # a1, a2 = [before.activity, after.activity]
-        # if a1 != a2:
-        #     if a2 is not None:
-        #         send = f"{to} > `{n}`'s activities changed: now {a2.type} {a2.name}"
-        #     else:
-        #         send = f"{to} > `{n}` now has no activity."
-        #     await log.send(send)
+        a1, a2 = [before.activity, after.activity]
+        if a1 != a2:
+            if a2 is not None:
+                send = f"{to} > {after.guild.name} > `{n}`'s activities changed: now {a2.type} {a2.name}"
+            else:
+                send = f"{to} > {after.guild.name} > `{n}` now has no activity."
+            await logs.log_channel(self.bot, 'activity').send(send)
         n1, n2 = [before.nick, after.nick]
         is_senko_lair = after.guild.id == 568148147457490954
         if n1 != n2:
@@ -74,21 +74,22 @@ class Spyware(commands.Cog):
             if is_senko_lair:
                 await senko.send(send)
             await log.send(send)
-        # try:
-        #     s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, before.mobile_status, before.desktop_status,
-        #                                             before.web_status, after.status, after.mobile_status,
-        #                                             after.desktop_status, after.web_status]
-        # except AttributeError:
-        #     s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, None, None, None, after.status, None, None, None]
-        # if after.id != 302851022790066185:
-        #     if s1 != s2:
-        #         await status_gen(log, to, n, "status", s1, s2, guild, after.id)
-        #     if s1m != s2m:
-        #         await status_gen(log, to, n, "mobile status", s1m, s2m, guild, after.id)
-        #     if s1d != s2d:
-        #         await status_gen(log, to, n, "desktop status", s1d, s2d, guild, after.id)
-        #     if s1w != s2w:
-        #         await status_gen(log, to, n, "web status", s1w, s2w, guild, after.id)
+        try:
+            s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, before.mobile_status, before.desktop_status,
+                                                    before.web_status, after.status, after.mobile_status,
+                                                    after.desktop_status, after.web_status]
+        except AttributeError:
+            s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, None, None, None, after.status, None, None, None]
+        status_log = logs.log_channel(self.bot, 'status')
+        if after.id != 302851022790066185:
+            if s1 != s2:
+                await status_gen(status_log, to, n, "status", s1, s2, guild, after.id)
+            if s1m != s2m:
+                await status_gen(status_log, to, n, "mobile status", s1m, s2m, guild, after.id)
+            if s1d != s2d:
+                await status_gen(status_log, to, n, "desktop status", s1d, s2d, guild, after.id)
+            if s1w != s2w:
+                await status_gen(status_log, to, n, "web status", s1w, s2w, guild, after.id)
         r1, r2 = [before.roles, after.roles]
         if r1 != r2:
             roles_lost = []

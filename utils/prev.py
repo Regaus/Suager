@@ -60,7 +60,7 @@ async def eval_(ctx, cmd):
         return await ctx.send("Code has been run, however returned no result.")
     elif len(str(result)) in range(1900, 8000001):
         async with ctx.typing():
-            data = BytesIO(result.encode('utf-8'))
+            data = BytesIO(str(result).encode('utf-8'))
             return await ctx.send(f"Result was a bit too long... ({len(result):,} chars)",
                                   file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
     elif len(str(result)) > 8000000:

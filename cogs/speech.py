@@ -1,12 +1,22 @@
 import discord
 from discord.ext import commands
 
-from utils import permissions
+from utils import permissions, emotes
 
 
 class Speech(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_message(self, msg):
+        mention = [f"<@!{self.bot.user.id}>", f"<@{self.bot.user.id}>"]
+        gb = [f"{m} good bot" for m in mention]
+        bb = [f"{m} bad bot" for m in mention]
+        if msg.content.lower() in gb:
+            await msg.channel.send(f"Thanks :3 {emotes.AlexPat}")
+        if msg.content.lower() in bb:
+            await msg.channel.send(f"Aww... :( {emotes.AlexHeartBroken}")
 
     @commands.command(name="dm")
     @commands.is_owner()

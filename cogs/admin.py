@@ -40,7 +40,7 @@ class AdminCommands(commands.Cog):
         """ Reloads an extension. """
         return await prev.reload(self, ctx, name, "cogs")
 
-    @commands.command()
+    @commands.command(name="reloadall")
     @commands.check(permissions.is_owner)
     async def reload_all(self, ctx):
         """ Reloads all extensions. """
@@ -64,7 +64,7 @@ class AdminCommands(commands.Cog):
         """ Unloads an extension. """
         return await prev.unload(self, ctx, name, "cogs")
 
-    @commands.command(name="reloadutil")
+    @commands.command(name="reloadutil", aliases=["reloadutils"])
     @commands.check(permissions.is_owner)
     async def reload_utils(self, ctx, name: str):
         """ Reloads a utility module. """
