@@ -36,7 +36,7 @@ class HumanInfo(commands.Cog):
         return result
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
-    async def pickle_size(self, ctx, user: discord.Member = None):
+    async def pickle_size(self, ctx, *, user: discord.Member = None):
         """ Pickle size! """
         if user is None:
             user = ctx.author
@@ -66,7 +66,7 @@ class HumanInfo(commands.Cog):
         return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result:.2f}cm**")
 
     @commands.command(name="breast", aliases=["boobs", "tiddies"])
-    async def boob_size(self, ctx, user: discord.Member = None):
+    async def boob_size(self, ctx, *, user: discord.Member = None):
         """ Boob size! """
         if user is None:
             user = ctx.author
@@ -172,6 +172,7 @@ class HumanInfo(commands.Cog):
     @commands.is_owner()
     @commands.guild_only()
     async def set_orientation(self, ctx, user: discord.Member, orientation: str):
+        """ Set orientation """
         try:
             gender = json.loads(open(f"data/gender/{user.id}.json", "r").read())
             male, female = [gender["male"], gender["female"]]

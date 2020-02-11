@@ -126,6 +126,7 @@ class KawaiiBot(commands.Cog):
     @commands.command(name="reloadimages")
     @commands.is_owner()
     async def reload_images(self, ctx):
+        """ Reload all images """
         self.pat = await lists.get_images(self.bot, 'p')
         self.hug = await lists.get_images(self.bot, 'h')
         self.kiss = await lists.get_images(self.bot, 'k')

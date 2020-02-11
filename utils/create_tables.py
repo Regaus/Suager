@@ -7,6 +7,16 @@ class Birthdays(db.Table):
     has_role = db.Column("BOOLEAN", nullable=False, default=False)
 
 
+class Leveling(db.Table):
+    user_id = db.Column("BIGINT", nullable=False, unique=False)
+    guild_id = db.Column("BIGINT", nullable=False)
+    level = db.Column("BIGINT", nullable=False)
+    xp = db.Column("FLOAT", nullable=False)
+    last_time = db.Column("FLOAT", nullable=False)
+    name = db.Column("TEXT", nullable=False)
+    disc = db.Column("INT", nullable=False)
+
+
 def creation(debug: bool = False):
     """ Create tables or add missing columns to tables """
     failed = False

@@ -101,10 +101,9 @@ class Birthdays(commands.Cog):
         is_author = user == ctx.author
         target = if_else(is_author, "**You** have", f"**{user.name}** has")
         grammar = if_else(is_author, "are", "is")
-        when = if_else(is_author, " ", " on ")
 
         await ctx.send(
-            f"{target} birthday{when}**{birthday}** and {grammar} currently **{age}** years old."
+            f"{target} birthday on **{birthday}** and {grammar} currently **{age}** years old."
         )
 
     @commands.command()
@@ -187,19 +186,12 @@ class Birthdays(commands.Cog):
         data = self.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (user.id, timestamp, False))
         await ctx.send(data)
 
-    @commands.command()
-    @commands.check(permissions.is_owner)
-    async def db(self, ctx, *, query: str):
-        """ Database query """
-        data = self.db.execute(query)
-        await ctx.send(f"{data}")
-
-    @commands.command()
-    @commands.check(permissions.is_owner)
-    async def dropall(self, ctx):
-        """ Delete everything """
-        data = self.db.execute("DELETE FROM birthdays")
-        await ctx.send(f"DEBUG: {data}")
+    # @commands.command()
+    # @commands.check(permissions.is_owner)
+    # async def dropall(self, ctx):
+    #     """ Delete everything """
+    #     data = self.db.execute("DELETE FROM birthdays")
+    #     await ctx.send(f"DEBUG: {data}")
 
 
 def setup(bot):

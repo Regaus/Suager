@@ -42,7 +42,7 @@ async def do_removal(ctx, limit, predicate, *, before=None, after=None, message=
 
     deleted = len(deleted)
     if message is True:
-        await ctx.send(f'🚮 Successfully removed {deleted} message{"" if deleted == 1 else "s"}.')
+        await ctx.send(f'🚮 Successfully removed {deleted} message{"" if deleted == 1 else "s"}.', delete_after=10)
 
 
 class MemberID(commands.Converter):

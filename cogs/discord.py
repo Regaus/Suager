@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 
 import discord
 from discord.ext import commands
@@ -131,6 +132,60 @@ class Discord(commands.Cog):
             for page in paginator.pages:
                 await channel.send(page)
         return await ctx.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.")
+
+    @commands.command(name="avatar")
+    async def avatar(self, ctx, *, who: discord.Member = None):
+        """ Get someone's avatar """
+        user = who or ctx.author
+        return await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024)}")
+
+    @commands.command(name="roles")
+    @commands.guild_only()
+    async def roles(self, ctx):
+        """ Get all roles in current server """
+        all_roles = ""
+        for num, role in enumerate(sorted(ctx.guild.roles, reverse=True), start=1):
+            all_roles += f"[{str(num).zfill(2)}] {role.id}\t{role.name}\t[ Users: {len(role.members)} ]\r\n"
+        data = BytesIO(all_roles.encode('utf-8'))
+        return await ctx.send(content=f"Roles in **{ctx.guild.name}**",
+                              file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
+
+    @commands.command(name="joinedat")
+    async def joined_at(self, ctx, *, who: discord.Member = None):
+        """ Check when someone joined server """
+        user = who or ctx.author
+        return await ctx.send(f"**{user}** joined **{ctx.guild.name}** on {time.time_output(user.joined_at)}")
+
+    @commands.command(name="user")
+    @commands.guild_only()
+    async def user(self, ctx, *, who: discord.Member = None):
+        """ Get info about user """
+        user = who or ctx.author
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.set_thumbnail(url=user.avatar_url)
+        embed.add_field(name="Username", value=user, inline=True)
+        embed.add_field(name="Nickname", value=user.nick, inline=True)
+        embed.add_field(name="User ID", value=user.id, inline=True)
+        embed.add_field(name="Created at", value=time.time_output(user.created_at), inline=True)
+        embed.add_field(name="Joined at", value=time.time_output(user.joined_at), inline=True)
+        embed.add_field(name="Current status", value=str(user.status), inline=True)
+        if len(user.roles) < 15:
+            roles = ', '.join([f"<@&{x.id}>" for x in user.roles if x is not ctx.guild.default_role]) \
+                if len(user.roles) > 1 else 'None' + f"\n({len(user.roles)} roles overall)"
+        else:
+            roles = f"There's {len(user.roles)} of them"
+        embed.add_field(name="Roles", value=roles, inline=False)
+        await ctx.send(f"ℹ About **{user}**", embed=embed)
+
+    @commands.command(name="emoji", aliases=["emote"])
+    @commands.cooldown(rate=3, per=5, type=commands.BucketType.user)
+    async def emoji(self, ctx, emoji: discord.Emoji):
+        """ View bigger version of a Custom Emoji """
+        return await ctx.send(f"Blame {ctx.author.name} for this", embed=discord.Embed(
+            description=f"Name: {emoji.name}\nAnimated: {emoji.animated}\nServer: {emoji.guild.name}\n"
+                        f"Created: {time.time_output(emoji.created_at)}\n[Copy Link]({emoji.url})",
+            colour=generic.random_colour()).set_image(url=emoji.url).set_author(
+            name=ctx.author, icon_url=ctx.author.avatar_url).set_footer(text="Or you could've used discord for PC"))
 
 
 def setup(bot):

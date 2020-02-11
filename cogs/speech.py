@@ -53,6 +53,22 @@ class Speech(commands.Cog):
             return await ctx.send(f"Could not send message: {e}")
         return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
 
+    @commands.command(name="atell")
+    @commands.is_owner()
+    async def admin_tell(self, ctx, channel_id: int, *, message: str):
+        """ Say something to a channel """
+        channel = self.bot.get_channel(channel_id)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        try:
+            await channel.send(message)
+        except Exception as e:
+            return await ctx.send(f"Could not send message: {e}")
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
+
+
     @commands.command(name="say")
     @commands.guild_only()
     async def say(self, ctx, *, message: str):

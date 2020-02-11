@@ -12,7 +12,7 @@ Originates from AlexFlipnote's code"""
 print(time.time(False, True, True) + " > Initialisation Started")
 
 # Test DB before launching
-tables = create_tables.creation(debug=True)
+tables = create_tables.creation(debug=False)
 if not tables:
     sys.exit(1)
 

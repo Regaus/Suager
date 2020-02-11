@@ -28,8 +28,8 @@ def from_ts(timestamp, utc=True):
         return datetime.fromtimestamp(timestamp)
 
 
-def now_ts(utc: bool = False):
-    return datetime.timestamp(now(utc))
+def now_ts():
+    return datetime.timestamp(now(False))
 
 
 def file_ts(name):

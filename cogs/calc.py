@@ -36,7 +36,7 @@ class Calculations(commands.Cog):
     @commands.command(name="multiply")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def multiplication(self, ctx, num1: int, num2: int):
-        """ Add 2 integers """
+        """ Multiply 2 integers """
         if num1 > 1000 or num2 > 1000:
             return await ctx.send(f"I'm afraid of such huge numbers... {emotes.NotLikeThis}")
         if num1 < 0 or num2 < 0:
@@ -63,7 +63,7 @@ class Calculations(commands.Cog):
     @commands.command(name="divide")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def division(self, ctx, num1: int, num2: int):
-        """ Add 2 integers """
+        """ Divide 2 integers """
         if num2 == 0:
             z = f"**Oh no! {ctx.author.name}, what have you done?!**"
             return await ctx.send(z.upper())
@@ -96,7 +96,7 @@ class Calculations(commands.Cog):
     @commands.command(name="subtract")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def subtraction(self, ctx, num1: int, num2: int):
-        """ Add 2 integers """
+        """ Subtract 2 integers """
         if num1 > 200 or num2 > 200:
             return await ctx.send(f"I'm afraid of such huge numbers... {emotes.NotLikeThis}")
         if num1 < 0 or num2 < 0:

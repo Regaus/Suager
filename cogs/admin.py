@@ -4,14 +4,22 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from utils import generic, time, logs, permissions, data_io, http, prev
+from utils import generic, time, logs, permissions, data_io, http, prev, sqlite
 
 
 class AdminCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = generic.get_config()
+        self.db = sqlite.Database()
         self.admin_mod = ["cogs.admin", "cogs.birthdays"]
+
+    @commands.command()
+    @commands.check(permissions.is_owner)
+    async def db(self, ctx, *, query: str):
+        """ Database query """
+        data = self.db.execute(query)
+        await ctx.send(f"{data}")
 
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)

@@ -4,7 +4,7 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import generic, emotes, bias
+from utils import generic, emotes, bias, lists, time
 
 
 class Fun(commands.Cog):
@@ -22,7 +22,7 @@ class Fun(commands.Cog):
 
     @commands.command(name="rateuser")
     @commands.guild_only()
-    async def rate_user(self, ctx, who: discord.Member):
+    async def rate_user(self, ctx, *, who: discord.Member):
         """ Rate someone """
         random.seed(who.id)
         r1, r2 = [800, 1000]
@@ -98,7 +98,7 @@ class Fun(commands.Cog):
         return await message.edit(content=f"The coin landed on {random.choice(['Heads', 'Tails'])}")
 
     @commands.command(name="bean")
-    async def bean(self, ctx, user: discord.Member = None):
+    async def bean(self, ctx, *, user: discord.Member = None):
         """ Beans a user from the current server """
         user = user or "the user"
         return await ctx.send(f"<:newjesus:579796865038548993> Successfully beaned {user} <a:licc:579413180200124436>")
@@ -142,10 +142,9 @@ class Fun(commands.Cog):
             await msg.edit(content=beer_offer)
 
     @commands.command(name="hotcalc", aliases=["hotness"])
-    async def hotness(self, ctx, user: discord.Member = None):
+    async def hotness(self, ctx, *, user: discord.Member = None):
         """ Check how hot someone is """
         user = user or ctx.author
-        is_me = user.id in generic.get_config().owners
         random.seed(user.id)
         step1 = int(round(random.random() * 100))
         step2 = int(round(random.random() * 20))
@@ -162,6 +161,79 @@ class Fun(commands.Cog):
         message = await ctx.send(f"{emotes.Loading} Checking how hot {user.name} is...")
         await asyncio.sleep(3)
         return await message.edit(content=f"**{user.name}** is **{step6:.2f}%** hot {emote}")
+
+    @commands.command(name="8ball", aliases=["eightball"])
+    async def eight_ball(self, ctx, *, question: commands.clean_content):
+        """ Consult the 8-Ball """
+        return await ctx.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}")
+
+    @commands.command(name="satan", aliases=["demons"])
+    async def demons(self, ctx, *, question: commands.clean_content):
+        """ Consult Satan """
+        return await ctx.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.demons_response)}")
+
+    @commands.command(name="stackoverflow")
+    async def stack_overflow(self, ctx, *, question: commands.clean_content):
+        """ Consult Stack Overflow"""
+        return await ctx.send(f"**Question:** {question}\n**Answer:** This is a stupid question.")
+
+    @commands.command(name="roll")
+    async def roll(self, ctx, num1: int = 6, num2: int = 1, repeat: int = 1):
+        """ Rolls a number between given range """
+        if repeat <= 0:
+            return await ctx.send("How are I supposed to do that?")
+        if repeat > 50:
+            return await ctx.send("But why?")
+        n1, n2 = [-(10**12), 10**12]
+        if num1 > n2 or num2 > n2 or num1 < n1 or num2 < n1:
+            return await ctx.send("Why do you need such large values?")
+        res = []
+        if num1 > num2:
+            v1, v2 = [num2, num1]
+        else:
+            v1, v2 = [num1, num2]
+        for i in range(repeat):
+            r = random.randint(v1, v2)
+            s = f"{r:,}"
+            res.append(s)
+        multiple = len(res) != 1
+        output = res if not multiple else ', '.join(res)
+        p = 's' if multiple else ''
+        out = output if not multiple else f"```fix\n{output}```"
+        return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p} and got this: {out}")
+
+    @commands.command(name="f")
+    async def pay_respects(self, ctx, *, text: commands.clean_content = None):
+        """ Press F to pay respects """
+        heart = random.choice(lists.hearts)
+        if text is None:
+            return await ctx.send(f"**{ctx.author.name}** has paid their respects {heart}")
+        return await ctx.send(f"**{ctx.author.name}** has paid their respects for **{text}** {heart}")
+
+    @commands.command(name="toast")
+    async def toast(self, ctx, *, user: discord.Member = None):
+        """ Toast someone """
+        if user is None:
+            user = ctx.author
+        return await ctx.send(f"*{user} is now a toast.*")
+
+    @commands.command(name="quote")
+    @commands.guild_only()
+    async def quote(self, ctx, user: discord.Member, *, text: str):
+        """ Make a very true quote """
+        embed = discord.Embed(colour=random.randint(0, 0xffffff))
+        embed.set_thumbnail(url=user.avatar_url)
+        embed.title = f"**{user}** once said..."
+        embed.description = text
+        embed.set_footer(text=f"Quote author: {ctx.author}")
+        embed.timestamp = time.now(True)
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="reverse")
+    async def reverse_text(self, ctx, *, text: commands.clean_content):
+        """ Reverses text """
+        reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
+        return await ctx.send(reverse)
 
 
 def setup(bot):

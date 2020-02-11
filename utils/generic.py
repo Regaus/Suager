@@ -40,15 +40,17 @@ def round_value(value):
         return e
 
 
-def string_make(val, sa: int = 0, negative: bool = False):
+def string_make(val, sa: int = 0, negative: bool = False, big: bool = False):
     minus = "-" if negative else ""
     res = ['', "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "O", "N", "D"]
+    yes = ['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion', 'quintillion', 'sextillion', 'septillion',
+           'octillion', 'nonillion', 'decillion']
     if sa >= len(res):
         return f"{minus}{round_value(val):,}e{sa*3}"
-    return f"{minus}{round_value(val):,}{res[sa]}"
+    return f"{minus}{round_value(val):,}{res[sa]}" if not big else f"{minus}{round_value(val):,} {yes[sa]}"
 
 
-def value_string(val, sa: int = 0, k: bool = False, negative: bool = False):
+def value_string(val, sa: int = 0, k: bool = False, negative: bool = False, big: bool = False):
     if val == float("inf"):
         return "Infinity"
     elif val == float("inf") * -1:
@@ -63,8 +65,8 @@ def value_string(val, sa: int = 0, k: bool = False, negative: bool = False):
             m = "-" if negative else ""
             return f"{m}{round_value(val):,}"
         if val / 1000 >= 1:
-            return value_string(val/1000, sa + 1, k, negative)
-        return string_make(val, sa, negative)
+            return value_string(val/1000, sa + 1, k, negative, big)
+        return string_make(val, sa, negative, big)
     except OverflowError:
         return "An overflow error's worth"
     except RecursionError:
