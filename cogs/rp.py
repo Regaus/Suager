@@ -38,7 +38,7 @@ class RPStuff(commands.Cog):
             # lounge_activity = f"Sinners' Ranch: {len(await ch.history.flatten())}\n"
             return await ctx.send(f"Here is the lounge activity in Senko Lair:\n{lounge_activity}")
 
-    @commands.command(name="requirement", aliases=["requiredactivity"], hidden=True)
+    @commands.command(name="requirement", aliases=["requiredactivity", "rla"], hidden=True)
     @commands.guild_only()
     @commands.is_owner()
     async def required_lounge_activity(self, ctx, target: int):

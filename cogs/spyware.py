@@ -18,6 +18,7 @@ async def status_gen(log, to, who, what, old, new, guild, uid):
 
 
 recently_logged = {}
+activity_logged = {}
 
 
 class Spyware(commands.Cog):
@@ -63,11 +64,16 @@ class Spyware(commands.Cog):
         n = after.name
         a1, a2 = [before.activity, after.activity]
         if a1 != a2:
+            now = time.now_ts()
+            last = activity_logged.get(after.id, 0)
             if a2 is not None:
-                send = f"{to} > {after.guild.name} > `{n}`'s activities changed: now {a2.type} {a2.name}"
+                t = f"{a2.type}".replace("ActivityType.", "")
+                send = f"{to} > {after.guild.name} > `{n}`'s activities changed: now {t}: `{a2.name}`"
             else:
                 send = f"{to} > {after.guild.name} > `{n}` now has no activity."
-            await logs.log_channel(self.bot, 'activity').send(send)
+            if now > last + 15:
+                await logs.log_channel(self.bot, 'activity').send(send)
+                activity_logged[after.id] = now
         n1, n2 = [before.nick, after.nick]
         is_senko_lair = after.guild.id == 568148147457490954
         if n1 != n2:
