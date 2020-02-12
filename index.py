@@ -12,10 +12,9 @@ Originates from AlexFlipnote's code"""
 print(time.time(False, True, True) + " > Initialisation Started")
 
 # Test DB before launching
-tables = create_tables.creation(debug=False)
+tables = create_tables.creation(debug=True)
 if not tables:
     sys.exit(1)
-
 
 async def get_prefix(_bot, message):
     uid = _bot.user.id

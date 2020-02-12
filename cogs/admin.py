@@ -1,10 +1,11 @@
+import importlib
 from datetime import datetime
 
 import aiohttp
 import discord
 from discord.ext import commands
 
-from utils import generic, time, logs, permissions, data_io, http, prev, sqlite
+from utils import generic, time, logs, permissions, data_io, http, prev, sqlite, create_tables
 
 
 class AdminCommands(commands.Cog):
@@ -218,6 +219,15 @@ class AdminCommands(commands.Cog):
         if generic.get_config().logs:
             await logs.log_channel(self.bot, 'changes').send(to_send)
         return await ctx.send(to_send)
+
+    @commands.command(name="tables")
+    @commands.is_owner()
+    async def recreate_tables(self, ctx):
+        module_name = importlib.import_module(f"utils.create_tables")
+        importlib.reload(module_name)
+        val = create_tables.creation(True)
+        return await ctx.send("Task succeeded successfully - Tables created." if val else
+                              "Task failed successfully - Great, more time to was on trying to fix that!")
 
 
 def setup(bot):

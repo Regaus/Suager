@@ -1,4 +1,4 @@
-from utils import sqlite as db
+from utils import sqlite as db, time
 
 
 class Birthdays(db.Table):
@@ -17,6 +17,16 @@ class Leveling(db.Table):
     disc = db.Column("INT", nullable=False)
 
 
+class Economy(db.Table):
+    user_id = db.Column("BIGINT", nullable=False, unique=False)
+    guild_id = db.Column("BIGINT", nullable=False)
+    money = db.Column("FLOAT", nullable=False)
+    last_time = db.Column("FLOAT", nullable=False)
+    donated = db.Column("FLOAT", nullable=False)
+    name = db.Column("TEXT", nullable=False)
+    disc = db.Column("INT", nullable=False)
+
+
 def creation(debug: bool = False):
     """ Create tables or add missing columns to tables """
     failed = False
@@ -29,7 +39,7 @@ def creation(debug: bool = False):
             failed = True
         else:
             if debug:
-                print(f'[{table.__module__}] Created {table.__tablename__}.')
+                print(f'{time.time()} > [{table.__module__}] Created {table.__tablename__}.')
 
     # Return True if everything went as planned, else False
     return True if not failed else False

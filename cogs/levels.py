@@ -90,7 +90,8 @@ class Leveling(commands.Cog):
     async def rank(self, ctx, *, who: discord.Member = None):
         """ Check your or someone's rank """
         user = who or ctx.author
-        if user.bot and user != self.bot.user:
+        is_self = user.id == self.bot.user.id
+        if user.bot and not is_self:
             return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
         data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (user.id, ctx.guild.id))
         if data:
@@ -99,7 +100,7 @@ class Leveling(commands.Cog):
             level, xp = [0, 0]
         embed = discord.Embed(colour=random_colour())
         embed.set_thumbnail(url=user.avatar_url)
-        if user.id == self.bot.user.id:
+        if is_self:
             embed.description = "Imagine playing fair in your own XP system. That'd be boring."
             embed.add_field(name="Experience", value="**More than you**", inline=False)
             embed.add_field(name="Level", value="Higher than yours", inline=False)

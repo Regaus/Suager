@@ -58,8 +58,7 @@ class Column:
             raise SyntaxError("'unique', 'primary_key', and 'default' are mutually exclusive.")
 
     def _create_table(self):
-        builder = []
-        builder.append(f"'{self.name}' {self.column_type}")
+        builder = [f"'{self.name}' {self.column_type}"]
 
         default = self.default
         if default:
