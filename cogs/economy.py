@@ -50,7 +50,7 @@ class Economy(commands.Cog):
         data = self.db.fetchrow("SELECT * FROM economy WHERE user_id=? AND guild_id=?", (user.id, ctx.guild.id))
         if not data:
             return await ctx.send(f"Doesn't appear like {user.name} has anything at all...")
-        return await ctx.send(f"**{user.name}** has **{value_string(data['money'], big=True)}{currency} "
+        return await ctx.send(f"**{user.name}** has **{value_string(data['money'], big=True)}{currency}** "
                               f"in **{ctx.guild.name}**")
 
     @commands.command(name="donate", aliases=["give"])
