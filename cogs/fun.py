@@ -84,11 +84,12 @@ class Fun(commands.Cog):
         await ctx.send("<a:epic:603691073822261248>")
 
     @commands.command(name="vibecheck")
-    async def vibe_check(self, ctx):
+    async def vibe_check(self, ctx, *, who: discord.Member = None):
         """ Check your vibe """
-        message = await ctx.send(f"<a:loading:651883385878478858> Checking {ctx.author.name}'s vibe...")
+        user = who or ctx.author
+        message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s vibe...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"**{ctx.author.name}** {random.choice(['failed', 'passed'])} the vibe check")
+        return await message.edit(content=f"**{user.name}** {random.choice(['failed', 'passed'])} the vibe check")
 
     @commands.command(name="flip", aliases=["coin"])
     async def flip_a_coin(self, ctx):

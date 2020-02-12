@@ -7,7 +7,7 @@ from utils import sqlite, time, bias
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 2500
-level_xp = [27, 40]
+level_xp = [19, 27]
 level_mr = [{'min': -1, 'max': 15, 'val': 0.05},  # Multiplier Rise for level between 0 and 15
             {'min': 15, 'max': 30, 'val': 0.12}, {'min': 30, 'max': 50, 'val': 0.17},
             {'min': 50, 'max': 100, 'val': 0.25}, {'min': 100, 'max': max_level, 'val': 0.3}]
