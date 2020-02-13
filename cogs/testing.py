@@ -1,3 +1,4 @@
+import discord
 from discord.ext import commands
 
 from utils import bias
@@ -5,10 +6,11 @@ from utils import bias
 
 class Testing(commands.Cog):
     @commands.command(name="placeholder", hidden=True)
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    async def placeholder(self, ctx):
+    @commands.cooldown(rate=1, per=1, type=commands.BucketType.user)
+    async def placeholder(self, ctx, *, who: discord.Member = None):
         """ Relative Time Delta """
-        return await ctx.send("Fuck off, command not in use. " + str(bias.friend_bias(ctx.bot, ctx.author)))
+        user = who or ctx.author
+        return await ctx.send("Fuck off, command not in use. " + str(bias.friend_bias(ctx.bot, user)))
 
 
 def setup(bot):

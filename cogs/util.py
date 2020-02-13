@@ -14,7 +14,8 @@ class Utility(commands.Cog):
     @commands.command(name="time")
     async def current_time(self, ctx):
         """ Current time """
-        return await ctx.send(f"Current time is: {time.time()}\nIf that's not the case in your timezone, too bad.")
+        return await ctx.send(f"Current time is: {time.time()}\n"
+                              f"If that's not the case for you, start using a proper timezone, smh.")
 
     @commands.command(name="mctime")
     async def mc_time(self, ctx, month: str = 1, day: int = 1, hour: int = 6, minute: int = 0):

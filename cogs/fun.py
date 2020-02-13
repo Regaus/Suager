@@ -236,6 +236,12 @@ class Fun(commands.Cog):
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
         return await ctx.send(reverse)
 
+    @commands.command(name="yeet")
+    @commands.is_owner()
+    async def yeet(self, ctx, user: discord.Member, *, reason: str):
+        """ Yeet someone """
+        return await ctx.send(f"{user.name} has been yeeted off the bridge for {reason}")
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))

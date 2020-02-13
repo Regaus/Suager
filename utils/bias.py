@@ -10,19 +10,21 @@ def friend_bias(bot, member: discord.Member):  # Bias by who you are in Senko La
             return 1
         member = yes
     bias = {
-        641423339671257118: 3,     # Tier 4 Friend
-        610107382067888138: 2.5,   # Tier 3 Friend
-        671816195564896298: 2,     # Tier 2 Friend
-        641423169454080051: 1.5,   # Tier 1 Friend
-        660880373894610945: 0.4,   # Bowser65
+        641423339671257118: 4,     # Tier 4 Friend
+        610107382067888138: 3,     # Tier 3 Friend
+        671816195564896298: 2.5,   # Tier 2 Friend
+        641423169454080051: 1.75,  # Tier 1 Friend
+        660880373894610945: 0.2,   # Bowser65
         673189353014689818: 1.5,   # Nuriki Cult
         655428243716964352: 0.5,   # Heretics
-        571034792754413598: 0.5,   # Sinners
+        571034792754413598: 0.4,   # Sinners
         571034926107852801: 0.33,  # Infidels 1
         646343824775446548: 0.25,  # Infidels 2
         668108494196441121: 1.25,  # R. P. S. (Secret Room)
+        642563763538755604: 1.25,  # AlexFlipnote's server
+        572535688801812500: 1.2,   # IRL Friends
     }
-    result = 1
+    result = 1.25  # Just for the fact that you're in Senko Lair
     for role in member.roles:
         result *= bias.get(role.id, 1)
     return result
