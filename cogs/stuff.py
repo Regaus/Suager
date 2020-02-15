@@ -3,10 +3,11 @@ import json
 import random
 from datetime import datetime
 
+import discord
 from discord.ext import commands
 
 from utils import sqlite, time, bias
-from utils.generic import value_string, round_value
+from utils.generic import value_string, round_value, random_colour
 
 soon = "Coming Soon\u005c\u2122"
 
@@ -16,13 +17,57 @@ class Games(commands.Cog):
         self.bot = bot
         self.db = sqlite.Database()
 
-    @commands.command(name="aqos")
+    @commands.group(name="aqos")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def aqos_command(self, ctx):
         """ The Aqos Game """
         # return await ctx.send(soon)
         if ctx.invoked_subcommand is None:
             return await aqos_game(self.bot, self.db, ctx)
+
+    @aqos_command.command(name="stats", aliases=["rank"])
+    async def aqos_stats(self, ctx, *, who: discord.Member = None):
+        """ Aqos Stats """
+        user = who or ctx.author
+        _data = self.db.fetchrow(aqos_find, (user.id, "aqos"))
+        if not _data:
+            data = aqos_data.copy()
+        else:
+            if _data['usage']:
+                return await ctx.send(f"{user.name} is currently using Aqos - "
+                                      f"Please wait for any currently running Aqos command to finish...")
+            data = json.loads(_data['data'])
+        embed = discord.Embed(colour=random_colour())
+        embed.set_thumbnail(url=user.avatar_url)
+        normal = data['level'] < 1441
+        if normal:
+            p, s = get_part(data['level'])
+            lr = (p * 4 + s + 1) * 72
+        else:
+            lr = aqos_iml
+        embed.add_field(name="Level", value=f"{data['level']:,}/{lr:,}", inline=True)
+        if normal:
+            embed.add_field(name="Normal Mode Progress", inline=True,
+                            value=f"{round_value((data['level'] - 1) / 1440 * 100)}%")
+        else:
+            embed.add_field(name="Overall Progress", inline=True,
+                            value=f"{round_value((data['level'] - 1) / (aqos_iml - 1440) * 100)}%X")
+        embed.add_field(name="Score", value=value_string(data['score'], big=True), inline=True)
+        embed.add_field(name="XP", value=value_string(data['xp'], big=True), inline=True)
+        embed.add_field(name="XP Level", value=f"{data['xp_level']:,}", inline=True)
+        now = time.now_ts()
+        er = energy_regen(data['level'], data['xp_level'])
+        el = max_energy(data['level'], data['score'])
+        if data['energy'] < el:
+            regen = (now - data['time']) / er
+            data['energy'] += regen
+            data['energy'] = el if data['energy'] > el else data['energy']
+        ert = (el - data['energy']) * er
+        tr = now + ert
+        fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=True)
+        embed.add_field(name="Energy", value=f"{data['energy']:,.1f}/{el:,.1f}", inline=True)
+        embed.add_field(name="Energy full in", value=fi, inline=True)
+        return await ctx.send(f"**{user}**'s current Aqos stats", embed=embed)
 
     @commands.command(name="tbl")
     @commands.guild_only()
