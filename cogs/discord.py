@@ -24,11 +24,23 @@ class Discord(commands.Cog):
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(name="Server name", value=ctx.guild.name, inline=True)
             embed.add_field(name="Server ID", value=ctx.guild.id, inline=True)
+            embed.add_field(name="Owner", inline=True,
+                            value=f"{ctx.guild.owner}\n({ctx.guild.owner.display_name})")
             embed.add_field(name="Members", value=ctx.guild.member_count, inline=True)
             embed.add_field(name="Bots", value=str(bots), inline=True)
-            embed.add_field(name="Owner", value=ctx.guild.owner, inline=True)
             embed.add_field(name="Region", value=ctx.guild.region, inline=True)
-            embed.add_field(name="Created at", value=time.time_output(ctx.guild.created_at), inline=True)
+            embed.add_field(name="Roles", value=str(len(ctx.guild.roles)), inline=True)
+            try:
+                embed.add_field(name="Bans", value=str(len(await ctx.guild.bans())), inline=True)
+            except discord.Forbidden:
+                embed.add_field(name="Bans", value="Unknown - Access Denied", inline=True)
+            embed.add_field(name="Channels", inline=True,
+                            value=f"{len(ctx.guild.text_channels)} text channels\n"
+                                  f"{len(ctx.guild.categories)} categories\n"
+                                  f"{len(ctx.guild.voice_channels)} voice channels")
+            embed.add_field(name="Created at", inline=False,
+                            value=f"{time.time_output(ctx.guild.created_at)} - "
+                                  f"{time.human_timedelta(ctx.guild.created_at)}")
             return await ctx.send(f"About **{ctx.guild.name}**", embed=embed)
 
     @server.command(name="icon", aliases=["avatar"])
@@ -46,7 +58,7 @@ class Discord(commands.Cog):
             m += f"[{n}] {bots[i]}\n"
         return await ctx.send(f"Bots in **{ctx.guild.name}**: ```ini\n{m}```")
 
-    @server.group(name="prefix")
+    @commands.group(name="prefix")
     async def server_prefix(self, ctx):
         """ Server prefix """
         if ctx.invoked_subcommand is None:
