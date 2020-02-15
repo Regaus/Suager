@@ -42,12 +42,13 @@ def round_value(value):
 
 def string_make(val, sa: int = 0, negative: bool = False, big: bool = False):
     minus = "-" if negative else ""
-    res = ['', "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "O", "N", "D"]
+    # res = ['', "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "O", "N", "D"]
+    res = ['', 'K', 'mil', 'bil', 'tri', 'qua', 'qui', 'sext', 'sept', 'oct', 'non', 'dec']
     yes = ['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion', 'quintillion', 'sextillion', 'septillion',
            'octillion', 'nonillion', 'decillion']
     if sa >= len(res):
         return f"{minus}{round_value(val):,}e{sa*3}"
-    return f"{minus}{round_value(val):,}{res[sa]}" if not big else f"{minus}{round_value(val):,} {yes[sa]}"
+    return f"{minus}{round_value(val):,} {res[sa]}" if not big else f"{minus}{round_value(val):,} {yes[sa]}"
 
 
 def value_string(val, sa: int = 0, k: bool = False, negative: bool = False, big: bool = False):

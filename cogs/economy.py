@@ -2,9 +2,7 @@ import random
 
 import discord
 from discord.ext import commands
-
-from cogs.levels import get_bias
-from utils import sqlite, time
+from utils import sqlite, time, bias
 from utils.generic import value_string, random_colour, get_config
 
 money_amounts = [50, 100]
@@ -29,7 +27,7 @@ class Economy(commands.Cog):
         if last > now - 60:
             return
         x1, x2 = money_amounts
-        biased = get_bias(self.bot, ctx.author)
+        biased = bias.get_bias(self.bot, ctx.author)
         new = random.randint(x1, x2) * biased
         xp += new
         if data:

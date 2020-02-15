@@ -8,9 +8,9 @@ from utils.generic import random_colour, value_string, round_value
 
 max_level = 2500
 level_xp = [12, 17]
-level_mr = [{'min': -1, 'max': 15, 'val': 0.04},  # Multiplier Rise for level between 0 and 15
-            {'min': 15, 'max': 30, 'val': 0.08}, {'min': 30, 'max': 50, 'val': 0.12},
-            {'min': 50, 'max': 100, 'val': 0.17}, {'min': 100, 'max': max_level, 'val': 0.25}]
+level_mr = [{'min': -1, 'max': 15, 'val': 0.03},  # Multiplier Rise for level between 0 and 15
+            {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
+            {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
 
 
 def levels(bias_value):
@@ -21,8 +21,12 @@ def levels(bias_value):
             power = 3
         else:
             power = 3 + (x - 500) / 500
-        base = 0.5 * (x ** power) + 2 * x ** 2 + 125 * x + 400
-        oh = 1 / bias_value
+        base = x ** power + 4 * x ** 2 + 250 * x + 500
+        if bias_value < 1:
+            oh = 1 / bias_value
+        else:
+            bv = 1 + (bias_value - 1) / 2
+            oh = 1 / bv
         total = base * oh
         req += total
         xp.append(req)
@@ -36,10 +40,6 @@ def level_mult(level):
             if data['min'] < lvl <= data['max']:
                 mult += data['val']
     return mult
-
-
-def get_bias(bot, user: discord.Member):
-    return bias.friend_bias(bot, user) * bias.gender_bias(user) * bias.sexuality_bias(user)
 
 
 class Leveling(commands.Cog):
@@ -61,7 +61,7 @@ class Leveling(commands.Cog):
             return
         x1, x2 = level_xp
         base_mult = level_mult(level)
-        biased = get_bias(self.bot, ctx.author)
+        biased = bias.get_bias(self.bot, ctx.author)
         new = random.randint(x1, x2) * base_mult * biased
         xp += new
         requirements = levels(biased)
@@ -109,7 +109,7 @@ class Leveling(commands.Cog):
             embed.add_field(name="Experience", value="**More than you**", inline=False)
             embed.add_field(name="Level", value="Higher than yours", inline=False)
         else:
-            biased = get_bias(self.bot, user)
+            biased = bias.get_bias(self.bot, user)
             r1 = f"{xp:,.0f}"
             if level < max_level:
                 yes = levels(biased)   # All levels
@@ -138,7 +138,7 @@ class Leveling(commands.Cog):
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
         normal = level_mult(level)
-        biased = get_bias(self.bot, ctx.author)
+        biased = bias.get_bias(self.bot, ctx.author)
         try:
             xp = levels(biased)[level - 1]
         except IndexError:
@@ -157,7 +157,7 @@ class Leveling(commands.Cog):
             return await ctx.send("It doesn't seem like I have any data saved for you right now...")
         level, xp = [data['level'], data['xp']]
         r1 = f"{xp:,.0f}"
-        biased = get_bias(self.bot, ctx.author)
+        biased = bias.get_bias(self.bot, ctx.author)
         yes = levels(biased)
         r, p = [int(yes[level]), int(yes[level-1])]
         re = r - xp

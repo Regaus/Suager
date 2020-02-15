@@ -1,6 +1,12 @@
+import asyncio
+import json
+import random
+from datetime import datetime
+
 from discord.ext import commands
 
-from utils import sqlite
+from utils import sqlite, time, bias
+from utils.generic import value_string, round_value
 
 soon = "Coming Soon\u005c\u2122"
 
@@ -14,7 +20,9 @@ class Games(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def aqos_command(self, ctx):
         """ The Aqos Game """
-        return await ctx.send(soon)
+        # return await ctx.send(soon)
+        if ctx.invoked_subcommand is None:
+            return await aqos_game(self.bot, self.db, ctx)
 
     @commands.command(name="tbl")
     @commands.guild_only()
@@ -49,7 +57,7 @@ aqos_les = [[[4750, 6500], [5250, 7000], [6000, 8000], [6500, 9000]],
             [[20000, 30000], [22500, 35000], [25000, 40000], [30000, 50000]]]  # Level end scores
 aqos_ml = 5000  # Max XP Level
 aqos_iml = 2147483647  # Infinity Mode Max Level
-aqos_kir = 0.7  # KI to XP rate
+aqos_kpr = 0.7  # KP to XP rate
 
 
 def levels(which: str, multipliers: float):
@@ -87,7 +95,7 @@ aqos_data = {
 
 
 def time_per_energy(level):
-    return aqos_tpe + (level - 1) * 1
+    return aqos_tpe + level - 1
 
 
 def energy_regen(level, xp):
@@ -124,13 +132,132 @@ def max_energy(level, score):
 aqos_find = 'SELECT * FROM data WHERE id=? and type=?'  # Type is 'aqos'
 aqos_insert = 'INSERT INTO data VALUES (?, ?, ?, ?, ?, ?)'
 # user.id, "aqos", data, False, user.name, user.discriminator
-aqos_update = 'UPDATE leveling SET data=?, usage=?, name=?, disc=? WHERE id=? AND type=?'
+aqos_update = 'UPDATE data SET data=?, usage=?, name=?, disc=? WHERE id=? AND type=?'
 # data, False, user.name, user.discriminator, user.id, "aqos"
 
 
-# async def aqos_game(db, ctx):
-#     data = db.fetchrow(aqos_find, (ctx.author.id, "aqos"))
-#     try:
-#         pass
-#     except Exception as e:
-#         return await ctx.send(f"Congratulations, you broke everything.\n`{e}`")
+async def aqos_game(bot, db, ctx):
+    _data = db.fetchrow(aqos_find, (ctx.author.id, "aqos"))
+    if not _data:
+        data = aqos_data.copy()
+        d = json.dumps(data)
+        db.execute(aqos_insert, (ctx.author.id, "aqos", d, True, ctx.author.name, ctx.author.discriminator))
+    else:
+        if _data['usage']:
+            return await ctx.send("It seems that Aqos is already being used, please wait...")
+        data = json.loads(_data['data'])
+        db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (True, ctx.author.id, "aqos"))
+    try:
+        now = time.now_ts()
+        now_dt = time.now()
+        elapsed = "None"
+        send = f"{time.time()} > {ctx.author.name} > Aqos Initiated."
+        message = await ctx.send(send)
+        er = energy_regen(data['level'], data['xp_level'])
+        el = max_energy(data['level'], data['score'])
+        if data['energy'] < el:
+            regen = (now - data['time']) / er
+            data['energy'] += regen
+            data['energy'] = el if data['energy'] > el else data['energy']
+        data['time'] = now
+        normal = data['level'] <= 1440
+        etu = int(data['energy'])  # Energy to use
+        bv = bias.get_bias(bot, ctx.author)  # Bias Value
+        if etu < 1:
+            db.execute(aqos_update, (data, False, ctx.author.name, ctx.author.discriminator, ctx.author.id, "aqos"))
+            left = time.human_timedelta(datetime.fromtimestamp(now + er * (1 - data['energy'])), accuracy=3)
+            return await message.edit(content=f"{ctx.author.name}, you don't have any energy to use."
+                                              f"\nNext energy point in: {left}")
+        if normal:
+            await message.edit(content=f"{time.time()} > {ctx.author.name} > Aqos Normal Mode\n"
+                                       f"Level: {data['level']:,} | Energy: {int(data['energy']):,}")
+            le = now
+            used = 0
+            for i in range(etu):
+                wait = 0.03 if etu < 500 else 0.02 if 500 <= etu < 1000 else 0.01
+                new = time.now_ts()
+                used += 1
+                tm = time_per_energy(data['level']) / 60
+                data['lp'] += tm
+                lu = False
+                if data['lp'] > data['lr']:
+                    data['level'] += 1
+                    if data['level'] > 1440:
+                        await message.edit(content=f"{time.time()} > {ctx.author.name} > Aqos Normal Mode complete.\n"
+                                                   f"Run `{ctx.prefix}aqos` again to enter Infinite Mode")
+                        s1, s2 = aqos_les[-1][-1]
+                        data['lp'] -= data['lr']
+                        data['score'] += int(round(random.randint(s1, s2), -2))
+                        await asyncio.sleep(7)
+                        break
+                    lu = True
+                p, s = get_part(data['level'])
+                if lu:
+                    s1, s2 = aqos_les[p][s]
+                    data['score'] += int(round(random.randint(s1, s2), -2))
+                    b = data['level'] % 6
+                    if b == 4 or b == 0:
+                        b1, b2 = [int(s1 ** 0.7), int(s2 ** 0.7)]
+                        for j in range(aqos_brl[p][s]):
+                            data['score'] += int(round(random.randint(b1, b2), -2))
+                            await asyncio.sleep(wait)
+                    data['lp'] -= data['lr']
+                    l1, l2 = aqos_ll[p][s]
+                    data['lr'] = random.randint(l1, l2)
+                ki1, ki2 = aqos_ki[p]
+                kp1, kp2 = aqos_kp[p]
+                ki = int(random.randint(ki1, ki2) * tm)
+                kp = int(random.randint(kp1, kp2) * tm)
+                spp1, spp2 = aqos_spp[p]
+                rs = [random.randint(spp1, spp2) for _ in range(10)]
+                for val in rs:
+                    data['score'] += (ki / 10) * val * bv
+                data['xp'] += kp * aqos_kpr * bv
+                if new > le + 2:
+                    le = new
+                    elapsed = time.human_timedelta(now_dt, accuracy=2, suffix=False)
+                    md = f"{time.time()} > {ctx.author.name} > Aqos Normal Mode\nEnergy used: {used:,}/{etu:,}\n" \
+                         f"Current Level: {data['level']:,}\nScore: {data['score']:,.2f}\nXP: {data['xp']:,.2f} " \
+                         f"(XP Level {data['xp_level']:,})\nElapsed: {elapsed}"
+                    await message.edit(content=md)
+                await asyncio.sleep(wait)
+            xpr = levels('aqos', bv)
+            data['xp_level'] = aqos_xpl(data['xp'], xpr)
+            p, s = get_part(data['level'])
+            lr = (p * 4 + s + 1) * 72
+            er = energy_regen(data['level'], data['xp_level'])
+            el = max_energy(data['level'], data['score'])
+            data['energy'] -= used
+            ert = (el - data['energy']) * er
+            tr = now + ert
+            fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
+            xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
+            clp = round_value(data['lp']/data['lr']*100)
+            oap = round_value((data['level']-1)/1440*100)
+            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator,
+                                     ctx.author.id, "aqos"))
+            md = f"{time.time()} > {ctx.author.name} > Aqos Normality Mode\nEnergy used: {used}\n" \
+                 f"Time taken: {elapsed}\nLevel: **{data['level']:,}/{lr:,}**\nProgress: Current Level - **{clp}%** | "\
+                 f"Normal Mode - **{oap}%**\nScore: **{value_string(data['score'], big=True)}**\nXP: **" \
+                 f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
+                 f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: 1 per {round(er, 2)} " \
+                 f"seconds - {((1/er) * 60):,.2f} per minute\nFull in: {fi}"
+            return await message.edit(content=md)
+        else:
+            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator,
+                                     ctx.author.id, "aqos"))
+            return await message.edit(content=f"{ctx.author.name}, Aqos is not yet available above level 1440 - {soon}")
+    except Exception as e:
+        db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator,
+                                 ctx.author.id, "aqos"))
+        return await ctx.send(f"Congratulations, everything broke.\n`{e}`")
+
+
+def aqos_xpl(xp, xpr):
+    level = 0
+    for lr in xpr:
+        if xp >= lr:
+            level += 1
+        else:
+            break
+    return level

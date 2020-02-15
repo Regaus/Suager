@@ -44,7 +44,7 @@ def gender_bias(member: discord.Member):  # Bias by gender
         return 0.4
 
 
-def sexuality_bias(member: discord.Member):  # Bias by S.O.
+def so_bias(member: discord.Member):  # Bias by S.O.
     try:
         data = json.loads(open(f"data/orientation/{member.id}.json", "r").read())
         if data['straight']:
@@ -55,3 +55,7 @@ def sexuality_bias(member: discord.Member):  # Bias by S.O.
             return 0.2
     except FileNotFoundError or KeyError or ValueError:
         return 0.5
+
+
+def get_bias(bot, user: discord.Member):
+    return friend_bias(bot, user) * gender_bias(user) * so_bias(user)
