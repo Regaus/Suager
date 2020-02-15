@@ -7,17 +7,21 @@ from utils import sqlite, time, bias
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 2500
-level_xp = [19, 27]
-level_mr = [{'min': -1, 'max': 15, 'val': 0.05},  # Multiplier Rise for level between 0 and 15
-            {'min': 15, 'max': 30, 'val': 0.12}, {'min': 30, 'max': 50, 'val': 0.17},
-            {'min': 50, 'max': 100, 'val': 0.25}, {'min': 100, 'max': max_level, 'val': 0.3}]
+level_xp = [12, 17]
+level_mr = [{'min': -1, 'max': 15, 'val': 0.04},  # Multiplier Rise for level between 0 and 15
+            {'min': 15, 'max': 30, 'val': 0.08}, {'min': 30, 'max': 50, 'val': 0.12},
+            {'min': 50, 'max': 100, 'val': 0.17}, {'min': 100, 'max': max_level, 'val': 0.25}]
 
 
 def levels(bias_value):
     req = 0
     xp = []
     for x in range(max_level):
-        base = 0.3 * x ** 3 + 2 * x ** 2 + 125 * x + 400
+        if x < 499:
+            power = 3
+        else:
+            power = 3 + (x - 500) / 500
+        base = 0.5 * (x ** power) + 2 * x ** 2 + 125 * x + 400
         oh = 1 / bias_value
         total = base * oh
         req += total
@@ -175,7 +179,7 @@ class Leveling(commands.Cog):
     async def levels_lb(self, ctx):
         """ Server's XP Leaderboard """
         async with ctx.typing():
-            data = self.db.fetch("SELECT * FROM leveling WHERE guild_id=? ORDER BY xp DESC LIMIT 10", (ctx.guild.id,))
+            data = self.db.fetch("SELECT * FROM leveling WHERE guild_id=? ORDER BY xp DESC LIMIT 250", (ctx.guild.id,))
             if not data:
                 return await ctx.send("I have no data at all for this server... Weird")
             block = "```fix\n"
@@ -191,7 +195,12 @@ class Leveling(commands.Cog):
                 xp.append(val)
                 xpl.append(len(val))
             spaces = max(xpl) + 5
-            for i, val in enumerate(data, start=1):
+            place = "unknown, or over 250"
+            for x in range(len(data)):
+                if data[x]['user_id'] == ctx.author.id:
+                    place = f"#{x + 1}"
+                    break
+            for i, val in enumerate(data[:10], start=1):
                 k = i - 1
                 who = un[k]
                 if val['user_id'] == ctx.author.id:
@@ -199,7 +208,7 @@ class Leveling(commands.Cog):
                 s = ' '
                 sp = xpl[k]
                 block += f"{str(i).zfill(2)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
-            return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\n{block}```")
+            return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
 
     @commands.command(name="addxp")
     @commands.guild_only()

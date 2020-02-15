@@ -109,13 +109,6 @@ class Economy(commands.Cog):
             embed.add_field(name="Donated", value=f"{r2}{currency}", inline=False)
         return await ctx.send(f"**{user.name}'s** profile in **{ctx.guild.name}**", embed=embed)
 
-    @commands.command(name="tbl")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def tbl_command(self, ctx):
-        """ The TBL Game """
-        return await ctx.send("Coming Soon\u005c\u2122 - Use <@577608850316853251> `,,tbl` for now.")
-
 
 def setup(bot):
     bot.add_cog(Economy(bot))
