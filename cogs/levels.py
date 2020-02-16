@@ -112,7 +112,8 @@ class Leveling(commands.Cog):
                 ac = settings['leveling']['announce_channel']
                 if ac != 0:
                     ch = self.bot.get_channel(ac)
-                    ch = ch if ch is not None else ctx.channel
+                    if ch is None or ch.guild.id != ctx.guild.id:
+                        ch = ctx.channel
                 else:
                     ch = ctx.channel
             except KeyError:
@@ -123,35 +124,36 @@ class Leveling(commands.Cog):
                 pass  # Well, if it can't send it there, too bad.
             try:
                 rewards = settings['leveling']['rewards']
-                l1, l2 = [], []
-                rewards.sort(key=lambda x: x['level'])
-                for i in range(len(rewards)):
-                    l1.append(rewards[i]['level'])
-                    l2.append(rewards[i]['role'])
-                roles = [r.id for r in ctx.author.roles]
-                for i in range(len(rewards)):
-                    role = discord.Object(id=l2[i])
-                    has_role = l2[i] in roles
-                    if level > l1[i]:
-                        if i < len(rewards) - 1:
-                            if level < l1[i + 1]:
+                if rewards:  # Don't bother if they're empty
+                    l1, l2 = [], []
+                    rewards.sort(key=lambda x: x['level'])
+                    for i in range(len(rewards)):
+                        l1.append(rewards[i]['level'])
+                        l2.append(rewards[i]['role'])
+                    roles = [r.id for r in ctx.author.roles]
+                    for i in range(len(rewards)):
+                        role = discord.Object(id=l2[i])
+                        has_role = l2[i] in roles
+                        if level > l1[i]:
+                            if i < len(rewards) - 1:
+                                if level < l1[i + 1]:
+                                    if not has_role:
+                                        await ctx.author.add_roles(role, reason="Level Rewards")
+                                else:
+                                    if has_role:
+                                        await ctx.author.remove_roles(role, reason="Level Rewards")
+                            else:
                                 if not has_role:
                                     await ctx.author.add_roles(role, reason="Level Rewards")
-                            else:
-                                if has_role:
-                                    await ctx.author.remove_roles(role, reason="Level Rewards")
                         else:
-                            if not has_role:
-                                await ctx.author.add_roles(role, reason="Level Rewards")
-                    else:
-                        if has_role:
-                            await ctx.author.remove_roles(role, reason="Level Rewards")
+                            if has_role:
+                                await ctx.author.remove_roles(role, reason="Level Rewards")
             except KeyError:
                 pass  # If no level rewards, don't even bother
             except discord.Forbidden:
                 pass  # If I can't add/remove the roles, don't even bother
             except Exception as e:
-                print(f"{type(e).__name__}: {e}")
+                print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
         if data:
             self.db.execute("UPDATE leveling SET level=?, xp=?, last_time=?, name=?, disc=? "
                             "WHERE user_id=? AND guild_id=?",
@@ -303,6 +305,41 @@ class Leveling(commands.Cog):
                 sp = xpl[k]
                 block += f"{str(i).zfill(2)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
             return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
+
+    @commands.command(name="glevels")
+    async def global_levels(self, ctx):
+        """ Global XP Leaderboard """
+        async with ctx.typing():
+            data = self.db.fetch("SELECT * FROM leveling", ())
+            coll = {}
+            for i in data:
+                if i['user_id'] not in coll:
+                    coll[i['user_id']] = [0, f"{i['name']}#{str(i['disc']).zfill(4)}"]
+                coll[i['user_id']][0] += i['xp']
+            sl = sorted(coll.items(), key=lambda x: x[1][0], reverse=True)
+            r = len(sl) if len(sl) < 10 else 10
+            block = "```fix\n"
+            un, xp, xpl = [], [], []
+            for thing in range(r):
+                v = sl[thing][1]
+                un.append(v[1])
+                x = value_string(v[0])
+                xp.append(x)
+                xpl.append(len(x))
+            spaces = max(xpl) + 5
+            place = "unknown, or over 250"
+            for someone in range(len(sl)):
+                if sl[someone][0] == ctx.author.id:
+                    place = f"#{someone + 1}"
+            s = ' '
+            for i, d in enumerate(sl[:10], start=1):
+                k = i - 1
+                who = un[k]
+                if d[0] == ctx.author.id:
+                    who = f"-> {who}"
+                sp = xpl[k]
+                block += f"{str(i).zfill(2)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+            return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
 
     @commands.command(name="addxp")
     @commands.guild_only()

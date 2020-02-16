@@ -90,10 +90,35 @@ class Games(commands.Cog):
         needed = value_string(xp, big=True)
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need **{needed} XP**")
 
-    # @aqos.command(name="leaderboard", aliases=["lb", "halloffame"])
-    # async def aqos_hof(self, ctx):
-    #     """ Aqos Hall of Fame """
-    #     data = self.db.execute("SELECT * FROM data WHERE type=? ORDER BY extra LIMIT 250", ("aqos",))
+    @aqos.command(name="leaderboard", aliases=["lb", "halloffame"])
+    async def aqos_hof(self, ctx):
+        """ Aqos Hall of Fame """
+        data = self.db.fetch("SELECT * FROM data WHERE type=? ORDER BY extra DESC LIMIT 250", ("aqos",))
+        if not data:
+            return await ctx.send("Doesn't seem like I have any data saved, weird.")
+        block = "```fix\n"
+        un, sc, scl = [], [], []
+        for user in data:
+            name = f"{user['name']}#{str(user['disc']).zfill(4)}"
+            un.append(name)
+            val = value_string(user['extra'])
+            sc.append(val)
+            scl.append(len(val))
+        spaces = max(scl) + 5
+        place = "unknown, or over 250"
+        for x in range(len(data)):
+            if data[x]['id'] == ctx.author.id:
+                place = f"#{x + 1}"
+                break
+        for i, val in enumerate(data[:10], start=1):
+            k = i - 1
+            who = un[k]
+            if val['id'] == ctx.author.id:
+                who = f"-> {who}"
+            s = ' '
+            sp = scl[k]
+            block += f"{str(i).zfill(2)}){s * 4}{sc[k]}{s * (spaces - sp)}{who}\n"
+        return await ctx.send(f"Top users: Aqos - Sorted by score\nYour place: {place}\n{block}```")
 
     @commands.command(name="tbl")
     @commands.guild_only()

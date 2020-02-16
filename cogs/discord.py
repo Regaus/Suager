@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils import generic, time, permissions, sqlite
+from utils.generic import random_colour
 
 prefix_template = {'prefixes': [], 'default': True}
 settings_template = {
@@ -15,7 +16,7 @@ settings_template = {
         'xp_multiplier': 1.0,
         'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
         'ignored_channels': [],
-        'announce_channel': 620347423608406026,
+        'announce_channel': 0,
         'rewards': [
             {'level': 2501, 'role': 12345},
             {'level': 2502, 'role': 67890}
@@ -73,28 +74,47 @@ class Discord(commands.Cog):
             m += f"[{n}] {bots[i]}\n"
         return await ctx.send(f"Bots in **{ctx.guild.name}**: ```ini\n{m}```")
 
-    @commands.group(name="prefix")
-    async def server_prefix(self, ctx):
-        """ Server prefix """
-        if ctx.invoked_subcommand is None:
-            embed = discord.Embed(colour=generic.random_colour())
-            embed.title = f"Prefixes in {ctx.guild.name}"
-            try:
-                data = json.loads(open(f'{generic.prefixes}/{ctx.guild.id}.json', 'r').read())
-            except FileNotFoundError:
-                data = prefix_template.copy()
+    # @commands.group(name="prefix")
+    # async def server_prefix(self, ctx):
+    #     """ Server prefix """
+    #     if ctx.invoked_subcommand is None:
+    #         embed = discord.Embed(colour=generic.random_colour())
+    #         embed.title = f"Prefixes in {ctx.guild.name}"
+    #         try:
+    #             data = json.loads(open(f'{generic.prefixes}/{ctx.guild.id}.json', 'r').read())
+    #         except FileNotFoundError:
+    #             data = prefix_template.copy()
+    #         dp = generic.get_config().prefix
+    #         defaults = dp if data['default'] else []
+    #         defaults.append(ctx.bot.user.mention)
+    #         embed.add_field(name="Default Prefixes", value='\n'.join(defaults), inline=True)
+    #         if data['prefixes']:
+    #             embed.add_field(name="Custom Prefixes", value='\n'.join(data['prefixes']), inline=True)
+    #         p = ctx.prefix
+    #         i = ctx.invoked_with
+    #         embed.set_footer(text=f"Add custom prefixes with {p}{i} add\nRemove custom prefixes with {p}{i} remove\n"
+    #                               f"To toggle default prefixes use {p}{i} default <True | False>\n"
+    #                               f"Feature: You can't have quotes in your prefix.")
+    #         return await ctx.send("This command will be changed soon.", embed=embed)
+
+    @commands.command(name="prefix")
+    @commands.guild_only()
+    async def prefix(self, ctx):
+        """ Server prefixes """
+        _data = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if not _data:
             dp = generic.get_config().prefix
-            defaults = dp if data['default'] else []
-            defaults.append(ctx.bot.user.mention)
-            embed.add_field(name="Default Prefixes", value='\n'.join(defaults), inline=True)
-            if data['prefixes']:
-                embed.add_field(name="Custom Prefixes", value='\n'.join(data['prefixes']), inline=True)
-            p = ctx.prefix
-            i = ctx.invoked_with
-            embed.set_footer(text=f"Add custom prefixes with {p}{i} add\nRemove custom prefixes with {p}{i} remove\n"
-                                  f"To toggle default prefixes use {p}{i} default <True | False>\n"
-                                  f"Feature: You can't have quotes in your prefix.")
-            return await ctx.send("This command will be changed soon.", embed=embed)
+            cp = None
+        else:
+            data = json.loads(_data['data'])
+            dp = generic.get_config().prefix if data['use_default'] else []
+            cp = data['prefixes']
+            dp.append(self.bot.user.mention)
+        embed = discord.Embed(colour=random_colour())
+        embed.add_field(name="Default Prefixes", value='\n'.join(dp), inline=True)
+        if cp is not None and cp != []:
+            embed.add_field(name="Custom Prefixes", value='\n'.join(cp), inline=True)
+        return await ctx.send(f"Prefixes for {ctx.guild.name}", embed=embed)
 
     @commands.group(name="settings")
     @commands.guild_only()
