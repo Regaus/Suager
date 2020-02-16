@@ -1,8 +1,8 @@
+import json
 import random
 
 import discord
 from discord.ext import commands
-
 from utils import sqlite, time, bias
 from utils.generic import random_colour, value_string, round_value
 
@@ -11,6 +11,21 @@ level_xp = [12, 17]
 level_mr = [{'min': -1, 'max': 15, 'val': 0.03},  # Multiplier Rise for level between 0 and 15
             {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
             {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
+settings_template = {
+    'prefixes': [],
+    'use_default': True,
+    'leveling': {
+        'enabled': True,
+        'xp_multiplier': 1.0,
+        'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
+        'ignored_channels': [],
+        'announce_channel': 0,
+        'rewards': [
+            {'level': 2501, 'role': 12345},
+            {'level': 2502, 'role': 67890}
+        ]
+    }
+}
 
 
 def levels(bias_value):
@@ -51,6 +66,19 @@ class Leveling(commands.Cog):
     async def on_message(self, ctx):
         if ctx.author.bot or ctx.guild is None:
             return
+        _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if not _settings:
+            settings = settings_template.copy()
+        else:
+            settings = json.loads(_settings['data'])
+        try:
+            if not settings['leveling']['enabled']:
+                return
+            ic = settings['leveling']['ignored_channels']
+            if ctx.channel.id in ic:
+                return
+        except KeyError:
+            pass
         data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
         if data:
             level, xp, last = [data['level'], data['xp'], data['last_time']]
@@ -62,7 +90,12 @@ class Leveling(commands.Cog):
         x1, x2 = level_xp
         base_mult = level_mult(level)
         biased = bias.get_bias(self.bot, ctx.author)
-        new = random.randint(x1, x2) * base_mult * biased
+        try:
+            sm = float(settings['leveling']['xp_multiplier'])
+            sm = 0 if sm < 0 else sm if sm < 10 else 10
+        except KeyError:
+            sm = 1
+        new = random.randint(x1, x2) * base_mult * biased * sm
         xp += new
         requirements = levels(biased)
         lu = False
@@ -70,17 +103,55 @@ class Leveling(commands.Cog):
             level += 1
             lu = True
         if lu:
-            send = f"{ctx.author.mention} has reached **level {level}**! <a:forsendiscosnake:613403121686937601>"
-            cid = 620347423608406026
-            bad = [658690448478568468, 610482988123422750, 671520521174777869, 672535025698209821]
             try:
-                if ctx.channel.id in bad:
-                    await self.bot.get_channel(cid).send(send)
+                send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention).replace(
+                    '[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
+            except KeyError:
+                send = f"{ctx.author.mention} has reached **level {level:,}**! <a:forsendiscosnake:613403121686937601>"
+            try:
+                ac = settings['leveling']['announce_channel']
+                if ac != 0:
+                    ch = self.bot.get_channel(ac)
+                    ch = ch if ch is not None else ctx.channel
                 else:
-                    await ctx.channel.send(send)
+                    ch = ctx.channel
+            except KeyError:
+                ch = ctx.channel
+            try:
+                await ch.send(send)
             except discord.Forbidden:
-                if ctx.guild.id == 568148147457490954:
-                    await self.bot.get_channel(cid).send(send)
+                pass  # Well, if it can't send it there, too bad.
+            try:
+                rewards = settings['leveling']['rewards']
+                l1, l2 = [], []
+                rewards.sort(key=lambda x: x['level'])
+                for i in range(len(rewards)):
+                    l1.append(rewards[i]['level'])
+                    l2.append(rewards[i]['role'])
+                roles = [r.id for r in ctx.author.roles]
+                for i in range(len(rewards)):
+                    role = discord.Object(id=l2[i])
+                    has_role = l2[i] in roles
+                    if level > l1[i]:
+                        if i < len(rewards) - 1:
+                            if level < l1[i + 1]:
+                                if not has_role:
+                                    await ctx.author.add_roles(role, reason="Level Rewards")
+                            else:
+                                if has_role:
+                                    await ctx.author.remove_roles(role, reason="Level Rewards")
+                        else:
+                            if not has_role:
+                                await ctx.author.add_roles(role, reason="Level Rewards")
+                    else:
+                        if has_role:
+                            await ctx.author.remove_roles(role, reason="Level Rewards")
+            except KeyError:
+                pass  # If no level rewards, don't even bother
+            except discord.Forbidden:
+                pass  # If I can't add/remove the roles, don't even bother
+            except Exception as e:
+                print(f"{type(e).__name__}: {e}")
         if data:
             self.db.execute("UPDATE leveling SET level=?, xp=?, last_time=?, name=?, disc=? "
                             "WHERE user_id=? AND guild_id=?",
@@ -88,6 +159,29 @@ class Leveling(commands.Cog):
         else:
             self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
+
+    @commands.command(name="rewards")
+    @commands.guild_only()
+    async def rewards(self, ctx):
+        """ Rewards """
+        settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if not settings:
+            return await ctx.send("Doesn't seem like this server has leveling rewards")
+        else:
+            data = json.loads(settings['data'])
+        try:
+            rewards = data['leveling']['rewards']
+            rewards.sort(key=lambda x: x['level'])
+            embed = discord.Embed(colour=random_colour())
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.title = f"Rewards for having no life in {ctx.guild.name}"
+            d = ''
+            for role in rewards:
+                d += f"Level {role['level']}: <@&{role['role']}>\n"
+            embed.description = d
+            return await ctx.send(embed=embed)
+        except KeyError:
+            return await ctx.send("Doesn't seem like this server has leveling rewards...")
 
     @commands.command(name="rank")
     @commands.guild_only()

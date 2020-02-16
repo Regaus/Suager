@@ -222,11 +222,13 @@ class Events(commands.Cog):
                             await logs.log_channel(self.bot, "senko").send(send)
                         times['senko'] = [hour, sn]
                 open('changes.json', 'w+').write(json.dumps(times))
-                await asyncio.sleep(5)
             except PermissionError:
                 print(f"{time.time()} > Looks like I failed to save changes.. Weird")
+            except ClientConnectorError:
+                print(f"{time.time()} > Looks like the bot tried to do something before it was even connected.")
             except Exception as e:
-                print(f"{time.time()} > {type(e)}: {e}")
+                print(f"{time.time()} > {type(e).__name__}: {e}")
+            await asyncio.sleep(5)
 
 
 def setup(bot):

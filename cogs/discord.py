@@ -4,15 +4,30 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from utils import generic, permissions, time
-
+from utils import generic, time, permissions, sqlite
 
 prefix_template = {'prefixes': [], 'default': True}
+settings_template = {
+    'prefixes': [],
+    'use_default': True,
+    'leveling': {
+        'enabled': True,
+        'xp_multiplier': 1.0,
+        'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
+        'ignored_channels': [],
+        'announce_channel': 620347423608406026,
+        'rewards': [
+            {'level': 2501, 'role': 12345},
+            {'level': 2502, 'role': 67890}
+        ]
+    }
+}
 
 
 class Discord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = sqlite.Database()
 
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
@@ -79,55 +94,58 @@ class Discord(commands.Cog):
             embed.set_footer(text=f"Add custom prefixes with {p}{i} add\nRemove custom prefixes with {p}{i} remove\n"
                                   f"To toggle default prefixes use {p}{i} default <True | False>\n"
                                   f"Feature: You can't have quotes in your prefix.")
-            return await ctx.send(embed=embed)
+            return await ctx.send("This command will be changed soon.", embed=embed)
 
-    @server_prefix.command(name="add")
+    @commands.group(name="settings")
+    @commands.guild_only()
     @permissions.has_permissions(manage_server=True)
-    async def sp_add(self, ctx, *, what: str):
-        """ Add a custom prefix """
-        f = f'{generic.prefixes}/{ctx.guild.id}.json'
-        try:
-            data = json.loads(open(f, 'r').read())
-        except FileNotFoundError:
-            data = prefix_template.copy()
-        new = what.replace('"', '')
-        data['prefixes'].append(new)
-        open(f, 'w+').write(json.dumps(data))
-        return await ctx.send(f"Added `{new}` to server prefixes")
+    async def settings(self, ctx):
+        """ Server settings """
+        if ctx.invoked_subcommand is None:
+            data = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+            if data:
+                send = BytesIO(data['data'])
+                return await ctx.send(f"Current settings for {ctx.guild.name}\n"
+                                      f"Use {ctx.prefix}settings template for the template.",
+                                      file=discord.File(send, filename=time.file_ts("Settings", "json")))
+            else:
+                send = BytesIO(json.dumps(settings_template.copy(), indent=4).encode('utf-8'))
+                return await ctx.send(f"Here's the settings template for you.\nUpload with {ctx.prefix}settings upload",
+                                      file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
 
-    @server_prefix.command(name="remove", aliases=["delete"])
-    @permissions.has_permissions(manage_server=True)
-    async def sp_remove(self, ctx, *, what: str):
-        """ Remove a custom prefix """
-        f = f'{generic.prefixes}/{ctx.guild.id}.json'
-        try:
-            data = json.loads(open(f, 'r').read())
-        except FileNotFoundError:
-            return await ctx.send("This server doesn't seem to even have any custom prefixes...")
-        new = what.replace('"', '')
-        try:
-            data['prefixes'].remove(new)
-        except ValueError:
+    @settings.command(name="template")
+    async def settings_template(self, ctx):
+        """ Settings template """
+        send = BytesIO(json.dumps(settings_template.copy(), indent=4).encode('utf-8'))
+        return await ctx.send(f"Here's the settings template for you.\nUpload with {ctx.prefix}settings upload\n"
+                              f"For leveling, [USER] will show user's name, and [MENTION] will @mention them",
+                              file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
+
+    @settings.command(name="upload")
+    async def settings_upload(self, ctx):
+        """ Upload new server settings """
+        ma = ctx.message.attachments
+        if len(ma) == 1:
+            name = ma[0].filename
+            if not name.endswith('json'):
+                return await ctx.send("This must be a JSON file")
             try:
-                data['prefixes'].remove(f"{new} ")
-            except ValueError:
-                return await ctx.send("This value is not in the list of prefixes... Try writing \"like this \", "
-                                      "including all spaces where necessary")
-        open(f, 'w+').write(json.dumps(data))
-        return await ctx.send(f"Removed `{new}` from server prefixes")
-
-    @server_prefix.command(name="default")
-    @permissions.has_permissions(manage_server=True)
-    async def sp_default(self, ctx, toggle: bool = None):
-        """ Toggle use of default prefixes """
-        f = f'{generic.prefixes}/{ctx.guild.id}.json'
+                stuff = await ma[0].read()
+            except discord.HTTPException or discord.NotFound:
+                return await ctx.send("There was an error getting the file.")
+        else:
+            return await ctx.send("There must be exactly one JSON file.")
         try:
-            data = json.loads(open(f, 'r').read())
-        except FileNotFoundError:
-            data = prefix_template.copy()
-        data['default'] = toggle if toggle is not None else not data['default']
-        open(f, 'w+').write(json.dumps(data))
-        return await ctx.send(f"Use of default prefixes is now set to {data['default']}")
+            json.loads(stuff)
+        except Exception as e:
+            return await ctx.send(f"Error loading file:\n{type(e).__name__}: {e}")
+        data = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if data:
+            res = self.db.execute("UPDATE data SET data=? WHERE type=? AND id=?", (stuff, "settings", ctx.guild.id))
+        else:
+            res = self.db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                  (ctx.guild.id, "settings", stuff, False, None, None, None))
+        return await ctx.send(f"Settings have been updated\n{res}")
 
     @commands.command(name="emojis")
     @commands.is_owner()

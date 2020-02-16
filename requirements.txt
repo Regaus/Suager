@@ -1,7 +1,7 @@
 discord
-aiohttp<3.6
-python-dateutil
 discord.py
+aiohttp
+python-dateutil
 psutil
 asyncio
 timeago

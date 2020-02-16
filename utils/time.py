@@ -32,8 +32,8 @@ def now_ts():
     return datetime.timestamp(now(False))
 
 
-def file_ts(name):
-    return f"{name}_{int(datetime.timestamp(datetime.now()))}.txt"
+def file_ts(name, ext="txt"):
+    return f"{name}_{int(now_ts())}.{ext}"
 
 
 def human_join(seq, delim=', ', final='or'):

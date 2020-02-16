@@ -33,7 +33,8 @@ class Data(db.Table):
     data = db.Column("TEXT", nullable=False)
     usage = db.Column("BOOLEAN", nullable=False)
     name = db.Column("TEXT", nullable=True)
-    disc = db.Column("INT", nullable=True)
+    disc = db.Column("INTEGER", nullable=True)
+    extra = db.Column("INTEGER", nullable=True)
 
 
 def creation(debug: bool = False):

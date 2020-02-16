@@ -4,7 +4,7 @@ import sys
 
 import discord
 
-from utils import generic, time, botdata, create_tables
+from utils import generic, time, botdata, create_tables, sqlite
 
 config = generic.get_config()
 desc = """Suager v4 - A bot by Regaus
@@ -15,6 +15,8 @@ print(time.time(False, True, True) + " > Initialisation Started")
 tables = create_tables.creation(debug=True)
 if not tables:
     sys.exit(1)
+db = sqlite.Database()
+
 
 async def get_prefix(_bot, message):
     uid = _bot.user.id

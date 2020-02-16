@@ -67,16 +67,19 @@ class Games(commands.Cog):
         fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=True)
         embed.add_field(name="Energy", value=f"{data['energy']:,.1f}/{el:,.1f}", inline=True)
         embed.add_field(name="Energy full in", value=fi, inline=True)
+        embed.set_footer(text=f"{user.name} has used this command {data['used']} times")
         return await ctx.send(f"**{user}**'s current Aqos stats", embed=embed)
 
     @aqos.command(name="resetusage")
     @permissions.has_permissions(administator=True)
     async def aqos_ru(self, ctx, user: discord.Member):
+        """ Reset usage """
         data = self.db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (False, user.id, "aqos"))
         return await ctx.send(f"Updated usage status for {user.name} -> {data}")
 
     @aqos.command(name="xplevel")
     async def aqos_xp_level(self, ctx, level: int):
+        """ XP required to reach a level """
         if level > aqos_ml or level < aqos_ml * -1 + 1:
             return await ctx.send(f"The max level is {aqos_ml}.")
         biased = bias.get_bias(self.bot, ctx.author)
@@ -86,6 +89,11 @@ class Games(commands.Cog):
             return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {aqos_ml}, btw.")
         needed = value_string(xp, big=True)
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need **{needed} XP**")
+
+    # @aqos.command(name="leaderboard", aliases=["lb", "halloffame"])
+    # async def aqos_hof(self, ctx):
+    #     """ Aqos Hall of Fame """
+    #     data = self.db.execute("SELECT * FROM data WHERE type=? ORDER BY extra LIMIT 250", ("aqos",))
 
     @commands.command(name="tbl")
     @commands.guild_only()
@@ -97,7 +105,7 @@ class Games(commands.Cog):
     @commands.command(name="cobblecobble", aliases=["cc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def cobble_cobble(self, ctx):
-        """ CobbleCobble"""
+        """ CobbleCobble """
         return await ctx.send(soon)
 
 
@@ -204,10 +212,10 @@ def max_energy(level, score):
 
 
 aqos_find = 'SELECT * FROM data WHERE id=? and type=?'  # Type is 'aqos'
-aqos_insert = 'INSERT INTO data VALUES (?, ?, ?, ?, ?, ?)'
-# user.id, "aqos", data, False, user.name, user.discriminator
-aqos_update = 'UPDATE data SET data=?, usage=?, name=?, disc=? WHERE id=? AND type=?'
-# data, False, user.name, user.discriminator, user.id, "aqos"
+aqos_insert = 'INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)'
+# user.id, "aqos", data, False, user.name, user.discriminator, data['score']
+aqos_update = 'UPDATE data SET data=?, usage=?, name=?, disc=?, extra=? WHERE id=? AND type=?'
+# data, False, user.name, user.discriminator, user.id, "aqos", data['score']
 
 
 async def aqos_game(bot, db, ctx):
@@ -215,7 +223,7 @@ async def aqos_game(bot, db, ctx):
     if not _data:
         data = aqos_data.copy()
         d = json.dumps(data)
-        db.execute(aqos_insert, (ctx.author.id, "aqos", d, True, ctx.author.name, ctx.author.discriminator))
+        db.execute(aqos_insert, (ctx.author.id, "aqos", d, True, ctx.author.name, ctx.author.discriminator, 0))
     else:
         if _data['usage']:
             return await ctx.send("It seems that Aqos is already being used, please wait...")
@@ -238,7 +246,8 @@ async def aqos_game(bot, db, ctx):
         etu = int(data['energy'])  # Energy to use
         bv = bias.get_bias(bot, ctx.author)  # Bias Value
         if etu < 1:
-            db.execute(aqos_update, (data, False, ctx.author.name, ctx.author.discriminator, ctx.author.id, "aqos"))
+            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+                                     ctx.author.id, "aqos"))
             left = time.human_timedelta(datetime.fromtimestamp(now + er * (1 - data['energy'])), accuracy=3)
             return await message.edit(content=f"{ctx.author.name}, you don't have any energy to use."
                                               f"\nNext energy point in: {left}")
@@ -251,6 +260,8 @@ async def aqos_game(bot, db, ctx):
                 wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001
                 new = time.now_ts()
                 used += 1
+                data['used'] += 1
+                data['energy'] -= 1
                 tm = time_per_energy(data['level']) / 60
                 data['lp'] += tm
                 lu = False
@@ -295,21 +306,19 @@ async def aqos_game(bot, db, ctx):
                          f"(XP Level {data['xp_level']:,})\nElapsed: {elapsed}"
                     await message.edit(content=md)
                 await asyncio.sleep(wait)
-            data['used'] += used
             xpr = levels('aqos', bv)
             data['xp_level'] = aqos_xpl(data['xp'], xpr)
             p, s = get_part(data['level'])
             lr = (p * 4 + s + 1) * 72
             er = energy_regen(data['level'], data['xp_level'])
             el = max_energy(data['level'], data['score'])
-            data['energy'] -= used
             ert = (el - data['energy']) * er
             tr = now + ert
             fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
             xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
             clp = round_value(data['lp']/data['lr']*100)
             oap = round_value((data['level']-1)/1440*100)
-            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator,
+            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                      ctx.author.id, "aqos"))
             md = f"{time.time()} > {ctx.author.name} > Aqos Normality Mode\nEnergy used: {used}\n" \
                  f"Time taken: {elapsed}\nLevel: **{data['level']:,}/{lr:,}**\nProgress: Current Level - **{clp}%** | "\
@@ -319,11 +328,11 @@ async def aqos_game(bot, db, ctx):
                  f"seconds - {((1/er) * 60):,.2f} per minute\nFull in: {fi}"
             return await message.edit(content=md)
         else:
-            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator,
+            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                      ctx.author.id, "aqos"))
             return await message.edit(content=f"{ctx.author.name}, Aqos is not yet available above level 1440 - {soon}")
     except Exception as e:
-        db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator,
+        db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                  ctx.author.id, "aqos"))
         return await ctx.send(f"Congratulations, everything broke.\n`{e}`")
 

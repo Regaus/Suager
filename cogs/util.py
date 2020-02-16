@@ -78,31 +78,33 @@ class Utility(commands.Cog):
             weather_icon = data['weather'][0]['icon']
             embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
             embed.add_field(name="Current weather", value=data['weather'][0]['description'].capitalize(), inline=True)
-            kelvin = round(data['main']['temp'], 1)
-            celcius = round(kelvin - 273.15, 1)
-            other = round(celcius * 1.8 + 32, 1)
-            embed.add_field(name="Current temperature", value=f"**{celcius}°C** | {kelvin}°K | {other}°F", inline=True)
+            _tk = data['main']['temp']
+            _tc = _tk - 273.15
+            _tf = _tc * 1.8 + 32
+            tk, tc, tf = [round(_tk, 1), round(_tc, 1), round(_tf, 1)]
+            embed.add_field(name="Current temperature", value=f"**{tc}°C** | {tk}°K | {tf}°F", inline=True)
             embed.add_field(name="Pressure", value=f"{data['main']['pressure']} hPa", inline=True)
             embed.add_field(name="Humidity", value=f"{data['main']['humidity']}%", inline=True)
-            mps = data['wind']['speed']
-            kmh = round(mps*3.6, 1)
-            mph = round(kmh/1.609, 1)
-            embed.add_field(name="Wind speed", value=f"**{mps} m/s | {kmh} km/h** | {mph} mph", inline=True)
+            sm = data['wind']['speed']
+            _sk = sm * 3.6
+            _sb = _sk / 1.609  # imperial system bad
+            sk, sb = [round(_sk, 1), round(_sb, 1)]
+            embed.add_field(name="Wind speed", value=f"**{sm} m/s | {sk} km/h** | {sb} mph", inline=True)
             embed.add_field(name="Cloud cover", value=f"{data['clouds']['all']}%", inline=True)
-            _timezone = data['timezone']
-            __sunrise = data['sys']['sunrise']
-            __sunset = data['sys']['sunset']
-            if __sunrise != 0 and __sunset != 0:
-                _sunrise = time.from_ts(__sunrise + _timezone)
-                _sunset = time.from_ts(__sunset + _timezone)
-                sunrise = _sunrise.strftime('%H:%M')
-                sunset = _sunset.strftime('%H:%M')
-                ___sunrise = timeago.format(_sunrise)
-                ___sunset = timeago.format(_sunset)
-                embed.add_field(name="Sunrise", value=f"{sunrise} | {___sunrise}", inline=True)
-                embed.add_field(name="Sunset", value=f"{sunset} | {___sunset}", inline=True)
+            tz = data['timezone']
+            sr = data['sys']['sunrise']
+            ss = data['sys']['sunset']
+            if sr != 0 and ss != 0:
+                srt = time.from_ts(sr + tz)
+                sst = time.from_ts(ss + tz)
+                sunrise = srt.strftime('%H:%M')
+                sunset = sst.strftime('%H:%M')
+                tar = timeago.format(srt)  # Time since/until sunrise
+                tas = timeago.format(sst)  # Time since/until sunset
+                embed.add_field(name="Sunrise", value=f"{sunrise} | {tar}", inline=True)
+                embed.add_field(name="Sunset", value=f"{sunset} | {tas}", inline=True)
             country = data['sys']['country']
-            local_time = time.time_output((time.now(True) + timedelta(seconds=_timezone)))
+            local_time = time.time_output((time.now(True) + timedelta(seconds=tz)))
             country_name = country_converter.convert(names=[country], to="name_short")
             emote = f":flag_{country.lower()}:"
             embed.timestamp = time.now(True)

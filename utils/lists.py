@@ -22,8 +22,8 @@ server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/64213
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139570569347102/09.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139584326533130/10.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
-playing = ["with Regaus", "Custom Status", "Aqos", "TBL", ",/help", "with myself",
-           "CobbleCobble", "a game", "Русские Вперёд!", "with the Nuriki Cult"]
+playing = ["CobbleCobble", "with Regaus", "with myself", "TBL", "Custom Status", "with the Nuriki Cult", "Aqos",
+           "a game", "Русские Вперёд!", ",/help"]
 phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
            "Hey, how's your day going?", "Ever wanted to take a break from all this hard work? I can't.",
            "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]

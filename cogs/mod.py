@@ -5,21 +5,6 @@ from discord.ext import commands
 
 from utils import generic as default, permissions, emotes
 
-template = {
-    "warn_limit": 4,
-    "mute_role_id": 0,
-    "leveling": {
-        "enabled": True,
-        "multiplier": 1.0,
-        "levelup_message": "[MENTION] has just reached level **[LEVEL]** <a:forsendiscosnake:613403121686937601>",
-        "ignored_channel_ids": [572856541028548658, 582965797761187840],
-        "rewards": [
-            {"level": 2, "role": 610543173353209867},
-            {"level": 5, "role": 610543687058849809}
-        ]
-    }
-}
-
 
 async def do_removal(ctx, limit, predicate, *, before=None, after=None, message=True):
     if limit > 2000:
