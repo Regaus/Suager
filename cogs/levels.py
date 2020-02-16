@@ -20,7 +20,7 @@ def levels(bias_value):
         if x < 499:
             power = 3
         else:
-            power = 3 + (x - 500) / 500
+            power = 3 + (x - 500) / 1000
         base = x ** power + 4 * x ** 2 + 250 * x + 500
         if bias_value < 1:
             oh = 1 / bias_value

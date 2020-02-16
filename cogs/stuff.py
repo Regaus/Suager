@@ -6,7 +6,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from utils import sqlite, time, bias
+from utils import sqlite, time, bias, permissions
 from utils.generic import value_string, round_value, random_colour
 
 soon = "Coming Soon\u005c\u2122"
@@ -19,13 +19,13 @@ class Games(commands.Cog):
 
     @commands.group(name="aqos")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def aqos_command(self, ctx):
+    async def aqos(self, ctx):
         """ The Aqos Game """
         # return await ctx.send(soon)
         if ctx.invoked_subcommand is None:
             return await aqos_game(self.bot, self.db, ctx)
 
-    @aqos_command.command(name="stats", aliases=["rank"])
+    @aqos.command(name="stats", aliases=["rank"])
     async def aqos_stats(self, ctx, *, who: discord.Member = None):
         """ Aqos Stats """
         user = who or ctx.author
@@ -69,11 +69,35 @@ class Games(commands.Cog):
         embed.add_field(name="Energy full in", value=fi, inline=True)
         return await ctx.send(f"**{user}**'s current Aqos stats", embed=embed)
 
+    @aqos.command(name="resetusage")
+    @permissions.has_permissions(administator=True)
+    async def aqos_ru(self, ctx, user: discord.Member):
+        data = self.db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (False, user.id, "aqos"))
+        return await ctx.send(f"Updated usage status for {user.name} -> {data}")
+
+    @aqos.command(name="xplevel")
+    async def aqos_xp_level(self, ctx, level: int):
+        if level > aqos_ml or level < aqos_ml * -1 + 1:
+            return await ctx.send(f"The max level is {aqos_ml}.")
+        biased = bias.get_bias(self.bot, ctx.author)
+        try:
+            xp = levels('aqos', biased)[level - 1]
+        except IndexError:
+            return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {aqos_ml}, btw.")
+        needed = value_string(xp, big=True)
+        return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need **{needed} XP**")
+
     @commands.command(name="tbl")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def tbl_command(self, ctx):
+    async def tbl(self, ctx):
         """ The TBL Game """
+        return await ctx.send(soon)
+
+    @commands.command(name="cobblecobble", aliases=["cc"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def cobble_cobble(self, ctx):
+        """ CobbleCobble"""
         return await ctx.send(soon)
 
 
@@ -103,14 +127,19 @@ aqos_les = [[[4750, 6500], [5250, 7000], [6000, 8000], [6500, 9000]],
 aqos_ml = 5000  # Max XP Level
 aqos_iml = 2147483647  # Infinity Mode Max Level
 aqos_kpr = 0.7  # KP to XP rate
+# SPP, LES, LL, BRL, KI and KP in Infinity Mode will depend on your level.
 
 
-def levels(which: str, multipliers: float):
+def levels(which: str, multipliers: int or float = 1):
     if which == "aqos":  # Aqos Leveling System
         r = 0
         xp = []
         for x in range(aqos_ml):
-            base = 2.7 * x ** 3 + 30 * x ** 2 + 750 * x + 2000  # 1 KI = 0.7 XP
+            if x < 499:
+                power = 3
+            else:
+                power = 3 + (x - 500) / 1000
+            base = 2.7 * x ** power + 30 * x ** 2 + 750 * x + 2000  # 1 KI = 0.7 XP
             too_bad = 1 / multipliers  # Imagine needing more XP just cuz the bot doesn't like you as much
             val = base * too_bad
             r += val
@@ -151,9 +180,9 @@ def energy_regen(level, xp):
         base = aqos_ier
     more = xp * 0.4
     cool = base - more
-    limit = [{'min': -1, 'max': 750, 'er': 20}, {'min': 750, 'max': 1000, 'er': 15},
-             {'min': 1000, 'max': 1250, 'er': 10}, {'min': 1250, 'max': 1440, 'er': 7.5},
-             {'min': 1440, 'max': 3000, 'er': 5}, {'min': 3000, 'max': aqos_iml, 'er': 2.5}]
+    limit = [{'min': -1, 'max': 750, 'er': 15}, {'min': 750, 'max': 1000, 'er': 10},
+             {'min': 1000, 'max': 1250, 'er': 7.5}, {'min': 1250, 'max': 1440, 'er': 5},
+             {'min': 1440, 'max': 3000, 'er': 2}, {'min': 3000, 'max': aqos_iml, 'er': 1}]
     mr = 20
     for val in limit:
         if val['min'] < level <= val['max']:
@@ -170,7 +199,7 @@ def max_energy(level, score):
         me = aqos_iel
     se = int(score / 50000)
     el = me + se
-    no = 30000 if nm else 50000 + (level - 1440) * 10
+    no = 50000 if nm else 75000 + (level - 1440) * 10
     return no if el > no else el
 
 
@@ -219,7 +248,7 @@ async def aqos_game(bot, db, ctx):
             le = now
             used = 0
             for i in range(etu):
-                wait = 0.03 if etu < 500 else 0.02 if 500 <= etu < 1000 else 0.01
+                wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001
                 new = time.now_ts()
                 used += 1
                 tm = time_per_energy(data['level']) / 60
@@ -266,6 +295,7 @@ async def aqos_game(bot, db, ctx):
                          f"(XP Level {data['xp_level']:,})\nElapsed: {elapsed}"
                     await message.edit(content=md)
                 await asyncio.sleep(wait)
+            data['used'] += used
             xpr = levels('aqos', bv)
             data['xp_level'] = aqos_xpl(data['xp'], xpr)
             p, s = get_part(data['level'])
@@ -285,7 +315,7 @@ async def aqos_game(bot, db, ctx):
                  f"Time taken: {elapsed}\nLevel: **{data['level']:,}/{lr:,}**\nProgress: Current Level - **{clp}%** | "\
                  f"Normal Mode - **{oap}%**\nScore: **{value_string(data['score'], big=True)}**\nXP: **" \
                  f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
-                 f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: 1 per {round(er, 2)} " \
+                 f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: {round(er, 2)} " \
                  f"seconds - {((1/er) * 60):,.2f} per minute\nFull in: {fi}"
             return await message.edit(content=md)
         else:

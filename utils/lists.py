@@ -22,10 +22,11 @@ server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/64213
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139570569347102/09.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139584326533130/10.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
-playing = ["with Regaus", "Custom Status", "Aqos", "TBL", ",/help"]
+playing = ["with Regaus", "Custom Status", "Aqos", "TBL", ",/help", "with myself",
+           "CobbleCobble", "a game", "Русские Вперёд!", "with the Nuriki Cult"]
 phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
            "Hey, how's your day going?", "Ever wanted to take a break from all this hard work? I can't.",
-           "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry"]
+           "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
 image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586,
                   'c': 675769002613669918, 'b': 675771077057839104}
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
@@ -36,7 +37,7 @@ ball_response = [
     'senpai, pls no ;-;'
 ]
 demons_response = [
-    '*wind blows*', 'go to hell with your stupid questions', 'Well what do you think, huh?',
+    '*wind blows*', 'Go to hell with your stupid questions', 'Well what do you think, huh?',
     'That is very doubtful',
     'Yes, surely', 'Without a doubt', 'Well I guess, most likely', 'That may or may not be possible',
     "I guess you'll be the judge here", 'no... (╯°□°）╯︵ ┻━┻', 'No.',

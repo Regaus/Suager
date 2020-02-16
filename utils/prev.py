@@ -216,4 +216,4 @@ async def status(ctx, _type: int):
     updates = ["Server is offline", "Server is online", "Restart incoming"]
     update = updates[_type]
     now = time.time()
-    return await ctx.send(f"{now}: **{update}**")
+    return await ctx.send(f"{now} > **{update}**")

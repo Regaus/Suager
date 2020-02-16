@@ -31,27 +31,13 @@ class Fun(commands.Cog):
         r = random.randint(r1, r2) / 10
         if ctx.guild.id == 568148147457490954:
             if ctx.guild.get_role(660880373894610945) in who.roles:
-                r /= 2
-        return await ctx.send(f"I'd rate {who} a {r}/100")
-
-    @commands.command(name="pingspam", hidden=True)
-    @commands.guild_only()
-    @commands.is_owner()
-    async def ping_spam(self, ctx, who: discord.Member, times: int, *, message: str = None):
-        """ Ping Spam """
-        if who.id == 302851022790066185:
-            return await ctx.send("Nah, not Regaus. :^)")
-        if ctx.channel.id != 674338147689168897:
-            return await ctx.send("Nah, <#674338147689168897> only.")
-        if times > 15000:
-            return await ctx.send("Nah, only up to 15k.")
-        add = f"\nMessage from {ctx.author.name}: {message}" if message is not None else ''
-        try:
-            for i in range(1, times+1):
-                await ctx.send(f"{who.mention} - Get pinged! ({i}/{times}){add}")
-        except Exception as e:
-            return await ctx.send(f"An error has occurred... {e}")
-        return await ctx.send(f"{ctx.author.mention} - I'm done torturing {who.name}, you motherfucker")
+                r /= 3
+            if 'arch' in who.name.lower():
+                r /= 3
+            if who.nick is not None:
+                if 'arch' in who.nick.lower():
+                    r /= 3
+        return await ctx.send(f"I'd rate {who.name} a {r:.1f}/100")
 
     @commands.command(name="babyrate")
     @commands.guild_only()
