@@ -144,6 +144,7 @@ class Events(commands.Cog):
         cp = self.config.changeplaying
         ca = self.config.changeavatars
         cs = self.config.changesenkolair
+        sl = self.bot.get_guild(568148147457490954)
         while cp or ca or cs:
             try:
                 self.config = generic.get_config()
@@ -165,6 +166,7 @@ class Events(commands.Cog):
                     plays = lists.playing
                     a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
                     if a != b:
+                        await generic.you_little_shit(sl)
                         play = plays[a]
                         playing = f"{play} | v{self.config.version}"
                         await self.bot.change_presence(activity=discord.Activity(type=0, name=playing),

@@ -76,9 +76,12 @@ class Spyware(commands.Cog):
                 activity_logged[after.id] = now
         n1, n2 = [before.nick, after.nick]
         is_senko_lair = after.guild.id == 568148147457490954
+        ls = [94762492923748352, 246652610747039744]
         if n1 != n2:
+            if after.id in ls:
+                await generic.you_little_shit(self.bot.get_guild(568148147457490954))
             send = f"{to} > `{n}`'s nickname in `{guild}` is now `{n2}` (from `{n1}`)"
-            if is_senko_lair:
+            if is_senko_lair and after.id not in ls:
                 await senko.send(send)
             await log.send(send)
         try:

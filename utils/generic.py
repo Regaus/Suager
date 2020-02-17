@@ -119,6 +119,20 @@ async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here'
     )
 
 
+async def you_little_shit(senko_lair):
+    ba = [senko_lair.get_member(94762492923748352), senko_lair.get_member(246652610747039744)]
+    for little_shit in ba:
+        name = str(little_shit.display_name).lower()
+        if 'arch' in name:
+            await little_shit.edit(nick="rule 4a", reason="Rule 4a")
+        if 'python' in name:
+            bad = ['bad', 'gae', 'gay']
+            for word in bad:
+                if word in name:
+                    await little_shit.edit(nick="rule 14b", reason="Rule 14b")
+
+
+
 # version = get("config.json").version
 invite = "https://discordapp.com/invite/UrHhtWE"
 owners = get("config.json").owners
