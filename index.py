@@ -18,25 +18,38 @@ if not tables:
 db = sqlite.Database()
 
 
-async def get_prefix(_bot, message):
+# async def get_prefix(_bot, message):
+#     uid = _bot.user.id
+#     default = [f"<@!{uid}> ", f"<@{uid}> "]
+#     if not message.guild:
+#         prefixes = default + config.prefix
+#     else:
+#         try:
+#             data = json.loads(open(f"{generic.prefixes}/{message.guild.id}.json", 'r').read())
+#             pre = data['prefixes']
+#             ud = data['default']
+#             pre += config.prefix if ud else []
+#             prefixes = default + pre
+#         except FileNotFoundError:
+#             prefixes = default + config.prefix
+#    return prefixes
+#     # if not message.guild:
+#     #     return config.prefix
+#     # prefix = bot.prefixes.get(str(message.guild.id), config.prefix)
+#     # return when_mentioned_or(prefix)
+
+async def get_prefix(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    if not message.guild:
-        prefixes = default + config.prefix
+    _data = db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+    if not _data:
+        dp = config.prefix
+        cp = []
     else:
-        try:
-            data = json.loads(open(f"{generic.prefixes}/{message.guild.id}.json", 'r').read())
-            pre = data['prefixes']
-            ud = data['default']
-            pre += config.prefix if ud else []
-            prefixes = default + pre
-        except FileNotFoundError:
-            prefixes = default + config.prefix
-    return prefixes
-    # if not message.guild:
-    #     return config.prefix
-    # prefix = bot.prefixes.get(str(message.guild.id), config.prefix)
-    # return when_mentioned_or(prefix)
+        data = json.loads(_data['data'])
+        dp = config.prefix if data['use_default'] else []
+        cp = data['prefixes']
+    return default + dp + cp
 
 
 try:
