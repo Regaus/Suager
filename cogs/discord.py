@@ -243,9 +243,11 @@ class Discord(commands.Cog):
         except AttributeError:
             embed.add_field(name="Current activity", value="None", inline=False)
         if len(user.roles) < 15:
+            r = user.roles
+            r.sort(key=lambda x: x.position, reverse=True)
             # roles = ', '.join([f"<@&{x.id}>" for x in user.roles if x is not ctx.guild.default_role]) \
             #     if len(user.roles) > 1 else 'None' + f"\n({len(user.roles)} roles overall)"
-            ar = [f"<@&{x.id}>" for x in user.roles if x.id != ctx.guild.default_role.id]
+            ar = [f"<@&{x.id}>" for x in r if x.id != ctx.guild.default_role.id]
             roles = ', '.join(ar) if ar else 'None'
             b = len(user.roles) - 1
             roles += f"\n({b} role{'s' if b != 1 else ''} overall)"

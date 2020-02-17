@@ -126,7 +126,7 @@ async def you_little_shit(senko_lair):
         if 'arch' in name:
             await little_shit.edit(nick="rule 4a", reason="Rule 4a")
         if 'python' in name:
-            bad = ['bad', 'gae', 'gay']
+            bad = ['bad', 'gae', 'gay', 'stupid', 'dump', 'stoopid']
             for word in bad:
                 if word in name:
                     await little_shit.edit(nick="rule 14b", reason="Rule 14b")

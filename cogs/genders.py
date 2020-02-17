@@ -22,6 +22,93 @@ orientations = {
 }
 
 
+def ship_validation(u1g, u1s, u2g, u2s):
+    """ Ship Validation """
+    u1m, u1f, u1i = [u1g["male"], u1g["female"], u1g["invalid"]]
+    u2m, u2f, u2i = [u2g["male"], u2g["female"], u2g["invalid"]]
+    u1lg, u1s, u1fp = u1s["gay_lesbian"], u1s["straight"], u1s["frying_pan"]
+    u2lg, u2s, u2bi, u2fp = u2s["gay_lesbian"], u2s["straight"], u2s["bisexual"], u2s["frying_pan"]
+    variant = "default"
+    if u1m:
+        if u1lg:
+            if u2m:
+                if u2lg:
+                    variant = "gay"
+                elif u2bi:
+                    variant = "bi"
+                else:
+                    return False
+            else:
+                return False
+        elif u1s:
+            if u2f:
+                if u2s:
+                    variant = "default"
+                elif u2bi:
+                    variant = "bi"
+                else:
+                    return False
+            else:
+                return False
+        else:
+            if u2m:
+                if u2lg or u2bi:
+                    variant = "bi"
+                else:
+                    return False
+            elif u2f:
+                if u2bi or u2s:
+                    variant = "bi"
+                else:
+                    return False
+            else:
+                return False
+    elif u1f:
+        if u1lg:
+            if u2f:
+                if u2lg:
+                    variant = "lesbian"
+                elif u2bi:
+                    variant = "bi"
+                else:
+                    return False
+            else:
+                return False
+        elif u1s:
+            if u2m:
+                if u2s:
+                    variant = "default"
+                elif u2bi:
+                    variant = "bi"
+                else:
+                    return False
+            else:
+                return False
+        else:
+            if u2m:
+                if u2bi or u2s:
+                    variant = "bi"
+                else:
+                    return False
+            elif u2f:
+                if u2lg or u2bi:
+                    variant = "bi"
+                else:
+                    return False
+    else:
+        if u1fp:
+            if u2i:
+                if u2fp:
+                    variant = "fryingpan"
+                else:
+                    return False
+            else:
+                return False
+        else:
+            return False
+    return variant
+
+
 class HumanInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -40,54 +127,22 @@ class HumanInfo(commands.Cog):
         """ Pickle size! """
         if user is None:
             user = ctx.author
-        if user.id == self.bot.user.id:
-            message = await ctx.send(
-                f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
-            await asyncio.sleep(3)
-            result = self.pb_size(user)
-            return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result:.2f}cm**")
-        try:
-            gender = json.loads(open(f"data/gender/{user.id}.json", "r").read())
-            if gender["male"]:
-                result = self.pb_size(user)
-            elif gender["female"]:
-                u = "You are" if user == ctx.author else f"{user.name} is"
-                return await ctx.send(f"{u} female though!")
-            else:
-                u = "you even have" if user == ctx.author else f"{user.name} even has"
-                return await ctx.send(f"Neither male or female? How can I know {u} one?")
-        except FileNotFoundError or KeyError or ValueError:
-            if user.bot:
-                return await ctx.send(f"But {user.name} is a bot!")
-            return await ctx.send(f"To know the {ctx.invoked_with} size, I need to know {user.name}'s gender.\n"
-                                  f"Use `{ctx.prefix}gender <gender>` to do so.")
+        result = self.pb_size(user)
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result:.2f}cm**")
+        return await message.edit(content=f"IF **{user.name}**'s  male, their {ctx.invoked_with} "
+                                          f"size would be **{result:.2f}cm**")
 
     @commands.command(name="breast", aliases=["boobs", "tiddies"])
     async def boob_size(self, ctx, *, user: discord.Member = None):
         """ Boob size! """
         if user is None:
             user = ctx.author
-        try:
-            gender = json.loads(open(f"data/gender/{user.id}.json", "r").read())
-            if gender["female"]:
-                result = self.pb_size(user) / 2.5
-            elif gender["male"]:
-                u = "You are" if user == ctx.author else f"{user.name} is"
-                return await ctx.send(f"{u} male though!")
-            else:
-                u = "you even have" if user == ctx.author else f"{user.name} even has"
-                return await ctx.send(f"Neither male or female? How can I know {u} them?")
-        except FileNotFoundError or KeyError or ValueError:
-            if user.bot:
-                return await ctx.send(f"But {user.name} is a bot!")
-            return await ctx.send(f"To know the {ctx.invoked_with} size, I need to know {user.name}'s gender.\n"
-                                  f"Use `{ctx.prefix}gender <gender>` to do so.")
+        result = self.pb_size(user) / 2.5
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result:.2f}cm**")
+        return await message.edit(content=f"If **{user.name}**'s is female, their {ctx.invoked_with} "
+                                          f"size would be **{result:.2f}cm**")
 
     @commands.command(name="gender")
     @commands.guild_only()
@@ -99,15 +154,7 @@ class HumanInfo(commands.Cog):
             female = data["female"]
             invalid = data["invalid"]
             if male or female or invalid:
-                if male:
-                    g = "male"
-                elif female:
-                    g = "female"
-                elif invalid:
-                    g = "invalid"
-                else:
-                    g = "undefined, Regaus broke something"
-                return await ctx.send(f"{ctx.author.mention} you are already **{g}**!")
+                return await ctx.send(f"{ctx.author.mention} I already know your gender! You can't change it...")
         except FileNotFoundError or KeyError or ValueError:
             try:
                 os.makedirs(f"data/gender")
@@ -128,7 +175,7 @@ class HumanInfo(commands.Cog):
                 data["invalid"] = True
                 rid = ctx.guild.get_role(651339982652571648)
             else:
-                return await ctx.send("Are you sure you choice either male, female or invalid?")
+                return await ctx.send("Are you sure your choice is either `male`, `female` or `invalid`?")
             if ctx.guild.id == 568148147457490954:
                 await ctx.author.add_roles(rid, reason="User assigned gender")
             open(f"data/gender/{ctx.author.id}.json", "w+").write(json.dumps(data))
@@ -162,7 +209,7 @@ class HumanInfo(commands.Cog):
                 data["invalid"] = True
                 rid = ctx.guild.get_role(651339982652571648)
             else:
-                return await ctx.send("Are you sure you choice either male, female or invalid?")
+                return await ctx.send("Are you sure your choice is either `male`, `female` or `invalid`?")
             if ctx.guild.id == 568148147457490954:
                 await user.add_roles(rid, reason="User assigned gender")
             open(f"data/gender/{user.id}.json", "w+").write(json.dumps(data))
@@ -239,8 +286,7 @@ class HumanInfo(commands.Cog):
             bi = data["bisexual"]
             pan = data["frying_pan"]
             if lg or straight or bi or pan:
-                _orientation = "gay/lesbian" if lg else "straight" if straight else "bisexual" if bi else "a frying pan"
-                return await ctx.send(f"{ctx.author.mention} But you're already **{_orientation}**!")
+                return await ctx.send(f"{ctx.author.mention} I already know what you are!")
         except FileNotFoundError or KeyError or ValueError:
             try:
                 os.makedirs(f"data/orientation")
@@ -288,115 +334,22 @@ class HumanInfo(commands.Cog):
             return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
         if user1.bot or user2.bot:
             return await ctx.send(f"Bots can't be shipped, they can't love :( {emotes.AlexHeartBroken}")
-        if user1 == user2:
-            return await ctx.send("I don't think that's how it works...")
-        try:
-            gender = json.loads(open(f"data/gender/{user1.id}.json", "r").read())
-            u1m, u1f, u1i = [gender["male"], gender["female"], gender["invalid"]]
-        except FileNotFoundError:
-            return await ctx.send(f"I need to know {user1.name}'s gender first.")
-        try:
-            gender = json.loads(open(f"data/gender/{user2.id}.json", "r").read())
-            u2m, u2f, u2i = [gender["male"], gender["female"], gender["invalid"]]
-        except FileNotFoundError:
-            return await ctx.send(f"I need to know {user2.name}'s gender first.")
-        try:
-            data = json.loads(open(f"data/orientation/{user1.id}.json", "r").read())
-            u1lg = data["gay_lesbian"]
-            u1s = data["straight"]
-            # u1bi = data["bisexual"]
-            u1fp = data["frying_pan"]
-        except FileNotFoundError:
-            return await ctx.send(f"I need to know {user1.name}'s orientation first.")
-        try:
-            data = json.loads(open(f"data/orientation/{user2.id}.json", "r").read())
-            u2lg = data["gay_lesbian"]
-            u2s = data["straight"]
-            u2bi = data["bisexual"]
-            u2fp = data["frying_pan"]
-        except FileNotFoundError:
-            return await ctx.send(f"I need to know {user2.name}'s orientation first.")
+        ls = [94762492923748352, 246652610747039744]
+        if user1.id in ls or user2.id in ls:
+            return await ctx.send("These 2 users cannot be shipped together.")
         av1 = user1.avatar_url_as(size=1024, format="png")
         av2 = user2.avatar_url_as(size=1024, format="png")
         main_link = f"https://media.bowser65.xyz/imgen/misc/ship?image1={av1}&image2={av2}&variant="
-        variant = "default"
-        if u1m:
-            if u1lg:
-                if u2m:
-                    if u2lg:
-                        variant = "gay"
-                    elif u2bi:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Gay male + Straight male")
-                else:
-                    return await ctx.send("Ship invalid: Gay males can only match other gay or bi males.")
-            elif u1s:
-                if u2f:
-                    if u2s:
-                        variant = "default"
-                    elif u2bi:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Male + Lesbian female")
-                else:
-                    return await ctx.send("Ship invalid: Straight males can only match with straight or bi females.")
-            else:
-                if u2m:
-                    if u2lg or u2bi:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Bisexual males can't match straight males.")
-                elif u2f:
-                    if u2bi or u2s:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Male + Lesbian female")
-                else:
-                    return await ctx.send("Ship invalid: Bisexuals cannot match with people of invalid gender.")
-        elif u1f:
-            if u1lg:
-                if u2f:
-                    if u2lg:
-                        variant = "lesbian"
-                    elif u2bi:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Lesbian female + Straight female")
-                else:
-                    return await ctx.send("Ship invalid: Lesbian females can only match other lesbians or bi females.")
-            elif u1s:
-                if u2m:
-                    if u2s:
-                        variant = "default"
-                    elif u2bi:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Female + Gay male")
-                else:
-                    return await ctx.send("Ship invalid: Straight females can only match with straight or bi males.")
-            else:
-                if u2m:
-                    if u2bi or u2s:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Female + Gay male")
-                elif u2f:
-                    if u2lg or u2bi:
-                        variant = "bi"
-                    else:
-                        return await ctx.send("Ship invalid: Bisexuals cannot match with people of invalid gender.")
-        else:
-            if u1fp:
-                if u2i:
-                    if u2fp:
-                        variant = "fryingpan"
-                    else:
-                        return await ctx.send("Ship invalid: Frying pans can only match other frying pans.")
-                else:
-                    return await ctx.send("Ship invalid: Invalid frying pans can only match other frying pans.")
-            else:
-                return await ctx.send("Ship invalid: Invalid people can only be a frying pan.")
+        try:
+            u1g = json.loads(open(f"data/gender/{user1.id}.json", "r").read())
+            u2g = json.loads(open(f"data/gender/{user2.id}.json", "r").read())
+            u1s = json.loads(open(f"data/orientation/{user1.id}.json", "r").read())
+            u2s = json.loads(open(f"data/orientation/{user2.id}.json", "r").read())
+            variant = ship_validation(u1g, u1s, u2g, u2s)
+            if variant is False:
+                return await ctx.send("These 2 users cannot be shipped together.")
+        except FileNotFoundError:
+            variant = "default"
         link = main_link + variant
         bio = BytesIO(await http.get(link, res_method="read"))
         if bio is None:
