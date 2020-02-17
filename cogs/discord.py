@@ -219,11 +219,38 @@ class Discord(commands.Cog):
         embed.add_field(name="Created at", value=time.time_output(user.created_at), inline=True)
         embed.add_field(name="Joined at", value=time.time_output(user.joined_at), inline=True)
         embed.add_field(name="Current status", value=str(user.status), inline=True)
+        try:
+            a = list(user.activities)
+            if not a:
+                embed.add_field(name="Current activity", value="None", inline=False)
+            else:
+                b = a[0]
+                if b.type == discord.ActivityType.custom:
+                    e = f"{b.emoji} " if b.emoji is not None else ''
+                    n = b.name if b.name is not None else ''
+                    embed.add_field(name="Current activity", value=f"Custom Status:\n{e}{n}", inline=False)
+                elif b.type == discord.ActivityType.streaming:
+                    c = b.platform
+                    d = b.name if b.name else ''
+                    e = f" {b.game} " if b.game else ''
+                    embed.add_field(name="Current activity", value=f"Streaming {e} on {c}\n{d}", inline=False)
+                elif b.type == discord.ActivityType.playing:
+                    embed.add_field(name="Current activity", value=f"Playing {b.name}", inline=False)
+                elif b.type == discord.ActivityType.listening:
+                    embed.add_field(name="Current activity", inline=False,
+                                    value=f"Listening to {b.name}\n{b.title} by {', '.join(b.artists)} - {b.album}")
+            # embed.add_field(name="Activity", value=who.activity)
+        except AttributeError:
+            embed.add_field(name="Current activity", value="None", inline=False)
         if len(user.roles) < 15:
-            roles = ', '.join([f"<@&{x.id}>" for x in user.roles if x is not ctx.guild.default_role]) \
-                if len(user.roles) > 1 else 'None' + f"\n({len(user.roles)} roles overall)"
+            # roles = ', '.join([f"<@&{x.id}>" for x in user.roles if x is not ctx.guild.default_role]) \
+            #     if len(user.roles) > 1 else 'None' + f"\n({len(user.roles)} roles overall)"
+            ar = [f"<@&{x.id}>" for x in user.roles if x.id != ctx.guild.default_role.id]
+            roles = ', '.join(ar) if ar else 'None'
+            b = len(user.roles) - 1
+            roles += f"\n({b} role{'s' if b != 1 else ''} overall)"
         else:
-            roles = f"There's {len(user.roles)} of them"
+            roles = f"There's {len(user.roles) - 1} of them"
         embed.add_field(name="Roles", value=roles, inline=False)
         await ctx.send(f"ℹ About **{user}**", embed=embed)
 
