@@ -23,7 +23,7 @@ class Games(commands.Cog):
         """ The Aqos Game """
         # return await ctx.send(soon)
         if ctx.invoked_subcommand is None:
-            return await aqos_game(self.bot, self.db, ctx)
+            return await aqos_game(self.db, ctx)
 
     @aqos.command(name="stats", aliases=["rank"])
     async def aqos_stats(self, ctx, *, who: discord.Member = None):
@@ -243,7 +243,7 @@ aqos_update = 'UPDATE data SET data=?, usage=?, name=?, disc=?, extra=? WHERE id
 # data, False, user.name, user.discriminator, user.id, "aqos", data['score']
 
 
-async def aqos_game(bot, db, ctx):
+async def aqos_game(db, ctx):
     _data = db.fetchrow(aqos_find, (ctx.author.id, "aqos"))
     if not _data:
         data = aqos_data.copy()

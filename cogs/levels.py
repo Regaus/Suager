@@ -8,9 +8,9 @@ from utils.generic import random_colour, value_string, round_value
 
 max_level = 2500
 level_xp = [12, 17]
-level_mr = [{'min': -1, 'max': 15, 'val': 0.03},  # Multiplier Rise for level between 0 and 15
-            {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
-            {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
+level_mr = [{'min': -1, 'max': 2147483647, 'val': 0.01}]  # Multiplier Rise for level between 0 and 15
+# {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
+# {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
 settings_template = {
     'prefixes': [],
     'use_default': True,
@@ -31,21 +31,28 @@ settings_template = {
 def levels(bias_value: float, server_default: float):
     req = 0
     xp = []
+    if bias_value < 1:
+        oh = 1 / bias_value
+    else:
+        bv = bias_value - 1
+        oh = 1 / (1 + bv / 4)
+    if server_default < 1:
+        ah = 1
+    else:
+        sd = server_default - 1
+        ah = 1 + sd / 3
+    tm = oh * ah
+    # print(f"{tm=}, {bias_value=}, {server_default=}")
     for x in range(max_level):
-        if x < 499:
-            power = 3
+        if x < 50:
+            power = 2
+        elif 50 <= x < 100:
+            power = 2 + (x - 50) / 50
         else:
-            power = 3 + (x - 500) / 1000
+            power = 3 + (x - 100) / 800
         base = x ** power + 4 * x ** 2 + 250 * x + 500
-        if bias_value < 1:
-            a = 1 - bias_value
-            b = a / 2
-            oh = 1 / (1 - b)
-        else:
-            bv = 1 + (bias_value - 1) / 4
-            oh = 1 / bv
-        ah = 1 + (server_default - 1) / 2
-        total = base * oh * ah
+        tm = 0.2 if tm < 0.2 else tm
+        total = base * tm
         req += total
         xp.append(req)
     return xp
@@ -91,6 +98,8 @@ class Leveling(commands.Cog):
         if last > now - 60:
             return
         x1, x2 = level_xp
+        x1 = 2000 if x1 > 2000 else x1
+        x2 = 2000 if x2 > 2000 else x2
         base_mult = level_mult(level)
         biased = bias.get_bias(self.db, ctx.author)
         try:
@@ -245,6 +254,8 @@ class Leveling(commands.Cog):
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
             base = level_mult(level)
             x1, x2 = [val * base * biased * dm for val in level_xp]
+            x1 = 2000 if x1 > 2000 else x1
+            x2 = 2000 if x2 > 2000 else x2
             embed.add_field(name="Multipliers", inline=False,
                             value=f"XP multiplier: {base * biased * dm:.2f}\nXP per message: {x1:.2f}-{x2:.2f}")
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
@@ -270,6 +281,8 @@ class Leveling(commands.Cog):
         except IndexError:
             return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {max_level}, btw.")
         x1, x2 = [val * normal * biased * dm for val in level_xp]
+        x1 = 2000 if x1 > 2000 else x1
+        x2 = 2000 if x2 > 2000 else x2
         needed = value_string(xp, big=True)
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need "
                               f"**{needed} XP**\nBy then, you'll be getting **{x1:,.2f}-{x2:,.2f} XP** per message")
@@ -303,9 +316,11 @@ class Leveling(commands.Cog):
         r5 = f"{level + 1:,}"
         normal = level_mult(level)
         x1, x2 = [val * normal * biased * dm for val in level_xp]
+        x1 = 2000 if x1 > 2000 else x1
+        x2 = 2000 if x2 > 2000 else x2
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         m1, m2 = [f"{a1:,.0f}", f"{a2:,.0f}"]
-        return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP. You need "
+        return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
                               f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: around "
                               f"**{m1}-{m2}**")
 

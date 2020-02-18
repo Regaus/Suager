@@ -51,20 +51,20 @@ import discord
 
 servers = {
     568148147457490954: {          # Senko Lair
-        641423339671257118: 2.5,   # Tier 4 Friend
-        610107382067888138: 2.25,  # Tier 3 Friend
+        641423339671257118: 3,     # Tier 4 Friend
+        610107382067888138: 2.5,   # Tier 3 Friend
         671816195564896298: 2,     # Tier 2 Friend
         641423169454080051: 1.5,   # Tier 1 Friend
-        660880373894610945: 0.2,   # Bowser65
-        673189353014689818: 1.33,  # Nuriki Cult
+        660880373894610945: 0.15,  # Bowser65
+        673189353014689818: 1.5,   # Nuriki Cult
         655428243716964352: 0.5,   # Heretics
-        571034792754413598: 0.33,  # Sinners
-        571034926107852801: 0.25,  # Infidels 1
-        646343824775446548: 0.2,   # Infidels 2
-        668108494196441121: 1.25,  # R. P. S. (Secret Room)
-        642563763538755604: 1.2,   # AlexFlipnote's server
-        572535688801812500: 1.2,   # IRL Friends
-        568157600156221460: 1.2,   # Members of Senko Lair - just for the fact you're there
+        571034792754413598: 0.3,   # Sinners
+        571034926107852801: 0.2,   # Infidels 1
+        646343824775446548: 0.15,  # Infidels 2
+        668108494196441121: 1.33,  # R. P. S. (Secret Room)
+        642563763538755604: 1.25,  # AlexFlipnote's server
+        572535688801812500: 1.25,  # IRL Friends
+        568157600156221460: 1.25,  # Members of Senko Lair - just for the fact you're there
     },
     679055998186553344: {          # Rosey's Server
         679063210241949736: 1.5,   # Fire Foxes
@@ -78,12 +78,12 @@ servers = {
     }
 }
 extra = {
-    302851022790066185: 0.2,  # Myself
+    302851022790066185: 1,  # Myself
 }
 special = {
     679055998186553344: {  # Rosey's Server
-        486620915669401600: 1.5,  # Rosey_Scarlet_Thorns#2608
-        302851022790066185: 0.6,  # Regaus
+        486620915669401600: 2.5,  # Rosey_Scarlet_Thorns#2608
+        302851022790066185: 1,  # Regaus
     }
 }
 
@@ -132,4 +132,5 @@ def so_bias(member: discord.Member):  # Bias by S.O.
 
 
 def get_bias(db, user: discord.Member):
-    return friend_bias(db, user) * gender_bias(user) * so_bias(user)
+    value = friend_bias(db, user) * gender_bias(user) * so_bias(user)
+    return value if value < 20 else 20
