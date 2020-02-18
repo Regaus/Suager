@@ -172,7 +172,7 @@ class Leveling(commands.Cog):
         else:
             self.db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)", (
                 ctx.author.id, "roles", json.dumps([r.id for r in ctx.author.roles]), False, ctx.author.name,
-                ctx.author.discriminator, ctx.guild.name))
+                ctx.author.discriminator, ctx.guild.id))
 
     @commands.command(name="rewards")
     @commands.guild_only()

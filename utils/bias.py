@@ -77,6 +77,15 @@ servers = {
         430946753097760768: 1.25,  # Owner
     }
 }
+extra = {
+    302851022790066185: 0.2,  # Myself
+}
+special = {
+    679055998186553344: {  # Rosey's Server
+        486620915669401600: 1.5,  # Rosey_Scarlet_Thorns#2608
+        302851022790066185: 0.6,  # Regaus
+    }
+}
 
 
 def friend_bias(db, member: discord.Member):
@@ -90,11 +99,9 @@ def friend_bias(db, member: discord.Member):
             bias = servers.get(gid, {})
             for role in data:
                 result *= bias.get(role, 1)
-    extra = {
-        486620915669401600: 1.5,  # Rosey_Scarlet_Thorns#2608
-        302851022790066185: 0.6,  # Myself
-    }
     result *= extra.get(member.id, 1)
+    yes = special.get(member.guild.id, {})
+    result *= yes.get(member.id, 1)
     return result
 
 

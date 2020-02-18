@@ -10,7 +10,7 @@ import time as _time
 import discord
 from discord.ext import commands
 
-from utils import time, generic, logs
+from utils import time, generic, logs, sqlite
 
 
 def insert_returns(body):
@@ -50,6 +50,7 @@ async def eval_(ctx, cmd):
         'discord': discord,
         'commands': commands,
         'ctx': ctx,
+        'db': sqlite.Database(),
         '__import__': __import__
     }
     exec(compile(parsed, filename="<ast>", mode="exec"), env)
