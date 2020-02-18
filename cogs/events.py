@@ -106,12 +106,12 @@ class Events(commands.Cog):
             if gender['invalid']:
                 await member.add_roles(snowflakes[2], reason=reason)
             embed = discord.Embed(colour=generic.random_colour())
+            embed.set_thumbnail(url=member.avatar_url)
             embed.add_field(name="User ID", value=member.id)
             embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
             embed.add_field(name="Created at", value=time.time_output(member.created_at))
             await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
-            await self.bot.get_channel(650774303192776744).send(
-                f"{member.name} just joined Senko Lair.", embed=embed)
+            await self.bot.get_channel(650774303192776744).send(f"{member.name} just joined Senko Lair.", embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):

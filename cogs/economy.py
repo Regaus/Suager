@@ -27,7 +27,7 @@ class Economy(commands.Cog):
         if last > now - 60:
             return
         x1, x2 = money_amounts
-        biased = bias.get_bias(self.bot, ctx.author)
+        biased = bias.get_bias(self.db, ctx.author)
         new = random.randint(x1, x2) * biased
         xp += new
         if data:

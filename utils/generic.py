@@ -132,7 +132,6 @@ async def you_little_shit(senko_lair):
                     await little_shit.edit(nick="rule 14b", reason="Rule 14b")
 
 
-
 # version = get("config.json").version
 invite = "https://discordapp.com/invite/UrHhtWE"
 owners = get("config.json").owners

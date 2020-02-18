@@ -4,12 +4,13 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import bias, generic, emotes
+from utils import bias, generic, emotes, sqlite
 
 
 class Ratings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = sqlite.Database()
 
     @commands.command(name="rate")
     async def rate(self, ctx, *, what: commands.clean_content):
@@ -60,7 +61,7 @@ class Ratings(commands.Cog):
         step1 = int(round(random.random() * 100))
         step2 = int(round(random.random() * 20))
         step3 = step1 / (107 + step2) * 100
-        step4 = bias.friend_bias(self.bot, user)
+        step4 = bias.friend_bias(self.db, user)
         step5 = step3 * step4
         step6 = 100 if step5 > 100 else step5
         if 0 < step6 < 33:
@@ -79,7 +80,7 @@ class Ratings(commands.Cog):
         user = who or ctx.author
         random.seed(user.id)
         ri = random.randint(127, 255)
-        b = bias.get_bias(self.bot, user)
+        b = bias.get_bias(self.db, user)
         r = ri * b / 1.17
         msg = await ctx.send(f"{emotes.Loading} Checking {user.name}'s IQ...")
         await asyncio.sleep(3)

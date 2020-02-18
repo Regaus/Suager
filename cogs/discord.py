@@ -74,28 +74,80 @@ class Discord(commands.Cog):
             m += f"[{n}] {bots[i]}\n"
         return await ctx.send(f"Bots in **{ctx.guild.name}**: ```ini\n{m}```")
 
-    # @commands.group(name="prefix")
-    # async def server_prefix(self, ctx):
-    #     """ Server prefix """
-    #     if ctx.invoked_subcommand is None:
-    #         embed = discord.Embed(colour=generic.random_colour())
-    #         embed.title = f"Prefixes in {ctx.guild.name}"
-    #         try:
-    #             data = json.loads(open(f'{generic.prefixes}/{ctx.guild.id}.json', 'r').read())
-    #         except FileNotFoundError:
-    #             data = prefix_template.copy()
-    #         dp = generic.get_config().prefix
-    #         defaults = dp if data['default'] else []
-    #         defaults.append(ctx.bot.user.mention)
-    #         embed.add_field(name="Default Prefixes", value='\n'.join(defaults), inline=True)
-    #         if data['prefixes']:
-    #             embed.add_field(name="Custom Prefixes", value='\n'.join(data['prefixes']), inline=True)
-    #         p = ctx.prefix
-    #         i = ctx.invoked_with
-    #         embed.set_footer(text=f"Add custom prefixes with {p}{i} add\nRemove custom prefixes with {p}{i} remove\n"
-    #                               f"To toggle default prefixes use {p}{i} default <True | False>\n"
-    #                               f"Feature: You can't have quotes in your prefix.")
-    #         return await ctx.send("This command will be changed soon.", embed=embed)
+    @server.command(name="status")
+    async def server_status(self, ctx):
+        """ Server status """
+        so, si, sd, sn = 0, 0, 0, 0
+        mo, mi, md, do, di, dd, wo, wi, wd = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        al, ag, at, ac, an = 0, 0, 0, 0, 0
+        m = 0
+        for member in ctx.guild.members:
+            m += 1
+            s, s1, s2, s3 = member.status, member.mobile_status, member.desktop_status, member.web_status
+            if s == discord.Status.online:
+                so += 1
+            if s1 == discord.Status.online:
+                mo += 1
+            if s2 == discord.Status.online:
+                do += 1
+            if s3 == discord.Status.online:
+                wo += 1
+            if s == discord.Status.idle:
+                si += 1
+            if s1 == discord.Status.idle:
+                mi += 1
+            if s2 == discord.Status.idle:
+                di += 1
+            if s3 == discord.Status.idle:
+                wi += 1
+            if s == discord.Status.dnd:
+                sd += 1
+            if s1 == discord.Status.dnd:
+                md += 1
+            if s2 == discord.Status.dnd:
+                dd += 1
+            if s3 == discord.Status.dnd:
+                wd += 1
+            if s == discord.Status.offline:
+                sn += 1
+            else:
+                activities = list(member.activities)
+                if not activities:
+                    an += 1
+                else:
+                    for a in activities:
+                        if a.type == discord.ActivityType.custom:
+                            ac += 1
+                        if a.type == discord.ActivityType.streaming:
+                            at += 1
+                        if a.type == discord.ActivityType.playing:
+                            ag += 1
+                        if a.type == discord.ActivityType.listening:
+                            al += 1
+        embed = discord.Embed(colour=random_colour(), description=f"Status of users in {ctx.guild.name}")
+        embed.set_thumbnail(url=ctx.guild.icon_url)
+        embed.add_field(name="Total members", value=f"{m:,}", inline=False)
+        e1, e2, e3, e4 = "<:online:679052892514287635>", "<:idle:679052892828598303>", "<:dnd:679052892782723114> ", \
+                         "<:offline:679052892782592033>"
+        a1, a2, a3, a4, a5 = "🎮", "<:streaming:679055367346323478>", "<:listening:679055367396917250> ", \
+                             "<:pikathink:674330001151229963>", "<:awoogoodnight:613410343359873054>"
+        po, pi, pd, pn = so / m * 100, si / m * 100, sd / m * 100, sn / m * 100
+        embed.add_field(name="Status", inline=False, value=f"{e1} Online: {so:,} - {po:.2f}%, of which:\n"
+                                                           f"Mobile: {mo:,}\nDesktop: {do:,}\nWeb: {wo:,}\n\n"
+                                                           f"{e2} Idle: {si:,} - {pi:.2f}%, of which:\n"
+                                                           f"Mobile: {mi:,}\nDesktop: {di:,}\nWeb: {wi:,}\n\n"
+                                                           f"{e3} Dungeons and Dragons: {sd:,} - {pd:.2f}%, of which:\n"
+                                                           f"Mobile: {md:,}\nDesktop: {dd:,}\nWeb: {wd:,}\n\n"
+                                                           f"{e4} Offline: {sn:,} - {pn:.2f}%")
+        o = m - sn
+        apg, apt, apl, apc, apn = ag / o * 100, at / o * 100, al / o * 100, ac / o * 100, an / o * 100
+        embed.add_field(name="Activities", inline=False, value=f"Excluding offline:\n"
+                                                               f"{a1} Playing a game: {ag:,} - {apg:.2f}%\n"
+                                                               f"{a4} Playing Custom Status: {ac:,} - {apc:.2f}%\n"
+                                                               f"{a2} Streaming: {at:,} - {apt:.2f}%\n"
+                                                               f"{a3} Listening: {al:,} - {apl:.2f}%\n"
+                                                               f"{a5} Doing nothing: {an:,} - {apn:.2f}%")
+        return await ctx.send(embed=embed)
 
     @commands.command(name="prefix")
     @commands.guild_only()

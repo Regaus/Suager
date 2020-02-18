@@ -82,7 +82,7 @@ class Games(commands.Cog):
         """ XP required to reach a level """
         if level > aqos_ml or level < aqos_ml * -1 + 1:
             return await ctx.send(f"The max level is {aqos_ml}.")
-        biased = bias.get_bias(self.bot, ctx.author)
+        biased = bias.get_bias(self.db, ctx.author)
         try:
             xp = levels('aqos', biased)[level - 1]
         except IndexError:
@@ -269,7 +269,7 @@ async def aqos_game(bot, db, ctx):
         data['time'] = now
         normal = data['level'] <= 1440
         etu = int(data['energy'])  # Energy to use
-        bv = bias.get_bias(bot, ctx.author)  # Bias Value
+        bv = bias.get_bias(db, ctx.author)  # Bias Value
         if etu < 1:
             db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                      ctx.author.id, "aqos"))
