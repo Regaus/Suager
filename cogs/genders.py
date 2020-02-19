@@ -112,12 +112,14 @@ def ship_validation(u1g, u1s, u2g, u2s):
 class HumanInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        # self.db = sqlite.Database()
 
     def pb_size(self, user: discord.Member):
         random.seed(user.id)
         ___random = random.randint(0, 69)
         __random = random.randint(87, 147) / 100
         result = ___random / __random
+        # result *= bias.friend_bias(self.db, user) * bias.gender_bias(user) * bias.so_bias(user)
         if user.id == self.bot.user.id:
             result = 420.69
         return result
@@ -130,7 +132,7 @@ class HumanInfo(commands.Cog):
         result = self.pb_size(user)
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"IF **{user.name}**'s  male, their {ctx.invoked_with} "
+        return await message.edit(content=f"If **{user.name}** was male, their {ctx.invoked_with} "
                                           f"size would be **{result:.2f}cm**")
 
     @commands.command(name="breast", aliases=["boobs", "tiddies"])
@@ -141,7 +143,7 @@ class HumanInfo(commands.Cog):
         result = self.pb_size(user) / 2.5
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"If **{user.name}**'s is female, their {ctx.invoked_with} "
+        return await message.edit(content=f"If **{user.name}** was female, their {ctx.invoked_with} "
                                           f"size would be **{result:.2f}cm**")
 
     @commands.command(name="gender")
