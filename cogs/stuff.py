@@ -203,7 +203,7 @@ aqos_data = {
 
 
 def time_per_energy(level):
-    return aqos_tpe + (level - 1) / 4
+    return aqos_tpe + (level - 1) / 1.75
 
 
 def energy_regen(level, xp):
@@ -365,7 +365,8 @@ async def aqos_game(db, ctx):
             le = now
             used = 0
             for i in range(etu):
-                wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001
+                wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001 \
+                    if etu < 100000 else 0
                 new = time.now_ts()
                 used += 1
                 data['used'] += 1
