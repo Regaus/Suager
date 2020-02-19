@@ -51,7 +51,7 @@ class Games(commands.Cog):
                             value=f"{round_value((data['level'] - 1) / 1440 * 100)}%")
         else:
             embed.add_field(name="Overall Progress", inline=True,
-                            value=f"{round_value((data['level'] - 1) / (aqos_iml - 1440) * 100)}%X")
+                            value=f"{round_value((data['level'] - 1) / aqos_iml * 100)}%")
         embed.add_field(name="Score", value=value_string(data['score'], big=True), inline=True)
         embed.add_field(name="XP", value=value_string(data['xp'], big=True), inline=True)
         embed.add_field(name="XP Level", value=f"{data['xp_level']:,}", inline=True)
@@ -67,7 +67,7 @@ class Games(commands.Cog):
         fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=True)
         embed.add_field(name="Energy", value=f"{data['energy']:,.1f}/{el:,.1f}", inline=True)
         embed.add_field(name="Energy full in", value=fi, inline=True)
-        embed.set_footer(text=f"{user.name} has used this command {data['used']} times")
+        embed.set_footer(text=f"{user.name} has used {data['used']:,} energy")
         return await ctx.send(f"**{user}**'s current Aqos stats", embed=embed)
 
     @aqos.command(name="resetusage")
@@ -157,6 +157,7 @@ aqos_les = [[[4750, 6500], [5250, 7000], [6000, 8000], [6500, 9000]],
             [[10000, 15000], [11250, 16250], [12500, 17500], [13750, 18750]],
             [[15000, 20000], [16250, 22500], [17500, 25000], [18750, 27500]],
             [[20000, 30000], [22500, 35000], [25000, 40000], [30000, 50000]]]  # Level end scores
+aqos_ils = [75000, 100000]
 aqos_ml = 5000  # Max XP Level
 aqos_iml = 2147483647  # Infinity Mode Max Level
 aqos_kpr = 0.7  # KP to XP rate
@@ -202,7 +203,7 @@ aqos_data = {
 
 
 def time_per_energy(level):
-    return aqos_tpe + level - 1
+    return aqos_tpe + (level - 1) / 4
 
 
 def energy_regen(level, xp):
@@ -215,7 +216,8 @@ def energy_regen(level, xp):
     cool = base - more
     limit = [{'min': -1, 'max': 750, 'er': 15}, {'min': 750, 'max': 1000, 'er': 10},
              {'min': 1000, 'max': 1250, 'er': 7.5}, {'min': 1250, 'max': 1440, 'er': 5},
-             {'min': 1440, 'max': 3000, 'er': 2}, {'min': 3000, 'max': aqos_iml, 'er': 1}]
+             {'min': 1440, 'max': 3000, 'er': 2}, {'min': 3000, 'max': 1000000, 'er': 1},
+             {'min': 1000000, 'max': 50000000, 'er': 0.5}, {'min': 50000000, 'max': aqos_iml, 'er': 0.2}]
     mr = 20
     for val in limit:
         if val['min'] < level <= val['max']:
@@ -298,6 +300,8 @@ async def aqos_game(db, ctx):
                         s1, s2 = aqos_les[-1][-1]
                         data['lp'] -= data['lr']
                         data['score'] += int(round(random.randint(s1, s2), -2))
+                        lr = 1440 * 7 + 1
+                        data['lr'] = random.randint(lr - 100, lr + 100)
                         await asyncio.sleep(7)
                         break
                     lu = True
@@ -352,14 +356,78 @@ async def aqos_game(db, ctx):
                  f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: {round(er, 2)} " \
                  f"seconds - {((1/er) * 60):,.2f} per minute\nFull in: {fi}"
             return await message.edit(content=md)
+        # db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+        #                          ctx.author.id, "aqos"))
+        # return await message.edit(content=f"{ctx.author.name}, Aqos is not yet available above level 1440 - {soon}")
         else:
-            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
-                                     ctx.author.id, "aqos"))
-            return await message.edit(content=f"{ctx.author.name}, Aqos is not yet available above level 1440 - {soon}")
+            await message.edit(content=f"{time.time()} > {ctx.author.name} > Aqos Infinite Mode\n"
+                                       f"Level: {data['level']:,} | Energy: {int(data['energy']):,}")
+            le = now
+            used = 0
+            for i in range(etu):
+                wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001
+                new = time.now_ts()
+                used += 1
+                data['used'] += 1
+                data['energy'] -= 1
+                tm = time_per_energy(data['level']) / 60
+                data['lp'] += tm
+                if data['lp'] > data['lr']:
+                    data['level'] += 1
+                    data['lp'] -= data['lr']
+                    s1, s2 = aqos_ils
+                    s1 += data['level']
+                    s2 += data['level']
+                    data['score'] += int(round(random.randint(s1, s2), -2))
+                    if data['level'] % 10 == 0:
+                        b1, b2 = int(s1 ** 0.7), int(s2 ** 0.7)
+                        bl = 61 + int(data['level'] / 100)
+                        for j in range(bl):
+                            data['score'] += int(round(random.randint(b1, b2), -2))
+                            await asyncio.sleep(wait)
+                    lr = 1440 * 6 + data['level']
+                    data['lr'] = random.randint(lr - 100, lr + 100)
+                ki = int(data['level'] / 1.5)
+                kp = int(ki / 1.25)
+                ki = int(random.randint(ki - 50, ki + 50) * tm)
+                kp = int(random.randint(kp - 50, kp + 50) * tm)
+                sp = int(data['level'] / 2.5)
+                rs = [random.randint(sp - 100, sp + 100) for _ in range(10)]
+                for val in rs:
+                    data['score'] += (ki / 10) * val * bv
+                data['xp'] += kp * aqos_kpr * bv
+                if new > le + 2:
+                    le = new
+                    elapsed = time.human_timedelta(now_dt, accuracy=2, suffix=False)
+                    md = f"{time.time()} > {ctx.author.name} > Aqos Infinite Mode\nEnergy used: {used:,}/{etu:,}\n" \
+                         f"Current Level: {data['level']:,}\nScore: {data['score']:,.2f}\nXP: {data['xp']:,.2f} " \
+                         f"(XP Level {data['xp_level']:,})\nElapsed: {elapsed}"
+                    await message.edit(content=md)
+                await asyncio.sleep(wait)
+            xpr = levels('aqos', bv)
+            data['xp_level'] = aqos_xpl(data['xp'], xpr)
+            er = energy_regen(data['level'], data['xp_level'])
+            el = max_energy(data['level'], data['score'])
+            ert = (el - data['energy']) * er
+            tr = now + ert
+            fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
+            xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
+            clp = round_value(data['lp'] / data['lr'] * 100)
+            oap = round_value((data['level'] - 1) / aqos_iml * 100)
+            db.execute(aqos_update,
+                       (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+                        ctx.author.id, "aqos"))
+            md = f"{time.time()} > {ctx.author.name} > Aqos Infinite Mode\nEnergy used: {used}\nTime taken: " \
+                 f"{elapsed}\nLevel: **{data['level']:,}/{aqos_iml:,}**\nProgress: Current Level - **{clp}%** | " \
+                 f"Overall - **{oap}%**\nScore: **{value_string(data['score'], big=True)}**\nXP: **" \
+                 f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
+                 f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: {round(er, 2)} " \
+                 f"seconds - {((1 / er) * 60):,.2f} per minute\nFull in: {fi}"
+            return await message.edit(content=md)
     except Exception as e:
         db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                  ctx.author.id, "aqos"))
-        return await ctx.send(f"Congratulations, everything broke.\n`{e}`")
+        return await ctx.send(f"Congratulations, everything broke.\n`{type(e).__name__}: {e}`")
 
 
 def aqos_xpl(xp, xpr):
