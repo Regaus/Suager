@@ -98,8 +98,8 @@ class Leveling(commands.Cog):
         if last > now - 60:
             return
         x1, x2 = level_xp
-        x1 = 2000 if x1 > 2000 else x1
-        x2 = 2000 if x2 > 2000 else x2
+        # x1 = 2000 if x1 > 2000 else x1
+        # x2 = 2000 if x2 > 2000 else x2
         base_mult = level_mult(level)
         biased = bias.get_bias(self.db, ctx.author)
         try:
@@ -108,6 +108,8 @@ class Leveling(commands.Cog):
         except KeyError:
             sm = 1
         new = random.randint(x1, x2) * base_mult * biased * sm
+        new = 2000 if new > 2000 else new
+        new = 0 if ctx.author.id == 592345932062916619 else new
         xp += new
         requirements = levels(biased, sm)
         lu = False

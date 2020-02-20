@@ -79,6 +79,7 @@ servers = {
 }
 extra = {
     302851022790066185: 1,  # Myself
+    # 592345932062916619: 1e-27,  # Lucy Furro - I mean, asked for it
 }
 special = {
     679055998186553344: {  # Rosey's Server
