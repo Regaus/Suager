@@ -50,6 +50,9 @@ class Events(commands.Cog):
         elif isinstance(err, commands.errors.CommandNotFound):
             pass
 
+        elif isinstance(err, commands.errors.MaxConcurrencyReached):
+            await ctx.send("This command cannot be used right now - max concurrency reached. Try again later.")
+
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         send = f"{time.time()} > Joined {guild.name}"

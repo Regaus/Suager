@@ -123,10 +123,10 @@ class Fun(commands.Cog):
             s = f"{r:,}"
             res.append(s)
         multiple = len(res) != 1
-        output = res if not multiple else ', '.join(res)
+        output = '; '.join(res)
         p = 's' if multiple else ''
         out = output if not multiple else f"```fix\n{output}```"
-        return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p} and got this: {out}")
+        return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p}) and got this: {out}")
 
     @commands.command(name="f")
     async def pay_respects(self, ctx, *, text: commands.clean_content = None):
