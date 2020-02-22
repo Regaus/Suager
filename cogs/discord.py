@@ -141,7 +141,7 @@ class Discord(commands.Cog):
                                                            f"{e4} Offline: {sn:,} - {pn:.2f}%")
         o = m - sn
         apg, apt, apl, apc, apn = ag / o * 100, at / o * 100, al / o * 100, ac / o * 100, an / o * 100
-        embed.add_field(name="Activities", inline=False, value=f"Excluding offline:\n"
+        embed.add_field(name="Activities", inline=False, value=f"Out of {o:,} people online:\n"
                                                                f"{a1} Playing a game: {ag:,} - {apg:.2f}%\n"
                                                                f"{a4} Playing Custom Status: {ac:,} - {apc:.2f}%\n"
                                                                f"{a2} Streaming: {at:,} - {apt:.2f}%\n"
