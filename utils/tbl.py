@@ -13,7 +13,10 @@ tbl_locations = [
         "sh": 4,
         "points": [25, 60],
         "level": 0,
-        "ll": 90,
+        "activity": [10, 30, 75, 150, 175, 60],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [40, 75],  # Avg. level completion time
+        "dr": 0.07,  # Death/Failure rate
+        "ll": 90,  # Level length
     },
     {
         "name": "Snegangairaat",
@@ -29,6 +32,9 @@ tbl_locations = [
         "sh": 6,
         "points": [35, 70],
         "level": 7,
+        "activity": [17, 41, 100, 200, 200, 80],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [60, 90],  # Avg. level completion time
+        "dr": 0.15,  # Death rate
         "ll": 105,
     },
     {
@@ -43,6 +49,9 @@ tbl_locations = [
         "sh": 7,
         "points": [50, 100],
         "level": 12,
+        "activity": [25, 50, 115, 220, 220, 100],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [80, 110],  # Avg. level completion time
+        "dr": 0.17,  # Death rate
         "ll": 120,
     },
     {
@@ -57,6 +66,9 @@ tbl_locations = [
         "sh": 9,
         "points": [75, 100],
         "level": 17,
+        "activity": [30, 80, 150, 300, 300, 130],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [90, 135],  # Avg. level completion time
+        "dr": 0.17,  # Death rate
         "ll": 150,
     },
     {
@@ -73,6 +85,9 @@ tbl_locations = [
         "sh": 11,
         "points": [100, 150],
         "level": 20,
+        "activity": [27, 80, 125, 270, 240, 110],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [90, 145],  # Avg. level completion time
+        "dr": 0.2,  # Death rate
         "ll": 180,
     },
     {
@@ -89,6 +104,9 @@ tbl_locations = [
         "sh": 13,
         "points": [150, 225],
         "level": 22,
+        "activity": [7, 21, 54, 127, 157, 75],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [120, 190],  # Avg. level completion time
+        "dr": 0.22,  # Death rate
         "ll": 210,
     },
     {
@@ -105,6 +123,9 @@ tbl_locations = [
         "sh": 17,
         "points": [225, 375],
         "level": 25,
+        "activity": [7, 41, 91, 175, 192, 70],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [180, 210],  # Avg. level completion time
+        "dr": 0.27,  # Death rate
         "ll": 240,
     },
     {
@@ -121,6 +142,9 @@ tbl_locations = [
         "sh": 20,
         "points": [300, 500],
         "level": 28,
+        "activity": [4, 15, 41, 92, 102, 50],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [200, 250],  # Avg. level completion time
+        "dr": 0.28,  # Death rate
         "ll": 270,
     },
     {
@@ -137,6 +161,9 @@ tbl_locations = [
         "sh": 24,
         "points": [450, 750],
         "level": 32,
+        "activity": [17, 42, 91, 172, 148, 59],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [225, 275],  # Avg. level completion time
+        "dr": 0.3,  # Death rate
         "ll": 300,
     },
     {
@@ -152,6 +179,9 @@ tbl_locations = [
         "sh": 27,
         "points": [600, 900],
         "level": 37,
+        "activity": [25, 75, 149, 343, 371, 107],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [275, 330],  # Avg. level completion time
+        "dr": 0.37,  # Death rate
         "ll": 350,
     },
     {
@@ -167,6 +197,9 @@ tbl_locations = [
         "sh": 32,
         "points": [800, 1200],
         "level": 42,
+        "activity": [11, 37, 100, 197, 211, 71],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [300, 375],  # Avg. level completion time
+        "dr": 0.33,  # Death rate
         "ll": 420,
     },
     {
@@ -183,6 +216,9 @@ tbl_locations = [
         "sh": 40,
         "points": [1000, 1500],
         "level": 50,
+        "activity": [47, 185, 284, 527, 571, 317],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [240, 475],  # Avg. level completion time
+        "dr": 0.4,  # Death rate
         "ll": 480,
     },
     {
@@ -197,6 +233,9 @@ tbl_locations = [
         "sh": 50,
         "points": [1250, 2000],
         "level": 60,
+        "activity": [16, 42, 81, 141, 121, 47],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [475, 515],  # Avg. level completion time
+        "dr": 0.43,  # Death rate
         "ll": 570,
     },
     {
@@ -213,6 +252,9 @@ tbl_locations = [
         "sh": 70,
         "points": [1500, 2250],
         "level": 70,
+        "activity": [75, 355, 750, 1215, 1073, 471],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [400, 600],  # Avg. level completion time
+        "dr": 0.27,  # Death rate
         "ll": 660,
     },
     {
@@ -227,6 +269,9 @@ tbl_locations = [
         "sh": 100,
         "points": [2000, 2000],
         "level": 201,
+        "activity": [1, 7, 22, 121, 97, 29],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [500, 750],  # Avg. level completion time
+        "dr": 0.07,  # Death rate
         "ll": 750,
     },
 ]

@@ -19,6 +19,7 @@ class Events(commands.Cog):
         self.bot = bot
         self.config = generic.get_config()
         self.process = psutil.Process(os.getpid())
+        self.exists = False
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
@@ -125,6 +126,18 @@ class Events(commands.Cog):
                 f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
 
     @commands.Cog.listener()
+    async def on_connect(self):
+        self.exists = True
+
+    @commands.Cog.listener()
+    async def on_disconnect(self):
+        self.exists = False
+
+    @commands.Cog.listener()
+    async def on_resumed(self):
+        self.exists = True
+
+    @commands.Cog.listener()
     async def on_ready(self):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(True)
@@ -149,6 +162,9 @@ class Events(commands.Cog):
         cs = self.config.changesenkolair
         sl = self.bot.get_guild(568148147457490954)
         while cp or ca or cs:
+            if not self.exists:
+                print("Looks like I am disconnected... Stopped on_ready() function...")
+                return
             try:
                 self.config = generic.get_config()
                 cp = self.config.changeplaying
