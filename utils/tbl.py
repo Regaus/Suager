@@ -1,5 +1,6 @@
 tbl_locations = [
     {
+        "id": 1,
         "name": "Leidarazdallar",
         "ru": "Летающие Острова",
         "en": "Floating Islands",
@@ -19,6 +20,7 @@ tbl_locations = [
         "ll": 90,  # Level length
     },
     {
+        "id": 2,
         "name": "Snegangairaat",
         "ru": "Снежные Горы",
         "en": "Snowy Mountains",
@@ -38,6 +40,7 @@ tbl_locations = [
         "ll": 105,
     },
     {
+        "id": 3,
         "name": "Taivead",
         "ru": "Топи",
         "en": "The Swamps",
@@ -55,6 +58,7 @@ tbl_locations = [
         "ll": 120,
     },
     {
+        "id": 4,
         "name": "Havazdallarigar",
         "ru": "Хвостоград",
         "en": "Tail Town",
@@ -72,6 +76,7 @@ tbl_locations = [
         "ll": 150,
     },
     {
+        "id": 5,
         "name": "Sunadallarat",
         "ru": "Солнечные Долины",
         "en": "Sunny Valleys",
@@ -91,6 +96,7 @@ tbl_locations = [
         "ll": 180,
     },
     {
+        "id": 6,
         "name": "Seinemaire",
         "ru": "Синее Море",
         "en": "The Blue Sea",
@@ -110,6 +116,7 @@ tbl_locations = [
         "ll": 210,
     },
     {
+        "id": 7,
         "name": "Na Veilarinne Belkaden Peaskat",
         "ru": "Великая Беличья Пустыня",
         "en": "The Great Squirrels' Desert",
@@ -129,6 +136,7 @@ tbl_locations = [
         "ll": 240,
     },
     {
+        "id": 8,
         "name": "Degazemlat",
         "ru": "Дикие Земли",
         "en": "The Wild Lands",
@@ -148,6 +156,7 @@ tbl_locations = [
         "ll": 270,
     },
     {
+        "id": 9,
         "name": "Stormaranvannat",
         "ru": "Равнины Штормов",
         "en": "The Plains of Storms",
@@ -167,6 +176,7 @@ tbl_locations = [
         "ll": 300,
     },
     {
+        "id": 10,
         "name": "Espennarversenat",
         "ru": "Вершины Испытаний",
         "en": "The Challenge Heights",
@@ -185,6 +195,7 @@ tbl_locations = [
         "ll": 350,
     },
     {
+        "id": 11,
         "name": "Sanzanbaira",
         "ru": "Сосновый Бор",
         "en": "The Pine Forest",
@@ -203,6 +214,7 @@ tbl_locations = [
         "ll": 420,
     },
     {
+        "id": 12,
         "name": "Anamallzonaa",
         "ru": "Аномальная Зона",
         "en": "Anomalous Zone",
@@ -222,6 +234,7 @@ tbl_locations = [
         "ll": 480,
     },
     {
+        "id": 13,
         "name": "Peirasta",
         "ru": "Пещера",
         "en": "The Cave",
@@ -239,6 +252,7 @@ tbl_locations = [
         "ll": 570,
     },
     {
+        "id": 14,
         "name": "Saivakairella",
         "ru": "Корабль Спасения",
         "en": "The Ship of Salvation",
@@ -258,6 +272,7 @@ tbl_locations = [
         "ll": 660,
     },
     {
+        "id": -1,
         "name": "<Redacted>",
         "ru": "<Засекречено>",
         "en": "<Redacted>",

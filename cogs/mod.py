@@ -52,7 +52,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
     async def kick_user(self, ctx, member: discord.Member, *, reason: str = None):
-        """ Kick a user """
+        """ Kick a user from the server """
         invalid = [o for o in self.config.owners]
         invalid.append(self.bot.user.id)
         if member == ctx.author:
@@ -69,7 +69,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @permissions.has_permissions(ban_members=True)
     async def ban_user(self, ctx, member: MemberID, *, reason: str = None):
-        """ Ban a user """
+        """ Ban a user from the server """
         invalid = [o for o in self.config.owners]
         invalid.append(self.bot.user.id)
         if member == ctx.author.id:
@@ -79,6 +79,27 @@ class Moderation(commands.Cog):
         try:
             await ctx.guild.ban(discord.Object(id=member), reason=default.reason(ctx.author, reason))
             return await ctx.send(default.action("banned", why=reason, emote="<:blobcatcoffee:651864579856662568>"))
+        except Exception as e:
+            return await ctx.send(e)
+
+    @commands.command(name="massban")
+    @commands.guild_only()
+    @permissions.has_permissions(ban_members=True)
+    async def mass_ban(self, ctx, reason: str, *who: MemberID):
+        """ Mass ban users from the server """
+        invalid = [o for o in self.config.owners]
+        invalid.append(self.bot.user.id)
+        if ctx.author.id in who:
+            return await ctx.send(f"Self harm bad {emotes.BlobCatPolice}")
+        else:
+            for member in who:
+                if member in invalid:
+                    return await ctx.send(f"I can't ban myself, nor my owners... {emotes.BlobCatPolice}")
+        try:
+            for member in who:
+                await ctx.guild.ban(discord.Object(id=member), reason=default.reason(ctx.author, reason))
+            return await ctx.send(default.action("banned", why=reason, many=True,
+                                                 emote="<:blobcatcoffee:651864579856662568>"))
         except Exception as e:
             return await ctx.send(e)
 

@@ -57,15 +57,18 @@ class Games(commands.Cog):
         embed.add_field(name="XP", value=value_string(data['xp'], big=True), inline=True)
         embed.add_field(name="XP Level", value=f"{data['xp_level']:,}", inline=True)
         now = time.now_ts()
-        er = energy_regen(data['level'], data['xp_level'])
         el = max_energy(data['level'], data['score'])
+        er = energy_regen(data['level'], data['xp_level'], el)
         if data['energy'] < el:
             regen = (now - data['time']) / er
             data['energy'] += regen
             data['energy'] = el if data['energy'] > el else data['energy']
         ert = (el - data['energy']) * er
         tr = now + ert
-        fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=True)
+        try:
+            fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=True)
+        except OSError:
+            fi = "An error ago"
         embed.add_field(name="Energy", value=f"{data['energy']:,.1f}/{el:,.1f}", inline=True)
         embed.add_field(name="Energy full in", value=fi, inline=True)
         embed.set_footer(text=f"{user.name} has used {data['used']:,} energy")
@@ -207,7 +210,7 @@ def time_per_energy(level):
     return aqos_tpe + (level - 1) / 1.75
 
 
-def energy_regen(level, xp):
+def energy_regen(level, xp, me):
     if level <= 1440:
         p = get_part(level)[0]
         base = aqos_er[p]
@@ -215,14 +218,13 @@ def energy_regen(level, xp):
         base = aqos_ier
     more = xp * 0.4
     cool = base - more
-    limit = [{'min': -1, 'max': 750, 'er': 15}, {'min': 750, 'max': 1000, 'er': 10},
-             {'min': 1000, 'max': 1250, 'er': 7.5}, {'min': 1250, 'max': 1440, 'er': 5},
-             {'min': 1440, 'max': 3000, 'er': 2}, {'min': 3000, 'max': 1000000, 'er': 1},
-             {'min': 1000000, 'max': 50000000, 'er': 0.5}, {'min': 50000000, 'max': aqos_iml, 'er': 0.2}]
-    mr = 20
-    for val in limit:
-        if val['min'] < level <= val['max']:
-            mr = val['er']
+    # limit = [{'min': -1, 'max': 750, 'er': 15}, {'min': 750, 'max': 1000, 'er': 10},
+    #          {'min': 1000, 'max': 1250, 'er': 7.5}, {'min': 1250, 'max': 1440, 'er': 5}]
+    # mr = 20
+    if level <= 1400:
+        mr = 86400 / me * 2
+    else:
+        mr = 86400 / me
     return mr if cool < mr else cool
 
 
@@ -235,7 +237,7 @@ def max_energy(level, score):
         me = aqos_iel
     se = int(score / 50000)
     el = me + se
-    no = 50000 if nm else 75000 + (level - 1440) * 10
+    no = 50000 if nm else 100000 + (level - 1440) * 20
     return no if el > no else el
 
 
@@ -263,8 +265,8 @@ async def aqos_game(db, ctx):
         elapsed = "None"
         send = f"{time.time()} > {ctx.author.name} > Aqos Initiated."
         message = await ctx.send(send)
-        er = energy_regen(data['level'], data['xp_level'])
         el = max_energy(data['level'], data['score'])
+        er = energy_regen(data['level'], data['xp_level'], el)
         if data['energy'] < el:
             regen = (now - data['time']) / er
             data['energy'] += regen
@@ -279,13 +281,16 @@ async def aqos_game(db, ctx):
             left = time.human_timedelta(datetime.fromtimestamp(now + er * (1 - data['energy'])), accuracy=3)
             return await message.edit(content=f"{ctx.author.name}, you don't have any energy to use."
                                               f"\nNext energy point in: {left}")
+        if etu > 10000000:  # 10 million
+            etu = 10000000
         if normal:
             await message.edit(content=f"{time.time()} > {ctx.author.name} > Aqos Normal Mode\n"
                                        f"Level: {data['level']:,} | Energy: {int(data['energy']):,}")
             le = now
             used = 0
             for i in range(etu):
-                wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001
+                wait = 0.02 if etu < 500 else 0.015 if 500 <= etu < 1000 else 0.007 if 1000 <= etu < 10000 else 0.001 \
+                    if etu < 500000 else 0
                 new = time.now_ts()
                 used += 1
                 data['used'] += 1
@@ -340,11 +345,14 @@ async def aqos_game(db, ctx):
             data['xp_level'] = aqos_xpl(data['xp'], xpr)
             p, s = get_part(data['level'])
             lr = (p * 4 + s + 1) * 72
-            er = energy_regen(data['level'], data['xp_level'])
             el = max_energy(data['level'], data['score'])
+            er = energy_regen(data['level'], data['xp_level'], el)
             ert = (el - data['energy']) * er
             tr = now + ert
-            fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
+            try:
+                fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
+            except OSError:
+                fi = "An error ago"
             xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
             clp = round_value(data['lp']/data['lr']*100)
             oap = round_value((data['level']-1)/1440*100)
@@ -407,11 +415,14 @@ async def aqos_game(db, ctx):
                 await asyncio.sleep(wait)
             xpr = levels('aqos', bv)
             data['xp_level'] = aqos_xpl(data['xp'], xpr)
-            er = energy_regen(data['level'], data['xp_level'])
             el = max_energy(data['level'], data['score'])
+            er = energy_regen(data['level'], data['xp_level'], el)
             ert = (el - data['energy']) * er
             tr = now + ert
-            fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
+            try:
+                fi = time.human_timedelta(datetime.fromtimestamp(tr), accuracy=3, suffix=False)
+            except OSError:
+                fi = "An error ago"
             xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
             clp = round_value(data['lp'] / data['lr'] * 100)
             oap = round_value((data['level'] - 1) / aqos_iml * 100)
@@ -439,4 +450,3 @@ def aqos_xpl(xp, xpr):
         else:
             break
     return level
-

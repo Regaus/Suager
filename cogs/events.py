@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+from datetime import datetime
 
 import discord
 import psutil
@@ -20,6 +21,7 @@ class Events(commands.Cog):
         self.config = generic.get_config()
         self.process = psutil.Process(os.getpid())
         self.exists = False
+        self.ad = False
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
@@ -96,6 +98,9 @@ class Events(commands.Cog):
             await logs.log_channel(self.bot, "spyware").send(
                 f"{time.time()} > {member} just joined {member.guild.name}")
         if member.guild.id == 568148147457490954:
+            td = time.now_ts() - datetime.timestamp(member.created_at)
+            if td < 86400:
+                await member.kick(reason="Account created less than a day ago")
             try:
                 gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
             except FileNotFoundError:
@@ -125,20 +130,10 @@ class Events(commands.Cog):
             await self.bot.get_channel(610836120321785869).send(
                 f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
 
-    @commands.Cog.listener()
-    async def on_connect(self):
-        self.exists = True
+    async def readiness(self):
+        while not self.exists:
+            await asyncio.sleep(1)
 
-    @commands.Cog.listener()
-    async def on_disconnect(self):
-        self.exists = False
-
-    @commands.Cog.listener()
-    async def on_resumed(self):
-        self.exists = True
-
-    @commands.Cog.listener()
-    async def on_ready(self):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(True)
 
@@ -157,99 +152,122 @@ class Events(commands.Cog):
             await logs.log_channel(self.bot, "uptime").send(send)
             # await log_channel.send(f"{statuses.time_output()} - Server is online")
         await self.bot.get_channel(577599230567383058).send(send)
-        cp = self.config.changeplaying
-        ca = self.config.changeavatars
-        cs = self.config.changesenkolair
-        sl = self.bot.get_guild(568148147457490954)
-        while cp or ca or cs:
-            if not self.exists:
-                print("Looks like I am disconnected... Stopped on_ready() function...")
-                return
-            try:
-                self.config = generic.get_config()
-                cp = self.config.changeplaying
-                ca = self.config.changeavatars
-                cs = self.config.changesenkolair
-                log = self.config.logs
-                now = time.now()
+        if self.ad:
+            print("Detected that I'm already doing the loop...")
+            return
+        else:
+            self.ad = True
+            cp = self.config.changeplaying
+            ca = self.config.changeavatars
+            cs = self.config.changesenkolair
+            sl = self.bot.get_guild(568148147457490954)
+            while cp or ca or cs:
                 try:
-                    # times = json.loads('changes.json')
-                    times = json.loads(open('changes.json', 'r').read())
-                except Exception as e:
-                    print(e)
-                    times = changes.copy()
-                if cp:
-                    this = now.minute * 60 + now.second
-                    that = times['playing']
-                    speed = self.config.playing_rate
-                    plays = lists.playing
-                    a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
-                    if a != b:
-                        await generic.you_little_shit(sl)
-                        play = plays[a]
-                        playing = f"{play} | v{self.config.version}"
-                        await self.bot.change_presence(activity=discord.Activity(type=0, name=playing),
-                                                       status=discord.Status.dnd)
-                        times["playing"] = this
-                        if log:
-                            ch = logs.log_channel(self.bot, "playing")
+                    self.config = generic.get_config()
+                    cp = self.config.changeplaying
+                    ca = self.config.changeavatars
+                    cs = self.config.changesenkolair
+                    log = self.config.logs
+                    now = time.now()
+                    try:
+                        # times = json.loads('changes.json')
+                        times = json.loads(open('changes.json', 'r').read())
+                    except Exception as e:
+                        print(e)
+                        times = changes.copy()
+                    if cp:
+                        this = now.minute * 60 + now.second
+                        that = times['playing']
+                        speed = self.config.playing_rate
+                        plays = lists.playing
+                        a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
+                        if a != b:
+                            await generic.you_little_shit(sl)
+                            play = plays[a]
+                            playing = f"{play} | v{self.config.version}"
+                            await self.bot.change_presence(activity=discord.Activity(type=0, name=playing),
+                                                           status=discord.Status.dnd)
+                            times["playing"] = this
+                            if log:
+                                ch = logs.log_channel(self.bot, "playing")
+                                try:
+                                    await ch.send(f"{time.time()} > Updated playing to `{playing}` - "
+                                                  f"{a+1}/{len(plays)}")
+                                except discord.errors.HTTPException or ClientConnectorError:
+                                    print(f"{time.time()} > Updated playing to `{playing}`, "
+                                          f"but failed to send message.")
+                    hour = now.hour
+                    if ca:
+                        that, last = times['avatar']
+                        if hour != that:
+                            avatars = lists.avatars
+                            al = len(avatars)
+                            an = last + 1 if last < al - 1 else 0
+                            avatar = avatars[an]
+                            e = False
+                            s1, s2 = [f"{time.time()} > Avatar changed - {an+1}/{al}",
+                                      f"{time.time()} > Didn't change avatar cuz error"]
                             try:
-                                await ch.send(f"{time.time()} > Updated playing to `{playing}` - {a+1}/{len(plays)}")
-                            except discord.errors.HTTPException or ClientConnectorError:
-                                print(f"{time.time()} > Updated playing to `{playing}`, but failed to send message.")
-                hour = now.hour
-                if ca:
-                    that, last = times['avatar']
-                    if hour != that:
-                        avatars = lists.avatars
-                        al = len(avatars)
-                        an = last + 1 if last < al - 1 else 0
-                        avatar = avatars[an]
-                        e = False
-                        s1, s2 = [f"{time.time()} > Avatar changed - {an+1}/{al}",
-                                  f"{time.time()} > Didn't change avatar cuz error"]
-                        try:
-                            bio = await http.get(avatar, res_method="read")
-                            await self.bot.user.edit(avatar=bio)
-                            print(s1)
-                        except discord.errors.HTTPException:
-                            print(s2)
-                            e = True
-                        send = s2 if e else s1
-                        if log:
-                            await logs.log_channel(self.bot, "senko").send(send)
-                        times['avatar'] = [hour, an]
-                if cs:
-                    that, last = times['senko']
-                    if hour != that:
-                        senko_list = lists.server_icons
-                        ss = len(senko_list)
-                        sn = last + 1 if last < ss - 1 else 0
-                        senko = senko_list[sn]
-                        e = False
-                        s1, s2 = [f"{time.time()} > Rainbow Senko - {sn+1}/{ss}",
-                                  f"{time.time()} > Didn't change Senko Lair icon cuz error"]
-                        try:
-                            bio = await http.get(senko, res_method="read")
-                            senko_lair = await self.bot.fetch_guild(568148147457490954)
-                            await senko_lair.edit(icon=bio, reason="Rainbow Senko")
-                            print(s1)
-                        except discord.errors.HTTPException:
-                            print(s2)
-                            e = True
+                                bio = await http.get(avatar, res_method="read")
+                                await self.bot.user.edit(avatar=bio)
+                                print(s1)
+                            except discord.errors.HTTPException:
+                                print(s2)
+                                e = True
+                            send = s2 if e else s1
+                            if log:
+                                await logs.log_channel(self.bot, "senko").send(send)
+                            times['avatar'] = [hour, an]
+                    if cs:
+                        that, last = times['senko']
+                        if hour != that:
+                            senko_list = lists.server_icons
+                            ss = len(senko_list)
+                            sn = last + 1 if last < ss - 1 else 0
+                            senko = senko_list[sn]
+                            e = False
+                            s1, s2 = [f"{time.time()} > Rainbow Senko - {sn+1}/{ss}",
+                                      f"{time.time()} > Didn't change Senko Lair icon cuz error"]
+                            try:
+                                bio = await http.get(senko, res_method="read")
+                                senko_lair = await self.bot.fetch_guild(568148147457490954)
+                                await senko_lair.edit(icon=bio, reason="Rainbow Senko")
+                                print(s1)
+                            except discord.errors.HTTPException:
+                                print(s2)
+                                e = True
 
-                        send = s2 if e else s1
-                        if log:
-                            await logs.log_channel(self.bot, "senko").send(send)
-                        times['senko'] = [hour, sn]
-                open('changes.json', 'w+').write(json.dumps(times))
-            except PermissionError:
-                print(f"{time.time()} > Looks like I failed to save changes.. Weird")
-            except ClientConnectorError:
-                print(f"{time.time()} > Looks like the bot tried to do something before it was even connected.")
-            except Exception as e:
-                print(f"{time.time()} > {type(e).__name__}: {e}")
-            await asyncio.sleep(5)
+                            send = s2 if e else s1
+                            if log:
+                                await logs.log_channel(self.bot, "senko").send(send)
+                            times['senko'] = [hour, sn]
+                    open('changes.json', 'w+').write(json.dumps(times))
+                except PermissionError:
+                    print(f"{time.time()} > Looks like I failed to save changes.. Weird")
+                except ClientConnectorError:
+                    print(f"{time.time()} > Looks like the bot tried to do something before it was even connected.")
+                except Exception as e:
+                    print(f"{time.time()} > {type(e).__name__}: {e}")
+                await asyncio.sleep(5)
+
+    @commands.Cog.listener()
+    async def on_connect(self):
+        while not self.exists:
+            await asyncio.sleep(1)
+
+        if not hasattr(self.bot, 'uptime'):
+            self.bot.uptime = time.now(True)
+
+        await self.readiness()
+
+    @commands.Cog.listener()
+    async def on_disconnect(self):
+        self.exists = False
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.exists = True
+        await self.readiness()
 
 
 def setup(bot):
