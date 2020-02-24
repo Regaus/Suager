@@ -1,3 +1,5 @@
+from utils import time
+
 tbl_locations = [
     {
         "id": 1,
@@ -183,7 +185,7 @@ tbl_locations = [
         "desc_en": "Squads of the most brave and skilled squirrels head to the Challenge Heights to show what "
                    "they're capable of.",
         "desc_ru": "Отряды самых смелых и умелых белок направляются в Испытания, чтобы показать, на что они способны.",
-        "energy": 15,
+        "energy": 14,
         "araksan": [27, 35],
         "xp": [150, 210],
         "sh": 27,
@@ -202,7 +204,7 @@ tbl_locations = [
         "desc_en": "In the forest it's good to lose yourself behind the trunks of trees, hop on branches and "
                    "throw cones at each other.",
         "desc_ru": "В лесу хорошо потеряться за стволами, скакать по веткам и швырять друг в друга шишками.",
-        "energy": 17,
+        "energy": 15,
         "araksan": [32, 40],
         "xp": [200, 300],
         "sh": 32,
@@ -222,7 +224,7 @@ tbl_locations = [
                    "formed in the place of the ship.",
         "desc_ru": "Волей злодейки-судьбы метеорит упал прямо на Корабль Спасения. На месте корабля "
                    "образовалась Аномальная Зона.",
-        "energy": 20,
+        "energy": 16,
         "araksan": [40, 50],
         "xp": [250, 375],
         "sh": 40,
@@ -240,7 +242,7 @@ tbl_locations = [
         "en": "The Cave",
         "desc_en": "It's dark and scary here, but it doesn't bother some at all.",
         "desc_ru": "Здесь темно и страшно, но некоторых это ни капли не останавливает.",
-        "energy": 20,
+        "energy": 16,
         "araksan": [50, 70],
         "xp": [300, 450],
         "sh": 50,
@@ -253,6 +255,65 @@ tbl_locations = [
     },
     {
         "id": 14,
+        "name": "Na Lavgar Teinearit",
+        "ru": "Вулкан Теней",
+        "en": "The Volcano of Shadows",
+        "desc_en": "Although it hasn't erupted in a long while, there are legends that when it does, the entire "
+                   "sky will be covered in ash and you wouldn't be able to see anything.",
+        "desc_ru": "Хоть уже давно он не извергался, ходят легенды, что когда это происходит, все небо покроется "
+                   "пеплом и ничего не будет видно.",
+        "energy": 16,
+        "araksan": [60, 80],
+        "xp": [400, 600],
+        "sh": 60,
+        "points": [1500, 2250],
+        "level": 70,
+        "activity": [10, 26, 47, 96, 103, 37],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [550, 630],  # Avg. level completion time
+        "dr": 0.44,  # Death rate
+        "ll": 660,
+    },
+    {
+        "id": 15,
+        "name": "Na Setanna Kairella",
+        "ru": "Потонувший Корабль",
+        "en": "The Sunken Ship",
+        "desc_en": "Once upon a time, humans invented a ship. But something went wrong and it sank. Well, what did you "
+                   "expect from humans?",
+        "desc_ru": "Однажды люди изобрели корабль. Но что-то пошло не так, и он затонул... А что вы от людей ожидали?",
+        "energy": 17,
+        "araksan": [70, 90],
+        "xp": [500, 750],
+        "sh": 70,
+        "points": [1750, 2625],
+        "level": 80,
+        "activity": [6, 17, 21, 48, 51, 41],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [500, 660],  # Avg. level completion time
+        "dr": 0.46,  # Death rate
+        "ll": 750,
+    },
+    {
+        "id": 16,
+        "name": "Seinankara Leideat",
+        "ru": "Южные Льды",
+        "en": "Southern Ices",
+        "desc_en": "It's really cold... Why are they going there? What did the ice ever do to them, that they're so "
+                   "desperate to find out what's in this empty and frozen place?",
+        "desc_ru": "Очень холодно... Зачем они туда идут? Что им лед сделал, что они так сильно хотят узнать что "
+                   "находится что в этой пустоте замерзшей?",
+        "energy": 18,
+        "araksan": [85, 105],
+        "xp": [600, 900],
+        "sh": 85,
+        "points": [2000, 3000],
+        "level": 90,
+        "activity": [7, 13, 27, 57, 62, 39],  # Activity: 0:00 to 4:00 IST and so on
+        "act": [600, 800],  # Avg. level completion time
+        "dr": 0.47,  # Death rate
+        "ll": 840,
+    },
+    {
+        "id": 17,
         "name": "Saivakairella",
         "ru": "Корабль Спасения",
         "en": "The Ship of Salvation",
@@ -260,16 +321,73 @@ tbl_locations = [
                    "This is the only hope for salvation.",
         "desc_ru": "Ученые не сдались, и построили второй Корабль Спасения, чтобы сбежать с планеты. "
                    "Это единственная надежда на спасение.",
-        "energy": 25,
-        "araksan": [75, 90],
-        "xp": [450, 750],
-        "sh": 70,
-        "points": [1500, 2250],
-        "level": 70,
+        "energy": 19,
+        "araksan": [100, 150],
+        "xp": [750, 1000],
+        "sh": 100,
+        "points": [2500, 3750],
+        "level": 100,
         "activity": [75, 355, 750, 1215, 1073, 471],  # Activity: 0:00 to 4:00 IST and so on
-        "act": [400, 600],  # Avg. level completion time
+        "act": [600, 900],  # Avg. level completion time
         "dr": 0.27,  # Death rate
-        "ll": 660,
+        "ll": 900,
+    },
+    {
+        "id": 1001,
+        "name": "Eddarin Leise",
+        "ru": "",
+        "en": "Morning Forest",
+        "desc_en": "In this forest our cute and fluffy adventurers watch the sun rise and greet the new day.",
+        "desc_ru": "",
+        "energy": 5,
+        "araksan": [2, 3],
+        "xp": [11, 17],
+        "sh": 2,
+        "points": [15, 25],
+        "level": 0,
+        "activity": [0, 27, 150, 2, 0, 0],
+        "open": ["6:00", "12:00"],
+        "act": [40, 75],  # Avg. level completion time
+        "dr": 0.03,
+        "ll": 90,
+    },
+    {
+        "id": 1002,
+        "name": "Rialsanazdar",
+        "ru": "",
+        "en": "Evening Island",
+        "desc_en": "Squirrels enjoy watching the sunset on this island. Not gonna lie, the views are really beautiful.",
+        "desc_ru": "",
+        "energy": 5,
+        "araksan": [2, 3],
+        "xp": [11, 17],
+        "sh": 2,
+        "points": [15, 25],
+        "level": 0,
+        "activity": [0, 0, 1, 93, 211, 117],
+        "open": ["16:00", "0:00"],
+        "act": [40, 75],  # Avg. level completion time
+        "dr": 0.03,
+        "ll": 90,
+    },
+    {
+        "id": 1003,
+        "name": "Naidanbar",
+        "ru": "",
+        "en": "The Night Bar",
+        "desc_en": "The center of life for young squirrels at night. Why would you ever be sleeping at such times?",
+        "desc_ru": "",
+        "energy": 5,
+        "araksan": [2, 3],
+        "xp": [11, 17],
+        "sh": 2,
+        "points": [15, 25],
+        "level": 0,
+        "activity": [105, 77, 0, 0, 0, 1],
+        "open": ["0:00", "6:00"],
+        "act": [40, 75],  # Avg. level completion time
+        "dr": 0.03,
+        "ll": 90,
     },
     {
         "id": -1,
@@ -278,22 +396,31 @@ tbl_locations = [
         "en": "<Redacted>",
         "desc_en": "Nobody knows what's going on here.",
         "desc_ru": "Никто не знает, что здесь происходит.",
-        "energy": 25,
-        "araksan": [100, 100],
-        "xp": [700, 1000],
+        "energy": 20,
+        "araksan": [150, 150],
+        "xp": [1000, 1000],
         "sh": 100,
-        "points": [2000, 2000],
+        "points": [4000, 4000],
         "level": 201,
         "activity": [1, 7, 22, 121, 97, 29],  # Activity: 0:00 to 4:00 IST and so on
-        "act": [500, 750],  # Avg. level completion time
-        "dr": 0.07,  # Death rate
-        "ll": 750,
+        "act": [900, 1120],  # Avg. level completion time
+        "dr": 0.11,  # Death rate
+        "ll": 1200,
     },
 ]
 
 
-def gls(val: str):
-    lang = "en"
+def get_activity(activity: list):
+    """ Get location's current activity """
+    now = time.now()
+    hour = now.hour
+    al = len(activity)
+    four = int(hour / 4)
+    rest = hour % 4
+    return (activity[four] * rest + activity[(four + 1) % al] * (4 - rest)) / 4
+
+
+def gls(val: str, lang: str = "en"):
     if lang == "en":
         tr = {
             "Новичок": "Newbie",

@@ -358,7 +358,7 @@ async def aqos_game(db, ctx):
             oap = round_value((data['level']-1)/1440*100)
             db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                      ctx.author.id, "aqos"))
-            md = f"{time.time()} > {ctx.author.name} > Aqos Normality Mode\nEnergy used: {used}\n" \
+            md = f"{time.time()} > {ctx.author.name} > Aqos Normal Mode\nEnergy used: {used:,}\n" \
                  f"Time taken: {elapsed}\nLevel: **{data['level']:,}/{lr:,}**\nProgress: Current Level - **{clp}%** | "\
                  f"Normal Mode - **{oap}%**\nScore: **{value_string(data['score'], big=True)}**\nXP: **" \
                  f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
@@ -429,7 +429,7 @@ async def aqos_game(db, ctx):
             db.execute(aqos_update,
                        (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                         ctx.author.id, "aqos"))
-            md = f"{time.time()} > {ctx.author.name} > Aqos Infinite Mode\nEnergy used: {used}\nTime taken: " \
+            md = f"{time.time()} > {ctx.author.name} > Aqos Infinite Mode\nEnergy used: {used:,}\nTime taken: " \
                  f"{elapsed}\nLevel: **{data['level']:,}/{aqos_iml:,}**\nProgress: Current Level - **{clp}%** | " \
                  f"Overall - **{oap}%**\nScore: **{value_string(data['score'], big=True)}**\nXP: **" \
                  f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
