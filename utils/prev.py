@@ -65,9 +65,9 @@ async def eval_(ctx, cmd):
             return await ctx.send(f"Result was a bit too long... ({len(result):,} chars)",
                                   file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
     elif len(str(result)) > 8000000:
-        return await ctx.send(f"Result was way too long... ({len(result):,} chars)")
+        return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
     else:
-        return await ctx.send(result)
+        return await ctx.send(str(result))
 
 
 async def eval_cmd(ctx, cmd):

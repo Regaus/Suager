@@ -1,16 +1,13 @@
-import discord
 from discord.ext import commands
-
-from utils import bias, sqlite
 
 
 class Testing(commands.Cog):
     @commands.command(name="placeholder", hidden=True)
     @commands.cooldown(rate=1, per=1, type=commands.BucketType.user)
-    async def placeholder(self, ctx, *, who: discord.Member = None):
+    async def placeholder(self, ctx):
         """ Relative Time Delta """
-        user = who or ctx.author
-        return await ctx.send("Fuck off, command not in use. " + str(bias.get_bias(sqlite.Database(), user)))
+        return await ctx.send("Fuck off, command not in use. ")
+        # return await ctx.send("Fuck off, command not in use. " + str(bias.get_bias(sqlite.Database(), user)))
 
 
 def setup(bot):

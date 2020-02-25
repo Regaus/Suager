@@ -6,7 +6,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from utils import sqlite, time, bias, permissions
+from utils import sqlite, time, permissions, tbl
 from utils.generic import value_string, round_value, random_colour
 
 soon = "Coming Soon\u005c\u2122"
@@ -86,9 +86,9 @@ class Games(commands.Cog):
         """ XP required to reach a level """
         if level > aqos_ml or level < aqos_ml * -1 + 1:
             return await ctx.send(f"The max level is {aqos_ml}.")
-        biased = bias.get_bias(self.db, ctx.author)
+        # biased = bias.get_bias(self.db, ctx.author)
         try:
-            xp = levels('aqos', biased)[level - 1]
+            xp = levels('aqos')[level - 1]
         except IndexError:
             return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {aqos_ml}, btw.")
         needed = value_string(xp, big=True)
@@ -168,7 +168,7 @@ aqos_kpr = 0.7  # KP to XP rate
 # SPP, LES, LL, BRL, KI and KP in Infinity Mode will depend on your level.
 
 
-def levels(which: str, multipliers: int or float = 1):
+def levels(which: str):
     if which == "aqos":  # Aqos Leveling System
         r = 0
         xp = []
@@ -178,9 +178,9 @@ def levels(which: str, multipliers: int or float = 1):
             else:
                 power = 3 + (x - 500) / 1000
             base = 2.7 * x ** power + 30 * x ** 2 + 750 * x + 2000  # 1 KI = 0.7 XP
-            too_bad = 1 / multipliers  # Imagine needing more XP just cuz the bot doesn't like you as much
-            val = base * too_bad
-            r += val
+            # too_bad = 1 / multipliers  # Imagine needing more XP just cuz the bot doesn't like you as much
+            # val = base * too_bad
+            r += base  # Removed bias
             xp.append(r)
         return xp
 
@@ -274,7 +274,7 @@ async def aqos_game(db, ctx):
         data['time'] = now
         normal = data['level'] <= 1440
         etu = int(data['energy'])  # Energy to use
-        bv = bias.get_bias(db, ctx.author)  # Bias Value
+        # bv = bias.get_bias(db, ctx.author)  # Bias Value
         if etu < 1:
             db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                                      ctx.author.id, "aqos"))
@@ -331,8 +331,8 @@ async def aqos_game(db, ctx):
                 spp1, spp2 = aqos_spp[p]
                 rs = [random.randint(spp1, spp2) for _ in range(10)]
                 for val in rs:
-                    data['score'] += (ki / 10) * val * bv
-                data['xp'] += kp * aqos_kpr * bv
+                    data['score'] += (ki / 10) * val
+                data['xp'] += kp * aqos_kpr
                 if new > le + 2:
                     le = new
                     elapsed = time.human_timedelta(now_dt, accuracy=2, suffix=False)
@@ -341,7 +341,7 @@ async def aqos_game(db, ctx):
                          f"(XP Level {data['xp_level']:,})\nElapsed: {elapsed}"
                     await message.edit(content=md)
                 await asyncio.sleep(wait)
-            xpr = levels('aqos', bv)
+            xpr = levels('aqos')
             data['xp_level'] = aqos_xpl(data['xp'], xpr)
             p, s = get_part(data['level'])
             lr = (p * 4 + s + 1) * 72
@@ -387,13 +387,15 @@ async def aqos_game(db, ctx):
                     s1, s2 = aqos_ils
                     s1 += data['level']
                     s2 += data['level']
-                    data['score'] += int(round(random.randint(s1, s2), -2))
-                    if data['level'] % 10 == 0:
-                        b1, b2 = int(s1 ** 0.7), int(s2 ** 0.7)
-                        bl = 61 + int(data['level'] / 100)
-                        for j in range(bl):
-                            data['score'] += int(round(random.randint(b1, b2), -2))
-                            await asyncio.sleep(wait)
+                    ls = int(round(random.randint(s1, s2), -2))
+                    bs = (ls ** 0.7) * (61 + int(data['level'] / 100))
+                    data['score'] += ls + bs
+                    # if data['level'] % 10 == 0:
+                    #     b1, b2 = int(s1 ** 0.7), int(s2 ** 0.7)
+                    #     bl = 61 + int(data['level'] / 100)
+                    #     for j in range(bl):
+                    #         data['score'] += int(round(random.randint(b1, b2), -2))
+                    #         await asyncio.sleep(wait)
                     lr = 1440 * 6 + data['level']
                     data['lr'] = random.randint(lr - 100, lr + 100)
                 ki = int(data['level'] / 1.5)
@@ -403,8 +405,8 @@ async def aqos_game(db, ctx):
                 sp = int(data['level'] / 2.5)
                 rs = [random.randint(sp - 100, sp + 100) for _ in range(10)]
                 for val in rs:
-                    data['score'] += (ki / 10) * val * bv
-                data['xp'] += kp * aqos_kpr * bv
+                    data['score'] += (ki / 10) * val
+                data['xp'] += kp * aqos_kpr
                 if new > le + 2:
                     le = new
                     elapsed = time.human_timedelta(now_dt, accuracy=2, suffix=False)
@@ -413,7 +415,7 @@ async def aqos_game(db, ctx):
                          f"(XP Level {data['xp_level']:,})\nElapsed: {elapsed}"
                     await message.edit(content=md)
                 await asyncio.sleep(wait)
-            xpr = levels('aqos', bv)
+            xpr = levels('aqos')
             data['xp_level'] = aqos_xpl(data['xp'], xpr)
             el = max_energy(data['level'], data['score'])
             er = energy_regen(data['level'], data['xp_level'], el)
@@ -450,3 +452,38 @@ def aqos_xpl(xp, xpr):
         else:
             break
     return level
+
+
+tbl_player = {
+    "level": 1,
+    "xp": 0,
+    "araksan": 150,
+    "coins": 5,
+    "sh_level": 1,
+    "sh_xp": 0,
+    "mana": 0,
+    "dr_day": 0,  # Daily Reward Day
+    "dr_ll": 0,   # Daily Reward Last Login
+    "energy": 0,
+    "time": 0,
+    "potion_energy": 0,
+    "potion_mana": 0,
+    "secret_mode": 0,
+    "league": 0,
+    "used": 0,
+    "sh": 0,
+    "2001": 0,  # How many times you went to visit Senko (2001)
+    "2002": 0,  # How many times you went to the Warm Lands (2002)
+    "timed": 0,  # How many times you went to timed locations (1001+)
+    "revival": 0,  # Time since last free reincarnation used (from clan)
+}
+tbl_clan = {
+    "level": 1,
+    "xp": 0,
+    "temples": [0, 0, 0],
+    "expiry": [0, 0, 0],
+    "skill_points": 0,
+    "araksan": 0,
+    "coins": 0,
+    "temple_levels": [1] * len(tbl.tbl_totems),
+}

@@ -4,7 +4,7 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import bias, generic, emotes, sqlite
+from utils import generic, emotes, sqlite
 
 
 class Ratings(commands.Cog):
@@ -61,18 +61,18 @@ class Ratings(commands.Cog):
         step1 = int(round(random.random() * 100))
         step2 = int(round(random.random() * 20))
         step3 = step1 / (107 + step2) * 100
-        step4 = bias.friend_bias(self.db, user)
-        step5 = step3 * step4
-        step6 = 100 if step5 > 100 else step5
-        if 0 < step6 < 33:
+        # step4 = bias.friend_bias(self.db, user)
+        # step5 = step3 * step4
+        # tep6 = 100 if step5 > 100 else step5
+        if 0 < step3 < 33:
             emote = "<:sadcat:620306629124161536>"
-        elif 33 <= step6 < 67:
+        elif 33 <= step3 < 67:
             emote = "<:lul:568168505543753759>"
         else:
             emote = "<:pog:610583684663345192>"
         message = await ctx.send(f"{emotes.Loading} Checking how hot {user.name} is...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"**{user.name}** is **{step6:.2f}%** hot {emote}")
+        return await message.edit(content=f"**{user.name}** is **{step3:.2f}%** hot {emote}")
 
     @commands.command(name="iq")
     async def iq_test(self, ctx, *, who: discord.Member = None):
@@ -80,8 +80,8 @@ class Ratings(commands.Cog):
         user = who or ctx.author
         random.seed(user.id)
         ri = random.randint(127, 255)
-        b = bias.get_bias(self.db, user)
-        r = ri * b / 1.17
+        # b = bias.get_bias(self.db, user)
+        r = ri / 1.17
         msg = await ctx.send(f"{emotes.Loading} Checking {user.name}'s IQ...")
         await asyncio.sleep(3)
         return await msg.edit(content=f"**{user.name}'s** IQ is **{r:,.2f}**")

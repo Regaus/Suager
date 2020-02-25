@@ -3,7 +3,8 @@ import random
 
 import discord
 from discord.ext import commands
-from utils import sqlite, time, bias, permissions
+
+from utils import sqlite, time
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 2500
@@ -28,20 +29,9 @@ settings_template = {
 }
 
 
-def levels(bias_value: float, server_default: float):
+def levels():
     req = 0
     xp = []
-    if bias_value < 1:
-        oh = 1 / bias_value
-    else:
-        bv = bias_value - 1
-        oh = 1 / (1 + bv / 4)
-    if server_default < 1:
-        ah = 1
-    else:
-        sd = server_default - 1
-        ah = 1 + sd / 3
-    tm = oh * ah
     # print(f"{tm=}, {bias_value=}, {server_default=}")
     for x in range(max_level):
         if x < 50:
@@ -51,9 +41,7 @@ def levels(bias_value: float, server_default: float):
         else:
             power = 3 + (x - 100) / 800
         base = x ** power + 4 * x ** 2 + 250 * x + 500
-        tm = 0.2 if tm < 0.2 else tm
-        total = base * tm
-        req += total
+        req += base
         xp.append(req)
     return xp
 
@@ -101,17 +89,16 @@ class Leveling(commands.Cog):
         # x1 = 2000 if x1 > 2000 else x1
         # x2 = 2000 if x2 > 2000 else x2
         base_mult = level_mult(level)
-        biased = bias.get_bias(self.db, ctx.author)
+        # biased = bias.get_bias(self.db, ctx.author)
         try:
             sm = float(settings['leveling']['xp_multiplier'])
             sm = 0 if sm < 0 else sm if sm < 10 else 10
         except KeyError:
             sm = 1
-        new = random.randint(x1, x2) * base_mult * biased * sm
-        new = 2000 if new > 2000 else new
+        new = random.randint(x1, x2) * base_mult * sm
         new = 0 if ctx.author.id == 592345932062916619 else new
         xp += new
-        requirements = levels(biased, sm)
+        requirements = levels()
         lu = False
         while level < max_level and xp >= requirements[level]:
             level += 1
@@ -237,10 +224,10 @@ class Leveling(commands.Cog):
             embed.add_field(name="Experience", value="**More than you**", inline=False)
             embed.add_field(name="Level", value="Higher than yours", inline=False)
         else:
-            biased = bias.get_bias(self.db, user)
+            # biased = bias.get_bias(self.db, user)
             r1 = f"{xp:,.0f}"
             if level < max_level:
-                yes = levels(biased, dm)   # All levels
+                yes = levels()   # All levels
                 req = int(yes[level])  # Requirement to next level
                 re = req - xp
                 r2 = f"{req:,.0f}"
@@ -255,11 +242,8 @@ class Leveling(commands.Cog):
                 embed.add_field(name="Experience", value=f"**{r1}**", inline=False)
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
             base = level_mult(level)
-            x1, x2 = [val * base * biased * dm for val in level_xp]
-            x1 = 2000 if x1 > 2000 else x1
-            x2 = 2000 if x2 > 2000 else x2
-            embed.add_field(name="Multipliers", inline=False,
-                            value=f"XP multiplier: {base * biased * dm:.2f}\nXP per message: {x1:.2f}-{x2:.2f}")
+            x1, x2 = [val * base * dm for val in level_xp]
+            embed.add_field(name="XP per message", inline=False, value=f"{x1:.2f}-{x2:.2f}")
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
 
     @commands.command(name="xplevel")
@@ -268,7 +252,7 @@ class Leveling(commands.Cog):
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
         normal = level_mult(level)
-        biased = bias.get_bias(self.db, ctx.author)
+        # biased = bias.get_bias(self.db, ctx.author)
         _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not _settings:
             dm = 1
@@ -279,12 +263,10 @@ class Leveling(commands.Cog):
             except KeyError:
                 dm = 1
         try:
-            xp = levels(biased, dm)[level - 1]
+            xp = levels()[level - 1]
         except IndexError:
             return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {max_level}, btw.")
-        x1, x2 = [val * normal * biased * dm for val in level_xp]
-        x1 = 2000 if x1 > 2000 else x1
-        x2 = 2000 if x2 > 2000 else x2
+        x1, x2 = [val * normal * dm for val in level_xp]
         needed = value_string(xp, big=True)
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need "
                               f"**{needed} XP**\nBy then, you'll be getting **{x1:,.2f}-{x2:,.2f} XP** per message")
@@ -307,8 +289,8 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         r1 = f"{xp:,.0f}"
-        biased = bias.get_bias(self.db, ctx.author)
-        yes = levels(biased, dm)
+        # biased = bias.get_bias(self.db, ctx.author)
+        yes = levels()
         r, p = [int(yes[level]), int(yes[level-1])]
         re = r - xp
         r2 = f"{r:,.0f}"
@@ -317,9 +299,7 @@ class Leveling(commands.Cog):
         r4 = round_value(pr * 100)
         r5 = f"{level + 1:,}"
         normal = level_mult(level)
-        x1, x2 = [val * normal * biased * dm for val in level_xp]
-        x1 = 2000 if x1 > 2000 else x1
-        x2 = 2000 if x2 > 2000 else x2
+        x1, x2 = [val * normal * dm for val in level_xp]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         m1, m2 = [f"{a1:,.0f}", f"{a2:,.0f}"]
         return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
@@ -397,21 +377,21 @@ class Leveling(commands.Cog):
                 block += f"{str(i).zfill(2)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
             return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
 
-    @commands.command(name="addxp")
-    @commands.guild_only()
-    @permissions.has_permissions(manage_server=True)
-    async def add_xp(self, ctx, user: discord.Member, amount: float):
-        """ Add XP to a user """
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (user.id, ctx.guild.id))
-        xp = data['xp'] if data else 0
-        xp += amount
-        if data:
-            yes = self.db.execute("UPDATE leveling SET level=0, xp=? WHERE user_id=? AND guild_id=?",
-                                  (xp, user.id, ctx.guild.id))
-        else:
-            yes = self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                  (user.id, ctx.guild.id, 0, xp, 0, user.name, user.discriminator))
-        return await ctx.send(f"Added {amount:,.0f} XP to {user.name} in {ctx.guild.name}.\n{yes}")
+    # @commands.command(name="addxp")
+    # @commands.guild_only()
+    # @permissions.has_permissions(manage_server=True)
+    # async def add_xp(self, ctx, user: discord.Member, amount: float):
+    #     """ Add XP to a user """
+    #     data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (user.id, ctx.guild.id))
+    #     xp = data['xp'] if data else 0
+    #     xp += amount
+    #     if data:
+    #         yes = self.db.execute("UPDATE leveling SET level=0, xp=? WHERE user_id=? AND guild_id=?",
+    #                               (xp, user.id, ctx.guild.id))
+    #     else:
+    #         yes = self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
+    #                               (user.id, ctx.guild.id, 0, xp, 0, user.name, user.discriminator))
+    #     return await ctx.send(f"Added {amount:,.0f} XP to {user.name} in {ctx.guild.name}.\n{yes}")
 
 
 def setup(bot):

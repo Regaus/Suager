@@ -2,7 +2,8 @@ import random
 
 import discord
 from discord.ext import commands
-from utils import sqlite, time, bias
+
+from utils import sqlite, time
 from utils.generic import value_string, random_colour, get_config
 
 money_amounts = [50, 100]
@@ -27,8 +28,8 @@ class Economy(commands.Cog):
         if last > now - 60:
             return
         x1, x2 = money_amounts
-        biased = bias.get_bias(self.db, ctx.author)
-        new = random.randint(x1, x2) * biased
+        # biased = bias.get_bias(self.db, ctx.author)
+        new = random.randint(x1, x2)
         xp += new
         if data:
             self.db.execute("UPDATE economy SET money=?, last_time=?, name=?, disc=? "

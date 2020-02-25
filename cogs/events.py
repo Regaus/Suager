@@ -252,22 +252,27 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_connect(self):
-        while not self.exists:
-            await asyncio.sleep(1)
+        # while not self.exists:
+        #     await asyncio.sleep(1)
 
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(True)
+
+        print(f"{time.time()} > Connection established.")
 
         await self.readiness()
 
     @commands.Cog.listener()
     async def on_disconnect(self):
         self.exists = False
+        print(f"{time.time()} > My life is over")
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.exists = True
-        await self.readiness()
+        # await self.readiness()
+
+        # print(f"{time.time()} > I am ready to abuse your mind")
 
 
 def setup(bot):

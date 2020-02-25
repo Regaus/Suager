@@ -64,8 +64,11 @@ tbl_locations = [
         "name": "Havazdallarigar",
         "ru": "Хвостоград",
         "en": "Tail Town",
-        "desc_en": "Not yet available",
-        "desc_ru": "Недоступно",
+        "desc_en": "So far the most successful squirrel city. Most business happens in here, although you wouldn't "
+                   "find those who choose to go the path of adventure and decide to prepare for the upcoming "
+                   "catastrophe here.",
+        "desc_ru": "На данный момент самый успешный беличий город. Большинство бизнеса здесь, но вряд ли ты здесь "
+                   "найдешь тех, кто пошли по пути приключения, и готовятся к наступающей катастрофе.",
         "energy": 10,
         "araksan": [9, 11],
         "xp": [50, 75],
@@ -335,10 +338,10 @@ tbl_locations = [
     {
         "id": 1001,
         "name": "Eddarin Leise",
-        "ru": "",
+        "ru": "Утренний Лес",
         "en": "Morning Forest",
         "desc_en": "In this forest our cute and fluffy adventurers watch the sun rise and greet the new day.",
-        "desc_ru": "",
+        "desc_ru": "В этом лесу наши милые и пушистые путешественники встречают восход солнца и приход нового дня.",
         "energy": 5,
         "araksan": [2, 3],
         "xp": [11, 17],
@@ -346,7 +349,7 @@ tbl_locations = [
         "points": [15, 25],
         "level": 0,
         "activity": [0, 27, 150, 2, 0, 0],
-        "open": ["6:00", "12:00"],
+        "open": [6, 12],
         "act": [40, 75],  # Avg. level completion time
         "dr": 0.03,
         "ll": 90,
@@ -354,10 +357,10 @@ tbl_locations = [
     {
         "id": 1002,
         "name": "Rialsanazdar",
-        "ru": "",
+        "ru": "Вечерний Остров",
         "en": "Evening Island",
         "desc_en": "Squirrels enjoy watching the sunset on this island. Not gonna lie, the views are really beautiful.",
-        "desc_ru": "",
+        "desc_ru": "Белкам нравится смотреть заход на этом острове. Не буду врать, вид действительно красивый.",
         "energy": 5,
         "araksan": [2, 3],
         "xp": [11, 17],
@@ -365,18 +368,18 @@ tbl_locations = [
         "points": [15, 25],
         "level": 0,
         "activity": [0, 0, 1, 93, 211, 117],
-        "open": ["16:00", "0:00"],
+        "open": [16, 24],
         "act": [40, 75],  # Avg. level completion time
         "dr": 0.03,
         "ll": 90,
     },
     {
         "id": 1003,
-        "name": "Naidanbar",
-        "ru": "",
+        "name": "Naidanbaar",
+        "ru": "Ночной Бар",
         "en": "The Night Bar",
         "desc_en": "The center of life for young squirrels at night. Why would you ever be sleeping at such times?",
-        "desc_ru": "",
+        "desc_ru": "Центр жизни беличьей молодежи. Зачем кому-либо спать в такое время дня, а?",
         "energy": 5,
         "araksan": [2, 3],
         "xp": [11, 17],
@@ -384,10 +387,48 @@ tbl_locations = [
         "points": [15, 25],
         "level": 0,
         "activity": [105, 77, 0, 0, 0, 1],
-        "open": ["0:00", "6:00"],
+        "open": [0, 6],
         "act": [40, 75],  # Avg. level completion time
         "dr": 0.03,
         "ll": 90,
+    },
+    {
+        "id": 2001,
+        "name": "Senka'de Senterra",
+        "ru": "Церковь Сенко",
+        "en": "Church of Senko",
+        "desc_en": "Everyone is a squirrel. Senko is a fox. Guess that makes sense.",
+        "desc_ru": "Все тут белки, а Сенко - лиса. Видимо, смысл в этом какой-то есть.",
+        "energy": 0,
+        "araksan": [0, 0],
+        "xp": [0, 0],
+        "sh": 0,
+        "points": [0, 0],
+        "level": 0,
+        "activity": [15, 17, 21, 22, 22, 16],
+        "act": [60, 60],  # Avg. level completion time
+        "dr": 0.00,
+        "ll": 60,
+    },
+    {
+        "id": 2002,
+        "name": "Tevillaria",
+        "ru": "Теплые Земли",
+        "en": "Warm Lands",
+        "desc_en": "Have a rest, you work hard enough! It's warm here, regardless of the current season everywhere "
+                   "else! Relax where ever you want.",
+        "desc_ru": "Отдохни, ты и так работаешь достаточно усердно! Здесь тепло, вне зависимости от времени года! "
+                   "Расслабляйся где угодно сколько хочешь.",
+        "energy": 0,
+        "araksan": [0, 0],
+        "xp": [0, 0],
+        "sh": 0,
+        "points": [0, 0],
+        "level": 2,
+        "activity": [9, 21, 47, 101, 122, 72],
+        "act": [60, 60],  # Avg. level completion time
+        "dr": 0.00,
+        "ll": 60,
     },
     {
         "id": -1,
@@ -418,6 +459,46 @@ def get_activity(activity: list):
     four = int(hour / 4)
     rest = hour % 4
     return (activity[four] * rest + activity[(four + 1) % al] * (4 - rest)) / 4
+
+
+tbl_totems = [
+    {
+        "name": "Totem of Life Power",
+        "desc": "Through whatever means, lets you revive for free once in <val> in-game minutes.",
+        "name_ru": "Тотем Силы Жизни",
+        "desc_ru": "Какими-то способами дает тебе возродится раз в <val> игровых минут.",
+    },
+    {
+        "name": "Totem of Growth",
+        "desc": "Creates <val>% more Araksan for you.",
+        "name_ru": "Тотем Роста",
+        "desc_ru": "Создает на <val>% больше орехов.",
+    },
+    {
+        "name": "Totem of Coolness",
+        "desc": "Get <val>% more XP - become cool faster.",
+        "name_ru": "Тотем Крутости",
+        "desc_ru": "Получаешь на <val>% больше опыта - быстрее становишься крутым.",
+    },
+    {
+        "name": "Totem of Shamanery",
+        "desc": "You are a cool shaman, you get <val>% Shaman XP",
+        "name_ru": "Тотем Шаманства",
+        "desc_ru": "Ты - крутой шаман. За это ты получаешь на <val>% больше опыта шамана.",
+    },
+    {
+        "name": "Totem of Senko",
+        "desc": "Now at least one person cares about you.\nNo real effect.",
+        "name_ru": "Тотем Сенко",
+        "desc_ru": "Теперь хотя бы один человек заботится о тебе.\nНет эффекта.",
+    },
+    {
+        "name": "Totem of Cthulhu",
+        "desc": "Well, uh.. Sure, why not?\nNo real effect.",
+        "name_ru": "Тотем Ктулху",
+        "desc_ru": "Ну а почему бы и нет?\nНет эффекта.",
+    },
+]
 
 
 def gls(val: str, lang: str = "en"):
@@ -1131,35 +1212,3 @@ xp_levels = [
         "title": gls("Чокнутый")
     }
 ]
-
-
-tbl_player = {
-    "level": 1,
-    "xp": 0,
-    "araksan": 150,
-    "coins": 5,
-    "sh_level": 1,
-    "sh_xp": 0,
-    "mana": 0,
-    "dr_day": 0,  # Daily Reward Day
-    "dr_ll": 0,   # Daily Reward Last Login
-    "energy": 0,
-    "time": 0,
-    "potion_energy": 0,
-    "potion_mana": 0,
-    "secret_mode": 0,
-    "league": 0,
-    "used": 0,
-    "sh": 0,
-}
-tbl_clan = {
-    "level": 1,
-    "xp": 0,
-    "temples": [0, 0, 0],
-    "expiry": [0, 0, 0],
-    "skill_points": 0,
-    "araksan": 0,
-    "coins": 0,
-    "temple_levels": [],
-    "bcd": 0,  # Black Shaman (Reincarnation) сooldown
-}
