@@ -12,7 +12,7 @@ from cogs.genders import genders
 from utils import generic, time, logs, lists, http
 from utils.emotes import AlexHeartBroken
 
-changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1]}
+changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False}
 
 
 class Events(commands.Cog):
@@ -21,7 +21,7 @@ class Events(commands.Cog):
         self.config = generic.get_config()
         self.process = psutil.Process(os.getpid())
         self.exists = False
-        self.ad = False
+        # self.ad = False
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
@@ -152,11 +152,19 @@ class Events(commands.Cog):
             await logs.log_channel(self.bot, "uptime").send(send)
             # await log_channel.send(f"{statuses.time_output()} - Server is online")
         await self.bot.get_channel(577599230567383058).send(send)
-        if self.ad:
+        try:
+            # times = json.loads('changes.json')
+            times = json.loads(open('changes.json', 'r').read())
+        except Exception as e:
+            print(e)
+            times = changes.copy()
+        ad = times['ad']
+        if ad:
             print("Detected that I'm already doing the loop...")
             return
         else:
-            self.ad = True
+            times['ad'] = True
+            open('changes.json', 'w+').write(json.dumps(times))
             cp = self.config.changeplaying
             ca = self.config.changeavatars
             cs = self.config.changesenkolair

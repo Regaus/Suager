@@ -4,6 +4,7 @@ import sys
 
 import discord
 
+from cogs.events import changes
 from utils import generic, time, botdata, create_tables, sqlite
 
 config = generic.get_config()
@@ -52,11 +53,20 @@ async def get_prefix(_bot, ctx):
     return default + dp + cp
 
 
+# try:
+#     files = os.listdir(generic.prefixes)
+# except FileNotFoundError:
+#     os.mkdir('data')
+#     os.mkdir(generic.prefixes)
+
 try:
-    files = os.listdir(generic.prefixes)
-except FileNotFoundError:
-    os.mkdir('data')
-    os.mkdir(generic.prefixes)
+    # times = json.loads('changes.json')
+    times = json.loads(open('changes.json', 'r').read())
+except Exception as e:
+    print(e)
+    times = changes.copy()
+times['ad'] = False
+open('changes.json', 'w+').write(json.dumps(times))
 
 
 bot = botdata.Bot(command_prefix=get_prefix, prefix=config.prefix, command_attrs=dict(hidden=True),
