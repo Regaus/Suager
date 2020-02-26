@@ -83,6 +83,11 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command(self, ctx):
+        # Some shitfuckery below
+        now = time.now().hour
+        if ctx.author.id == 302851022790066185:  # Me
+            if now >= 23 or now < 7:
+                await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
         try:
             g = ctx.guild.name
         except AttributeError:
@@ -92,11 +97,6 @@ class Events(commands.Cog):
         if self.config.logs:
             await logs.log_channel(self.bot).send(send)
         print(send)
-        # Some shitfuckery below
-        now = time.now().hour
-        if ctx.author.id == 302851022790066185:  # Me
-            if now >= 23 or now < 7:
-                await ctx.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
