@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import random
 from datetime import datetime
 
 import discord
@@ -9,7 +10,7 @@ from aiohttp import ClientConnectorError
 from discord.ext import commands
 
 from cogs.genders import genders
-from utils import generic, time, logs, lists, http
+from utils import generic, time, logs, lists, http, emotes
 from utils.emotes import AlexHeartBroken
 
 changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False}
@@ -91,6 +92,11 @@ class Events(commands.Cog):
         if self.config.logs:
             await logs.log_channel(self.bot).send(send)
         print(send)
+        # Some shitfuckery below
+        now = time.now().hour
+        if ctx.author.id == 302851022790066185:  # Me
+            if now >= 23 or now < 7:
+                await ctx.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -160,7 +166,7 @@ class Events(commands.Cog):
             times = changes.copy()
         ad = times['ad']
         if ad:
-            print("Detected that I'm already doing the loop...")
+            print(f"{time.time()} > Detected that I'm already doing the loop...")
             return
         else:
             times['ad'] = True
@@ -260,25 +266,23 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_connect(self):
-        # while not self.exists:
-        #     await asyncio.sleep(1)
-
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(True)
 
         print(f"{time.time()} > Connection established.")
 
-        await self.readiness()
+        # await self.readiness()
 
     @commands.Cog.listener()
     async def on_disconnect(self):
         self.exists = False
-        print(f"{time.time()} > My life is over")
+        phrases = ["My life is over", "UwU, not again!"]
+        print(f"{time.time()} > {random.choice(phrases)}")
 
     @commands.Cog.listener()
     async def on_ready(self):
         self.exists = True
-        # await self.readiness()
+        await self.readiness()
 
         # print(f"{time.time()} > I am ready to abuse your mind")
 

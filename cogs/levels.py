@@ -7,9 +7,9 @@ from discord.ext import commands
 from utils import sqlite, time
 from utils.generic import random_colour, value_string, round_value
 
-max_level = 2500
+max_level = 5000
 level_xp = [12, 17]
-level_mr = [{'min': -1, 'max': 2147483647, 'val': 0.01}]  # Multiplier Rise for level between 0 and 15
+# level_mr = [{'min': -1, 'max': 2147483647, 'val': 0.01}]  # Multiplier Rise for level between 0 and 15
 # {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
 # {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
 settings_template = {
@@ -34,25 +34,23 @@ def levels():
     xp = []
     # print(f"{tm=}, {bias_value=}, {server_default=}")
     for x in range(max_level):
-        if x < 50:
+        if x < 500:
             power = 2
-        elif 50 <= x < 100:
-            power = 2 + (x - 50) / 50
         else:
-            power = 3 + (x - 100) / 800
-        base = x ** power + 4 * x ** 2 + 250 * x + 500
+            power = 2 + (x - 100) / 900
+        base = x ** power + x ** 2 + 100 * x + 200
         req += base
         xp.append(req)
     return xp
 
 
-def level_mult(level):
-    mult = 1
-    for lvl in range(level):
-        for data in level_mr:
-            if data['min'] < lvl <= data['max']:
-                mult += data['val']
-    return mult
+# def level_mult(level):
+    # mult = 1
+    # for lvl in range(level):
+    #     for data in level_mr:
+    #         if data['min'] < lvl <= data['max']:
+    #             mult += data['val']
+    # return mult
 
 
 class Leveling(commands.Cog):
@@ -88,7 +86,7 @@ class Leveling(commands.Cog):
         x1, x2 = level_xp
         # x1 = 2000 if x1 > 2000 else x1
         # x2 = 2000 if x2 > 2000 else x2
-        base_mult = level_mult(level)
+        base_mult = 1
         # biased = bias.get_bias(self.db, ctx.author)
         try:
             sm = float(settings['leveling']['xp_multiplier'])
@@ -241,7 +239,7 @@ class Leveling(commands.Cog):
             else:
                 embed.add_field(name="Experience", value=f"**{r1}**", inline=False)
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
-            base = level_mult(level)
+            base = 1
             x1, x2 = [val * base * dm for val in level_xp]
             embed.add_field(name="XP per message", inline=False, value=f"{x1:.2f}-{x2:.2f}")
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
@@ -251,7 +249,7 @@ class Leveling(commands.Cog):
         """ XP required to achieve a level """
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
-        normal = level_mult(level)
+        normal = 1
         # biased = bias.get_bias(self.db, ctx.author)
         _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not _settings:
@@ -298,7 +296,7 @@ class Leveling(commands.Cog):
         pr = (xp - p) / (r - p)
         r4 = round_value(pr * 100)
         r5 = f"{level + 1:,}"
-        normal = level_mult(level)
+        normal = 1
         x1, x2 = [val * normal * dm for val in level_xp]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         m1, m2 = [f"{a1:,.0f}", f"{a2:,.0f}"]

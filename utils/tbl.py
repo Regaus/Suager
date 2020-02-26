@@ -494,7 +494,7 @@ tbl_totems = [
     },
     {
         "name": "Totem of Cthulhu",
-        "desc": "Well, uh.. Sure, why not?\nNo real effect.",
+        "desc": "Well, uh.. Why not? At least it makes this shitfuckery even weirder.\nNo real effect.",
         "name_ru": "Тотем Ктулху",
         "desc_ru": "Ну а почему бы и нет?\nНет эффекта.",
     },

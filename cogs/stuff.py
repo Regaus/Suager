@@ -30,7 +30,7 @@ class Games(commands.Cog):
     async def aqos_stats(self, ctx, *, who: discord.Member = None):
         """ Aqos Stats """
         user = who or ctx.author
-        _data = self.db.fetchrow(aqos_find, (user.id, "aqos"))
+        _data = self.db.fetchrow(find, (user.id, "aqos"))
         if not _data:
             data = aqos_data.copy()
         else:
@@ -241,19 +241,19 @@ def max_energy(level, score):
     return no if el > no else el
 
 
-aqos_find = 'SELECT * FROM data WHERE id=? and type=?'  # Type is 'aqos'
-aqos_insert = 'INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)'
+find = 'SELECT * FROM data WHERE id=? and type=?'  # Type is 'aqos'
+insert = 'INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)'
 # user.id, "aqos", data, False, user.name, user.discriminator, data['score']
-aqos_update = 'UPDATE data SET data=?, usage=?, name=?, disc=?, extra=? WHERE id=? AND type=?'
+update = 'UPDATE data SET data=?, usage=?, name=?, disc=?, extra=? WHERE id=? AND type=?'
 # data, False, user.name, user.discriminator, user.id, "aqos", data['score']
 
 
 async def aqos_game(db, ctx):
-    _data = db.fetchrow(aqos_find, (ctx.author.id, "aqos"))
+    _data = db.fetchrow(find, (ctx.author.id, "aqos"))
     if not _data:
         data = aqos_data.copy()
         d = json.dumps(data)
-        db.execute(aqos_insert, (ctx.author.id, "aqos", d, True, ctx.author.name, ctx.author.discriminator, 0))
+        db.execute(insert, (ctx.author.id, "aqos", d, True, ctx.author.name, ctx.author.discriminator, 0))
     else:
         if _data['usage']:
             return await ctx.send("It seems that Aqos is already being used, please wait...")
@@ -276,8 +276,8 @@ async def aqos_game(db, ctx):
         etu = int(data['energy'])  # Energy to use
         # bv = bias.get_bias(db, ctx.author)  # Bias Value
         if etu < 1:
-            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
-                                     ctx.author.id, "aqos"))
+            db.execute(update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+                                ctx.author.id, "aqos"))
             left = time.human_timedelta(datetime.fromtimestamp(now + er * (1 - data['energy'])), accuracy=3)
             return await message.edit(content=f"{ctx.author.name}, you don't have any energy to use."
                                               f"\nNext energy point in: {left}")
@@ -356,8 +356,8 @@ async def aqos_game(db, ctx):
             xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
             clp = round_value(data['lp']/data['lr']*100)
             oap = round_value((data['level']-1)/1440*100)
-            db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
-                                     ctx.author.id, "aqos"))
+            db.execute(update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+                                ctx.author.id, "aqos"))
             md = f"{time.time()} > {ctx.author.name} > Aqos Normal Mode\nEnergy used: {used:,}\n" \
                  f"Time taken: {elapsed}\nLevel: **{data['level']:,}/{lr:,}**\nProgress: Current Level - **{clp}%** | "\
                  f"Normal Mode - **{oap}%**\nScore: **{value_string(data['score'], big=True)}**\nXP: **" \
@@ -428,7 +428,7 @@ async def aqos_game(db, ctx):
             xpn = value_string(xpr[data['xp_level']], big=True) if data['xp_level'] < aqos_ml else "MAX"
             clp = round_value(data['lp'] / data['lr'] * 100)
             oap = round_value((data['level'] - 1) / aqos_iml * 100)
-            db.execute(aqos_update,
+            db.execute(update,
                        (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                         ctx.author.id, "aqos"))
             md = f"{time.time()} > {ctx.author.name} > Aqos Infinite Mode\nEnergy used: {used:,}\nTime taken: " \
@@ -439,8 +439,8 @@ async def aqos_game(db, ctx):
                  f"seconds - {((1 / er) * 60):,.2f} per minute\nFull in: {fi}"
             return await message.edit(content=md)
     except Exception as e:
-        db.execute(aqos_update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
-                                 ctx.author.id, "aqos"))
+        db.execute(update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+                            ctx.author.id, "aqos"))
         return await ctx.send(f"Congratulations, everything broke.\n`{type(e).__name__}: {e}`")
 
 
@@ -472,6 +472,7 @@ tbl_player = {
     "league": 0,
     "used": 0,
     "sh": 0,
+    "location": 0,  # Your current location
     "2001": 0,  # How many times you went to visit Senko (2001)
     "2002": 0,  # How many times you went to the Warm Lands (2002)
     "timed": 0,  # How many times you went to timed locations (1001+)
@@ -487,3 +488,72 @@ tbl_clan = {
     "coins": 0,
     "temple_levels": [1] * len(tbl.tbl_totems),
 }
+
+# tbl_find = 'SELECT * FROM data WHERE id=? and type=?'  # Type is 'aqos'
+# tbl_insert = 'INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)'
+# user.id, "aqos", data, False, user.name, user.discriminator, data['score']
+# tbl_update = 'UPDATE data SET data=?, usage=?, name=?, disc=?, extra=? WHERE id=? AND type=?'
+# data, False, user.name, user.discriminator, user.id, "aqos", data['score']
+tp, tc = "tbl_player", "tbl_clan"
+
+
+async def tbl_game(db, ctx):
+    d1 = db.fetchrow(find, (ctx.author.id, "tbl_player"))
+    d2 = db.fetchrow(find, (ctx.guild.id, "tbl_clan"))
+    if not d1:
+        player = tbl_player.copy()
+        d = json.dumps(player)
+        db.execute(insert, (ctx.author.id, "tbl_player", d, True, ctx.author.name, ctx.author.discriminator, 0))
+    else:
+        if d1['usage']:
+            return await ctx.send("Seems like you're already playing TBL, please wait...")
+        player = json.loads(d1['data'])
+        db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (True, ctx.author.id, "tbl_player"))
+    if not d2:
+        clan = tbl_clan.copy()
+        d = json.dumps(clan)
+        db.execute(insert, (ctx.guild.id, "tbl_clan", d, True, ctx.guild.name, None, 0))
+    else:
+        if d2['usage']:
+            return await ctx.send("Seems like someone here is already playing TBL, please wait...")
+        clan = json.loads(d2['data'])
+        db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (True, ctx.guild.id, "tbl_clan"))
+    try:
+        now = time.now_ts()
+        now_dt = time.now()
+        elapsed = "None"
+        lid = player['location']
+        sm = player['secret_mode']
+        if lid == 0 or (sm < now and lid == -1):
+            lid = get_location_id(player['level'], sm, now)
+        loc = get_location(lid)
+        send = f"{time.time()} > {ctx.author.name} > TBL Initiated.\nWelcome to TBL, you motherfucker. " \
+               f"Enjoy your stay while it still lasts."
+        # This shit below is just for Pycharm to fuck off about unused variables. I'll finish it tomorrow, ik they're
+        # not used yet, smh.
+        now_dt -= 1
+        elapsed += ""
+        loc += 1
+        send += ""
+    except Exception as e:
+        db.execute(update, (json.dumps(player), False, ctx.author.name, ctx.author.discriminator, player['league'],
+                            ctx.author.id, "tbl_player"))
+        db.execute(update, (json.dumps(clan), False, ctx.guild.name, None, 0, ctx.guild.id, "tbl_clan"))
+        return await ctx.send(f"Congratulations, everything broke.\n`{type(e).__name__}: {e}`")
+
+
+def get_location_id(level, sm, now):
+    if sm > now:
+        return -1
+    loc = tbl.tbl_locations
+    for i in range(len(loc)):
+        if loc[i]['id'] < 1000:  # If it ain't some kinda special one
+            if level < loc[i]['level']:
+                return loc[i]['id']
+
+
+def get_location(lid):
+    loc = tbl.tbl_locations
+    for i in range(len(loc)):
+        if loc[i]['id'] == lid:
+            return loc[i]

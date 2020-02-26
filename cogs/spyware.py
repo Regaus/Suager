@@ -45,7 +45,7 @@ class Spyware(commands.Cog):
             if after.id != 520042197391769610:  # Suager v3
                 await senko.send(send)
                 await logs.log_channel(self.bot, 'avatars').send(
-                    f"{send}. New avatar: {after.avatar_url_as(size=1024, format='png')}")
+                    f"{send}. New avatar: {after.avatar_url_as(size=1024)}")
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
             send = f"{to} > `{n2}`'s discriminator is now `{d2}` (from `{d1}`)"
