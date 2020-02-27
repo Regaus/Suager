@@ -84,9 +84,16 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command(self, ctx):
         # Some shitfuckery below
-        now = time.now().hour
+        cool_days = [[1, 1], [1, 27], [2, 14], [2, 23], [3, 17], [4, 1], [5, 9], [6, 12], [9, 3], [10, 31], [12, 25]]
+        now = time.now()
+        month, day = now.month, now.day
+        for date in cool_days:
+            if month == date[0] and day == date[1]:
+                await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} "
+                                       f"What if I sometimes want a day off too?")
+        hour = now.hour
         if ctx.author.id == 302851022790066185:  # Me
-            if now >= 23 or now < 7:
+            if hour >= 23 or hour < 7:
                 await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
         try:
             g = ctx.guild.name
