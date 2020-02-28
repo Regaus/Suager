@@ -95,7 +95,8 @@ class Events(commands.Cog):
         hour = now.hour
         # if ctx.author.id == 302851022790066185:  # Me
         if hour >= 23 or hour < 7:
-            await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
+            await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} It's already "
+                                   f"{time.time(day=False, seconds=False)}! I wanna rest, and so should you...")
         try:
             g = ctx.guild.name
         except AttributeError:
