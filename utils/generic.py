@@ -90,7 +90,7 @@ def reason(who, why=None):
     return f"{r} {why}"
 
 
-def action(what, *, who=None, why=None, many: bool = False, emote=None):
+def action(what, *, who=None, why=None, many: int = 0, emote=None):
     if who is None:
         s = 's' if many else ''
         output = f"**{what}** the id{s}/user{s}"

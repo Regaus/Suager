@@ -84,7 +84,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command(self, ctx):
         # Some shitfuckery below
-        cool_days = [[1, 1], [1, 27], [2, 14], [2, 23], [3, 17], [4, 1], [5, 9], [6, 12], [9, 3], [10, 31], [12, 25]]
+        cool_days = [[1, 1], [1, 7], [1, 27], [2, 14], [2, 23], [3, 17], [4, 1], [5, 9], [6, 12],
+                     [9, 3], [10, 31], [12, 25], [12, 31]]
         now = time.now()
         month, day = now.month, now.day
         for date in cool_days:
@@ -92,9 +93,9 @@ class Events(commands.Cog):
                 await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} "
                                        f"What if I sometimes want a day off too?")
         hour = now.hour
-        if ctx.author.id == 302851022790066185:  # Me
-            if hour >= 23 or hour < 7:
-                await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
+        # if ctx.author.id == 302851022790066185:  # Me
+        if hour >= 23 or hour < 7:
+            await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} I wanna rest, and so should you... ")
         try:
             g = ctx.guild.name
         except AttributeError:
@@ -130,8 +131,8 @@ class Events(commands.Cog):
             embed = discord.Embed(colour=generic.random_colour())
             embed.set_thumbnail(url=member.avatar_url)
             embed.add_field(name="User ID", value=member.id)
-            embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
             embed.add_field(name="Created at", value=time.time_output(member.created_at))
+            embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
             await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
             await self.bot.get_channel(650774303192776744).send(f"{member.name} just joined Senko Lair.", embed=embed)
 

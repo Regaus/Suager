@@ -95,13 +95,15 @@ class Moderation(commands.Cog):
             for member in who:
                 if member in invalid:
                     return await ctx.send(f"I can't ban myself, nor my owners... {emotes.BlobCatPolice}")
-        try:
-            for member in who:
+        banned = 0
+        for member in who:
+            try:
                 await ctx.guild.ban(discord.Object(id=member), reason=default.reason(ctx.author, reason))
-            return await ctx.send(default.action("banned", why=reason, many=True,
-                                                 emote="<:blobcatcoffee:651864579856662568>"))
-        except Exception as e:
-            return await ctx.send(e)
+                banned += 1
+            except Exception as e:
+                return await ctx.send(e)
+        return await ctx.send(default.action("banned", why=reason, many=banned,
+                                             emote="<:blobcatcoffee:651864579856662568>"))
 
     @commands.command(name="unban")
     @commands.guild_only()
