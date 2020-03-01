@@ -160,15 +160,15 @@ class Leveling(commands.Cog):
         else:
             self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
-        stuff = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=? AND extra=?",
-                                 ("roles", ctx.author.id, ctx.guild.id))
-        if stuff:
-            self.db.execute("UPDATE data SET data=? WHERE type=? AND id=? AND extra=?",
-                            (json.dumps([r.id for r in ctx.author.roles]), "roles", ctx.author.id, ctx.guild.id))
-        else:
-            self.db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)", (
-                ctx.author.id, "roles", json.dumps([r.id for r in ctx.author.roles]), False, ctx.author.name,
-                ctx.author.discriminator, ctx.guild.id))
+        # stuff = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=? AND extra=?",
+        #                          ("roles", ctx.author.id, ctx.guild.id))
+        # if stuff:
+        #    self.db.execute("UPDATE data SET data=? WHERE type=? AND id=? AND extra=?",
+        #                      (json.dumps([r.id for r in ctx.author.roles]), "roles", ctx.author.id, ctx.guild.id))
+        # else:
+        #     self.db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)", (
+        #        ctx.author.id, "roles", json.dumps([r.id for r in ctx.author.roles]), False, ctx.author.name,
+        #        ctx.author.discriminator, ctx.guild.id))
 
     @commands.command(name="rewards")
     @commands.guild_only()

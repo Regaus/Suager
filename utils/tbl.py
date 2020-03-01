@@ -1,5 +1,3 @@
-from utils import time
-
 tbl_locations = [
     {
         "id": 1,
@@ -451,40 +449,24 @@ tbl_locations = [
 ]
 
 
-def get_activity(activity: list):
-    """ Get location's current activity """
-    now = time.now()
-    hour = now.hour
-    al = len(activity)
-    four = int(hour / 4)
-    rest = hour % 4
-    return (activity[four] * rest + activity[(four + 1) % al] * (4 - rest)) / 4
-
-
 tbl_totems = [
-    {
-        "name": "Totem of Life Power",
-        "desc": "Through whatever means, lets you revive for free once in <val> in-game minutes.",
-        "name_ru": "Тотем Силы Жизни",
-        "desc_ru": "Какими-то способами дает тебе возродится раз в <val> игровых минут.",
-    },
     {
         "name": "Totem of Growth",
         "desc": "Creates <val>% more Araksan for you.",
         "name_ru": "Тотем Роста",
-        "desc_ru": "Создает на <val>% больше орехов.",
+        "desc_ru": "Создает на <val>% больше орехов.",  # 1.08 + 0.02 * level
     },
     {
         "name": "Totem of Coolness",
         "desc": "Get <val>% more XP - become cool faster.",
         "name_ru": "Тотем Крутости",
-        "desc_ru": "Получаешь на <val>% больше опыта - быстрее становишься крутым.",
+        "desc_ru": "Получаешь на <val>% больше опыта - быстрее становишься крутым.",  # 1.06 + 0.04 * level
     },
     {
         "name": "Totem of Shamanery",
         "desc": "You are a cool shaman, you get <val>% Shaman XP",
         "name_ru": "Тотем Шаманства",
-        "desc_ru": "Ты - крутой шаман. За это ты получаешь на <val>% больше опыта шамана.",
+        "desc_ru": "Ты - крутой шаман. За это ты получаешь на <val>% больше опыта шамана.",  # 1.05 + 0.025 * level
     },
     {
         "name": "Totem of Senko",
@@ -1212,3 +1194,10 @@ xp_levels = [
         "title": gls("Чокнутый")
     }
 ]
+
+
+sh_levels = [80, 300, 720, 1400, 2400, 3780, 5600, 7920, 10800, 14300, 18480, 23400, 29120, 35700, 40044, 45408, 52152,
+             60636, 71220, 84264, 100128, 119172, 141756, 168240, 198984, 234348, 274692, 320376, 371760, 403274,
+             436469, 471883, 510058, 551532, 596846, 646541, 701155, 761230, 827304, 899918, 979613, 1066927, 1162402,
+             1266576, 1330905, 1399713, 1474442, 1556531, 1647419, 1748548]
+clan_levels = [int(3 * x ** 2 + 250 * x + 400) for x in range(60)]

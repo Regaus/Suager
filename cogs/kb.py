@@ -29,7 +29,7 @@ class KawaiiBot(commands.Cog):
         if ctx.author == user:
             return await ctx.send("Don't be like that ;-;")
         if user.id == self.bot.user.id:
-            return await ctx.send(f"Thanks, {ctx.author.name} :3 {emotes.AlexHeart}")
+            return await ctx.send(f"Thanks, {ctx.author.name} :3 {emotes.AlexHeart} {emotes.AlexPat}")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a pat from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.pat))
@@ -77,7 +77,7 @@ class KawaiiBot(commands.Cog):
             return await ctx.send(embed=embed.set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673644219314733106/selflick.gif"))
         if user.id == self.bot.user.id:
-            return await ctx.send(f"w-why did you lick me, {ctx.author.name}", embed=embed.set_image(url=but_why))
+            return await ctx.send(f"W-why did you lick me, {ctx.author.name}?", embed=embed.set_image(url=but_why))
         embed.description = f"**{user.name}** was licked by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.lick))
         return await ctx.send(embed=embed)
@@ -91,8 +91,8 @@ class KawaiiBot(commands.Cog):
         if user == ctx.author:
             return await ctx.send("Alone? ;-;")
         if user.id == self.bot.user.id:
-            return await ctx.send(f"Thanks {ctx.author.name} {emotes.AlexHeart}. "
-                                  f"But, I'm a bot... I wasn't programmed to feel love")
+            return await ctx.send(f"Thanks, {ctx.author.name} {emotes.AlexHeart}! "
+                                  f"But, I'm a bot... I wasn't programmed to feel love ;-;")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.kiss))
@@ -102,15 +102,16 @@ class KawaiiBot(commands.Cog):
     @commands.guild_only()
     async def bite(self, ctx, user: discord.Member):
         """ Bite someone """
-        if is_fucked(self.kiss):
-            self.kiss = await lists.get_images(self.bot, 'k')
+        if is_fucked(self.bite):
+            self.bite = await lists.get_images(self.bot, 'k')
         if user == ctx.author:
             return await ctx.send("How are you going to do that?")
         if user.id == self.bot.user.id:
-            return await ctx.send(f"Ow.. why'd you bite me, {ctx.author.name}?")
+            return await ctx.send(f"Ow.. why would you bite me, {ctx.author.name}? "
+                                  f"It h-hurts ;-; {emotes.AlexHeartBroken}")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was bitten by **{ctx.author.name}**"
-        embed.set_image(url=random.choice(self.kiss))
+        embed.set_image(url=random.choice(self.bite))
         return await ctx.send(embed=embed)
 
     @commands.command(name="slap")

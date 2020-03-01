@@ -1,7 +1,7 @@
 import asyncio
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
@@ -124,12 +124,15 @@ class Games(commands.Cog):
             block += f"{str(i).zfill(2)}){s * 4}{sc[k]}{s * (spaces - sp)}{who}\n"
         return await ctx.send(f"Top users: Aqos - Sorted by score\nYour place: {place}\n{block}```")
 
-    @commands.command(name="tbl")
+    @commands.group(name="tbl")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
     async def tbl(self, ctx):
         """ The TBL Game """
-        return await ctx.send(soon)
+        # return await ctx.send(soon)
+        if ctx.invoked_subcommand is None:
+            return await tbl_game(self.db, ctx)
 
     @commands.command(name="cobblecobble", aliases=["cc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -476,7 +479,7 @@ tbl_player = {
     "2001": 0,  # How many times you went to visit Senko (2001)
     "2002": 0,  # How many times you went to the Warm Lands (2002)
     "timed": 0,  # How many times you went to timed locations (1001+)
-    "revival": 0,  # Time since last free reincarnation used (from clan)
+    # "revival": 0,  # Time since last free reincarnation used (from clan)  - Not in use
 }
 tbl_clan = {
     "level": 1,
@@ -521,20 +524,149 @@ async def tbl_game(db, ctx):
     try:
         now = time.now_ts()
         now_dt = time.now()
-        elapsed = "None"
+        # elapsed = "None"
         lid = player['location']
         sm = player['secret_mode']
         if lid == 0 or (sm < now and lid == -1):
             lid = get_location_id(player['level'], sm, now)
+        if 1000 <= lid < 2000:
+            a = get_location(lid)
+            o = a['open']
+            h = now.hour
+            if h < o[0] or h >= o[1]:
+                lid = get_location_id(player['level'], sm, now)
         loc = get_location(lid)
         send = f"{time.time()} > {ctx.author.name} > TBL Initiated.\nWelcome to TBL, you motherfucker. " \
                f"Enjoy your stay while it still lasts."
-        # This shit below is just for Pycharm to fuck off about unused variables. I'll finish it tomorrow, ik they're
-        # not used yet, smh.
-        now_dt -= 1
-        elapsed += ""
-        loc += 1
-        send += ""
+        ep = player['potion_energy'] > now
+        player['energy'], player['time'], player['mana'] = regenerate_energy(
+            player['energy'], player['mana'], now, ep, player['time'], player['level'],
+            player['potion_energy'], player['potion_mana'])
+        # try:
+        #     rounds = int(player['energy'] / loc['energy'])
+        # except ZeroDivisionError:
+        #     rounds = 10
+        # re = loc['energy'] * rounds
+        # enough = player['energy'] - re >= 0 and rounds > 0
+        if player['energy'] < loc['energy']:
+            db.execute(update, (json.dumps(player), False, ctx.author.name, ctx.author.discriminator, player['league'],
+                                ctx.author.id, "tbl_player"))
+            db.execute(update, (json.dumps(clan), False, ctx.guild.name, None, 0, ctx.guild.id, "tbl_clan"))
+            return await ctx.send(f"You don't have enough energy right now. {player['energy']}/{loc['energy']}")
+        # fl = False - Force life - deprecated
+        message = await ctx.send(send)
+        # le = now
+        used = 0
+        while player['energy'] >= loc['energy'] and used < 100:
+            cool = player['sh'] > 0
+            # new = time.now_ts()
+            used += 1
+            if 1000 <= loc['id'] < 2000:
+                player['timed'] += 1
+            if loc['id'] == 2001:
+                player['2001'] += 1
+            if loc['id'] == 2002:
+                player['2002'] += 1
+            player['energy'] -= loc['energy']
+            player['used'] += 1
+            life = random.random()
+            live = life > loc['dr']
+            rewards = [0, 0, 0, 0, 0]  # Araksan, XP, Mana, SH and SH XP
+            activity = get_activity(loc['activity'])
+            people = activity if activity < 15 else 15
+            if 50 <= activity < 100:
+                people = 20
+            elif 100 <= activity < 150:
+                people = 30
+            elif activity >= 150:
+                people = int(activity / 4)
+            place = 0
+            if live:
+                clan['xp'] += loc['sh']
+                a1, a2 = loc['araksan']
+                rewards[0] += random.randint(a1, a2)
+                x1, x2 = loc['xp']
+                rewards[1] += random.randint(x1, x2)
+                l1, l2 = loc['points']
+                player['league'] += random.randint(l1, l2)
+                if not cool and people > 1:
+                    place = random.randint(1, people - 1)
+                    rewards[2] += people - place
+                    sh = 3 - place
+                    rewards[3] = sh if sh > 0 else 0
+                else:
+                    saves = random.randint(0, people)
+                    rewards[4] += loc['sh'] * saves
+                    rewards[0] += saves
+                    rewards[3] -= 1
+            else:
+                if cool or people == 1:
+                    saves = random.randint(0, people)
+                    rewards[4] += loc['sh'] * saves
+                    rewards[0] += saves
+                    rewards[3] -= 1
+            # totems = tbl.tbl_totems
+            for k in range(len(clan['temples'])):
+                if clan['expiry'][k] > now or k == 0:
+                    if clan['temples'][k] == 1:
+                        rewards[0] *= (1.08 + 0.02 * clan['temple_levels'][0])
+                    if clan['temples'][k] == 2:
+                        rewards[1] *= (1.06 + 0.04 * clan['temple_levels'][1])
+                    if clan['temples'][k] == 3:
+                        rewards[4] *= (1.05 + 0.025 * clan['temple_levels'][2])
+            t1, t2 = loc['act']
+            rct = random.randint(t1, t2)
+            td = timedelta(seconds=rct).__str__()
+            if ep:
+                rewards[1] *= 2
+                rewards[2] *= 1.5
+                rewards[4] *= 2
+            player['araksan'] += rewards[0]
+            player['xp'] += rewards[1]
+            player['mana'] += rewards[2]
+            player['sh'] += rewards[3]
+            player['sh'] = 0 if player['sh'] < 0 else player['sh']
+            player['sh_xp'] += rewards[4]
+            er = 2 if ep else 1
+            el = 420 if ep else 120 + player['level']
+            if player['energy'] < el:
+                player['energy'] += rct / 60 * er
+                if player['energy'] > el:
+                    player['energy'] = el
+            await asyncio.sleep(loc['ll'] / 60)
+            elapsed = time.human_timedelta(now_dt, suffix=False)
+            pl = f" - You were #{place}/{people - 1}" if not cool else ""
+            sd = f"\nShaman XP: {rewards[4]}" if cool or people == 1 else ""
+            md = f"{time.time()} > {ctx.author.name} > TBL\nRound: {used}\nLocation: {loc['name']}\n" \
+                 f"Elapsed: {elapsed}\nEnergy: {player['energy']:,.0f}/{el}\n\nRound results:\n" \
+                 f"Time taken: {td}{pl}\nAraksan: {rewards[0]:,.0f} - You now have {player['araksan']:,.0f}\n" \
+                 f"XP: {rewards[1]:,.0f} - You now have {player['xp']:,.0f}\n" \
+                 f"Mana: {rewards[2]:,.0f} - You now have {player['mana']:,.0f}{sd}"
+            await message.edit(content=md)
+        player['level'], ld, title = get_level(player['level'], player['xp'])
+        oa = ""
+        if ld > 0:
+            el = 420 if ep else 120 + player['level']
+            if player['energy'] < el:
+                player['energy'] = el
+            oa += f"You've reached XP Level **{player['level']}**! - New title: {title}\n"
+        player['sh_level'], sld = sh_level(player['sh_level'], player['sh_xp'])
+        if sld > 0:
+            oa += f"You've reached XP Level **{player['sh_level']}**!\n"
+        clan['level'], cld = sh_level(clan['level'], clan['xp'])
+        clan['skill_points'] += cld
+        if cld > 0:
+            oa += f"This clan is now Level **{clan['level']}**! - Earned {cld} Skill Points\n"
+        db.execute(update, (json.dumps(player), False, ctx.author.name, ctx.author.discriminator, player['league'],
+                            ctx.author.id, "tbl_player"))
+        db.execute(update, (json.dumps(clan), False, ctx.guild.name, None, 0, ctx.guild.id, "tbl_clan"))
+        tt = time.human_timedelta(now_dt, suffix=False)
+        md = f"{time.time()} > {ctx.author.name} > Thank you for playing TBL\nTime taken: {tt}\nNew totals:\n" \
+             f"Energy left: {player['energy']:,.0f}\n" \
+             f"Araksan: {value_string(player['araksan'])}\nXP: {value_string(player['xp'])}\n" \
+             f"Mana: {value_string(player['mana'])}\nShaman XP: {value_string(player['sh_xp'])}\n{oa}\n" \
+             f"Check \"{ctx.prefix}help tbl\" for possible commands"
+        return await message.edit(content=md)
     except Exception as e:
         db.execute(update, (json.dumps(player), False, ctx.author.name, ctx.author.discriminator, player['league'],
                             ctx.author.id, "tbl_player"))
@@ -549,7 +681,10 @@ def get_location_id(level, sm, now):
     for i in range(len(loc)):
         if loc[i]['id'] < 1000:  # If it ain't some kinda special one
             if level < loc[i]['level']:
-                return loc[i]['id']
+                try:
+                    return loc[i - 1]['id']
+                except IndexError:
+                    return 1
 
 
 def get_location(lid):
@@ -557,3 +692,81 @@ def get_location(lid):
     for i in range(len(loc)):
         if loc[i]['id'] == lid:
             return loc[i]
+
+
+def regenerate_energy(energy, bm, now, ze, er, xp, epe, mpe):
+    td = now - er
+    rs = 30 if ze else 60
+    el = 420 if ze else 120 + xp
+    zt = 0
+    if epe > er:
+        if epe > now:
+            zt = now - er
+        else:
+            zt = epe - er
+    if zt > 0:
+        bm += int(round(100 * zt / 3600))
+    zm = 0
+    if mpe > er:
+        if mpe > er:
+            zm = now - er
+        else:
+            zm = mpe - er
+    if zm > 0:
+        bm += int(round(1000 * zm / 3600))
+    if energy < el:
+        re = int(td / rs)
+        ne = energy + re
+        if ne > el:
+            energy = el
+            er = now
+        else:
+            er += re * rs
+    else:
+        er = now
+    return energy, er, bm
+
+
+def get_activity(activity: list):
+    """ Get location's current activity """
+    now = time.now()
+    hour = now.hour
+    al = len(activity)
+    four = int(hour / 4)
+    rest = hour % 4
+    return (activity[four] * rest + activity[(four + 1) % al] * (4 - rest)) / 4
+
+
+def get_level(xpl, xp):
+    old_level = xpl
+    xp_level = 0
+    title = "Unknown"
+    for level in tbl.xp_levels:
+        if level["experience"] <= xp:
+            xp_level += 1
+            title = level["title"]
+        else:
+            break
+    return xp_level, xp_level - old_level, title
+
+
+def sh_level(sl, sxp):
+    old_level = sl
+    shl = 1
+    for level in tbl.sh_levels:
+        if level <= sxp:
+            shl += 1
+        else:
+            break
+    return shl, shl - old_level
+
+
+def clan_level(cl, cxp):
+    old_level = cl
+    ncl = 1
+    for level in tbl.clan_levels:
+        if level <= cxp:
+            ncl += 1
+        else:
+            break
+    return ncl, ncl - old_level

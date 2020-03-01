@@ -16,11 +16,11 @@ class Ratings(commands.Cog):
     async def rate(self, ctx, *, what: commands.clean_content):
         """ Rate something """
         random.seed(str(what))
-        r = random.randint(0, 1000) / 10
+        r = random.randint(400, 1000) / 10
         bad = ["xela", "lidl xela"]
         if str(what).lower() in bad:  # xelA is a meanie, and meanies don't deserve love mmlol
             r = 0.0                   # I don't like LIDL xelA, so it ain't getting any love either
-        return await ctx.send(f"I'd rate {what} a {r}/100")
+        return await ctx.send(f"I'd rate {what} a **{r}/100**")
 
     @commands.command(name="rateuser")
     @commands.guild_only()
@@ -39,18 +39,48 @@ class Ratings(commands.Cog):
             if who.nick is not None:
                 if 'arch' in who.nick.lower():
                     r /= 3
-        return await ctx.send(f"I'd rate {who.name} a {r:.1f}/100")
+        return await ctx.send(f"I'd rate {who.name} a **{r:.1f}/100**")
 
     @commands.command(name="babyrate")
     @commands.guild_only()
     async def baby_rate(self, ctx, user1: discord.Member, user2: discord.Member):
         """ Chance of 2 users having a baby """
+        if user1 == user2:
+            return await ctx.send("I don't think that's how it works...")
+        if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
+            return await ctx.send(f"I wasn't programmed for this, {ctx.author.name}...")
+        if user1.bot or user2.bot:
+            return await ctx.send("Bot's can't feel love...")
         seed = user1.id + user2.id
         random.seed(seed)
         rate = random.randint(0, 100)
         embed = discord.Embed(colour=generic.random_colour(),
                               description=f"The chance of {user1.mention} and {user2.mention} "
                                           f"having a baby is **{rate}**%")
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="love")
+    @commands.guild_only()
+    async def love_calc(self, ctx, user1: discord.Member, user2: discord.Member):
+        """ Chance of 2 users having a baby """
+        if user1 == user2:
+            return await ctx.send("I don't think that's how it works...")
+        if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
+            return await ctx.send(f"{ctx.author.name}, I'm already t-taken...")
+        if user1.bot or user2.bot:
+            return await ctx.send("Bot's can't feel love...")
+        seed = user1.id + user2.id + 1
+        random.seed(seed)
+        a = [302851022790066185, 527729196688998415, 411616745451683852]
+        b = [179217986517729280, 191522051943563264]
+        if user1.id in a and user2.id in a:
+            rate = 90
+        elif user1.id in b and user2.id in b:
+            rate = 100
+        else:
+            rate = random.randint(0, 100)
+        embed = discord.Embed(colour=generic.random_colour(),
+                              description=f"Love level between {user1.mention} and {user2.mention} is **{rate}**%")
         return await ctx.send(embed=embed)
 
     @commands.command(name="hotcalc", aliases=["hotness"])

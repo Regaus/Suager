@@ -360,7 +360,9 @@ class HumanInfo(commands.Cog):
         _names = [int(x / 2) for x in __names]
         names = [user1.name[:_names[0]], user2.name[_names[1]:]]
         name = ''.join(names)
-        message = f"Nice shipping there!\nShip name: **{name}**"
+        names2 = [user2.name[:_names[1]], user1.name[_names[0]:]]
+        name2 = ''.join(names2)
+        message = f"Nice shipping there!\nShip names: **{name}** or **{name2}**"
         return await ctx.send(message, file=discord.File(bio, filename=f"shipping_services.png"))
 
 
