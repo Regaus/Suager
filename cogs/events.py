@@ -13,7 +13,10 @@ from cogs.genders import genders
 from utils import generic, time, logs, lists, http, emotes
 from utils.emotes import AlexHeartBroken
 
-changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False}
+ct = time.now()  # Current time
+changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False, "tired": {
+    "dates": [], "time": [], "lr": [ct.year, ct.month, ct.day]
+}}
 
 
 class Events(commands.Cog):
@@ -22,6 +25,12 @@ class Events(commands.Cog):
         self.config = generic.get_config()
         self.process = psutil.Process(os.getpid())
         self.exists = False
+        try:
+            times = json.loads(open('changes.json', 'r').read())
+        except Exception as e:
+            print(e)
+            times = changes.copy()
+        self.today = times['tired']['lr']
         # self.ad = False
 
     @commands.Cog.listener()
@@ -84,24 +93,44 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command(self, ctx):
         # Some shitfuckery below
-        if ctx.guild.id == 568148147457490954:
-            cool_days = [[1, 1], [1, 7], [1, 27], [2, 14], [2, 23], [3, 17], [4, 1], [5, 9], [6, 12],
-                         [9, 3], [10, 31], [12, 25], [12, 31]]
-            now = time.now()
-            month, day = now.month, now.day
-            for date in cool_days:
-                if month == date[0] and day == date[1]:
-                    await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} "
-                                           f"What if I sometimes want a day off too?")
-            hour = now.hour
-            # if ctx.author.id == 302851022790066185:  # Me
-            if hour >= 23 or hour < 7:
-                await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} It's already "
-                                       f"{time.time(day=False, seconds=False)}! I wanna rest, and so should you...")
         try:
             g = ctx.guild.name
         except AttributeError:
             g = "Private Message"
+        if ctx.guild.id == 568148147457490954:
+            cool_days = [[1, 1], [1, 7], [1, 27], [2, 14], [2, 23], [3, 17], [4, 1], [5, 9], [6, 12],
+                         [9, 3], [10, 31], [12, 25], [12, 31]]
+            now = time.now()
+            year, month, day, hour = now.year, now.month, now.day, now.hour
+            try:
+                # times = json.loads('changes.json')
+                times = json.loads(open('changes.json', 'r').read())
+            except Exception as e:
+                print(e)
+                times = changes.copy()
+            changed = False
+            for date in cool_days:
+                if month == date[0] and day == date[1]:
+                    d = [ctx.author.id, year, month, day]
+                    if d not in times['tired']['dates']:
+                        times['tired']['dates'].append(d)
+                        today = now.strftime("%d %b %Y")
+                        await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} "
+                                               f"What if I sometimes want a day off too?")
+                        print(f"{time.time()} > Reminded {ctx.author} that it's {today} today and I want a day off")
+                        changed = True
+            # if ctx.author.id == 302851022790066185:  # Me
+            if hour >= 23 or hour < 7:
+                t = [ctx.author.id, year, month, day, hour]
+                if t not in times['tired']['time']:
+                    times['tired']['time'].append(t)
+                    rn = now.strftime("%H:%M")
+                    await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} It's already "
+                                           f"{time.time(day=False, seconds=False)}! I wanna rest, and so should you...")
+                    print(f"{time.time()} > Reminder {ctx.author} that it's already {rn} and I'm tired.")
+                    changed = True
+            if changed:
+                open('changes.json', 'w+').write(json.dumps(times))
         send = f"{time.time()} > {g} > {ctx.author} > {ctx.message.content}"\
             .replace("<@302851022790066185>", "<Regaus mention>").replace("<@!302851022790066185>", "<Regaus mention>")
         if self.config.logs:
@@ -163,7 +192,10 @@ class Events(commands.Cog):
         # await general_commands.send(f"{statuses.time_output()} - Bot is now online")
         # logs = statuses.logs
         # log_channel = statuses.tb_log_channel(self.bot)
-        send = f"{time.time()} > Server is online"
+        hour = time.now().hour
+        when = int(hour / 6)
+        send = f"{time.time()} > Server is online\n{lists.hello[when]}, motherfuckers, " \
+               f"I'm ready to torture your minds >:3"
         if self.config.logs:
             await logs.log_channel(self.bot, "uptime").send(send)
             # await log_channel.send(f"{statuses.time_output()} - Server is online")
@@ -199,6 +231,13 @@ class Events(commands.Cog):
                     except Exception as e:
                         print(e)
                         times = changes.copy()
+                    today = [now.year, now.month, now.day]
+                    if today != self.today:
+                        print(f"{time.time()} > Nice, a new day began!")
+                        self.today = today
+                        times['tired']['dates'] = []
+                        times['tired']['time'] = []
+                        times['tired']['lr'] = today
                     if cp:
                         this = now.minute * 60 + now.second
                         that = times['playing']

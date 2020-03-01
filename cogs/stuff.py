@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-from utils import sqlite, time, permissions, tbl
+from utils import sqlite, time, permissions, tbl, errors
 from utils.generic import value_string, round_value, random_colour
 
 soon = "Coming Soon\u005c\u2122"
+aqos_guilds = []
 
 
 class Games(commands.Cog):
@@ -19,11 +20,14 @@ class Games(commands.Cog):
 
     @commands.group(name="aqos")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
+    # @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
     async def aqos(self, ctx):
         """ The Aqos Game """
         # return await ctx.send(soon)
         if ctx.invoked_subcommand is None:
+            # if ctx.guild.id in self.aqos_guilds:
+            #     return await ctx.send("Someone in this server is currently using Aqos, please wait...")
+            # self.aqos_guilds.append(ctx.guild.id)
             return await aqos_game(self.db, ctx)
 
     @aqos.command(name="stats", aliases=["rank"])
@@ -126,13 +130,64 @@ class Games(commands.Cog):
 
     @commands.group(name="tbl")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
+    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    # @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
     async def tbl(self, ctx):
         """ The TBL Game """
         # return await ctx.send(soon)
         if ctx.invoked_subcommand is None:
-            return await tbl_game(self.db, ctx)
+            return await ctx.invoke(self.tbl_run)
+
+    @tbl.command(name="run", hidden=True)
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def tbl_run(self, ctx):
+        """ The TBL Game """
+        return await tbl_game(self.db, ctx)
+
+    @tbl.command(name="stats")
+    async def tbl_stats(self, ctx, *, who: discord.Member = None):
+        """ TBL Stats """
+        user = who or ctx.author
+        data = self.db.fetchrow(find, (user.id, "tbl_player"))
+        if not data:
+            player = tbl_player.copy()
+        else:
+            if data['usage']:
+                return await ctx.send(f"{user.name} is currently playing TBL - "
+                                      f"Please wait for any currently running TBL command to finish...")
+            player = json.loads(data['data'])
+        embed = discord.Embed(colour=random_colour())
+        embed.set_thumbnail(url=user.avatar_url)
+        ze = player['potion_energy'] > time.now_ts()
+        mp = player['potion_mana'] > time.now_ts()
+        player['energy'], player['time'], player['mana'] = regenerate_energy(
+            player['energy'], player['mana'], time.now_ts(), ze, player['time'],
+            player['level'], player['potion_energy'], player['potion_mana'])
+        embed.add_field(name="Araksan", value=value_string(player['araksan']), inline=True)
+        embed.add_field(name="Coins", value=value_string(player['coins']), inline=True)
+        embed.add_field(name="Mana", value=value_string(player['mana']), inline=True)
+        nl = value_string(tbl.xp_levels[player['level']]['experience'])
+        embed.add_field(name="Experience", inline=True,
+                        value=f"Level {player['level']:,}\n{value_string(player['xp'])}/{nl} XP")
+        embed.add_field(name="Title", value=tbl.xp_levels[player['level'] - 1]['title'], inline=True)
+        snl = value_string(tbl.sh_levels[player['sh_level'] - 1])
+        embed.add_field(name="Shaman Stats", inline=True,
+                        value=f"Level {player['sh_level']}\n{value_string(player['sh_xp'])}/{snl} XP")
+        el = 420 if ze else 119 + player['level']
+        embed.add_field(name="Energy", value=f"{player['energy']:,.0f}/{el}", inline=True)
+        epe = f"Active until {time.time_output(time.from_ts(player['potion_energy']))}" if ze else "Inactive"
+        mpe = f"Active until {time.time_output(time.from_ts(player['potion_mana']))}" if mp else "Inactive"
+        embed.add_field(name="Energy Potion", value=epe, inline=True)
+        embed.add_field(name="Mana Potion", value=mpe, inline=True)
+        league = "None"
+        for lg in tbl.tbl_leagues:
+            if lg['min_scores'] <= player['league']:
+                league = lg['en']
+        embed.add_field(name="League", value=f"{league} - {value_string(player['league'])} points", inline=True)
+        embed.add_field(name="Current Clan", value=ctx.guild.name, inline=True)
+        embed.add_field(name="Rounds Played", value=value_string(player['used']), inline=True)
+        return await ctx.send(f"TBL Stats for {user.name}", embed=embed)
 
     @commands.command(name="cobblecobble", aliases=["cc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -263,6 +318,10 @@ async def aqos_game(db, ctx):
         data = json.loads(_data['data'])
         db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (True, ctx.author.id, "aqos"))
     try:
+        if ctx.guild.id in aqos_guilds:
+            # await ctx.send("It seems that someone is using Aqos in this server, please wait...")
+            raise errors.AqosError("It seems that someone is using Aqos in this server, please wait...")
+        aqos_guilds.append(ctx.guild.id)
         now = time.now_ts()
         now_dt = time.now()
         elapsed = "None"
@@ -440,11 +499,26 @@ async def aqos_game(db, ctx):
                  f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
                  f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: {round(er, 2)} " \
                  f"seconds - {((1 / er) * 60):,.2f} per minute\nFull in: {fi}"
+            try:
+                aqos_guilds.pop(ctx.guild.id)
+            except IndexError:
+                pass
             return await message.edit(content=md)
+    except errors.RegausError as e:
+        save_shit(db, ctx, data)
+        return await ctx.send(f"{e}")
     except Exception as e:
-        db.execute(update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
-                            ctx.author.id, "aqos"))
+        save_shit(db, ctx, data),
         return await ctx.send(f"Congratulations, everything broke.\n`{type(e).__name__}: {e}`")
+
+
+def save_shit(db, ctx, data):
+    db.execute(update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
+                        ctx.author.id, "aqos"))
+    try:
+        aqos_guilds.pop(ctx.guild.id)
+    except IndexError:
+        pass
 
 
 def aqos_xpl(xp, xpr):
@@ -552,7 +626,7 @@ async def tbl_game(db, ctx):
             db.execute(update, (json.dumps(player), False, ctx.author.name, ctx.author.discriminator, player['league'],
                                 ctx.author.id, "tbl_player"))
             db.execute(update, (json.dumps(clan), False, ctx.guild.name, None, 0, ctx.guild.id, "tbl_clan"))
-            return await ctx.send(f"You don't have enough energy right now. {player['energy']}/{loc['energy']}")
+            return await ctx.send(f"You don't have enough energy right now. {player['energy']:.0f}/{loc['energy']}")
         # fl = False - Force life - deprecated
         message = await ctx.send(send)
         # le = now
@@ -628,14 +702,14 @@ async def tbl_game(db, ctx):
             player['sh'] = 0 if player['sh'] < 0 else player['sh']
             player['sh_xp'] += rewards[4]
             er = 2 if ep else 1
-            el = 420 if ep else 120 + player['level']
+            el = 420 if ep else 119 + player['level']
             if player['energy'] < el:
                 player['energy'] += rct / 60 * er
                 if player['energy'] > el:
                     player['energy'] = el
             await asyncio.sleep(loc['ll'] / 60)
             elapsed = time.human_timedelta(now_dt, suffix=False)
-            pl = f" - You were #{place}/{people - 1}" if not cool else ""
+            pl = f" - You were #{place}/{int(people - 1)}" if not cool else ""
             sd = f"\nShaman XP: {rewards[4]}" if cool or people == 1 else ""
             md = f"{time.time()} > {ctx.author.name} > TBL\nRound: {used}\nLocation: {loc['name']}\n" \
                  f"Elapsed: {elapsed}\nEnergy: {player['energy']:,.0f}/{el}\n\nRound results:\n" \
@@ -646,13 +720,13 @@ async def tbl_game(db, ctx):
         player['level'], ld, title = get_level(player['level'], player['xp'])
         oa = ""
         if ld > 0:
-            el = 420 if ep else 120 + player['level']
+            el = 420 if ep else 119 + player['level']
             if player['energy'] < el:
                 player['energy'] = el
             oa += f"You've reached XP Level **{player['level']}**! - New title: {title}\n"
         player['sh_level'], sld = sh_level(player['sh_level'], player['sh_xp'])
         if sld > 0:
-            oa += f"You've reached XP Level **{player['sh_level']}**!\n"
+            oa += f"You've reached Shaman Level **{player['sh_level']}**!\n"
         clan['level'], cld = sh_level(clan['level'], clan['xp'])
         clan['skill_points'] += cld
         if cld > 0:
@@ -697,7 +771,7 @@ def get_location(lid):
 def regenerate_energy(energy, bm, now, ze, er, xp, epe, mpe):
     td = now - er
     rs = 30 if ze else 60
-    el = 420 if ze else 120 + xp
+    el = 420 if ze else 119 + xp
     zt = 0
     if epe > er:
         if epe > now:

@@ -229,6 +229,17 @@ class AdminCommands(commands.Cog):
         return await ctx.send("Task succeeded successfully - Tables created." if val else
                               "Task failed successfully - Great, more time to was on trying to fix that!")
 
+    @commands.command(name="timeout", aliases=["fuckoff"])
+    @commands.is_owner()
+    async def fuck_off(self, ctx):
+        """ Tell Suager to fuck off and disconnect him """
+        import time as tl
+        await ctx.send(f"{ctx.author.mention} So you want me to get disconnected? Ok then...")
+        a = time.now()
+        tl.sleep(120)
+        b = time.human_timedelta(a, suffix=False)
+        return await ctx.send(f"Ugh.. Thanks {ctx.author.mention} for those {b} of not being able to do anything.")
+
 
 def setup(bot):
     bot.add_cog(AdminCommands(bot))

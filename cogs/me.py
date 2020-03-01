@@ -13,7 +13,7 @@ from utils import generic, time, lists
 class Info(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.creation_date = datetime(1, 1, 1)
+        self.creation_date = datetime(2020, 3, 2, 18)
         self.birthday = datetime(2018, 12, 6, 1, 2)
 
     @commands.command(name="source")

@@ -18,7 +18,7 @@ but_why = "https://cdn.discordapp.com/attachments/610482988123422750/67364202835
 class KawaiiBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite = [lists.error] * 6
+        self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy = [lists.error] * 7
 
     @commands.command(name="pat")
     @commands.guild_only()
@@ -103,7 +103,7 @@ class KawaiiBot(commands.Cog):
     async def bite(self, ctx, user: discord.Member):
         """ Bite someone """
         if is_fucked(self.bite):
-            self.bite = await lists.get_images(self.bot, 'k')
+            self.bite = await lists.get_images(self.bot, 'b')
         if user == ctx.author:
             return await ctx.send("How are you going to do that?")
         if user.id == self.bot.user.id:
@@ -112,6 +112,17 @@ class KawaiiBot(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was bitten by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.bite))
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="sleepy")
+    @commands.guild_only()
+    async def sleepy(self, ctx):
+        """ You're sleepy """
+        if is_fucked(self.sleepy):
+            self.sleepy = await lists.get_images(self.bot, 's')
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{ctx.author.name}** is sleepy..."
+        embed.set_image(url=random.choice(self.sleepy))
         return await ctx.send(embed=embed)
 
     @commands.command(name="slap")
@@ -134,6 +145,7 @@ class KawaiiBot(commands.Cog):
         self.lick = await lists.get_images(self.bot, 'l')
         self.cuddle = await lists.get_images(self.bot, 'c')
         self.bite = await lists.get_images(self.bot, 'b')
+        self.sleepy = await lists.get_images(self.bot, 's')
         if generic.get_config().logs:
             await logs.log_channel(self.bot, 'changes').send('Reloaded KawaiiBot images')
         return await ctx.send("Successfully reloaded images")
