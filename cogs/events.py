@@ -127,7 +127,7 @@ class Events(commands.Cog):
                     rn = now.strftime("%H:%M")
                     await ctx.channel.send(f"{emotes.BlobSleepy} {ctx.author.mention} It's already "
                                            f"{time.time(day=False, seconds=False)}! I wanna rest, and so should you...")
-                    print(f"{time.time()} > Reminder {ctx.author} that it's already {rn} and I'm tired.")
+                    print(f"{time.time()} > Reminded {ctx.author} that it's already {rn} and I'm tired by now...")
                     changed = True
             if changed:
                 open('changes.json', 'w+').write(json.dumps(times))
