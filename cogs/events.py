@@ -238,6 +238,10 @@ class Events(commands.Cog):
                         times['tired']['dates'] = []
                         times['tired']['time'] = []
                         times['tired']['lr'] = today
+                        if today[1] == 12 and today[2] == 6:  # 6th December
+                            age = today[0] - 2018
+                            await self.bot.get_channel(568148147457490958).send(
+                                f"It's my birthday today! I am now {age} years old! 🎉")
                     if cp:
                         this = now.minute * 60 + now.second
                         that = times['playing']
