@@ -436,7 +436,7 @@ async def aqos_game(db, ctx):
             le = now
             used = 0
             for i in range(etu):
-                wait = 0.001 if etu < 10000 else 0.0002 if 10000 <= etu < 500000 else 0
+                wait = 0.001 if etu < 10000 else 0.0002 if 10000 <= etu < 125000 else 0
                 new = time.now_ts()
                 used += 1
                 data['used'] += 1
