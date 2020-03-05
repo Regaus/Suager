@@ -59,10 +59,10 @@ class Ratings(commands.Cog):
                                           f"having a baby is **{rate}**%")
         return await ctx.send(embed=embed)
 
-    @commands.command(name="love")
+    @commands.command(name="love", aliases=["lovecalc"])
     @commands.guild_only()
     async def love_calc(self, ctx, user1: discord.Member, user2: discord.Member):
-        """ Chance of 2 users having a baby """
+        """ Calculate the amount of love between 2 users """
         if user1 == user2:
             return await ctx.send("I don't think that's how it works...")
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
@@ -83,14 +83,13 @@ class Ratings(commands.Cog):
                               description=f"Love level between {user1.mention} and {user2.mention} is **{rate}**%")
         return await ctx.send(embed=embed)
 
-    @commands.command(name="hotcalc", aliases=["hotness"])
+    @commands.command(name="hotcalc", aliases=["hotness", "hot"])
     async def hotness(self, ctx, *, user: discord.Member = None):
         """ Check how hot someone is """
         user = user or ctx.author
         random.seed(user.id)
-        step1 = int(round(random.random() * 100))
-        step2 = int(round(random.random() * 20))
-        step3 = step1 / (107 + step2) * 100
+        step1 = int(random.randint(5000, 10000))
+        step3 = step1 / 117
         # step4 = bias.friend_bias(self.db, user)
         # step5 = step3 * step4
         # tep6 = 100 if step5 > 100 else step5

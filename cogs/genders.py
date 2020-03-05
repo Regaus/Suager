@@ -22,93 +22,6 @@ orientations = {
 }
 
 
-def ship_validation(u1g, u1s, u2g, u2s):
-    """ Ship Validation """
-    u1m, u1f, u1i = [u1g["male"], u1g["female"], u1g["invalid"]]
-    u2m, u2f, u2i = [u2g["male"], u2g["female"], u2g["invalid"]]
-    u1lg, u1s, u1fp = u1s["gay_lesbian"], u1s["straight"], u1s["frying_pan"]
-    u2lg, u2s, u2bi, u2fp = u2s["gay_lesbian"], u2s["straight"], u2s["bisexual"], u2s["frying_pan"]
-    variant = "default"
-    if u1m:
-        if u1lg:
-            if u2m:
-                if u2lg:
-                    variant = "gay"
-                elif u2bi:
-                    variant = "bi"
-                else:
-                    return False
-            else:
-                return False
-        elif u1s:
-            if u2f:
-                if u2s:
-                    variant = "default"
-                elif u2bi:
-                    variant = "bi"
-                else:
-                    return False
-            else:
-                return False
-        else:
-            if u2m:
-                if u2lg or u2bi:
-                    variant = "bi"
-                else:
-                    return False
-            elif u2f:
-                if u2bi or u2s:
-                    variant = "bi"
-                else:
-                    return False
-            else:
-                return False
-    elif u1f:
-        if u1lg:
-            if u2f:
-                if u2lg:
-                    variant = "lesbian"
-                elif u2bi:
-                    variant = "bi"
-                else:
-                    return False
-            else:
-                return False
-        elif u1s:
-            if u2m:
-                if u2s:
-                    variant = "default"
-                elif u2bi:
-                    variant = "bi"
-                else:
-                    return False
-            else:
-                return False
-        else:
-            if u2m:
-                if u2bi or u2s:
-                    variant = "bi"
-                else:
-                    return False
-            elif u2f:
-                if u2lg or u2bi:
-                    variant = "bi"
-                else:
-                    return False
-    else:
-        if u1fp:
-            if u2i:
-                if u2fp:
-                    variant = "fryingpan"
-                else:
-                    return False
-            else:
-                return False
-        else:
-            return False
-    return variant
-
-
 class HumanInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -341,18 +254,7 @@ class HumanInfo(commands.Cog):
             return await ctx.send("These 2 users cannot be shipped together.")
         av1 = user1.avatar_url_as(size=1024, format="png")
         av2 = user2.avatar_url_as(size=1024, format="png")
-        main_link = f"https://media.bowser65.xyz/imgen/misc/ship?image1={av1}&image2={av2}&variant="
-        try:
-            u1g = json.loads(open(f"data/gender/{user1.id}.json", "r").read())
-            u2g = json.loads(open(f"data/gender/{user2.id}.json", "r").read())
-            u1s = json.loads(open(f"data/orientation/{user1.id}.json", "r").read())
-            u2s = json.loads(open(f"data/orientation/{user2.id}.json", "r").read())
-            variant = ship_validation(u1g, u1s, u2g, u2s)
-            if variant is False:
-                return await ctx.send("These 2 users cannot be shipped together.")
-        except FileNotFoundError:
-            variant = "default"
-        link = main_link + variant
+        link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
         bio = BytesIO(await http.get(link, res_method="read"))
         if bio is None:
             return await ctx.send("Something went wrong, couldn't generate image")
