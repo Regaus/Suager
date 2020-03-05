@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-from utils import sqlite, time, permissions, tbl, errors
+from utils import sqlite, time, permissions, tbl
 from utils.generic import value_string, round_value, random_colour
 
 soon = "Coming Soon\u005c\u2122"
-aqos_guilds = []
+# aqos_guilds = []
 
 
 class Games(commands.Cog):
@@ -318,10 +318,10 @@ async def aqos_game(db, ctx):
         data = json.loads(_data['data'])
         db.execute("UPDATE data SET usage=? WHERE id=? AND type=?", (True, ctx.author.id, "aqos"))
     try:
-        if ctx.guild.id in aqos_guilds:
-            # await ctx.send("It seems that someone is using Aqos in this server, please wait...")
-            raise errors.AqosError("It seems that someone is using Aqos in this server, please wait...")
-        aqos_guilds.append(ctx.guild.id)
+        # if ctx.guild.id in aqos_guilds:
+        #     # await ctx.send("It seems that someone is using Aqos in this server, please wait...")
+        #     raise errors.AqosError("It seems that someone is using Aqos in this server, please wait...")
+        # aqos_guilds.append(ctx.guild.id)
         now = time.now_ts()
         now_dt = time.now()
         elapsed = "None"
@@ -499,14 +499,14 @@ async def aqos_game(db, ctx):
                  f"{value_string(data['xp'], big=True)}/{xpn}** - XP Level **{data['xp_level']:,}**\n" \
                  f"Energy Left: **{data['energy']:,.1f}/{el:,.1f}**\nEnergy regeneration: {round(er, 2)} " \
                  f"seconds - {((1 / er) * 60):,.2f} per minute\nFull in: {fi}"
-            try:
-                aqos_guilds.pop(ctx.guild.id)
-            except IndexError:
-                pass
+            # try:
+            #     aqos_guilds.pop(ctx.guild.id)
+            # except IndexError:
+            #     pass
             return await message.edit(content=md)
-    except errors.RegausError as e:
-        save_shit(db, ctx, data)
-        return await ctx.send(f"{e}")
+    # except errors.RegausError as e:
+    #     save_shit(db, ctx, data)
+    #     return await ctx.send(f"{e}")
     except Exception as e:
         save_shit(db, ctx, data),
         return await ctx.send(f"Congratulations, everything broke.\n`{type(e).__name__}: {e}`")
@@ -515,10 +515,10 @@ async def aqos_game(db, ctx):
 def save_shit(db, ctx, data):
     db.execute(update, (json.dumps(data), False, ctx.author.name, ctx.author.discriminator, data['score'],
                         ctx.author.id, "aqos"))
-    try:
-        aqos_guilds.pop(ctx.guild.id)
-    except IndexError:
-        pass
+    # try:
+    #     aqos_guilds.pop(ctx.guild.id)
+    # except IndexError:
+    #     pass
 
 
 def aqos_xpl(xp, xpr):
