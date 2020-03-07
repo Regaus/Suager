@@ -30,44 +30,47 @@ def insert_returns(body):
 
 
 async def eval_(ctx, cmd):
-    fn_name = "_eval_expr"
+    try:
+        fn_name = "_eval_expr"
 
-    cmd = cmd.strip("` ")
+        cmd = cmd.strip("` ")
 
-    # add a layer of indentation
-    cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
+        # add a layer of indentation
+        cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
 
-    # wrap in async def body
-    body = f"async def {fn_name}():\n{cmd}"
+        # wrap in async def body
+        body = f"async def {fn_name}():\n{cmd}"
 
-    parsed = ast.parse(body)
-    body = parsed.body[0].body
+        parsed = ast.parse(body)
+        body = parsed.body[0].body
 
-    insert_returns(body)
+        insert_returns(body)
 
-    env = {
-        'bot': ctx.bot,
-        'discord': discord,
-        'commands': commands,
-        'ctx': ctx,
-        'db': sqlite.Database(),
-        '__import__': __import__
-    }
-    exec(compile(parsed, filename="<ast>", mode="exec"), env)
+        env = {
+            'bot': ctx.bot,
+            'discord': discord,
+            'commands': commands,
+            'ctx': ctx,
+            'db': sqlite.Database(),
+            '__import__': __import__
+        }
+        exec(compile(parsed, filename="<ast>", mode="exec"), env)
 
-    result = (await eval(f"{fn_name}()", env))
-    # return await ctx.send(result)
-    if len(str(result)) == 0 or result is None:
-        return await ctx.send("Code has been run, however returned no result.")
-    elif len(str(result)) in range(1900, 8000001):
-        async with ctx.typing():
-            data = BytesIO(str(result).encode('utf-8'))
-            return await ctx.send(f"Result was a bit too long... ({len(result):,} chars)",
-                                  file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
-    elif len(str(result)) > 8000000:
-        return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
-    else:
-        return await ctx.send(str(result))
+        result = (await eval(f"{fn_name}()", env))
+        # return await ctx.send(result)
+        if len(str(result)) == 0 or result is None:
+            return await ctx.send("Code has been run, however returned no result.")
+        elif len(str(result)) in range(1900, 8000001):
+            async with ctx.typing():
+                data = BytesIO(str(result).encode('utf-8'))
+                return await ctx.send(f"Result was a bit too long... ({len(result):,} chars)",
+                                      file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
+        elif len(str(result)) > 8000000:
+            return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
+        else:
+            return await ctx.send(str(result))
+    except Exception as e:
+        return await ctx.send(f"{type(e).__name__}: {e}")
 
 
 async def eval_cmd(ctx, cmd):

@@ -14,9 +14,8 @@ from utils import generic, time, logs, lists, http, emotes
 from utils.emotes import AlexHeartBroken
 
 ct = time.now()  # Current time
-changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False, "tired": {
-    "dates": [], "time": [], "lr": [ct.year, ct.month, ct.day]
-}}
+changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False, "greeting": 0,
+           "tired": {"dates": [], "time": [], "lr": [ct.year, ct.month, ct.day]}}
 
 
 class Events(commands.Cog):
@@ -31,6 +30,7 @@ class Events(commands.Cog):
             print(e)
             times = changes.copy()
         self.today = times['tired']['lr']
+        # self.stop, self.done = False, False
         # self.ad = False
 
     @commands.Cog.listener()
@@ -182,30 +182,23 @@ class Events(commands.Cog):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(True)
 
-        # config = default.get("config.json")
-        playing = f"{self.config.playing} | v{self.config.version}"
-        # print(f'Ready: {self.bot.user} | Servers: {len(self.bot.guilds)} - Members: {len(self.bot.users)}')
         print(f"{time.time()} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
-        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing,
-                                                                 name=playing), status=discord.Status.dnd)
-        # general_commands = self.bot.get_channel(577599230567383058)
-        # await general_commands.send(f"{statuses.time_output()} - Bot is now online")
-        # logs = statuses.logs
-        # log_channel = statuses.tb_log_channel(self.bot)
-        hour = time.now().hour
-        when = int(hour / 6)
-        send = f"{time.time()} > Server is online\n{lists.hello[when]}, motherfuckers, " \
-               f"I'm ready to torture your minds >:3"
-        if self.config.logs:
-            await logs.log_channel(self.bot, "uptime").send(send)
-            # await log_channel.send(f"{statuses.time_output()} - Server is online")
-        await self.bot.get_channel(577599230567383058).send(send)
         try:
             # times = json.loads('changes.json')
             times = json.loads(open('changes.json', 'r').read())
         except Exception as e:
             print(e)
             times = changes.copy()
+        playing = f"{self.config.playing} | v{self.config.version}"
+        await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing,
+                                                                 name=playing), status=discord.Status.dnd)
+        hour = time.now().hour
+        when = int(hour / 6)
+        send = f"{time.time()} > Server is online\n{lists.hello[when]}, mothafuckas, " \
+               f"I'm ready to torture your minds >:3"
+        if self.config.logs:
+            await logs.log_channel(self.bot, "uptime").send(send)
+        await self.bot.get_channel(577599230567383058).send(send)
         ad = times['ad']
         if ad:
             print(f"{time.time()} > Detected that I'm already doing the loop...")
@@ -242,6 +235,11 @@ class Events(commands.Cog):
                             age = today[0] - 2018
                             await self.bot.get_channel(568148147457490958).send(
                                 f"It's my birthday today! I am now {age} years old! 🎉")
+                    hour = now.hour
+                    pod = int(hour / 6)
+                    if pod != times['greeting']:
+                        await self.bot.get_channel(577599230567383058).send(lists.hello[pod])
+                        times['greeting'] = pod
                     if cp:
                         this = now.minute * 60 + now.second
                         that = times['playing']
@@ -263,7 +261,6 @@ class Events(commands.Cog):
                                 except discord.errors.HTTPException or ClientConnectorError:
                                     print(f"{time.time()} > Updated playing to `{playing}`, "
                                           f"but failed to send message.")
-                    hour = now.hour
                     if ca:
                         that, last = times['avatar']
                         if hour != that:
@@ -336,8 +333,6 @@ class Events(commands.Cog):
     async def on_ready(self):
         self.exists = True
         await self.readiness()
-
-        # print(f"{time.time()} > I am ready to abuse your mind")
 
 
 def setup(bot):
