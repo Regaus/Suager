@@ -731,6 +731,7 @@ async def tbl_game(db, ctx):
         clan['skill_points'] += cld
         if cld > 0:
             oa += f"This clan is now Level **{clan['level']}**! - Earned {cld} Skill Points\n"
+        player['time'] = now
         db.execute(update, (json.dumps(player), False, ctx.author.name, ctx.author.discriminator, player['league'],
                             ctx.author.id, "tbl_player"))
         db.execute(update, (json.dumps(clan), False, ctx.guild.name, None, 0, ctx.guild.id, "tbl_clan"))

@@ -1,7 +1,10 @@
+import asyncio
+
+import discord
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-from utils import time
+from utils import time, emotes
 
 
 class RPStuff(commands.Cog):
@@ -97,6 +100,17 @@ class RPStuff(commands.Cog):
             block += f"{r[i]}{' '*(rd_spaces-rl[i])}{d[i]}{' '*(dt_spaces-dl[i])}{' '*ts}{to}\n"
         block += f"{place}{' '*(rd_spaces + dt_spaces + 7 - len(place) - 5)}{cur_time}```"
         return await ctx.send(block)
+
+    @commands.command(name="blood", aliases=["feedblood"], hidden=True)
+    @commands.guild_only()
+    async def feed_blood(self, ctx, user: discord.Member, amt: str, whose: str = None, *,
+                         flavour: str = "Normal"):
+        """ Feed blood """
+        giver = whose or ctx.author.name
+        data = f"{emotes.Loading} Feeding {user.name} blood...\nAmount: {amt}\nFrom: {giver}\nFlavour: {flavour}"
+        message = await ctx.send(data)
+        await asyncio.sleep(10)
+        return await message.edit(content=f"Fed {user.name} {amt} {giver}'s blood. ({flavour} flavour)")
 
 
 def setup(bot):
