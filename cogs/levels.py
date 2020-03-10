@@ -8,7 +8,7 @@ from utils import sqlite, time
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 5000
-level_xp = [12, 17]
+level_xp = [17, 30]
 # level_mr = [{'min': -1, 'max': 2147483647, 'val': 0.01}]  # Multiplier Rise for level between 0 and 15
 # {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
 # {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
@@ -249,25 +249,16 @@ class Leveling(commands.Cog):
         """ XP required to achieve a level """
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
-        normal = 1
         # biased = bias.get_bias(self.db, ctx.author)
         _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
-        if not _settings:
-            dm = 1
-        else:
-            settings = json.loads(_settings['data'])
-            try:
-                dm = settings['leveling']['xp_multiplier']
-            except KeyError:
-                dm = 1
         try:
             xp = levels()[level - 1]
         except IndexError:
             return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {max_level}, btw.")
-        x1, x2 = [val * normal * dm for val in level_xp]
+        # x1, x2 = [val * normal * dm for val in level_xp]
         needed = value_string(xp, big=True)
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need "
-                              f"**{needed} XP**\nBy then, you'll be getting **{x1:,.2f}-{x2:,.2f} XP** per message")
+                              f"**{needed} XP**")
 
     @commands.command(name="nextlevel")
     @commands.guild_only()
@@ -374,22 +365,6 @@ class Leveling(commands.Cog):
                 sp = xpl[k]
                 block += f"{str(i).zfill(2)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
             return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
-
-    # @commands.command(name="addxp")
-    # @commands.guild_only()
-    # @permissions.has_permissions(manage_server=True)
-    # async def add_xp(self, ctx, user: discord.Member, amount: float):
-    #     """ Add XP to a user """
-    #     data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (user.id, ctx.guild.id))
-    #     xp = data['xp'] if data else 0
-    #     xp += amount
-    #     if data:
-    #         yes = self.db.execute("UPDATE leveling SET level=0, xp=? WHERE user_id=? AND guild_id=?",
-    #                               (xp, user.id, ctx.guild.id))
-    #     else:
-    #         yes = self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
-    #                               (user.id, ctx.guild.id, 0, xp, 0, user.name, user.discriminator))
-    #     return await ctx.send(f"Added {amount:,.0f} XP to {user.name} in {ctx.guild.name}.\n{yes}")
 
 
 def setup(bot):
