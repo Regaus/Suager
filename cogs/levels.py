@@ -133,7 +133,7 @@ class Leveling(commands.Cog):
                     for i in range(len(rewards)):
                         role = discord.Object(id=l2[i])
                         has_role = l2[i] in roles
-                        if level > l1[i]:
+                        if level >= l1[i]:
                             if i < len(rewards) - 1:
                                 if level < l1[i + 1]:
                                     if not has_role:
@@ -150,7 +150,8 @@ class Leveling(commands.Cog):
             except KeyError:
                 pass  # If no level rewards, don't even bother
             except discord.Forbidden:
-                pass  # If I can't add/remove the roles, don't even bother
+                await ctx.send(f"{ctx.author.name} should have got a level reward, "
+                               f"but I do not have sufficient permissions to do so.")
             except Exception as e:
                 print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
         if data:
