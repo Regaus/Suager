@@ -4,7 +4,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from utils import generic, time, permissions, sqlite
+from utils import generic, time, permissions, sqlite, argparser
 from utils.generic import random_colour
 
 prefix_template = {'prefixes': [], 'default': True}
@@ -317,6 +317,74 @@ class Discord(commands.Cog):
                         f"Created: {time.time_output(emoji.created_at)}\n[Copy Link]({emoji.url})",
             colour=generic.random_colour()).set_image(url=emoji.url).set_author(
             name=ctx.author, icon_url=ctx.author.avatar_url).set_footer(text="Or you could've used discord for PC"))
+
+    @commands.command(name="customrole", aliases=["cr"])
+    @commands.guild_only()
+    async def custom_role(self, ctx, *, stuff: str):
+        """ Custom Role (only in Senko Lair)
+
+         Arguments:
+        -c/--colour/--color: Set role colour
+        -n/--name: Set role name """
+        if ctx.guild.id == 568148147457490954:
+            data = self.db.fetchrow("SELECT * FROM customrole WHERE uid=?", (ctx.author.id,))
+            if not data:
+                return await ctx.send(f"Doesn't seem like you have a custom role, {ctx.author.name}")
+            parser = argparser.Arguments()
+            # parser.add_argument('input', nargs="+", default=None)
+            parser.add_argument('-c', '--colour', '--color', nargs=1)
+            parser.add_argument('-n', '--name', nargs="+")
+
+            args, valid_check = parser.parse_args(stuff)
+            if not valid_check:
+                return await ctx.send(args)
+
+            role = ctx.guild.get_role(data['rid'])
+
+            if args.colour is not None:
+                c = args.colour[0]
+                a = len(c)
+                if c == "random":
+                    col = generic.random_colour()
+                else:
+                    if a == 6 or a == 3:
+                        try:
+                            col = int(c, base=16)
+                        except Exception as e:
+                            return await ctx.send(f"Invalid colour - {type(e).__name__}: {e}")
+                    else:
+                        return await ctx.send("Colour must be either 3 or 6 HEX digits long.")
+                colour = discord.Colour(col)
+            else:
+                colour = role.colour
+
+            name = ' '.join(args.name) or role.name
+
+            try:
+                await role.edit(name=name, colour=colour, reason="Custom Role change")
+            except Exception as e:
+                return await ctx.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}")
+
+            return await ctx.send(f"Successfully updated your custom role, {ctx.author.name}")
+        else:
+            return await ctx.send("This command is only available in Senko Lair.")
+
+    @commands.command(name="grantrole")
+    @commands.guild_only()
+    @commands.is_owner()
+    async def grant_custom_role(self, ctx, user: discord.Member, role: discord.Role):
+        """ Grant custom role """
+        if ctx.guild.id == 568148147457490954:
+            already = self.db.fetchrow("SELECT * FROM customrole WHERE uid=?", (user.id,))
+            if not already:
+                result = self.db.execute("INSERT INTO customrole VALUES (?, ?)", (user.id, role.id))
+                await user.add_roles(role, reason="Custom Role grant")
+                return await ctx.send(f"Granted {role.name} to {user.name}: {result}")
+            else:
+                result = self.db.execute("UPDATE customrole SET rid=? WHERE uid=?", (role.id, user.id))
+                return await ctx.send(f"Updated custom role of {user.name} to {role.name}: {result}")
+        else:
+            return await ctx.send("This is only available in Senko Lair")
 
 
 def setup(bot):

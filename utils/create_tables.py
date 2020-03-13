@@ -37,6 +37,11 @@ class Data(db.Table):
     extra = db.Column("INTEGER", nullable=True)
 
 
+class CustomRole(db.Table):
+    uid = db.Column("INTEGER", nullable=False)
+    rid = db.Column("INTEGER", nullable=False)
+
+
 def creation(debug: bool = False):
     """ Create tables or add missing columns to tables """
     failed = False
