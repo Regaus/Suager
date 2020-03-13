@@ -236,10 +236,10 @@ class Events(commands.Cog):
                             await self.bot.get_channel(568148147457490958).send(
                                 f"It's my birthday today! I am now {age} years old! 🎉")
                     hour = now.hour
-                    pod = int(hour / 6)
-                    if pod != times['greeting']:
-                        await self.bot.get_channel(577599230567383058).send(lists.hello[pod])
-                        times['greeting'] = pod
+                    # pod = int(hour / 6)
+                    # if pod != times['greeting']:
+                    #     await self.bot.get_channel(577599230567383058).send(lists.hello[pod])
+                    #     times['greeting'] = pod
                     if cp:
                         this = now.minute * 60 + now.second
                         that = times['playing']

@@ -236,7 +236,7 @@ class Discord(commands.Cog):
         return await ctx.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.")
 
     @commands.command(name="avatar")
-    async def avatar(self, ctx, *, who: discord.Member = None):
+    async def avatar(self, ctx, *, who: discord.User = None):
         """ Get someone's avatar """
         user = who or ctx.author
         return await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024)}")
