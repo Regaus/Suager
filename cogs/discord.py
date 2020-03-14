@@ -320,6 +320,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="customrole", aliases=["cr"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
     async def custom_role(self, ctx, *, stuff: str):
         """ Custom Role (only in Senko Lair)
 

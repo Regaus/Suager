@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import discord
 import psutil
@@ -57,8 +57,8 @@ class Events(commands.Cog):
             pass
 
         elif isinstance(err, commands.errors.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown... try again in {generic.round_value(err.retry_after)} "
-                           f"seconds.")
+            ra = timedelta(seconds=err.retry_after).__str__()
+            await ctx.send(f"This command is on cooldown... try again in {ra[2:-4]}")
 
         elif isinstance(err, commands.errors.CommandNotFound):
             pass
