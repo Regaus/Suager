@@ -252,8 +252,8 @@ class HumanInfo(commands.Cog):
         ls = [94762492923748352, 246652610747039744]
         if user1.id in ls or user2.id in ls:
             return await ctx.send("These 2 users cannot be shipped together.")
-        av1 = user1.avatar_url_as(size=1024, format="png")
-        av2 = user2.avatar_url_as(size=1024, format="png")
+        av1 = user1.avatar_url_as(size=1024)
+        av2 = user2.avatar_url_as(size=1024)
         link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
         bio = BytesIO(await http.get(link, res_method="read"))
         if bio is None:
