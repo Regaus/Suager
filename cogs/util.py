@@ -141,20 +141,23 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=900, type=commands.BucketType.guild)
     async def rainbow_roles(self, ctx, *, role: discord.Role):
         """ Rainbow Roles """
-        colour = role.colour
-        now = time.now_ts()
-        tl = 60
-        end = now + tl
-        data = f"{time.time()} > {ctx.guild.name} > Rainbow Roles for {role.name}\nThis will last {tl} seconds"
-        message = await ctx.send(data)
-        freq = 0.2
-        while now < end:
+        try:
+            colour = role.colour
             now = time.now_ts()
-            await role.edit(reason=reason(ctx.author, "Rainbow Roles"), colour=discord.Colour(random_colour()))
-            await asyncio.sleep(freq)
-        await role.edit(reason=reason(ctx.author, "Rainbow Roles ended"), colour=colour)
-        return await message.edit(content=f"{time.time()} > {ctx.guild.name} > Rainbow Roles for {role.name} ended. "
-                                          f"Original role colour restored")
+            tl = 60
+            end = now + tl
+            data = f"{time.time()} > {ctx.guild.name} > Rainbow Roles for {role.name}\nThis will last {tl} seconds"
+            message = await ctx.send(data)
+            freq = 0.2
+            while now < end:
+                now = time.now_ts()
+                await role.edit(reason=reason(ctx.author, "Rainbow Roles"), colour=discord.Colour(random_colour()))
+                await asyncio.sleep(freq)
+            await role.edit(reason=reason(ctx.author, "Rainbow Roles ended"), colour=colour)
+            return await message.edit(content=f"{time.time()} > {ctx.guild.name} > Rainbow Roles for {role.name} ended. "
+                                              f"Original role colour restored")
+        except discord.Forbidden:
+            return await ctx.send("Well, looks like I can't do that.")
 
 
 def setup(bot):
