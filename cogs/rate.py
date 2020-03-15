@@ -43,7 +43,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="babyrate")
     @commands.guild_only()
-    async def baby_rate(self, ctx, user1: discord.Member, user2: discord.Member):
+    async def baby_rate(self, ctx, user1: discord.User, user2: discord.User):
         """ Chance of 2 users having a baby """
         if user1 == user2:
             return await ctx.send("I don't think that's how it works...")
@@ -61,7 +61,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="love", aliases=["lovecalc"])
     @commands.guild_only()
-    async def love_calc(self, ctx, user1: discord.Member, user2: discord.Member):
+    async def love_calc(self, ctx, user1: discord.User, user2: discord.User):
         """ Calculate the amount of love between 2 users """
         if user1 == user2:
             return await ctx.send("I don't think that's how it works...")
@@ -84,7 +84,7 @@ class Ratings(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
-    async def hotness(self, ctx, *, user: discord.Member = None):
+    async def hotness(self, ctx, *, user: discord.User = None):
         """ Check how hot someone is """
         user = user or ctx.author
         random.seed(user.id)
@@ -104,7 +104,7 @@ class Ratings(commands.Cog):
         return await message.edit(content=f"**{user.name}** is **{step3:.2f}%** hot {emote}")
 
     @commands.command(name="iq")
-    async def iq_test(self, ctx, *, who: discord.Member = None):
+    async def iq_test(self, ctx, *, who: discord.User = None):
         """ Check Someone's IQ """
         user = who or ctx.author
         random.seed(user.id)

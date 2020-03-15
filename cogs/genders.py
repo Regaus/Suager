@@ -29,8 +29,8 @@ class HumanInfo(commands.Cog):
 
     def pb_size(self, user: discord.Member):
         random.seed(user.id)
-        ___random = random.randint(0, 69)
-        __random = random.randint(87, 147) / 100
+        ___random = random.randint(0, 200)
+        __random = 10
         result = ___random / __random
         # result *= bias.friend_bias(self.db, user) * bias.gender_bias(user) * bias.so_bias(user)
         if user.id == self.bot.user.id:
@@ -53,7 +53,7 @@ class HumanInfo(commands.Cog):
         """ Boob size! """
         if user is None:
             user = ctx.author
-        result = self.pb_size(user) / 2.5
+        result = self.pb_size(user)
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
         return await message.edit(content=f"If **{user.name}** was female, their {ctx.invoked_with} "
