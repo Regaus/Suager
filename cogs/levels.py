@@ -155,6 +155,14 @@ class Leveling(commands.Cog):
                                f"but I do not have sufficient permissions to do so.")
             except Exception as e:
                 print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
+        if data:
+            self.db.execute("UPDATE leveling SET level=?, xp=?, last_time=?, name=?, disc=? "
+                            "WHERE user_id=? AND guild_id=?",
+                            (level, xp, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+        else:
+            self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
+        if lu:  # Only after the save
             if ctx.guild.id == 679055998186553344:  # Rosey
                 role = ctx.author.top_role
                 if role != ctx.guild.default_role:
@@ -172,22 +180,6 @@ class Leveling(commands.Cog):
                         await role.edit(reason=reason(ctx.author, "Level up rainbow role ended"), colour=colour)
                     except discord.Forbidden:
                         pass
-        if data:
-            self.db.execute("UPDATE leveling SET level=?, xp=?, last_time=?, name=?, disc=? "
-                            "WHERE user_id=? AND guild_id=?",
-                            (level, xp, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
-        else:
-            self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
-        # stuff = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=? AND extra=?",
-        #                          ("roles", ctx.author.id, ctx.guild.id))
-        # if stuff:
-        #    self.db.execute("UPDATE data SET data=? WHERE type=? AND id=? AND extra=?",
-        #                      (json.dumps([r.id for r in ctx.author.roles]), "roles", ctx.author.id, ctx.guild.id))
-        # else:
-        #     self.db.execute("INSERT INTO data VALUES (?, ?, ?, ?, ?, ?, ?)", (
-        #        ctx.author.id, "roles", json.dumps([r.id for r in ctx.author.roles]), False, ctx.author.name,
-        #        ctx.author.discriminator, ctx.guild.id))
 
     @commands.command(name="rewards")
     @commands.guild_only()
