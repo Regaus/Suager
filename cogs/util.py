@@ -1,15 +1,13 @@
-import asyncio
 import json
 import random
 from datetime import datetime, timedelta
 
-import discord
 import country_converter
+import discord
 import timeago
 from discord.ext import commands
 
-from utils import time, http, permissions
-from utils.generic import random_colour, reason
+from utils import time, http
 
 
 class Utility(commands.Cog):
@@ -134,30 +132,6 @@ class Utility(commands.Cog):
                 _time = f"{i['due']} mins"
             trams += f"{i['destination']}: {_time}\n"
         return await ctx.send(f"Data available for {_place}:\n{status}\n{trams}")
-
-    @commands.command(name="rainbow")
-    @permissions.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    @commands.cooldown(rate=1, per=900, type=commands.BucketType.guild)
-    async def rainbow_roles(self, ctx, *, role: discord.Role):
-        """ Rainbow Roles """
-        try:
-            colour = role.colour
-            now = time.now_ts()
-            tl = 60
-            end = now + tl
-            data = f"{time.time()} > {ctx.guild.name} > Rainbow Roles for {role.name}\nThis will last {tl} seconds"
-            message = await ctx.send(data)
-            freq = 0.2
-            while now < end:
-                now = time.now_ts()
-                await role.edit(reason=reason(ctx.author, "Rainbow Roles"), colour=discord.Colour(random_colour()))
-                await asyncio.sleep(freq)
-            await role.edit(reason=reason(ctx.author, "Rainbow Roles ended"), colour=colour)
-            return await message.edit(content=f"{time.time()} > {ctx.guild.name} > Rainbow Roles for {role.name} ended. "
-                                              f"Original role colour restored")
-        except discord.Forbidden:
-            return await ctx.send("Well, looks like I can't do that.")
 
 
 def setup(bot):

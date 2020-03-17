@@ -133,6 +133,6 @@ async def you_little_shit(senko_lair):
 
 
 # version = get("config.json").version
-invite = "https://discordapp.com/invite/UrHhtWE"
+invite = "https://discord.gg/cw7czUx"
 owners = get("config.json").owners
 prefixes = 'data/prefixes'

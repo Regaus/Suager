@@ -1,4 +1,3 @@
-import asyncio
 import json
 import random
 
@@ -6,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils import sqlite, time
-from utils.generic import random_colour, value_string, round_value, reason
+from utils.generic import random_colour, value_string, round_value
 
 max_level = 5000
 level_xp = [17, 30]
@@ -162,25 +161,6 @@ class Leveling(commands.Cog):
         else:
             self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
-        if lu:  # Only after the save
-            if ctx.guild.id == 679055998186553344:  # Rosey
-                if self.bot.user.id == 609423646347231282:
-                    role = ctx.author.top_role
-                    if role != ctx.guild.default_role:
-                        try:
-                            colour = role.colour
-                            now = time.now_ts()
-                            tl = 15
-                            end = now + tl
-                            freq = 0.2
-                            while now < end:
-                                now = time.now_ts()
-                                await role.edit(reason=reason(ctx.author, "Level up"),
-                                                colour=discord.Colour(random_colour()))
-                                await asyncio.sleep(freq)
-                            await role.edit(reason=reason(ctx.author, "Level up rainbow role ended"), colour=colour)
-                        except discord.Forbidden:
-                            pass
 
     @commands.command(name="rewards")
     @commands.guild_only()
