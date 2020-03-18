@@ -3,7 +3,7 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import sqlite, time
+from utils import sqlite, time, emotes
 from utils.generic import value_string, random_colour, get_config
 
 money_amounts = [50, 100]
@@ -80,6 +80,7 @@ class Economy(commands.Cog):
         else:
             self.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
+        return await ctx.send(f"{ctx.author.name} just gave {amount}{currency} to {user.name}. {emotes.AlexHeart}")
 
     @commands.command(name="profile")
     @commands.guild_only()

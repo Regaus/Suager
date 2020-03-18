@@ -29,12 +29,14 @@ class HumanInfo(commands.Cog):
 
     def pb_size(self, user: discord.Member):
         random.seed(user.id)
-        ___random = random.randint(0, 200)
+        ___random = random.randint(150, 300)
         __random = 10
         result = ___random / __random
         # result *= bias.friend_bias(self.db, user) * bias.gender_bias(user) * bias.so_bias(user)
         if user.id == self.bot.user.id:
             result = 420.69
+        if user.id == 682321712779493429:  # imagine being you
+            result = 0
         return result
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
