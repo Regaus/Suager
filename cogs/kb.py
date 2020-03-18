@@ -20,7 +20,7 @@ class KawaiiBot(commands.Cog):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy = [lists.error] * 7
 
-    @commands.command(name="pat")
+    @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
     async def pat(self, ctx, user: discord.Member):
         """ Pat someone """
