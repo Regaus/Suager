@@ -1,7 +1,10 @@
+import random
+from io import BytesIO
+
 import discord
 from discord.ext import commands
 
-from utils import permissions, emotes
+from utils import permissions, emotes, http
 
 
 class Speech(commands.Cog):
@@ -68,7 +71,6 @@ class Speech(commands.Cog):
             return await ctx.send(f"Could not send message: {e}")
         return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
 
-
     @commands.command(name="say")
     @commands.guild_only()
     async def say(self, ctx, *, message: str):
@@ -79,6 +81,66 @@ class Speech(commands.Cog):
             pass
         await ctx.send(f"**{ctx.author}:**\n{message}")
         return await ctx.send(f"✉️ Successfully sent message", delete_after=10)
+
+    @commands.command(name="tellimg")
+    @commands.guild_only()
+    @permissions.has_permissions(manage_messages=True)
+    async def tell_image(self, ctx, channel: discord.TextChannel, *, message: str = ""):
+        """ Send an image to a channel """
+        if len(ctx.message.attachments) == 1:
+            url = ctx.message.attachments[0].url
+            fn = ctx.message.attachments[0].filename
+            spoiler = ctx.message.attachments[0].is_spoiler()
+        else:
+            return await ctx.send(f"I need you to upload a file with the command, otherwise use {ctx.prefix}tell.")
+        bio = BytesIO(await http.get(url, res_method="read"))
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        if channel.guild != ctx.guild:
+            return await ctx.send(f"Hmm, it doesn't seem like this channel is in {ctx.guild.name}, "
+                                  f"but rather {channel.guild.name}...")
+        try:
+            await channel.send(message, file=discord.File(bio, filename=fn, spoiler=spoiler))
+        except Exception as e:
+            return await ctx.send(f"Could not send message: {e}")
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
+
+    @commands.command(name="tellembed")
+    @commands.guild_only()
+    @permissions.has_permissions(manage_messages=True)
+    async def tell_embed(self, ctx, channel: discord.TextChannel, embed_colour: str, *, message: str):
+        """ Say something with an embed """
+        if embed_colour == "random":
+            colour = random.randint(0, 0xffffff)
+            # _colour = hex(__colour)[2:]
+            a = 6
+        else:
+            try:
+                colour = int(embed_colour, base=16)
+                # _colour = hex(__colour)[2:]
+                a = len(embed_colour)
+                if a != 3 and a != 6:
+                    return await ctx.send(f"Value must be either 3 or 6 digits long")
+            except Exception as e:
+                return await ctx.send(f"Invalid colour: {e}\nValue must be either `random` or a HEX value")
+        if a == 3:
+            d, e, f = embed_colour
+            colour = int(f"{d}{d}{e}{e}{f}{f}", base=16)
+        embed = discord.Embed(colour=colour, description=message)
+        try:
+            await ctx.message.delete()
+        except discord.Forbidden:
+            pass
+        if channel.guild != ctx.guild:
+            return await ctx.send(f"Hmm, it doesn't seem like this channel is in {ctx.guild.name}, "
+                                  f"but rather {channel.guild.name}...")
+        try:
+            await channel.send(embed=embed)
+        except Exception as e:
+            return await ctx.send(f"Could not send message: {e}")
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
 
 
 def setup(bot):
