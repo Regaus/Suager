@@ -72,6 +72,11 @@ class KawaiiBot(commands.Cog):
         """ Lick someone """
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
+        if ctx.guild.id == 679055998186553344:  # Rosey's server
+            if user.id == 302851022790066185:  # Regaus
+                if ctx.author.id != 424472476106489856:  # Canvas
+                    canvas = ctx.guild.get_member(424472476106489856)
+                    return await ctx.send(f"Only {canvas.display_name} is allowed to lick {user.display_name}.")
         embed = discord.Embed(colour=generic.random_colour())
         if user == ctx.author:
             return await ctx.send(embed=embed.set_image(
@@ -144,10 +149,9 @@ class KawaiiBot(commands.Cog):
         if user == ctx.author:
             return await ctx.send("How are you going to do that?")
         if user.id == self.bot.user.id:
-            return await ctx.send(f"Ow.. why would you bite me, {ctx.author.name}? "
-                                  f"It h-hurts ;-; {emotes.AlexHeartBroken}")
+            return await ctx.send(f"Why are you {ctx.invoked_with}ing me, {ctx.author.name}? ")
         embed = discord.Embed(colour=generic.random_colour())
-        embed.description = f"**{user.name}** was bitten by **{ctx.author.name}**"
+        embed.description = f"**{user.name}** was {ctx.invoked_with}ed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.smell))
         return await ctx.send(embed=embed)
 
