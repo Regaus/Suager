@@ -110,8 +110,11 @@ class Speech(commands.Cog):
     @commands.command(name="tellembed")
     @commands.guild_only()
     @permissions.has_permissions(manage_messages=True)
-    async def tell_embed(self, ctx, channel: discord.TextChannel, embed_colour: str, *, message: str):
-        """ Say something with an embed """
+    async def tell_embed(self, ctx, channel: discord.TextChannel, embed_colour: str, thumbnail_url: str,
+                         *, message: str):
+        """ Say something with an embed
+
+         Put "none" as thumbnail_url to not use one """
         if embed_colour == "random":
             colour = random.randint(0, 0xffffff)
             # _colour = hex(__colour)[2:]
@@ -129,6 +132,8 @@ class Speech(commands.Cog):
             d, e, f = embed_colour
             colour = int(f"{d}{d}{e}{e}{f}{f}", base=16)
         embed = discord.Embed(colour=colour, description=message)
+        if thumbnail_url.lower() != "none":
+            embed.set_thumbnail(url=thumbnail_url.lower())
         try:
             await ctx.message.delete()
         except discord.Forbidden:
