@@ -3,6 +3,7 @@ import random
 import discord
 from discord.ext import commands
 
+from cogs.stuff import soon
 from utils import sqlite, time, emotes
 from utils.generic import value_string, random_colour, get_config
 
@@ -108,6 +109,18 @@ class Economy(commands.Cog):
             embed.add_field(name="Money", value=f"{r1}{currency}", inline=False)
             embed.add_field(name="Donated", value=f"{r2}{currency}", inline=False)
         return await ctx.send(f"**{user.name}'s** profile in **{ctx.guild.name}**", embed=embed)
+
+    @commands.command(name="buy")
+    @commands.guild_only()
+    async def buy_something(self, ctx):
+        """ Buy an item from the shop """
+        return await ctx.send(soon)
+
+    @commands.command(name="shop")
+    @commands.guild_only()
+    async def item_shop(self, ctx):
+        """ Item shop """
+        return await ctx.send(soon)
 
 
 def setup(bot):

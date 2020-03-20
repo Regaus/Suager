@@ -9,7 +9,7 @@ from discord.ext import commands
 from utils import sqlite, time, permissions, tbl
 from utils.generic import value_string, round_value, random_colour
 
-soon = "Coming Soon\u005c\u2122"
+soon = "Placeholder - Coming Soon\u005c\u2122"
 # aqos_guilds = []
 
 

@@ -9,7 +9,7 @@ import psutil
 from aiohttp import ClientConnectorError
 from discord.ext import commands
 
-from cogs.genders import genders
+from cogs.genders import genders, roles
 from utils import generic, time, logs, lists, http
 from utils.emotes import AlexHeartBroken
 
@@ -107,23 +107,22 @@ class Events(commands.Cog):
         if self.config.spyware:
             await logs.log_channel(self.bot, "spyware").send(
                 f"{time.time()} > {member} just joined {member.guild.name}")
+        try:
+            gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
+        except FileNotFoundError:
+            gender = genders.copy()
+        snowflakes = [discord.Object(id=i) for i in roles.get(member.guild.id, [-1, -1, -1])]
+        reason = "Gender assignments - Joined Senko Lair"
+        if gender['male']:
+            await member.add_roles(snowflakes[0], reason=reason)
+        if gender['female']:
+            await member.add_roles(snowflakes[1], reason=reason)
+        if gender['invalid']:
+            await member.add_roles(snowflakes[2], reason=reason)
         if member.guild.id == 568148147457490954:
             td = time.now_ts() - datetime.timestamp(member.created_at)
             if td < 86400:
                 await member.kick(reason="Account created less than a day ago")
-            try:
-                gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
-            except FileNotFoundError:
-                gender = genders.copy()
-            roles = [651339885013106688, 651339932681371659, 651339982652571648]
-            snowflakes = [discord.Object(id=i) for i in roles]
-            reason = "Gender assignments - Joined Senko Lair"
-            if gender['male']:
-                await member.add_roles(snowflakes[0], reason=reason)
-            if gender['female']:
-                await member.add_roles(snowflakes[1], reason=reason)
-            if gender['invalid']:
-                await member.add_roles(snowflakes[2], reason=reason)
             embed = discord.Embed(colour=generic.random_colour())
             embed.set_thumbnail(url=member.avatar_url)
             embed.add_field(name="User ID", value=member.id)
