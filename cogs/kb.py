@@ -18,7 +18,7 @@ but_why = "https://cdn.discordapp.com/attachments/610482988123422750/67364202835
 class KawaiiBot(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy = [lists.error] * 7
+        self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell = [lists.error] * 8
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
@@ -125,7 +125,7 @@ class KawaiiBot(commands.Cog):
         embed.set_image(url=random.choice(self.sleepy))
         return await ctx.send(embed=embed)
 
-    @commands.command(name="slap")
+    @commands.command(name="slap", aliases=["kill", "shoot", "punch", "hit"])
     @commands.guild_only()
     async def slap(self, ctx, user: discord.Member):
         """ Violence! """
@@ -134,6 +134,22 @@ class KawaiiBot(commands.Cog):
         if user.id == self.bot.user.id:
             return await ctx.send(f"{ctx.author.name}, we can no longer be friends. ;-; {emotes.AlexHeartBroken}")
         return await ctx.send(f"Violence is never the answer, {ctx.author.name}!")
+
+    @commands.command(name="smell", aliases=["sniff"])
+    @commands.guild_only()
+    async def smell(self, ctx, user: discord.Member):
+        """ Smell/sniff someone """
+        if is_fucked(self.smell):
+            self.smell = await lists.get_images(self.bot, 'n')
+        if user == ctx.author:
+            return await ctx.send("How are you going to do that?")
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"Ow.. why would you bite me, {ctx.author.name}? "
+                                  f"It h-hurts ;-; {emotes.AlexHeartBroken}")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{user.name}** was bitten by **{ctx.author.name}**"
+        embed.set_image(url=random.choice(self.smell))
+        return await ctx.send(embed=embed)
 
     @commands.command(name="reloadimages")
     @commands.is_owner()
@@ -146,6 +162,7 @@ class KawaiiBot(commands.Cog):
         self.cuddle = await lists.get_images(self.bot, 'c')
         self.bite = await lists.get_images(self.bot, 'b')
         self.sleepy = await lists.get_images(self.bot, 's')
+        self.smell = await lists.get_images(self.bot, 'n')
         if generic.get_config().logs:
             await logs.log_channel(self.bot, 'changes').send('Reloaded KawaiiBot images')
         return await ctx.send("Successfully reloaded images")
