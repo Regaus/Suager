@@ -16,7 +16,7 @@ class Ratings(commands.Cog):
     async def rate(self, ctx, *, what: commands.clean_content):
         """ Rate something """
         random.seed(str(what))
-        r = random.randint(400, 1000) / 10
+        r = random.randint(0, 1000) / 10
         bad = ["xela", "lidl xela", "alexflipnote"]
         if str(what).lower() in bad:  # xelA is a meanie, and meanies don't deserve love mmlol
             r = 0.0                   # I don't like LIDL xelA, so it ain't getting any love either

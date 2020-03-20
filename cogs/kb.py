@@ -66,7 +66,7 @@ class KawaiiBot(commands.Cog):
         embed.set_image(url=random.choice(self.cuddle))
         return await ctx.send(embed=embed)
 
-    @commands.command(name="lick")
+    @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
     async def lick(self, ctx, user: discord.Member):
         """ Lick someone """
