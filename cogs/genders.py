@@ -41,6 +41,8 @@ class HumanInfo(commands.Cog):
             result = 420.69
         if user.id == 682321712779493429:  # imagine being you
             result = 0
+        if user.id == 302851022790066185:
+            result *= 2.5
         return result
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
