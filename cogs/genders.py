@@ -33,7 +33,8 @@ class HumanInfo(commands.Cog):
 
     def pb_size(self, user: discord.Member):
         random.seed(user.id)
-        ___random = random.randint(150, 300)
+        lr, ur = 150, 300
+        ___random = random.randint(lr, ur)
         __random = 10
         result = ___random / __random
         # result *= bias.friend_bias(self.db, user) * bias.gender_bias(user) * bias.so_bias(user)
@@ -42,7 +43,7 @@ class HumanInfo(commands.Cog):
         if user.id == 682321712779493429:  # imagine being you
             result = 0
         if user.id == 302851022790066185:
-            result *= 2.5
+            result = ur - (1 / __random)
         return result
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
@@ -54,7 +55,7 @@ class HumanInfo(commands.Cog):
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
         return await message.edit(content=f"If **{user.name}** was male, their {ctx.invoked_with} "
-                                          f"size would be **{result:.2f}cm**")
+                                          f"size would be **{result:.1f}cm**")
 
     @commands.command(name="breast", aliases=["boobs", "tiddies"])
     async def boob_size(self, ctx, *, user: discord.Member = None):
@@ -65,7 +66,7 @@ class HumanInfo(commands.Cog):
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
         await asyncio.sleep(3)
         return await message.edit(content=f"If **{user.name}** was female, their {ctx.invoked_with} "
-                                          f"size would be **{result:.2f}cm**")
+                                          f"size would be **{result:.1f}cm**")
 
     @commands.command(name="gender")
     @commands.guild_only()
