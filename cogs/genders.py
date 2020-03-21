@@ -43,7 +43,7 @@ class HumanInfo(commands.Cog):
         if user.id == 682321712779493429:  # imagine being you
             result = 0
         if user.id == 302851022790066185:
-            result = ur - (1 / __random)
+            result = (ur - 1) / __random
         return result
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
