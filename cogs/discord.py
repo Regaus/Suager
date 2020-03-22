@@ -359,7 +359,10 @@ class Discord(commands.Cog):
             else:
                 colour = role.colour
 
-            name = ' '.join(args.name) or role.name
+            try:
+                name = ' '.join(args.name)
+            except TypeError:
+                name = role.name
 
             try:
                 await role.edit(name=name, colour=colour, reason="Custom Role change")
