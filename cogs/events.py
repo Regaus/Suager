@@ -111,7 +111,7 @@ class Events(commands.Cog):
             gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
         except FileNotFoundError:
             gender = genders.copy()
-        snowflakes = [discord.Object(id=i) for i in roles.get(member.guild.id, [-1, -1, -1])]
+        snowflakes = [discord.Object(id=i) for i in roles.get(member.guild.id, [0, 0, 0])]
         reason = "Gender assignments - Joined Senko Lair"
         if gender['male']:
             await member.add_roles(snowflakes[0], reason=reason)
