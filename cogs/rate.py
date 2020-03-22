@@ -18,8 +18,9 @@ class Ratings(commands.Cog):
         random.seed(str(what))
         r = random.randint(0, 1000) / 10
         bad = ["xela", "lidl xela", "alexflipnote"]
-        if str(what).lower() in bad:  # xelA is a meanie, and meanies don't deserve love mmlol
+        if str(what).lower() in bad:  # xelA is a meanie, and meanies don't deserve love.
             r = 0.0                   # I don't like LIDL xelA, so it ain't getting any love either
+        # Alex you can go to hell too. I know that you created the original source, but still.
         return await ctx.send(f"I'd rate {what} a **{r}/100**")
 
     @commands.command(name="rateuser")
@@ -31,14 +32,14 @@ class Ratings(commands.Cog):
         if who.id == ctx.author.id:
             return await ctx.send(f"{ctx.author.mention} I like you the way you are! {emotes.AlexPat}")
         r = random.randint(r1, r2) / 10
-        if ctx.guild.id == 568148147457490954:
-            if ctx.guild.get_role(660880373894610945) in who.roles:
-                r /= 3
-            if 'arch' in who.name.lower():
-                r /= 3
-            if who.nick is not None:
-                if 'arch' in who.nick.lower():
-                    r /= 3
+        _79 = [94762492923748352, 464901058796453899, 246652610747039744]  # Bowser65
+        if who.id in _79:
+            r = 79.9
+        _100 = [302851022790066185, 597373963571691520, 527729196688998415, 411616745451683852, 424472476106489856,
+                609423646347231282, 520042197391769610, 568149836927467542]
+        # Regaus, Nuriki, Aya, Huggi, canvas, and Suager (incl. Beta and Alpha)
+        if who.id in _100:
+            r = 100.0
         return await ctx.send(f"I'd rate {who.name} a **{r:.1f}/100**")
 
     @commands.command(name="babyrate")
@@ -69,13 +70,16 @@ class Ratings(commands.Cog):
             return await ctx.send(f"{ctx.author.name}, I'm already t-taken...")
         if user1.bot or user2.bot:
             return await ctx.send("Bot's can't feel love...")
-        seed = user1.id + user2.id + 1
+        seed = user1.id - user2.id
         random.seed(seed)
-        a = [302851022790066185, 527729196688998415, 411616745451683852]
-        b = [179217986517729280, 191522051943563264]
+        a = [302851022790066185, 527729196688998415, 411616745451683852]  # Nuriki Cult / Aya and Huggi
+        b = [179217986517729280, 191522051943563264]  # Memory and Poro
+        c = [302851022790066185, 424472476106489856]  # Canvas
         if user1.id in a and user2.id in a:
             rate = 90
         elif user1.id in b and user2.id in b:
+            rate = 100
+        elif user1.id in c and user2.id in c:
             rate = 100
         else:
             rate = random.randint(0, 100)
@@ -84,31 +88,38 @@ class Ratings(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
-    async def hotness(self, ctx, *, user: discord.User = None):
+    async def hotness(self, ctx, *, who: discord.User = None):
         """ Check how hot someone is """
-        user = user or ctx.author
-        random.seed(user.id)
-        step1 = int(random.randint(5000, 10000))
+        user = who or ctx.author
+        random.seed(user.id - 1)
+        step1 = int(random.randint(2000, 11700))
         step3 = step1 / 117
+        custom = {
+            302851022790066185: 99,
+            424472476106489856: 100,  # canvas
+            527729196688998415: 99,   # Aya
+            597373963571691520: 99,   # Nuriki
+        }
+        step4 = custom.get(user.id, round(step3, 2))
         # step4 = bias.friend_bias(self.db, user)
         # step5 = step3 * step4
         # tep6 = 100 if step5 > 100 else step5
-        if 0 < step3 < 33:
+        if 0 < step4 < 33:
             emote = "<:sadcat:620306629124161536>"
-        elif 33 <= step3 < 67:
-            emote = "<:lul:568168505543753759>"
-        else:
+        elif 33 <= step4 < 67:
             emote = "<:pog:610583684663345192>"
+        else:
+            emote = "<:LewdMegumin:679069449701163045>"
         message = await ctx.send(f"{emotes.Loading} Checking how hot {user.name} is...")
         await asyncio.sleep(3)
-        return await message.edit(content=f"**{user.name}** is **{step3:.2f}%** hot {emote}")
+        return await message.edit(content=f"**{user.name}** is **{step4}%** hot {emote}")
 
     @commands.command(name="iq")
     async def iq_test(self, ctx, *, who: discord.User = None):
         """ Check Someone's IQ """
         user = who or ctx.author
-        random.seed(user.id)
-        ri = random.randint(127, 255)
+        random.seed(user.id + 1)
+        ri = random.randint(50, 255)
         # b = bias.get_bias(self.db, user)
         r = ri / 1.17
         msg = await ctx.send(f"{emotes.Loading} Checking {user.name}'s IQ...")
