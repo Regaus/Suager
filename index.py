@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import sys
@@ -5,59 +6,65 @@ import sys
 import discord
 
 from cogs.events import changes
-from utils import generic, time, botdata, create_tables, sqlite
+from utils import generic, time, botdata, database, logs
 
 config = generic.get_config()
-desc = """Suager v4 - A bot by Regaus
-Originates from AlexFlipnote's code"""
-print(time.time(False, True, True), "> Initialisation Started")
+desc = """Suager - A bot by Regaus"""
+print(f"{time.time()} > Initialisation Started")
+loop = asyncio.get_event_loop()
+tasks = []
 
 # Test DB before launching
-tables = create_tables.creation(debug=False)
+tables = database.creation()
 if not tables:
     sys.exit(1)
-db = sqlite.Database()
+db = database.Database()
+logs.create()
 
-
-# async def get_prefix(_bot, message):
-#     uid = _bot.user.id
-#     default = [f"<@!{uid}> ", f"<@{uid}> "]
-#     if not message.guild:
-#         prefixes = default + config.prefix
-#     else:
-#         try:
-#             data = json.loads(open(f"{generic.prefixes}/{message.guild.id}.json", 'r').read())
-#             pre = data['prefixes']
-#             ud = data['default']
-#             pre += config.prefix if ud else []
-#             prefixes = default + pre
-#         except FileNotFoundError:
-#             prefixes = default + config.prefix
-#    return prefixes
-#     # if not message.guild:
-#     #     return config.prefix
-#     # prefix = bot.prefixes.get(str(message.guild.id), config.prefix)
-#     # return when_mentioned_or(prefix)
 
 async def get_prefix(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    _data = db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+    _data = db.fetchrow("SELECT * FROM data_stable WHERE type=? AND id=?", ("settings", ctx.guild.id))
     if not _data:
-        dp = config.prefix
+        dp = config["bots"]["stable"]["prefixes"]
         cp = []
     else:
         data = json.loads(_data['data'])
-        dp = config.prefix if data['use_default'] else []
+        dp = config["bots"]["stable"]["prefixes"] if data['use_default'] else []
         cp = data['prefixes']
-    return default + dp + cp
+    sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+    return default + dp + cp + sp
 
 
-# try:
-#     files = os.listdir(generic.prefixes)
-# except FileNotFoundError:
-#     os.mkdir('data')
-#     os.mkdir(generic.prefixes)
+async def get_prefix2(_bot, ctx):
+    uid = _bot.user.id
+    default = [f"<@!{uid}> ", f"<@{uid}> "]
+    _data = db.fetchrow("SELECT * FROM data_beta WHERE type=? AND id=?", ("settings", ctx.guild.id))
+    if not _data:
+        dp = config["bots"]["beta"]["prefixes"]
+        cp = []
+    else:
+        data = json.loads(_data['data'])
+        dp = config["bots"]["beta"]["prefixes"] if data['use_default'] else []
+        cp = data['prefixes']
+    sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+    return default + dp + cp + sp
+
+
+async def get_prefix3(_bot, ctx):
+    uid = _bot.user.id
+    default = [f"<@!{uid}> ", f"<@{uid}> "]
+    _data = db.fetchrow("SELECT * FROM data_alpha WHERE type=? AND id=?", ("settings", ctx.guild.id))
+    if not _data:
+        dp = config["bots"]["alpha"]["prefixes"]
+        cp = []
+    else:
+        data = json.loads(_data['data'])
+        dp = config["bots"]["alpha"]["prefixes"] if data['use_default'] else []
+        cp = data['prefixes']
+    sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+    return default + dp + cp + sp
 
 try:
     # times = json.loads('changes.json')
@@ -69,13 +76,38 @@ times['ad'] = False
 open('changes.json', 'w+').write(json.dumps(times))
 
 
-bot = botdata.Bot(command_prefix=get_prefix, prefix=config.prefix, command_attrs=dict(hidden=True),
-                  case_insensitive=True, help_command=botdata.HelpFormat(), description=desc, owner_ids=config.owners,
-                  activity=discord.Activity(type=discord.ActivityType.playing, name=config.playing),
-                  status=discord.Status.dnd)
-# bot.prefixes = get_prefixes()
-for file in os.listdir("cogs"):
-    if file.endswith(".py"):
-        name = file[:-3]
-        bot.load_extension(f"cogs.{name}")
-bot.run(config.token)
+types = ["stable", "beta", "alpha"]
+dirs = ["cogs", "beta", "alpha"]
+
+for i in range(len(types)):
+    fn = f"data/{types[i]}/changes.json"
+    try:
+        times = json.loads(open(fn, 'r').read())
+    except Exception as e:
+        print(e)
+        times = changes.copy()
+    times['ad'] = False
+    open(fn, 'w+').write(json.dumps(times))
+    if config["bots"][types[i]]["boot"]:
+        a = config["bots"][types[i]].copy()
+        func = get_prefix if i == 0 else get_prefix2 if i == 1 else get_prefix3
+        bot = botdata.Bot(command_prefix=func, prefix=a["prefixes"], command_attrs=dict(hidden=True),
+                          case_insensitive=True, help_command=botdata.HelpFormat(), description=desc,
+                          owner_ids=generic.owners,
+                          activity=discord.Activity(type=discord.ActivityType.playing, name=config["playing"]),
+                          status=discord.Status.dnd)
+        # bot.prefixes = get_prefixes()
+        for file in os.listdir(dirs[i]):
+            if file.endswith(".py"):
+                name = file[:-3]
+                bot.load_extension(f"{dirs[i]}.{name}")
+        tasks.append(loop.create_task(bot.run(config["tokens"][i])))
+
+try:
+    loop.run_until_complete(asyncio.gather(*tasks))
+except KeyboardInterrupt:
+    print("CTRL + C was pressed, closing asyncio...")
+    loop.close()
+except asyncio.CancelledError:
+    print("Process killed, closing asyncio...")
+    loop.close()

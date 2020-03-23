@@ -1,25 +1,64 @@
 {
-  "token": "token_here",
-  "owners": [
-    302851022790066185
+  "tokens": [
+    "stable",
+    "beta",
+    "alpha"
   ],
-  "join_message": "Huh? Hm, wait what? What is this? I've come to another server again? Weird. Thanks for inviting me here, though \u0440\u045f\u040a\u045f \ud83d\udc40",
-  "prefix": [
-    ",/",
-    "//",
-    ",,"
-  ],
-  "guild_id": 568148147457490954,
-  "announce_channel_id": 568148147457490958,
-  "birthday_role_id": 663661621448802304,
-  "changeplaying": true,
-  "changeavatars": true,
-  "changesenkolair": true,
+  "owners": [302851022790066185],
+  "join_message": "Oh what, I've been added to this server? Cool, hi! \u0440\u045f\u040a\u045f \ud83d\udc40",
+  "bots": {
+    "stable": {
+      "prefixes": [",/", "//", ",,"],
+      "change_playing": true,
+      "change_avatars": true,
+      "change_senko": true,
+      "birthdays": {
+        "568148147457490954": {
+          "channel": 568148147457490958,
+          "role_id": 663661621448802304
+        }
+      },
+      "version": "4.0",
+      "full_version": "4.0.21",
+      "last_update": 1584886284,
+      "boot": true
+    },
+    "beta": {
+      "prefixes": ["b/", "B/", "b!"],
+      "change_playing": true,
+      "change_avatars": true,
+      "change_senko": false,
+      "birthdays": {
+        "568148147457490954": {
+          "channel": 568148147457490958,
+          "role_id": 663661621448802304
+        }
+      },
+      "version": "4.1b",
+      "full_version": "4.1-beta1",
+      "last_update": 1584886284,
+      "boot": true
+    },
+    "alpha": {
+      "prefixes": ["a/", "A/", "a!"],
+      "change_playing": true,
+      "change_avatars": true,
+      "change_senko": false,
+      "birthdays": {
+        "568148147457490954": {
+          "channel": 568148147457490958,
+          "role_id": 663661621448802304
+        }
+      },
+      "version": "4.1a",
+      "full_version": "4.1-alpha1",
+      "last_update": 1584886284,
+      "boot": true
+    }
+  },
+  "common_prefix": ["s/", "S/"],
   "spyware": true,
   "playing_rate": 90,
   "playing": "Sample Text",
-  "version": "4.1b",
-  "full_version": "4.0.21",
-  "last_update": 1584886284,
   "logs": true
 }

@@ -10,7 +10,7 @@ import time as _time
 import discord
 from discord.ext import commands
 
-from utils import time, generic, logs, sqlite
+from utils import time, generic, logs, sqlite, emotes
 
 
 def insert_returns(body):
@@ -93,14 +93,13 @@ async def are_you_admin(ctx):
     if ctx.author.id == 86477779717066752:
         return await ctx.send(f"**{ctx.author.name}**... No, but you are the author of the original source code")
     elif ctx.author.id in generic.get_config().owners:
-        return await ctx.send(f"<:allow:610828713424191498> Yes **{ctx.author.name}** you are admin, "
-                              f"whether I like it or not.")
+        return await ctx.send(f"<:allow:610828713424191498> Yes **{ctx.author.name}** you are admin")
 
     return await ctx.send(f"<:deny:610828713533112350> **no**, go away **{ctx.author.name}** "
-                          f"<:blobcatpolice:648243791769239571>")
+                          f"{emotes.BlobCatPolice}")
 
 
-async def reload(self, ctx, name: str, where: str):
+async def reload(self, ctx, version: str, name: str, where: str):
     """ Reloads an extension. """
     try:
         self.bot.reload_extension(f"{where}.{name}")
@@ -108,8 +107,9 @@ async def reload(self, ctx, name: str, where: str):
         return await ctx.send(f"```diff\n- {e}```")
     reloaded = f"Reloaded extension **{name}.py**"
     await ctx.send(reloaded)
-    if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+    if generic.get_config()["logs"]:
+        # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+        logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
 
 async def reload_all(self, ctx, where: str):
@@ -129,17 +129,18 @@ async def reload_all(self, ctx, where: str):
     await ctx.send("Successfully reloaded all extensions")
 
 
-async def shutdown(self, ctx):
+async def shutdown(ctx, version: str):
     """ Shut down the bot """
     import sys
     await ctx.send('Shutting down...')
-    if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'uptime').send(f"{time.time()} > Shutting down from command...")
+    if generic.get_config()["logs"]:
+        # await logs.log_channel(self.bot, 'uptime').send(f"{time.time()} > Shutting down from command...")
+        logs.save(logs.get_place(version, "uptime"), f"{time.time()} > Shutting down from command...")
     _time.sleep(1)
     sys.exit(0)
 
 
-async def load(self, ctx, name: str, where: str):
+async def load(self, ctx, version: str, name: str, where: str):
     """ Loads an extension. """
     try:
         self.bot.load_extension(f"{where}.{name}")
@@ -147,11 +148,12 @@ async def load(self, ctx, name: str, where: str):
         return await ctx.send(f"```diff\n- {e}```")
     reloaded = f"Loaded extension **{name}.py**"
     await ctx.send(reloaded)
-    if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+    if generic.get_config()["logs"]:
+        # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+        logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
 
-async def unload(self, ctx, name: str, where: str):
+async def unload(self, ctx, version: str, name: str, where: str):
     """ Unloads an extension. """
     try:
         self.bot.unload_extension(f"{where}.{name}")
@@ -159,11 +161,12 @@ async def unload(self, ctx, name: str, where: str):
         return await ctx.send(f"```diff\n- {e}```")
     reloaded = f"Unloaded extension **{name}.py**"
     await ctx.send(reloaded)
-    if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+    if generic.get_config()["logs"]:
+        # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+        logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
 
-async def reload_utils(self, ctx, name: str):
+async def reload_utils(self, ctx, version: str, name: str):
     """ Reloads a utility module. """
     name_maker = f"**utils/{name}.py**"
     try:
@@ -176,8 +179,9 @@ async def reload_utils(self, ctx, name: str):
         return await ctx.send(f"Module {name_maker} returned an error and was not reloaded...\n{error}")
     reloaded = f"Reloaded module **{name_maker}**"
     await ctx.send(reloaded)
-    if generic.get_config().logs:
-        await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+    if generic.get_config()["logs"]:
+        # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
+        logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
 
 async def execute(ctx, text: str):

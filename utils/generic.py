@@ -24,7 +24,7 @@ def random_colour():
 
 
 def get_config():
-    return get("config.json")
+    return json.loads(open("config.json", "r").read())
 
 
 def round_value(value):
@@ -134,5 +134,5 @@ async def you_little_shit(senko_lair):
 
 # version = get("config.json").version
 invite = "https://discord.gg/cw7czUx"
-owners = get("config.json").owners
+owners = get_config()["owners"]
 prefixes = 'data/prefixes'
