@@ -93,9 +93,9 @@ async def are_you_admin(ctx):
     if ctx.author.id == 86477779717066752:
         return await ctx.send(f"**{ctx.author.name}**... No, but you are the author of the original source code")
     elif ctx.author.id in generic.get_config().owners:
-        return await ctx.send(f"<:allow:610828713424191498> Yes **{ctx.author.name}** you are admin")
+        return await ctx.send(f"{emotes.Allow} Yes **{ctx.author.name}** you are admin")
 
-    return await ctx.send(f"<:deny:610828713533112350> **no**, go away **{ctx.author.name}** "
+    return await ctx.send(f"{emotes.Deny} **no**, go away **{ctx.author.name}** "
                           f"{emotes.BlobCatPolice}")
 
 

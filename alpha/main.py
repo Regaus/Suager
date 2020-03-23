@@ -14,7 +14,10 @@ settings_template = {
             {'level': 2501, 'role': 0},
             {'level': 2502, 'role': 0}
         ]
-    }
+    },
+    "muted_role": 0,
+    "warn_limit": 3,
+    "word_filter": [],
 }
 
 
