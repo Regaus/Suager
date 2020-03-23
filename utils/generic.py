@@ -76,10 +76,13 @@ def value_string(val, sa: int = 0, k: bool = False, negative: bool = False, big:
         return f"An error - {e}"
 
 
-def traceback_maker(err, advance: bool = True, text: str = None):
+def traceback_maker(err, advance: bool = True, text: str = None, guild = None, author = None):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
-    error = '```py\n{3}{1}{0}: {2}\n```'.format(
-        type(err).__name__, _traceback, err, f"{text}\n" if text is not None else '')
+    n = "\n"
+    g = f'Guild: {guild.name}\n' if guild is not None else ''
+    a = f'User: {author.name}\n' if author is not None else ''
+    error = f'{g}{a}```py\n{f"{text}{n}" if text is not None else ""}' \
+            f'{_traceback}{type(err).__name__}: {err}\n```'
     return error if advance else f"{type(err).__name__}: {err}"
 
 

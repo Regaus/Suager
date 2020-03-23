@@ -14,7 +14,7 @@ from cogs.genders import genders, roles
 from utils import generic, time, logs, lists, http
 from utils.emotes import AlexHeartBroken
 
-ct = time.now()  # Current time
+# ct = time.now()  # Current time
 changes = {"playing": 3601, "avatar": [25, -1], "senko": [25, -1], "ad": False}
 
 
@@ -38,7 +38,7 @@ class Events(commands.Cog):
             await ctx.send_help(helper)
 
         elif isinstance(err, commands.errors.CommandInvokeError):
-            error = generic.traceback_maker(err.original, text=ctx.message.content)
+            error = generic.traceback_maker(err.original, text=ctx.message.content, guild=ctx.guild, author=ctx.author)
             if "2000 or fewer" in str(err) and len(ctx.message.clean_content) > 1900:
                 return await ctx.send(
                     f"You attempted to make the command display more than 2,000 characters, didn't you?\n"

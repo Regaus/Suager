@@ -1,5 +1,21 @@
 version = "alpha"
 folder = "alpha"
+prefix_template = {'prefixes': [], 'default': True}
+settings_template = {
+    'prefixes': [],
+    'use_default': True,
+    'leveling': {
+        'enabled': True,
+        'xp_multiplier': 1.0,
+        'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
+        'ignored_channels': [],
+        'announce_channel': 0,
+        'rewards': [
+            {'level': 2501, 'role': 0},
+            {'level': 2502, 'role': 0}
+        ]
+    }
+}
 
 
 def setup(bot):

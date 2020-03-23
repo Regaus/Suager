@@ -177,7 +177,7 @@ async def reload_utils(self, ctx, version: str, name: str):
     except Exception as e:
         error = generic.traceback_maker(e)
         return await ctx.send(f"Module {name_maker} returned an error and was not reloaded...\n{error}")
-    reloaded = f"Reloaded module **{name_maker}**"
+    reloaded = f"Reloaded module {name_maker}"
     await ctx.send(reloaded)
     if generic.get_config()["logs"]:
         # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
