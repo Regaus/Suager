@@ -196,12 +196,11 @@ class Social(commands.Cog):
         """ Bang someone """
         if user.id == self.bot.user.id:
             return await ctx.send("No. I'm taken, find someone else.")
-        if user.id == 302851022790066185 and ctx.author.id != 424472476106489856:
-            return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
-        if user.id == 424472476106489856 and ctx.author.id != 302851022790066185:
-            return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
         if ctx.guild.id == 679055998186553344:
-            return await ctx.send("I thought this was a wholesome server, smh.")
+            if user.id == 302851022790066185 and ctx.author.id != 424472476106489856:
+                return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
+            if user.id == 424472476106489856 and ctx.author.id != 302851022790066185:
+                return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
         return await ctx.send(f"{emotes.Scary} {emotes.NotLikeThis} {ctx.author.name} is now "
                               f"{ctx.invoked_with}ing {user.name}...")
 

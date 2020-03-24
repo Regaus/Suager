@@ -37,13 +37,13 @@ ball_response = [
     "You'll be the judge", 'no... (╯°□°）╯︵ ┻━┻', 'no... baka',
     'senpai, pls no ;-;'
 ]
-demons_response = [
-    '*wind blows*', 'Go to hell with your stupid questions', 'Well what do you think, huh?',
-    'That is very doubtful',
-    'Yes, surely', 'Without a doubt', 'Well I guess, most likely', 'That may or may not be possible',
-    "I guess you'll be the judge here", 'no... (╯°□°）╯︵ ┻━┻', 'No.',
-    'Bruh what the hell? ;-;', 'I guess, yes', "What are you friggin' gay?"
-]
+# demons_response = [
+#     '*wind blows*', 'Go to hell with your stupid questions', 'Well what do you think, huh?',
+#     'That is very doubtful',
+#     'Yes, surely', 'Without a doubt', 'Well I guess, most likely', 'That may or may not be possible',
+#     "I guess you'll be the judge here", 'no... (╯°□°）╯︵ ┻━┻', 'No.',
+#     'Bruh what the hell? ;-;', 'I guess, yes', "What are you friggin' gay?"
+# ]
 hearts = [":heart:", ":orange_heart:", ":yellow_heart:", ":green_heart:", ":blue_heart:", ":purple_heart:",
           ":black_heart:", ":brown_heart:", ":white_heart:"]
 hello = ["Good aftermidnight", "Good morning", "Good afternoon", "Good evening"]

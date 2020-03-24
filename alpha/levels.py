@@ -64,7 +64,7 @@ class Leveling(commands.Cog):
                 sm = 0 if sm < 0 else sm if sm < 10 else 10
             except KeyError:
                 sm = 1
-            new = random.randint(x1, x2) * base_mult * sm
+            new = int(random.randint(x1, x2) * base_mult * sm)
             new = 0 if ctx.author.id == 592345932062916619 else new
             xp += new
             requirements = levels()
