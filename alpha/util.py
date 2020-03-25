@@ -16,7 +16,7 @@ class Utility(commands.Cog):
         """ Current time """
         return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
 
-    @commands.command(name="mctime")
+    @commands.command(name="mctime", hidden=True)
     async def mc_time(self, ctx, month: str = 1, day: int = 1, hour: int = 6, minute: int = 0):
         """ Set time in Minecraft """
         if month == 'random':

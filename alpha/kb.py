@@ -1,12 +1,14 @@
 # KawaiiBot except with images I liked mmlol
 # Ah yes, LIDL KawaiiBot
 import random
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
 from alpha import main
-from utils import lists, emotes, generic, logs
+from alpha.images import image_gen
+from utils import lists, emotes, generic, logs, http
 
 
 def is_fucked(something):
@@ -14,6 +16,10 @@ def is_fucked(something):
 
 
 but_why = "https://cdn.discordapp.com/attachments/610482988123422750/673642028357386241/butwhy.gif"
+
+
+def give(u1: str, u2: str, emote: str):
+    return f"{u2}, you got a {emote} from {u1}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧{emote}"
 
 
 class Social(commands.Cog):
@@ -196,6 +202,8 @@ class Social(commands.Cog):
         """ Bang someone """
         if user.id == self.bot.user.id:
             return await ctx.send("No. I'm taken, find someone else.")
+        if user == ctx.author:
+            return await ctx.send("How are you going to do that?")
         if ctx.guild.id == 679055998186553344:
             if user.id == 302851022790066185 and ctx.author.id != 424472476106489856:
                 return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
@@ -209,6 +217,51 @@ class Social(commands.Cog):
     async def bean(self, ctx, user: discord.Member):
         """ Bean someone """
         return await ctx.send(f"{emotes.Licc} Successfully beaned {user.name}")
+
+    @commands.command(name="cookie")
+    @commands.guild_only()
+    async def cookie(self, ctx, user: discord.Member):
+        """ Give someone a cookie """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        output = give(ctx.author.name, user.name, ":cookie:")
+        return await ctx.send(output)
+
+    @commands.command(name="fruit", aliases=["fruitsnacks"])
+    @commands.guild_only()
+    async def fruit_snacks(self, ctx, user: discord.Member):
+        """ Give someone a fruit snack """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        output = give(ctx.author.name, user.name, random.choice(
+            [":green_apple:", ":apple:", ":pear:", ":tangerine:", ":banana:", ":watermelon:", ":grapes:",
+             ":strawberry:", ":cherries:", ":pineapple:"]))
+        return await ctx.send(output)
+
+    @commands.command(name="bad")
+    async def bad(self, ctx, user: discord.Member):
+        """ Bad user """
+        if user.id == 302851022790066185:
+            user = ctx.author
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"{emotes.AlexHeartBroken}")
+        return await image_gen(ctx, user, "bad", f"bad_{user.name.lower()}")
+
+    @commands.command(name="trash")
+    async def trash(self, ctx, user: discord.Member):
+        """ Show someone their home """
+        if user == ctx.author:
+            return await ctx.send("Don't call yourself trash")
+        if user == ctx.bot.user:
+            return await ctx.send(f"You calling me trash? {emotes.AlexHeartBroken}")
+        a1, a2 = [ctx.author.avatar_url, user.avatar_url]
+        if user.id == 302851022790066185:
+            a2, a1 = a1, a2
+        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}",
+                                     res_method="read"))
+        if bio is None:
+            return await ctx.send("Something went wrong, couldn't generate image")
+        return await ctx.send(file=discord.File(bio, filename=f"trash_{user.name}.png"))
 
     @commands.command(name="reloadimages")
     @commands.is_owner()

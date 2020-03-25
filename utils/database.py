@@ -146,5 +146,9 @@ tables = [
         Column("last", 1, True),
         Column("name", 2, True),
         Column("disc", 0, True)
+    ]),
+    Table("genders", [
+        Column("uid", 0, True),
+        Column("gender", 2, True)
     ])
 ]
