@@ -60,7 +60,7 @@ async def eval_(ctx, cmd):
         # return await ctx.send(result)
         if len(str(result)) == 0 or result is None:
             return await ctx.send("Code has been run, however returned no result.")
-        elif len(str(result)) in range(1900, 8000001):
+        elif len(str(result)) in range(2001, 8000001):
             async with ctx.typing():
                 data = BytesIO(str(result).encode('utf-8'))
                 return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)",
@@ -166,7 +166,7 @@ async def unload(self, ctx, version: str, name: str, where: str):
         logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
 
-async def reload_utils(self, ctx, version: str, name: str):
+async def reload_utils(ctx, version: str, name: str):
     """ Reloads a utility module. """
     name_maker = f"**utils/{name}.py**"
     try:

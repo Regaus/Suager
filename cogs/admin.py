@@ -77,7 +77,7 @@ class AdminCommands(commands.Cog):
     @commands.check(permissions.is_owner)
     async def reload_utils(self, ctx, name: str):
         """ Reloads a utility module. """
-        return await prev.reload_utils(self, ctx, name)
+        return await prev.reload_utils(ctx, name)
 
     @commands.command(name="exec", aliases=["execute"])
     @commands.check(permissions.is_owner)
