@@ -161,7 +161,7 @@ class AdminCommands(commands.Cog):
     async def change_full_version(self, ctx, new_version: str):
         """ Change version (full) """
         try:
-            old_version = self.config.full_version
+            old_version = self.config["bots"][self.type]["full_version"]
             # data_io.change_value("config.json", "full_version", new_version)
             # data_io.change_value("config_example.json", "full_version", new_version)
             data_io.change_versions(self.type, "full_version", new_version)
@@ -185,7 +185,7 @@ class AdminCommands(commands.Cog):
     async def change_short_version(self, ctx, new_version: str):
         """ Change version (short) """
         try:
-            old_version = self.config.version
+            old_version = self.config["bots"][self.type]["version"]
             # data_io.change_value("config.json", "version", new_version)
             # data_io.change_value("config_example.json", "version", new_version)
             data_io.change_versions(self.type, "version", new_version)
@@ -210,7 +210,7 @@ class AdminCommands(commands.Cog):
         """ Change last update time """
         now = time.now(False)
         try:
-            last_update = self.config.last_update
+            last_update = self.config["bots"][self.type]["last_update"]
             # data_io.change_value("config.json", "last_update", int(datetime.timestamp(now)))
             # data_io.change_value("config_example.json", "last_update", int(datetime.timestamp(now)))
             data_io.change_versions(self.type, "last_update", int(datetime.timestamp(now)))

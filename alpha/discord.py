@@ -299,11 +299,11 @@ class Discord(commands.Cog):
     @commands.cooldown(rate=3, per=5, type=commands.BucketType.user)
     async def emoji(self, ctx, emoji: discord.Emoji):
         """ View bigger version of a Custom Emoji """
-        return await ctx.send(f"Blame {ctx.author.name} for this", embed=discord.Embed(
-            description=f"Name: {emoji.name}\nAnimated: {emoji.animated}\nServer: {emoji.guild.name}\n"
+        return await ctx.send(f"{ctx.author.name}:", embed=discord.Embed(
+            description=f"Name: {emoji.name}\nID: {emoji.id}\nAnimated: {emoji.animated}\nServer: {emoji.guild.name}\n"
                         f"Created: {time.time_output(emoji.created_at)}\n[Copy Link]({emoji.url})",
             colour=generic.random_colour()).set_image(url=emoji.url).set_author(
-            name=ctx.author, icon_url=ctx.author.avatar_url).set_footer(text="Or you could've used discord for PC"))
+            name=ctx.author, icon_url=ctx.author.avatar_url))
 
     @commands.command(name="customrole", aliases=["cr"])
     @commands.guild_only()
