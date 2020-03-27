@@ -1,5 +1,6 @@
 import asyncio
 import random
+from io import BytesIO
 
 import discord
 from discord.ext import commands
@@ -92,9 +93,9 @@ class Fun(commands.Cog):
         """ Rolls a number between given range """
         if repeat <= 0:
             return await ctx.send("How are I supposed to do that?")
-        if repeat > 50:
-            return await ctx.send("But why?")
-        n1, n2 = [-(10**12), 10**12]
+        if repeat > 100:
+            return await ctx.send("But why so much?")
+        n1, n2 = [-10**15, 10**15]
         if num1 > n2 or num2 > n2 or num1 < n1 or num2 < n1:
             return await ctx.send("Why do you need such large values?")
         res = []
@@ -110,6 +111,10 @@ class Fun(commands.Cog):
         output = '; '.join(res)
         p = 's' if multiple else ''
         out = output if not multiple else f"```fix\n{output}```"
+        if len(output) > 1900:
+            data = BytesIO(str(output).encode('utf-8'))
+            return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p}) and got this:",
+                                  file=discord.File(data, filename=f"{time.file_ts('Roll')}"))
         return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p}) and got this: {out}")
 
     @commands.command(name="f")
