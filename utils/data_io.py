@@ -19,7 +19,7 @@ def change_versions(version, value, new):
     open("config.json", "w").write(json.dumps(data))
     data = json.loads(open("config_example.json", "r").read())
     data["bots"][version][value] = new
-    open("config_example.json", "w").write(json.dumps(data))
+    open("config_example.json", "w").write(json.dumps(data, indent=2))
 
 
 # def append_value(file, value, addition):
