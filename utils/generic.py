@@ -1,4 +1,7 @@
+import codecs
 import json
+import os
+import pathlib
 import random
 import traceback
 from collections import namedtuple
@@ -76,7 +79,7 @@ def value_string(val, sa: int = 0, k: bool = False, negative: bool = False, big:
         return f"An error - {e}"
 
 
-def traceback_maker(err, advance: bool = True, text: str = None, guild = None, author = None):
+def traceback_maker(err, advance: bool = True, text: str = None, guild=None, author=None):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
     n = "\n"
     g = f'Guild: {guild.name}\n' if guild is not None else ''
@@ -139,3 +142,39 @@ async def you_little_shit(senko_lair):
 invite = "https://discord.gg/cw7czUx"
 owners = get_config()["owners"]
 prefixes = 'data/prefixes'
+
+
+def line_count():
+    docstring = False
+    file_amount, functions, comments, lines, classes = 0, 0, 0, 0, 0
+
+    for dirpath, dirname, filenames in os.walk("."):
+        for name in filenames:
+
+            if not name.endswith(".py"):
+                continue
+            file_amount += 1
+
+            with codecs.open("./" + str(pathlib.PurePath(dirpath, name)), "r", "utf-8") as files_lines:
+                for line in files_lines:
+                    line = line.strip()
+                    if len(line) == 0:
+                        continue
+                    elif line.startswith('"""'):
+                        if docstring is False:
+                            docstring = True
+                        else:
+                            docstring = False
+                    elif docstring is True:
+                        continue
+                    if line.startswith("#"):
+                        comments += 1
+                        continue
+                    if line.startswith(("def", "async def")):
+                        functions += 1
+                    if line.startswith("class"):
+                        classes += 1
+                    lines += 1
+
+    return file_amount, functions, comments, lines, classes
+# https://github.com/iDevision/Life/blob/master/Life/cogs/utilities/utils.py#L44-L77

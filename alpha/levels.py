@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from alpha import main
-from utils import time, database, emotes
+from utils import time, database
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 5000
@@ -32,8 +32,6 @@ class Leveling(commands.Cog):
     async def on_message(self, ctx):
         if ctx.author.bot or ctx.guild is None:
             return
-        if "<:6751_Lemon_cringe_zoom:691663104886440008>" in ctx.content:
-            await ctx.channel.send(emotes.Scary)
         if self.type == "stable":
             _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
                                          ("settings", ctx.guild.id))
@@ -199,6 +197,7 @@ class Leveling(commands.Cog):
                 prev = int(yes[level-1]) if level != 0 else 0
                 progress = (xp - prev) / (req - prev)
                 r4 = round_value(progress * 100)
+                r4 = 100 if r4 > 100 else r4
                 embed.add_field(name="Experience", value=f"**{r1}**/{r2}", inline=False)
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
                 embed.add_field(name="Progress to next level", value=f"{r4}% - {r3} XP to level up", inline=False)
@@ -207,7 +206,8 @@ class Leveling(commands.Cog):
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
             base = 1
             x1, x2 = [val * base * dm for val in level_xp]
-            embed.add_field(name="XP per message", inline=False, value=f"{x1:.2f}-{x2:.2f}")
+            o1, o2 = int(x1), int(x2)
+            embed.add_field(name="XP per message", inline=False, value=f"{o1}-{o2}")
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
 
     @commands.command(name="xplevel")
@@ -242,20 +242,21 @@ class Leveling(commands.Cog):
             except KeyError:
                 dm = 1
         level, xp = [data['level'], data['xp']]
-        r1 = f"{xp:,.0f}"
+        r1 = f"{int(xp)}"
         # biased = bias.get_bias(self.db, ctx.author)
         yes = levels()
-        r, p = [int(yes[level]), int(yes[level-1])]
+        r, p = [int(yes[level]), int(yes[level-1]) if level != 0 else 0]
         re = r - xp
-        r2 = f"{r:,.0f}"
-        r3 = f"{re:,.2f}"
+        r2 = f"{int(r)}"
+        r3 = f"{int(re)}"
         pr = (xp - p) / (r - p)
         r4 = round_value(pr * 100)
+        r4 = 100 if r4 > 100 else r4
         r5 = f"{level + 1:,}"
         normal = 1
         x1, x2 = [val * normal * dm for val in level_xp]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
-        m1, m2 = [f"{a1:,.0f}", f"{a2:,.0f}"]
+        m1, m2 = int(a1), int(a2)
         return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
                               f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: around "
                               f"**{m1}-{m2}**")
@@ -274,7 +275,7 @@ class Leveling(commands.Cog):
             # unl = []  # User name lengths
             xpl = []  # XP string lengths
             for user in data:
-                name = f"{user['name']}#{str(user['disc']).zfill(4)}"
+                name = f"{user['name']}#{user['disc']:04d}"
                 un.append(name)
                 # unl.append(len(name))
                 val = f"{value_string(user['xp'])}"
@@ -304,7 +305,7 @@ class Leveling(commands.Cog):
             coll = {}
             for i in data:
                 if i['uid'] not in coll:
-                    coll[i['uid']] = [0, f"{i['name']}#{str(i['disc']).zfill(4)}"]
+                    coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
                 coll[i['uid']][0] += i['xp']
             sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
             r = len(sl) if len(sl) < 10 else 10

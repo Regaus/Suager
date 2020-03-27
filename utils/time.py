@@ -63,6 +63,23 @@ class Plural:
         return f'{v} {_singular}'
 
 
+def timedelta(seconds: int):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    d, h = divmod(h, 24)
+    d, h, m, s = round(d), round(h), round(m), round(s)
+    ds = f"{d}d " if d != 0 else ""
+    hs = f"{h}h " if h != 0 or d != 0 else ""
+    ms = f"{m}m {s}s"
+    return ds + hs + ms
+# Code yoinked from: https://github.com/iDevision/Life/blob/master/Life/cogs/utilities/utils.py
+
+
+def timesince(when: datetime):
+    t = now() - when
+    return timedelta(int(t.total_seconds()))
+
+
 def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
     _now = source or datetime.utcnow()
     # Microsecond free zone

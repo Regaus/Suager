@@ -226,7 +226,7 @@ class Discord(commands.Cog):
     async def avatar(self, ctx, *, who: discord.User = None):
         """ Get someone's avatar """
         user = who or ctx.author
-        return await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024)}")
+        return await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024, static_format='png')}")
 
     @commands.command(name="roles")
     @commands.guild_only()
