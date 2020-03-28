@@ -11,8 +11,8 @@ settings_template = {
         'ignored_channels': [],
         'announce_channel': 0,
         'rewards': [
-            {'level': 2501, 'role': 0},
-            {'level': 2502, 'role': 0}
+            {'level': 5001, 'role': 0},
+            {'level': 5002, 'role': 0}
         ]
     },
     "muted_role": 0,

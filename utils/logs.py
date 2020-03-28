@@ -1,6 +1,5 @@
 import os
 
-from utils import time
 error_channel = 691442857537568789
 
 
@@ -24,4 +23,5 @@ def save(file: str, data: str, ow: bool = False):
         stuff.write(f"{data}\n")  # Add in an extra newline just in case
         stuff.close()
     except UnicodeEncodeError:
-        print(f"{time.time()} > Failed to save data ({data})")
+        # print(f"{time.time()} > Failed to save data ({data})")
+        pass  # To not spam the console too much

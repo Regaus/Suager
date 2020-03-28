@@ -90,15 +90,16 @@ class Ratings(commands.Cog):
         """ Check how hot someone is """
         user = who or ctx.author
         random.seed(user.id - 1)
-        step1 = int(random.randint(2000, 11700))
-        step3 = step1 / 117
+        # step1 = int(random.randint(2000, 11700))
+        step1 = round(random.uniform(17, 100), 2)
+        # step3 = step1 / 117
         custom = {
             302851022790066185: 99,
-            424472476106489856: 99,  # canvas
+            424472476106489856: 99,   # canvas
             527729196688998415: 99,   # Aya
             597373963571691520: 99,   # Nuriki
         }
-        step4 = custom.get(user.id, round(step3, 2))
+        step4 = custom.get(user.id, step1)
         # step4 = bias.friend_bias(self.db, user)
         # step5 = step3 * step4
         # tep6 = 100 if step5 > 100 else step5

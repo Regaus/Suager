@@ -120,6 +120,9 @@ class Social(commands.Cog):
                 if ctx.author.id != 302851022790066185:  # Regaus
                     regaus = ctx.guild.get_member(302851022790066185)
                     return await ctx.send(f"Only {regaus.display_name} is allowed to do that.")
+            if ctx.author.id == 424472476106489856:  # Canvas
+                if user.id != 302851022790066185:  # Regaus
+                    return await ctx.send(f"{emotes.Deny} you allowed to do that, {ctx.author.name}.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.kiss))

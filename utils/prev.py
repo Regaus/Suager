@@ -3,14 +3,14 @@ import ast
 import asyncio
 import importlib
 import os
+import time as _time
 from asyncio.subprocess import PIPE
 from io import BytesIO
-import time as _time
 
 import discord
 from discord.ext import commands
 
-from utils import time, generic, logs, sqlite, emotes
+from utils import time, generic, logs, emotes, database
 
 
 def insert_returns(body):
@@ -51,7 +51,7 @@ async def eval_(ctx, cmd):
             'discord': discord,
             'commands': commands,
             'ctx': ctx,
-            'db': sqlite.Database(),
+            'db': database.Database(),
             '__import__': __import__
         }
         exec(compile(parsed, filename="<ast>", mode="exec"), env)

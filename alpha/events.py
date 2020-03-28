@@ -10,8 +10,9 @@ from aiohttp import ClientConnectorError
 from discord.ext import commands
 
 from alpha import main
+from alpha.genders import select
 from cogs.genders import genders, roles
-from utils import generic, time, logs, lists, http
+from utils import generic, time, logs, lists, http, database
 from utils.emotes import AlexHeartBroken
 
 # ct = time.now()  # Current time
@@ -29,6 +30,7 @@ class Events(commands.Cog):
         # self.stop, self.done = False, False
         # self.ad = False
         self.changes = f"data/{self.type}/changes.json"
+        self.db = database.Database()
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
@@ -77,7 +79,8 @@ class Events(commands.Cog):
         send = f"{time.time()} > Joined {guild.name}"
         # if self.config.logs:
         #     await logs.log_channel(self.bot, "servers").send(send)
-        logs.save(logs.get_place(self.type, "guilds"), send)
+        if self.config["logs"]:
+            logs.save(logs.get_place(self.type, "guilds"), send)
         print(send)
         if not self.config["join_message"]:
             return
@@ -95,7 +98,8 @@ class Events(commands.Cog):
         send = f"{time.time()} > Left {guild.name}"
         # if self.config.logs:
         #     await logs.log_channel(self.bot, "servers").send(send)
-        logs.save(logs.get_place(self.type, "guilds"), send)
+        if self.config["logs"]:
+            logs.save(logs.get_place(self.type, "guilds"), send)
         print(send)
 
     @commands.Cog.listener()
@@ -109,7 +113,8 @@ class Events(commands.Cog):
         send = f"{time.time()} > {g} > {ctx.author} > {content}"
         # if self.config.logs:
         #     await logs.log_channel(self.bot).send(send)
-        logs.save(logs.get_place(self.type, "commands"), send)
+        if self.config["logs"]:
+            logs.save(logs.get_place(self.type, "commands"), send)
         print(send)
 
     @commands.Cog.listener()
@@ -118,29 +123,30 @@ class Events(commands.Cog):
             # await logs.log_channel(self.bot, "spyware").send(
             #     f"{time.time()} > {member} just joined {member.guild.name}")
             logs.save(logs.get_place(self.type, "members"), f"{time.time()} > {member} just joined {member.guild.name}")
-        try:
-            gender = json.loads(open(f"data/gender/{member.id}.json", "r").read())
-        except FileNotFoundError:
-            gender = genders.copy()
-        snowflakes = [discord.Object(id=i) for i in roles.get(member.guild.id, [0, 0, 0])]
-        reason = "Gender assignments - Joined Senko Lair"
-        if gender['male']:
-            await member.add_roles(snowflakes[0], reason=reason)
-        if gender['female']:
-            await member.add_roles(snowflakes[1], reason=reason)
-        if gender['invalid']:
-            await member.add_roles(snowflakes[2], reason=reason)
-        if member.guild.id == 568148147457490954:
-            td = time.now_ts() - datetime.timestamp(member.created_at)
-            if td < 86400:
-                await member.kick(reason="Account created less than a day ago")
-            embed = discord.Embed(colour=generic.random_colour())
-            embed.set_thumbnail(url=member.avatar_url)
-            embed.add_field(name="User ID", value=member.id)
-            embed.add_field(name="Created at", value=time.time_output(member.created_at))
-            embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
-            await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
-            await self.bot.get_channel(650774303192776744).send(f"{member.name} just joined Senko Lair.", embed=embed)
+        data = self.db.fetchrow(select, (member.id,))
+        if data:  # if gender is available
+            snowflakes = [discord.Object(id=i) for i in roles.get(member.guild.id, [0, 0, 0])]
+            reason = "Gender assignments on server join"
+            gender = data["gender"]
+            if gender == "male":
+                await member.add_roles(snowflakes[0], reason=reason)
+            if gender == "female":
+                await member.add_roles(snowflakes[1], reason=reason)
+            if gender == "invalid":
+                await member.add_roles(snowflakes[2], reason=reason)
+        if self.type == "stable":
+            if member.guild.id == 568148147457490954:
+                td = time.now_ts() - datetime.timestamp(member.created_at)
+                if td < 86400:
+                    await member.kick(reason="Account created less than a day ago")
+                embed = discord.Embed(colour=generic.random_colour())
+                embed.set_thumbnail(url=member.avatar_url)
+                embed.add_field(name="User ID", value=member.id)
+                embed.add_field(name="Created at", value=time.time_output(member.created_at))
+                embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
+                await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
+                await self.bot.get_channel(650774303192776744).send(
+                    f"{member.name} just joined Senko Lair.", embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -148,9 +154,10 @@ class Events(commands.Cog):
             # await logs.log_channel(self.bot, "spyware").send(
             # f"{time.time()} > {member} just left {member.guild.name}")
             logs.save(logs.get_place(self.type, "members"), f"{time.time()} > {member} just left {member.guild.name}")
-        if member.guild.id == 568148147457490954:
-            await self.bot.get_channel(610836120321785869).send(
-                f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
+        if self.type == "stable":
+            if member.guild.id == 568148147457490954:
+                await self.bot.get_channel(610836120321785869).send(
+                    f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
 
     async def readiness(self):
         while not self.exists:
@@ -207,10 +214,6 @@ class Events(commands.Cog):
                             print(e)
                             times = changes.copy()
                         hour = now.hour
-                        # pod = int(hour / 6)
-                        # if pod != times['greeting']:
-                        #     await self.bot.get_channel(577599230567383058).send(lists.hello[pod])
-                        #     times['greeting'] = pod
                         pf = logs.get_place(self.type, "playing")
                         af = logs.get_place(self.type, "avatar")
                         sf = logs.get_place(self.type, "senko")
@@ -229,14 +232,6 @@ class Events(commands.Cog):
                                 if log:
                                     logs.save(pf, f"{time.time()} > Updated playing to `{playing}` - "
                                                   f"{a+1}/{len(plays)}")
-                                # if log:
-                                #     ch = logs.log_channel(self.bot, "playing")
-                                #     try:
-                                #         await ch.send(f"{time.time()} > Updated playing to `{playing}` - "
-                                #                       f"{a+1}/{len(plays)}")
-                                #     except discord.errors.HTTPException or ClientConnectorError:
-                                #         print(f"{time.time()} > Updated playing to `{playing}`, "
-                                #               f"but failed to send message.")
                         if ca:
                             that, last = times['avatar']
                             if hour != that:

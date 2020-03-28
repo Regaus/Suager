@@ -16,7 +16,7 @@ def change_value(file, value, change_to):
 def change_versions(version, value, new):
     data = json.loads(open("config.json", "r").read())
     data["bots"][version][value] = new
-    open("config.json", "w").write(json.dumps(data))
+    open("config.json", "w").write(json.dumps(data, indent=2))
     data = json.loads(open("config_example.json", "r").read())
     data["bots"][version][value] = new
     open("config_example.json", "w").write(json.dumps(data, indent=2))

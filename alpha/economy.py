@@ -9,7 +9,7 @@ from utils import time, emotes, database
 from utils.generic import value_string, random_colour, get_config
 
 money_amounts = [50, 100]
-currency = "$"
+currency = "€"
 
 
 class Economy(commands.Cog):

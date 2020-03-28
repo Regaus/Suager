@@ -63,15 +63,16 @@ class Plural:
         return f'{v} {_singular}'
 
 
-def timedelta(seconds: int):
+def timedelta(seconds: int, show_seconds: bool = True):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     d, h = divmod(h, 24)
     d, h, m, s = round(d), round(h), round(m), round(s)
     ds = f"{d}d " if d != 0 else ""
     hs = f"{h}h " if h != 0 or d != 0 else ""
-    ms = f"{m}m {s}s"
-    return ds + hs + ms
+    ms = f"{m}m"
+    ss = f" {s}s" if show_seconds else ""
+    return ds + hs + ms + ss
 # Code yoinked from: https://github.com/iDevision/Life/blob/master/Life/cogs/utilities/utils.py
 
 

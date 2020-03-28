@@ -91,39 +91,39 @@ class Leveling(commands.Cog):
                     await ch.send(send)
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
-                try:
-                    rewards = settings['leveling']['rewards']
-                    if rewards:  # Don't bother if they're empty
-                        l1, l2 = [], []
-                        rewards.sort(key=lambda x: x['level'])
-                        for i in range(len(rewards)):
-                            l1.append(rewards[i]['level'])
-                            l2.append(rewards[i]['role'])
-                        roles = [r.id for r in ctx.author.roles]
-                        for i in range(len(rewards)):
-                            role = discord.Object(id=l2[i])
-                            has_role = l2[i] in roles
-                            if level >= l1[i]:
-                                if i < len(rewards) - 1:
-                                    if level < l1[i + 1]:
-                                        if not has_role:
-                                            await ctx.author.add_roles(role, reason="Level Rewards")
-                                    else:
-                                        if has_role:
-                                            await ctx.author.remove_roles(role, reason="Level Rewards")
-                                else:
+            try:
+                rewards = settings['leveling']['rewards']
+                if rewards:  # Don't bother if they're empty
+                    l1, l2 = [], []
+                    rewards.sort(key=lambda x: x['level'])
+                    for i in range(len(rewards)):
+                        l1.append(rewards[i]['level'])
+                        l2.append(rewards[i]['role'])
+                    roles = [r.id for r in ctx.author.roles]
+                    for i in range(len(rewards)):
+                        role = discord.Object(id=l2[i])
+                        has_role = l2[i] in roles
+                        if level >= l1[i]:
+                            if i < len(rewards) - 1:
+                                if level < l1[i + 1]:
                                     if not has_role:
                                         await ctx.author.add_roles(role, reason="Level Rewards")
+                                else:
+                                    if has_role:
+                                        await ctx.author.remove_roles(role, reason="Level Rewards")
                             else:
-                                if has_role:
-                                    await ctx.author.remove_roles(role, reason="Level Rewards")
-                except KeyError:
-                    pass  # If no level rewards, don't even bother
-                except discord.Forbidden:
-                    await ctx.send(f"{ctx.author.name} should have got a level reward, "
-                                   f"but I do not have sufficient permissions to do so.")
-                except Exception as e:
-                    print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
+                                if not has_role:
+                                    await ctx.author.add_roles(role, reason="Level Rewards")
+                        else:
+                            if has_role:
+                                await ctx.author.remove_roles(role, reason="Level Rewards")
+            except KeyError:
+                pass  # If no level rewards, don't even bother
+            except discord.Forbidden:
+                await ctx.send(f"{ctx.author.name} should have got a level reward, "
+                               f"but I do not have sufficient permissions to do so.")
+            except Exception as e:
+                print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
             if data:
                 self.db.execute(
                     "UPDATE leveling SET level=?, xp=?, last=?, name=?, disc=? WHERE uid=? AND gid=?",
@@ -256,10 +256,11 @@ class Leveling(commands.Cog):
         normal = 1
         x1, x2 = [val * normal * dm for val in level_xp]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
-        m1, m2 = int(a1), int(a2)
+        m1, m2 = int(a1) + 1, int(a2) + 1
+        t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [m1, m2]]
         return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
                               f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: around "
-                              f"**{m1}-{m2}**")
+                              f"**{m1}-{m2}**\nTime left (if non-stop talking): **{t1}-{t2}**")
 
     @commands.command(name="levels")
     @commands.guild_only()
