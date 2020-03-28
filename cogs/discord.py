@@ -315,7 +315,7 @@ class Discord(commands.Cog):
         -c/--colour/--color: Set role colour
         -n/--name: Set role name """
         if ctx.guild.id == 568148147457490954:
-            data = self.db.fetchrow("SELECT * FROM customrole WHERE uid=?", (ctx.author.id,))
+            data = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=?", (ctx.author.id,))
             if not data:
                 return await ctx.send(f"Doesn't seem like you have a custom role, {ctx.author.name}")
             parser = argparser.Arguments()
