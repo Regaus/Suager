@@ -3,8 +3,8 @@ import random
 import discord
 from discord.ext import commands
 
-from cogs import main
-from cogs.stuff import soon
+from beta import main
+from beta.stuff import soon
 from utils import time, emotes, database
 from utils.generic import value_string, random_colour, get_config
 

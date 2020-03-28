@@ -1,5 +1,5 @@
-version = "alpha"
-folder = "alpha"
+version = "stable"
+folder = "cogs"
 prefix_template = {'prefixes': [], 'default': True}
 settings_template = {
     'prefixes': [],

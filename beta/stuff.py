@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 
-from cogs import main
+from beta import main
 from utils import time, permissions, tbl, database
 from utils.generic import value_string, round_value, random_colour
 

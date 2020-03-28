@@ -101,7 +101,7 @@ for i in range(len(types)):
             if file.endswith(".py"):
                 name = file[:-3]
                 bot.load_extension(f"{dirs[i]}.{name}")
-        tasks.append(loop.create_task(bot.run(config["tokens"][i])))
+        tasks.append(loop.create_task(bot.start(config["tokens"][i])))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

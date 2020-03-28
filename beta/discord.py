@@ -4,8 +4,8 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from cogs import main
-from cogs.main import settings_template
+from beta import main
+from beta.main import settings_template
 from utils import generic, time, permissions, argparser, database
 from utils.generic import random_colour
 

@@ -3,7 +3,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from cogs import main
+from beta import main
 from utils import time, generic, logs, http
 
 

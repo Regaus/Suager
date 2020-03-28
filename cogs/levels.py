@@ -4,123 +4,93 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import sqlite, time
+from cogs import main
+from utils import time, database
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 5000
-level_xp = [17, 30]
-# level_mr = [{'min': -1, 'max': 2147483647, 'val': 0.01}]  # Multiplier Rise for level between 0 and 15
-# {'min': 15, 'max': 30, 'val': 0.06}, {'min': 30, 'max': 50, 'val': 0.09},
-# {'min': 50, 'max': 100, 'val': 0.12}, {'min': 100, 'max': max_level, 'val': 0.15}]
-settings_template = {
-    'prefixes': [],
-    'use_default': True,
-    'leveling': {
-        'enabled': True,
-        'xp_multiplier': 1.0,
-        'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
-        'ignored_channels': [],
-        'announce_channel': 0,
-        'rewards': [
-            {'level': 2501, 'role': 12345},
-            {'level': 2502, 'role': 67890}
-        ]
-    }
-}
+level_xp = [21, 30]
 
 
 def levels():
     req = 0
     xp = []
-    # print(f"{tm=}, {bias_value=}, {server_default=}")
     for x in range(max_level):
-        if x < 500:
-            power = 2
-        else:
-            power = 2 + (x - 100) / 900
-        base = x ** power + x ** 2 + 100 * x + 200
+        base = 1.5 * x ** 2 + 125 * x + 200
         req += base
         xp.append(req)
     return xp
 
 
-# def level_mult(level):
-    # mult = 1
-    # for lvl in range(level):
-    #     for data in level_mr:
-    #         if data['min'] < lvl <= data['max']:
-    #             mult += data['val']
-    # return mult
-
-
 class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = sqlite.Database()
+        self.db = database.Database()
+        self.type = main.version
 
     @commands.Cog.listener()
     async def on_message(self, ctx):
         if ctx.author.bot or ctx.guild is None:
             return
-        _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
-        if not _settings:
-            settings = settings_template.copy()
-        else:
-            settings = json.loads(_settings['data'])
-        try:
-            if not settings['leveling']['enabled']:
-                return
-            ic = settings['leveling']['ignored_channels']
-            if ctx.channel.id in ic:
-                return
-        except KeyError:
-            pass
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
-        if data:
-            level, xp, last = [data['level'], data['xp'], data['last_time']]
-        else:
-            level, xp, last = [0, 0, 0]
-        now = time.now_ts()
-        if last > now - 60:
-            return
-        x1, x2 = level_xp
-        # x1 = 2000 if x1 > 2000 else x1
-        # x2 = 2000 if x2 > 2000 else x2
-        base_mult = 1
-        # biased = bias.get_bias(self.db, ctx.author)
-        try:
-            sm = float(settings['leveling']['xp_multiplier'])
-            sm = 0 if sm < 0 else sm if sm < 10 else 10
-        except KeyError:
-            sm = 1
-        new = random.randint(x1, x2) * base_mult * sm
-        new = 0 if ctx.author.id == 592345932062916619 else new
-        xp += new
-        requirements = levels()
-        lu = False
-        while level < max_level and xp >= requirements[level]:
-            level += 1
-            lu = True
-        if lu:
+        if self.type == "stable":
+            _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
+                                         ("settings", ctx.guild.id))
+            if not _settings:
+                settings = main.settings_template.copy()
+            else:
+                settings = json.loads(_settings['data'])
             try:
-                send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention).replace(
-                    '[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
+                if not settings['leveling']['enabled']:
+                    return
+                ic = settings['leveling']['ignored_channels']
+                if ctx.channel.id in ic:
+                    return
             except KeyError:
-                send = f"{ctx.author.mention} has reached **level {level:,}**! <a:forsendiscosnake:613403121686937601>"
+                pass
+            data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            if data:
+                level, xp, last = [data['level'], data['xp'], data['last']]
+            else:
+                level, xp, last = [0, 0, 0]
+            now = time.now_ts()
+            if last > now - 60:
+                return
+            x1, x2 = level_xp
+            base_mult = 1
             try:
-                ac = settings['leveling']['announce_channel']
-                if ac != 0:
-                    ch = self.bot.get_channel(ac)
-                    if ch is None or ch.guild.id != ctx.guild.id:
+                sm = float(settings['leveling']['xp_multiplier'])
+                sm = 0 if sm < 0 else sm if sm < 10 else 10
+            except KeyError:
+                sm = 1
+            new = int(random.randint(x1, x2) * base_mult * sm)
+            new = 0 if ctx.author.id == 592345932062916619 else new
+            xp += new
+            requirements = levels()
+            lu = False
+            while level < max_level and xp >= requirements[level]:
+                level += 1
+                lu = True
+            if lu:
+                try:
+                    send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
+                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
+                except KeyError:
+                    send = f"{ctx.author.mention} has reached **level {level:,}**! " \
+                           f"<a:forsendiscosnake:613403121686937601>"
+                try:
+                    ac = settings['leveling']['announce_channel']
+                    if ac != 0:
+                        ch = self.bot.get_channel(ac)
+                        if ch is None or ch.guild.id != ctx.guild.id:
+                            ch = ctx.channel
+                    else:
                         ch = ctx.channel
-                else:
+                except KeyError:
                     ch = ctx.channel
-            except KeyError:
-                ch = ctx.channel
-            try:
-                await ch.send(send)
-            except discord.Forbidden:
-                pass  # Well, if it can't send it there, too bad.
+                try:
+                    await ch.send(send)
+                except discord.Forbidden:
+                    pass  # Well, if it can't send it there, too bad.
             try:
                 rewards = settings['leveling']['rewards']
                 if rewards:  # Don't bother if they're empty
@@ -154,19 +124,20 @@ class Leveling(commands.Cog):
                                f"but I do not have sufficient permissions to do so.")
             except Exception as e:
                 print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
-        if data:
-            self.db.execute("UPDATE leveling SET level=?, xp=?, last_time=?, name=?, disc=? "
-                            "WHERE user_id=? AND guild_id=?",
-                            (level, xp, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
-        else:
-            self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
+            if data:
+                self.db.execute(
+                    "UPDATE leveling SET level=?, xp=?, last=?, name=?, disc=? WHERE uid=? AND gid=?",
+                    (level, xp, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+            else:
+                self.db.execute(
+                    "INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
 
     @commands.command(name="rewards")
     @commands.guild_only()
     async def rewards(self, ctx):
         """ Rewards """
-        settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not settings:
             return await ctx.send("Doesn't seem like this server has leveling rewards")
         else:
@@ -193,7 +164,8 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
-        _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
+                                     ("settings", ctx.guild.id))
         if not _settings:
             dm = 1
         else:
@@ -202,7 +174,7 @@ class Leveling(commands.Cog):
                 dm = settings['leveling']['xp_multiplier']
             except KeyError:
                 dm = 1
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (user.id, ctx.guild.id))
+        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if data:
             level, xp = [data['level'], data['xp']]
         else:
@@ -225,6 +197,7 @@ class Leveling(commands.Cog):
                 prev = int(yes[level-1]) if level != 0 else 0
                 progress = (xp - prev) / (req - prev)
                 r4 = round_value(progress * 100)
+                r4 = 100 if r4 > 100 else r4
                 embed.add_field(name="Experience", value=f"**{r1}**/{r2}", inline=False)
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
                 embed.add_field(name="Progress to next level", value=f"{r4}% - {r3} XP to level up", inline=False)
@@ -233,7 +206,8 @@ class Leveling(commands.Cog):
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
             base = 1
             x1, x2 = [val * base * dm for val in level_xp]
-            embed.add_field(name="XP per message", inline=False, value=f"{x1:.2f}-{x2:.2f}")
+            o1, o2 = int(x1), int(x2)
+            embed.add_field(name="XP per message", inline=False, value=f"{o1}-{o2}")
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
 
     @commands.command(name="xplevel")
@@ -241,8 +215,6 @@ class Leveling(commands.Cog):
         """ XP required to achieve a level """
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
-        # biased = bias.get_bias(self.db, ctx.author)
-        _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
         try:
             xp = levels()[level - 1]
         except IndexError:
@@ -256,10 +228,11 @@ class Leveling(commands.Cog):
     @commands.guild_only()
     async def next_level(self, ctx):
         """ XP required for next level """
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE user_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
+        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await ctx.send("It doesn't seem like I have any data saved for you right now...")
-        _settings = self.db.fetchrow("SELECT * FROM data WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
+                                     ("settings", ctx.guild.id))
         if not _settings:
             dm = 1
         else:
@@ -269,30 +242,32 @@ class Leveling(commands.Cog):
             except KeyError:
                 dm = 1
         level, xp = [data['level'], data['xp']]
-        r1 = f"{xp:,.0f}"
+        r1 = f"{int(xp):,}"
         # biased = bias.get_bias(self.db, ctx.author)
         yes = levels()
-        r, p = [int(yes[level]), int(yes[level-1])]
+        r, p = [int(yes[level]), int(yes[level-1]) if level != 0 else 0]
         re = r - xp
-        r2 = f"{r:,.0f}"
-        r3 = f"{re:,.2f}"
+        r2 = f"{int(r):,}"
+        r3 = f"{int(re):,}"
         pr = (xp - p) / (r - p)
         r4 = round_value(pr * 100)
+        r4 = 100 if r4 > 100 else r4
         r5 = f"{level + 1:,}"
         normal = 1
         x1, x2 = [val * normal * dm for val in level_xp]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
-        m1, m2 = [f"{a1:,.0f}", f"{a2:,.0f}"]
+        m1, m2 = int(a1) + 1, int(a2) + 1
+        t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [m1, m2]]
         return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
                               f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: around "
-                              f"**{m1}-{m2}**")
+                              f"**{m1}-{m2}**\nTime left (if non-stop talking): **{t1}-{t2}**")
 
     @commands.command(name="levels")
     @commands.guild_only()
     async def levels_lb(self, ctx):
         """ Server's XP Leaderboard """
         async with ctx.typing():
-            data = self.db.fetch("SELECT * FROM leveling WHERE guild_id=? ORDER BY xp DESC LIMIT 250", (ctx.guild.id,))
+            data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC LIMIT 250", (ctx.guild.id,))
             if not data:
                 return await ctx.send("I have no data at all for this server... Weird")
             block = "```fix\n"
@@ -301,7 +276,7 @@ class Leveling(commands.Cog):
             # unl = []  # User name lengths
             xpl = []  # XP string lengths
             for user in data:
-                name = f"{user['name']}#{str(user['disc']).zfill(4)}"
+                name = f"{user['name']}#{user['disc']:04d}"
                 un.append(name)
                 # unl.append(len(name))
                 val = f"{value_string(user['xp'])}"
@@ -310,13 +285,13 @@ class Leveling(commands.Cog):
             spaces = max(xpl) + 5
             place = "unknown, or over 250"
             for x in range(len(data)):
-                if data[x]['user_id'] == ctx.author.id:
+                if data[x]['uid'] == ctx.author.id:
                     place = f"#{x + 1}"
                     break
             for i, val in enumerate(data[:10], start=1):
                 k = i - 1
                 who = un[k]
-                if val['user_id'] == ctx.author.id:
+                if val['uid'] == ctx.author.id:
                     who = f"-> {who}"
                 s = ' '
                 sp = xpl[k]
@@ -330,9 +305,9 @@ class Leveling(commands.Cog):
             data = self.db.fetch("SELECT * FROM leveling", ())
             coll = {}
             for i in data:
-                if i['user_id'] not in coll:
-                    coll[i['user_id']] = [0, f"{i['name']}#{str(i['disc']).zfill(4)}"]
-                coll[i['user_id']][0] += i['xp']
+                if i['uid'] not in coll:
+                    coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
+                coll[i['uid']][0] += i['xp']
             sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
             r = len(sl) if len(sl) < 10 else 10
             block = "```fix\n"

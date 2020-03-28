@@ -4,7 +4,7 @@ import random
 import discord
 from discord.ext import commands
 
-from alpha import main
+from beta import main
 from utils import time, database
 from utils.generic import random_colour, value_string, round_value
 

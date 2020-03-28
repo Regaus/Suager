@@ -5,7 +5,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from cogs import main
+from beta import main
 from utils import generic, time, logs, permissions, data_io, http, prev, database
 
 

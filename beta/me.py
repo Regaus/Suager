@@ -6,7 +6,7 @@ import discord
 import psutil
 from discord.ext import commands
 
-from alpha import main
+from beta import main
 from utils import generic, time, lists, prev
 
 

@@ -10,8 +10,7 @@ from aiohttp import ClientConnectorError
 from discord.ext import commands
 
 from alpha import main
-from alpha.genders import select
-from cogs.genders import genders, roles
+from alpha.genders import select, roles
 from utils import generic, time, logs, lists, http, database
 from utils.emotes import AlexHeartBroken
 

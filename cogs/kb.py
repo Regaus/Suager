@@ -1,11 +1,12 @@
-# KawaiiBot except with images I liked mmlol
-# Ah yes, LIDL KawaiiBot
 import random
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
-from utils import lists, emotes, generic, logs
+from cogs import main
+from cogs.images import image_gen
+from utils import lists, emotes, generic, logs, http
 
 
 def is_fucked(something):
@@ -15,10 +16,16 @@ def is_fucked(something):
 but_why = "https://cdn.discordapp.com/attachments/610482988123422750/673642028357386241/butwhy.gif"
 
 
-class KawaiiBot(commands.Cog):
+def give(u1: str, u2: str, emote: str):
+    return f"{u2}, you got a {emote} from {u1}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧{emote}"
+
+
+class Social(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell = [lists.error] * 8
+        self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, \
+            self.slap = [lists.error] * 10
+        self.type = main.version
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
@@ -111,6 +118,9 @@ class KawaiiBot(commands.Cog):
                 if ctx.author.id != 302851022790066185:  # Regaus
                     regaus = ctx.guild.get_member(302851022790066185)
                     return await ctx.send(f"Only {regaus.display_name} is allowed to do that.")
+            if ctx.author.id == 424472476106489856:  # Canvas
+                if user.id != 302851022790066185:  # Regaus
+                    return await ctx.send(f"{emotes.Deny} you allowed to do that, {ctx.author.name}.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.kiss))
@@ -143,6 +153,17 @@ class KawaiiBot(commands.Cog):
         embed.set_image(url=random.choice(self.sleepy))
         return await ctx.send(embed=embed)
 
+    @commands.command(name="cry")
+    @commands.guild_only()
+    async def cry(self, ctx):
+        """ You're crying """
+        if is_fucked(self.cry):
+            self.cry = await lists.get_images(self.bot, 'r')
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{ctx.author.name}** is crying"
+        embed.set_image(url=random.choice(self.cry))
+        return await ctx.send(embed=embed)
+
     @commands.command(name="slap", aliases=["kill", "shoot", "punch", "hit"])
     @commands.guild_only()
     async def slap(self, ctx, user: discord.Member):
@@ -151,7 +172,15 @@ class KawaiiBot(commands.Cog):
             return await ctx.send(embed=discord.Embed(colour=generic.random_colour()).set_image(url=but_why))
         if user.id == self.bot.user.id:
             return await ctx.send(f"{ctx.author.name}, we can no longer be friends. ;-; {emotes.AlexHeartBroken}")
-        return await ctx.send(f"Violence is never the answer, {ctx.author.name}!")
+        if ctx.invoked_with == "slap":
+            if is_fucked(self.slap):
+                self.slap = await lists.get_images(self.bot, 'v')
+            embed = discord.Embed(colour=generic.random_colour())
+            embed.description = f"**{user.name}** was slapped by **{ctx.author.name}**"
+            embed.set_image(url=random.choice(self.slap))
+        else:
+            embed = None
+        return await ctx.send(f"Violence is never the answer, {ctx.author.name}!", embed=embed)
 
     @commands.command(name="smell", aliases=["sniff"])
     @commands.guild_only()
@@ -168,6 +197,73 @@ class KawaiiBot(commands.Cog):
         embed.set_image(url=random.choice(self.smell))
         return await ctx.send(embed=embed)
 
+    @commands.command(name="bang", aliases=["fuck"])
+    @commands.guild_only()
+    async def fuck(self, ctx, user: discord.Member):
+        """ Bang someone """
+        if user.id == self.bot.user.id:
+            return await ctx.send("No. I'm taken, find someone else.")
+        if user == ctx.author:
+            return await ctx.send("How are you going to do that?")
+        if ctx.guild.id == 679055998186553344:
+            if user.id == 302851022790066185 and ctx.author.id != 424472476106489856:
+                return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
+            if user.id == 424472476106489856 and ctx.author.id != 302851022790066185:
+                return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
+        return await ctx.send(f"{emotes.Scary} {emotes.NotLikeThis} {ctx.author.name} is now "
+                              f"{ctx.invoked_with}ing {user.name}...")
+
+    @commands.command(name="bean")
+    @commands.guild_only()
+    async def bean(self, ctx, user: discord.Member):
+        """ Bean someone """
+        return await ctx.send(f"{emotes.Licc} Successfully beaned {user.name}")
+
+    @commands.command(name="cookie")
+    @commands.guild_only()
+    async def cookie(self, ctx, user: discord.Member):
+        """ Give someone a cookie """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        output = give(ctx.author.name, user.name, ":cookie:")
+        return await ctx.send(output)
+
+    @commands.command(name="fruit", aliases=["fruitsnacks"])
+    @commands.guild_only()
+    async def fruit_snacks(self, ctx, user: discord.Member):
+        """ Give someone a fruit snack """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        output = give(ctx.author.name, user.name, random.choice(
+            [":green_apple:", ":apple:", ":pear:", ":tangerine:", ":banana:", ":watermelon:", ":grapes:",
+             ":strawberry:", ":cherries:", ":pineapple:"]))
+        return await ctx.send(output)
+
+    @commands.command(name="bad")
+    async def bad(self, ctx, user: discord.Member):
+        """ Bad user """
+        if user.id == 302851022790066185:
+            user = ctx.author
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"{emotes.AlexHeartBroken}")
+        return await image_gen(ctx, user, "bad", f"bad_{user.name.lower()}")
+
+    @commands.command(name="trash")
+    async def trash(self, ctx, user: discord.Member):
+        """ Show someone their home """
+        if user == ctx.author:
+            return await ctx.send("Don't call yourself trash")
+        if user == ctx.bot.user:
+            return await ctx.send(f"You calling me trash? {emotes.AlexHeartBroken}")
+        a1, a2 = [ctx.author.avatar_url, user.avatar_url]
+        if user.id == 302851022790066185:
+            a2, a1 = a1, a2
+        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}",
+                                     res_method="read"))
+        if bio is None:
+            return await ctx.send("Something went wrong, couldn't generate image")
+        return await ctx.send(file=discord.File(bio, filename=f"trash_{user.name}.png"))
+
     @commands.command(name="reloadimages")
     @commands.is_owner()
     async def reload_images(self, ctx):
@@ -180,10 +276,13 @@ class KawaiiBot(commands.Cog):
         self.bite = await lists.get_images(self.bot, 'b')
         self.sleepy = await lists.get_images(self.bot, 's')
         self.smell = await lists.get_images(self.bot, 'n')
-        if generic.get_config().logs:
-            await logs.log_channel(self.bot, 'changes').send('Reloaded KawaiiBot images')
+        self.cry = await lists.get_images(self.bot, 'r')
+        self.slap = await lists.get_images(self.bot, 'v')
+        if generic.get_config()["logs"]:
+            # await logs.log_channel(self.bot, 'changes').send('Reloaded KB images')
+            logs.save(logs.get_place(self.type, "changes"), "Reloaded KB images")
         return await ctx.send("Successfully reloaded images")
 
 
 def setup(bot):
-    bot.add_cog(KawaiiBot(bot))
+    bot.add_cog(Social(bot))

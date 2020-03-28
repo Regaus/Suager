@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from alpha import main
-from cogs.stuff import soon
+from alpha.stuff import soon
 from utils import time, emotes, database
 from utils.generic import value_string, random_colour, get_config
 
@@ -25,7 +25,7 @@ class Economy(commands.Cog):
         if self.type == "stable":
             data = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             if data:
-                xp, last = [data['money'], data['last_time']]
+                xp, last = [data['money'], data['last']]
             else:
                 xp, last = [0, 0]
             now = time.now_ts()
@@ -36,7 +36,7 @@ class Economy(commands.Cog):
             new = random.randint(x1, x2)
             xp += new
             if data:
-                self.db.execute("UPDATE economy SET money=?, last_time=?, name=?, disc=? "
+                self.db.execute("UPDATE economy SET money=?, last=?, name=?, disc=? "
                                 "WHERE uid=? AND gid=?",
                                 (xp, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
             else:

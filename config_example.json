@@ -24,9 +24,9 @@
           "role_id": 663661621448802304
         }
       },
-      "version": "4.0",
-      "full_version": "4.0.21",
-      "last_update": 1584886284,
+      "version": "4.1",
+      "full_version": "4.1",
+      "last_update": 1585358572,
       "boot": true
     },
     "beta": {
@@ -44,10 +44,10 @@
           "role_id": 663661621448802304
         }
       },
-      "version": "4.1b",
-      "full_version": "4.1-beta1",
-      "last_update": 1584886284,
-      "boot": true
+      "version": "4.1",
+      "full_version": "4.1",
+      "last_update": 1585358572,
+      "boot": false
     },
     "alpha": {
       "prefixes": [
@@ -64,10 +64,10 @@
           "role_id": 663661621448802304
         }
       },
-      "version": "4.1a",
-      "full_version": "4.1-alpha5",
-      "last_update": 1585355084,
-      "boot": true
+      "version": "4.1",
+      "full_version": "4.1",
+      "last_update": 1585358572,
+      "boot": false
     }
   },
   "common_prefix": [

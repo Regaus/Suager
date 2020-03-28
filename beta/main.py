@@ -1,5 +1,5 @@
-version = "alpha"
-folder = "alpha"
+version = "beta"
+folder = "beta"
 prefix_template = {'prefixes': [], 'default': True}
 settings_template = {
     'prefixes': [],

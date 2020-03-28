@@ -4,8 +4,8 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from alpha import main
-from alpha.images import image_gen
+from beta import main
+from beta.images import image_gen
 from utils import lists, emotes, generic, logs, http
 
 

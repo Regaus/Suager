@@ -7,7 +7,7 @@ import discord
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-from cogs import main
+from beta import main
 from utils import permissions, generic, emotes, time, database
 
 

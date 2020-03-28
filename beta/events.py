@@ -9,8 +9,8 @@ import psutil
 from aiohttp import ClientConnectorError
 from discord.ext import commands
 
-from cogs import main
-from cogs.genders import select, roles
+from beta import main
+from beta.genders import select, roles
 from utils import generic, time, logs, lists, http, database
 from utils.emotes import AlexHeartBroken
 
