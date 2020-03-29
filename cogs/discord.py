@@ -162,7 +162,10 @@ class Discord(commands.Cog):
         if ctx.invoked_subcommand is None:
             data = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?", ("settings", ctx.guild.id))
             if data:
-                send = BytesIO(data['data'].encode('utf-8'))
+                try:
+                    send = BytesIO(data['data'].encode('utf-8'))
+                except AttributeError:
+                    send = BytesIO(data['data'])
                 return await ctx.send(f"Current settings for {ctx.guild.name}\n"
                                       f"Use {ctx.prefix}settings template for the template.",
                                       file=discord.File(send, filename=time.file_ts("Settings", "json")))

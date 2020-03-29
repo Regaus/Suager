@@ -283,6 +283,32 @@ class Social(commands.Cog):
             logs.save(logs.get_place(self.type, "changes"), "Reloaded KB images")
         return await ctx.send("Successfully reloaded images")
 
+    @commands.command(name="ship")
+    @commands.guild_only()
+    async def ship(self, ctx, user1: discord.Member, user2: discord.Member):
+        """ Build a ship """
+        if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
+            return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
+        if user1.bot or user2.bot:
+            return await ctx.send(f"Bots can't be shipped, they can't love :( {emotes.AlexHeartBroken}")
+        ls = [94762492923748352, 246652610747039744]
+        if user1.id in ls or user2.id in ls:
+            return await ctx.send("These 2 users cannot be shipped together.")
+        av1 = user1.avatar_url_as(size=1024)
+        av2 = user2.avatar_url_as(size=1024)
+        link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
+        bio = BytesIO(await http.get(link, res_method="read"))
+        if bio is None:
+            return await ctx.send("Something went wrong, couldn't generate image")
+        __names = [len(user1.name), len(user2.name)]
+        _names = [int(x / 2) for x in __names]
+        names = [user1.name[:_names[0]], user2.name[_names[1]:]]
+        name = ''.join(names)
+        names2 = [user2.name[:_names[1]], user1.name[_names[0]:]]
+        name2 = ''.join(names2)
+        message = f"Nice shipping there!\nShip names: **{name}** or **{name2}**"
+        return await ctx.send(message, file=discord.File(bio, filename=f"shipping_services.png"))
+
 
 def setup(bot):
     bot.add_cog(Social(bot))

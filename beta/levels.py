@@ -56,13 +56,12 @@ class Leveling(commands.Cog):
             if last > now - 60:
                 return
             x1, x2 = level_xp
-            base_mult = 1
             try:
                 sm = float(settings['leveling']['xp_multiplier'])
                 sm = 0 if sm < 0 else sm if sm < 10 else 10
             except KeyError:
                 sm = 1
-            new = int(random.randint(x1, x2) * base_mult * sm)
+            new = int(random.randint(x1, x2) * sm)
             new = 0 if ctx.author.id == 592345932062916619 else new
             xp += new
             requirements = levels()
@@ -91,6 +90,7 @@ class Leveling(commands.Cog):
                     await ch.send(send)
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
+            reason = f"Level Rewards - Level {level}"
             try:
                 rewards = settings['leveling']['rewards']
                 if rewards:  # Don't bother if they're empty
@@ -107,16 +107,16 @@ class Leveling(commands.Cog):
                             if i < len(rewards) - 1:
                                 if level < l1[i + 1]:
                                     if not has_role:
-                                        await ctx.author.add_roles(role, reason="Level Rewards")
+                                        await ctx.author.add_roles(role, reason=reason)
                                 else:
                                     if has_role:
-                                        await ctx.author.remove_roles(role, reason="Level Rewards")
+                                        await ctx.author.remove_roles(role, reason=reason)
                             else:
                                 if not has_role:
-                                    await ctx.author.add_roles(role, reason="Level Rewards")
+                                    await ctx.author.add_roles(role, reason=reason)
                         else:
                             if has_role:
-                                await ctx.author.remove_roles(role, reason="Level Rewards")
+                                await ctx.author.remove_roles(role, reason=reason)
             except KeyError:
                 pass  # If no level rewards, don't even bother
             except discord.Forbidden:
@@ -172,6 +172,7 @@ class Leveling(commands.Cog):
             settings = json.loads(_settings['data'])
             try:
                 dm = settings['leveling']['xp_multiplier']
+                dm = 0 if dm < 0 else dm if dm < 10 else 10
             except KeyError:
                 dm = 1
         data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
@@ -204,8 +205,7 @@ class Leveling(commands.Cog):
             else:
                 embed.add_field(name="Experience", value=f"**{r1}**", inline=False)
                 embed.add_field(name="Level", value=f"{level:,}", inline=False)
-            base = 1
-            x1, x2 = [val * base * dm for val in level_xp]
+            x1, x2 = [val * dm for val in level_xp]
             o1, o2 = int(x1), int(x2)
             embed.add_field(name="XP per message", inline=False, value=f"{o1}-{o2}")
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
@@ -259,8 +259,8 @@ class Leveling(commands.Cog):
         m1, m2 = int(a1) + 1, int(a2) + 1
         t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [m1, m2]]
         return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
-                              f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: around "
-                              f"**{m1}-{m2}**\nTime left (if non-stop talking): **{t1}-{t2}**")
+                              f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: "
+                              f"**{m1} to {m2}**\nEstimated talking time: **{t1} to {t2}**")
 
     @commands.command(name="levels")
     @commands.guild_only()
