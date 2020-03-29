@@ -70,14 +70,11 @@ class Ratings(commands.Cog):
             return await ctx.send("Bot's can't feel love...")
         seed = user1.id - user2.id
         random.seed(seed)
-        a = [302851022790066185, 527729196688998415, 411616745451683852]  # Nuriki Cult / Aya and Huggi
+        a = [417390734690484224, 255460743128940547]  # Kyomi and Lucvinhlong
         b = [179217986517729280, 191522051943563264]  # Memory and Poro
-        c = [302851022790066185, 424472476106489856]  # Canvas
         if user1.id in a and user2.id in a:
-            rate = 90
+            rate = 95
         elif user1.id in b and user2.id in b:
-            rate = 100
-        elif user1.id in c and user2.id in c:
             rate = 100
         else:
             rate = random.randint(0, 100)
