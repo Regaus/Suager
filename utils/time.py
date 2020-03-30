@@ -82,7 +82,8 @@ def timesince(when: datetime):
 
 
 def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
-    _now = source or datetime.utcnow()
+    # _now = source or datetime.utcnow()
+    _now = source or now(False)
     # Microsecond free zone
     _now = _now.replace(microsecond=0)
     dt = dt.replace(microsecond=0)

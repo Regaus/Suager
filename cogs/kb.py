@@ -24,7 +24,7 @@ class Social(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, \
-            self.slap = [lists.error] * 10
+            self.slap, self.blush, self.smile = [lists.error] * 12
         self.type = main.version
 
     @commands.command(name="pat", aliases=["pet"])
@@ -164,6 +164,28 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(self.cry))
         return await ctx.send(embed=embed)
 
+    @commands.command(name="blush")
+    @commands.guild_only()
+    async def blush(self, ctx):
+        """ You blush """
+        if is_fucked(self.blush):
+            self.blush = await lists.get_images(self.bot, 'u')
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{ctx.author.name}** blushes"
+        embed.set_image(url=random.choice(self.blush))
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="smile")
+    @commands.guild_only()
+    async def smile(self, ctx):
+        """ You smile """
+        if is_fucked(self.smile):
+            self.smile = await lists.get_images(self.bot, 'm')
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{ctx.author.name}** smiles"
+        embed.set_image(url=random.choice(self.smile))
+        return await ctx.send(embed=embed)
+
     @commands.command(name="slap", aliases=["kill", "shoot", "punch", "hit"])
     @commands.guild_only()
     async def slap(self, ctx, user: discord.Member):
@@ -278,6 +300,8 @@ class Social(commands.Cog):
         self.smell = await lists.get_images(self.bot, 'n')
         self.cry = await lists.get_images(self.bot, 'r')
         self.slap = await lists.get_images(self.bot, 'v')
+        self.blush = await lists.get_images(self.bot, 'u')
+        self.smile = await lists.get_images(self.bot, 'm')
         if generic.get_config()["logs"]:
             # await logs.log_channel(self.bot, 'changes').send('Reloaded KB images')
             logs.save(logs.get_place(self.type, "changes"), "Reloaded KB images")
@@ -291,6 +315,8 @@ class Social(commands.Cog):
             return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
         if user1.bot or user2.bot:
             return await ctx.send(f"Bots can't be shipped, they can't love :( {emotes.AlexHeartBroken}")
+        if user1 == user2:
+            return await ctx.send("I don't think that's how it works")
         ls = [94762492923748352, 246652610747039744]
         if user1.id in ls or user2.id in ls:
             return await ctx.send("These 2 users cannot be shipped together.")
