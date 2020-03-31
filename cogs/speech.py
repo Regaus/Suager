@@ -24,14 +24,14 @@ class Speech(commands.Cog):
         """ DM a user """
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        except Exception as e:
+            await ctx.send(f"Message deletion failed: {e}", delete_after=5)
         user = self.bot.get_user(user_id)
         if not user:
             return await ctx.send(f"Could not find user with ID {user_id}")
         try:
             await user.send(message)
-            return await ctx.send(f"✉️ Sent DM to **{user}**", delete_after=10)
+            return await ctx.send(f"✉️ Sent DM to **{user}**", delete_after=5)
         except discord.Forbidden:
             return await ctx.send("User might have blocked DMs, or be a bot account.")
 
@@ -42,8 +42,8 @@ class Speech(commands.Cog):
         """ Say something to a channel """
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        except Exception as e:
+            await ctx.send(f"Message deletion failed: {e}", delete_after=5)
         if channel.guild != ctx.guild:
             return await ctx.send(f"Hmm, it doesn't seem like this channel is in {ctx.guild.name}, "
                                   f"but rather {channel.guild.name}...")
@@ -51,7 +51,7 @@ class Speech(commands.Cog):
             await channel.send(message)
         except Exception as e:
             return await ctx.send(f"Could not send message: {e}")
-        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=5)
 
     @commands.command(name="atell")
     @commands.is_owner()
@@ -60,13 +60,13 @@ class Speech(commands.Cog):
         channel = self.bot.get_channel(channel_id)
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        except Exception as e:
+            await ctx.send(f"Message deletion failed: {e}", delete_after=5)
         try:
             await channel.send(message)
         except Exception as e:
             return await ctx.send(f"Could not send message: {e}")
-        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=5)
 
     @commands.command(name="say")
     @commands.guild_only()
@@ -74,10 +74,10 @@ class Speech(commands.Cog):
         """ Make me speak! """
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        except Exception as e:
+            await ctx.send(f"Message deletion failed: {e}", delete_after=5)
         await ctx.send(f"**{ctx.author}:**\n{message}")
-        return await ctx.send(f"✉️ Successfully sent message", delete_after=10)
+        return await ctx.send(f"✉️ Successfully sent message", delete_after=5)
 
     @commands.command(name="tellimg")
     @commands.guild_only()
@@ -93,8 +93,8 @@ class Speech(commands.Cog):
         bio = BytesIO(await http.get(url, res_method="read"))
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        except Exception as e:
+            await ctx.send(f"Message deletion failed: {e}", delete_after=5)
         if channel.guild != ctx.guild:
             return await ctx.send(f"Hmm, it doesn't seem like this channel is in {ctx.guild.name}, "
                                   f"but rather {channel.guild.name}...")
@@ -102,7 +102,7 @@ class Speech(commands.Cog):
             await channel.send(message, file=discord.File(bio, filename=fn, spoiler=spoiler))
         except Exception as e:
             return await ctx.send(f"Could not send message: {e}")
-        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=5)
 
     @commands.command(name="tellembed")
     @commands.guild_only()
@@ -133,8 +133,8 @@ class Speech(commands.Cog):
             embed.set_thumbnail(url=thumbnail_url.lower())
         try:
             await ctx.message.delete()
-        except discord.Forbidden:
-            pass
+        except Exception as e:
+            await ctx.send(f"Message deletion failed: {e}", delete_after=5)
         if channel.guild != ctx.guild:
             return await ctx.send(f"Hmm, it doesn't seem like this channel is in {ctx.guild.name}, "
                                   f"but rather {channel.guild.name}...")
@@ -142,7 +142,7 @@ class Speech(commands.Cog):
             await channel.send(embed=embed)
         except Exception as e:
             return await ctx.send(f"Could not send message: {e}")
-        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=10)
+        return await ctx.send(f"✉️ Successfully sent message to {channel.mention}", delete_after=5)
 
 
 def setup(bot):

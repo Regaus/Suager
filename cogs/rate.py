@@ -33,9 +33,9 @@ class Ratings(commands.Cog):
         _79 = [94762492923748352, 464901058796453899, 246652610747039744]  # Bowser65
         if who.id in _79:
             r = 79.9
-        _100 = [302851022790066185, 597373963571691520, 527729196688998415, 411616745451683852, 424472476106489856,
+        _100 = [302851022790066185, 597373963571691520, 527729196688998415, 411616745451683852,
                 609423646347231282, 520042197391769610, 568149836927467542]
-        # Regaus, Nuriki, Aya, Huggi, canvas, and Suager (incl. Beta and Alpha)
+        # Regaus, Nuriki, Aya, Huggi, and Suager (incl. Beta and Alpha)
         if who.id in _100:
             r = 100.0
         return await ctx.send(f"I'd rate {who.name} a **{r:.1f}/100**")

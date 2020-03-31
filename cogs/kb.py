@@ -17,7 +17,7 @@ but_why = "https://cdn.discordapp.com/attachments/610482988123422750/67364202835
 
 
 def give(u1: str, u2: str, emote: str):
-    return f"{u2}, you got a {emote} from {u1}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧{emote}"
+    return f"{u2}, you got a {emote} from {u1}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ {emote}"
 
 
 class Social(commands.Cog):

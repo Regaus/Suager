@@ -81,8 +81,10 @@ class HumanInfo(commands.Cog):
         r = self.db.execute(insert, (ctx.author.id, choice))
         if ctx.guild.id in roles:
             for role in remove:
-                await ctx.author.remove_roles(role, reason="User assigned gender")
-            await ctx.author.add_roles(rid, reason="User assigned gender")
+                if role is not None:
+                    await ctx.author.remove_roles(role, reason="User assigned gender")
+            if rid is not None:
+                await ctx.author.add_roles(rid, reason="User assigned gender")
         # open(f"data/gender/{ctx.author.id}.json", "w+").write(json.dumps(data))
         return await ctx.send(f"{ctx.author.mention} Set your gender to {choice}.\n{r}")
 
@@ -116,8 +118,11 @@ class HumanInfo(commands.Cog):
         else:
             r = self.db.execute(insert, (ctx.author.id, choice))
         if ctx.guild.id in roles:
-            await ctx.author.remove_roles(remove, reason="User assigned gender")
-            await ctx.author.add_roles(rid, reason="User assigned gender")
+            for role in remove:
+                if role is not None:
+                    await ctx.author.remove_roles(role, reason="User assigned gender")
+            if rid is not None:
+                await ctx.author.add_roles(rid, reason="User assigned gender")
         return await ctx.send(f"{ctx.author.mention} Set {user.name}'s gender to {choice}.\n{r}")
 
 
