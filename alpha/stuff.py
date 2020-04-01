@@ -602,8 +602,7 @@ async def tbl_game(db, ctx):
             if h < o[0] or h >= o[1]:
                 lid = get_location_id(player['level'], sm, now)
         loc = get_location(lid)
-        send = f"{time.time()} > {ctx.author.name} > TBL Initiated.\nWelcome to TBL, you motherfucker. " \
-               f"Enjoy your stay while it still lasts."
+        send = f"{time.time()} > {ctx.author.name} > TBL Initiated."
         ep = player['potion_energy'] > now
         player['energy'], player['time'], player['mana'] = regenerate_energy(
             player['energy'], player['mana'], now, ep, player['time'], player['level'],

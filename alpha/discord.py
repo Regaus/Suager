@@ -141,11 +141,11 @@ class Discord(commands.Cog):
         """ Server prefixes """
         _data = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not _data:
-            dp = generic.get_config().prefix
+            dp = generic.get_config()["bots"][self.type]["prefixes"]
             cp = None
         else:
             data = json.loads(_data['data'])
-            dp = generic.get_config().prefix if data['use_default'] else []
+            dp = generic.get_config()["bots"][self.type]["prefixes"] if data['use_default'] else []
             cp = data['prefixes']
             dp.append(self.bot.user.mention)
         embed = discord.Embed(colour=random_colour())
