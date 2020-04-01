@@ -131,7 +131,7 @@ class Events(commands.Cog):
                 await member.add_roles(snowflakes[0], reason=reason)
             if gender == "female":
                 await member.add_roles(snowflakes[1], reason=reason)
-            if gender == "invalid":
+            if gender == "invalid" or gender == "other":
                 await member.add_roles(snowflakes[2], reason=reason)
         if self.type == "stable":
             if member.guild.id == 568148147457490954:

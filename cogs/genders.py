@@ -76,8 +76,6 @@ class HumanInfo(commands.Cog):
             rid = ctx.guild.get_role(gr[2])
         else:
             return await ctx.send("Are you sure your choice is either `male`, `female`, `other` or `invalid`?")
-        if choice == "other":
-            choice = "invalid"
         r = self.db.execute(insert, (ctx.author.id, choice))
         if ctx.guild.id in roles:
             for role in remove:
@@ -110,19 +108,17 @@ class HumanInfo(commands.Cog):
             rid = ctx.guild.get_role(gr[2])
         else:
             return await ctx.send("Are you sure your choice is either `male`, `female`, `other` or `invalid`?")
-        if choice == "other":
-            choice = "invalid"
-        d = self.db.fetchrow(select, (ctx.author.id,))
+        d = self.db.fetchrow(select, (user.id,))
         if d:
-            r = self.db.execute(update, (choice, ctx.author.id))
+            r = self.db.execute(update, (choice, user.id))
         else:
-            r = self.db.execute(insert, (ctx.author.id, choice))
+            r = self.db.execute(insert, (user.id, choice))
         if ctx.guild.id in roles:
             for role in remove:
                 if role is not None:
-                    await ctx.author.remove_roles(role, reason="User assigned gender")
+                    await user.remove_roles(role, reason="User assigned gender")
             if rid is not None:
-                await ctx.author.add_roles(rid, reason="User assigned gender")
+                await user.add_roles(rid, reason="User assigned gender")
         return await ctx.send(f"{ctx.author.mention} Set {user.name}'s gender to {choice}.\n{r}")
 
 
