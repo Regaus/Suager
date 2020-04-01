@@ -219,10 +219,14 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(self.smell))
         return await ctx.send(embed=embed)
 
-    @commands.command(name="bang", aliases=["fuck"])
+    @commands.command(name="bang", aliases=["fuck"], hidden=True)
     @commands.guild_only()
-    async def fuck(self, ctx, user: discord.Member):
+    async def fuck(self, ctx, user: discord.Member = None):
         """ Bang someone """
+        if ctx.guild.id == 690162603275714574:
+            return await ctx.send("This command is disabled in this server.")
+        if user is None:
+            return await ctx.send_help(str(ctx.command))
         if user.id == self.bot.user.id:
             return await ctx.send("No. I'm taken, find someone else.")
         if user == ctx.author:

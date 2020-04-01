@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 
 import discord
-from dateutil.relativedelta import relativedelta
+# from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
 from cogs import main
@@ -20,20 +20,21 @@ def if_else(statement, if_statement: str, else_statement: str = None):
     return if_statement if statement else else_statement
 
 
-def calculate_age(born):
-    """ Calculate age (datetime) """
-    # today = datetime.now()
-    # age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
-    now = datetime.now()
-    rd = relativedelta(now, born)
-    age = rd.years
-    return age
+# def calculate_age(born):
+#     """ Calculate age (datetime) """
+#     # today = datetime.now()
+#     # age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+#     now = datetime.now()
+#     rd = relativedelta(now, born)
+#     age = rd.years
+#     return age
 
 
 class Birthdays(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.re_timestamp = r"^(0[0-9]|1[0-9]|2[0-9]|3[0-1])\/(0[1-9]|1[0-2])\/([1-2]{1}[0-9]{3})"
+        # self.re_timestamp = r"^(0[0-9]|1[0-9]|2[0-9]|3[0-1])\/(0[1-9]|1[0-2])\/([1-2]{1}[0-9]{3})"
+        self.re_timestamp = r"^(0[0-9]|1[0-9]|2[0-9]|3[0-1])\/(0[1-9]|1[0-2])"
         self.db = database.Database()
         self.config = generic.get_config()
         self.type = main.version
@@ -119,13 +120,13 @@ class Birthdays(commands.Cog):
                 return await ctx.send(f"**{user.name}** has not saved his/her birthday :(")
 
             birthday = has_birthday.strftime('%d %B')
-            age = calculate_age(has_birthday)
+            # age = calculate_age(has_birthday)
 
             is_author = user == ctx.author
             target = if_else(is_author, "**You** have", f"**{user.name}** has")
-            grammar = if_else(is_author, "are", "is")
+            # grammar = if_else(is_author, "are", "is")
 
-            await ctx.send(f"{target} birthday on **{birthday}** and {grammar} currently **{age}** years old.")
+            await ctx.send(f"{target} birthday on **{birthday}**")
 
     @birthday.command(name="set")
     async def set(self, ctx):
@@ -133,12 +134,12 @@ class Birthdays(commands.Cog):
         has_birthday = self.check_birthday_noted(ctx.author.id)
         if has_birthday:
             return await ctx.send(
-                f"You've already set your birth date to **{has_birthday.strftime('%d %B %Y')}**\n"
+                f"You've already set your birth date to **{has_birthday.strftime('%d %B')}**\n"
                 f"To change this, please contact the owner of the bot."
             )
 
         start_msg = await ctx.send(f"Hello there **{ctx.author.name}**, please enter when you were born. "
-                                   f"`[ DD/MM/YYYY ]`")
+                                   f"`[ DD/MM ]`")
         confirmcode = random.randint(10000, 99999)
 
         def check_timestamp(m):
@@ -160,22 +161,22 @@ class Birthdays(commands.Cog):
                 content=f"~~{start_msg.clean_content}~~\n\nfine then, I won't save your birthday :("
             )
 
-        timestamp = datetime.strptime(user.content.split(" ")[0], "%d/%m/%Y")
-        timestamp_clean = timestamp.strftime("%d %B %Y")
-        today = datetime.now()
-        age = calculate_age(timestamp)
+        timestamp = datetime.strptime(user.content.split(" ")[0] + "/2020", "%d/%m/%Y")
+        timestamp_clean = timestamp.strftime("%d %B")
+        # today = datetime.now()
+        # age = calculate_age(timestamp)
 
-        if timestamp > today:
-            return await ctx.send(f"Nope.. you can't exist in the future **{ctx.author.name}**")
-        if age > 125:
-            return await ctx.send(f"**{ctx.author.name}**... Are you sure you're like... over 125 years old?")
-        if age <= 13:
-            return await ctx.send(f"You have to be **13** to use Discord **{ctx.author.name}**... "
-                                  f"Are you saying you're underage (only {age})? 🤔")
+        # if timestamp > today:
+        #     return await ctx.send(f"Nope.. you can't exist in the future **{ctx.author.name}**")
+        # if age > 125:
+        #     return await ctx.send(f"**{ctx.author.name}**... Are you sure you're like... over 125 years old?")
+        # if age <= 13:
+        #     return await ctx.send(f"You have to be **13** to use Discord **{ctx.author.name}**... "
+        #                           f"Are you saying you're underage (only {age})? 🤔")
 
         confirm_msg = await ctx.send(
-            f"Alright **{ctx.author.name}**, do you confirm that your birth date is **{timestamp_clean}** "
-            f"and you're currently **{age}** years old?\nType `{confirmcode}` to confirm this choice\n"
+            f"Alright **{ctx.author.name}**, do you confirm that your birth date is **{timestamp_clean}**?\n"
+            f"Type `{confirmcode}` to confirm this choice\n"
             f"(NOTE: To change birthday later, you must send valid birthday to the owner)"
         )
 
@@ -193,7 +194,7 @@ class Birthdays(commands.Cog):
     @commands.check(permissions.is_owner)
     async def force_set(self, ctx, user: discord.User, *, new_time: str):
         """ Force-set someone's birthday """
-        timestamp = datetime.strptime(new_time, "%d/%m/%Y")
+        timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
         data = self.db.execute("UPDATE birthdays SET birthday=? WHERE uid=?", (timestamp, user.id))
         await ctx.send(data)
 
@@ -201,7 +202,7 @@ class Birthdays(commands.Cog):
     @commands.check(permissions.is_owner)
     async def insert(self, ctx, user: discord.User, *, new_time: str):
         """ Insert someone's birthday """
-        timestamp = datetime.strptime(new_time, "%d/%m/%Y")
+        timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
         data = self.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (user.id, timestamp, False))
         await ctx.send(data)
 
