@@ -10,10 +10,13 @@ from utils import generic, emotes
 class Ratings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="rate")
     async def rate(self, ctx, *, what: commands.clean_content):
         """ Rate something """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} for fuck's sake...")
         random.seed(str(what))
         r = random.randint(0, 1000) / 10
         bad = ["xela", "lidl xela"]
@@ -25,6 +28,8 @@ class Ratings(commands.Cog):
     @commands.guild_only()
     async def rate_user(self, ctx, *, who: discord.Member):
         """ Rate someone """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} for fuck's sake...")
         random.seed(who.id)
         r1, r2 = [800, 1000]
         if who.id == ctx.author.id:
@@ -44,6 +49,8 @@ class Ratings(commands.Cog):
     @commands.guild_only()
     async def baby_rate(self, ctx, user1: discord.User, user2: discord.User):
         """ Chance of 2 users having a baby """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} for fuck's sake...")
         if user1 == user2:
             return await ctx.send("I don't think that's how it works...")
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
@@ -62,6 +69,8 @@ class Ratings(commands.Cog):
     @commands.guild_only()
     async def love_calc(self, ctx, user1: discord.User, user2: discord.User):
         """ Calculate the amount of love between 2 users """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} for fuck's sake...")
         if user1 == user2:
             return await ctx.send("I don't think that's how it works...")
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
@@ -85,6 +94,8 @@ class Ratings(commands.Cog):
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
     async def hotness(self, ctx, *, who: discord.User = None):
         """ Check how hot someone is """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} for fuck's sake...")
         user = who or ctx.author
         random.seed(user.id - 1)
         # step1 = int(random.randint(2000, 11700))
@@ -112,6 +123,8 @@ class Ratings(commands.Cog):
     @commands.command(name="iq")
     async def iq_test(self, ctx, *, who: discord.User = None):
         """ Check Someone's IQ """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} for fuck's sake...")
         user = who or ctx.author
         random.seed(user.id + 1)
         ri = random.randint(50, 255)
