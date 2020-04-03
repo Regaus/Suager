@@ -26,6 +26,7 @@ class Social(commands.Cog):
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, \
             self.slap, self.blush, self.smile = [lists.error] * 12
         self.type = main.version
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
@@ -327,6 +328,8 @@ class Social(commands.Cog):
     @commands.guild_only()
     async def ship(self, ctx, user1: discord.Member, user2: discord.Member):
         """ Build a ship """
+        if ctx.channel.id in self.banned:
+            return await ctx.send(f"Stop using this command in {ctx.channel.mention} already...")
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
         if user1.bot or user2.bot:

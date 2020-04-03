@@ -223,13 +223,35 @@ class Leveling(commands.Cog):
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
         try:
-            xp = levels()[level - 1]
+            r = levels()[level - 1]
         except IndexError:
             return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {max_level}, btw.")
+        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        if not data:
+            return await ctx.send("It doesn't seem like I have any data saved for you right now...")
+        _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
+                                     ("settings", ctx.guild.id))
+        if not _settings:
+            dm = 1
+        else:
+            settings = json.loads(_settings['data'])
+            try:
+                dm = settings['leveling']['xp_multiplier']
+            except KeyError:
+                dm = 1
+        xp = data['xp']
+        x1, x2 = [val * dm for val in level_xp]
+        a1, a2 = [(r - xp) / x2, (r - xp) / x1]
+        m1, m2 = int(a1) + 1, int(a2) + 1
+        t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [m1, m2]]
         # x1, x2 = [val * normal * dm for val in level_xp]
-        needed = value_string(xp, big=True)
+        needed = value_string(r, big=True)
+        tl = ""
+        if xp < r:
+            tl = f"\nXP left to reach level: **{value_string(r - xp, big=True)}**\n" \
+                 f"That is **{m1:,} to {m2:,}** more messages.\nTalking time: **{t1} to {t2}**"
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need "
-                              f"**{needed} XP**")
+                              f"**{needed} XP**{tl}")
 
     @commands.command(name="nextlevel")
     @commands.guild_only()

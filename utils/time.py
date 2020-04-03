@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta as td
 
 from dateutil.relativedelta import relativedelta
 
@@ -63,16 +63,16 @@ class Plural:
         return f'{v} {_singular}'
 
 
-def timedelta(seconds: int, show_seconds: bool = True):
-    m, s = divmod(seconds, 60)
-    h, m = divmod(m, 60)
-    d, h = divmod(h, 24)
-    d, h, m, s = round(d), round(h), round(m), round(s)
-    ds = f"{d}d " if d != 0 else ""
-    hs = f"{h}h " if h != 0 or d != 0 else ""
-    ms = f"{m}m"
-    ss = f" {s}s" if show_seconds else ""
-    return ds + hs + ms + ss
+# def timedelta(seconds: int, show_seconds: bool = True):
+#     m, s = divmod(seconds, 60)
+#     h, m = divmod(m, 60)
+#     d, h = divmod(h, 24)
+#     d, h, m, s = round(d), round(h), round(m), round(s)
+#     ds = f"{d}d " if d != 0 else ""
+#     hs = f"{h}h " if h != 0 or d != 0 else ""
+#     ms = f"{m}m"
+#     ss = f" {s}s" if show_seconds else ""
+#     return ds + hs + ms + ss
 # Code yoinked from: https://github.com/iDevision/Life/blob/master/Life/cogs/utilities/utils.py
 
 
@@ -143,3 +143,75 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
         else:
             return ' '.join(output) + suffix
 # Code from R. Danny
+
+
+def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: bool = False, show_seconds=True):
+    # _now = source or datetime.utcnow()
+    # _now = source or now(False)
+    # Microsecond free zone
+    # _now = _now.replace(microsecond=0)
+    # dt = dt.replace(microsecond=0)
+    n = now(False)
+    t = now(False) + td(seconds=seconds)
+    # delta = relativedelta(seconds=seconds).normalized()
+    p = "in " if future and suffix else ""
+    s = " ago" if not future and suffix else ""
+    delta = relativedelta(t, n)
+
+    # This implementation uses relativedelta instead of the much more obvious
+    # divmod approach with seconds because the seconds approach is not entirely
+    # accurate once you go over 1 week in terms of accuracy since you have to
+    # hardcode a month as 30 or 31 days.
+    # A query like "11 months" can be interpreted as "!1 months and 6 days"
+    # if dt > _now:
+    #     delta = relativedelta(dt, _now)
+    #     suffix = ''
+    # else:
+    #     delta = relativedelta(_now, dt)
+    #     suffix = ' ago' if suffix else ''
+
+    attrs = [
+        ('year', 'y'),
+        ('month', 'mo'),
+        ('day', 'd'),
+        ('hour', 'h'),
+        ('minute', 'm'),
+        ('second', 's'),
+    ]
+
+    output = []
+    for attr, brief_attr in attrs:
+        elem = getattr(delta, attr + 's')
+        if not elem:
+            continue
+
+        if attr == 'day':
+            weeks = delta.weeks
+            if weeks:
+                elem -= weeks * 7
+                output.append(f'{weeks}w')
+
+        if elem <= 0:
+            continue
+        if not show_seconds and brief_attr == "s":
+            continue
+        output.append(f'{elem}{brief_attr}')
+
+    if accuracy is not None:
+        output = output[:accuracy]
+
+    if len(output) == 0:
+        return 'now'
+    else:
+        t = ' '.join(output)
+        # if suffix:
+        #     if future:
+        #         t = 'in ' + t
+        #     else:
+        #         t += ' ago'
+        return f"{p}{t}{s}"
+        # if not brief:
+        #     return human_join(output, final='and') + suffix
+        # else:
+        #     return ' '.join(output) + suffix
+# Code adopted from R. Danny
