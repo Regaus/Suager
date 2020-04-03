@@ -188,10 +188,12 @@ class Social(commands.Cog):
 
     @commands.command(name="slap", aliases=["kill", "shoot", "punch", "hit"])
     @commands.guild_only()
-    async def slap(self, ctx, user: discord.Member):
+    async def slap(self, ctx, user: discord.Member = None):
         """ Violence! """
         if ctx.guild.id == 690162603275714574:
             return await ctx.send("This command has been disabled in this server.")
+        if user is None:
+            return await ctx.send_help(str(ctx.command))
         if user == ctx.author:
             return await ctx.send(embed=discord.Embed(colour=generic.random_colour()).set_image(url=but_why))
         if user.id == self.bot.user.id:
@@ -254,6 +256,15 @@ class Social(commands.Cog):
         if user == ctx.author:
             return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
         output = give(ctx.author.name, user.name, ":cookie:")
+        return await ctx.send(output)
+
+    @commands.command(name="carrot")
+    @commands.guild_only()
+    async def carrot(self, ctx, user: discord.Member):
+        """ Give someone a carrot """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        output = give(ctx.author.name, user.name, ":carrot:")
         return await ctx.send(output)
 
     @commands.command(name="fruit", aliases=["fruitsnacks"])

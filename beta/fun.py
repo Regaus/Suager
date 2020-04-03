@@ -143,6 +143,13 @@ class Fun(commands.Cog):
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
         return await ctx.send(reverse)
 
+    @commands.command(name="notwork")
+    async def notwork(self, ctx):
+        """ That's not how it works you little shit """
+        embed = discord.Embed(colour=random.randint(0, 0xffffff))
+        embed.set_image(url="https://cdn.discordapp.com/attachments/577599230567383058/695424749097975808/notwork.png")
+        return await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
