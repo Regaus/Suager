@@ -192,7 +192,7 @@ class Social(commands.Cog):
     async def slap(self, ctx, user: discord.Member = None):
         """ Violence! """
         if ctx.guild.id == 690162603275714574:
-            return await ctx.send("This command has been disabled in this server.")
+            return
         if user is None:
             return await ctx.send_help(str(ctx.command))
         if user == ctx.author:
@@ -229,7 +229,7 @@ class Social(commands.Cog):
     async def fuck(self, ctx, user: discord.Member = None):
         """ Bang someone """
         if ctx.guild.id == 690162603275714574:
-            return await ctx.send("This command has been disabled in this server.")
+            return
         if user is None:
             return await ctx.send_help(str(ctx.command))
         if user.id == self.bot.user.id:

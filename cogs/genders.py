@@ -23,6 +23,8 @@ class HumanInfo(commands.Cog):
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
     async def pickle_size(self, ctx, *, user: discord.Member = None):
         """ Pickle size! """
+        if ctx.guild.id == 690162603275714574:
+            return
         if user is None:
             user = ctx.author
         random.seed(user.id)
@@ -40,6 +42,8 @@ class HumanInfo(commands.Cog):
     @commands.command(name="breast", aliases=["boobs", "tiddies"])
     async def boob_size(self, ctx, *, user: discord.Member = None):
         """ Boob size! """
+        if ctx.guild.id == 690162603275714574:
+            return
         if user is None:
             user = ctx.author
         random.seed(user.id - 1)
