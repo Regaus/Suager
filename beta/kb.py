@@ -268,6 +268,16 @@ class Social(commands.Cog):
         output = give(ctx.author.name, user.name, ":carrot:")
         return await ctx.send(output)
 
+    @commands.command(name="lemon")
+    @commands.guild_only()
+    async def lemon(self, ctx, user: discord.Member):
+        """ Give someone a lemon """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        output = give(ctx.author.name, user.name, ":lemon:")
+        return await ctx.send(output)
+
+
     @commands.command(name="fruit", aliases=["fruitsnacks"])
     @commands.guild_only()
     async def fruit_snacks(self, ctx, user: discord.Member):
