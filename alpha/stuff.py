@@ -152,8 +152,9 @@ class Games(commands.Cog):
             player = tbl_player.copy()
         else:
             if data['usage']:
-                return await ctx.send(f"{user.name} is currently playing TBL - "
-                                      f"Please wait for any currently running TBL command to finish...")
+                return await ctx.send("This command is currently unavailable - try again later.")
+                # return await ctx.send(f"{user.name} is currently playing TBL - "
+                #                       f"Please wait for any currently running TBL command to finish...")
             player = json.loads(data['data'])
         embed = discord.Embed(colour=random_colour())
         embed.set_thumbnail(url=user.avatar_url)
@@ -173,7 +174,10 @@ class Games(commands.Cog):
         embed.add_field(name="Shaman Stats", inline=True,
                         value=f"Level {player['sh_level']}\n{value_string(player['sh_xp'])}/{snl} XP")
         el = 420 if ze else 119 + player['level']
-        embed.add_field(name="Energy", value=f"{player['energy']:,.0f}/{el}", inline=True)
+        rs = 30 if ze else 60
+        ne = time.human_timedelta(time.from_ts(player['time'] + rs), suffix=True, brief=True)
+        ni = f" - Next in {ne}" if player['energy'] < el else ""
+        embed.add_field(name="Energy", value=f"{player['energy']:,.0f}/{el}{ni}", inline=True)
         epe = f"Active until {time.time_output(time.from_ts(player['potion_energy']))}" if ze else "Inactive"
         mpe = f"Active until {time.time_output(time.from_ts(player['potion_mana']))}" if mp else "Inactive"
         embed.add_field(name="Energy Potion", value=epe, inline=True)
@@ -186,6 +190,51 @@ class Games(commands.Cog):
         embed.add_field(name="Current Clan", value=ctx.guild.name, inline=True)
         embed.add_field(name="Rounds Played", value=value_string(player['used']), inline=True)
         return await ctx.send(f"TBL Stats for {user.name}", embed=embed)
+
+    @tbl.command(name="clan", aliases=["server", "guild"])
+    @commands.guild_only()
+    async def tbl_clan(self, ctx):
+        """ TBL Clan Stats """
+        data = self.db.fetchrow(find, (ctx.guild.id, "tbl_clan"))
+        if not data:
+            clan = tbl_clan.copy()
+        else:
+            if data['usage']:
+                return await ctx.send("This command is currently unavailable - try again later.")
+            clan = json.loads(data['data'])
+        embed = discord.Embed(colour=random_colour())
+        embed.set_thumbnail(url=ctx.guild.icon_url)
+        embed.add_field(name="Level", value=f"Level {clan['level']} - {value_string(clan['xp'])} XP", inline=True)
+        embed.add_field(name="Skill Points", value=value_string(clan["skill_points"]), inline=True)
+        embed.add_field(name="Money", inline=True,
+                        value=f"{value_string(clan['araksan'])} Araksan\n{value_string(clan['coins'])} Coins")
+        t1, t2, t3 = clan["temples"]
+        _, e2, e3 = clan["expiry"]
+        now = time.now_ts()
+        if t1 != 0:
+            r1 = tbl.tbl_totems[t1 - 1]["name"]
+        else:
+            r1 = "Inactive totem"
+        if t2 != 0:
+            if e2 > now:
+                x2 = time.human_timedelta(time.from_ts(e2, False), brief=True, suffix=False)
+                r2 = f"{tbl.tbl_totems[t2 - 1]['name']} (Expires in {x2})"
+            else:
+                r2 = "Expired"
+        else:
+            r2 = "Inactive totem"
+        if t3 != 0:
+            if e3 > now:
+                x3 = time.human_timedelta(time.from_ts(e3, False), brief=True, suffix=False)
+                r3 = f"{tbl.tbl_totems[t3 - 1]['name']} (Expires in {x3})"
+            else:
+                r3 = "Expired"
+        else:
+            r3 = "Inactive totem"
+        embed.add_field(name="Temples", value=f"{r1}\n{r2}\n{r3}", inline=True)
+        embed.add_field(name="Members", value=f"{len(ctx.guild.members):,}/250,000", inline=True)
+        embed.add_field(name="1 coin", value="1 credit", inline=True)
+        return await ctx.send(f"TBL Stats for {ctx.guild.name}", embed=embed)
 
 
 def setup(bot):
@@ -787,6 +836,7 @@ def regenerate_energy(energy, bm, now, ze, er, xp, epe, mpe):
             energy = el
             er = now
         else:
+            energy = ne
             er += re * rs
     else:
         er = now
@@ -796,11 +846,13 @@ def regenerate_energy(energy, bm, now, ze, er, xp, epe, mpe):
 def get_activity(activity: list):
     """ Get location's current activity """
     now = time.now()
+    month = now.month
+    months = [0.94, 1.0, 1.15, 1.27, 1.41, 2.5, 2.73, 2.4, 1.52, 1.27, 0.92, 0.87]
     hour = now.hour
     al = len(activity)
     four = int(hour / 4)
     rest = hour % 4
-    return (activity[four] * rest + activity[(four + 1) % al] * (4 - rest)) / 4
+    return ((activity[four] * rest + activity[(four + 1) % al] * (4 - rest)) / 4) * months[month - 1]
 
 
 def get_level(xpl, xp):

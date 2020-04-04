@@ -21,7 +21,7 @@ def get_time(timestamp: int, utc: bool = False):
     return datetime.utcfromtimestamp(timestamp) if utc else datetime.fromtimestamp(timestamp)
 
 
-def from_ts(timestamp, utc=True):
+def from_ts(timestamp, utc=False):
     if utc:
         return datetime.utcfromtimestamp(timestamp)
     else:

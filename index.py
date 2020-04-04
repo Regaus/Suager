@@ -25,45 +25,60 @@ logs.create()
 async def get_prefix(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    _data = db.fetchrow("SELECT * FROM data_stable WHERE type=? AND id=?", ("settings", ctx.guild.id))
-    if not _data:
-        dp = config["bots"]["stable"]["prefixes"]
-        cp = []
+    if ctx.guild is not None:
+        _data = db.fetchrow("SELECT * FROM data_stable WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if not _data:
+            dp = config["bots"]["stable"]["prefixes"]
+            cp = []
+        else:
+            data = json.loads(_data['data'])
+            dp = config["bots"]["stable"]["prefixes"] if data['use_default'] else []
+            cp = data['prefixes']
+        sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
     else:
-        data = json.loads(_data['data'])
-        dp = config["bots"]["stable"]["prefixes"] if data['use_default'] else []
-        cp = data['prefixes']
-    sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+        dp = config["bots"]["stable"]["prefixes"]
+        sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+        cp = []
     return default + dp + cp + sp
 
 
 async def get_prefix2(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    _data = db.fetchrow("SELECT * FROM data_beta WHERE type=? AND id=?", ("settings", ctx.guild.id))
-    if not _data:
-        dp = config["bots"]["beta"]["prefixes"]
-        cp = []
+    if ctx.guild is not None:
+        _data = db.fetchrow("SELECT * FROM data_beta WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if not _data:
+            dp = config["bots"]["beta"]["prefixes"]
+            cp = []
+        else:
+            data = json.loads(_data['data'])
+            dp = config["bots"]["beta"]["prefixes"] if data['use_default'] else []
+            cp = data['prefixes']
+        sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
     else:
-        data = json.loads(_data['data'])
-        dp = config["bots"]["beta"]["prefixes"] if data['use_default'] else []
-        cp = data['prefixes']
-    sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+        dp = config["bots"]["beta"]["prefixes"]
+        sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+        cp = []
     return default + dp + cp + sp
 
 
 async def get_prefix3(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    _data = db.fetchrow("SELECT * FROM data_alpha WHERE type=? AND id=?", ("settings", ctx.guild.id))
-    if not _data:
-        dp = config["bots"]["alpha"]["prefixes"]
-        cp = []
+    if ctx.guild is not None:
+        _data = db.fetchrow("SELECT * FROM data_alpha WHERE type=? AND id=?", ("settings", ctx.guild.id))
+        if not _data:
+            dp = config["bots"]["alpha"]["prefixes"]
+            cp = []
+        else:
+            data = json.loads(_data['data'])
+            dp = config["bots"]["alpha"]["prefixes"] if data['use_default'] else []
+            cp = data['prefixes']
+        sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
     else:
-        data = json.loads(_data['data'])
-        dp = config["bots"]["alpha"]["prefixes"] if data['use_default'] else []
-        cp = data['prefixes']
-    sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+        dp = config["bots"]["alpha"]["prefixes"]
+        sp = config['common_prefix'] if ctx.author.id in config["owners"] else []
+        cp = []
     return default + dp + cp + sp
 
 try:
