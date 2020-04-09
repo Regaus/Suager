@@ -139,7 +139,7 @@ class Leveling(commands.Cog):
     async def rewards(self, ctx):
         """ Rewards """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} ffs...")
+            return
         settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not settings:
             return await ctx.send("Doesn't seem like this server has leveling rewards")
@@ -164,7 +164,7 @@ class Leveling(commands.Cog):
     async def rank(self, ctx, *, who: discord.Member = None):
         """ Check your or someone's rank """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} ffs...")
+            return
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
@@ -216,10 +216,12 @@ class Leveling(commands.Cog):
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
 
     @commands.command(name="xplevel")
-    async def xp_level(self, ctx, level: int):
+    async def xp_level(self, ctx, level: int = None):
         """ XP required to achieve a level """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} ffs...")
+            return
+        if level is None:
+            return await ctx.send_help(str(ctx.command))
         if level > max_level or level < max_level * -1 + 1:
             return await ctx.send(f"The max level is {max_level}.")
         try:
@@ -258,7 +260,7 @@ class Leveling(commands.Cog):
     async def next_level(self, ctx):
         """ XP required for next level """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} ffs...")
+            return
         data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await ctx.send("It doesn't seem like I have any data saved for you right now...")
@@ -298,7 +300,7 @@ class Leveling(commands.Cog):
     async def levels_lb(self, ctx):
         """ Server's XP Leaderboard """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} ffs...")
+            return
         async with ctx.typing():
             data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC LIMIT 250", (ctx.guild.id,))
             if not data:
@@ -335,7 +337,7 @@ class Leveling(commands.Cog):
     async def global_levels(self, ctx):
         """ Global XP Leaderboard """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} ffs...")
+            return
         async with ctx.typing():
             data = self.db.fetch("SELECT * FROM leveling", ())
             coll = {}

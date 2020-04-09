@@ -29,7 +29,8 @@ phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
            "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
 image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586,
                   'c': 675769002613669918, 'b': 675771077057839104, 's': 683486714873905171, 'n': 690573072536961075,
-                  'r': 691739503160852591, 'v': 671897418589143051, 'u': 694148497766875186, 'm': 694151734603415632}
+                  'r': 691739503160852591, 'v': 671897418589143051, 'u': 694148497766875186, 'm': 694151734603415632,
+                  'i': 696485411869950003}
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
 ball_response = [
     'Yes', 'No', 'Take a wild guess...', 'Very doubtful',

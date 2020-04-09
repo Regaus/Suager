@@ -24,7 +24,7 @@ class Social(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, \
-            self.slap, self.blush, self.smile = [lists.error] * 12
+            self.slap, self.blush, self.smile, self.highfive = [lists.error] * 13
         self.type = main.version
         self.banned = [690254056354087047, 694684764074016799]
 
@@ -80,15 +80,6 @@ class Social(commands.Cog):
         """ Lick someone """
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
-        if ctx.guild.id == 679055998186553344:  # Rosey's server
-            if user.id == 302851022790066185:  # Regaus
-                if ctx.author.id != 424472476106489856:  # Canvas
-                    canvas = ctx.guild.get_member(424472476106489856)
-                    return await ctx.send(f"Only {canvas.display_name} is allowed to lick {user.display_name}.")
-            if user.id == 424472476106489856:  # Canvas
-                if ctx.author.id != 302851022790066185:  # Regaus
-                    regaus = ctx.guild.get_member(302851022790066185)
-                    return await ctx.send(f"Only {regaus.display_name} is allowed to lick {user.display_name}.")
         embed = discord.Embed(colour=generic.random_colour())
         if user == ctx.author:
             return await ctx.send(embed=embed.set_image(
@@ -110,18 +101,6 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await ctx.send(f"Thanks, {ctx.author.name} {emotes.AlexHeart}! "
                                   f"But, I'm a bot... I wasn't programmed to feel love ;-;")
-        if ctx.guild.id == 679055998186553344:  # Rosey's server
-            if user.id == 302851022790066185:  # Regaus
-                if ctx.author.id != 424472476106489856:  # Canvas
-                    canvas = ctx.guild.get_member(424472476106489856)
-                    return await ctx.send(f"Only {canvas.display_name} is allowed to do that.")
-            if user.id == 424472476106489856:  # Canvas
-                if ctx.author.id != 302851022790066185:  # Regaus
-                    regaus = ctx.guild.get_member(302851022790066185)
-                    return await ctx.send(f"Only {regaus.display_name} is allowed to do that.")
-            if ctx.author.id == 424472476106489856:  # Canvas
-                if user.id != 302851022790066185:  # Regaus
-                    return await ctx.send(f"{emotes.Deny} you allowed to do that, {ctx.author.name}.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.kiss))
@@ -236,11 +215,6 @@ class Social(commands.Cog):
             return await ctx.send("No. I'm taken, find someone else.")
         if user == ctx.author:
             return await ctx.send("How are you going to do that?")
-        if ctx.guild.id == 679055998186553344:
-            if user.id == 302851022790066185 and ctx.author.id != 424472476106489856:
-                return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
-            if user.id == 424472476106489856 and ctx.author.id != 302851022790066185:
-                return await ctx.send(f"{emotes.Deny} Nope, you are not allowed to do that.")
         return await ctx.send(f"{emotes.Scary} {emotes.NotLikeThis} {ctx.author.name} is now "
                               f"{ctx.invoked_with}ing {user.name}...")
 
@@ -313,6 +287,21 @@ class Social(commands.Cog):
             return await ctx.send("Something went wrong, couldn't generate image")
         return await ctx.send(file=discord.File(bio, filename=f"trash_{user.name}.png"))
 
+    @commands.command(name="highfive")
+    @commands.guild_only()
+    async def high_five(self, ctx, user: discord.Member):
+        """ High five someone """
+        if is_fucked(self.highfive):
+            self.highfive = await lists.get_images(self.bot, 'i')
+        if user == ctx.author:
+            return await ctx.send("How are you going to do that?")
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"*High fives {ctx.author.name} back*")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{user.name}** got a high five **{ctx.author.name}**"
+        embed.set_image(url=random.choice(self.highfive))
+        return await ctx.send(embed=embed)
+
     @commands.command(name="reloadimages")
     @commands.is_owner()
     async def reload_images(self, ctx):
@@ -328,6 +317,7 @@ class Social(commands.Cog):
         self.cry = await lists.get_images(self.bot, 'r')
         self.slap = await lists.get_images(self.bot, 'v')
         self.blush = await lists.get_images(self.bot, 'u')
+        self.highfive = await lists.get_images(self.bot, 'i')
         if generic.get_config()["logs"]:
             # await logs.log_channel(self.bot, 'changes').send('Reloaded KB images')
             logs.save(logs.get_place(self.type, "changes"), "Reloaded KB images")
@@ -335,10 +325,12 @@ class Social(commands.Cog):
 
     @commands.command(name="ship")
     @commands.guild_only()
-    async def ship(self, ctx, user1: discord.Member, user2: discord.Member):
+    async def ship(self, ctx, user1: discord.Member = None, user2: discord.Member = None):
         """ Build a ship """
         if ctx.channel.id in self.banned:
-            return await ctx.send(f"Stop using this command in {ctx.channel.mention} already...")
+            return
+        if user1 is None or user2 is None:
+            return await ctx.send_help(str(ctx.command))
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
         if user1.bot or user2.bot:
@@ -362,11 +354,6 @@ class Social(commands.Cog):
         name2 = ''.join(names2)
         message = f"Nice shipping there!\nShip names: **{name}** or **{name2}**"
         return await ctx.send(message, file=discord.File(bio, filename=f"shipping_services.png"))
-
-    @commands.command(name="dab", hidden=True)
-    async def dab(self, ctx):
-        """ Dab """
-        return await ctx.send("No")
 
 
 def setup(bot):

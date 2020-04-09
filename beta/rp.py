@@ -103,10 +103,12 @@ class RPStuff(commands.Cog):
 
     @commands.command(name="blood", aliases=["feedblood"], hidden=True)
     @commands.guild_only()
-    async def feed_blood(self, ctx, user: discord.Member, amt: str, whose: str = None, *,
+    async def feed_blood(self, ctx, user: discord.Member = None, amt: str = None, whose: str = None, *,
                          flavour: str = "Normal"):
         """ Feed blood """
         if ctx.guild.id == 568148147457490954:
+            if user is None or amt is None:
+                return await ctx.send_help(str(ctx.command))
             if ctx.author.id in [527729196688998415, 302851022790066185]:
                 giver = whose or ctx.author.name
                 data = f"{emotes.Loading} Feeding {user.name} blood...\n" \
