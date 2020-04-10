@@ -225,7 +225,7 @@ class Social(commands.Cog):
         if user == ctx.author:
             return await ctx.send("How are you gonna do that?")
         if user.id == 302851022790066185:
-            return await ctx.send(f"No u, {user.name}.")
+            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are dismissed from {ctx.guild.name}.")
         return await ctx.send(f"{emotes.Allow} {user.name}, you are dismissed from {ctx.guild.name}.")
 
     @commands.command(name="cookie")

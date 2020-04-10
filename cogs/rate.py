@@ -31,19 +31,32 @@ class Ratings(commands.Cog):
         if ctx.channel.id in self.banned:
             return
         random.seed(who.id)
-        r1, r2 = [800, 1000]
+        r1, r2 = [50, 100]
         if who.id == ctx.author.id:
             return await ctx.send(f"{ctx.author.mention} I like you the way you are! {emotes.AlexPat}")
-        r = random.randint(r1, r2) / 10
-        _79 = [94762492923748352, 464901058796453899, 246652610747039744]  # Bowser65
-        if who.id in _79:
-            r = 79.9
-        _100 = [302851022790066185, 597373963571691520, 527729196688998415, 411616745451683852,
-                609423646347231282, 520042197391769610, 568149836927467542]
+        r = round(random.uniform(r1, r2), 1)
+        custom = {
+            94762492923748352: r1 - 0.1,   # Bowser65
+            464901058796453899: r1 - 0.1,  # Foxy / Bowser's bot
+            246652610747039744: r1 - 0.1,  # Bowser's alt
+            424472476106489856: r1 - 0.1,  # canvas the sour lemon
+            302851022790066185: r2,  # Me
+            597373963571691520: r2,  # Nuriki
+            411616745451683852: r2,  # Huggi
+            609423646347231282: r2,  # Suager
+            520042197391769610: r2,  # Suager Beta
+            568149836927467542: r2,  # Suager Alpha
+        }
+        # _79 = [94762492923748352, 464901058796453899, 246652610747039744]  # Bowser65
+        # if who.id in _79:
+        #     r = 79.9
+        # _100 = [302851022790066185, 597373963571691520, 527729196688998415, 411616745451683852,
+        #         609423646347231282, 520042197391769610, 568149836927467542]
         # Regaus, Nuriki, Aya, Huggi, and Suager (incl. Beta and Alpha)
-        if who.id in _100:
-            r = 100.0
-        return await ctx.send(f"I'd rate {who.name} a **{r:.1f}/100**")
+        # if who.id in _100:
+        #     r = 100.0
+        result = custom.get(who.id, r)
+        return await ctx.send(f"I'd rate {who.name} a **{result:.1f}/100**")
 
     @commands.command(name="babyrate")
     @commands.guild_only()
@@ -60,6 +73,9 @@ class Ratings(commands.Cog):
         seed = user1.id + user2.id
         random.seed(seed)
         rate = random.randint(0, 100)
+        no = [424472476106489856, 302851022790066185]  # Canvas and me
+        if user1.id in no and user2.id in no:
+            rate = 0
         embed = discord.Embed(colour=generic.random_colour(),
                               description=f"The chance of {user1.mention} and {user2.mention} "
                                           f"having a baby is **{rate}**%")
@@ -79,14 +95,17 @@ class Ratings(commands.Cog):
             return await ctx.send("Bot's can't feel love...")
         seed = user1.id - user2.id
         random.seed(seed)
-        a = [417390734690484224, 255460743128940547]  # Kyomi and Lucvinhlong
-        b = [179217986517729280, 191522051943563264]  # Memory and Poro
-        if user1.id in a and user2.id in a:
-            rate = 95
-        elif user1.id in b and user2.id in b:
-            rate = 100
-        else:
-            rate = random.randint(0, 100)
+        # a = [417390734690484224, 255460743128940547]  # Kyomi and Lucvinhlong
+        # b = [179217986517729280, 191522051943563264]  # Memory and Poro
+        # if user1.id in a and user2.id in a:
+        #     rate = 95
+        # elif user1.id in b and user2.id in b:
+        #     rate = 100
+        # else:
+        rate = random.randint(0, 100)
+        no = [424472476106489856, 302851022790066185]  # Canvas and me
+        if user1.id in no and user2.id in no:
+            rate = 0
         embed = discord.Embed(colour=generic.random_colour(),
                               description=f"Love level between {user1.mention} and {user2.mention} is **{rate}**%")
         return await ctx.send(embed=embed)
@@ -102,9 +121,9 @@ class Ratings(commands.Cog):
         step1 = round(random.uniform(17, 100), 2)
         # step3 = step1 / 117
         custom = {
-            302851022790066185: 99,
-            527729196688998415: 99,   # Aya
-            597373963571691520: 99,   # Nuriki
+            302851022790066185: 99.99,
+            527729196688998415: 99.97,   # Aya
+            597373963571691520: 99.99,   # Nuriki
         }
         step4 = custom.get(user.id, step1)
         # step4 = bias.friend_bias(self.db, user)
