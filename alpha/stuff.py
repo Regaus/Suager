@@ -18,18 +18,23 @@ class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database()
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.group(name="aqos")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     # @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
     async def aqos(self, ctx):
         """ The Aqos Game """
+        if ctx.channel.id in self.banned:
+            return
         if ctx.invoked_subcommand is None:
             return await aqos_game(self.db, ctx)
 
     @aqos.command(name="stats", aliases=["rank"])
     async def aqos_stats(self, ctx, *, who: discord.Member = None):
         """ Aqos Stats """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         _data = self.db.fetchrow(find, (user.id, "aqos"))
         if not _data:
@@ -79,6 +84,8 @@ class Games(commands.Cog):
     @permissions.has_permissions(administator=True)
     async def aqos_ru(self, ctx, user: discord.Member):
         """ Reset usage """
+        if ctx.channel.id in self.banned:
+            return
         data = self.db.execute(f"UPDATE data_{main.version} SET usage=? WHERE id=? AND type=?",
                                (False, user.id, "aqos"))
         return await ctx.send(f"Updated usage status for {user.name} -> {data}")
@@ -86,6 +93,8 @@ class Games(commands.Cog):
     @aqos.command(name="xplevel")
     async def aqos_xp_level(self, ctx, level: int):
         """ XP required to reach a level """
+        if ctx.channel.id in self.banned:
+            return
         if level > aqos_ml or level < aqos_ml * -1 + 1:
             return await ctx.send(f"The max level is {aqos_ml}.")
         # biased = bias.get_bias(self.db, ctx.author)
@@ -99,6 +108,8 @@ class Games(commands.Cog):
     @aqos.command(name="leaderboard", aliases=["lb", "halloffame"])
     async def aqos_hof(self, ctx):
         """ Aqos Hall of Fame """
+        if ctx.channel.id in self.banned:
+            return
         data = self.db.fetch(f"SELECT * FROM data_{main.version} WHERE type=? ORDER BY extra DESC LIMIT 250", ("aqos",))
         if not data:
             return await ctx.send("Doesn't seem like I have any data saved, weird.")
@@ -133,6 +144,8 @@ class Games(commands.Cog):
     async def tbl(self, ctx):
         """ The TBL Game """
         # return await ctx.send(soon)
+        if ctx.channel.id in self.banned:
+            return
         if ctx.invoked_subcommand is None:
             return await ctx.invoke(self.tbl_run)
 
@@ -141,11 +154,15 @@ class Games(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tbl_run(self, ctx):
         """ The TBL Game """
+        if ctx.channel.id in self.banned:
+            return
         return await tbl_game(self.db, ctx)
 
     @tbl.command(name="stats")
     async def tbl_stats(self, ctx, *, who: discord.Member = None):
         """ TBL Stats """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         data = self.db.fetchrow(find, (user.id, "tbl_player"))
         if not data:
@@ -195,6 +212,8 @@ class Games(commands.Cog):
     @commands.guild_only()
     async def tbl_clan(self, ctx):
         """ TBL Clan Stats """
+        if ctx.channel.id in self.banned:
+            return
         data = self.db.fetchrow(find, (ctx.guild.id, "tbl_clan"))
         if not data:
             clan = tbl_clan.copy()

@@ -17,6 +17,7 @@ class Economy(commands.Cog):
         self.bot = bot
         self.db = database.Database()
         self.type = main.version
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.Cog.listener()
     async def on_message(self, ctx):
@@ -47,6 +48,8 @@ class Economy(commands.Cog):
     @commands.guild_only()
     async def balance(self, ctx, *, who: discord.Member = None):
         """ Check someone's balance"""
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         if user.bot:
             return await ctx.send("Bots can't have any money, cuz they're cheaters. I get my money from Regaus, dw.")
@@ -60,6 +63,8 @@ class Economy(commands.Cog):
     @commands.guild_only()
     async def donate(self, ctx, user: discord.Member, amount: int):
         """ Give someone your money """
+        if ctx.channel.id in self.banned:
+            return
         if amount < 0:
             return await ctx.send(f"Nice try, {ctx.author.name}")
         if user == ctx.author:
@@ -90,6 +95,8 @@ class Economy(commands.Cog):
     @commands.guild_only()
     async def profile(self, ctx, who: discord.Member = None):
         """ Check someone's profile """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
@@ -117,12 +124,16 @@ class Economy(commands.Cog):
     @commands.guild_only()
     async def buy_something(self, ctx):
         """ Buy an item from the shop """
+        if ctx.channel.id in self.banned:
+            return
         return await ctx.send(soon)
 
     @commands.command(name="shop")
     @commands.guild_only()
     async def item_shop(self, ctx):
         """ Item shop """
+        if ctx.channel.id in self.banned:
+            return
         return await ctx.send(soon)
 
 

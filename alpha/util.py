@@ -11,6 +11,10 @@ from utils import time, http
 
 
 class Utility(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.banned = [690254056354087047, 694684764074016799]
+
     @commands.command(name="time")
     async def current_time(self, ctx):
         """ Current time """
@@ -19,6 +23,8 @@ class Utility(commands.Cog):
     @commands.command(name="mctime", hidden=True)
     async def mc_time(self, ctx, month: str = 1, day: int = 1, hour: int = 6, minute: int = 0):
         """ Set time in Minecraft """
+        if ctx.channel.id in self.banned:
+            return
         if month == 'random':
             rmo = random.randint(1, 12)
             days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -41,6 +47,8 @@ class Utility(commands.Cog):
     async def time_since(self, ctx, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0,
                          second: int = 0):
         """ Time difference """
+        if ctx.channel.id in self.banned:
+            return
         try:
             now = time.now(True)
             date = datetime(now.year, 1, 1)
@@ -68,6 +76,8 @@ class Utility(commands.Cog):
     @commands.command(name="weather")
     async def weather(self, ctx, *, _place: commands.clean_content):
         """ Check weather in a place """
+        if ctx.channel.id in self.banned:
+            return
         place = str(_place)
         try:
             bio = await http.get("http://api.openweathermap.org/data/2.5/weather?"
@@ -115,6 +125,8 @@ class Utility(commands.Cog):
     @commands.command(name="luas")
     async def luas(self, ctx, *, place: commands.clean_content):
         """ Data for Luas """
+        if ctx.channel.id in self.banned:
+            return
         import luas.api
         client = luas.api.LuasClient()
         _place = str(place).title() if len(str(place)) != 3 else str(place)

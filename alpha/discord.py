@@ -15,11 +15,14 @@ class Discord(commands.Cog):
         self.bot = bot
         self.db = database.Database()
         self.type = main.version
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
     async def server(self, ctx):
         """ Check info about current server """
+        if ctx.channel.id in self.banned:
+            return
         if ctx.invoked_subcommand is None:
             bots = sum(1 for member in ctx.guild.members if member.bot)
             embed = discord.Embed(colour=generic.random_colour())
@@ -48,11 +51,15 @@ class Discord(commands.Cog):
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx):
         """ Get server icon """
+        if ctx.channel.id in self.banned:
+            return
         return await ctx.send(f"Icon of **{ctx.guild.name}**:\n{ctx.guild.icon_url_as(size=1024)}")
 
     @server.command(name="bots")
     async def server_bots(self, ctx):
         """ Bots in servers """
+        if ctx.channel.id in self.banned:
+            return
         bots = [a for a in ctx.guild.members if a.bot]
         m = ''
         for i in range(len(bots)):
@@ -139,6 +146,8 @@ class Discord(commands.Cog):
     @commands.guild_only()
     async def prefix(self, ctx):
         """ Server prefixes """
+        if ctx.channel.id in self.banned:
+            return
         _data = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not _data:
             dp = generic.get_config()["bots"][self.type]["prefixes"]
@@ -213,6 +222,8 @@ class Discord(commands.Cog):
     @commands.is_owner()
     async def get_all_emotes(self, ctx):
         """ Yoink all emotes """
+        if ctx.channel.id in self.banned:
+            return
         channel = self.bot.get_channel(676154789159239740)
         await channel.send(f"This stash of emotes was made on {time.time()}")
         for guild in self.bot.guilds:
@@ -228,6 +239,8 @@ class Discord(commands.Cog):
     @commands.command(name="avatar")
     async def avatar(self, ctx, *, who: discord.User = None):
         """ Get someone's avatar """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         return await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024, static_format='png')}")
 
@@ -235,6 +248,8 @@ class Discord(commands.Cog):
     @commands.guild_only()
     async def roles(self, ctx):
         """ Get all roles in current server """
+        if ctx.channel.id in self.banned:
+            return
         all_roles = ""
         for num, role in enumerate(sorted(ctx.guild.roles, reverse=True), start=1):
             all_roles += f"[{str(num).zfill(2)}] {role.id}\t{role.name}\t[ Users: {len(role.members)} ]\r\n"
@@ -245,6 +260,8 @@ class Discord(commands.Cog):
     @commands.command(name="joinedat")
     async def joined_at(self, ctx, *, who: discord.Member = None):
         """ Check when someone joined server """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         return await ctx.send(f"**{user}** joined **{ctx.guild.name}** on {time.time_output(user.joined_at)}")
 
@@ -252,6 +269,8 @@ class Discord(commands.Cog):
     @commands.guild_only()
     async def user(self, ctx, *, who: discord.Member = None):
         """ Get info about user """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         embed = discord.Embed(colour=generic.random_colour())
         embed.set_thumbnail(url=user.avatar_url)
@@ -302,6 +321,8 @@ class Discord(commands.Cog):
     @commands.cooldown(rate=3, per=5, type=commands.BucketType.user)
     async def emoji(self, ctx, emoji: discord.Emoji):
         """ View bigger version of a Custom Emoji """
+        if ctx.channel.id in self.banned:
+            return
         return await ctx.send(f"{ctx.author.name}:", embed=discord.Embed(
             description=f"Name: {emoji.name}\nID: {emoji.id}\nAnimated: {emoji.animated}\nServer: {emoji.guild.name}\n"
                         f"Created: {time.time_output(emoji.created_at)}\n[Copy Link]({emoji.url})",

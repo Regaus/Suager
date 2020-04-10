@@ -11,10 +11,13 @@ from utils import lists, time, emotes
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="vote", aliases=["petition"])
     async def vote(self, ctx, *, question: commands.clean_content):
         """ Start a vote """
+        if ctx.channel.id in self.banned:
+            return
         message = await ctx.send(f"A {ctx.invoked_with.lower()} has been started by {ctx.author} ```fix\n{question}```")
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
@@ -33,6 +36,8 @@ class Fun(commands.Cog):
     @commands.command(name="vibecheck")
     async def vibe_check(self, ctx, *, who: discord.Member = None):
         """ Check your vibe """
+        if ctx.channel.id in self.banned:
+            return
         user = who or ctx.author
         message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s vibe...")
         await asyncio.sleep(3)
@@ -41,6 +46,8 @@ class Fun(commands.Cog):
     @commands.command(name="flip", aliases=["coin"])
     async def flip_a_coin(self, ctx):
         """ Flip a coin """
+        if ctx.channel.id in self.banned:
+            return
         message = await ctx.send("<a:loading:651883385878478858> Flipping a coin...")
         await asyncio.sleep(3)
         return await message.edit(content=f"The coin landed on {random.choice(['Heads', 'Tails'])}")
@@ -86,11 +93,15 @@ class Fun(commands.Cog):
     @commands.command(name="8ball", aliases=["eightball"])
     async def eight_ball(self, ctx, *, question: commands.clean_content):
         """ Consult the 8-Ball """
+        if ctx.channel.id in self.banned:
+            return
         return await ctx.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}")
 
     @commands.command(name="roll")
     async def roll(self, ctx, num1: int = 6, num2: int = 1, repeat: int = 1):
         """ Rolls a number between given range """
+        if ctx.channel.id in self.banned:
+            return
         if repeat <= 0:
             return await ctx.send("How are I supposed to do that?")
         if repeat > 100:
@@ -129,6 +140,8 @@ class Fun(commands.Cog):
     @commands.guild_only()
     async def quote(self, ctx, user: discord.Member, *, text: str):
         """ Make a very true quote """
+        if ctx.channel.id in self.banned:
+            return
         embed = discord.Embed(colour=random.randint(0, 0xffffff))
         embed.set_thumbnail(url=user.avatar_url)
         embed.title = f"**{user}** once said..."
@@ -140,8 +153,10 @@ class Fun(commands.Cog):
     @commands.command(name="reverse")
     async def reverse_text(self, ctx, *, text: commands.clean_content):
         """ Reverses text """
+        if ctx.channel.id in self.banned:
+            return
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
-        return await ctx.send(reverse)
+        return await ctx.send(f"🔁 {ctx.author.name}:\n{reverse}")
 
     @commands.command(name="notwork")
     async def notwork(self, ctx):

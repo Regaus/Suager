@@ -16,6 +16,7 @@ class Info(commands.Cog):
         self.creation_date = datetime(2020, 3, 2, 18)
         self.birthday = datetime(2018, 12, 6, 1, 2)
         self.type = main.version
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="source")
     async def source(self, ctx):
@@ -23,13 +24,18 @@ class Info(commands.Cog):
         # Do not remove this command, this has to stay due to the GitHub LICENSE.
         # TL:DR, you have to disclose source according to GNU GPL v3.
         # Reference: https://github.com/AlexFlipnote/birthday.py/blob/master/LICENSE
-        await ctx.send(f"It's these links' fault that **{ctx.bot.user}** even exists and works:\n"
+        if ctx.channel.id in self.banned:
+            return
+        await ctx.send(f"It's these links' fault that **{ctx.bot.user}** even exists and works, "
+                       f"and you should check those out if you wanna have your own bot:\n"
                        f"<https://github.com/AlexFlipnote/discord_bot.py>\n"
                        f"<https://github.com/AlexFlipnote/birthday.py>")
 
     @commands.command(name="stats", aliases=["info", "about", "status"])
     async def stats(self, ctx):
         """ Bot stats"""
+        if ctx.channel.id in self.banned:
+            return
         async with ctx.typing():
             config = generic.get_config()
             embed = discord.Embed(colour=generic.random_colour())
@@ -86,6 +92,8 @@ class Info(commands.Cog):
     @commands.is_owner()
     async def servers(self, ctx):
         """ The servers the bot is in """
+        if ctx.channel.id in self.banned:
+            return
         _servers = list(self.bot.guilds)
         message = f"Connected to {len(_servers)} servers:"
         for guild in _servers:
@@ -95,6 +103,8 @@ class Info(commands.Cog):
     @commands.command(name="invite")
     async def invite(self, ctx):
         """ Invite me to your server! """
+        if ctx.channel.id in self.banned:
+            return
         perms = 470150231
         return await ctx.send(f"{ctx.author.name}, use this link to invite me:\n<https://discordapp.com/oauth2/"
                               f"authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>")
@@ -102,6 +112,8 @@ class Info(commands.Cog):
     @commands.command(name="botserver")
     async def my_server(self, ctx):
         """ My server """
+        if ctx.channel.id in self.banned:
+            return
         if isinstance(ctx.channel, discord.DMChannel) or ctx.guild.id != 568148147457490954:
             return await ctx.send(f"**Here you go {ctx.author.name}\n{generic.invite}**")
         return await ctx.send("This is my how, j'know <3")
@@ -109,6 +121,8 @@ class Info(commands.Cog):
     @commands.command(name="ping")
     async def ping(self, ctx):
         """ Ping Pong """
+        if ctx.channel.id in self.banned:
+            return
         import time as _time
         t1 = _time.monotonic()
         ws = int(self.bot.latency * 1000)

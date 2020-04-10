@@ -11,6 +11,10 @@ from utils import time, http
 
 
 class Utility(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.banned = [690254056354087047, 694684764074016799]
+
     @commands.command(name="time")
     async def current_time(self, ctx):
         """ Current time """
@@ -19,10 +23,12 @@ class Utility(commands.Cog):
     @commands.command(name="mctime", hidden=True)
     async def mc_time(self, ctx, month: str = 1, day: int = 1, hour: int = 6, minute: int = 0):
         """ Set time in Minecraft """
+        if ctx.channel.id in self.banned:
+            return
         if month == 'random':
             rmo = random.randint(1, 12)
             days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-            rd = random.randint(1, days[rmo-1])
+            rd = random.randint(1, days[rmo - 1])
             rh = random.randint(1, 23)
             rm = random.randint(1, 59)
             dt = datetime(1, rmo, rd, rh, rm)
@@ -41,6 +47,8 @@ class Utility(commands.Cog):
     async def time_since(self, ctx, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0,
                          second: int = 0):
         """ Time difference """
+        if ctx.channel.id in self.banned:
+            return
         try:
             now = time.now(True)
             date = datetime(now.year, 1, 1)
@@ -49,7 +57,7 @@ class Utility(commands.Cog):
                 dates = [datetime(_year, 1, 27), datetime(_year, 2, 14), datetime(_year, 3, 8),
                          datetime(_year, 3, 17), datetime(_year, 4, 1), datetime(_year, 5, 9),
                          datetime(_year, 6, 12), datetime(_year, 9, 3), datetime(_year, 10, 31),
-                         datetime(_year, 12, 25), datetime(_year+1, 1, 1)]
+                         datetime(_year, 12, 25), datetime(_year + 1, 1, 1)]
                 for _date in dates:
                     if now < _date:
                         date = _date
@@ -68,6 +76,8 @@ class Utility(commands.Cog):
     @commands.command(name="weather")
     async def weather(self, ctx, *, _place: commands.clean_content):
         """ Check weather in a place """
+        if ctx.channel.id in self.banned:
+            return
         place = str(_place)
         try:
             bio = await http.get("http://api.openweathermap.org/data/2.5/weather?"
@@ -115,6 +125,8 @@ class Utility(commands.Cog):
     @commands.command(name="luas")
     async def luas(self, ctx, *, place: commands.clean_content):
         """ Data for Luas """
+        if ctx.channel.id in self.banned:
+            return
         import luas.api
         client = luas.api.LuasClient()
         _place = str(place).title() if len(str(place)) != 3 else str(place)

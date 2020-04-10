@@ -35,9 +35,15 @@ async def api_img_creator(ctx, url, filename, content=None):
 
 
 class Images(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.banned = [690254056354087047, 694684764074016799]
+
     @commands.command(name="colour", aliases=["color"])
     async def colour(self, ctx, colour: str):
         """ Colours! """
+        if ctx.channel.id in self.banned:
+            return
         async with ctx.typing():
             c = ctx.invoked_with
             if colour == "random":
@@ -80,6 +86,8 @@ class Images(commands.Cog):
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     async def colourify(self, ctx, user: discord.Member = None, colour: str = "7289da"):
         """ Colourify """
+        if ctx.channel.id in self.banned:
+            return
         if user is None:
             user = ctx.author
         z = "7289da"
@@ -109,6 +117,8 @@ class Images(commands.Cog):
         """ Let someone go through a filter
         Allowed filter names: "blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik",
         "jpegify", "communist" """
+        if ctx.channel.id in self.banned:
+            return
         if user is None:
             user = ctx.author
         filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist"]
@@ -121,6 +131,8 @@ class Images(commands.Cog):
     @commands.cooldown(rate=1, per=1.5, type=commands.BucketType.user)
     async def joke_over_head(self, ctx, user: discord.Member = None):
         """ Joke over head """
+        if ctx.channel.id in self.banned:
+            return
         if user is None:
             user = ctx.author
         return await image_gen(ctx, user, "jokeoverhead", "joke-over-head")
@@ -128,6 +140,8 @@ class Images(commands.Cog):
     @commands.command(name="amiajoke")
     async def am_i_a_joke(self, ctx, *, user: discord.member = None):
         """ Is a user a joke? """
+        if ctx.channel.id in self.banned:
+            return
         if user is None:
             user = ctx.author
         return await image_gen(ctx, user, "amiajoke", f"is_{user.name.lower()}_a_joke")
@@ -135,6 +149,8 @@ class Images(commands.Cog):
     @commands.command(name="salty")
     async def sodium_chloride(self, ctx, *, user: discord.Member = None):
         """ Salty user """
+        if ctx.channel.id in self.banned:
+            return
         if user is None:
             user = ctx.author
         return await image_gen(ctx, user, "salty", f"sodium_chloride_{user.name.lower()}")
@@ -142,6 +158,8 @@ class Images(commands.Cog):
     @commands.command(name="floor")
     async def the_floor_is(self, ctx, user: discord.Member, *text):
         """ The floor is... """
+        if ctx.channel.id in self.banned:
+            return
         __text = '+'.join(text)
         _text = str(__text).replace("#", "%23")
         if len(a := _text.split("+")) > 1:
@@ -161,6 +179,8 @@ class Images(commands.Cog):
             --dark | Make the background to dark colour
             --light | Make background to light and text to dark colour
         """
+        if ctx.channel.id in self.banned:
+            return
         parser = argparser.Arguments()
         parser.add_argument('input', nargs="+", default=None)
         parser.add_argument('-d', '--dark', action='store_true')

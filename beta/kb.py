@@ -222,7 +222,11 @@ class Social(commands.Cog):
     @commands.guild_only()
     async def bean(self, ctx, user: discord.Member):
         """ Bean someone """
-        return await ctx.send(f"{emotes.Licc} Successfully beaned {user.name}")
+        if user == ctx.author:
+            return await ctx.send("How are you gonna do that?")
+        if user.id == 302851022790066185:
+            return await ctx.send(f"No u, {user.name}.")
+        return await ctx.send(f"{emotes.Allow} {user.name}, you are dismissed from {ctx.guild.name}.")
 
     @commands.command(name="cookie")
     @commands.guild_only()
@@ -230,7 +234,24 @@ class Social(commands.Cog):
         """ Give someone a cookie """
         if user == ctx.author:
             return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        if ctx.guild.id == 690162603275714574:  # OtakuTalk
+            roles = [r.id for r in user.roles]
+            if 696468113675255888 in roles:  # lemon squad
+                return await ctx.send(f"Sour lemons like {user.name} don't deserve our cookies.")
         output = give(ctx.author.name, user.name, ":cookie:")
+        return await ctx.send(output)
+
+    @commands.command(name="lemon")
+    @commands.guild_only()
+    async def lemon(self, ctx, user: discord.Member):
+        """ Give someone a lemon """
+        if user == ctx.author:
+            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
+        if ctx.guild.id == 690162603275714574:  # OtakuTalk
+            roles = [r.id for r in user.roles]
+            if 695246056945877053 in roles:  # Cookie Army
+                return await ctx.send("You can't give lemons to a cookie.")
+        output = give(ctx.author.name, user.name, ":lemon:")
         return await ctx.send(output)
 
     @commands.command(name="carrot")
@@ -240,15 +261,6 @@ class Social(commands.Cog):
         if user == ctx.author:
             return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
         output = give(ctx.author.name, user.name, ":carrot:")
-        return await ctx.send(output)
-
-    @commands.command(name="lemon")
-    @commands.guild_only()
-    async def lemon(self, ctx, user: discord.Member):
-        """ Give someone a lemon """
-        if user == ctx.author:
-            return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
-        output = give(ctx.author.name, user.name, ":lemon:")
         return await ctx.send(output)
 
     @commands.command(name="fruit", aliases=["fruitsnacks"])

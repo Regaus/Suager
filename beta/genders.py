@@ -19,6 +19,7 @@ class HumanInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database()
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
     async def pickle_size(self, ctx, *, user: discord.Member = None):
@@ -60,6 +61,8 @@ class HumanInfo(commands.Cog):
     @commands.guild_only()
     async def assign_gender(self, ctx, gender: str):
         """ Assign your gender """
+        if ctx.channel.id in self.banned:
+            return
         data = self.db.fetchrow(select, (ctx.author.id,))
         if data:
             return await ctx.send(f"{ctx.author.mention} I already know your gender! You can't change it...")

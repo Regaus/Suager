@@ -39,6 +39,7 @@ class Birthdays(commands.Cog):
         self.config = generic.get_config()
         self.type = main.version
         self.bd_config = self.config["bots"][self.type]["birthdays"]
+        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -109,6 +110,8 @@ class Birthdays(commands.Cog):
     @commands.group(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
     async def birthday(self, ctx, *, user: discord.User = None):
         """ Check your birthday or other people """
+        if ctx.channel.id in self.banned:
+            return
         if ctx.invoked_subcommand is None:
             user = user or ctx.author
 
@@ -131,6 +134,8 @@ class Birthdays(commands.Cog):
     @birthday.command(name="set")
     async def set(self, ctx):
         """ Set your birthday :) """
+        if ctx.channel.id in self.banned:
+            return
         has_birthday = self.check_birthday_noted(ctx.author.id)
         if has_birthday:
             return await ctx.send(
