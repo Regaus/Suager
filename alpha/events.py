@@ -75,7 +75,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        send = f"{time.time()} > Joined {guild.name}"
+        send = f"{time.time()} > Joined {guild.name} ({guild.id})"
         # if self.config.logs:
         #     await logs.log_channel(self.bot, "servers").send(send)
         if self.config["logs"]:
@@ -94,7 +94,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        send = f"{time.time()} > Left {guild.name}"
+        send = f"{time.time()} > Left {guild.name} ({guild.id})"
         # if self.config.logs:
         #     await logs.log_channel(self.bot, "servers").send(send)
         if self.config["logs"]:
@@ -109,7 +109,7 @@ class Events(commands.Cog):
         except AttributeError:
             g = "Private Message"
         content = ctx.message.clean_content
-        send = f"{time.time()} > {g} > {ctx.author} > {content}"
+        send = f"{time.time()} > {g} > {ctx.author} ({ctx.author.id}) > {content}"
         # if self.config.logs:
         #     await logs.log_channel(self.bot).send(send)
         if self.config["logs"]:
@@ -121,7 +121,8 @@ class Events(commands.Cog):
         if self.config["spyware"]:
             # await logs.log_channel(self.bot, "spyware").send(
             #     f"{time.time()} > {member} just joined {member.guild.name}")
-            logs.save(logs.get_place(self.type, "members"), f"{time.time()} > {member} just joined {member.guild.name}")
+            logs.save(logs.get_place(self.type, "members"),
+                      f"{time.time()} > {member} ({member.id}) just joined {member.guild.name}")
         data = self.db.fetchrow(select, (member.id,))
         if data:  # if gender is available
             snowflakes = [discord.Object(id=i) for i in roles.get(member.guild.id, [0, 0, 0])]
@@ -152,7 +153,8 @@ class Events(commands.Cog):
         if self.config["spyware"]:
             # await logs.log_channel(self.bot, "spyware").send(
             # f"{time.time()} > {member} just left {member.guild.name}")
-            logs.save(logs.get_place(self.type, "members"), f"{time.time()} > {member} just left {member.guild.name}")
+            logs.save(logs.get_place(self.type, "members"),
+                      f"{time.time()} > {member} ({member.id}) just left {member.guild.name}")
         if self.type == "stable":
             if member.guild.id == 568148147457490954:
                 await self.bot.get_channel(610836120321785869).send(

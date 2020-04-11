@@ -171,7 +171,7 @@ class Social(commands.Cog):
     async def slap(self, ctx, user: discord.Member = None):
         """ Violence! """
         if ctx.guild.id == 690162603275714574:
-            return
+            return await ctx.send(f"{emotes.Deny} This command is disabled, stop trying already.")
         if user is None:
             return await ctx.send_help(str(ctx.command))
         if user == ctx.author:
@@ -223,9 +223,13 @@ class Social(commands.Cog):
     async def bean(self, ctx, user: discord.Member):
         """ Bean someone """
         if user == ctx.author:
-            return await ctx.send("How are you gonna do that?")
+            return await ctx.send(f"{emotes.Deny} How are you gonna do that?")
         if user.id == 302851022790066185:
-            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are dismissed from {ctx.guild.name}.")
+            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are not allowed to do that.")
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you can't bean me.")
+        if user.id == ctx.guild.owner.id and ctx.author.id != 302851022790066185:
+            return await ctx.send(f"{emotes.Deny} Imagine beaning the owner, lol")
         return await ctx.send(f"{emotes.Allow} {user.name}, you are dismissed from {ctx.guild.name}.")
 
     @commands.command(name="cookie")
@@ -277,8 +281,6 @@ class Social(commands.Cog):
     @commands.command(name="bad")
     async def bad(self, ctx, user: discord.Member):
         """ Bad user """
-        if ctx.channel.id in self.banned:
-            return
         if user.id == 302851022790066185:
             user = ctx.author
         if user.id == self.bot.user.id:
@@ -288,8 +290,6 @@ class Social(commands.Cog):
     @commands.command(name="trash")
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
-        if ctx.channel.id in self.banned:
-            return
         if user == ctx.author:
             return await ctx.send("Don't call yourself trash")
         if user == ctx.bot.user:

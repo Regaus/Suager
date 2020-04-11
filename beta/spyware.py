@@ -7,8 +7,8 @@ from beta import main
 from utils import time, generic, logs, http
 
 
-def status_gen(log, to, who, what, old, new, guild):
-    send = f"{to} > {guild} > {who}'s {what} is now {new} (from {old})"
+def status_gen(log, to, who, what, old, new, guild, uid):
+    send = f"{to} > {guild} > {who}'s ({uid}) {what} is now {new} (from {old})"
     logs.save(log, send)
 
 
@@ -26,9 +26,10 @@ class Spyware(commands.Cog):
         # senko = self.bot.get_channel(self.log_sl)
         # log = logs.log_channel(self.bot, 'spyware')
         log = logs.get_place(main.version, "spyware")
+        uid = after.id
         n1, n2 = [before.name, after.name]
         if n1 != n2:
-            send = f"{to} > {n1} is now known as {n2}"
+            send = f"{to} > {n1} ({uid}) is now known as {n2}"
             # await senko.send(send)
             logs.save(log, send)
         a1, a2 = [before.avatar, after.avatar]
@@ -36,7 +37,7 @@ class Spyware(commands.Cog):
             if after.id not in [609423646347231282, 568149836927467542, 520042197391769610]:  # Suager diff versions
                 # await senko.send(send)
                 al = self.bot.get_channel(676899389977133072)
-                send = f"{to} > `{n2}` changed their avatar"
+                send = f"{to} > {n2} ({uid}) changed their avatar"
                 bio = BytesIO(await http.get(str(after.avatar_url_as(size=1024, static_format="png")),
                                              res_method="read"))
                 ani = after.is_avatar_animated()
@@ -52,7 +53,7 @@ class Spyware(commands.Cog):
                 #     f"{send}. New avatar: {after.avatar_url_as(size=1024)}")
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
-            send = f"{to} > {n2}'s discriminator is now {d2} (from {d1})"
+            send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
             # await senko.send(send)
             # await log.send(send)
             logs.save(log, send)
@@ -68,14 +69,15 @@ class Spyware(commands.Cog):
         sl = logs.get_place(main.version, "spyware_status")
         guild = after.guild.name
         n = after.name
+        uid = after.id
         a1, a2 = [before.activity, after.activity]
         if a1 != a2:
             # now = time.now_ts()
             if a2 is not None:
                 t = f"{a2.type}".replace("ActivityType.", "")
-                send = f"{to} > {after.guild.name} > {n}'s activities changed: now {t}: {a2.name}"
+                send = f"{to} > {after.guild.name} > {n}'s ({uid}) activities changed: now {t}: {a2.name}"
             else:
-                send = f"{to} > {after.guild.name} > {n} now has no activity."
+                send = f"{to} > {after.guild.name} > {n} ({uid}) now has no activity."
             logs.save(al, send)
             # if now > last + 15:
             #     logs.log_channel(self.bot, 'activity').send(send)
@@ -86,7 +88,7 @@ class Spyware(commands.Cog):
         if n1 != n2:
             if after.id in ls and is_senko_lair:
                 await generic.you_little_shit(self.bot.get_guild(568148147457490954))
-            send = f"{to} > {n}'s nickname in {guild} is now {n2} (from {n1})"
+            send = f"{to} > {n}'s ({uid}) nickname in {guild} is now {n2} (from {n1})"
             # await log.send(send)
             logs.save(log, send)
         try:
@@ -98,13 +100,13 @@ class Spyware(commands.Cog):
         # status_log = logs.log_channel(self.bot, 'status')
         if after.id != 302851022790066185:
             if s1 != s2:
-                status_gen(sl, to, n, "status", s1, s2, guild)
+                status_gen(sl, to, n, "status", s1, s2, guild, uid)
             if s1m != s2m:
-                status_gen(sl, to, n, "mobile status", s1m, s2m, guild)
+                status_gen(sl, to, n, "mobile status", s1m, s2m, guild, uid)
             if s1d != s2d:
-                status_gen(sl, to, n, "desktop status", s1d, s2d, guild)
+                status_gen(sl, to, n, "desktop status", s1d, s2d, guild, uid)
             if s1w != s2w:
-                status_gen(sl, to, n, "web status", s1w, s2w, guild)
+                status_gen(sl, to, n, "web status", s1w, s2w, guild, uid)
         r1, r2 = [before.roles, after.roles]
         if r1 != r2:
             roles_lost = []
@@ -117,10 +119,10 @@ class Spyware(commands.Cog):
                     roles_gained.append(role.name)
             for role in roles_lost:
                 # await log.send(f"{to} > `{guild}` > `{n}` lost role `{role}`")
-                logs.save(log, f"{to} > {guild} > {n} lost role {role}")
+                logs.save(log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
             for role in roles_gained:
                 # await log.send(f"{to} > `{guild}` > `{n}` got role `{role}`")
-                logs.save(log, f"{to} > {guild} > {n} got role {role}")
+                logs.save(log, f"{to} > {guild} > {n} ({uid}) got role {role}")
 
 
 def setup(bot):
