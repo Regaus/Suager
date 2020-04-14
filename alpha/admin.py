@@ -23,27 +23,33 @@ class AdminCommands(commands.Cog):
     @commands.check(permissions.is_owner)
     async def db_command(self, ctx, *, query: str):
         """ Database query """
-        data = self.db.execute(query)
-        return await ctx.send(f"{data}")
+        try:
+            data = self.db.execute(query)
+            return await ctx.send(f"{data}")
+        except Exception as e:
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="fetch")
     @commands.check(permissions.is_owner)
     async def db_fetch(self, ctx, *, query: str):
         """ Fetch data from db """
-        data = self.db.fetch(query)
-        result = f"{data}"
-        # return await ctx.send(result)
-        if len(str(result)) == 0 or result is None:
-            return await ctx.send("Code has been run, however returned no result.")
-        elif len(str(result)) in range(2001, 8000001):
-            async with ctx.typing():
-                data = BytesIO(str(result).encode('utf-8'))
-                return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)",
-                                      file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
-        elif len(str(result)) > 8000000:
-            return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
-        else:
-            return await ctx.send(str(result))
+        try:
+            data = self.db.fetch(query)
+            result = f"{data}"
+            # return await ctx.send(result)
+            if len(str(result)) == 0 or result is None:
+                return await ctx.send("Code has been run, however returned no result.")
+            elif len(str(result)) in range(2001, 8000001):
+                async with ctx.typing():
+                    data = BytesIO(str(result).encode('utf-8'))
+                    return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)",
+                                          file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
+            elif len(str(result)) > 8000000:
+                return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
+            else:
+                return await ctx.send(str(result))
+        except Exception as e:
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)

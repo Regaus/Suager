@@ -160,6 +160,22 @@ class Events(commands.Cog):
                 await self.bot.get_channel(610836120321785869).send(
                     f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
 
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
+        uid = user.id
+        gid = guild.id
+        del1 = self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+        del2 = self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
+        logs.save(logs.get_place(self.type, "members"),
+                  f"{time.time()} > {user} ({user.id}) just got banned from {guild.name} - Database statuses: "
+                  f"leveling {del1}, economy {del2}")
+        print(f"{time.time()} > Banned {user.name} from {guild.name} > DB statuses: lvl {del1}, economy {del2}")
+
+    @commands.Cog.listener()
+    async def on_member_unban(self, guild: discord.Guild, user: discord.User):
+        logs.save(logs.get_place(self.type, "members"),
+                  f"{time.time()} > {user} ({user.id}) just got unbanned from {guild.name}")
+
     async def readiness(self):
         while not self.exists:
             await asyncio.sleep(1)
