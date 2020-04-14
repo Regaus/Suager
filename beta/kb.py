@@ -343,8 +343,6 @@ class Social(commands.Cog):
     @commands.guild_only()
     async def ship(self, ctx, user1: discord.Member = None, user2: discord.Member = None):
         """ Build a ship """
-        if ctx.channel.id in self.banned:
-            return
         if user1 is None or user2 is None:
             return await ctx.send_help(str(ctx.command))
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
