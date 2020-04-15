@@ -150,5 +150,11 @@ tables = [
     Table("genders", [
         Column("uid", 0, True),
         Column("gender", 2, True)
+    ]),
+    Table("custom_rank", [
+        Column("uid", 0, True),
+        Column("font", 0, True),
+        Column("progress", 0, True),
+        Column("background", 0, True)
     ])
 ]

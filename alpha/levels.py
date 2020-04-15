@@ -1,15 +1,37 @@
 import json
 import random
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
 from alpha import main
-from utils import time, database
+from utils import time, database, http
 from utils.generic import random_colour, value_string, round_value
+from PIL import Image, ImageDraw, ImageFont
 
 max_level = 5000
 level_xp = [21, 30]
+
+
+def get_colour(colour: int):
+    a = 256
+    r, g = divmod(colour, a ** 2)
+    g, b = divmod(g, a)
+    return r, g, b
+
+
+def int_colour(colour: str):
+    try:
+        length = len(colour)
+        if length == 3:
+            a, b, c = colour
+            colour = f"{a}{a}{b}{b}{c}{c}"
+        elif length != 6:
+            return -1
+        return int(colour, base=16)
+    except ValueError:
+        return -2
 
 
 def levels():
@@ -161,7 +183,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="rank")
     @commands.guild_only()
-    async def rank(self, ctx, *, who: discord.Member = None):
+    async def rank_image(self, ctx, *, who: discord.Member = None):
         """ Check your or someone's rank """
         if ctx.channel.id in self.banned:
             return
@@ -169,51 +191,111 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
-        _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
-                                     ("settings", ctx.guild.id))
-        if not _settings:
-            dm = 1
-        else:
-            settings = json.loads(_settings['data'])
-            try:
-                dm = settings['leveling']['xp_multiplier']
-                dm = 0 if dm < 0 else dm if dm < 10 else 10
-            except KeyError:
-                dm = 1
         data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
+        if custom:
+            font_colour, progress_colour, background_colour = \
+                get_colour(custom["font"]), get_colour(custom["progress"]), get_colour(custom["background"])
+        else:
+            font_colour, progress_colour, background_colour = (50, 255, 50), (50, 255, 50), 0
         if data:
             level, xp = [data['level'], data['xp']]
         else:
             level, xp = [0, 0]
-        embed = discord.Embed(colour=random_colour())
-        embed.set_thumbnail(url=user.avatar_url)
-        if is_self:
-            embed.description = "Imagine playing fair in your own XP system. That'd be boring."
-            embed.add_field(name="Experience", value="**More than you**", inline=False)
-            embed.add_field(name="Level", value="Higher than yours", inline=False)
+        img = Image.new("RGB", (768, 256), color=background_colour)
+        dr = ImageDraw.Draw(img)
+        avatar = BytesIO(await http.get(str(user.avatar_url_as(size=256, format="png")), res_method="read"))
+        avatar_img = Image.open(avatar)
+        avatar_resized = avatar_img.resize((256, 256))
+        img.paste(avatar_resized)
+        font_dir = "assets/font.ttf"
+        font = ImageFont.truetype(font_dir, size=36)
+        font_small = ImageFont.truetype(font_dir, size=24)
+        dr.text((276, 20), f"{user}", font=font, fill=font_colour)
+        al = levels()   # All levels
+        try:
+            req = int(al[level])  # Requirement to next level
+            # re = req - xp
+            r2 = f"{req:,.0f}"
+        except IndexError:
+            req = float("inf")
+            r2 = "Error"
+        # r3 = value_string(re)
+        prev = int(al[level-1]) if level != 0 else 0
+        if not is_self:
+            progress = (xp - prev) / (req - prev)
+            dr.text((276, 60), f"Level {level:,}", font=font_small, fill=font_colour)
+            dr.text((276, 180), f"{xp:,}/{r2} XP", font=font_small, fill=font_colour)
         else:
-            # biased = bias.get_bias(self.db, user)
-            r1 = f"{xp:,.0f}"
-            if level < max_level:
-                yes = levels()   # All levels
-                req = int(yes[level])  # Requirement to next level
-                re = req - xp
-                r2 = f"{req:,.0f}"
-                r3 = value_string(re)
-                prev = int(yes[level-1]) if level != 0 else 0
-                progress = (xp - prev) / (req - prev)
-                r4 = round_value(progress * 100)
-                r4 = 100 if r4 > 100 else r4
-                embed.add_field(name="Experience", value=f"**{r1}**/{r2}", inline=False)
-                embed.add_field(name="Level", value=f"{level:,}", inline=False)
-                embed.add_field(name="Progress to next level", value=f"{r4}% - {r3} XP to level up", inline=False)
-            else:
-                embed.add_field(name="Experience", value=f"**{r1}**", inline=False)
-                embed.add_field(name="Level", value=f"{level:,}", inline=False)
-            x1, x2 = [val * dm for val in level_xp]
-            o1, o2 = int(x1), int(x2)
-            embed.add_field(name="XP per message", inline=False, value=f"{o1}-{o2}")
-        return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
+            progress = 50
+            dr.text((276, 60), f"Level 69,420", font=font_small, fill=font_colour)
+            dr.text((276, 180), f"9,999,999,999,999 XP", font=font_small, fill=font_colour)
+        full = 400
+        done = int(progress * full)
+        # left = full - done
+        i1 = Image.new("RGB", (done, 30), color=progress_colour)
+        i2 = Image.new("RGB", (full, 30), color=(30, 30, 30))
+        box1 = (276, 210, 276 + done, 240)
+        box2 = (276, 210, 276 + full, 240)
+        img.paste(i2, box2)
+        img.paste(i1, box1)
+        bio = BytesIO()
+        img.save(bio, "PNG")
+        # img.save("test.png", "PNG")
+        bio.seek(0)
+        return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}**",
+                              file=discord.File(bio, filename=f"rank.png"))
+
+    @commands.group(name="crank", aliases=["customrank"])
+    async def custom_rank(self, ctx):
+        """ Customise your rank """
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(str(ctx.command))
+
+    @custom_rank.command(name="font")
+    async def crank_font(self, ctx, colour: str):
+        """ Font colour """
+        c = int_colour(colour)
+        if c == -1:
+            return await ctx.send("The colour must be either 3 or 6 digits long")
+        if c == -2:
+            return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
+        data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+        if data:
+            db = self.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
+        else:
+            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0xff0000, 0))
+        return await ctx.send(f"Updated your font colour to #{colour}\nDatabase status: {db}")
+
+    @custom_rank.command(name="progress")
+    async def crank_progress(self, ctx, colour: str):
+        """ Progress bar colour """
+        c = int_colour(colour)
+        if c == -1:
+            return await ctx.send("The colour must be either 3 or 6 digits long")
+        if c == -2:
+            return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
+        data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+        if data:
+            db = self.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
+        else:
+            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0xff0000, c, 0))
+        return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
+
+    @custom_rank.command(name="background", aliases=["bg"])
+    async def crank_bg(self, ctx, colour: str):
+        """ Progress bar colour """
+        c = int_colour(colour)
+        if c == -1:
+            return await ctx.send("The colour must be either 3 or 6 digits long")
+        if c == -2:
+            return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
+        data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+        if data:
+            db = self.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
+        else:
+            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0xff0000, 0xff0000, c))
+        return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @commands.command(name="xplevel")
     async def xp_level(self, ctx, level: int = None):
@@ -255,9 +337,9 @@ class Leveling(commands.Cog):
         return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need "
                               f"**{needed} XP**{tl}")
 
-    @commands.command(name="nextlevel")
+    @commands.command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()
-    async def next_level(self, ctx):
+    async def next_level(self, ctx, t: str = ""):
         """ XP required for next level """
         if ctx.channel.id in self.banned:
             return
@@ -291,9 +373,17 @@ class Leveling(commands.Cog):
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         m1, m2 = int(a1) + 1, int(a2) + 1
         t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [m1, m2]]
-        return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
-                              f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: "
-                              f"**{m1} to {m2}**\nEstimated talking time: **{t1} to {t2}**")
+        if t == "t":
+            return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
+                                  f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: "
+                                  f"**{m1} to {m2}**\nEstimated talking time: **{t1} to {t2}**")
+        else:
+            embed = discord.Embed(colour=random_colour())
+            embed.add_field(name="Experience", value=f"**{r1}**/{r2} XP", inline=False)
+            embed.add_field(name="Level", value=f"Level **{level:,}**", inline=False)
+            embed.add_field(name="To next level", value=f"**{r3} XP** ({r4}%)", inline=False)
+            embed.add_field(name="Messages left", value=f"**{m1} to {m2}** (Time left: **{t1} to {t2}**)", inline=False)
+            return await ctx.send(f"**{ctx.author.name}**'s progress in **{ctx.guild.name}**:", embed=embed)
 
     @commands.command(name="levels")
     @commands.guild_only()
