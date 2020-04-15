@@ -243,8 +243,7 @@ class Leveling(commands.Cog):
         img.save(bio, "PNG")
         # img.save("test.png", "PNG")
         bio.seek(0)
-        return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}**",
-                              file=discord.File(bio, filename=f"rank.png"))
+        return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}**", file=discord.File(bio, filename="rank.png"))
 
     @commands.group(name="crank", aliases=["customrank"])
     async def custom_rank(self, ctx):
@@ -339,7 +338,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()
-    async def next_level(self, ctx, t: str = ""):
+    async def next_level(self, ctx):
         """ XP required for next level """
         if ctx.channel.id in self.banned:
             return
@@ -373,17 +372,9 @@ class Leveling(commands.Cog):
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         m1, m2 = int(a1) + 1, int(a2) + 1
         t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [m1, m2]]
-        if t == "t":
-            return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
-                                  f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: "
-                                  f"**{m1} to {m2}**\nEstimated talking time: **{t1} to {t2}**")
-        else:
-            embed = discord.Embed(colour=random_colour())
-            embed.add_field(name="Experience", value=f"**{r1}**/{r2} XP", inline=False)
-            embed.add_field(name="Level", value=f"Level **{level:,}**", inline=False)
-            embed.add_field(name="To next level", value=f"**{r3} XP** ({r4}%)", inline=False)
-            embed.add_field(name="Messages left", value=f"**{m1} to {m2}** (Time left: **{t1} to {t2}**)", inline=False)
-            return await ctx.send(f"**{ctx.author.name}**'s progress in **{ctx.guild.name}**:", embed=embed)
+        return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
+                              f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: "
+                              f"**{m1} to {m2}**\nEstimated talking time: **{t1} to {t2}**")
 
     @commands.command(name="levels")
     @commands.guild_only()
