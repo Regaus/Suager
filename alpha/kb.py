@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from alpha import main
 from alpha.images import image_gen
-from utils import lists, emotes, generic, logs, http
+from utils import lists, emotes, generic, logs, http, database
 
 
 def is_fucked(something):
@@ -27,6 +27,9 @@ class Social(commands.Cog):
             self.slap, self.blush, self.smile, self.highfive = [lists.error] * 13
         self.type = main.version
         self.banned = [690254056354087047, 694684764074016799]
+        self.db = database.Database()
+        self.insert = f"INSERT INTO counters VALUES ({'?, ' * 41}?)"
+        self.empty = [0] * 42
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
@@ -41,6 +44,29 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a pat from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.pat))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[16] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET pats_given=? WHERE uid=? AND gid=?",
+                            (data_giver["pats_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[17] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET pats_received=? WHERE uid=? AND gid=?",
+                            (data_receive["pats_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["pats_received"] + 1
+        embed.set_footer(text=f"{user.name} has now received {number} pat(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="hug")
@@ -57,6 +83,29 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a hug from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.hug))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[10] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET hugs_given=? WHERE uid=? AND gid=?",
+                            (data_giver["hugs_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[11] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET hugs_received=? WHERE uid=? AND gid=?",
+                            (data_receive["hugs_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["hugs_received"] + 1
+        embed.set_footer(text=f"{user.name} has now received {number} hug(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="cuddle")
@@ -72,6 +121,29 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a cuddle from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.cuddle))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[6] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET cuddles_given=? WHERE uid=? AND gid=?",
+                            (data_giver["cuddles_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[7] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET cuddles_received=? WHERE uid=? AND gid=?",
+                            (data_receive["cuddles_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["cuddles_received"] + 1
+        embed.set_footer(text=f"{user.name} has now received {number} cuddle(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="lick", aliases=["licc"])
@@ -88,6 +160,29 @@ class Social(commands.Cog):
             return await ctx.send(f"W-why did you lick me, {ctx.author.name}?", embed=embed.set_image(url=but_why))
         embed.description = f"**{user.name}** was licked by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.lick))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[14] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET licks_given=? WHERE uid=? AND gid=?",
+                            (data_giver["licks_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[15] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET licks_received=? WHERE uid=? AND gid=?",
+                            (data_receive["licks_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["licks_received"] + 1
+        embed.set_footer(text=f"{user.name} has now received {number} lick(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="kiss")
@@ -104,6 +199,29 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.kiss))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[12] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET kisses_given=? WHERE uid=? AND gid=?",
+                            (data_giver["kisses_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[13] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET kisses_received=? WHERE uid=? AND gid=?",
+                            (data_receive["kisses_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["kisses_received"] + 1
+        embed.set_footer(text=f"{user.name} has now received {number} kiss(es) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="bite")
@@ -120,6 +238,29 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was bitten by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.bite))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[4] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET bites_given=? WHERE uid=? AND gid=?",
+                            (data_giver["bites_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[5] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET bites_received=? WHERE uid=? AND gid=?",
+                            (data_receive["bites_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["bites_received"] + 1
+        embed.set_footer(text=f"{user.name} has now got bitten {number} time(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="sleepy")
@@ -171,7 +312,7 @@ class Social(commands.Cog):
     async def slap(self, ctx, user: discord.Member = None):
         """ Violence! """
         if ctx.guild.id == 690162603275714574:
-            return await ctx.send(f"{emotes.Deny} This command is disabled, stop trying already.")
+            return await ctx.send(f"{emotes.Deny} This command is disabled in this server.")
         if user is None:
             return await ctx.send_help(str(ctx.command))
         if user == ctx.author:
@@ -184,6 +325,29 @@ class Social(commands.Cog):
             embed = discord.Embed(colour=generic.random_colour())
             embed.description = f"**{user.name}** was slapped by **{ctx.author.name}**"
             embed.set_image(url=random.choice(self.slap))
+            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            if not data_giver:
+                data = self.empty.copy()
+                data[0] = ctx.author.id
+                data[1] = ctx.guild.id
+                data[18] = 1
+                self.db.execute(self.insert, tuple(data))
+            else:
+                self.db.execute("UPDATE counters SET slaps_given=? WHERE uid=? AND gid=?",
+                                (data_giver["slaps_given"] + 1, ctx.author.id, ctx.guild.id))
+            if not data_receive:
+                data = self.empty.copy()
+                data[0] = user.id
+                data[1] = ctx.guild.id
+                data[19] = 1
+                self.db.execute(self.insert, tuple(data))
+                number = 1
+            else:
+                self.db.execute("UPDATE counters SET slaps_received=? WHERE uid=? AND gid=?",
+                                (data_receive["slaps_received"] + 1, user.id, ctx.guild.id))
+                number = data_receive["slaps_received"] + 1
+            embed.set_footer(text=f"{user.name} has now got slapped {number} time(s) in this server!")
         else:
             embed = None
         return await ctx.send(f"Violence is never the answer, {ctx.author.name}!", embed=embed)
@@ -201,6 +365,29 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was {ctx.invoked_with}ed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.smell))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[20] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET sniffs_given=? WHERE uid=? AND gid=?",
+                            (data_giver["sniffs_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[21] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET sniffs_received=? WHERE uid=? AND gid=?",
+                            (data_receive["sniffs_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["sniffs_received"] + 1
+        embed.set_footer(text=f"{user.name} has now got {ctx.invoked_with}ed {number} time(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
@@ -215,8 +402,32 @@ class Social(commands.Cog):
             return await ctx.send("No. I'm taken, find someone else.")
         if user == ctx.author:
             return await ctx.send("How are you going to do that?")
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[2] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET bangs_given=? WHERE uid=? AND gid=?",
+                            (data_giver["bangs_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[3] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET bangs_received=? WHERE uid=? AND gid=?",
+                            (data_receive["bangs_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["bangs_received"] + 1
+        # embed.set_footer(text=f"{user.name} has now got {ctx.invoked_with}ed {number} time(s) in this server!")
         return await ctx.send(f"{emotes.Scary} {emotes.NotLikeThis} {ctx.author.name} is now "
-                              f"{ctx.invoked_with}ing {user.name}...")
+                              f"{ctx.invoked_with}ing {user.name}...\n{user.name} has now got {ctx.invoked_with}ed "
+                              f"{number} time(s) in this server!")
 
     @commands.command(name="bean")
     @commands.guild_only()
@@ -314,8 +525,31 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await ctx.send(f"*High fives {ctx.author.name} back*")
         embed = discord.Embed(colour=generic.random_colour())
-        embed.description = f"**{user.name}** got a high five **{ctx.author.name}**"
+        embed.description = f"**{user.name}** got a high five from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.highfive))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[8] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            self.db.execute("UPDATE counters SET high_fives_given=? WHERE uid=? AND gid=?",
+                            (data_giver["high_fives_given"] + 1, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[9] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            self.db.execute("UPDATE counters SET high_fives_received=? WHERE uid=? AND gid=?",
+                            (data_receive["high_fives_received"] + 1, user.id, ctx.guild.id))
+            number = data_receive["high_fives_received"] + 1
+        embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         return await ctx.send(embed=embed)
 
     @commands.command(name="reloadimages")
