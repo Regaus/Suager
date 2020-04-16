@@ -62,7 +62,8 @@ class Events(commands.Cog):
         elif isinstance(err, commands.errors.CommandOnCooldown):
             # ra = timedelta(seconds=err.retry_after).__str__()
             rm, rs = divmod(err.retry_after, 60)
-            ra = f"{rm}:{rs:02d.2f}"
+            z = "0" if rs < 10 else ""
+            ra = f"{int(rm)}:{z}{round(rs, 2)}"
             # rm = err.retry_after // 60
             # _rs = err.retry_after - 60 * rm
             # rs = str(_rs).zfill(2)

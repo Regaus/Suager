@@ -45,8 +45,8 @@
         }
       },
       "version": "4.2",
-      "full_version": "4.2.1-pre2",
-      "last_update": 1587053049,
+      "full_version": "4.2.1",
+      "last_update": 1587070576,
       "boot": false
     },
     "alpha": {
@@ -65,8 +65,8 @@
         }
       },
       "version": "4.2",
-      "full_version": "4.2.1-pre2",
-      "last_update": 1587053049,
+      "full_version": "4.2.1",
+      "last_update": 1587070576,
       "boot": false
     }
   },

@@ -618,6 +618,7 @@ class Social(commands.Cog):
         return await ctx.send(output)
 
     @commands.command(name="eat")
+    @commands.guild_only()
     async def eat_something(self, ctx, what: str):
         """ Eat something """
         if what == "cookie":
@@ -642,6 +643,7 @@ class Social(commands.Cog):
         return await ctx.send(f"{ctx.author.name} just ate a {what}. You have {left} left.")
 
     @commands.command(name="bad")
+    @commands.guild_only()
     async def bad(self, ctx, user: discord.Member):
         """ Bad user """
         if user.id == 302851022790066185:
@@ -674,6 +676,7 @@ class Social(commands.Cog):
         return await image_gen(ctx, user, "bad", f"bad_{user.name.lower()}")
 
     @commands.command(name="trash")
+    @commands.guild_only()
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
         if user == ctx.author:
@@ -839,6 +842,61 @@ class Social(commands.Cog):
         message += f"\n{user2.name} has now been shipped {number2} time(s) in this server!"
         message += f"\n{ctx.author.name} has now built {number3} ship(s) in this server!"
         return await ctx.send(message, file=discord.File(bio, filename=f"shipping_services.png"))
+
+    @commands.command(name="counters")
+    @commands.guild_only()
+    async def counters(self, ctx, who: discord.Member = None):
+        """ Check your or someone else's counts! """
+        if ctx.channel.id in self.banned:
+            return
+        user = who or ctx.author
+        data = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data:
+            return await ctx.send("It doesn't seem I have anything saved for you...")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.set_thumbnail(url=user.avatar_url_as(static_format="png", size=1024))
+        embed.add_field(name="Social", inline=False,
+                        value=f"{data['bites_given']:,} - Times bit someone\n"
+                              f"{data['bites_received']:,} - Times bitten\n"
+                              f"{data['cuddles_given']:,} - Cuddles given\n"
+                              f"{data['cuddles_received']:,} - Cuddles received\n"
+                              f"{data['high_fives_given']:,} - High fives given\n"
+                              f"{data['high_fives_received']:,} - High fives received\n"
+                              f"{data['hugs_given']:,} - Hugs given\n"
+                              f"{data['hugs_received']:,} - Hugs received\n"
+                              f"{data['kisses_given']:,} - Kisses given\n"
+                              f"{data['kisses_received']:,} - Kisses received\n"
+                              f"{data['licks_given']:,} - Licks given\n"
+                              f"{data['licks_received']:,} - Licks received\n"
+                              f"{data['pats_given']:,} - Pats given\n"
+                              f"{data['pats_received']:,} - Pats received\n"
+                              f"{data['slaps_given']:,} - Slaps given\n"
+                              f"{data['slaps_received']:,} - Slaps received\n"
+                              f"{data['sniffs_given']:,} - Sniffs given\n"
+                              f"{data['sniffs_received']:,} - Sniffs received")
+        if ctx.guild.id != 690162603275714574:
+            embed.add_field(name=f"{emotes.NotLikeThis} Scary stuff", inline=False,
+                            value=f"{data['bangs_received']:,} time(s) got banged\n"
+                                  f"{data['bangs_given']:,} time(s) banged others")
+        embed.add_field(name="Statuses", inline=False,
+                        value=f"{data['blushed']:,} time(s) blushed\n"
+                              f"{data['cried']:,} time(s) cried\n"
+                              f"{data['sleepy']:,} time(s) been sleepy\n"
+                              f"{data['smiled']:,} time(s) smiled")
+        cr, ce = data["carrots_received"], data["carrots_eaten"]
+        cl = cr - ce
+        ar, ae = data["cookies_received"], data["cookies_eaten"]
+        al = ar - ae
+        fr, fe = data["fruits_received"], data["fruits_eaten"]
+        fl = fr - fe
+        lr, le = data["lemons_received"], data["lemons_eaten"]
+        ll = lr - le
+        embed.add_field(name="Foods", inline=False,
+                        value=f"{cr:,} carrots received\n{ce:,} carrots eaten\n{cl:,} carrots left\n\n"
+                              f"{ar:,} cookies received\n{ae:,} cookies eaten\n{al:,} cookies left\n\n"
+                              f"{fr:,} fruits received\n{fe:,} fruits eaten\n{fl:,} fruits left\n\n"
+                              f"{lr:,} lemons received\n{le:,} lemons eaten\n{ll:,} lemons left")
+        return await ctx.send(f"Counters for {user.name} in {ctx.guild.name}", embed=embed)
 
 
 def setup(bot):
