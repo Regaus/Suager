@@ -61,10 +61,12 @@ class Events(commands.Cog):
 
         elif isinstance(err, commands.errors.CommandOnCooldown):
             # ra = timedelta(seconds=err.retry_after).__str__()
-            rm = err.retry_after // 60
-            _rs = err.retry_after - 60 * rm
-            rs = str(_rs).zfill(2)
-            ra = f"{rm}:{rs}"
+            rm, rs = divmod(err.retry_after, 60)
+            ra = f"{rm}:{rs:02d.2f}"
+            # rm = err.retry_after // 60
+            # _rs = err.retry_after - 60 * rm
+            # rs = str(_rs).zfill(2)
+            # ra = f"{rm}:{rs}"
             await ctx.send(f"This command is on cooldown... try again in {ra}")
 
         elif isinstance(err, commands.errors.CommandNotFound):
