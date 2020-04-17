@@ -286,7 +286,7 @@ class Leveling(commands.Cog):
 
     @custom_rank.command(name="background", aliases=["bg"])
     async def crank_bg(self, ctx, colour: str):
-        """ Progress bar colour """
+        """ Background colour """
         c = int_colour(colour)
         if c == -1:
             return await ctx.send("The colour must be either 3 or 6 digits long")
