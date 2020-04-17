@@ -23,6 +23,8 @@ def get_colour(colour: int):
 
 def int_colour(colour: str):
     try:
+        if colour[0] == "#":
+            return -3
         length = len(colour)
         if length == 3:
             a, b, c = colour
@@ -262,11 +264,13 @@ class Leveling(commands.Cog):
             return await ctx.send("The colour must be either 3 or 6 digits long")
         if c == -2:
             return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
+        if c == -3:
+            return await ctx.send("Remove the `#`...")
         data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
         if data:
             db = self.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
         else:
-            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0xff0000, 0))
+            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
         return await ctx.send(f"Updated your font colour to #{colour}\nDatabase status: {db}")
 
     @custom_rank.command(name="progress")
@@ -277,11 +281,13 @@ class Leveling(commands.Cog):
             return await ctx.send("The colour must be either 3 or 6 digits long")
         if c == -2:
             return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
+        if c == -3:
+            return await ctx.send("Remove the `#`...")
         data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
         if data:
             db = self.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
         else:
-            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0xff0000, c, 0))
+            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
         return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @custom_rank.command(name="background", aliases=["bg"])
@@ -292,11 +298,13 @@ class Leveling(commands.Cog):
             return await ctx.send("The colour must be either 3 or 6 digits long")
         if c == -2:
             return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
+        if c == -3:
+            return await ctx.send("Remove the `#`...")
         data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
         if data:
             db = self.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
         else:
-            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0xff0000, 0xff0000, c))
+            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
         return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @commands.command(name="xplevel")
