@@ -22,6 +22,7 @@ class HumanInfo(commands.Cog):
         self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="pickle", aliases=["cucumber", "banana", "eggplant"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def pickle_size(self, ctx, *, user: discord.Member = None):
         """ Pickle size! """
         if ctx.guild.id == 690162603275714574:
@@ -41,6 +42,7 @@ class HumanInfo(commands.Cog):
         return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result}cm**")
 
     @commands.command(name="breast", aliases=["boobs", "tiddies"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def boob_size(self, ctx, *, user: discord.Member = None):
         """ Boob size! """
         if ctx.guild.id == 690162603275714574:
@@ -59,6 +61,7 @@ class HumanInfo(commands.Cog):
 
     @commands.command(name="gender")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def assign_gender(self, ctx, gender: str):
         """ Assign your gender """
         if ctx.channel.id in self.banned:

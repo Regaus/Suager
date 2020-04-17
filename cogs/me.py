@@ -19,6 +19,7 @@ class Info(commands.Cog):
         self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="source")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def source(self, ctx):
         """ Source codes <3 """
         # Do not remove this command, this has to stay due to the GitHub LICENSE.
@@ -32,6 +33,7 @@ class Info(commands.Cog):
                        f"<https://github.com/AlexFlipnote/birthday.py>")
 
     @commands.command(name="stats", aliases=["info", "about", "status"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def stats(self, ctx):
         """ Bot stats"""
         if ctx.channel.id in self.banned:
@@ -101,6 +103,7 @@ class Info(commands.Cog):
         return await ctx.send(message)
 
     @commands.command(name="invite")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def invite(self, ctx):
         """ Invite me to your server! """
         if ctx.channel.id in self.banned:
@@ -110,6 +113,7 @@ class Info(commands.Cog):
                               f"authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>")
 
     @commands.command(name="botserver")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def my_server(self, ctx):
         """ My server """
         if ctx.channel.id in self.banned:
@@ -119,6 +123,7 @@ class Info(commands.Cog):
         return await ctx.send("This is my how, j'know <3")
 
     @commands.command(name="ping")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def ping(self, ctx):
         """ Ping Pong """
         if ctx.channel.id in self.banned:

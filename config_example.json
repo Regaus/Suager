@@ -1,9 +1,5 @@
 {
-  "tokens": [
-    "stable",
-    "beta",
-    "alpha"
-  ],
+  "token": "token_here",
   "owners": [
     302851022790066185
   ],
@@ -24,50 +20,9 @@
           "role_id": 663661621448802304
         }
       },
-      "version": "4.2",
-      "full_version": "4.2",
-      "last_update": 1586958089,
-      "boot": true
-    },
-    "beta": {
-      "prefixes": [
-        "b/",
-        "B/",
-        "b!"
-      ],
-      "change_playing": true,
-      "change_avatars": true,
-      "change_senko": false,
-      "birthdays": {
-        "568148147457490954": {
-          "channel": 568148147457490958,
-          "role_id": 663661621448802304
-        }
-      },
-      "version": "4.2",
-      "full_version": "4.2.1",
-      "last_update": 1587070576,
-      "boot": false
-    },
-    "alpha": {
-      "prefixes": [
-        "a/",
-        "A/",
-        "a!"
-      ],
-      "change_playing": true,
-      "change_avatars": true,
-      "change_senko": false,
-      "birthdays": {
-        "568148147457490954": {
-          "channel": 568148147457490958,
-          "role_id": 663661621448802304
-        }
-      },
-      "version": "4.2",
-      "full_version": "4.2.1",
-      "last_update": 1587070576,
-      "boot": false
+      "version": "4.3",
+      "full_version": "4.3",
+      "last_update": 1587083040
     }
   },
   "common_prefix": [

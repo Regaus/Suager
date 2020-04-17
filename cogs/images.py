@@ -40,6 +40,7 @@ class Images(commands.Cog):
         self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="colour", aliases=["color"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def colour(self, ctx, colour: str):
         """ Colours! """
         if ctx.channel.id in self.banned:
@@ -84,6 +85,7 @@ class Images(commands.Cog):
             return await ctx.send(f"{c.capitalize()} name: **{data['name']}**", embed=embed)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def colourify(self, ctx, user: discord.Member = None, colour: str = "7289da"):
         """ Colourify """
         if ctx.channel.id in self.banned:
@@ -113,6 +115,7 @@ class Images(commands.Cog):
             return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}")
 
     @commands.command(name="filter")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def filter(self, ctx, filter_name: str, user: discord.Member = None):
         """ Let someone go through a filter
         Allowed filter names: "blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik",
@@ -128,7 +131,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
-    @commands.cooldown(rate=1, per=1.5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def joke_over_head(self, ctx, user: discord.Member = None):
         """ Joke over head """
         if ctx.channel.id in self.banned:
@@ -138,6 +141,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, "jokeoverhead", "joke-over-head")
 
     @commands.command(name="amiajoke")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def am_i_a_joke(self, ctx, *, user: discord.member = None):
         """ Is a user a joke? """
         if ctx.channel.id in self.banned:
@@ -147,6 +151,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, "amiajoke", f"is_{user.name.lower()}_a_joke")
 
     @commands.command(name="salty")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def sodium_chloride(self, ctx, *, user: discord.Member = None):
         """ Salty user """
         if ctx.channel.id in self.banned:
@@ -156,6 +161,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, "salty", f"sodium_chloride_{user.name.lower()}")
 
     @commands.command(name="floor")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def the_floor_is(self, ctx, user: discord.Member, *text):
         """ The floor is... """
         if ctx.channel.id in self.banned:
@@ -172,6 +178,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, "floor", f"the_floor_is_{filename}", f"text={_text}")
 
     @commands.command()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def supreme(self, ctx, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Make a Supreme logo
 

@@ -244,7 +244,8 @@ class Events(commands.Cog):
                             plays = lists.playing
                             a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
                             if a != b:
-                                play = plays[a]
+                                # play = plays[a]
+                                play = random.choice(plays)
                                 playing = f"{play} | v{self.config['bots'][self.type]['version']}"
                                 await self.bot.change_presence(activity=discord.Activity(type=0, name=playing),
                                                                status=discord.Status.dnd)

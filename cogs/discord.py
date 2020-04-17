@@ -19,6 +19,7 @@ class Discord(commands.Cog):
 
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def server(self, ctx):
         """ Check info about current server """
         if ctx.channel.id in self.banned:
@@ -144,6 +145,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="prefix")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def prefix(self, ctx):
         """ Server prefixes """
         if ctx.channel.id in self.banned:
@@ -166,6 +168,7 @@ class Discord(commands.Cog):
     @commands.group(name="settings")
     @commands.guild_only()
     @permissions.has_permissions(manage_server=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def settings(self, ctx):
         """ Server settings """
         if ctx.invoked_subcommand is None:
@@ -237,6 +240,7 @@ class Discord(commands.Cog):
         return await ctx.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.")
 
     @commands.command(name="avatar")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def avatar(self, ctx, *, who: discord.User = None):
         """ Get someone's avatar """
         if ctx.channel.id in self.banned:
@@ -246,6 +250,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="roles")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def roles(self, ctx):
         """ Get all roles in current server """
         if ctx.channel.id in self.banned:
@@ -258,6 +263,7 @@ class Discord(commands.Cog):
                               file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
 
     @commands.command(name="joinedat")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def joined_at(self, ctx, *, who: discord.Member = None):
         """ Check when someone joined server """
         if ctx.channel.id in self.banned:
@@ -267,6 +273,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="user")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def user(self, ctx, *, who: discord.Member = None):
         """ Get info about user """
         if ctx.channel.id in self.banned:
@@ -318,7 +325,7 @@ class Discord(commands.Cog):
         await ctx.send(f"ℹ About **{user}**", embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
-    @commands.cooldown(rate=3, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def emoji(self, ctx, emoji: discord.Emoji):
         """ View bigger version of a Custom Emoji """
         if ctx.channel.id in self.banned:

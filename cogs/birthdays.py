@@ -108,6 +108,7 @@ class Birthdays(commands.Cog):
             return None
 
     @commands.group(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def birthday(self, ctx, *, user: discord.User = None):
         """ Check your birthday or other people """
         if ctx.channel.id in self.banned:

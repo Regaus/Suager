@@ -38,6 +38,7 @@ class Speech(commands.Cog):
     @commands.command(name="tell")
     @commands.guild_only()
     @permissions.has_permissions(manage_messages=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def tell(self, ctx, channel: discord.TextChannel, *, message: str):
         """ Say something to a channel """
         try:
@@ -70,6 +71,7 @@ class Speech(commands.Cog):
 
     @commands.command(name="say")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def say(self, ctx, *, message: str):
         """ Make me speak! """
         try:
@@ -82,6 +84,7 @@ class Speech(commands.Cog):
     @commands.command(name="tellimg")
     @commands.guild_only()
     @permissions.has_permissions(manage_messages=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def tell_image(self, ctx, channel: discord.TextChannel, *, message: str = ""):
         """ Send an image to a channel """
         if len(ctx.message.attachments) == 1:
@@ -107,6 +110,7 @@ class Speech(commands.Cog):
     @commands.command(name="tellembed")
     @commands.guild_only()
     @permissions.has_permissions(manage_messages=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def tell_embed(self, ctx, channel: discord.TextChannel, embed_colour: str, thumbnail_url: str,
                          *, message: str):
         """ Say something with an embed

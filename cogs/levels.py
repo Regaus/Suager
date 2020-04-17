@@ -158,6 +158,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="rewards")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def rewards(self, ctx):
         """ Rewards """
         if ctx.channel.id in self.banned:
@@ -183,6 +184,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="rank")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def rank_image(self, ctx, *, who: discord.Member = None):
         """ Check your or someone's rank """
         if ctx.channel.id in self.banned:
@@ -246,6 +248,7 @@ class Leveling(commands.Cog):
         return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}**", file=discord.File(bio, filename="rank.png"))
 
     @commands.group(name="crank", aliases=["customrank"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def custom_rank(self, ctx):
         """ Customise your rank """
         if ctx.invoked_subcommand is None:
@@ -297,6 +300,7 @@ class Leveling(commands.Cog):
         return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @commands.command(name="xplevel")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def xp_level(self, ctx, level: int = None):
         """ XP required to achieve a level """
         if ctx.channel.id in self.banned:
@@ -338,6 +342,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def next_level(self, ctx):
         """ XP required for next level """
         if ctx.channel.id in self.banned:
@@ -378,6 +383,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="levels")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def levels_lb(self, ctx):
         """ Server's XP Leaderboard """
         if ctx.channel.id in self.banned:
@@ -415,6 +421,7 @@ class Leveling(commands.Cog):
             return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
 
     @commands.command(name="glevels")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def global_levels(self, ctx):
         """ Global XP Leaderboard """
         if ctx.channel.id in self.banned:

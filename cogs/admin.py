@@ -68,6 +68,7 @@ class AdminCommands(commands.Cog):
         return await prev.eval_cmd(ctx, cmd)
 
     @commands.command(name="amiadmin")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def are_you_admin(self, ctx):
         """ Are you admin? """
         return await prev.are_you_admin(ctx)

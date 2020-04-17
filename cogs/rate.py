@@ -13,6 +13,7 @@ class Ratings(commands.Cog):
         self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="rate")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def rate(self, ctx, *, what: commands.clean_content):
         """ Rate something """
         if ctx.channel.id in self.banned:
@@ -26,6 +27,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="rateuser")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def rate_user(self, ctx, *, who: discord.Member):
         """ Rate someone """
         if ctx.channel.id in self.banned:
@@ -60,6 +62,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="babyrate")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def baby_rate(self, ctx, user1: discord.User, user2: discord.User):
         """ Chance of 2 users having a baby """
         if ctx.channel.id in self.banned:
@@ -83,6 +86,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="love", aliases=["lovecalc"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def love_calc(self, ctx, user1: discord.User, user2: discord.User):
         """ Calculate the amount of love between 2 users """
         if ctx.channel.id in self.banned:
@@ -111,6 +115,7 @@ class Ratings(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def hotness(self, ctx, *, who: discord.User = None):
         """ Check how hot someone is """
         if ctx.channel.id in self.banned:
@@ -140,6 +145,7 @@ class Ratings(commands.Cog):
         return await message.edit(content=f"**{user.name}** is **{step4}%** hot {emote}")
 
     @commands.command(name="iq")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def iq_test(self, ctx, *, who: discord.User = None):
         """ Check Someone's IQ """
         if ctx.channel.id in self.banned:

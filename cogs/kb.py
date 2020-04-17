@@ -33,6 +33,7 @@ class Social(commands.Cog):
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def pat(self, ctx, user: discord.Member):
         """ Pat someone """
         if is_fucked(self.pat):
@@ -71,6 +72,7 @@ class Social(commands.Cog):
 
     @commands.command(name="hug")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def hug(self, ctx, user: discord.Member):
         """ Hug someone """
         if is_fucked(self.hug):
@@ -110,6 +112,7 @@ class Social(commands.Cog):
 
     @commands.command(name="cuddle")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def cuddle(self, ctx, user: discord.Member):
         """ Cuddle someone """
         if is_fucked(self.cuddle):
@@ -148,6 +151,7 @@ class Social(commands.Cog):
 
     @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def lick(self, ctx, user: discord.Member):
         """ Lick someone """
         if is_fucked(self.lick):
@@ -187,6 +191,7 @@ class Social(commands.Cog):
 
     @commands.command(name="kiss")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def kiss(self, ctx, user: discord.Member):
         """ Kiss someone """
         if is_fucked(self.kiss):
@@ -226,6 +231,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bite")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def bite(self, ctx, user: discord.Member):
         """ Bite someone """
         if is_fucked(self.bite):
@@ -265,6 +271,7 @@ class Social(commands.Cog):
 
     @commands.command(name="sleepy")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def sleepy(self, ctx):
         """ You're sleepy """
         if is_fucked(self.sleepy):
@@ -289,6 +296,7 @@ class Social(commands.Cog):
 
     @commands.command(name="cry")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def cry(self, ctx):
         """ You're crying """
         if is_fucked(self.cry):
@@ -313,6 +321,7 @@ class Social(commands.Cog):
 
     @commands.command(name="blush")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def blush(self, ctx):
         """ You blush """
         if is_fucked(self.blush):
@@ -337,6 +346,7 @@ class Social(commands.Cog):
 
     @commands.command(name="smile")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def smile(self, ctx):
         """ You smile """
         if is_fucked(self.smile):
@@ -361,6 +371,7 @@ class Social(commands.Cog):
 
     @commands.command(name="slap", aliases=["kill", "shoot", "punch", "hit"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def slap(self, ctx, user: discord.Member = None):
         """ Violence! """
         if ctx.guild.id == 690162603275714574:
@@ -406,6 +417,7 @@ class Social(commands.Cog):
 
     @commands.command(name="smell", aliases=["sniff"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def smell(self, ctx, user: discord.Member):
         """ Smell/sniff someone """
         if is_fucked(self.smell):
@@ -444,6 +456,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def fuck(self, ctx, user: discord.Member = None):
         """ Bang someone """
         if ctx.guild.id == 690162603275714574:
@@ -483,6 +496,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bean")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def bean(self, ctx, user: discord.Member):
         """ Bean someone """
         if user == ctx.author:
@@ -521,6 +535,7 @@ class Social(commands.Cog):
 
     @commands.command(name="cookie")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def cookie(self, ctx, user: discord.Member):
         """ Give someone a cookie """
         if user == ctx.author:
@@ -547,6 +562,7 @@ class Social(commands.Cog):
 
     @commands.command(name="lemon")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def lemon(self, ctx, user: discord.Member):
         """ Give someone a lemon """
         if user == ctx.author:
@@ -573,6 +589,7 @@ class Social(commands.Cog):
 
     @commands.command(name="carrot")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def carrot(self, ctx, user: discord.Member):
         """ Give someone a carrot """
         if user == ctx.author:
@@ -595,6 +612,7 @@ class Social(commands.Cog):
 
     @commands.command(name="fruit", aliases=["fruitsnacks"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def fruit_snacks(self, ctx, user: discord.Member):
         """ Give someone a fruit snack """
         if user == ctx.author:
@@ -619,6 +637,7 @@ class Social(commands.Cog):
 
     @commands.command(name="eat")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def eat_something(self, ctx, what: str):
         """ Eat something """
         if what == "cookie":
@@ -644,14 +663,19 @@ class Social(commands.Cog):
 
     @commands.command(name="bad")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def bad(self, ctx, user: discord.Member):
         """ Bad user """
         if user.id == 302851022790066185:
             user = ctx.author
+            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?",
+                                            (ctx.author.id, ctx.guild.id))
+            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        else:
+            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if user.id == self.bot.user.id:
             return await ctx.send(f"{emotes.AlexHeartBroken}")
-        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not data_giver:
             data = self.empty.copy()
             data[0] = ctx.author.id
@@ -677,6 +701,7 @@ class Social(commands.Cog):
 
     @commands.command(name="trash")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
         if user == ctx.author:
@@ -686,12 +711,16 @@ class Social(commands.Cog):
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
             a2, a1 = a1, a2
+            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?",
+                                            (ctx.author.id, ctx.guild.id))
+            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        else:
+            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}",
                                      res_method="read"))
         if bio is None:
             return await ctx.send("Something went wrong, couldn't generate image")
-        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not data_giver:
             data = self.empty.copy()
             data[0] = ctx.author.id
@@ -717,6 +746,7 @@ class Social(commands.Cog):
 
     @commands.command(name="highfive")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def high_five(self, ctx, user: discord.Member):
         """ High five someone """
         if is_fucked(self.highfive):
@@ -776,6 +806,7 @@ class Social(commands.Cog):
 
     @commands.command(name="ship")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def ship(self, ctx, user1: discord.Member = None, user2: discord.Member = None):
         """ Build a ship """
         if user1 is None or user2 is None:
@@ -845,6 +876,7 @@ class Social(commands.Cog):
 
     @commands.command(name="counters")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def counters(self, ctx, who: discord.Member = None):
         """ Check your or someone else's counts! """
         if ctx.channel.id in self.banned:

@@ -46,6 +46,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="balance", aliases=["bal"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def balance(self, ctx, *, who: discord.Member = None):
         """ Check someone's balance"""
         if ctx.channel.id in self.banned:
@@ -61,6 +62,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="donate", aliases=["give"])
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def donate(self, ctx, user: discord.Member, amount: int):
         """ Give someone your money """
         if ctx.channel.id in self.banned:
@@ -93,6 +95,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="profile")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def profile(self, ctx, who: discord.Member = None):
         """ Check someone's profile """
         if ctx.channel.id in self.banned:
@@ -122,6 +125,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="buy")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def buy_something(self, ctx):
         """ Buy an item from the shop """
         if ctx.channel.id in self.banned:
@@ -130,6 +134,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="shop")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def item_shop(self, ctx):
         """ Item shop """
         if ctx.channel.id in self.banned:

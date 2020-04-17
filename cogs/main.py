@@ -5,7 +5,7 @@ settings_template = {
     'prefixes': [],
     'use_default': True,
     'leveling': {
-        'enabled': True,
+        'enabled': False,
         'xp_multiplier': 1.0,
         'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
         'ignored_channels': [],

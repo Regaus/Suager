@@ -14,6 +14,7 @@ class Fun(commands.Cog):
         self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="vote", aliases=["petition"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def vote(self, ctx, *, question: commands.clean_content):
         """ Start a vote """
         if ctx.channel.id in self.banned:
@@ -24,16 +25,19 @@ class Fun(commands.Cog):
         await message.add_reaction(emotes.Deny)
 
     @commands.command(name="shrug")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def shrug(self, ctx):
         """ ¯\u005C_(ツ)_/¯ """
         await ctx.send("¯\u005C\u005C_(ツ)\u005C_/¯")
 
     @commands.command(name="epic")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def epic(self, ctx):
         """ Very epic """
         await ctx.send("<a:epic:603691073822261248>")
 
     @commands.command(name="vibecheck")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def vibe_check(self, ctx, *, who: discord.Member = None):
         """ Check your vibe """
         if ctx.channel.id in self.banned:
@@ -44,6 +48,7 @@ class Fun(commands.Cog):
         return await message.edit(content=f"**{user.name}** {random.choice(['failed', 'passed'])} the vibe check")
 
     @commands.command(name="flip", aliases=["coin"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def flip_a_coin(self, ctx):
         """ Flip a coin """
         if ctx.channel.id in self.banned:
@@ -53,6 +58,7 @@ class Fun(commands.Cog):
         return await message.edit(content=f"The coin landed on {random.choice(['Heads', 'Tails'])}")
 
     @commands.command()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def beer(self, ctx, user: discord.Member = None, *, reason: commands.clean_content = ""):
         """ Give someone a beer! 🍻 """
         if not user or user.id == ctx.author.id:
@@ -91,6 +97,7 @@ class Fun(commands.Cog):
             await msg.edit(content=beer_offer)
 
     @commands.command(name="8ball", aliases=["eightball"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def eight_ball(self, ctx, *, question: commands.clean_content):
         """ Consult the 8-Ball """
         if ctx.channel.id in self.banned:
@@ -98,6 +105,7 @@ class Fun(commands.Cog):
         return await ctx.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}")
 
     @commands.command(name="roll")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def roll(self, ctx, num1: int = 6, num2: int = 1, repeat: int = 1):
         """ Rolls a number between given range """
         if ctx.channel.id in self.banned:
@@ -129,6 +137,7 @@ class Fun(commands.Cog):
         return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p}) and got this: {out}")
 
     @commands.command(name="f")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def pay_respects(self, ctx, *, text: commands.clean_content = None):
         """ Press F to pay respects """
         heart = random.choice(lists.hearts)
@@ -138,6 +147,7 @@ class Fun(commands.Cog):
 
     @commands.command(name="quote")
     @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def quote(self, ctx, user: discord.Member, *, text: str):
         """ Make a very true quote """
         if ctx.channel.id in self.banned:
@@ -151,6 +161,7 @@ class Fun(commands.Cog):
         return await ctx.send(embed=embed)
 
     @commands.command(name="reverse")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def reverse_text(self, ctx, *, text: commands.clean_content):
         """ Reverses text """
         if ctx.channel.id in self.banned:
@@ -159,6 +170,7 @@ class Fun(commands.Cog):
         return await ctx.send(f"🔁 {ctx.author.name}:\n{reverse}")
 
     @commands.command(name="notwork")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def notwork(self, ctx):
         """ That's not how it works you little shit """
         embed = discord.Embed(colour=random.randint(0, 0xffffff))

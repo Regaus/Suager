@@ -16,11 +16,13 @@ class Utility(commands.Cog):
         self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="time")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def current_time(self, ctx):
         """ Current time """
         return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
 
     @commands.command(name="mctime", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def mc_time(self, ctx, month: str = 1, day: int = 1, hour: int = 6, minute: int = 0):
         """ Set time in Minecraft """
         if ctx.channel.id in self.banned:
@@ -44,6 +46,7 @@ class Utility(commands.Cog):
         return await ctx.send(f"For {date}:\n**/time set {mt}**")
 
     @commands.command(name="timesince", aliases=["timeuntil"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def time_since(self, ctx, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0,
                          second: int = 0):
         """ Time difference """
@@ -74,6 +77,7 @@ class Utility(commands.Cog):
             return await ctx.send(f"There was an error:\n{e}")
 
     @commands.command(name="weather")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def weather(self, ctx, *, _place: commands.clean_content):
         """ Check weather in a place """
         if ctx.channel.id in self.banned:
@@ -123,6 +127,7 @@ class Utility(commands.Cog):
                               f"Local time: **{local_time}**", embed=embed)
 
     @commands.command(name="luas")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def luas(self, ctx, *, place: commands.clean_content):
         """ Data for Luas """
         if ctx.channel.id in self.banned:
