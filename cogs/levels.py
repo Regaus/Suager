@@ -1,3 +1,4 @@
+import difflib
 import json
 import random
 from io import BytesIO
@@ -12,6 +13,29 @@ from PIL import Image, ImageDraw, ImageFont
 
 max_level = 5000
 level_xp = [21, 30]
+
+
+def similarity(a: str, b: str or None):
+    if b is None:
+        return 0.0
+    return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio()
+
+
+def similarity_nc(a: str, b: str):
+    return difflib.SequenceMatcher(None, a, b).ratio()
+
+
+def caps_spam(a: str):
+    split = a.split(" ")
+    if len(split) == 1:
+        sim = similarity_nc(a, a.upper())
+        return int(sim > 0.9 and len(a) > 10), 1
+    if len(split) == 2:
+        return -1, -1
+    caps = [word.upper() for word in split]
+    similarities = [similarity_nc(split[i], caps[i]) for i in range(len(split)) if len(split[i]) > 2]
+    spammed = [sim for sim in similarities if sim > 0.85]
+    return len(spammed), len(split)
 
 
 def get_colour(colour: int):
@@ -57,106 +81,151 @@ class Leveling(commands.Cog):
     async def on_message(self, ctx):
         if ctx.author.bot or ctx.guild is None:
             return
-        if self.type == "stable":
-            _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
-                                         ("settings", ctx.guild.id))
-            if not _settings:
-                settings = main.settings_template.copy()
-            else:
-                settings = json.loads(_settings['data'])
-            try:
-                if not settings['leveling']['enabled']:
-                    return
-                ic = settings['leveling']['ignored_channels']
-                if ctx.channel.id in ic:
-                    return
-            except KeyError:
-                pass
-            data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-            if data:
-                level, xp, last = [data['level'], data['xp'], data['last']]
-            else:
-                level, xp, last = [0, 0, 0]
-            now = time.now_ts()
-            if last > now - 60:
+        _settings = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?",
+                                     ("settings", ctx.guild.id))
+        if not _settings:
+            settings = main.settings_template.copy()
+        else:
+            settings = json.loads(_settings['data'])
+        try:
+            if not settings['leveling']['enabled']:
                 return
-            x1, x2 = level_xp
+            ic = settings['leveling']['ignored_channels']
+            if ctx.channel.id in ic:
+                return
+        except KeyError:
+            pass
+        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        caps = False
+        if ctx.guild.id == 690162603275714574:
+            # if ctx.content.startswith("/"):
+            #     return
+            cs, ls = caps_spam(ctx.content)
+            if ls == 1 and cs == 1:
+                caps = True
+            elif cs > 2:
+                caps = True
+        if data:
+            level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
+            dm = data["last_messages"]
+            if dm is None:
+                lm = [None, None, None]
+            else:
+                lm = json.loads(data["last_messages"])
+        else:
+            level, xp, last, ls = [0, 0, 0, 0]
+            lm = [None, None, None]
+        similarities = [similarity(ctx.content, msg) for msg in lm]
+        if ls is None:
+            ls = 0
+        now = time.now_ts()
+        td = now - last
+        _td = now - ls
+        mr = random.uniform(5, 15)
+        if td < 1 or _td < 1:
+            mult = -0.3
+        elif 1 <= td < mr:
+            mult = 0
+        elif mr <= td < 60:
+            mult = td / 60
+        else:
+            mult = 1
+        dc = mult == 0  # didn't count
+        if mult > 0:
+            if similarities[0] > 0.8:
+                mult /= 4
+            if td < 90:
+                if similarities[1] > 0.8:
+                    mult /= 3
+                if similarities[2] > 0.85:
+                    mult /= 2.5
+        lm[2] = lm[1]
+        lm[1] = lm[0]
+        lm[0] = ctx.content
+        # if last > now - 60:
+        #     return
+        x1, x2 = level_xp
+        try:
+            sm = float(settings['leveling']['xp_multiplier'])
+            sm = 0 if sm < 0 else sm if sm < 10 else 10
+        except KeyError:
+            sm = 1
+        new = int(random.uniform(x1, x2) * sm * mult)
+        if (ctx.author.id == 592345932062916619) or caps:
+            new = 0
+        xp += new
+        # print(td, _td, xp, new, _n, mult)
+        requirements = levels()
+        lu = False
+        while level < max_level and xp >= requirements[level]:
+            level += 1
+            lu = True
+        if lu:
             try:
-                sm = float(settings['leveling']['xp_multiplier'])
-                sm = 0 if sm < 0 else sm if sm < 10 else 10
+                send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
+                    .replace('[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
             except KeyError:
-                sm = 1
-            new = int(random.randint(x1, x2) * sm)
-            new = 0 if ctx.author.id == 592345932062916619 else new
-            xp += new
-            requirements = levels()
-            lu = False
-            while level < max_level and xp >= requirements[level]:
-                level += 1
-                lu = True
-            if lu:
-                try:
-                    send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
-                except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! " \
-                           f"<a:forsendiscosnake:613403121686937601>"
-                try:
-                    ac = settings['leveling']['announce_channel']
-                    if ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
-                    else:
-                        ch = ctx.channel
-                except KeyError:
-                    ch = ctx.channel
-                try:
-                    await ch.send(send)
-                except discord.Forbidden:
-                    pass  # Well, if it can't send it there, too bad.
-            reason = f"Level Rewards - Level {level}"
+                send = f"{ctx.author.mention} has reached **level {level:,}**! " \
+                       f"<a:forsendiscosnake:613403121686937601>"
             try:
-                rewards = settings['leveling']['rewards']
-                if rewards:  # Don't bother if they're empty
-                    l1, l2 = [], []
-                    rewards.sort(key=lambda x: x['level'])
-                    for i in range(len(rewards)):
-                        l1.append(rewards[i]['level'])
-                        l2.append(rewards[i]['role'])
-                    roles = [r.id for r in ctx.author.roles]
-                    for i in range(len(rewards)):
-                        role = discord.Object(id=l2[i])
-                        has_role = l2[i] in roles
-                        if level >= l1[i]:
-                            if i < len(rewards) - 1:
-                                if level < l1[i + 1]:
-                                    if not has_role:
-                                        await ctx.author.add_roles(role, reason=reason)
-                                else:
-                                    if has_role:
-                                        await ctx.author.remove_roles(role, reason=reason)
-                            else:
+                ac = settings['leveling']['announce_channel']
+                if ac != 0:
+                    ch = self.bot.get_channel(ac)
+                    if ch is None or ch.guild.id != ctx.guild.id:
+                        ch = ctx.channel
+                else:
+                    ch = ctx.channel
+            except KeyError:
+                ch = ctx.channel
+            try:
+                await ch.send(send)
+            except discord.Forbidden:
+                pass  # Well, if it can't send it there, too bad.
+        reason = f"Level Rewards - Level {level}"
+        try:
+            rewards = settings['leveling']['rewards']
+            if rewards:  # Don't bother if they're empty
+                l1, l2 = [], []
+                rewards.sort(key=lambda x: x['level'])
+                for i in range(len(rewards)):
+                    l1.append(rewards[i]['level'])
+                    l2.append(rewards[i]['role'])
+                roles = [r.id for r in ctx.author.roles]
+                for i in range(len(rewards)):
+                    role = discord.Object(id=l2[i])
+                    has_role = l2[i] in roles
+                    if level >= l1[i]:
+                        if i < len(rewards) - 1:
+                            if level < l1[i + 1]:
                                 if not has_role:
                                     await ctx.author.add_roles(role, reason=reason)
+                            else:
+                                if has_role:
+                                    await ctx.author.remove_roles(role, reason=reason)
                         else:
-                            if has_role:
-                                await ctx.author.remove_roles(role, reason=reason)
-            except KeyError:
-                pass  # If no level rewards, don't even bother
-            except discord.Forbidden:
-                await ctx.send(f"{ctx.author.name} should have got a level reward, "
-                               f"but I do not have sufficient permissions to do so.")
-            except Exception as e:
-                print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
-            if data:
-                self.db.execute(
-                    "UPDATE leveling SET level=?, xp=?, last=?, name=?, disc=? WHERE uid=? AND gid=?",
-                    (level, xp, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
-            else:
-                self.db.execute(
-                    "INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (ctx.author.id, ctx.guild.id, level, xp, now, ctx.author.name, ctx.author.discriminator))
+                            if not has_role:
+                                await ctx.author.add_roles(role, reason=reason)
+                    else:
+                        if has_role:
+                            await ctx.author.remove_roles(role, reason=reason)
+        except KeyError:
+            pass  # If no level rewards, don't even bother
+        except discord.Forbidden:
+            await ctx.send(f"{ctx.author.name} should have got a level reward, "
+                           f"but I do not have sufficient permissions to do so.")
+        except Exception as e:
+            print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
+        _last = last if dc else now
+        if data:
+            self.db.execute(
+                "UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, last_messages=?, name=?, disc=? WHERE uid=? "
+                "AND gid=?", (level, xp, _last, now, json.dumps(lm), ctx.author.name, ctx.author.discriminator,
+                              ctx.author.id, ctx.guild.id))
+        else:
+            self.db.execute(
+                "INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (ctx.author.id, ctx.guild.id, level, xp, now, now, json.dumps([ctx.content, None, None]),
+                 ctx.author.name, ctx.author.discriminator))
 
     @commands.command(name="rewards")
     @commands.guild_only()

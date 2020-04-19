@@ -169,10 +169,12 @@ class Events(commands.Cog):
         gid = guild.id
         del1 = self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
         del2 = self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
+        del3 = self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (uid, gid))
         logs.save(logs.get_place(self.type, "members"),
                   f"{time.time()} > {user} ({user.id}) just got banned from {guild.name} - Database statuses: "
-                  f"leveling {del1}, economy {del2}")
-        print(f"{time.time()} > Banned {user.name} from {guild.name} > DB statuses: lvl {del1}, economy {del2}")
+                  f"leveling {del1}, economy {del2}, counters {del3}")
+        print(f"{time.time()} > Banned {user.name} from {guild.name} > DB statuses: lvl {del1}, economy {del2}, "
+              f"counters {del3}")
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):

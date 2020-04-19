@@ -144,6 +144,8 @@ tables = [
         Column("level", 0, True),
         Column("xp", 0, True),  # int from 4.1
         Column("last", 1, True),
+        Column("last_sent", 1, False),
+        Column("last_messages", 2, False),
         Column("name", 2, True),
         Column("disc", 0, True)
     ]),
