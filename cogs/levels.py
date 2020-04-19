@@ -223,19 +223,24 @@ class Leveling(commands.Cog):
             r2 = f"{req:,.0f}"
         except IndexError:
             req = float("inf")
-            r2 = "Error"
+            r2 = "MAX"
         # r3 = value_string(re)
-        prev = int(al[level-1]) if level != 0 else 0
+        try:
+            prev = int(al[level-1]) if level != 0 else 0
+        except IndexError:
+            prev = 0
         if not is_self:
             progress = (xp - prev) / (req - prev)
             dr.text((276, 60), f"Level {level:,}", font=font_small, fill=font_colour)
             dr.text((276, 180), f"{xp:,}/{r2} XP", font=font_small, fill=font_colour)
         else:
-            progress = 50
+            progress = 0.5
             dr.text((276, 60), f"Level 69,420", font=font_small, fill=font_colour)
             dr.text((276, 180), f"9,999,999,999,999 XP", font=font_small, fill=font_colour)
         full = 400
         done = int(progress * full)
+        if done < 0:
+            done = 0
         # left = full - done
         i1 = Image.new("RGB", (done, 30), color=progress_colour)
         i2 = Image.new("RGB", (full, 30), color=(30, 30, 30))
@@ -372,7 +377,15 @@ class Leveling(commands.Cog):
         r1 = f"{int(xp):,}"
         # biased = bias.get_bias(self.db, ctx.author)
         yes = levels()
-        r, p = [int(yes[level]), int(yes[level-1]) if level != 0 else 0]
+        try:
+            r = int(yes[level])
+        except IndexError:
+            r = -1
+        try:
+            p = int(yes[level-1]) if level != 0 else 0
+        except IndexError:
+            p = 0
+        # r, p = [int(yes[level]), ]
         re = r - xp
         r2 = f"{int(r):,}"
         r3 = f"{int(re):,}"

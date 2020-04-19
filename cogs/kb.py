@@ -930,6 +930,52 @@ class Social(commands.Cog):
                               f"{lr:,} lemons received\n{le:,} lemons eaten\n{ll:,} lemons left")
         return await ctx.send(f"Counters for {user.name} in {ctx.guild.name}", embed=embed)
 
+    @commands.command(name="top")
+    @commands.guild_only()
+    async def top_counters(self, ctx):
+        """ Top counters """
+        if ctx.channel.id in self.banned:
+            return
+        keys = [["bangs_given", "bangs_received"],
+                ["bites_given", "bites_received", "cuddles_given", "cuddles_received", "high_fives_given",
+                 "high_fives_received", "hugs_given", "hugs_received", "kisses_given", "kisses_received", "licks_given",
+                 "licks_received", "pats_given", "pats_received", "slaps_given", "slaps_received", "sniffs_given",
+                 "sniffs_received"], ["bad_given", "bad_received", "beaned", "beans_given", "shipped", "ships_built",
+                                      "trashed", "trash_given"], ["blushed", "cried", "sleepy", "smiled"],
+                ["carrots_received", "carrots_eaten", "cookies_received", "cookies_eaten", "fruits_received",
+                 "fruits_eaten", "lemons_received", "lemons_eaten"]]
+        names = ["Scary stuff", "Social", "<Name>", "Statuses", "Food"]
+        all_keys = []
+        for k in keys:
+            for i in k:
+                all_keys.append(i)
+        length = len(keys)
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.set_thumbnail(url=ctx.guild.icon_url_as(static_format="png", size=1024))
+        for i in range(length):
+            if i == 0 and ctx.guild.id == 690162603275714574:
+                continue
+            name = names[i]
+            local_keys = keys[i]
+            data = []
+            for key in local_keys:
+                data.append(self.db.fetchrow(f"SELECT uid, {key} FROM counters WHERE gid={ctx.guild.id} ORDER BY "
+                                             f"{key} DESC LIMIT 1"))
+            output = ""
+            _range = len(data)
+            for j in range(_range):
+                key = local_keys[j]
+                key_name = local_keys[j].replace("_", " ")
+                key_name = key_name.title()
+                d = data[j]
+                if d is not None:
+                    if d[key] > 0:
+                        output += f"{key_name}: {d[key]:,} - <@{d['uid']}>\n"
+            if output == "":
+                output = "No data available"
+            embed.add_field(name=name, value=output, inline=False)
+        return await ctx.send(f"Top counters in {ctx.guild.name}", embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Social(bot))
