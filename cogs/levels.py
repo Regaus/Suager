@@ -135,16 +135,15 @@ class Leveling(commands.Cog):
         else:
             mult = 1
         dc = mult == 0  # didn't count
-        if mult > 0:
-            if similarities[0] > 0.9:
-                mult *= -0.25
-            elif 0.9 > similarities[0] > 0.8:
-                mult /= 4
-            if td < 90 and mult > 0:
-                if similarities[1] > 0.8:
-                    mult /= 4
-                if similarities[2] > 0.85:
-                    mult /= 3
+        if similarities[0] > 0.9:
+            mult *= -0.25 if mult > 0 else 1.75
+        elif 0.9 > similarities[0] > 0.8:
+            mult /= 4 if mult > 0 else (1 / 1.75)
+        if td < 90:
+            if similarities[1] > 0.8:
+                mult *= 1.5 if mult < 0 else 0.25
+            if similarities[2] > 0.85:
+                mult *= 1.5 if mult < 0 else 0.33
         lm[2] = lm[1]
         lm[1] = lm[0]
         lm[0] = ctx.content
@@ -162,10 +161,19 @@ class Leveling(commands.Cog):
         xp += new
         # print(td, _td, xp, new, _n, mult)
         requirements = levels()
-        lu = False
+        lu, ld = False, False
+        if level == -1 and xp > 0:
+            level = 0
+            lu = True
         while level < max_level and xp >= requirements[level]:
             level += 1
             lu = True
+        while level > 0 and xp < requirements[level - 1]:
+            level -= 1
+            ld = True
+        if level == 0 and xp < 0:
+            level = -1
+            ld = True
         if lu:
             try:
                 send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
@@ -173,6 +181,23 @@ class Leveling(commands.Cog):
             except KeyError:
                 send = f"{ctx.author.mention} has reached **level {level:,}**! " \
                        f"<a:forsendiscosnake:613403121686937601>"
+            try:
+                ac = settings['leveling']['announce_channel']
+                if ac != 0:
+                    ch = self.bot.get_channel(ac)
+                    if ch is None or ch.guild.id != ctx.guild.id:
+                        ch = ctx.channel
+                else:
+                    ch = ctx.channel
+            except KeyError:
+                ch = ctx.channel
+            try:
+                await ch.send(send)
+            except discord.Forbidden:
+                pass  # Well, if it can't send it there, too bad.
+        if ld:
+            send = f"{ctx.author.mention} is now **level {level:,}** " \
+                   f"<a:UmmOK:693575304622637087>"
             try:
                 ac = settings['leveling']['announce_channel']
                 if ac != 0:
@@ -295,6 +320,8 @@ class Leveling(commands.Cog):
             al = levels()   # All levels
             try:
                 req = int(al[level])  # Requirement to next level
+                if level == -1:
+                    req = 0
                 # re = req - xp
                 r2 = f"{req:,.0f}"
             except IndexError:
@@ -303,6 +330,8 @@ class Leveling(commands.Cog):
             # r3 = value_string(re)
             try:
                 prev = int(al[level-1]) if level != 0 else 0
+                if level == -1:
+                    prev = -int(al[0])
             except IndexError:
                 prev = 0
             _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
@@ -472,6 +501,9 @@ class Leveling(commands.Cog):
             p = int(yes[level-1]) if level != 0 else 0
         except IndexError:
             p = 0
+        if level == -1:
+            r = 0
+            p = -int(yes[0])
         # r, p = [int(yes[level]), ]
         re = r - xp
         r2 = f"{int(r):,}"
