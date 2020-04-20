@@ -301,7 +301,7 @@ class Leveling(commands.Cog):
         _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
         place = "unknown"
         for x in range(len(_data)):
-            if _data[x]['uid'] == ctx.author.id:
+            if _data[x]['uid'] == user.id:
                 place = f"#{x + 1:,}"
                 break
         if not is_self:
