@@ -122,8 +122,10 @@ class Leveling(commands.Cog):
         td = now - last
         _td = now - ls
         mr = random.uniform(5, 15)
-        if td < 1 or _td < 1:
-            mult = -0.3
+        if td < 2 or _td < 2:
+            mult = -0.2
+        elif td < 1 or _td < 1:
+            mult = -0.4
         elif 1 <= td < mr:
             mult = 0
         elif mr <= td < 60:
@@ -132,13 +134,15 @@ class Leveling(commands.Cog):
             mult = 1
         dc = mult == 0  # didn't count
         if mult > 0:
-            if similarities[0] > 0.8:
+            if similarities[0] > 0.9:
+                mult *= -0.25
+            elif 0.9 > similarities[0] > 0.8:
                 mult /= 4
-            if td < 90:
+            if td < 90 and mult > 0:
                 if similarities[1] > 0.8:
-                    mult /= 3
+                    mult /= 4
                 if similarities[2] > 0.85:
-                    mult /= 2.5
+                    mult /= 3
         lm[2] = lm[1]
         lm[1] = lm[0]
         lm[0] = ctx.content
