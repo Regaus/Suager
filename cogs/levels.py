@@ -485,7 +485,7 @@ class Leveling(commands.Cog):
     @commands.command(name="levels")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def levels_lb(self, ctx):
+    async def levels_lb(self, ctx, top: str = ""):
         """ Server's XP Leaderboard """
         if ctx.channel.id in self.banned:
             return
@@ -507,11 +507,19 @@ class Leveling(commands.Cog):
                 xpl.append(len(val))
             spaces = max(xpl) + 5
             place = "unknown"
+            n = 0
             for x in range(len(data)):
                 if data[x]['uid'] == ctx.author.id:
                     place = f"#{x + 1}"
+                    n = x + 1
                     break
-            for i, val in enumerate(data[:10], start=1):
+            if n <= 10 or top.lower() == "top":
+                _data = data[:10]
+                start = 1
+            else:
+                _data = data[n-5:n+5]
+                start = n - 4
+            for i, val in enumerate(_data, start=start):
                 k = i - 1
                 who = un[k]
                 if val['uid'] == ctx.author.id:
@@ -545,7 +553,7 @@ class Leveling(commands.Cog):
                 xp.append(x)
                 xpl.append(len(x))
             spaces = max(xpl) + 5
-            place = "unknown, or over 250"
+            place = "unknown"
             for someone in range(len(sl)):
                 if sl[someone][0] == ctx.author.id:
                     place = f"#{someone + 1}"
