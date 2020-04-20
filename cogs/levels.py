@@ -122,10 +122,12 @@ class Leveling(commands.Cog):
         td = now - last
         _td = now - ls
         mr = random.uniform(5, 15)
-        if td < 2 or _td < 2:
+        if 1 <= td < 2 or 1 <= _td < 2:
             mult = -0.2
-        elif td < 1 or _td < 1:
+        elif 0.33 <= td < 1 or 0.33 <= _td < 1:
             mult = -0.4
+        elif td < 0.33 or _td < 0.33:
+            mult = -1
         elif 1 <= td < mr:
             mult = 0
         elif mr <= td < 60:
