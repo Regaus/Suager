@@ -260,79 +260,80 @@ class Leveling(commands.Cog):
         """ Check your or someone's rank """
         if ctx.channel.id in self.banned:
             return
-        user = who or ctx.author
-        is_self = user.id == self.bot.user.id
-        if user.bot and not is_self:
-            return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-        custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
-        if custom:
-            font_colour, progress_colour, background_colour = \
-                get_colour(custom["font"]), get_colour(custom["progress"]), get_colour(custom["background"])
-        else:
-            font_colour, progress_colour, background_colour = (50, 255, 50), (50, 255, 50), 0
-        if data:
-            level, xp = [data['level'], data['xp']]
-        else:
-            level, xp = [0, 0]
-        img = Image.new("RGB", (1536, 512), color=background_colour)
-        dr = ImageDraw.Draw(img)
-        avatar = BytesIO(await http.get(str(user.avatar_url_as(size=512, format="png")), res_method="read"))
-        avatar_img = Image.open(avatar)
-        avatar_resized = avatar_img.resize((512, 512))
-        img.paste(avatar_resized)
-        font_dir = "assets/font.ttf"
-        font = ImageFont.truetype(font_dir, size=72)
-        font_small = ImageFont.truetype(font_dir, size=48)
-        dr.text((552, 20), f"{user}", font=font, fill=font_colour)
-        al = levels()   # All levels
-        try:
-            req = int(al[level])  # Requirement to next level
-            # re = req - xp
-            r2 = f"{req:,.0f}"
-        except IndexError:
-            req = float("inf")
-            r2 = "MAX"
-        # r3 = value_string(re)
-        try:
-            prev = int(al[level-1]) if level != 0 else 0
-        except IndexError:
-            prev = 0
-        _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
-        place = "unknown"
-        for x in range(len(_data)):
-            if _data[x]['uid'] == user.id:
-                place = f"#{x + 1:,}"
-                break
-        if not is_self:
-            progress = (xp - prev) / (req - prev)
-            dr.text((552, 100), f"Level {level:,}", font=font_small, fill=font_colour)
-            dr.text((552, 150), f"Rank {place}", font=font_small, fill=font_colour)
-            dr.text((552, 350), f"{xp:,}/{r2} XP", font=font_small, fill=font_colour)
-        else:
-            progress = 0.5
-            dr.text((552, 100), f"Level 69,420", font=font_small, fill=font_colour)
-            dr.text((552, 150), f"Rank #1", font=font_small, fill=font_colour)
-            dr.text((552, 350), f"9,999,999,999,999 XP", font=font_small, fill=font_colour)
-        full = 800
-        done = int(progress * full)
-        if done < 0:
-            done = 0
-        # left = full - done
-        i1 = Image.new("RGB", (done, 60), color=progress_colour)
-        i2 = Image.new("RGB", (full + 10, 70), color=(30, 30, 30))
-        box1 = (552, 420, 552 + done, 480)
-        box2 = (547, 415, 557 + full, 485)  # 2 px bigger
-        img.paste(i2, box2)
-        img.paste(i1, box1)
-        bio = BytesIO()
-        img.save(bio, "PNG")
-        # img.save("test.png", "PNG")
-        bio.seek(0)
-        r = f"**{user}**'s rank in **{ctx.guild.name}**"
-        if is_self:
-            r += "\nThat's my card! Did you think I'd play fair?"
-        return await ctx.send(r, file=discord.File(bio, filename="rank.png"))
+        async with ctx.typing():
+            user = who or ctx.author
+            is_self = user.id == self.bot.user.id
+            if user.bot and not is_self:
+                return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
+            data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
+            if custom:
+                font_colour, progress_colour, background_colour = \
+                    get_colour(custom["font"]), get_colour(custom["progress"]), get_colour(custom["background"])
+            else:
+                font_colour, progress_colour, background_colour = (50, 255, 50), (50, 255, 50), 0
+            if data:
+                level, xp = [data['level'], data['xp']]
+            else:
+                level, xp = [0, 0]
+            img = Image.new("RGB", (1536, 512), color=background_colour)
+            dr = ImageDraw.Draw(img)
+            avatar = BytesIO(await http.get(str(user.avatar_url_as(size=512, format="png")), res_method="read"))
+            avatar_img = Image.open(avatar)
+            avatar_resized = avatar_img.resize((512, 512))
+            img.paste(avatar_resized)
+            font_dir = "assets/font.ttf"
+            font = ImageFont.truetype(font_dir, size=72)
+            font_small = ImageFont.truetype(font_dir, size=48)
+            dr.text((552, 20), f"{user}", font=font, fill=font_colour)
+            al = levels()   # All levels
+            try:
+                req = int(al[level])  # Requirement to next level
+                # re = req - xp
+                r2 = f"{req:,.0f}"
+            except IndexError:
+                req = float("inf")
+                r2 = "MAX"
+            # r3 = value_string(re)
+            try:
+                prev = int(al[level-1]) if level != 0 else 0
+            except IndexError:
+                prev = 0
+            _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
+            place = "unknown"
+            for x in range(len(_data)):
+                if _data[x]['uid'] == user.id:
+                    place = f"#{x + 1:,}"
+                    break
+            if not is_self:
+                progress = (xp - prev) / (req - prev)
+                dr.text((552, 100), f"Level {level:,}", font=font_small, fill=font_colour)
+                dr.text((552, 150), f"Rank {place}", font=font_small, fill=font_colour)
+                dr.text((552, 350), f"{xp:,}/{r2} XP", font=font_small, fill=font_colour)
+            else:
+                progress = 0.5
+                dr.text((552, 100), f"Level 69,420", font=font_small, fill=font_colour)
+                dr.text((552, 150), f"Rank #1", font=font_small, fill=font_colour)
+                dr.text((552, 350), f"9,999,999,999,999 XP", font=font_small, fill=font_colour)
+            full = 800
+            done = int(progress * full)
+            if done < 0:
+                done = 0
+            # left = full - done
+            i1 = Image.new("RGB", (done, 60), color=progress_colour)
+            i2 = Image.new("RGB", (full + 10, 70), color=(30, 30, 30))
+            box1 = (552, 420, 552 + done, 480)
+            box2 = (547, 415, 557 + full, 485)  # 2 px bigger
+            img.paste(i2, box2)
+            img.paste(i1, box1)
+            bio = BytesIO()
+            img.save(bio, "PNG")
+            # img.save("test.png", "PNG")
+            bio.seek(0)
+            r = f"**{user}**'s rank in **{ctx.guild.name}**"
+            if is_self:
+                r += "\nThat's my card! Did you think I'd play fair?"
+            return await ctx.send(r, file=discord.File(bio, filename="rank.png"))
 
     @commands.group(name="crank", aliases=["customrank"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
