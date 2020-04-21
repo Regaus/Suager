@@ -24,12 +24,12 @@ class Social(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, \
-            self.slap, self.blush, self.smile, self.highfive = [lists.error] * 13
+            self.slap, self.blush, self.smile, self.highfive, self.poke, self.boop = [lists.error] * 15
         self.type = main.version
         self.banned = [690254056354087047, 694684764074016799]
         self.db = database.Database()
-        self.insert = f"INSERT INTO counters VALUES ({'?, ' * 41}?)"
-        self.empty = [0] * 42
+        self.insert = f"INSERT INTO counters VALUES ({'?, ' * 45}?)"
+        self.empty = [0] * 46
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
@@ -237,7 +237,9 @@ class Social(commands.Cog):
         if is_fucked(self.bite):
             self.bite = await lists.get_images(self.bot, 'b')
         if user == ctx.author:
-            return await ctx.send("How are you going to do that?")
+            return await ctx.send(f"{emotes.Deny} Self harm bad")
+        if user.id in generic.get_config()["owners"]:
+            return await ctx.send(f"{emotes.Deny} Don't you even dare do that!")
         if user.id == self.bot.user.id:
             return await ctx.send(f"Ow.. why would you bite me, {ctx.author.name}? "
                                   f"It h-hurts ;-; {emotes.AlexHeartBroken}")
@@ -379,7 +381,8 @@ class Social(commands.Cog):
         if user is None:
             return await ctx.send_help(str(ctx.command))
         if user == ctx.author:
-            return await ctx.send(embed=discord.Embed(colour=generic.random_colour()).set_image(url=but_why))
+            return await ctx.send(f"{emotes.Deny} Self harm bad",
+                                  embed=discord.Embed(colour=generic.random_colour()).set_image(url=but_why))
         if user.id == self.bot.user.id:
             return await ctx.send(f"{ctx.author.name}, we can no longer be friends. ;-; {emotes.AlexHeartBroken}")
         if ctx.invoked_with == "slap":
@@ -783,6 +786,104 @@ class Social(commands.Cog):
         embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         return await ctx.send(embed=embed)
 
+    @commands.command(name="poke")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    async def poke(self, ctx, user: discord.Member):
+        """ Poke someone """
+        if is_fucked(self.poke):
+            self.poke = await lists.get_images(self.bot, 'P')
+        if user == ctx.author:
+            return await ctx.send(f"{emotes.Deny} How are you going to do that?")
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"Why did you poke me, {ctx.author.name}?")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{user.name}** got poked by **{ctx.author.name}**"
+        embed.set_image(url=random.choice(self.poke))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[42] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            pg = data_giver["pokes_given"]
+            if pg is None:
+                pg = 1
+            else:
+                pg = pg + 1
+            self.db.execute("UPDATE counters SET pokes_given=? WHERE uid=? AND gid=?",
+                            (pg, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[43] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            pr = data_receive["pokes_received"]
+            if pr is None:
+                pr = 1
+            else:
+                pr = pr + 1
+            self.db.execute("UPDATE counters SET pokes_received=? WHERE uid=? AND gid=?",
+                            (pr, user.id, ctx.guild.id))
+            number = pr
+        embed.set_footer(text=f"{user.name} has now been poked {number} time(s) in this server!")
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="boop", aliases=["bap"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    async def boop(self, ctx, user: discord.Member):
+        """ I hate you... """
+        if is_fucked(self.boop):
+            self.boop = await lists.get_images(self.bot, 'B')
+        if user == ctx.author:
+            return await ctx.send(f"{emotes.Deny} How are you going to do that?")
+        if user.id == self.bot.user.id:
+            return await ctx.send(f"Why though, {ctx.author.name}?")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.description = f"**{user.name}** got booped by **{ctx.author.name}**"
+        embed.set_image(url=random.choice(self.boop))
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not data_giver:
+            data = self.empty.copy()
+            data[0] = ctx.author.id
+            data[1] = ctx.guild.id
+            data[44] = 1
+            self.db.execute(self.insert, tuple(data))
+        else:
+            bg = data_giver["boops_given"]
+            if bg is None:
+                bg = 1
+            else:
+                bg = bg + 1
+            self.db.execute("UPDATE counters SET boops_given=? WHERE uid=? AND gid=?",
+                            (bg, ctx.author.id, ctx.guild.id))
+        if not data_receive:
+            data = self.empty.copy()
+            data[0] = user.id
+            data[1] = ctx.guild.id
+            data[45] = 1
+            self.db.execute(self.insert, tuple(data))
+            number = 1
+        else:
+            br = data_receive["boops_received"]
+            if br is None:
+                br = 1
+            else:
+                br = br + 1
+            self.db.execute("UPDATE counters SET boops_received=? WHERE uid=? AND gid=?",
+                            (br, user.id, ctx.guild.id))
+            number = br
+        embed.set_footer(text=f"{user.name} has now been booped {number} time(s) in this server!")
+        return await ctx.send(embed=embed)
+
     @commands.command(name="reloadimages")
     @commands.is_owner()
     async def reload_images(self, ctx):
@@ -799,6 +900,9 @@ class Social(commands.Cog):
         self.slap = await lists.get_images(self.bot, 'v')
         self.blush = await lists.get_images(self.bot, 'u')
         self.highfive = await lists.get_images(self.bot, 'i')
+        self.smile = await lists.get_images(self.bot, 'm')
+        self.poke = await lists.get_images(self.bot, 'P')
+        self.boop = await lists.get_images(self.bot, 'B')
         if generic.get_config()["logs"]:
             # await logs.log_channel(self.bot, 'changes').send('Reloaded KB images')
             logs.save(logs.get_place(self.type, "changes"), "Reloaded KB images")
@@ -887,29 +991,47 @@ class Social(commands.Cog):
             return await ctx.send("It doesn't seem I have anything saved for you...")
         embed = discord.Embed(colour=generic.random_colour())
         embed.set_thumbnail(url=user.avatar_url_as(static_format="png", size=1024))
+        value = f"{data['bites_given']:,} - Times bit someone\n" \
+                f"{data['bites_received']:,} - Times bitten\n" \
+                f"{data['cuddles_given']:,} - Cuddles given\n" \
+                f"{data['cuddles_received']:,} - Cuddles received\n" \
+                f"{data['high_fives_given']:,} - High fives given\n" \
+                f"{data['high_fives_received']:,} - High fives received\n" \
+                f"{data['hugs_given']:,} - Hugs given\n" \
+                f"{data['hugs_received']:,} - Hugs received\n" \
+                f"{data['kisses_given']:,} - Kisses given\n" \
+                f"{data['kisses_received']:,} - Kisses received\n" \
+                f"{data['licks_given']:,} - Licked others\n" \
+                f"{data['licks_received']:,} - Gotten licked\n" \
+                f"{data['pats_given']:,} - Pats given\n" \
+                f"{data['pats_received']:,} - Pats received\n" \
+                f"{data['slaps_given']:,} - Slaps given\n" \
+                f"{data['slaps_received']:,} - Slaps received\n" \
+                f"{data['sniffs_given']:,} - Sniffed others\n" \
+                f"{data['sniffs_received']:,} - Gotten sniffed\n"
+        if data["pokes_given"] is not None:
+            value += f"{data['pokes_given']:,} - Poked others\n"
+        if data["pokes_received"] is not None:
+            value += f"{data['pokes_received']:,} - Gotten poked\n"
+        if data["boops_given"] is not None:
+            value += f"{data['boops_given']:,} - Booped others\n"
+        if data["boops_received"] is not None:
+            value += f"{data['boops_received']:,} - Gotten booped"
         embed.add_field(name="Social", inline=False,
-                        value=f"{data['bites_given']:,} - Times bit someone\n"
-                              f"{data['bites_received']:,} - Times bitten\n"
-                              f"{data['cuddles_given']:,} - Cuddles given\n"
-                              f"{data['cuddles_received']:,} - Cuddles received\n"
-                              f"{data['high_fives_given']:,} - High fives given\n"
-                              f"{data['high_fives_received']:,} - High fives received\n"
-                              f"{data['hugs_given']:,} - Hugs given\n"
-                              f"{data['hugs_received']:,} - Hugs received\n"
-                              f"{data['kisses_given']:,} - Kisses given\n"
-                              f"{data['kisses_received']:,} - Kisses received\n"
-                              f"{data['licks_given']:,} - Licks given\n"
-                              f"{data['licks_received']:,} - Licks received\n"
-                              f"{data['pats_given']:,} - Pats given\n"
-                              f"{data['pats_received']:,} - Pats received\n"
-                              f"{data['slaps_given']:,} - Slaps given\n"
-                              f"{data['slaps_received']:,} - Slaps received\n"
-                              f"{data['sniffs_given']:,} - Sniffs given\n"
-                              f"{data['sniffs_received']:,} - Sniffs received")
+                        value=value)
         if ctx.guild.id != 690162603275714574:
             embed.add_field(name=f"{emotes.NotLikeThis} Scary stuff", inline=False,
                             value=f"{data['bangs_received']:,} time(s) got banged\n"
                                   f"{data['bangs_given']:,} time(s) banged others")
+        embed.add_field(name="Edit This Text", inline=False,
+                        value=f"{data['bad_given']:,} - Called others bad\n"
+                              f"{data['bad_received']:,} - Gotten called bad\n"
+                              f"{data['beaned']:,} - Gotten beaned\n"
+                              f"{data['beans_given']:,} - Beaned others\n"
+                              f"{data['shipped']:,} - Gotten shipped\n"
+                              f"{data['ships_built']:,} - Ships built\n"
+                              f"{data['trashed']:,} - Gotten called trash\n"
+                              f"{data['trash_given']:,} - Called others trash")
         embed.add_field(name="Statuses", inline=False,
                         value=f"{data['blushed']:,} time(s) blushed\n"
                               f"{data['cried']:,} time(s) cried\n"
@@ -940,8 +1062,9 @@ class Social(commands.Cog):
                 ["bites_given", "bites_received", "cuddles_given", "cuddles_received", "high_fives_given",
                  "high_fives_received", "hugs_given", "hugs_received", "kisses_given", "kisses_received", "licks_given",
                  "licks_received", "pats_given", "pats_received", "slaps_given", "slaps_received", "sniffs_given",
-                 "sniffs_received"], ["bad_given", "bad_received", "beaned", "beans_given", "shipped", "ships_built",
-                                      "trashed", "trash_given"], ["blushed", "cried", "sleepy", "smiled"],
+                 "sniffs_received", "pokes_given", "pokes_received", "boops_given", "boops_received"],
+                ["bad_given", "bad_received", "beaned", "beans_given", "shipped", "ships_built", "trashed",
+                 "trash_given"], ["blushed", "cried", "sleepy", "smiled"],
                 ["carrots_received", "carrots_eaten", "cookies_received", "cookies_eaten", "fruits_received",
                  "fruits_eaten", "lemons_received", "lemons_eaten"]]
         names = ["Scary stuff", "Social", "<Name>", "Statuses", "Food"]
@@ -969,7 +1092,7 @@ class Social(commands.Cog):
                 key_name = key_name.title()
                 d = data[j]
                 if d is not None:
-                    if d[key] > 0:
+                    if d[key] is not None and d[key] > 0:
                         output += f"{key_name}: {d[key]:,} - <@{d['uid']}>\n"
             if output == "":
                 output = "No data available"

@@ -201,6 +201,10 @@ tables = [
         Column("fruits_received", 0, True),
         Column("fruits_eaten", 0, True),
         Column("lemons_received", 0, True),
-        Column("lemons_eaten", 0, True)
+        Column("lemons_eaten", 0, True),
+        Column("pokes_given", 0, False),
+        Column("pokes_received", 0, False),
+        Column("boops_given", 0, False),
+        Column("boops_received", 0, False)
     ])
 ]

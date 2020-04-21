@@ -121,13 +121,12 @@ class Leveling(commands.Cog):
         now = time.now_ts()
         td = now - last
         _td = now - ls
-        mr = random.uniform(5, 15)
-        if 1 <= td < 2 or 1 <= _td < 2:
-            mult = -0.2
-        elif 0.33 <= td < 1 or 0.33 <= _td < 1:
-            mult = -0.4
-        elif td < 0.33 or _td < 0.33:
-            mult = -1
+        mr = random.uniform(5, 10)
+        naughty_list = [424472476106489856, 648671430686277651, 661439493055971350, 273916273732222979]
+        # canvas, WeebLord, Mari, Adde
+        um = 0.95 if ctx.author.id in naughty_list else 1
+        if td < 1.5 or _td < 1.5:
+            mult = 0.2 / _td
         elif 1 <= td < mr:
             mult = 0
         elif mr <= td < 60:
@@ -135,15 +134,20 @@ class Leveling(commands.Cog):
         else:
             mult = 1
         dc = mult == 0  # didn't count
+        spam = 1
+        if similarities[0] == 1:
+            spam = -1 if mult > 0 else 2.5
         if similarities[0] > 0.9:
-            mult *= -0.25 if mult > 0 else 1.75
+            spam = -0.3 if mult > 0 else 1.75
         elif 0.9 > similarities[0] > 0.8:
-            mult /= 4 if mult > 0 else (1 / 1.75)
+            spam = 0.3 if mult > 0 else 4 / 7
         if td < 90:
-            if similarities[1] > 0.8:
-                mult *= 1.5 if mult < 0 else 0.25
+            if 1 > similarities[1] > 0.8:
+                spam *= 1.5 if spam < 0 else 0.25
+            elif similarities[1] == 1:
+                spam *= 2 if spam < 0 else 0.125
             if similarities[2] > 0.85:
-                mult *= 1.5 if mult < 0 else 0.33
+                spam *= 1.5 if spam < 0 else 0.33
         lm[2] = lm[1]
         lm[1] = lm[0]
         lm[0] = ctx.content
@@ -155,7 +159,11 @@ class Leveling(commands.Cog):
             sm = 0 if sm < 0 else sm if sm < 10 else 10
         except KeyError:
             sm = 1
-        new = int(random.uniform(x1, x2) * sm * mult)
+        if mult > 0 and spam > 0:
+            new = int(random.uniform(x1, x2) * sm * um * mult * spam)
+        else:
+            total = -abs(mult * spam * (1 / um))
+            new = int(random.uniform(x1, x2) * sm * total)
         if (ctx.author.id == 592345932062916619) or caps:
             new = 0
         xp += new
