@@ -126,7 +126,7 @@ class Leveling(commands.Cog):
         # canvas, WeebLord, Mari, Adde
         um = 0.95 if ctx.author.id in naughty_list else 1
         if td < 1.5 or _td < 1.5:
-            mult = 0.2 / _td
+            mult = -0.2 / _td
         elif 1 <= td < mr:
             mult = 0
         elif mr <= td < 60:
