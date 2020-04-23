@@ -21,23 +21,6 @@ def similarity(a: str, b: str or None):
     return difflib.SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 
-def similarity_nc(a: str, b: str):
-    return difflib.SequenceMatcher(None, a, b).ratio()
-
-
-def caps_spam(a: str):
-    split = a.split(" ")
-    if len(split) == 1:
-        sim = similarity_nc(a, a.upper())
-        return int(sim > 0.9 and len(a) > 10), 1
-    if len(split) == 2:
-        return -1, -1
-    caps = [word.upper() for word in split]
-    similarities = [similarity_nc(split[i], caps[i]) for i in range(len(split)) if len(split[i]) > 2]
-    spammed = [sim for sim in similarities if sim > 0.85]
-    return len(spammed), len(split)
-
-
 def get_colour(colour: int):
     a = 256
     r, g = divmod(colour, a ** 2)
@@ -96,15 +79,6 @@ class Leveling(commands.Cog):
         except KeyError:
             pass
         data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        caps = False
-        if ctx.guild.id == 690162603275714574:
-            # if ctx.content.startswith("/"):
-            #     return
-            cs, ls = caps_spam(ctx.content)
-            if ls == 1 and cs == 1:
-                caps = True
-            elif cs > 2:
-                caps = True
         if data:
             level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
             dm = data["last_messages"]
@@ -122,9 +96,6 @@ class Leveling(commands.Cog):
         td = now - last
         _td = now - ls
         mr = random.uniform(5, 10)
-        naughty_list = [424472476106489856, 648671430686277651, 661439493055971350, 273916273732222979]
-        # canvas, WeebLord, Mari, Adde
-        um = 0.95 if ctx.author.id in naughty_list else 1
         if td < 1.5 or _td < 1.5:
             mult = -0.2 / _td
         elif 1 <= td < mr:
@@ -160,11 +131,11 @@ class Leveling(commands.Cog):
         except KeyError:
             sm = 1
         if mult > 0 and spam > 0:
-            new = int(random.uniform(x1, x2) * sm * um * mult * spam)
+            new = int(random.uniform(x1, x2) * sm * mult * spam)
         else:
-            total = -abs(mult * spam * (1 / um))
+            total = -abs(mult * spam)
             new = int(random.uniform(x1, x2) * sm * total)
-        if (ctx.author.id == 592345932062916619) or caps:
+        if (ctx.author.id == 592345932062916619):
             new = 0
         xp += new
         # print(td, _td, xp, new, _n, mult)

@@ -141,6 +141,13 @@ class Economy(commands.Cog):
             return
         return await ctx.send(soon)
 
+    @commands.command(name="steal")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    async def steal(self, ctx):
+        """ Imagine stealing """
+        return await ctx.send(f"{emotes.Deny} Stealing bad.")
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))

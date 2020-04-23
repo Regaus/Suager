@@ -152,8 +152,13 @@ class Social(commands.Cog):
     @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def lick(self, ctx, user: discord.Member):
+    async def lick(self, ctx, user: discord.Member = None):
         """ Lick someone """
+        if ctx.guild.id == 690162603275714574:
+            return await ctx.send(f"{emotes.Deny} This command is disabled in this server due to a number of "
+                                  f"complaints from members.")
+        if user is None:
+            return await ctx.send_help(str(ctx.command))
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
         embed = discord.Embed(colour=generic.random_colour())
@@ -232,14 +237,18 @@ class Social(commands.Cog):
     @commands.command(name="bite")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def bite(self, ctx, user: discord.Member):
+    async def bite(self, ctx, user: discord.Member = None):
         """ Bite someone """
+        if ctx.guild.id == 690162603275714574:
+            return await ctx.send(f"{emotes.Deny} This command is disabled in this server.")
+        if user is None:
+            return await ctx.send_help(str(ctx.command))
         if is_fucked(self.bite):
             self.bite = await lists.get_images(self.bot, 'b')
         if user == ctx.author:
             return await ctx.send(f"{emotes.Deny} Self harm bad")
         if user.id in generic.get_config()["owners"]:
-            return await ctx.send(f"{emotes.Deny} Don't you even dare do that!")
+            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are not allowed to do that.")
         if user.id == self.bot.user.id:
             return await ctx.send(f"Ow.. why would you bite me, {ctx.author.name}? "
                                   f"It h-hurts ;-; {emotes.AlexHeartBroken}")
@@ -383,6 +392,8 @@ class Social(commands.Cog):
         if user == ctx.author:
             return await ctx.send(f"{emotes.Deny} Self harm bad",
                                   embed=discord.Embed(colour=generic.random_colour()).set_image(url=but_why))
+        if user.id in generic.get_config()["owners"]:
+            return await ctx.send(f"{emotes.Deny} You are not allowed to do that, {ctx.author.name}")
         if user.id == self.bot.user.id:
             return await ctx.send(f"{ctx.author.name}, we can no longer be friends. ;-; {emotes.AlexHeartBroken}")
         if ctx.invoked_with == "slap":
@@ -502,39 +513,54 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def bean(self, ctx, user: discord.Member):
         """ Bean someone """
+        bean_self = False
         if user == ctx.author:
             return await ctx.send(f"{emotes.Deny} How are you gonna do that?")
         if user.id == 302851022790066185:
-            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are not allowed to do that.")
+            # return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are not allowed to do that.")
+            bean_self = True
         if user.id == self.bot.user.id:
-            return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you can't bean me.")
+            # return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you can't bean me.")
+            bean_self = True
         if user.id == ctx.guild.owner.id and ctx.author.id != 302851022790066185:
             return await ctx.send(f"{emotes.Deny} Imagine beaning the owner, lol")
-        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if ctx.author.id == 424472476106489856:
+            bean_self = True
+        if not bean_self:
+            id1, id2 = ctx.author.id, user.id
+            index1, index2 = 24, 25
+        else:
+            id1, id2 = user.id, ctx.author.id
+            index1, index2 = 25, 24
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (id1, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (id2, ctx.guild.id))
         if not data_giver:
             data = self.empty.copy()
-            data[0] = ctx.author.id
+            data[0] = id1
             data[1] = ctx.guild.id
-            data[24] = 1
+            data[index1] = 1
             self.db.execute(self.insert, tuple(data))
         else:
             self.db.execute("UPDATE counters SET beans_given=? WHERE uid=? AND gid=?",
-                            (data_giver["beans_given"] + 1, ctx.author.id, ctx.guild.id))
+                            (data_giver["beans_given"] + 1, id1, ctx.guild.id))
         if not data_receive:
             data = self.empty.copy()
-            data[0] = user.id
+            data[0] = id2
             data[1] = ctx.guild.id
-            data[25] = 1
+            data[index2] = 1
             self.db.execute(self.insert, tuple(data))
             number = 1
         else:
             self.db.execute("UPDATE counters SET beaned=? WHERE uid=? AND gid=?",
-                            (data_receive["beaned"] + 1, user.id, ctx.guild.id))
+                            (data_receive["beaned"] + 1, id2, ctx.guild.id))
             number = data_receive["beaned"] + 1
         # embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
-        return await ctx.send(f"{emotes.Allow} {user.name}, you are dismissed from {ctx.guild.name}.\n"
-                              f"{user.name} has now been beaned {number} time(s) in this server!")
+        if not bean_self:
+            bean = f"{emotes.Allow} {user.name}, you are dismissed from {ctx.guild.name}.\n" \
+                   f"{user.name} has now been beaned {number} time(s) in this server!"
+        else:
+            bean = f"{emotes.Deny} {ctx.author.name}, you are dismissed from {ctx.guild.name}."
+        return await ctx.send(bean)
 
     @commands.command(name="cookie")
     @commands.guild_only()
@@ -669,35 +695,41 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def bad(self, ctx, user: discord.Member):
         """ Bad user """
+        bad_self = False
         if user.id == 302851022790066185:
-            user = ctx.author
-            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?",
-                                            (ctx.author.id, ctx.guild.id))
-            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            bad_self = True
+        elif ctx.author.id == 424472476106489856:
+            bad_self = True
+        if not bad_self:
+            id1, id2 = ctx.author.id, user.id
+            index1, index2 = 22, 23
         else:
-            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            id1, id2 = user.id, ctx.author.id
+            index1, index2 = 23, 22
+            user = ctx.author
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (id1, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (id2, ctx.guild.id))
         if user.id == self.bot.user.id:
             return await ctx.send(f"{emotes.AlexHeartBroken}")
         if not data_giver:
             data = self.empty.copy()
-            data[0] = ctx.author.id
+            data[0] = id1
             data[1] = ctx.guild.id
-            data[22] = 1
+            data[index1] = 1
             self.db.execute(self.insert, tuple(data))
         else:
             self.db.execute("UPDATE counters SET bad_given=? WHERE uid=? AND gid=?",
-                            (data_giver["bad_given"] + 1, ctx.author.id, ctx.guild.id))
+                            (data_giver["bad_given"] + 1, id1, ctx.guild.id))
         if not data_receive:
             data = self.empty.copy()
-            data[0] = user.id
+            data[0] = id2
             data[1] = ctx.guild.id
-            data[23] = 1
+            data[index2] = 1
             self.db.execute(self.insert, tuple(data))
             # number = 1
         else:
             self.db.execute("UPDATE counters SET bad_received=? WHERE uid=? AND gid=?",
-                            (data_receive["bad_received"] + 1, user.id, ctx.guild.id))
+                            (data_receive["bad_received"] + 1, id2, ctx.guild.id))
             # number = data_receive["bad_received"] + 1
         # embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         return await image_gen(ctx, user, "bad", f"bad_{user.name.lower()}")
@@ -707,42 +739,49 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
+        trash_self = False
         if user == ctx.author:
             return await ctx.send("Don't call yourself trash")
         if user == ctx.bot.user:
-            return await ctx.send(f"You calling me trash? {emotes.AlexHeartBroken}")
+            return await ctx.send(f"You dare calling me trash? {emotes.AlexHeartBroken}")
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
             a2, a1 = a1, a2
-            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?",
-                                            (ctx.author.id, ctx.guild.id))
-            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            trash_self = True
+        elif ctx.author.id == 424472476106489856:
+            a2, a1 = a1, a2
+            trash_self = True
+        if not trash_self:
+            id1, id2 = ctx.author.id, user.id
+            index1, index2 = 28, 29
         else:
-            data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-            data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            id1, id2 = user.id, ctx.author.id
+            index1, index2 = 23, 22
+        data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (id1, ctx.guild.id))
+        data_receive = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (id2, ctx.guild.id))
         bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}",
                                      res_method="read"))
         if bio is None:
             return await ctx.send("Something went wrong, couldn't generate image")
         if not data_giver:
             data = self.empty.copy()
-            data[0] = ctx.author.id
+            data[0] = id1
             data[1] = ctx.guild.id
-            data[28] = 1
+            data[index1] = 1
             self.db.execute(self.insert, tuple(data))
         else:
             self.db.execute("UPDATE counters SET trash_given=? WHERE uid=? AND gid=?",
-                            (data_giver["trash_given"] + 1, ctx.author.id, ctx.guild.id))
+                            (data_giver["trash_given"] + 1, id1, ctx.guild.id))
         if not data_receive:
             data = self.empty.copy()
-            data[0] = user.id
+            data[0] = id2
             data[1] = ctx.guild.id
-            data[29] = 1
+            data[index2] = 1
             self.db.execute(self.insert, tuple(data))
             # number = 1
         else:
             self.db.execute("UPDATE counters SET trashed=? WHERE uid=? AND gid=?",
-                            (data_receive["trashed"] + 1, user.id, ctx.guild.id))
+                            (data_receive["trashed"] + 1, id2, ctx.guild.id))
             # number = data_receive["trashed"] + 1
         # embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         return await ctx.send(file=discord.File(bio, filename=f"trash_{user.name}.png"))
@@ -978,7 +1017,7 @@ class Social(commands.Cog):
         message += f"\n{ctx.author.name} has now built {number3} ship(s) in this server!"
         return await ctx.send(message, file=discord.File(bio, filename=f"shipping_services.png"))
 
-    @commands.command(name="counters")
+    @commands.command(name="counters", aliases=["spamstats"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def counters(self, ctx, who: discord.Member = None):
@@ -1050,7 +1089,7 @@ class Social(commands.Cog):
                               f"{ar:,} cookies received\n{ae:,} cookies eaten\n{al:,} cookies left\n\n"
                               f"{fr:,} fruits received\n{fe:,} fruits eaten\n{fl:,} fruits left\n\n"
                               f"{lr:,} lemons received\n{le:,} lemons eaten\n{ll:,} lemons left")
-        return await ctx.send(f"Counters for {user.name} in {ctx.guild.name}", embed=embed)
+        return await ctx.send(f"Spam stats for {user.name} in {ctx.guild.name}", embed=embed)
 
     @commands.command(name="top")
     @commands.guild_only()
@@ -1097,7 +1136,7 @@ class Social(commands.Cog):
             if output == "":
                 output = "No data available"
             embed.add_field(name=name, value=output, inline=False)
-        return await ctx.send(f"Top counters in {ctx.guild.name}", embed=embed)
+        return await ctx.send(f"Top spammers in {ctx.guild.name}", embed=embed)
 
 
 def setup(bot):
