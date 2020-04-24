@@ -42,7 +42,7 @@ class Social(commands.Cog):
             return await ctx.send("Don't be like that ;-;")
         if user.id == self.bot.user.id:
             return await ctx.send(f"Thanks, {ctx.author.name} :3 {emotes.AlexHeart} {emotes.AlexPat}")
-        if user.id == 424472476106489856:
+        if user.id == 424472476106489856 and ctx.author.id not in [689158123352883340]:
             return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a pat from **{ctx.author.name}**"
@@ -84,7 +84,7 @@ class Social(commands.Cog):
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673641089218904065/selfhug.gif"))
         if user.id == self.bot.user.id:
             return await ctx.send(f"*Hugs {ctx.author.name} back* {emotes.AlexHeart}")
-        if user.id == 424472476106489856 and ctx.author.id != 417390734690484224:
+        if user.id == 424472476106489856 and ctx.author.id not in [417390734690484224, 689158123352883340]:
             return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a hug from **{ctx.author.name}**"
@@ -125,7 +125,7 @@ class Social(commands.Cog):
             return await ctx.send("Alone? ;-;")
         if user.id == self.bot.user.id:
             return await ctx.send(f"*Cuddles {ctx.author.name} back* {emotes.AlexHeart}")
-        if user.id == 424472476106489856 and ctx.author.id != 417390734690484224:
+        if user.id == 424472476106489856 and ctx.author.id not in [417390734690484224, 689158123352883340]:
             return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a cuddle from **{ctx.author.name}**"
@@ -212,7 +212,7 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await ctx.send(f"Thanks, {ctx.author.name} {emotes.AlexHeart}! "
                                   f"But, I'm a bot... I wasn't programmed to feel love ;-;")
-        if user.id == 424472476106489856:
+        if user.id == 424472476106489856 and ctx.author.id not in [689158123352883340]:
             return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
