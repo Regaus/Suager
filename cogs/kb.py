@@ -42,6 +42,8 @@ class Social(commands.Cog):
             return await ctx.send("Don't be like that ;-;")
         if user.id == self.bot.user.id:
             return await ctx.send(f"Thanks, {ctx.author.name} :3 {emotes.AlexHeart} {emotes.AlexPat}")
+        if user.id == 424472476106489856:
+            return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a pat from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.pat))
@@ -82,6 +84,8 @@ class Social(commands.Cog):
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673641089218904065/selfhug.gif"))
         if user.id == self.bot.user.id:
             return await ctx.send(f"*Hugs {ctx.author.name} back* {emotes.AlexHeart}")
+        if user.id == 424472476106489856 and ctx.author.id != 417390734690484224:
+            return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a hug from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.hug))
@@ -121,6 +125,8 @@ class Social(commands.Cog):
             return await ctx.send("Alone? ;-;")
         if user.id == self.bot.user.id:
             return await ctx.send(f"*Cuddles {ctx.author.name} back* {emotes.AlexHeart}")
+        if user.id == 424472476106489856 and ctx.author.id != 417390734690484224:
+            return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** got a cuddle from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.cuddle))
@@ -206,6 +212,8 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await ctx.send(f"Thanks, {ctx.author.name} {emotes.AlexHeart}! "
                                   f"But, I'm a bot... I wasn't programmed to feel love ;-;")
+        if user.id == 424472476106489856:
+            return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         embed.description = f"**{user.name}** was kissed by **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.kiss))
@@ -677,8 +685,11 @@ class Social(commands.Cog):
             fr, fe = "fruits_received", "fruits_eaten"
         elif what == "lemon":
             fr, fe = "lemons_received", "lemons_eaten"
+        elif what.lower() in ["<@273916273732222979>", "<@!273916273732222979>", "adde", "adde the chicken noodle"]:
+            return await ctx.send(f"{ctx.author.name} just ate a piece of Adde the Chicken Noodle.")
         else:
-            return await ctx.send("You can only eat the following: cookie, carrot, fruit, lemon.")
+            return await ctx.send("You can only eat the following: cookie, carrot, fruit, lemon, and "
+                                  "Adde the Chicken Noodle.")
         data = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await ctx.send(f"You don't have any {what}s right now...")
