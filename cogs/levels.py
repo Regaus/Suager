@@ -222,8 +222,8 @@ class Leveling(commands.Cog):
         except KeyError:
             pass  # If no level rewards, don't even bother
         except discord.Forbidden:
-            await ctx.send(f"{ctx.author.name} should have got a level reward, "
-                           f"but I do not have sufficient permissions to do so.")
+            await ctx.channel.send(f"{ctx.author.name} should have got a level reward, "
+                                   f"but I do not have sufficient permissions to do so.")
         except Exception as e:
             print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
         _last = last if dc else now

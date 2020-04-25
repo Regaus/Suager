@@ -162,19 +162,24 @@ class Events(commands.Cog):
             if member.guild.id == 568148147457490954:
                 await self.bot.get_channel(610836120321785869).send(
                     f"{member.name} has abandoned Senko Lair :( {AlexHeartBroken}")
+        uid = member.id
+        gid = member.guild.id
+        self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+        self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
+        self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (uid, gid))
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
-        uid = user.id
-        gid = guild.id
-        del1 = self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
-        del2 = self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
-        del3 = self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (uid, gid))
+        # uid = user.id
+        # gid = guild.id
+        # del1 = self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+        # del2 = self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
+        # del3 = self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (uid, gid))
         logs.save(logs.get_place(self.type, "members"),
-                  f"{time.time()} > {user} ({user.id}) just got banned from {guild.name} - Database statuses: "
-                  f"leveling {del1}, economy {del2}, counters {del3}")
-        print(f"{time.time()} > Banned {user.name} from {guild.name} > DB statuses: lvl {del1}, economy {del2}, "
-              f"counters {del3}")
+                  f"{time.time()} > {user} ({user.id}) just got banned from {guild.name}")
+        #          f" - Database statuses: leveling {del1}, economy {del2}, counters {del3}")
+        # print(f"{time.time()} > Banned {user.name} from {guild.name} > DB statuses: lvl {del1}, economy {del2}, "
+        #       f"counters {del3}")
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
