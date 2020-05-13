@@ -167,7 +167,7 @@ class Discord(commands.Cog):
 
     @commands.group(name="settings")
     @commands.guild_only()
-    @permissions.has_permissions(manage_server=True)
+    @permissions.has_permissions(manage_guild=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def settings(self, ctx):
         """ Server settings """

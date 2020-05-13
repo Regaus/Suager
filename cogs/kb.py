@@ -395,6 +395,8 @@ class Social(commands.Cog):
         """ Violence! """
         if ctx.guild.id == 690162603275714574:
             return await ctx.send(f"{emotes.Deny} This command is disabled in this server.")
+        if ctx.guild.id == 704793070646067216:
+            return await ctx.send(f"{emotes.Deny} This command is disabled in this server.")
         if user is None:
             return await ctx.send_help(str(ctx.command))
         if user == ctx.author:
@@ -706,6 +708,8 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def bad(self, ctx, user: discord.Member):
         """ Bad user """
+        if ctx.guild.id == 704793070646067216:
+            return await ctx.send(f"{emotes.Deny} This command is disabled in this server.")
         bad_self = False
         if user.id == 302851022790066185:
             bad_self = True
@@ -750,6 +754,8 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.guild)
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
+        if ctx.guild.id == 704793070646067216:
+            return await ctx.send(f"{emotes.Deny} This command is disabled in this server.")
         trash_self = False
         if user == ctx.author:
             return await ctx.send("Don't call yourself trash")

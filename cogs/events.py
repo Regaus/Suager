@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import random
-from datetime import datetime
 
 import discord
 import psutil
@@ -139,15 +138,16 @@ class Events(commands.Cog):
                 await member.add_roles(snowflakes[2], reason=reason)
         if self.type == "stable":
             if member.guild.id == 568148147457490954:
-                td = time.now_ts() - datetime.timestamp(member.created_at)
-                if td < 86400:
-                    await member.kick(reason="Account created less than a day ago")
+                # td = time.now_ts() - datetime.timestamp(member.created_at)
+                # if td < 86400:
+                #     await member.kick(reason="Account created less than a day ago")
                 embed = discord.Embed(colour=generic.random_colour())
                 embed.set_thumbnail(url=member.avatar_url)
                 embed.add_field(name="User ID", value=member.id)
                 embed.add_field(name="Created at", value=time.time_output(member.created_at))
                 embed.add_field(name="Joined at", value=time.time_output(member.joined_at))
-                await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
+                if not self.config["bots"]["stable"]["disable_welcome"]:
+                    await self.bot.get_channel(568148147457490958).send(f"Welcome {member.mention} to Senko Lair!")
                 await self.bot.get_channel(650774303192776744).send(
                     f"{member.name} just joined Senko Lair.", embed=embed)
 
