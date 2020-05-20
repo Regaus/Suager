@@ -1,0 +1,38 @@
+{
+  "token1": "NTIwMDQyMTk3MzkxNzY5NjEw.Xm0Xrw.C6WQLmSEayogYZJLUJCInlM6QTY",
+  "token": "NjA5NDIzNjQ2MzQ3MjMxMjgy.XsQ2WQ.dPkUyFyhxxQ5U_x8yQqFTNi-o34",
+  "owners": [
+    302851022790066185
+  ],
+  "join_message": "Oh what, I've been added to this server? Cool, hi! \u0440\u045f\u040a\u045f \ud83d\udc40",
+  "bots": {
+    "stable": {
+      "prefixes2": [
+        "b/",
+        "B/"
+      ],
+      "prefixes": [",/", "//", ",,"],
+      "change_playing": true,
+      "change_avatars": true,
+      "change_senko": false,
+      "disable_welcome": true,
+      "birthdays": {
+        "568148147457490954": {
+          "channel": 568148147457490958,
+          "role_id": 663661621448802304
+        }
+      },
+      "version": "4.3",
+      "full_version": "4.3.7",
+      "last_update": 1587765089
+    }
+  },
+  "common_prefix": [
+    "s/",
+    "S/"
+  ],
+  "spyware": true,
+  "playing_rate": 90,
+  "playing": "Sample Text",
+  "logs": true
+}
