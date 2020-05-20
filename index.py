@@ -74,7 +74,8 @@ for file in os.listdir("cogs"):
     if file.endswith(".py"):
         name = file[:-3]
         bot.load_extension(f"cogs.{name}")
-tasks.append(loop.create_task(bot.start(config["token"])))
+# tasks.append(loop.create_task(bot.start(config["token"])))
+tasks.append(loop.create_task(bot.start(os.environ["TOKEN"])))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))
