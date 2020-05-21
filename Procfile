@@ -1,1 +1,1 @@
-worker: python-3.8.3 index.py
+worker: python index.py
