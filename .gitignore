@@ -31,7 +31,7 @@ changes.json
 MANIFEST
 data/
 logs/
-# database.db
+database.db
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
