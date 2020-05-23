@@ -10,7 +10,7 @@ class HTTPSession(aiohttp.ClientSession):
     def __init__(self, loop=None):
         super().__init__(loop=loop or asyncio.get_event_loop())
 
-    def __del__(self):
+    def __del__(self, _warnings=None):
         """
         Closes the ClientSession instance
         cleanly when the instance is deleted.

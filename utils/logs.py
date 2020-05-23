@@ -3,25 +3,23 @@ import os
 error_channel = 691442857537568789
 
 
-def get_place(version: str, what: str):
-    return f"logs/{version}/{what}.rsf"
-
-
-def create():
-    for version in ["stable", "beta", "alpha"]:
-        for folder in ["logs", "data"]:
-            try:
-                os.makedirs(f"{folder}/{version}")
-            except FileExistsError:
-                pass
-
-
-def save(file: str, data: str, ow: bool = False):
+def create_logs():
     try:
-        p = "w" if ow else "a"
-        stuff = open(file, f"{p}+")
-        stuff.write(f"{data}\n")  # Add in an extra newline just in case
+        os.makedirs("data")
+    except FileExistsError:
+        pass
+
+
+def log(log_type: str, data: str):
+    stuff = open(f"data/{log_type}.rsf", "a+")
+    try:
+        stuff.write(f"{data}\n")
         stuff.close()
     except UnicodeEncodeError:
-        # print(f"{time.time()} > Failed to save data ({data})")
-        pass  # To not spam the console too much
+        try:
+            _data = data.encode("utf-8")  # Try to encode the shit
+            stuff.write(f"{str(_data)[2:-1]}\n")
+            stuff.close()
+        except Exception as _:
+            del _
+            # if the shit still doesn't work, do literally nothing

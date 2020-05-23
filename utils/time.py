@@ -1,38 +1,58 @@
-from datetime import datetime, timedelta as td
+from datetime import datetime, timedelta as td, timezone
 
+import pytz
 from dateutil.relativedelta import relativedelta
 
 
-def time_output(when: datetime, day: bool = True, seconds: bool = False, dow: bool = False):
+def time_output(when: datetime, day: bool = True, seconds: bool = False, dow: bool = False, tz: bool = False):
     d, n = ["%a, ", '']
-    f = f"{f'{d if dow else n}%d %b %Y, ' if day else ''}%H:%M{':%S' if seconds else ''}"
+    f = f"{f'{d if dow else n}%d %b %Y, ' if day else ''}%H:%M{':%S' if seconds else ''}{' %Z' if tz else ''}"
     return when.strftime(f)
 
 
 def now(utc: bool = False):
-    return datetime.utcnow() if utc else datetime.now()
-
-
-def time(utc: bool = False, day: bool = True, seconds: bool = True, dow: bool = False):
-    return time_output(now(utc), day, seconds, dow)
-
-
-def get_time(timestamp: int, utc: bool = False):
-    return datetime.utcfromtimestamp(timestamp) if utc else datetime.fromtimestamp(timestamp)
-
-
-def from_ts(timestamp, utc=False):
+    from utils.generic import config
     if utc:
-        return datetime.utcfromtimestamp(timestamp)
-    else:
-        return datetime.fromtimestamp(timestamp)
+        return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=pytz.timezone(config["timezone"]))
+    # return datetime.utcnow() if utc else datetime.now()
 
 
-def now_ts():
-    return datetime.timestamp(now(False))
+def now_k():
+    t = now(True).astimezone(timezone(td(hours=1, minutes=30), "KST"))
+    r = relativedelta(years=-276, days=5)
+    return t + r
 
 
-def file_ts(name, ext="txt"):
+def time_k(day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):
+    return time_output(now_k(), day, seconds, dow, tz)
+
+
+def time(utc: bool = False, day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):
+    return time_output(now(utc), day, seconds, dow, tz)
+
+
+# def get_time(timestamp: int, utc: bool = False):
+#     return datetime.utcfromtimestamp(timestamp) if utc else datetime.fromtimestamp(timestamp)
+
+
+def from_ts(timestamp: int or float, utc=False) -> datetime:
+    from utils.generic import config
+    if utc:
+        return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    return datetime.fromtimestamp(timestamp, tz=pytz.timezone(config["timezone"]))
+
+
+def now_ts() -> float:
+    return get_ts(now())
+    # return datetime.timestamp(now(False))
+
+
+def get_ts(when: datetime) -> float:
+    return datetime.timestamp(when)
+
+
+def file_ts(name: str, ext: str = "txt") -> str:
     return f"{name}_{int(now_ts())}.{ext}"
 
 
@@ -77,7 +97,8 @@ class Plural:
 
 
 def timesince(when: datetime):
-    t = now() - when
+    t = now(False) - from_ts(get_ts(when), False)
+    # This piece of shit complains about offset-naive and offset-aware datetime, but this horror somehow makes it shut the fuck up about it
     return timedelta(int(t.total_seconds()))
 
 
@@ -86,13 +107,14 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
     _now = source or now(False)
     # Microsecond free zone
     _now = _now.replace(microsecond=0)
-    dt = dt.replace(microsecond=0)
+    # dt = dt.replace(microsecond=0)
+    dt = from_ts(get_ts(dt), False)
 
     # This implementation uses relativedelta instead of the much more obvious
     # divmod approach with seconds because the seconds approach is not entirely
     # accurate once you go over 1 week in terms of accuracy since you have to
     # hardcode a month as 30 or 31 days.
-    # A query like "11 months" can be interpreted as "!1 months and 6 days"
+    # A query like "11 months" can be interpreted as "11 months and 6 days"
     if dt > _now:
         delta = relativedelta(dt, _now)
         suffix = ''
@@ -157,27 +179,7 @@ def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: boo
     p = "in " if future and suffix else ""
     s = " ago" if not future and suffix else ""
     delta = relativedelta(t, n)
-
-    # This implementation uses relativedelta instead of the much more obvious
-    # divmod approach with seconds because the seconds approach is not entirely
-    # accurate once you go over 1 week in terms of accuracy since you have to
-    # hardcode a month as 30 or 31 days.
-    # A query like "11 months" can be interpreted as "!1 months and 6 days"
-    # if dt > _now:
-    #     delta = relativedelta(dt, _now)
-    #     suffix = ''
-    # else:
-    #     delta = relativedelta(_now, dt)
-    #     suffix = ' ago' if suffix else ''
-
-    attrs = [
-        ('year', 'y'),
-        ('month', 'mo'),
-        ('day', 'd'),
-        ('hour', 'h'),
-        ('minute', 'm'),
-        ('second', 's'),
-    ]
+    attrs = [('year', 'y'), ('month', 'mo'), ('day', 'd'), ('hour', 'h'), ('minute', 'm'), ('second', 's')]
 
     output = []
     for attr, brief_attr in attrs:

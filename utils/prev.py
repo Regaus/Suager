@@ -115,7 +115,7 @@ async def reload(self, ctx, version: str, name: str, where: str):
 async def reload_all(self, ctx, where: str):
     """ Reloads all extensions. """
     error_collection = []
-    for file in os.listdir("cogs"):
+    for file in os.listdir("cogs_old"):
         if file.endswith(".py"):
             name = file[:-3]
             try:

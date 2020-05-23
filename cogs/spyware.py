@@ -2,14 +2,13 @@ from io import BytesIO
 
 import discord
 from discord.ext import commands
-
-from cogs import main
 from utils import time, generic, logs, http
 
 
 def status_gen(log, to, who, what, old, new, guild, uid):
     send = f"{to} > {guild} > {who}'s ({uid}) {what} is now {new} (from {old})"
-    logs.save(log, send)
+    logs.log(log, send)
+    # logs.save(log, send)
 
 
 class Spyware(commands.Cog):
@@ -25,13 +24,15 @@ class Spyware(commands.Cog):
         to = time.time()
         # senko = self.bot.get_channel(self.log_sl)
         # log = logs.log_channel(self.bot, 'spyware')
-        log = logs.get_place(main.version, "spyware")
+        # log = logs.get_place(main.version, "spyware")
+        log = "spyware"
         uid = after.id
         n1, n2 = [before.name, after.name]
         if n1 != n2:
             send = f"{to} > {n1} ({uid}) is now known as {n2}"
             # await senko.send(send)
-            logs.save(log, send)
+            logs.log(log, send)
+            # logs.save(log, send)
         a1, a2 = [before.avatar, after.avatar]
         if a1 != a2:
             if after.id not in [609423646347231282, 568149836927467542, 520042197391769610]:  # Suager diff versions
@@ -46,9 +47,13 @@ class Spyware(commands.Cog):
                     file = discord.File(bio, filename=f"{after.avatar}.{fe}")
                 else:
                     file = None
-                if al is not None and main.version == "stable":
-                    await al.send(send, file=file)
-                logs.save(logs.get_place(main.version, "avatars"), send)
+                if al is not None:
+                    try:
+                        await al.send(send, file=file)
+                    except discord.HTTPException:
+                        pass
+                logs.log("avatars", send)
+                # logs.save(logs.get_place(main.version, "avatars"), send)
                 # await logs.log_channel(self.bot, 'avatars').send(
                 #     f"{send}. New avatar: {after.avatar_url_as(size=1024)}")
         d1, d2 = [before.discriminator, after.discriminator]
@@ -56,7 +61,8 @@ class Spyware(commands.Cog):
             send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
             # await senko.send(send)
             # await log.send(send)
-            logs.save(log, send)
+            logs.log(log, send)
+            # logs.save(log, send)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
@@ -64,9 +70,12 @@ class Spyware(commands.Cog):
         if not logging:
             return
         to = time.time()
-        log = logs.get_place(main.version, "spyware")
-        al = logs.get_place(main.version, "spyware_activity")
-        sl = logs.get_place(main.version, "spyware_status")
+        log = "spyware"
+        al = "spyware_activity"
+        sl = "spuware_status"
+        # log = logs.get_place(main.version, "spyware")
+        # al = logs.get_place(main.version, "spyware_activity")
+        # sl = logs.get_place(main.version, "spyware_status")
         guild = after.guild.name
         n = after.name
         uid = after.id
@@ -78,7 +87,8 @@ class Spyware(commands.Cog):
                 send = f"{to} > {after.guild.name} > {n}'s ({uid}) activities changed: now {t}: {a2.name}"
             else:
                 send = f"{to} > {after.guild.name} > {n} ({uid}) now has no activity."
-            logs.save(al, send)
+            logs.log(al, send)
+            # logs.save(al, send)
             # if now > last + 15:
             #     logs.log_channel(self.bot, 'activity').send(send)
             #     activity_logged[after.id] = now
@@ -90,11 +100,11 @@ class Spyware(commands.Cog):
                 await generic.you_little_shit(self.bot.get_guild(568148147457490954))
             send = f"{to} > {n}'s ({uid}) nickname in {guild} is now {n2} (from {n1})"
             # await log.send(send)
-            logs.save(log, send)
+            logs.log(log, send)
+            # logs.save(log, send)
         try:
-            s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, before.mobile_status, before.desktop_status,
-                                                    before.web_status, after.status, after.mobile_status,
-                                                    after.desktop_status, after.web_status]
+            s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, before.mobile_status, before.desktop_status, before.web_status, after.status,
+                                                    after.mobile_status, after.desktop_status, after.web_status]
         except AttributeError:
             s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, None, None, None, after.status, None, None, None]
         # status_log = logs.log_channel(self.bot, 'status')
@@ -118,11 +128,13 @@ class Spyware(commands.Cog):
                 if role not in r1:
                     roles_gained.append(role.name)
             for role in roles_lost:
+                logs.log(log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
                 # await log.send(f"{to} > `{guild}` > `{n}` lost role `{role}`")
-                logs.save(log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
+                # logs.save(log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
             for role in roles_gained:
+                logs.log(log, f"{to} > {guild} > {n} ({uid}) got role {role}")
                 # await log.send(f"{to} > `{guild}` > `{n}` got role `{role}`")
-                logs.save(log, f"{to} > {guild} > {n} ({uid}) got role {role}")
+                # logs.save(log, f"{to} > {guild} > {n} ({uid}) got role {role}")
 
 
 def setup(bot):

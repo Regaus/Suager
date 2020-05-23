@@ -11,7 +11,6 @@ class Bot(AutoShardedBot):
     async def on_message(self, msg):
         if not self.is_ready() or msg.author.bot or not permissions.can_send(msg):
             return
-
         await self.process_commands(msg)
 
 

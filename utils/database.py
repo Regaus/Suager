@@ -1,6 +1,5 @@
 import sqlite3
 
-from utils import time
 types = [
     "INTEGER",   # int
     "REAL",      # float
@@ -79,7 +78,7 @@ class Table:
         db = Database()
         result = db.execute(command)
         if result != "CREATE 0":
-            print(f"{time.time()} > {self.name} > {result}")
+            print(f"{self.name} > {result}")
 
 
 def creation():
@@ -100,9 +99,10 @@ tables = [
     ]),
     Table("custom_role", [
         Column("uid", 0, True),
-        Column("rid", 0, True)
+        Column("rid", 0, True),
+        Column("gid", 0, True)
     ]),
-    Table("data_stable", [
+    Table("data", [
         Column("id", 0, True),
         Column("type", 2, True),
         Column("data", 2, True),
@@ -111,23 +111,9 @@ tables = [
         Column("disc", 0, False),
         Column("extra", 0, False)
     ]),
-    Table("data_beta", [
-        Column("id", 0, True),
-        Column("type", 2, True),
-        Column("data", 2, True),
-        Column("usage", 3, True),
-        Column("name", 2, False),
-        Column("disc", 0, False),
-        Column("extra", 0, False)
-    ]),
-    Table("data_alpha", [
-        Column("id", 0, True),
-        Column("type", 2, True),
-        Column("data", 2, True),
-        Column("usage", 3, True),
-        Column("name", 2, False),
-        Column("disc", 0, False),
-        Column("extra", 0, False)
+    Table("settings", [
+        Column("gid", 0, True),
+        Column("data", 0, True)
     ]),
     Table("economy", [
         Column("uid", 0, True),

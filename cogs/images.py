@@ -6,10 +6,10 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from utils import http, argparser
+from utils import http, argparser, generic
 
 
-async def image_gen(ctx, user: discord.Member, link, filename=None, extra_args=None):
+async def image_gen(ctx: commands.Context, user: discord.Member, link, filename=None, extra_args=None):
     async with ctx.typing():
         if filename is None:
             filename = link
@@ -18,33 +18,39 @@ async def image_gen(ctx, user: discord.Member, link, filename=None, extra_args=N
         extra = f"&{extra_args}" if extra_args is not None else ''
         bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", res_method="read"))
         if bio is None:
-            return await ctx.send("Something went wrong, couldn't generate image")
-        return await ctx.send(file=discord.File(bio, filename=f"{filename}.png"))
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
+            # return await ctx.send("Something went wrong, couldn't generate image")
+        return await generic.send(None, ctx.channel, file=discord.File(bio, filename=f"{filename}.png"))
+        # return await ctx.send(file=discord.File(bio, filename=f"{filename}.png"))
 
 
-async def api_img_creator(ctx, url, filename, content=None):
+async def api_img_creator(ctx: commands.Context, url, filename, content=None):
     async with ctx.channel.typing():
         req = await http.get(url, res_method="read")
 
         if req is None:
-            return await ctx.send("I couldn't create the image ;-;")
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
+            # return await ctx.send("I couldn't create the image ;-;")
 
         bio = BytesIO(req)
         bio.seek(0)
-        await ctx.send(content=content, file=discord.File(bio, filename=filename))
+        return await generic.send(content, ctx.channel, file=discord.File(bio, filename=filename))
+        # await ctx.send(content=content, file=discord.File(bio, filename=filename))
 
 
 class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="colour", aliases=["color"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def colour(self, ctx, colour: str):
+    async def colour(self, ctx: commands.Context, colour: str):
         """ Colours! """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "colour"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         async with ctx.typing():
             c = ctx.invoked_with
             if colour == "random":
@@ -86,10 +92,13 @@ class Images(commands.Cog):
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def colourify(self, ctx, user: discord.Member = None, colour: str = "7289da"):
+    async def colourify(self, ctx: commands.Context, user: discord.Member = None, colour: str = "7289da"):
         """ Colourify """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "colourify"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if user is None:
             user = ctx.author
         z = "7289da"
@@ -116,14 +125,16 @@ class Images(commands.Cog):
 
     @commands.command(name="filter")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def filter(self, ctx, filter_name: str, user: discord.Member = None):
+    async def filter(self, ctx: commands.Context, filter_name: str, who: discord.Member = None):
         """ Let someone go through a filter
         Allowed filter names: "blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik",
         "jpegify", "communist" """
-        if ctx.channel.id in self.banned:
-            return
-        if user is None:
-            user = ctx.author
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "filter"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        user = who or ctx.author
         filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist"]
         _filter = filter_name.lower()
         if _filter not in filters:
@@ -132,40 +143,49 @@ class Images(commands.Cog):
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def joke_over_head(self, ctx, user: discord.Member = None):
+    async def joke_over_head(self, ctx: commands.Context, who: discord.Member = None):
         """ Joke over head """
-        if ctx.channel.id in self.banned:
-            return
-        if user is None:
-            user = ctx.author
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "woosh"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        user = who or ctx.author
         return await image_gen(ctx, user, "jokeoverhead", "joke-over-head")
 
     @commands.command(name="amiajoke")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def am_i_a_joke(self, ctx, *, user: discord.member = None):
+    async def am_i_a_joke(self, ctx: commands.Context, *, who: discord.member = None):
         """ Is a user a joke? """
-        if ctx.channel.id in self.banned:
-            return
-        if user is None:
-            user = ctx.author
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "amiajoke"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        user = who or ctx.author
         return await image_gen(ctx, user, "amiajoke", f"is_{user.name.lower()}_a_joke")
 
     @commands.command(name="salty")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def sodium_chloride(self, ctx, *, user: discord.Member = None):
+    async def sodium_chloride(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Salty user """
-        if ctx.channel.id in self.banned:
-            return
-        if user is None:
-            user = ctx.author
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "salty"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        user = who or ctx.author
         return await image_gen(ctx, user, "salty", f"sodium_chloride_{user.name.lower()}")
 
     @commands.command(name="floor")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def the_floor_is(self, ctx, user: discord.Member, *text):
+    async def the_floor_is(self, ctx: commands.Context, user: discord.Member, *text):
         """ The floor is... """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "floor"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         __text = '+'.join(text)
         _text = str(__text).replace("#", "%23")
         if len(a := _text.split("+")) > 1:
@@ -179,15 +199,18 @@ class Images(commands.Cog):
 
     @commands.command()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def supreme(self, ctx, *, text: commands.clean_content(fix_channel_mentions=True)):
+    async def supreme(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Make a Supreme logo
 
         Arguments:
             --dark | Make the background to dark colour
             --light | Make background to light and text to dark colour
         """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "supreme"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         parser = argparser.Arguments()
         parser.add_argument('input', nargs="+", default=None)
         parser.add_argument('-d', '--dark', action='store_true')
@@ -199,7 +222,8 @@ class Images(commands.Cog):
 
         input_text = urllib.parse.quote(' '.join(args.input))
         if len(input_text) > 500:
-            return await ctx.send(f"**{ctx.author.name}**, the Supreme API is only limited to 500 characters...")
+            return await generic.send(generic.gls(locale, "supreme_limit", [ctx.author.name]), ctx.channel)
+            # return await ctx.send(f"**{ctx.author.name}**, the Supreme API is only limited to 500 characters...")
 
         dol = ""
         if args.dark:
@@ -207,9 +231,11 @@ class Images(commands.Cog):
         if args.light:
             dol = "&light=true"
         if args.dark and args.light:
-            return await ctx.send(f"**{ctx.author.name}**, can't you don't do both dark and light at the same time")
+            return await generic.send(generic.gls(locale, "supreme_dark_light", [ctx.author.name]), ctx.channel)
+            # return await ctx.send(f"**{ctx.author.name}**, can't you don't do both dark and light at the same time")
 
-        await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
+        return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
+        # await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
 
 
 def setup(bot):

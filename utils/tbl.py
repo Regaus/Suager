@@ -338,7 +338,7 @@ tbl_locations = [
         "name": "Eddarin Leise",
         "ru": "Утренний Лес",
         "en": "Morning Forest",
-        "desc_en": "In this forest our cute and fluffy adventurers watch the sun rise and greet the new day.",
+        "desc_en": "In this forest our cute and fluffy adventurers watch the sun rise and greet the cogs day.",
         "desc_ru": "В этом лесу наши милые и пушистые путешественники встречают восход солнца и приход нового дня.",
         "energy": 5,
         "araksan": [2, 3],

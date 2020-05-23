@@ -24,19 +24,18 @@ server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/64213
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
 playing = ["CobbleCobble", "with Regaus", "with myself", "TBL", "Custom Status", "with the Nuriki Cult", "Aqos",
            "a game", "Русские Вперёд!", ",/help"]
-phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
-           "Hey, how's your day going?", "Ever wanted to take a break from all this hard work? I can't.",
-           "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
+phrases = ["Placeholder", "Reminder that AlexFlipnote is a furry"]
+# phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
+#            "Hey, how's your day going?", "Ever wanted to take a break from all this hard work? I can't.",
+#            "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
 image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586,
                   'c': 675769002613669918, 'b': 675771077057839104, 's': 683486714873905171, 'n': 690573072536961075,
                   'r': 691739503160852591, 'v': 671897418589143051, 'u': 694148497766875186, 'm': 694151734603415632,
                   'i': 696485411869950003, 'P': 702280684907003986, 'B': 702280732755624469}
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
 ball_response = [
-    'Yes', 'No', 'Take a wild guess...', 'Very doubtful',
-    'Sure', 'Without a doubt', 'Most likely', 'Might be possible',
-    "You'll be the judge", 'no... (╯°□°）╯︵ ┻━┻', 'no... baka',
-    'senpai, pls no ;-;'
+    'Yes', 'No', 'Take a wild guess...', 'Very doubtful', 'Sure', 'Without a doubt', 'Most likely', 'Might be possible',
+    "You'll be the judge", 'no... (╯°□°）╯︵ ┻━┻', 'no... baka', 'senpai, pls no ;-;'
 ]
 # demons_response = [
 #     '*wind blows*', 'Go to hell with your stupid questions', 'Well what do you think, huh?',
@@ -45,8 +44,9 @@ ball_response = [
 #     "I guess you'll be the judge here", 'no... (╯°□°）╯︵ ┻━┻', 'No.',
 #     'Bruh what the hell? ;-;', 'I guess, yes', "What are you friggin' gay?"
 # ]
-hearts = [":heart:", ":orange_heart:", ":yellow_heart:", ":green_heart:", ":blue_heart:", ":purple_heart:",
-          ":black_heart:", ":brown_heart:", ":white_heart:"]
+# hearts = [":heart:", ":orange_heart:", ":yellow_heart:", ":green_heart:", ":blue_heart:", ":purple_heart:",
+#           ":black_heart:", ":brown_heart:", ":white_heart:"]
+hearts = list("❤️🧡💛💚💙💜🖤🤎🤍")
 hello = ["Good aftermidnight", "Good morning", "Good afternoon", "Good evening"]
 
 

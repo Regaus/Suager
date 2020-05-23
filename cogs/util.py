@@ -7,51 +7,35 @@ import discord
 import timeago
 from discord.ext import commands
 
-from utils import time, http
+from utils import time, generic, http
 
 
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="time")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def current_time(self, ctx):
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def current_time(self, ctx: commands.Context):
         """ Current time """
-        return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
-
-    @commands.command(name="mctime", hidden=True)
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def mc_time(self, ctx, month: str = 1, day: int = 1, hour: int = 6, minute: int = 0):
-        """ Set time in Minecraft """
-        if ctx.channel.id in self.banned:
-            return
-        if month == 'random':
-            rmo = random.randint(1, 12)
-            days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-            rd = random.randint(1, days[rmo - 1])
-            rh = random.randint(1, 23)
-            rm = random.randint(1, 59)
-            dt = datetime(1, rmo, rd, rh, rm)
-        else:
-            try:
-                dt = datetime(1, int(month), day, hour, minute)
-            except Exception as e:
-                return await ctx.send(e)
-        # rd = relativedelta(datetime(year, month, day, hour, minute), datetime.min)
-        rd = dt - datetime.min
-        mt = int(round(rd.seconds * 24000 / 86400 + rd.days * 24000)) - 6000
-        date = time.time_output(dt)
-        return await ctx.send(f"For {date}:\n**/time set {mt}**")
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "time"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        return await generic.send(generic.gls(locale, "time_command", [
+            time.time(tz=True), time.time_k(tz=True), ctx.author.name, time.time(True, tz=True)]), ctx.channel)
+        # return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
 
     @commands.command(name="timesince", aliases=["timeuntil"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def time_since(self, ctx, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0,
-                         second: int = 0):
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Time difference """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "timesince"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         try:
             now = time.now(True)
             date = datetime(now.year, 1, 1)
@@ -71,17 +55,22 @@ class Utility(commands.Cog):
             human_timeago = time.human_timedelta(date, accuracy=7)
             current_time = time.time_output(now, True, True, True)
             specified_time = time.time_output(date, True, True, True)
-            return await ctx.send(f"Current time: **{current_time}**\nSpecified time: **{specified_time}**\n"
-                                  f"Result: **{human_timeago}**")
+            return await generic.send(generic.gls(locale, "time_since", [current_time, specified_time, human_timeago]), ctx.channel)
+            # return await ctx.send(f"Current time: **{current_time}**\nSpecified time: **{specified_time}**\n"
+            #                       f"Result: **{human_timeago}**")
         except Exception as e:
-            return await ctx.send(f"There was an error:\n{e}")
+            return await generic.send(generic.gls(locale, "time_since_error", [e]), ctx.channel)
+            # return await ctx.send(f"There was an error:\n{e}")
 
     @commands.command(name="weather")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def weather(self, ctx, *, _place: commands.clean_content):
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def weather(self, ctx: commands.Context, *, _place: commands.clean_content):
         """ Check weather in a place """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "weather"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         place = str(_place)
         try:
             bio = await http.get("http://api.openweathermap.org/data/2.5/weather?"
@@ -90,48 +79,55 @@ class Utility(commands.Cog):
             embed = discord.Embed(colour=random.randint(0, 0xffffff))
             weather_icon = data['weather'][0]['icon']
             embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
-            embed.add_field(name="Current weather", value=data['weather'][0]['description'].capitalize(), inline=True)
+            embed.add_field(name=generic.gls(locale, "current_weather"), value=data['weather'][0]['description'].capitalize(), inline=True)
             _tk = data['main']['temp']
             _tc = _tk - 273.15
             _tf = _tc * 1.8 + 32
             tk, tc, tf = [round(_tk, 1), round(_tc, 1), round(_tf, 1)]
-            embed.add_field(name="Current temperature", value=f"**{tc}°C** | {tk}°K | {tf}°F", inline=True)
-            embed.add_field(name="Pressure", value=f"{data['main']['pressure']} hPa", inline=True)
-            embed.add_field(name="Humidity", value=f"{data['main']['humidity']}%", inline=True)
+            embed.add_field(name=generic.gls(locale, "temperature"), value=f"**{tc}°C** | {tk}°K | {tf}°F", inline=True)
+            embed.add_field(name=generic.gls(locale, "pressure"), value=f"{data['main']['pressure']} hPa", inline=True)
+            embed.add_field(name=generic.gls(locale, "humidity"), value=f"{data['main']['humidity']}%", inline=True)
             sm = data['wind']['speed']
             _sk = sm * 3.6
             _sb = _sk / 1.609  # imperial system bad
             sk, sb = [round(_sk, 1), round(_sb, 1)]
-            embed.add_field(name="Wind speed", value=f"**{sm} m/s | {sk} km/h** | {sb} mph", inline=True)
-            embed.add_field(name="Cloud cover", value=f"{data['clouds']['all']}%", inline=True)
+            embed.add_field(name=generic.gls(locale, "wind_speed"), value=f"**{sm} m/s | {sk} km/h** | {sb} mph", inline=True)
+            embed.add_field(name=generic.gls(locale, "cloud_cover"), value=f"{data['clouds']['all']}%", inline=True)
             tz = data['timezone']
             sr = data['sys']['sunrise']
             ss = data['sys']['sunset']
+            now = time.now(True)
+            now_l = now + timedelta(seconds=tz)
             if sr != 0 and ss != 0:
-                srt = time.from_ts(sr + tz)
-                sst = time.from_ts(ss + tz)
+                srt = time.from_ts(sr + tz, True)
+                sst = time.from_ts(ss + tz, True)
                 sunrise = srt.strftime('%H:%M')
                 sunset = sst.strftime('%H:%M')
-                tar = timeago.format(srt)  # Time since/until sunrise
-                tas = timeago.format(sst)  # Time since/until sunset
-                embed.add_field(name="Sunrise", value=f"{sunrise} | {tar}", inline=True)
-                embed.add_field(name="Sunset", value=f"{sunset} | {tas}", inline=True)
+                tar = timeago.format(srt, now_l, locale=locale)  # Time since/until sunrise
+                tas = timeago.format(sst, now_l, locale=locale)  # Time since/until sunset
+                embed.add_field(name=generic.gls(locale, "sunrise"), value=f"{sunrise} | {tar}", inline=True)
+                embed.add_field(name=generic.gls(locale, "sunset"), value=f"{sunset} | {tas}", inline=True)
             country = data['sys']['country']
             local_time = time.time_output((time.now(True) + timedelta(seconds=tz)))
             country_name = country_converter.convert(names=[country], to="name_short")
             emote = f":flag_{country.lower()}:"
-            embed.timestamp = time.now(True)
+            embed.timestamp = now
         except Exception as e:
-            return await ctx.send(f"Could not get weather for {place}:\n{e}")
-        return await ctx.send(f"{emote} Weather in **{data['name']}, {country_name}**\n"
-                              f"Local time: **{local_time}**", embed=embed)
+            return await generic.send(generic.gls(locale, "weather_error", [place, type(e).__name__, e]), ctx.channel)
+            # return await ctx.send(f"Could not get weather for {place}:\n{e}")
+        return await generic.send(generic.gls(locale, "weather_output", [emote, data["name"], country_name, local_time]), ctx.channel, embed=embed)
+        # return await ctx.send(f"{emote} Weather in **{data['name']}, {country_name}**\n"
+        #                       f"Local time: **{local_time}**", embed=embed)
 
     @commands.command(name="luas")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def luas(self, ctx, *, place: commands.clean_content):
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
         """ Data for Luas """
-        if ctx.channel.id in self.banned:
-            return
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "luas"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         import luas.api
         client = luas.api.LuasClient()
         _place = str(place).title() if len(str(place)) != 3 else str(place)
@@ -144,7 +140,8 @@ class Utility(commands.Cog):
             else:
                 _time = f"{i['due']} mins"
             trams += f"{i['destination']}: {_time}\n"
-        return await ctx.send(f"Data available for {_place}:\n{status}\n{trams}")
+        return await generic.send(generic.gls(locale, "luas", [_place, status, trams]), ctx.channel)
+        # return await ctx.send(f"Data available for {_place}:\n{status}\n{trams}")
 
 
 def setup(bot):
