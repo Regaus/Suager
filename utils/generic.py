@@ -232,23 +232,11 @@ async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here'
         return await ctx.send(f"{resultmsg}```ini\n{pretty}```")
 
     data = BytesIO(pretty.encode('utf-8'))
-    await ctx.send(
-        content=resultmsg,
-        file=discord.File(data, filename=time.file_ts(filename.title()))
-    )
-
-
-async def you_little_shit(senko_lair):
-    ba = [senko_lair.get_member(94762492923748352), senko_lair.get_member(246652610747039744)]
-    for little_shit in ba:
-        name = str(little_shit.display_name).lower()
-        if 'arch' in name:
-            await little_shit.edit(nick="rule 4a", reason="Rule 4a")
-        if 'python' in name:
-            bad = ['bad', 'gae', 'gay', 'stupid', 'dump', 'stoopid']
-            for word in bad:
-                if word in name:
-                    await little_shit.edit(nick="rule 14b", reason="Rule 14b")
+    return await send(resultmsg, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
+    # await ctx.send(
+    #     content=resultmsg,
+    #     file=discord.File(data, filename=time.file_ts(filename.title()))
+    # )
 
 
 # version = get("config.json").version
@@ -358,8 +346,8 @@ def is_love_locked(user: discord.Member, author: discord.Member) -> bool:
 
 
 def line_count():
-    docstring = False
-    file_amount, functions, comments, lines, classes, docs = 0, 0, 0, 0, 0, 0
+    # docstring = False
+    file_amount, functions, comments, lines, classes = 0, 0, 0, 0, 0
 
     for dir_path, dir_name, file_names in os.walk("."):
         for name in file_names:
@@ -373,12 +361,13 @@ def line_count():
                     line = line.strip()
                     if len(line) == 0:
                         continue
-                    elif line.startswith('"""'):
-                        docstring = not docstring
-                    if docstring is True:
-                        docs += 1
-                    if line.endswith('"""'):
-                        docstring = not docstring
+                    # idk, I don't think half of my code is just documentation
+                    # elif line.startswith('"""'):
+                    #     docstring = not docstring
+                    # if docstring is True:
+                    #     docs += 1
+                    # if line.endswith('"""'):
+                    #     docstring = not docstring
                     if line.startswith("#"):
                         comments += 1
                         continue
@@ -388,5 +377,5 @@ def line_count():
                         classes += 1
                     lines += 1
 
-    return file_amount, functions, comments, lines, classes, docs
+    return file_amount, functions, comments, lines, classes
 # https://github.com/iDevision/Life/blob/master/Life/cogs/utilities/utils.py#L44-L77

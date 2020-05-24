@@ -1,6 +1,6 @@
 import random
 import sys
-from datetime import datetime
+from datetime import datetime, timezone as tz
 
 import discord
 import psutil
@@ -9,14 +9,12 @@ from discord.ext import commands
 from utils import generic, time, lists
 
 
-class Info(commands.Cog):
+class Suager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # self.creation_date = datetime(2020, 3, 2, 18)  # this was v4
-        self.creation_date = datetime(2020, 12, 31, 23, 59, 59)  # Date of creation of v5 (placeholder) || Note to self: make this time be in UTC
-        self.birthday = datetime(2018, 12, 6, 1, 2)  # Date when the user was created
-        # self.type = main.version
-        # self.banned = [690254056354087047, 694684764074016799]
+        self.creation_date = datetime(2020, 12, 31, 23, 59, 59, tzinfo=tz.utc)  # Date of creation of v5 (placeholder) || Note to self: make this time be in UTC
+        self.birthday = datetime(2018, 12, 6, 1, 2, tzinfo=tz.utc)  # Date when the user was created
 
     @commands.command(name="source")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -28,12 +26,8 @@ class Info(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        return await generic.send(generic.gls(locale, "source") + "<https://github.com/AlexFlipnote/discord_bot.py>\n"
+        return await generic.send(generic.gls(locale, "source") + "\n<https://github.com/AlexFlipnote/discord_bot.py>\n"
                                                                   "<https://github.com/AlexFlipnote/birthday.py>", ctx.channel)
-        # await ctx.send(f"It's these links' fault that **{ctx.bot.user}** even exists and works, "
-        #                f"and you should check those out if you wanna have your own bot:\n"
-        #                f"<https://github.com/AlexFlipnote/discord_bot.py>\n"
-        #                f"<https://github.com/AlexFlipnote/birthday.py>")
 
     @commands.command(name="stats", aliases=["info", "about", "status"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -49,17 +43,10 @@ class Info(commands.Cog):
             process = psutil.Process()
             ram = round(process.memory_info().rss / 1048576, 2)
             process.cpu_percent(interval=1)
-            # corona = list("corona virus")
-            # random.shuffle(corona)
-            # corona_virus = (''.join(corona)).title()
-            # when = time.time_output(self.bot.uptime)
             embed.description = random.choice(lists.phrases)
             embed.set_thumbnail(url=self.bot.user.avatar_url)
-            # owners = len(config["owners"])
             owners = ", ".join([str(self.bot.get_user(i)) for i in config["owners"]])
             embed.add_field(name=generic.gls(locale, "generic"), inline=True, value=generic.gls(locale, "generic_info", [owners, uptime]))
-            #                 value=f"Developer{'' if owners == 1 else 's'}: **{owners_}**\nUptime: **{uptime}**\n")
-            #                       f"Conora Virus: **{corona_virus}**")
             tm = 0
             tc, vc, cc = 0, 0, 0
             for guild in self.bot.guilds:
@@ -73,33 +60,20 @@ class Info(commands.Cog):
             embed.add_field(name=generic.gls(locale, "counts"), inline=True,
                             value=generic.gls(locale, "counts_info", [f"{servers:,}", f"{users:,}", f"{avg_members:,}",
                                                                       len([j.name for j in self.bot.commands])]))
-            #                 value=f"Servers: **{len(self.bot.guilds):,}**\nUsers: **{users:,}**\n"
-            #                       f"Avg members / server: **{avg_members:,}**\n"
-            #                       f"Commands: **{len([j.name for j in self.bot.commands])}**")
-            files, functions, comments, lines, classes, docs = generic.line_count()
+            files, functions, comments, lines, classes = generic.line_count()
             embed.add_field(name=generic.gls(locale, "code_stats"), inline=True,
-                            value=generic.gls(locale, "code_stats_info",
-                                              [f"{files:,}", f"{lines:,}", f"{comments:,}", f"{functions:,}", f"{classes:,}", f"{docs:,}"]))
-            #                 value=f"Files: **{files:,}**\nLines: **{lines:,}**\nComments: **{comments:,}**\n"
-            #                       f"Functions: **{functions:,}**\nClasses: **{classes:,}**")
+                            value=generic.gls(locale, "code_stats_info", [f"{files:,}", f"{lines:,}", f"{comments:,}", f"{functions:,}", f"{classes:,}"]))
             cpu = round(process.cpu_percent() / psutil.cpu_count(), 2)
             embed.add_field(name=generic.gls(locale, "process"), inline=True, value=generic.gls(locale, "process_info", [ram, cpu]))
-            #                 value=f"RAM: **{ram} MB**\nCPU: **{cpu}%**")
             embed.add_field(name=generic.gls(locale, "counts2"), inline=True,
                             value=generic.gls(locale, "counts2_info", [f"{tm:,}", f"{tc:,}", f"{cc:,}", f"{vc:,}"]))
-            #                 value=f"Members: **{tm:,}**\nText Channels: **{tc:,}**\n"
-            #                       f"Categories: **{cc:,}**\nVoice Channels: **{vc:,}**")
             _version = sys.version_info
             version = f"{_version.major}.{_version.minor}.{_version.micro}"
             embed.add_field(name=generic.gls(locale, "what_i_use"), inline=True, value=f"**discord.py v{discord.__version__}\nPython v{version}**")
-            birthday = time.time_output(self.birthday)
-            # v4_created = time.time_output(self.creation_date)
-            v5_created = time.time_output(self.creation_date)
-            last_update = time.time_output(time.from_ts(config["last_update"], True))
+            birthday = time.time_output(self.birthday, tz=True)
+            v5_created = time.time_output(self.creation_date, tz=True)
+            last_update = time.time_output(time.from_ts(config["last_update"], True), tz=True)
             embed.add_field(name=generic.gls(locale, "dates"), inline=False, value=generic.gls(locale, "dates_info", [birthday, v5_created, last_update]))
-            # embed.add_field(name="__Dates__", inline=False, value=f"Suager Creation: **{birthday}**\nCreation of v4: "
-            #                                                       f"**{v4_created}**\nLast Update: **{last_update}**")
-            # embed.title = f"ℹ About **{self.bot.user}** | **v{config['full_version']}**"
             embed.title = generic.gls(locale, "about_suager", [str(self.bot.user), config["full_version"]])
             return await generic.send(None, ctx.channel, embed=embed)
             # return await ctx.send(embed=embed)
@@ -173,4 +147,4 @@ class Info(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Info(bot))
+    bot.add_cog(Suager(bot))

@@ -93,11 +93,11 @@ class Spyware(commands.Cog):
             #     logs.log_channel(self.bot, 'activity').send(send)
             #     activity_logged[after.id] = now
         n1, n2 = [before.nick, after.nick]
-        is_senko_lair = after.guild.id == 568148147457490954
-        ls = [94762492923748352, 246652610747039744]
+        # is_senko_lair = after.guild.id == 568148147457490954
+        # ls = [94762492923748352, 246652610747039744]
         if n1 != n2:
-            if after.id in ls and is_senko_lair:
-                await generic.you_little_shit(self.bot.get_guild(568148147457490954))
+            # if after.id in ls and is_senko_lair:
+            #     await generic.you_little_shit(self.bot.get_guild(568148147457490954))
             send = f"{to} > {n}'s ({uid}) nickname in {guild} is now {n2} (from {n1})"
             # await log.send(send)
             logs.log(log, send)
