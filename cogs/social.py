@@ -131,7 +131,7 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
         # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+            return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
         # if user.id == 424472476106489856 and ctx.author.id not in [689158123352883340]:
         #     return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
@@ -163,7 +163,7 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
         # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+            return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "hugs_given", "hugs_received", 10, 11)
         embed.description = generic.gls(locale, "hug", [user.name, ctx.author.name])
@@ -190,7 +190,7 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
         # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+            return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "cuddles_given", "cuddles_received", 6, 7)
         embed.description = generic.gls(locale, "cuddle", [user.name, ctx.author.name])
@@ -242,7 +242,7 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "kiss_bot", [user.name]), ctx.channel)
         # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+            return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "kisses_given", "kisses_received", 12, 13)
         embed.description = generic.gls(locale, "kiss", [user.name, ctx.author.name])
@@ -337,7 +337,7 @@ class Social(commands.Cog):
     async def highfive(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a high five """
         locale = generic.get_lang(ctx.guild)
-        if generic.is_locked(ctx.guild, "bite"):
+        if generic.is_locked(ctx.guild, "highfive"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if is_fucked(self.highfive):
             self.highfive = await lists.get_images(self.bot, 'i')
@@ -885,7 +885,7 @@ class Social(commands.Cog):
     async def top_counters(self, ctx):
         """ Top counters """
         locale = generic.get_lang(ctx.guild)
-        if generic.is_locked(ctx.guild, "counters"):
+        if generic.is_locked(ctx.guild, "top"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)

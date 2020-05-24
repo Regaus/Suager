@@ -156,11 +156,11 @@ class Leveling(commands.Cog):
                 lm[0] = ctx.content
         heresy = 1
         if ctx.author.id in generic.tier_1:
-            heresy = 0.93
+            heresy = 0.95
         if ctx.author.id in generic.tier_2:
-            heresy = 0.87
+            heresy = 0.90
         if ctx.author.id in generic.tier_3:
-            heresy = 0.8
+            heresy = 0.85
         # if last > now - 60:
         #     return
         x1, x2 = level_xp
@@ -174,6 +174,7 @@ class Leveling(commands.Cog):
             new = int(random.uniform(x1, x2) * sm * mult * spam * heresy)
             new_money = int(random.uniform(x3, x4) * mult * spam)
         else:
+            # I honestly don't remember what this shit does, but it works :shrug:
             if abs(spam) < 1:
                 st = 1 / spam
             else:
@@ -185,7 +186,7 @@ class Leveling(commands.Cog):
                 total = st / 4
             else:
                 total = -abs(mult * st)
-            new = int(random.uniform(x1, x2) * sm * total * heresy)
+            new = int(random.uniform(x1, x2) * sm * total * (1 / heresy))
             new_money = int(random.uniform(x3, x4) * sm * total)
         if ctx.author.id == 592345932062916619:
             new = 0
@@ -230,8 +231,7 @@ class Leveling(commands.Cog):
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                send = f"{ctx.author.mention} is now **level {level:,}** " \
-                       f"<a:UmmOK:693575304622637087>"
+                send = f"{ctx.author.mention} is now **level {level:,}** <a:UmmOK:693575304622637087>"
                 try:
                     ac = settings['leveling']['announce_channel']
                     if ac != 0:
