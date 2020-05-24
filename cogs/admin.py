@@ -465,6 +465,24 @@ class Admin(commands.Cog):
         # return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} Tier {tier} Heretic List\n"
         #                           f"Reload status: {reload}", ctx.channel)
 
+    @config.command(name="heretics3", aliases=["hl3", "1down"])
+    @commands.check(permissions.is_owner)
+    async def config_heretics3(self, ctx: commands.Context, uid: int):
+        """ Move someone down in the Heretic List """
+        try:
+            ret = generic.heresy_down(uid)
+            # data_io.change_values("heretics", str(tier), action, uid)
+        except Exception as e:
+            return await generic.send(str(e), ctx.channel)
+        reload = reload_util("generic")
+        if ret == -1:
+            out = f"{emotes.Deny} Nothing happened."
+        elif ret == 0:
+            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is no longer a Heretic."
+        else:
+            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Heretic."
+        return await generic.send(f"{out}\n{reload}", ctx.channel)
+
     @config.command(name="lovelocks", aliases=["love", "ll"])
     @commands.check(permissions.is_owner)
     async def config_love_locks(self, ctx: commands.Context, action: str, uid: int):
@@ -569,15 +587,15 @@ class Admin(commands.Cog):
 
     @commands.command(name="lv2l", aliases=["heretics3", "regausmad"])
     async def heretic_list3(self, ctx: commands.Context):
-        """ The list of people who annoyed Regaus and got level -2 """
+        """ Imagine being level -2 """
         res = self.db.fetch("SELECT * FROM leveling WHERE level=-2")
         embed = discord.Embed(colour=generic.random_colour())
-        au = []
+        # au = []
         desc = ""
         for user in res:
-            if user["uid"] not in au:
-                desc += f"<@{user['uid']}> - {user['name']}#{user['disc']:04d}\n"
-                au.append(user["uid"])
+            # if user["uid"] not in au:
+            desc += f"<@{user['uid']}> - {user['name']}#{user['disc']:04d} - in {self.bot.get_guild(user['gid'])}\n"
+            #     au.append(user["uid"])
         embed.description = desc
         # embed.description = "\n".join([" - ".join([f"<@{u['uid']}>", f"{u['name']}#{u['disc']:04d}"]) for u in res])
         return await generic.send("The list of people who managed to get level -2", ctx.channel, embed=embed)

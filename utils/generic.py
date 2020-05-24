@@ -273,7 +273,7 @@ def heresy(uid: int):
     t1 = uid in tier_1
     t2 = uid in tier_2
     t3 = uid in tier_3
-    t0 = not (t1 and t2 and t3)
+    t0 = not (t1 or t2 or t3)
     # data_io.change_values("heretics", str(tier), action, uid)
     val1 = "heretics"
     tier = ["1", "2", "3"]
@@ -299,6 +299,33 @@ def heresy(uid: int):
         data_io.change_values(val1, tier[1], a2, uid)
         ret = 4
     return ret
+
+
+def heresy_down(uid: int):
+    t1 = uid in tier_1
+    t2 = uid in tier_2
+    t3 = uid in tier_3
+    # t0 = not (t1 and t2 and t3)
+    # data_io.change_values("heretics", str(tier), action, uid)
+    val1 = "heretics"
+    tier = ["1", "2", "3"]
+    a1, a2 = "add", "remove"
+    if t1:
+        data_io.change_values(val1, tier[0], a2, uid)
+        data_io.change_values(val1, tier[1], a2, uid)
+        data_io.change_values(val1, tier[2], a2, uid)
+        return 0
+    if t2:
+        data_io.change_values(val1, tier[0], a1, uid)
+        data_io.change_values(val1, tier[1], a2, uid)
+        data_io.change_values(val1, tier[2], a2, uid)
+        return 1
+    if t3:
+        data_io.change_values(val1, tier[0], a2, uid)
+        data_io.change_values(val1, tier[1], a1, uid)
+        data_io.change_values(val1, tier[2], a2, uid)
+        return 2
+    return -1
 
 
 def get_lang(guild: discord.Guild = None):
