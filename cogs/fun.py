@@ -163,8 +163,8 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "f"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        # if ctx.channel.id in generic.channel_locks:
+        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         heart = random.choice(lists.hearts)
         if text is None:
             return await generic.send(generic.gls(locale, "respects1", [ctx.author.name, heart]), ctx.channel)

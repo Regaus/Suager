@@ -137,7 +137,8 @@ class Info(commands.Cog):
         if isinstance(ctx.channel, discord.DMChannel) or ctx.guild.id != 568148147457490954:
             try:
                 await ctx.author.send(generic.gls(locale, "invite_to_sl", [ctx.author.name]))
-                return await ctx.author.name(generic.invite)
+                await ctx.author.send(generic.invite)
+                return await ctx.message.add_reaction("✉")
             except discord.Forbidden:
                 return await generic.send(generic.gls(locale, "invite_to_sl_failed"), ctx.channel)
             # return await ctx.send(f"**Here you go {ctx.author.name}\n{generic.invite}**")

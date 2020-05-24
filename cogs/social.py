@@ -377,7 +377,7 @@ class Social(commands.Cog):
         embed.set_footer(text=generic.gls(locale, "poke2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="boop")
+    @commands.command(name="boop", aliases=["bap"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def boop(self, ctx: commands.Context, user: discord.Member):

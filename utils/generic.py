@@ -252,8 +252,8 @@ async def you_little_shit(senko_lair):
 
 
 # version = get("config.json").version
-# invite = "https://discord.gg/cw7czUx"
-invite = "https://discord.gg/senko/"
+invite = "https://discord.gg/cw7czUx"
+# invite = "https://discord.gg/senko/"
 config = get_config()
 owners = config["owners"]
 love_locks = config["love_locks"]

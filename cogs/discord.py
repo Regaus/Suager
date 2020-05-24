@@ -262,7 +262,7 @@ class Discord(commands.Cog):
     @commands.guild_only()
     @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
     async def custom_role(self, ctx: commands.Context, *, stuff: str):
-        """ Custom Role (only in Senko Lair)
+        """ Custom Role (only in supported servers)
 
          Arguments:
         -c/--colour/--color: Set role colour
