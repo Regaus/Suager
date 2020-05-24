@@ -75,6 +75,8 @@ class Leveling(commands.Cog):
     async def on_message(self, ctx: discord.Message):
         if ctx.author.bot or ctx.guild is None:
             return
+        if ctx.content == "" and ctx.type != discord.MessageType.default:
+            return
         # if ctx.channel.id in [568148147457490958, 577599230567383058, 570682506127474729, 690254056354087047, 694684764074016799]:
         #     ani = re.findall(self.ani_emotes, ctx.content)
         #     if ani:
@@ -137,23 +139,23 @@ class Leveling(commands.Cog):
         dc = mult == 0  # didn't count
         spam = 1
         if anti_spam_xp:
-            if ctx.content != "" and ctx.type == discord.MessageType.default:
-                if similarities[0] == 1:
-                    spam = -1 if mult > 0 else 2.5
-                if similarities[0] > 0.9:
-                    spam = -0.3 if mult > 0 else 1.75
-                elif 0.9 > similarities[0] > 0.8:
-                    spam = 0.3 if mult > 0 else 4 / 7
-                if td < 90:
-                    if 1 > similarities[1] > 0.8:
-                        spam *= 1.5 if spam < 0 else 0.25
-                    elif similarities[1] == 1:
-                        spam *= 2 if spam < 0 else 0.125
-                    if similarities[2] > 0.85:
-                        spam *= 1.5 if spam < 0 else 0.33
-                lm[2] = lm[1]
-                lm[1] = lm[0]
-                lm[0] = ctx.content
+            # if ctx.content != "" and ctx.type == discord.MessageType.default:
+            if similarities[0] == 1:
+                spam = -1 if mult > 0 else 2.5
+            if similarities[0] > 0.9:
+                spam = -0.3 if mult > 0 else 1.75
+            elif 0.9 > similarities[0] > 0.8:
+                spam = 0.3 if mult > 0 else 4 / 7
+            if td < 90:
+                if 1 > similarities[1] > 0.8:
+                    spam *= 1.5 if spam < 0 else 0.25
+                elif similarities[1] == 1:
+                    spam *= 2 if spam < 0 else 0.125
+                if similarities[2] > 0.85:
+                    spam *= 1.5 if spam < 0 else 0.33
+            lm[2] = lm[1]
+            lm[1] = lm[0]
+            lm[0] = ctx.content
         heresy = 1
         if ctx.author.id in generic.tier_1:
             heresy = 0.95

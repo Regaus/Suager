@@ -162,9 +162,16 @@ class Events(commands.Cog):
                 f"{member.name} has abandoned Senko Lair :( {emotes.AlexHeartBroken}")
         uid = member.id
         gid = member.guild.id
-        self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
         self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
         self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (uid, gid))
+        sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+        if sel:
+            if sel["xp"] < 0:
+                return
+            elif sel["level"] < 0:
+                self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=?", (uid, gid))
+            else:
+                self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
