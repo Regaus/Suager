@@ -637,10 +637,12 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bad_self"), ctx.channel)
         if user.id == 302851022790066185:
             bad_self = True
+            generic.heresy(ctx.author.id)
         # elif ctx.author.id == 424472476106489856:
         elif ctx.author.id in generic.bad_locks:
             bad_self = True
         elif user.id == self.bot.user.id:
+            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
         if not bad_self:
             id1, id2 = ctx.author.id, user.id
@@ -666,11 +668,13 @@ class Social(commands.Cog):
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "bad_self"), ctx.channel)
             # return await ctx.send("Don't call yourself trash")
-        if user == ctx.bot.user:
+        if user.id == self.bot.user.id:
+            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
             # return await ctx.send(f"You dare calling me trash? {emotes.AlexHeartBroken}")
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
+            generic.heresy(ctx.author.id)
             a2, a1 = a1, a2
             trash_self = True
         # elif ctx.author.id == 424472476106489856:
