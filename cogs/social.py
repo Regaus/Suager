@@ -408,11 +408,13 @@ class Social(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "ship"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        pr = False
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             if user1.id != 302851022790066185 and user2.id != 302851022790066185:
                 return await generic.send(generic.gls(locale, "ship_suager"), ctx.channel)
+            pr = True
             # return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
-        if user1.bot ^ user2.bot:
+        if (user1.bot ^ user2.bot) and not pr:
             return await generic.send(generic.gls(locale, "bots_love"), ctx.channel)
             # return await ctx.send(f"Bots can't be shipped, they can't love :( {emotes.AlexHeartBroken}")
         if user1 == user2:

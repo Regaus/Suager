@@ -269,7 +269,7 @@ data = {
     "hug2": "<val1> обняли <val2> раз(а) на этом сервере",
     "cr_not_available": "Пользовательские роли не доступны на этом сервере.",
     "cuddle_suager": f"*Обнимает <val1> в ответ* {emotes.AlexHeart}",
-    "cuddle": "**<val2>** сильно обнял(а) **<val1>***",
+    "cuddle": "**<val2>** сильно обнял(а) **<val1>**",
     "cuddle2": "<val1> обняли <val2> раз(а) на этом сервере",
     "lick_suager": "Зачем меня лизать, <val1>?",
     "lick_bot": "Зачем вообще лизать бота? <val1> все равно вряд ли тебе ответит.",
@@ -349,4 +349,5 @@ data = {
     "no_greedy": "Don't be greedy, **<val1>**!",
     "give_food": "**<val2>** just got a <val3> from **<val1>**",
     "food_counter": "**<val1>** now has **<val2> <val3>** in this server",
+    "bad_self": emotes.AlexPat,
 }

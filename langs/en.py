@@ -266,7 +266,7 @@ data = {
     "hug2": "<val1> has now received <val2> hugs in this server",
     "cr_not_available": "Custom roles are not available in this server right now.",
     "cuddle_suager": f"*Cuddles <val1> back* {emotes.AlexHeart}",
-    "cuddle": "**<val1>** got a cuddle from **<val2>***",
+    "cuddle": "**<val1>** got a cuddle from **<val2>**",
     "cuddle2": "<val1> has now received <val2> cuddles in this server",
     "lick_suager": "But why would you lick me, <val1>?",
     "lick_bot": "Why would you even lick a bot? It's not like <val1> would respond to you anyway.",
@@ -345,4 +345,5 @@ data = {
     "no_greedy": "Don't be greedy, **<val1>**!",
     "give_food": "**<val2>** just got a <val3> from **<val1>**",
     "food_counter": "**<val1>** now has **<val2> <val3>** in this server",
+    "bad_self": emotes.AlexPat,
 }
