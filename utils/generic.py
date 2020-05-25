@@ -196,19 +196,6 @@ def reason(who, why=None):
     return f"{r} {why}"
 
 
-# def action(what, *, who=None, why=None, many: int = 0, emote=None):
-#     if who is None:
-#         s = 's' if many else ''
-#         output = f"**{what}** the id{s}/user{s}"
-#     else:
-#         output = f"**{what}** {who}"
-#     if why is not None:
-#         output += f" for {why}"
-#     if emote is not None:
-#         output += f" {emote}"
-#     return f"<:allow:610828713424191498> Successfully {output}"
-
-
 async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here's the results:", loop=None):
     if not loop:
         return await ctx.send("The result was empty...")
@@ -220,10 +207,6 @@ async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here'
 
     data = BytesIO(pretty.encode('utf-8'))
     return await send(resultmsg, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
-    # await ctx.send(
-    #     content=resultmsg,
-    #     file=discord.File(data, filename=time.file_ts(filename.title()))
-    # )
 
 
 # version = get("config.json").version
@@ -348,13 +331,6 @@ def line_count():
                     line = line.strip()
                     if len(line) == 0:
                         continue
-                    # idk, I don't think half of my code is just documentation
-                    # elif line.startswith('"""'):
-                    #     docstring = not docstring
-                    # if docstring is True:
-                    #     docs += 1
-                    # if line.endswith('"""'):
-                    #     docstring = not docstring
                     if line.startswith("#"):
                         comments += 1
                         continue
