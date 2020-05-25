@@ -646,7 +646,8 @@ class Leveling(commands.Cog):
             except KeyError:
                 dm = 1
         # x1, x2 = [val * normal * dm for val in level_xp]
-        needed = value_string(r, big=True)
+        # needed = value_string(r, big=True)
+        needed = f"{r:,}"
         base = generic.gls(locale, "xp_level_base", [ctx.author.name, f"{level:,}", needed])
         extra = ""
         if xp < r:

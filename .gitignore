@@ -27,10 +27,8 @@ share/python-wheels/
 *.egg
 .idea/
 config.json
-changes.json
 MANIFEST
 data/
-logs/
 database.db
 
 # PyInstaller

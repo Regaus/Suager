@@ -4,13 +4,12 @@ import os
 import pathlib
 import random
 import traceback
-from collections import namedtuple
 from datetime import datetime
 from io import BytesIO
-from langs import en, ru
 
 import discord
 
+from langs import en, ru
 from utils import time, database, data_io
 
 prefix_template = {'prefixes': [], 'default': True}
@@ -106,18 +105,6 @@ def time_ls(locale: str, ts: datetime, *, short: bool = True, show_year: bool = 
         if show_seconds:
             base += f":{s:02d}"
     return base
-
-
-def get(file):
-    try:
-        with open(file, encoding='utf8') as data:
-            # return json.load(data, object_hook=lambda d: namedtuple('X', d.keys())(*d.values()))
-            # return json.load(data, object_hook=lambda d: namedtuple('JSONData', d.keys())(*d.values()))
-            return json.load(data, object_hook=lambda d: namedtuple('JSONData', d.keys())())
-    except AttributeError:
-        raise AttributeError("Unknown argument")
-    except FileNotFoundError:
-        raise FileNotFoundError("JSON file wasn't found")
 
 
 def random_colour():
