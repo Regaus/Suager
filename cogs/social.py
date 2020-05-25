@@ -301,7 +301,7 @@ class Social(commands.Cog):
             embed = discord.Embed(colour=generic.random_colour())
             number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "slaps_given", "slaps_received", 18, 19)
             embed.description = generic.gls(locale, "slap", [user.name, ctx.author.name])
-            embed.set_image(url=random.choice(self.bite))
+            embed.set_image(url=random.choice(self.slap))
             embed.set_footer(text=generic.gls(locale, "slap2", [user.name, number]))
         else:
             embed = None
@@ -316,7 +316,7 @@ class Social(commands.Cog):
         if generic.is_locked(ctx.guild, "smell"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if is_fucked(self.smell):
-            self.smell = await lists.get_images(self.bot, 'b')
+            self.smell = await lists.get_images(self.bot, 'n')
         if ctx.author == user:
             return await generic.send(generic.gls(locale, "how_are_you_gonna"), ctx.channel)
         if user.id == self.bot.user.id:

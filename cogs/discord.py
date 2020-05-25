@@ -268,7 +268,7 @@ class Discord(commands.Cog):
         -c/--colour/--color: Set role colour
         -n/--name: Set role name """
         if ctx.guild.id in generic.config["custom_role"]:
-            data = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=?, gid=?", (ctx.author.id, ctx.guild.id))
+            data = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             if not data:
                 return await generic.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}", ctx.channel)
                 # return await ctx.send(f"Doesn't seem like you have a custom role, {ctx.author.name}")

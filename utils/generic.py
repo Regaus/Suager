@@ -312,7 +312,7 @@ def is_locked(guild: discord.Guild or None, cmd: str):
 
 
 def is_love_locked(user: discord.Member, author: discord.Member) -> bool:
-    return (user.id in love_locks and author.id not in love_exceptions[str(user.id)]) or author.id == 597373963571691520  # Nuriki
+    return (user.id in love_locks and author.id not in love_exceptions[str(user.id)]) and author.id != 597373963571691520  # Nuriki
 
 
 def line_count():

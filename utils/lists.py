@@ -22,7 +22,7 @@ server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/64213
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139570569347102/09.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139584326533130/10.png",
                 "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
-playing = ["Grand Theft Auto V", "with Regaus", "with myself", "with your feelings", "Custom Status", "with the Nuriki Cult", "PyCharm",
+playing = ["Grand Theft Auto V", "with Regaus", "without you", "with your feelings", "Custom Status", "with the Nuriki Cult", "PyCharm",
            "a game", "Русские Вперёд!", ",/help"]
 phrases = ["Imagine being forced to work 24/7", "Reminder that AlexFlipnote is a furry"]
 # phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",

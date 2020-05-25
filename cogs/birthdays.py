@@ -77,7 +77,7 @@ class Birthdays(commands.Cog):
                                 user = guild.get_member(g["uid"])
                                 if user is not None:
                                     await generic.send(generic.gls(generic.get_lang(guild), "birthday_today",
-                                                                   [user.mention]), channels[i])
+                                                                   [user.mention]), channels[i], u=True)
                                     # await channels[i].send(
                                     #     f"Happy birthday {user.mention}, have a nice birthday and enjoy your role "
                                     #     f"today 🎂🎉"
