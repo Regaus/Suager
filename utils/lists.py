@@ -10,18 +10,18 @@ avatars = ["https://cdn.discordapp.com/attachments/622949625204047872/6229497295
            "https://cdn.discordapp.com/attachments/622949625204047872/622949928938766336/09.png",
            "https://cdn.discordapp.com/attachments/622949625204047872/622949934144028682/10.png",
            "https://cdn.discordapp.com/attachments/622949625204047872/622949940049477663/11.png"]
-server_icons = ["https://cdn.discordapp.com/attachments/642139397386534912/642139449320407040/00.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139460028596224/01.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139473106305034/02.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139487488704542/03.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139499769626635/04.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139513904431104/05.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139533223264266/06.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139545214779393/07.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139558397345810/08.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139570569347102/09.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139584326533130/10.png",
-                "https://cdn.discordapp.com/attachments/642139397386534912/642139596947193864/11.png"]
+server_icons = ["https://cdn.discordapp.com/attachments/714583916706791494/714583957785673879/0.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584123485978736/1.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584148387430491/2.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584179949436949/3.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584188397027440/4.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584195703504926/5.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584202611392542/6.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584211360841738/7.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584222051991552/8.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584228150640721/9.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584238686732319/10.png",
+                "https://cdn.discordapp.com/attachments/714583916706791494/714584244940439593/11.png"]
 playing = ["Grand Theft Auto V", "with Regaus", "without you", "with your feelings", "Custom Status", "with the Nuriki Cult", "PyCharm",
            "a game", "Русские Вперёд!", ",/help"]
 phrases = ["Imagine being forced to work 24/7", "Reminder that AlexFlipnote is a furry"]
