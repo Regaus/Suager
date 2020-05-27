@@ -29,7 +29,10 @@ class Utility(commands.Cog):
         send = generic.gls(locale, "time_command", [time.time(tz=True), time.time_k(tz=True), ctx.author.name, time.time(True, tz=True)])
         data = self.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
         if data:
-            send += generic.gls(locale, "time_local", [data["tz"], time.time_output(time.set_tz(time.now(True), data["tz"]), tz=True, seconds=True)])
+            _tzn = data["tz"]
+            _tzl = len(_tzn)
+            tzn = _tzn.upper() if _tzl <= 3 else _tzn.title()
+            send += generic.gls(locale, "time_local", [tzn, time.time_output(time.set_tz(time.now(True), data["tz"]), tz=True, seconds=True)])
         return await generic.send(send, ctx.channel)
         # return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
 
