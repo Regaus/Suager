@@ -72,7 +72,7 @@ class Spyware(commands.Cog):
         to = time.time()
         log = "spyware"
         al = "spyware_activity"
-        sl = "spuware_status"
+        sl = "spyware_status"
         # log = logs.get_place(main.version, "spyware")
         # al = logs.get_place(main.version, "spyware_activity")
         # sl = logs.get_place(main.version, "spyware_status")

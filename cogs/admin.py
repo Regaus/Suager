@@ -563,6 +563,8 @@ class Admin(commands.Cog):
     @commands.check(permissions.is_owner)
     async def heretic_list(self, ctx: commands.Context):
         """ Heretic List """
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         embed.add_field(name="Tier 1", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_1]), inline=False)
         embed.add_field(name="Tier 2", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_2]), inline=False)
@@ -573,21 +575,26 @@ class Admin(commands.Cog):
     @commands.check(permissions.is_owner)
     async def heretic_list2(self, ctx: commands.Context):
         """ Locks list """
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
-        embed.add_field(name="LL", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks]), inline=False)
+        embed.add_field(name="Love Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks]), inline=False)
         lev = ""
         le = generic.love_exceptions
         for lock in le:
             for exc in le[str(lock)]:
                 lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
-        embed.add_field(name="LE", value=lev, inline=True)
+        embed.add_field(name="Love Exceptions", value=lev, inline=True)
         # embed.add_field(name="LE", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_exceptions]), inline=False)
-        embed.add_field(name="BL", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.bad_locks]), inline=False)
+        embed.add_field(name="Bad Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.bad_locks]), inline=False)
         return await generic.send("Here is the locks list", ctx.channel, embed=embed)
 
     @commands.command(name="lv2l", aliases=["heretics3", "regausmad"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def heretic_list3(self, ctx: commands.Context):
         """ Imagine being level -2 """
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         res = self.db.fetch("SELECT * FROM leveling WHERE level=-2")
         embed = discord.Embed(colour=generic.random_colour())
         # au = []
@@ -599,6 +606,23 @@ class Admin(commands.Cog):
         embed.description = desc
         # embed.description = "\n".join([" - ".join([f"<@{u['uid']}>", f"{u['name']}#{u['disc']:04d}"]) for u in res])
         return await generic.send("The list of people who managed to get level -2", ctx.channel, embed=embed)
+
+    @commands.command(name="lv2", aliases=["lv-2"])
+    @commands.check(permissions.is_owner)
+    async def lv2(self, ctx: commands.Context, user: discord.User, guild: discord.Guild = None):
+        """ Set someone to lvl -2 """
+        guild = guild or ctx.guild
+        ret = self.db.execute("UPDATE leveling SET level=-2 WHERE uid=? AND gid=?", (user.id, guild.id))
+        return await generic.send(ret, ctx.channel)
+
+    @commands.command(name="lv0")
+    @commands.check(permissions.is_owner)
+    async def lv0(self, ctx: commands.Context, user: discord.User, guild: discord.Guild = None):
+        """ Restore someone's levels """
+        guild = guild or ctx.guild
+        ret = self.db.execute("UPDATE leveling SET level=0 WHERE uid=? AND gid=?", (user.id, guild.id))
+        return await generic.send(ret, ctx.channel)
+
 
     @commands.group()
     @commands.check(permissions.is_owner)

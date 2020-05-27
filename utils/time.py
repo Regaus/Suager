@@ -18,6 +18,10 @@ def now(utc: bool = False):
     # return datetime.utcnow() if utc else datetime.now()
 
 
+def set_tz(dt: datetime, tz: str):
+    return dt.astimezone(tz=pytz.timezone(tz))
+
+
 def now_k():
     t = now(True).astimezone(timezone(td(hours=1, minutes=30), "KST"))
     r = relativedelta(years=-276, days=5)

@@ -145,6 +145,10 @@ tables = [
         Column("progress", 0, True),
         Column("background", 0, True)
     ]),
+    Table("timezones", [
+        Column("uid", 0, True),
+        Column("tz", 2, True)
+    ]),
     Table("counters", [
         Column("uid", 0, True),
         Column("gid", 0, True),

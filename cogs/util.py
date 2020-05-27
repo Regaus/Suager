@@ -1,18 +1,21 @@
 import json
 import random
 from datetime import datetime, timedelta
+from io import BytesIO
 
 import country_converter
 import discord
+import pytz
 import timeago
 from discord.ext import commands
 
-from utils import time, generic, http
+from utils import time, generic, http, database
 
 
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = database.Database()
 
     @commands.command(name="time")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -23,9 +26,31 @@ class Utility(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        return await generic.send(generic.gls(locale, "time_command", [
-            time.time(tz=True), time.time_k(tz=True), ctx.author.name, time.time(True, tz=True)]), ctx.channel)
+        send = generic.gls(locale, "time_command", [time.time(tz=True), time.time_k(tz=True), ctx.author.name, time.time(True, tz=True)])
+        data = self.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+        if data:
+            send += generic.gls(locale, "time_local", [data["tz"], time.time_output(time.set_tz(time.now(True), data["tz"]), tz=True, seconds=True)])
+        return await generic.send(send, ctx.channel)
         # return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
+
+    @commands.command(name="settz")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def set_timezone(self, ctx: commands.Context, tz: str):
+        """ Set your timezone """
+        locale = generic.get_lang(ctx.guild)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        try:
+            data = self.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+            _tz = pytz.timezone(tz)
+            if data:
+                ret = self.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
+            else:
+                ret = self.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
+            return await generic.send(generic.gls(locale, "tz_set", [ctx.author.name, tz, ret]), ctx.channel)
+        except pytz.exceptions.UnknownTimeZoneError:
+            file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
+            return await generic.send(generic.gls(locale, "tz_invalid", [tz]), ctx.channel, file=file)
 
     @commands.command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
