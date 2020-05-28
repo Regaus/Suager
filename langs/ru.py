@@ -348,7 +348,7 @@ data = {
     "eat": "**<val1>**, you just ate a **<val2>**. You have **<val3>** left.",
     "no_greedy": "Don't be greedy, **<val1>**!",
     "give_food": "**<val2>** just got a <val3> from **<val1>**",
-    "food_counter": "**<val1>** now has **<val2> <val3>** in this server",
+    "food_counter": "\n**<val1>** now has **<val2> <val3>** in this server",
     "bad_self": emotes.AlexPat,
     "tz_set": "<val1>, your timezone has been set to **<val2>**.\nDB status: <val3>",
     "tz_invalid": "The timezone you specified <val1> was not found. Attached below is the list of pytz timezones.",

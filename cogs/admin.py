@@ -152,37 +152,81 @@ class Admin(commands.Cog):
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
             # return await ctx.send(f"{type(e).__name__}: {e}")
 
-    @commands.command(name="fetch")
+    @commands.command(name="fetch", aliases=["select"])
     @commands.check(permissions.is_owner)
     async def db_fetch(self, ctx: commands.Context, *, query: str):
         """ Fetch data from db """
         try:
-            data = self.db.fetch(query)
+            data = self.db.fetch("SELECT " + query)
             result = f"{data}"
             if ctx.guild is None:
                 limit = 8000000
             else:
                 limit = int(ctx.guild.filesize_limit / 1.05)
             # return await ctx.send(result)
-            if len(str(result)) == 0 or result is None:
+            rl = len(str(result))
+            if rl == 0 or result is None:
                 return await generic.send("Code has been run, however returned no result.", ctx.channel)
                 # return await ctx.send("Code has been run, however returned no result.")
-            elif len(str(result)) in range(2001, limit + 1):
+            elif rl in range(2001, limit + 1):
                 async with ctx.typing():
                     data = BytesIO(str(result).encode('utf-8'))
-                    return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
+                    return await generic.send(f"Result was a bit too long... ({rl:,} chars)", ctx.channel,
                                               file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
                     # return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)",
                     #                       file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
-            elif len(str(result)) > limit:
+            elif rl > limit:
                 async with ctx.typing():
                     data = BytesIO(str(result)[-limit:].encode('utf-8'))
-                    return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)\nSending last {limit:,} chars", ctx.channel,
+                    return await generic.send(f"Result was a bit too long... ({rl:,} chars)\nSending last {limit:,} chars", ctx.channel,
                                               file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
                 # return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
             else:
                 return await generic.send(str(result), ctx.channel)
                 # return await ctx.send(str(result))
+        except Exception as e:
+            return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
+            # return await ctx.send(f"{type(e).__name__}: {e}")
+
+    @commands.command(name="log", aliases=["logs"])
+    @commands.check(permissions.is_owner)
+    async def log(self, ctx: commands.Context, log: str, *, search: str = None):
+        """ Get logs """
+        try:
+            if search is None:
+                data = open(f"data/{log}.rsf").read()
+                result = f"{data}"
+            else:
+                data = open(f"data/{log}.rsf").readlines()
+                result = ""
+                for line in data:
+                    if search in line:
+                        result += line
+            if ctx.guild is None:
+                limit = 8000000
+            else:
+                limit = int(ctx.guild.filesize_limit / 1.05)
+            # return await ctx.send(result)
+            rl = len(str(result))
+            if rl == 0 or result is None:
+                return await generic.send("Nothing was found...", ctx.channel)
+                # return await ctx.send("Code has been run, however returned no result.")
+            elif 0 < rl <= limit:
+                async with ctx.typing():
+                    data = BytesIO(str(result).encode('utf-8'))
+                    return await generic.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                                              file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
+                    # return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
+                    #                           file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
+            elif rl > limit:
+                async with ctx.typing():
+                    data = BytesIO(str(result)[-limit:].encode('utf-8'))
+                    return await generic.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", ctx.channel,
+                                              file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
+                # return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
+            # else:
+            #     return await generic.send(str(result), ctx.channel)
+            # return await ctx.send(str(result))
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
             # return await ctx.send(f"{type(e).__name__}: {e}")
@@ -684,49 +728,6 @@ class Admin(commands.Cog):
         except TypeError:
             return await generic.send("You need to either provide an image URL or upload one with the command", ctx.channel)
             # await ctx.send("You need to either provide an image URL or upload one with the command")
-
-    @commands.command(name="log")
-    @commands.check(permissions.is_owner)
-    async def log(self, ctx: commands.Context, log: str, *, search: str = None):
-        """ Get logs """
-        try:
-            if search is None:
-                data = open(f"data/{log}.rsf").read()
-                result = f"{data}"
-            else:
-                data = open(f"data/{log}.rsf").readlines()
-                result = ""
-                for line in data:
-                    if search in line:
-                        result += line
-            if ctx.guild is None:
-                limit = 8000000
-            else:
-                limit = int(ctx.guild.filesize_limit / 1.05)
-            # return await ctx.send(result)
-            rl = len(str(result))
-            if rl == 0 or result is None:
-                return await generic.send("Nothing was found...", ctx.channel)
-                # return await ctx.send("Code has been run, however returned no result.")
-            elif 0 < rl <= limit:
-                async with ctx.typing():
-                    data = BytesIO(str(result).encode('utf-8'))
-                    return await generic.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
-                                              file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
-                    # return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
-                    #                           file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
-            elif rl > limit:
-                async with ctx.typing():
-                    data = BytesIO(str(result)[-limit:].encode('utf-8'))
-                    return await generic.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", ctx.channel,
-                                              file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
-                # return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
-            # else:
-            #     return await generic.send(str(result), ctx.channel)
-            # return await ctx.send(str(result))
-        except Exception as e:
-            return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"{type(e).__name__}: {e}")
 
 
 async def status(ctx: commands.Context, _type: int):
