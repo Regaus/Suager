@@ -581,6 +581,20 @@ class Admin(commands.Cog):
         return await generic.send(f"{emotes.Allow} Successfully {w1} `{command}` {w2} the Server Locks List for {self.bot.get_guild(gid)}\n"
                                   f"Reload status: {reload}", ctx.channel)
 
+    @config.command(name="counterlocks", aliases=["cl2", "nl"])
+    @commands.check(permissions.is_owner)
+    async def config_counter_locks(self, ctx: commands.Context, action: str, gid: int):
+        """ Update the counter locks list """
+        try:
+            data_io.change_values("counter_locks", None, action, gid)
+        except Exception as e:
+            return await generic.send(str(e), ctx.channel)
+        reload = reload_util("generic")
+        w1 = "added" if action == "add" else "removed"
+        w2 = "to" if action == "add" else "from"
+        return await generic.send(f"{emotes.Allow} Successfully {w1} {self.bot.get_guild(gid)} {w2} the Counter Locks List\n"
+                                  f"Reload status: {reload}", ctx.channel)
+
     def get_user(self, uid: int) -> str:
         try:
             return str([user for user in self.bot.users if user.id == uid][0])

@@ -326,12 +326,13 @@ data = {
     "bang_suager": "Nope, find someone else.",
     "bang": "bang",
     "fuck": "fuck",
-    "bang_out": f"{emotes.Scary} {emotes.NotLikeThis} **<val1>** is now <val4>ing **<val2>**...\n"
-                f"**<val2> **has now got <val4>ed **<val3>** times in this server!",
+    "bang_out": f"{emotes.Scary} {emotes.NotLikeThis} **<val1>** is now <val3>ing **<val2>**...",
+    "bang_counter": "\n**<val1> **has now got <val3>ed **<val2>** times in this server!",
     "bean_not_allowed": f"{emotes.Deny} You are not allowed to do that {emotes.BlobCatPolice}",
     "bean_suager": f"{emotes.Deny} You can't bean me",
     "bean_owner": f"{emotes.Deny} Imagine beaning the owner, lol",
-    "bean": f"{emotes.Allow} **<val1>** has been dismissed from **<val2>**.\n**<val1>** has now been beaned **<val3> times** in this server",
+    "bean": f"{emotes.Allow} **<val1>** has been dismissed from **<val2>**.",
+    "bean3": "\n**<val1>** has now been beaned **<val2> times** in this server",
     "bean2": f"{emotes.Deny} **<val1>** has been dismissed from **<val2>**.",
     "bad_suager": "If you think I'm bad, why am I still in this server?",
     "eat_allowed": "You can only eat: cookie, carrot, fruit, lemon",
@@ -353,4 +354,6 @@ data = {
     "tz_set": "<val1>, your timezone has been set to **<val2>**.\nDB status: <val3>",
     "tz_invalid": "The timezone you specified <val1> was not found. Attached below is the list of pytz timezones.",
     "time_local": "\n<val1>: **<val2>**",
+    "counters_disabled": "Counters are hidden in this server - you can still check them with `<val1>counters`.",
+    "channel_must_be_nsfw": "You can only use this command in an NSFW channel",
 }

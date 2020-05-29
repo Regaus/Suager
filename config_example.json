@@ -57,6 +57,7 @@
       "slap"
     ]
   },
+  "counter_locks": [],
   "heretics": {
     "1": [
       381870347814830081
@@ -95,8 +96,8 @@
     690162603275714574
   ],
   "version": "5.0a",
-  "full_version": "5.0-alpha13",
-  "last_update": 1590620862,
+  "full_version": "5.0-alpha14",
+  "last_update": 1590712850,
   "common_prefix": [
     "s/",
     "S/"
