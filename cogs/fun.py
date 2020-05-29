@@ -74,8 +74,8 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "beer"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        # if ctx.channel.id in generic.channel_locks:
+        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if not user or user.id == ctx.author.id:
             return await generic.send(generic.gls(locale, "beer_self", [ctx.author.name]), ctx.channel)
             # with ctx.typing():
@@ -213,8 +213,8 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "notwork"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        # if ctx.channel.id in generic.channel_locks:
+        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=random.randint(0, 0xffffff))
         embed.set_image(url="https://cdn.discordapp.com/attachments/577599230567383058/695424749097975808/notwork.png")
         return await generic.send(None, ctx.channel, embed=embed)

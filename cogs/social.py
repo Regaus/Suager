@@ -745,8 +745,7 @@ class Social(commands.Cog):
             id1, id2 = user.id, ctx.author.id
             # index1, index2 = 23, 22
         self.data_update(id1, id2, ctx.guild.id, "trash_given", "trashed", 28, 29)
-        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}",
-                                     res_method="read"))
+        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
         if bio is None:
             return await generic.send(generic.gls(locale, "image_not_created"), ctx.channel)
             # return await ctx.send("Something went wrong, couldn't generate image")
