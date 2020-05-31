@@ -14,7 +14,6 @@ def status_gen(log, to, who, what, old, new, guild, uid):
 class Spyware(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.log_sl = 650774303192776744
 
     @commands.Cog.listener()
     async def on_user_update(self, before, after):
@@ -22,25 +21,19 @@ class Spyware(commands.Cog):
         if not logging:
             return
         to = time.time()
-        # senko = self.bot.get_channel(self.log_sl)
-        # log = logs.log_channel(self.bot, 'spyware')
-        # log = logs.get_place(main.version, "spyware")
         log = "spyware"
         uid = after.id
         n1, n2 = [before.name, after.name]
         if n1 != n2:
             send = f"{to} > {n1} ({uid}) is now known as {n2}"
-            # await senko.send(send)
             logs.log(log, send)
-            # logs.save(log, send)
         a1, a2 = [before.avatar, after.avatar]
         if a1 != a2:
             if after.id not in [609423646347231282, 568149836927467542, 520042197391769610]:  # Suager diff versions
                 # await senko.send(send)
-                al = self.bot.get_channel(676899389977133072)
+                al = self.bot.get_channel(generic.get_config()["avatar_channel"])
                 send = f"{to} > {n2} ({uid}) changed their avatar"
-                bio = BytesIO(await http.get(str(after.avatar_url_as(size=1024, static_format="png")),
-                                             res_method="read"))
+                bio = BytesIO(await http.get(str(after.avatar_url_as(size=1024, static_format="png")), res_method="read"))
                 ani = after.is_avatar_animated()
                 fe = "gif" if ani else "png"
                 if bio is not None:
@@ -53,16 +46,10 @@ class Spyware(commands.Cog):
                     except discord.HTTPException:
                         pass
                 logs.log("avatars", send)
-                # logs.save(logs.get_place(main.version, "avatars"), send)
-                # await logs.log_channel(self.bot, 'avatars').send(
-                #     f"{send}. New avatar: {after.avatar_url_as(size=1024)}")
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
             send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
-            # await senko.send(send)
-            # await log.send(send)
             logs.log(log, send)
-            # logs.save(log, send)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
@@ -73,9 +60,6 @@ class Spyware(commands.Cog):
         log = "spyware"
         al = "spyware_activity"
         sl = "spyware_status"
-        # log = logs.get_place(main.version, "spyware")
-        # al = logs.get_place(main.version, "spyware_activity")
-        # sl = logs.get_place(main.version, "spyware_status")
         guild = after.guild.name
         n = after.name
         uid = after.id
@@ -88,26 +72,15 @@ class Spyware(commands.Cog):
             else:
                 send = f"{to} > {after.guild.name} > {n} ({uid}) now has no activity."
             logs.log(al, send)
-            # logs.save(al, send)
-            # if now > last + 15:
-            #     logs.log_channel(self.bot, 'activity').send(send)
-            #     activity_logged[after.id] = now
         n1, n2 = [before.nick, after.nick]
-        # is_senko_lair = after.guild.id == 568148147457490954
-        # ls = [94762492923748352, 246652610747039744]
         if n1 != n2:
-            # if after.id in ls and is_senko_lair:
-            #     await generic.you_little_shit(self.bot.get_guild(568148147457490954))
             send = f"{to} > {n}'s ({uid}) nickname in {guild} is now {n2} (from {n1})"
-            # await log.send(send)
             logs.log(log, send)
-            # logs.save(log, send)
         try:
             s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, before.mobile_status, before.desktop_status, before.web_status, after.status,
                                                     after.mobile_status, after.desktop_status, after.web_status]
         except AttributeError:
             s1, s1m, s1d, s1w, s2, s2m, s2d, s2w = [before.status, None, None, None, after.status, None, None, None]
-        # status_log = logs.log_channel(self.bot, 'status')
         if after.id != 302851022790066185:
             if s1 != s2:
                 status_gen(sl, to, n, "status", s1, s2, guild, uid)
@@ -129,12 +102,8 @@ class Spyware(commands.Cog):
                     roles_gained.append(role.name)
             for role in roles_lost:
                 logs.log(log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
-                # await log.send(f"{to} > `{guild}` > `{n}` lost role `{role}`")
-                # logs.save(log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
             for role in roles_gained:
                 logs.log(log, f"{to} > {guild} > {n} ({uid}) got role {role}")
-                # await log.send(f"{to} > `{guild}` > `{n}` got role `{role}`")
-                # logs.save(log, f"{to} > {guild} > {n} ({uid}) got role {role}")
 
 
 def setup(bot):

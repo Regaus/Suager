@@ -15,6 +15,18 @@ class Economy(commands.Cog):
         self.bot = bot
         self.db = database.Database()
 
+    def get_currency(self, gid):
+        settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (gid,))
+        if not settings:
+            currency = default_currency
+        else:
+            try:
+                set = json.loads(settings["data"])
+                currency = set["currency"]
+            except KeyError:
+                currency = default_currency
+        return currency
+
     @commands.command(name="balance", aliases=["bal"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -33,7 +45,8 @@ class Economy(commands.Cog):
         if not data:
             return await generic.send(generic.gls(locale, "no_money", [user.name]), ctx.channel)
             # return await ctx.send(f"Doesn't appear like {user.name} has any money at all...")
-        return await generic.send(generic.gls(locale, "balance", [user.name, value_string(data["money"], big=True), default_currency, ctx.guild.name]),
+        currency = self.get_currency(ctx.guild.id)
+        return await generic.send(generic.gls(locale, "balance", [user.name, value_string(data["money"], big=True), currency, ctx.guild.name]),
                                   ctx.channel)
         # return await ctx.send(f"**{user.name}** has **{value_string(data['money'], big=True)}{currency}** "
         #                       f"in **{ctx.guild.name}**")
@@ -77,7 +90,8 @@ class Economy(commands.Cog):
         else:
             self.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)",
                             (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
-        return await generic.send(generic.gls(locale, "donate_yes", [ctx.author.name, value_string(amount, big=True), default_currency, user.name]),
+        currency = self.get_currency(ctx.guild.id)
+        return await generic.send(generic.gls(locale, "donate_yes", [ctx.author.name, value_string(amount, big=True), currency, user.name]),
                                   ctx.channel)
         # return await ctx.send(f"{ctx.author.name} just gave {amount}{currency} to {user.name}. {emotes.AlexHeart}")
 
@@ -112,8 +126,9 @@ class Economy(commands.Cog):
                 # return await ctx.send(f"I ain't sure if {user.name} has anything at all...")
             r1 = value_string(data['money'], big=True)
             r2 = value_string(data['donated'], big=True)
-            embed.add_field(name=generic.gls(locale, "money"), value=f"{r1}{default_currency}", inline=False)
-            embed.add_field(name=generic.gls(locale, "donated"), value=f"{r2}{default_currency}", inline=False)
+            currency = self.get_currency(ctx.guild.id)
+            embed.add_field(name=generic.gls(locale, "money"), value=f"{r1}{currency}", inline=False)
+            embed.add_field(name=generic.gls(locale, "donated"), value=f"{r2}{currency}", inline=False)
         return await generic.send(generic.gls(locale, "profile", [user.name, ctx.guild.name]), ctx.channel, embed=embed)
         # return await ctx.send(f"**{user.name}'s** profile in **{ctx.guild.name}**", embed=embed)
 

@@ -42,12 +42,6 @@ class Birthdays(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        # print(f'Ready: {self.bot.user} | Servers: {len(self.bot.guilds)}')
-        # await self.bot.change_presence(
-        #     activity=discord.Activity(type=3, name="when your birthday is due 🎉🎂"),
-        #     status=discord.Status.idle
-        # )
-
         while True:
             await asyncio.sleep(10)
             ag = [a for a in self.bd_config]
@@ -64,9 +58,7 @@ class Birthdays(commands.Cog):
             # birthday_role = discord.Object(id=self.config.birthday_role_id)
 
             # Check if someone has birthday today
-            birthday_today = self.db.fetch(
-                "SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')"
-            )
+            birthday_today = self.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
             if birthday_today:
                 for g in birthday_today:
                     self.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (g["uid"],))
@@ -76,20 +68,14 @@ class Birthdays(commands.Cog):
                             if guild is not None:
                                 user = guild.get_member(g["uid"])
                                 if user is not None:
-                                    await generic.send(generic.gls(generic.get_lang(guild), "birthday_today",
-                                                                   [user.mention]), channels[i], u=True)
-                                    # await channels[i].send(
-                                    #     f"Happy birthday {user.mention}, have a nice birthday and enjoy your role "
-                                    #     f"today 🎂🎉"
-                                    # )
+                                    await generic.send(generic.gls(generic.get_lang(guild), "birthday_today", [user.mention]), channels[i], u=True)
+                                    # await channels[i].send(f"Happy birthday {user.mention}, have a nice birthday and enjoy your role today 🎂🎉")
                                     await user.add_roles(roles[i], reason=f"{user} has birthday! 🎂🎉")
                                     print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
                         except Exception as e:
                             print(e)
 
-            birthday_over = self.db.fetch(
-                "SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')"
-            )
+            birthday_over = self.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
             for g in birthday_over:
                 self.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=?", (g["uid"],))
                 for i in range(len(guilds)):
@@ -148,7 +134,7 @@ class Birthdays(commands.Cog):
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
-        """ Set your birthday :) """
+        """ Set your birthday :) [DD/MM] """
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "birthday"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
@@ -192,23 +178,7 @@ class Birthdays(commands.Cog):
         else:
             return await generic.send(generic.gls(locale, "birthday_no"), ctx.channel)
         timestamp_clean = generic.time_ls(locale, timestamp, show_year=False, show_time=False)
-        # timestamp_clean = timestamp.strftime("%d %B")
-        # today = datetime.now()
-        # age = calculate_age(timestamp)
-
-        # if timestamp > today:
-        #     return await ctx.send(f"Nope.. you can't exist in the future **{ctx.author.name}**")
-        # if age > 125:
-        #     return await ctx.send(f"**{ctx.author.name}**... Are you sure you're like... over 125 years old?")
-        # if age <= 13:
-        #     return await ctx.send(f"You have to be **13** to use Discord **{ctx.author.name}**... "
-        #                           f"Are you saying you're underage (only {age})? 🤔")
         confirm_msg = await generic.send(generic.gls(locale, "birthday_confirm", [ctx.author.name, timestamp_clean, confirm_code]), ctx.channel)
-        # confirm_msg = await ctx.send(
-        #     f"Alright **{ctx.author.name}**, do you confirm that your birth date is **{timestamp_clean}**?\n"
-        #     f"Type `{confirm_code}` to confirm this choice\n"
-        #     f"(NOTE: To change birthday later, you must send valid birthday to the owner)"
-        # )
 
         try:
             await self.bot.wait_for('message', timeout=30.0, check=check_confirm)

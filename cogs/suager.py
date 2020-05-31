@@ -14,15 +14,13 @@ class Suager(commands.Cog):
         self.bot = bot
         # self.creation_date = datetime(2020, 3, 2, 18)  # this was v4
         self.creation_date = datetime(2020, 12, 31, 23, 59, 59, tzinfo=tz.utc)  # Date of creation of v5 (placeholder) || Note to self: make this time be in UTC
-        self.birthday = datetime(2018, 12, 6, 1, 2, tzinfo=tz.utc)  # Date when the user was created
+        # self.birthday = datetime(2018, 12, 6, 1, 2, tzinfo=tz.utc)  # Date when the user was created
+        self.birthday = datetime(2019, 5, 13, 21, 2, tzinfo=tz.utc)  # Apparently the actual first versions were at a different time
 
     @commands.command(name="source")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
     async def source(self, ctx: commands.Context):
         """ Source codes <3 """
-        # Do not remove this command, this has to stay due to the GitHub LICENSE.
-        # TL:DR, you have to disclose source according to GNU GPL v3.
-        # Reference: https://github.com/AlexFlipnote/birthday.py/blob/master/LICENSE
         locale = generic.get_lang(ctx.guild)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
@@ -98,8 +96,6 @@ class Suager(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         perms = 470150231
         return await generic.send(generic.gls(locale, "invite_bot", [ctx.author.name, perms, self.bot.user.id]), ctx.channel)
-        # return await ctx.send(f"{ctx.author.name}, use this link to invite me:\n<https://discordapp.com/oauth2/"
-        #                       f"authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>")
 
     @commands.command(name="botserver")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -131,19 +127,13 @@ class Suager(commands.Cog):
         ws = int(self.bot.latency * 1000)
         r1 = generic.gls(locale, "ping1", [ctx.author.mention, f"{ws:,}"])
         msg = await generic.send(r1, ctx.channel, u=[ctx.author])
-        # msg = await ctx.send(f"<a:loading:651883385878478858> {ctx.author.mention} Pong\n"
-        #                      f"Message Send: undefined\nMessage Edit: undefined\nWS: {ws:,}ms")
         t2 = int((_time.monotonic() - t1) * 1000)
         t2s = _time.monotonic()
         r2 = generic.gls(locale, "ping2", [ctx.author.mention, f"{ws:,}", f"{t2:,}"])
         await msg.edit(content=r2)
-        # await msg.edit(content=f"<a:loading:651883385878478858> {ctx.author.mention} Pong\n"
-        #                        f"Message Send: {t2:,}ms\nMessage Edit: undefined\nWS: {ws:,}ms")
         t3 = int((_time.monotonic() - t2s) * 1000)
         r3 = generic.gls(locale, "ping3", [ctx.author.mention, f"{ws:,}", f"{t2:,}", f"{t3:,}"])
         await msg.edit(content=r3)
-        # await msg.edit(content=f"{ctx.author.mention} Pong:\n"
-        #                        f"Message Send: {t2:,}ms\nMessage Edit: {t3:,}ms\nWS: {ws:,}ms")
 
 
 def setup(bot):

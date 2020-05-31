@@ -79,16 +79,12 @@ class Utility(commands.Cog):
                         break
             else:
                 date = datetime(year, month, day, hour, minute, second)
-            # human_timeago = time.time_ago(date, now)
             human_timeago = time.human_timedelta(date, accuracy=7)
             current_time = time.time_output(now, True, True, True)
             specified_time = time.time_output(date, True, True, True)
             return await generic.send(generic.gls(locale, "time_since", [current_time, specified_time, human_timeago]), ctx.channel)
-            # return await ctx.send(f"Current time: **{current_time}**\nSpecified time: **{specified_time}**\n"
-            #                       f"Result: **{human_timeago}**")
         except Exception as e:
             return await generic.send(generic.gls(locale, "time_since_error", [e]), ctx.channel)
-            # return await ctx.send(f"There was an error:\n{e}")
 
     @commands.command(name="weather")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -101,51 +97,53 @@ class Utility(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         place = str(_place)
         try:
-            bio = await http.get("http://api.openweathermap.org/data/2.5/weather?"
-                                 f"appid=140e8db87d18e656a628272c48936fd7&q={place}", res_method="read")
+            bio = await http.get(f"http://api.openweathermap.org/data/2.5/weather?appid={generic.get_config()['weather_key']}&q={place}", res_method="read")
             data = json.loads(str(bio.decode('utf-8')))
-            embed = discord.Embed(colour=random.randint(0, 0xffffff))
-            weather_icon = data['weather'][0]['icon']
-            embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
-            embed.add_field(name=generic.gls(locale, "current_weather"), value=data['weather'][0]['description'].capitalize(), inline=True)
-            _tk = data['main']['temp']
-            _tc = _tk - 273.15
-            _tf = _tc * 1.8 + 32
-            tk, tc, tf = [round(_tk, 1), round(_tc, 1), round(_tf, 1)]
-            embed.add_field(name=generic.gls(locale, "temperature"), value=f"**{tc}°C** | {tk}°K | {tf}°F", inline=True)
-            embed.add_field(name=generic.gls(locale, "pressure"), value=f"{data['main']['pressure']} hPa", inline=True)
-            embed.add_field(name=generic.gls(locale, "humidity"), value=f"{data['main']['humidity']}%", inline=True)
-            sm = data['wind']['speed']
-            _sk = sm * 3.6
-            _sb = _sk / 1.609  # imperial system bad
-            sk, sb = [round(_sk, 1), round(_sb, 1)]
-            embed.add_field(name=generic.gls(locale, "wind_speed"), value=f"**{sm} m/s | {sk} km/h** | {sb} mph", inline=True)
-            embed.add_field(name=generic.gls(locale, "cloud_cover"), value=f"{data['clouds']['all']}%", inline=True)
-            tz = data['timezone']
-            sr = data['sys']['sunrise']
-            ss = data['sys']['sunset']
-            now = time.now(True)
-            now_l = now + timedelta(seconds=tz)
-            if sr != 0 and ss != 0:
-                srt = time.from_ts(sr + tz, True)
-                sst = time.from_ts(ss + tz, True)
-                sunrise = srt.strftime('%H:%M')
-                sunset = sst.strftime('%H:%M')
-                tar = timeago.format(srt, now_l, locale=locale)  # Time since/until sunrise
-                tas = timeago.format(sst, now_l, locale=locale)  # Time since/until sunset
-                embed.add_field(name=generic.gls(locale, "sunrise"), value=f"{sunrise} | {tar}", inline=True)
-                embed.add_field(name=generic.gls(locale, "sunset"), value=f"{sunset} | {tas}", inline=True)
-            country = data['sys']['country']
-            local_time = time.time_output((time.now(True) + timedelta(seconds=tz)))
-            country_name = country_converter.convert(names=[country], to="name_short")
-            emote = f":flag_{country.lower()}:"
-            embed.timestamp = now
+            code = data["cod"]
+            if code == 200:
+                embed = discord.Embed(colour=random.randint(0, 0xffffff))
+                country = data['sys']['country']
+                tz = data['timezone']
+                local_time = time.time_output((time.now(True) + timedelta(seconds=tz)))
+                country_name = country_converter.convert(names=[country], to="name_short")
+                emote = f":flag_{country.lower()}:"
+                embed.title = generic.gls(locale, "weather_output", [emote, data["name"], country_name])
+                embed.description = generic.gls(locale, "weather_output2", [local_time])
+                weather_icon = data['weather'][0]['icon']
+                embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
+                embed.add_field(name=generic.gls(locale, "current_weather"), value=data['weather'][0]['description'].capitalize(), inline=True)
+                _tk = data['main']['temp']
+                _tc = _tk - 273.15
+                _tf = _tc * 1.8 + 32
+                tk, tc, tf = [round(_tk, 1), round(_tc, 1), round(_tf, 1)]
+                embed.add_field(name=generic.gls(locale, "temperature"), value=f"**{tc}°C** | {tk}°K | {tf}°F", inline=True)
+                embed.add_field(name=generic.gls(locale, "pressure"), value=f"{data['main']['pressure']} hPa", inline=True)
+                embed.add_field(name=generic.gls(locale, "humidity"), value=f"{data['main']['humidity']}%", inline=True)
+                sm = data['wind']['speed']
+                _sk = sm * 3.6
+                _sb = _sk / 1.609  # imperial system bad
+                sk, sb = [round(_sk, 1), round(_sb, 1)]
+                embed.add_field(name=generic.gls(locale, "wind_speed"), value=f"**{sm} m/s | {sk} km/h** | {sb} mph", inline=True)
+                embed.add_field(name=generic.gls(locale, "cloud_cover"), value=f"{data['clouds']['all']}%", inline=True)
+                sr = data['sys']['sunrise']
+                ss = data['sys']['sunset']
+                now = time.now(True)
+                now_l = now + timedelta(seconds=tz)
+                if sr != 0 and ss != 0:
+                    srt = time.from_ts(sr + tz, True)
+                    sst = time.from_ts(ss + tz, True)
+                    sunrise = srt.strftime('%H:%M')
+                    sunset = sst.strftime('%H:%M')
+                    tar = timeago.format(srt, now_l, locale=locale)  # Time since/until sunrise
+                    tas = timeago.format(sst, now_l, locale=locale)  # Time since/until sunset
+                    embed.add_field(name=generic.gls(locale, "sunrise"), value=f"{sunrise} | {tar}", inline=True)
+                    embed.add_field(name=generic.gls(locale, "sunset"), value=f"{sunset} | {tas}", inline=True)
+                embed.timestamp = now
+            else:
+                return await generic.send(generic.gls(locale, "weather_error", [place, code, data["message"]]), ctx.channel)
         except Exception as e:
             return await generic.send(generic.gls(locale, "weather_error", [place, type(e).__name__, e]), ctx.channel)
-            # return await ctx.send(f"Could not get weather for {place}:\n{e}")
-        return await generic.send(generic.gls(locale, "weather_output", [emote, data["name"], country_name, local_time]), ctx.channel, embed=embed)
-        # return await ctx.send(f"{emote} Weather in **{data['name']}, {country_name}**\n"
-        #                       f"Local time: **{local_time}**", embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="luas")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -169,7 +167,6 @@ class Utility(commands.Cog):
                 _time = f"{i['due']} mins"
             trams += f"{i['destination']}: {_time}\n"
         return await generic.send(generic.gls(locale, "luas", [_place, status, trams]), ctx.channel)
-        # return await ctx.send(f"Data available for {_place}:\n{status}\n{trams}")
 
 
 def setup(bot):

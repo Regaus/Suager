@@ -37,15 +37,6 @@ class Genders(commands.Cog):
         }
         result = custom.get(user.id, _result)
         return await generic.send(generic.gls(locale, "pickle", [user.name, result]), ctx.channel)
-        # if user.id == self.bot.user.id:
-        #     result = 42.0
-        # if user.id == 682321712779493429:  # imagine being you
-        #     result = 0.0
-        # if user.id == 302851022790066185:
-        #     result = 29.9
-        # message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s {ctx.invoked_with} size...")
-        # await asyncio.sleep(3)
-        # return await message.edit(content=f"**{user.name}**'s {ctx.invoked_with} size is **{result}cm**")
 
     @commands.command(name="gender")
     @commands.guild_only()

@@ -74,28 +74,17 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "beer"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        # if ctx.channel.id in generic.channel_locks:
-        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if not user or user.id == ctx.author.id:
-            return await generic.send(generic.gls(locale, "beer_self", [ctx.author.name]), ctx.channel)
-            # with ctx.typing():
-            # bio = io.StringIO("Image is currently broken, try again later...")
-            # return await ctx.send(f"**{ctx.author.name}**: paaaarty!🎉🍺")
-            #                     file=discord.File("assets/drunk.gif", filename="party.gif"))
-            # await ctx.send(f"**{ctx.author.name}: Party!**", file=discord.File(bio, filename="partay.gif"))
+            async with ctx.typing():
+                return await generic.send(generic.gls(locale, "beer_self", [ctx.author.name]), ctx.channel, file=discord.File("assets/party.gif", "party.gif"))
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "beer_me"), ctx.channel)
             # return await ctx.send("*drinks beer with you* 🍻")
         if user.bot:
             return await generic.send(generic.gls(locale, "beer_bot", [user.name]), ctx.channel)
-            # return await ctx.send(f"I would love to give beer to the bot **{ctx.author.name}**, but I don't think it "
-            #                       f"will respond to you :/")
         beer_offer = generic.gls(locale, "beer_offer1", [user.name, ctx.author.name])
         if reason:
             beer_offer += generic.gls(locale, "beer_offer2", [reason])
-        # beer_offer = f"**{user.name}**, you got a 🍺 offer from **{ctx.author.name}**"
-        # beer_offer = beer_offer + f"\n\n**Reason:** {reason}" if reason else beer_offer
-        # msg = await ctx.send(beer_offer)
         msg = await generic.send(beer_offer, ctx.channel)
 
         def reaction_check(m):
@@ -107,16 +96,10 @@ class Fun(commands.Cog):
             await msg.add_reaction("🍻")
             await self.bot.wait_for('raw_reaction_add', timeout=30.0, check=reaction_check)
             return await msg.edit(content=generic.gls(locale, "beer_success", [user.name, ctx.author.name]))
-            # await msg.edit(content=f"**{user.name}** and **{ctx.author.name}** are enjoying a lovely beer together 🍻")
         except asyncio.TimeoutError:
             await msg.delete()
             return await generic.send(generic.gls(locale, "beer_timeout", [user.name, ctx.author]), ctx.channel)
-            # await ctx.send(f"well, doesn't seem like **{user.name}** would like to have "
-            #                f"a beer with you **{ctx.author.name}** ;-;")
         except discord.Forbidden:
-            # Yeah so, bot doesn't have reaction permission, drop the "offer" word
-            # beer_offer = f"**{user.name}**, you got a 🍺 from **{ctx.author.name}**"
-            # beer_offer = beer_offer + f"\n\n**Reason:** {reason}" if reason else beer_offer
             beer = generic.gls(locale, "beer_offer3", [user.name, ctx.author.name])
             if reason:
                 beer += generic.gls(locale, "beer_offer2", [reason])
@@ -150,11 +133,6 @@ class Fun(commands.Cog):
         r = random.randint(v1, v2)
         s = f"{r:,}"
         return await generic.send(generic.gls(locale, "roll", [ctx.author.name, f"{v1:,}", f"{v2:,}", s]), ctx.channel)
-        # if len(output) > 1900:
-        #     data = BytesIO(str(output).encode('utf-8'))
-        #     return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p}) and got this:",
-        #                           file=discord.File(data, filename=f"{time.file_ts('Roll')}"))
-        # return await ctx.send(f"**{ctx.author.name}** rolled **{v1:,}-{v2:,}** ({repeat} time{p}) and got this: {out}")
 
     @commands.command(name="f")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -163,14 +141,10 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "f"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        # if ctx.channel.id in generic.channel_locks:
-        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         heart = random.choice(lists.hearts)
         if text is None:
             return await generic.send(generic.gls(locale, "respects1", [ctx.author.name, heart]), ctx.channel)
-            # return await ctx.send(f"**{ctx.author.name}** has paid their respects {heart}")
         return await generic.send(generic.gls(locale, "respects2", [ctx.author.name, text, heart]), ctx.channel)
-        # return await ctx.send(f"**{ctx.author.name}** has paid their respects for **{text}** {heart}")
 
     @commands.command(name="quote")
     @commands.guild_only()
@@ -180,18 +154,15 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "quote"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        # if ctx.channel.id in generic.channel_locks:
+        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=random.randint(0, 0xffffff))
         embed.set_thumbnail(url=user.avatar_url)
-        # embed.title = f"**{user}** once said..."
         embed.title = generic.gls(locale, "quote_begin", [str(user)])
         embed.description = text
         embed.set_footer(text=generic.gls(locale, "quote_author", [ctx.author]))
-        # embed.set_footer(text=f"Quote author: {ctx.author}")
         embed.timestamp = time.now(False)
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="reverse")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

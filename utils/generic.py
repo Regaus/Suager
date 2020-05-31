@@ -31,7 +31,7 @@ settings_template = {
             {'level': 5002, 'role': 0}
         ]
     },
-    "mute_role": 0,
+    # "mute_role": 0,
     # "warns_to_mute": 3,
     "currency": "€",
     "shop_items": [

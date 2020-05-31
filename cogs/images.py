@@ -27,11 +27,9 @@ async def image_gen(ctx: commands.Context, user: discord.Member, link, filename=
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
     async with ctx.channel.typing():
         req = await http.get(url, res_method="read")
-
         if req is None:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
             # return await ctx.send("I couldn't create the image ;-;")
-
         bio = BytesIO(req)
         bio.seek(0)
         return await generic.send(content, ctx.channel, file=discord.File(bio, filename=filename))
@@ -52,20 +50,22 @@ class Images(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         async with ctx.typing():
-            c = ctx.invoked_with
+            # c = ctx.invoked_with
+            c = generic.gls(locale, str(ctx.invoked_with).lower())
+            c2 = c.capitalize()
             if colour == "random":
-                __colour = random.randint(0, 0xffffff)
-                _colour = hex(__colour)[2:]
+                _colour = hex(random.randint(0, 0xffffff))[2:]
                 a = 6
             else:
                 try:
-                    __colour = int(colour, base=16)
-                    _colour = hex(__colour)[2:]
+                    _colour = hex(int(colour, base=16))[2:]
                     a = len(colour)
                     if a != 3 and a != 6:
-                        return await ctx.send(f"Value must be either 3 or 6 digits long")
+                        return await generic.send(generic.gls(locale, "colour_value_len"), ctx.channel)
+                        # return await ctx.send(f"Value must be either 3 or 6 digits long")
                 except Exception as e:
-                    return await ctx.send(f"Invalid {c}: {e}\n{c.capitalize()} must be either `random` or a HEX value")
+                    return await generic.send(generic.gls(locale, "invalid_colour2", [c, c2, e]), ctx.channel)
+                    # return await ctx.send(f"Invalid {c}: {e}\n{c.capitalize()} must be either `random` or a HEX value")
             try:
                 _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
                 data = json.loads(_data)
@@ -74,21 +74,23 @@ class Images(commands.Cog):
                     _data = await http.get(f"https://api.alexflipnote.dev/colour/{colour}", res_method="read")
                     data = json.loads(_data)
                 except json.JSONDecodeError:
-                    return await ctx.send("Something went wrong, try again")
+                    return await generic.send(generic.gls(locale, "col_error"), ctx.channel)
+                    # return await ctx.send("Something went wrong, try again")
             if a == 3:
                 d, e, f = colour
                 g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
                 embed = discord.Embed(colour=g)
             else:
-                embed = discord.Embed(colour=__colour)
-            embed.add_field(name="Hex value", value=data["hex"], inline=True)
-            embed.add_field(name="RGB value", value=data["rgb"], inline=True)
-            embed.add_field(name="Integer", value=data["int"], inline=True)
-            embed.add_field(name="Brightness", value=data["brightness"], inline=True)
-            embed.add_field(name=f"Font {c}", value=data["blackorwhite_text"], inline=True)
+                embed = discord.Embed(colour=int(colour, base=16))
+            embed.add_field(name=generic.gls(locale, "hex_value"), value=data["hex"], inline=True)
+            embed.add_field(name=generic.gls(locale, "rgb_value"), value=data["rgb"], inline=True)
+            embed.add_field(name=generic.gls(locale, "integer"), value=data["int"], inline=True)
+            embed.add_field(name=generic.gls(locale, "brightness"), value=data["brightness"], inline=True)
+            embed.add_field(name=generic.gls(locale, "font_col", [c]), value=data["blackorwhite_text"], inline=True)
             embed.set_thumbnail(url=data["image"])
             embed.set_image(url=data["image_gradient"])
-            return await ctx.send(f"{c.capitalize()} name: **{data['name']}**", embed=embed)
+            return await generic.send(None, ctx.channel, embed=embed)
+            # return await ctx.send(f"{c.capitalize()} name: **{data['name']}**", embed=embed)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -101,34 +103,29 @@ class Images(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if user is None:
             user = ctx.author
-        z = "7289da"
-        y = "Invalid HEX value specified, using default..."
-        x = "colourify"
+        z, y, x = "7289da", generic.gls(locale, "invalid_colour"), "colourify"
         a = len(colour)
         c = colour
         try:
             int(c, base=16)
         except ValueError:
-            await ctx.send(y)
-            c = z
-            a = 6
+            await generic.send(y, ctx.channel)
+            c, a = z, 6
         if a == 3:
             d, e, f = c
             b = f"{d}{d}{e}{e}{f}{f}"
         elif a == 6:
             b = c
         else:
-            await ctx.send(y)
+            await generic.send(y, ctx.channel)
             b = z
-        async with ctx.typing():
-            return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}")
+        return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}")
 
     @commands.command(name="filter")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
-    async def filter(self, ctx: commands.Context, filter_name: str, who: discord.Member = None):
+    async def filter(self, ctx: commands.Context, filter_name: str, *, who: discord.Member = None):
         """ Let someone go through a filter
-        Allowed filter names: "blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik",
-        "jpegify", "communist" """
+        Do //filter help to see allowed filters """
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "filter"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
@@ -137,8 +134,9 @@ class Images(commands.Cog):
         user = who or ctx.author
         filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist"]
         _filter = filter_name.lower()
-        if _filter not in filters:
-            return await ctx.send(f"The allowed filter names are:\n`{filters}`")
+        if _filter not in filters or _filter == "help":
+            return await generic.send(generic.gls(locale, "allowed_filters", ["`, `".join(filters)]), ctx.channel)
+            # return await ctx.send(f"The allowed filter names are:\n`{filters}`")
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
@@ -203,8 +201,8 @@ class Images(commands.Cog):
         """ Make a Supreme logo
 
         Arguments:
-            --dark | Make the background to dark colour
-            --light | Make background to light and text to dark colour
+            --dark | Make the background dark
+            --light | Make background light
         """
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "supreme"):
@@ -218,7 +216,8 @@ class Images(commands.Cog):
 
         args, valid_check = parser.parse_args(text)
         if not valid_check:
-            return await ctx.send(args)
+            return await generic.send(args, ctx.channel)
+            # return await ctx.send(args)
 
         input_text = urllib.parse.quote(' '.join(args.input))
         if len(input_text) > 500:

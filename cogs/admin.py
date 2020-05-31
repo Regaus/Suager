@@ -294,7 +294,7 @@ class Admin(commands.Cog):
         out = reload_locale(name)
         return await generic.send(out, ctx.channel)
 
-    @commands.command(name="load")
+    @commands.command(name="load", aliases=["l"])
     @commands.check(permissions.is_owner)
     async def load(self, ctx: commands.Context, name: str):
         """ Loads an extension. """
@@ -311,7 +311,7 @@ class Admin(commands.Cog):
             # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
             # logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
-    @commands.command(name="unload")
+    @commands.command(name="unload", aliases=["ul"])
     @commands.check(permissions.is_owner)
     async def unload(self, ctx: commands.Context, name: str):
         """ Unloads an extension. """
@@ -380,25 +380,25 @@ class Admin(commands.Cog):
         else:
             await message.edit(content=f"```fix\n{content}\n```")
 
-    @commands.command(name="online")
+    @commands.command(name="online", aliases=["on"])
     @commands.check(permissions.is_owner)
     async def online(self, ctx: commands.Context):
         """ Server is online """
         return await status(ctx, 1)
 
-    @commands.command(name="offline")
+    @commands.command(name="offline", aliases=["off"])
     @commands.check(permissions.is_owner)
     async def offline(self, ctx: commands.Context):
         """ Server is offline """
         return await status(ctx, 0)
 
-    @commands.command(name="restart")
+    @commands.command(name="restart", aliases=["re"])
     @commands.check(permissions.is_owner)
     async def restart(self, ctx: commands.Context):
         """ Restart incoming """
         return await status(ctx, 2)
 
-    @commands.command(name="tables")
+    @commands.command(name="tables", aliases=["create", "recreate"])
     @commands.is_owner()
     async def recreate_tables(self, ctx: commands.Context):
         """ Recreate all tables """
@@ -415,7 +415,7 @@ class Admin(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
-    @config.command(name="fullversion", aliases=["fversion", "version"])
+    @config.command(name="fullversion", aliases=["fversion", "version", "fv", "v"])
     @commands.check(permissions.is_owner)
     async def change_full_version(self, ctx: commands.Context, new_version: str):
         """ Change version (full) """
@@ -436,7 +436,7 @@ class Admin(commands.Cog):
             logs.log("version_changes", f"{time.time()} > {to_send}")
         return await generic.send(to_send, ctx.channel)
 
-    @config.command(name="shortversion", aliases=["sversion"])
+    @config.command(name="shortversion", aliases=["sversion", "sv"])
     @commands.check(permissions.is_owner)
     async def change_short_version(self, ctx: commands.Context, new_version: str):
         """ Change version (short) """

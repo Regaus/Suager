@@ -4,6 +4,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
+from cogs.levels import max_level
 from utils import database, permissions, generic, time, argparser, http
 from utils.generic import settings_template
 
@@ -13,7 +14,7 @@ class Discord(commands.Cog):
         self.bot = bot
         self.db = database.Database()
 
-    @commands.group(name="settings")
+    @commands.group(name="settings", aliases=["set"])
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -29,30 +30,17 @@ class Discord(commands.Cog):
                 return await generic.send(
                     generic.gls(generic.get_lang(ctx.guild), "settings_current", [ctx.guild.name, ctx.prefix]),
                     ctx.channel, file=discord.File(send, filename=time.file_ts("Settings", "json")))
-                # return await ctx.send(f"Current settings for {ctx.guild.name}\n"
-                #                       f"Use {ctx.prefix}settings template for the template.",
-                #                       file=discord.File(send, filename=time.file_ts("Settings", "json")))
             else:
                 send = BytesIO(json.dumps(settings_template.copy(), indent=4).encode('utf-8'))
-                return await generic.send(
-                    generic.gls(generic.get_lang(ctx.guild), "settings_template", [ctx.prefix]), ctx.channel,
-                    file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json"))
-                )
-                # return await ctx.send(f"Here's the settings template for you.\nUpload with {ctx.prefix}settings
-                # upload", file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
+                return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_template", [ctx.prefix]), ctx.channel,
+                                          file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
 
     @settings.command(name="template")
     async def settings_template(self, ctx: commands.Context):
         """ Settings template """
-        # s = settings_template.copy()
         send = BytesIO(json.dumps(settings_template.copy(), indent=4).encode('utf-8'))
-        return await generic.send(
-            generic.gls(generic.get_lang(ctx.guild), "settings_template_detailed", [ctx.prefix]), ctx.channel,
-            file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json"))
-        )
-        # return await ctx.send(f"Here's the settings template for you.\nUpload with {ctx.prefix}settings upload\n"
-        #                       f"For leveling, [USER] will show user's name, and [MENTION] will @mention them",
-        #                       file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_template_detailed", [ctx.prefix]), ctx.channel,
+                                  file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
 
     @settings.command(name="upload")
     async def settings_upload(self, ctx: commands.Context):
@@ -62,30 +50,446 @@ class Discord(commands.Cog):
             name = ma[0].filename
             if not name.endswith('json'):
                 return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_upload_no1"), ctx.channel)
-                # return await ctx.send("This must be a JSON file")
             try:
                 stuff = await ma[0].read()
             except discord.HTTPException or discord.NotFound:
                 return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_upload_no2"), ctx.channel)
-                # return await ctx.send("There was an error getting the file.")
         else:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_upload_no3"), ctx.channel)
-            # return await ctx.send("There must be exactly one JSON file.")
         try:
             json.loads(stuff)
         except Exception as e:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_upload_no4",
                                                   [f"{type(e).__name__}: {e}"]), ctx.channel)
-            # return await ctx.send(f"Error loading file:\n{type(e).__name__}: {e}")
         data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:
-            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?",
-                                  (stuff, ctx.guild.id))
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
         else:
-            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)",
-                                  (ctx.guild.id, stuff))
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
         return await generic.send(generic.gls(generic.get_lang(ctx.guild), "settings_upload_yes", [res]), ctx.channel)
-        # return await ctx.send(f"Settings have been updated\n{res}")
+
+    @settings.command(name="locale")
+    async def set_locale(self, ctx: commands.Context, new_locale: str):
+        """ Change server locale """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        settings["locale"] = new_locale
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_locale", [new_locale, res]), ctx.channel)
+
+    @settings.command(name="currency")
+    async def set_currency(self, ctx: commands.Context, new: str):
+        """ Change server currency """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        settings["currency"] = new
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_currency", [new, res]), ctx.channel)
+
+    @settings.group(name="prefixes")
+    async def set_prefixes(self, ctx: commands.Context):
+        """ Change server prefixes """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @set_prefixes.command(name="add")
+    async def prefix_add(self, ctx: commands.Context, prefix: str):
+        """ Add a new custom prefix """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        settings["prefixes"].append(prefix)
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_pa", [prefix, res]), ctx.channel)
+
+    @set_prefixes.command(name="remove")
+    async def prefix_remove(self, ctx: commands.Context, prefix: str):
+        """ Remove a custom prefix """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        try:
+            settings["prefixes"].remove(prefix)
+        except ValueError:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_prf", [prefix]), ctx.channel)
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_pr", [prefix, res]), ctx.channel)
+
+    @set_prefixes.command(name="default")
+    async def prefix_default(self, ctx: commands.Context):
+        """ Toggle the use of default prefixes """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        settings["use_default"] ^= True
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        t = settings["use_default"]
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_pde" if t else "su_pdd", [res]), ctx.channel)
+
+    @settings.group(name="antispam", aliases=["as"])
+    async def set_as(self, ctx: commands.Context):
+        """ Change anti-spam channels """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @set_as.command(name="add")
+    async def as_add(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Add a channel to the list """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "anti_spam" not in settings:
+            settings["anti_spam"] = {"channels": []}
+        settings["anti_spam"]["channels"].append(channel.id)
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_asa", [channel.name, res]), ctx.channel)
+
+    @set_as.command(name="remove")
+    async def as_remove(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Remove a channel from the list """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "anti_spam" not in settings:
+            settings["anti_spam"] = {"channels": []}
+        try:
+            settings["anti_spam"]["channels"].remove(channel.id)
+        except ValueError:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_asdf", [channel.name]), ctx.channel)
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_asd", [channel.name, res]), ctx.channel)
+
+    @settings.group(name="leveling", aliases=["levels"])
+    async def set_lvl(self, ctx: commands.Context):
+        """ Leveling settings """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @set_lvl.command(name="enable")
+    async def lvl_enable(self, ctx: commands.Context):
+        """ Enable leveling """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        settings["leveling"]["enabled"] = True
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_le", [res]), ctx.channel)
+
+    @set_lvl.command(name="disable")
+    async def lvl_disable(self, ctx: commands.Context):
+        """ Disable leveling """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        settings["leveling"]["enabled"] = False
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_ld", [res]), ctx.channel)
+
+    @set_lvl.command(name="multiplier", aliases=["xpm", "mult"])
+    async def lvl_xpm(self, ctx: commands.Context, value: float):
+        """ Set XP multiplier """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        settings["leveling"]["xp_multiplier"] = value
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lm", [value, res]), ctx.channel)
+
+    @set_lvl.command(name="message", aliases=["lum", "msg"])
+    async def lvl_lum(self, ctx: commands.Context, value: str):
+        """ Set level up message """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        settings["leveling"]["level_up_message"] = value
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lm2", [value, res]), ctx.channel)
+
+    @set_lvl.group(name="ignored", aliases=["ic"])
+    async def lvl_ic(self, ctx: commands.Context):
+        """ Change ignored channels for leveling """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @lvl_ic.command(name="add")
+    async def ic_add(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Add a channel to the list """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        settings["leveling"]["ignored_channels"].append(channel.id)
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lia", [channel.name, res]), ctx.channel)
+
+    @lvl_ic.command(name="remove")
+    async def ic_remove(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Remove a channel from the list """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        try:
+            settings["leveling"]["ignored_channels"].remove(channel.id)
+        except ValueError:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lidf", [channel.name]), ctx.channel)
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lid", [channel.name, res]), ctx.channel)
+
+    @set_lvl.command(name="announcement", aliases=["ac"])
+    async def lvl_ac(self, ctx: commands.Context, channel: discord.TextChannel or None):
+        """ Set level up announcement channel """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        if channel is None:
+            settings["leveling"]["announce_channel"] = 0
+        else:
+            settings["leveling"]["announce_channel"] = channel.id
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        if channel is not None:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_la", [channel.name, res]), ctx.channel)
+        else:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lar", [res]), ctx.channel)
+
+    @set_lvl.group(name="rewards", aliases=["rr", "lr"])
+    async def lvl_rr(self, ctx: commands.Context):
+        """ Set level rewards for the server """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @lvl_rr.command(name="add")
+    async def rr_add(self, ctx: commands.Context, role: discord.Role, level: int):
+        """ Add a level reward """
+        if level < 0:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lra_nl"), ctx.channel)
+        elif level > max_level:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lra_hl", [max_level]), ctx.channel)
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        try:
+            rr = settings["leveling"]["rewards"]
+        except KeyError:
+            rr = []
+        roles = [i["role"] for i in rr]
+        if role.id in roles:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lra_ra"), ctx.channel)
+        levels = [i["level"] for i in rr]
+        if level in levels:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lra_la"), ctx.channel)
+        rr.append({"level": level, "role": role.id})
+        # settings["leveling"]["ignored_channels"].append(channel.id)
+        settings["leveling"]["rewards"] = rr
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lra", [role.name, level, res]), ctx.channel)
+
+    @lvl_rr.command(name="remove")
+    async def rr_remove(self, ctx: commands.Context, role: discord.Role):
+        """ Remove a role reward """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        if "leveling" not in settings:
+            settings["leveling"] = settings_template["leveling"].copy()
+            settings["leveling"]["rewards"] = []
+        try:
+            rr = settings["leveling"]["rewards"]
+        except KeyError:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lrd_nr"), ctx.channel)
+        r = False
+        for _role in rr:
+            if _role["role"] == role.id:
+                rr.remove(_role)
+                r = True
+                break
+        if r:
+            settings["leveling"]["rewards"] = rr
+            stuff = json.dumps(settings)
+            if data:
+                res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+            else:
+                res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lrd", [role.name, res]), ctx.channel)
+        else:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lrdf", [role.name]), ctx.channel)
+
+    @settings.group(name="shop")
+    async def set_shop(self, ctx: commands.Context):
+        """ Set level rewards for the server """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @set_shop.command(name="add")
+    async def shop_add(self, ctx: commands.Context, role: discord.Role, cost: int):
+        """ Add a shop item """
+        if cost < 0:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_sa_nc"), ctx.channel)
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        try:
+            rr = settings["shop_items"]
+        except KeyError:
+            rr = []
+        roles = [i["role"] for i in rr]
+        if role.id in roles:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_sa_ra"), ctx.channel)
+        rr.append({"cost": cost, "role": role.id})
+        settings["shop_items"] = rr
+        stuff = json.dumps(settings)
+        if data:
+            res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_sa", [role.name, f"{cost:,}", res]), ctx.channel)
+
+    @set_shop.command(name="remove")
+    async def shop_remove(self, ctx: commands.Context, role: discord.Role):
+        """ Remove a shop item """
+        data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            settings = json.loads(data["data"])
+        else:
+            settings = settings_template.copy()
+        try:
+            rr = settings["shop_items"]
+        except KeyError:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_sd_nr"), ctx.channel)
+        r = False
+        for _role in rr:
+            if _role["role"] == role.id:
+                rr.remove(_role)
+                r = True
+                break
+        if r:
+            settings["shop_items"] = rr
+            stuff = json.dumps(settings)
+            if data:
+                res = self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+            else:
+                res = self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_sd", [role.name, res]), ctx.channel)
+        else:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_sdf", [role.name]), ctx.channel)
 
     @commands.command(name="emojis")
     @commands.is_owner()
@@ -194,6 +598,7 @@ class Discord(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         user = who or ctx.author
         embed = discord.Embed(colour=generic.random_colour())
+        embed.title = generic.gls(locale, "about_user", [user])
         embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name=generic.gls(locale, "username"), value=user, inline=True)
         embed.add_field(name=generic.gls(locale, "nickname"), value=user.nick, inline=True)
@@ -236,7 +641,7 @@ class Discord(commands.Cog):
         else:
             roles = f"There's {len(user.roles) - 1} of them"
         embed.add_field(name=generic.gls(locale, "roles"), value=roles, inline=False)
-        return await generic.send(generic.gls(locale, "about_user", [user]), ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
         # await ctx.send(f"", embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
@@ -358,6 +763,7 @@ class Discord(commands.Cog):
             bots = sum(1 for member in ctx.guild.members if member.bot)
             embed = discord.Embed(colour=generic.random_colour())
             embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.title = generic.gls(locale, "about_server", [ctx.guild.name])
             embed.add_field(name=generic.gls(locale, "server_name"), value=ctx.guild.name, inline=True)
             embed.add_field(name=generic.gls(locale, "server_id"), value=ctx.guild.id, inline=True)
             embed.add_field(name=generic.gls(locale, "owner"), inline=True,
@@ -386,7 +792,7 @@ class Discord(commands.Cog):
             embed.add_field(name=generic.gls(locale, "created_at"), inline=False,  # value=generic.gls(locale, "server_ca"))
                             value=f"{time.time_output(ctx.guild.created_at)} - "
                                   f"{time.human_timedelta(ctx.guild.created_at)}")
-            return await generic.send(generic.gls(locale, "about_server", [ctx.guild.name]), ctx.channel, embed=embed)
+            return await generic.send(None, ctx.channel, embed=embed)
             # return await ctx.send(f"About **{ctx.guild.name}**", embed=embed)
 
     @server.command(name="icon", aliases=["avatar"])
@@ -557,11 +963,12 @@ class Discord(commands.Cog):
             cp = data['prefixes']
             dp.append(self.bot.user.mention)
         embed = discord.Embed(colour=generic.random_colour())
+        embed.title = generic.gls(locale, "server_prefixes", [ctx.guild.name])
         embed.set_thumbnail(url=ctx.guild.icon_url)
         embed.add_field(name=generic.gls(locale, "default_prefixes"), value='\n'.join(dp), inline=True)
         if cp is not None and cp != []:
             embed.add_field(name=generic.gls(locale, "custom_prefixes"), value='\n'.join(cp), inline=True)
-        return await generic.send(generic.gls(locale, "server_prefixes", [ctx.guild.name]), ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
         # return await ctx.send(f"Prefixes for {ctx.guild.name}", embed=embed)
 
 

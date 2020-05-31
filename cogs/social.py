@@ -452,10 +452,6 @@ class Social(commands.Cog):
             # return await ctx.send(f"Bots can't be shipped, they can't love :( {emotes.AlexHeartBroken}")
         if user1 == user2:
             return await generic.send(generic.gls(locale, "ship_self"), ctx.channel)
-            # return await ctx.send("I don't think that's how it works")
-        # ls = [94762492923748352, 246652610747039744]
-        # if user1.id in ls or user2.id in ls:
-        #     return await ctx.send("These 2 users cannot be shipped together.")
         av1 = user1.avatar_url_as(size=1024)
         av2 = user2.avatar_url_as(size=1024)
         link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
@@ -507,9 +503,6 @@ class Social(commands.Cog):
             self.db.execute("UPDATE counters SET shipped=? WHERE uid=? AND gid=?",
                             (data_receive2["shipped"] + 1, user2.id, ctx.guild.id))
             number2 = data_receive2["shipped"] + 1
-        # message += f"\n{user1.name} has now been shipped {number} time(s) in this server!"
-        # message += f"\n{user2.name} has now been shipped {number2} time(s) in this server!"
-        # message += f"\n{ctx.author.name} has now built {number3} ship(s) in this server!"
         if ctx.guild.id in generic.counter_locks:
             message += "\n" + generic.gls(locale, "counters_disabled", [ctx.prefix])
         else:
@@ -517,7 +510,6 @@ class Social(commands.Cog):
             message += generic.gls(locale, "ship2", [user2.name, number2])
             message += generic.gls(locale, "ship3", [ctx.author.name, number3])
         return await generic.send(message, ctx.channel, file=discord.File(bio, filename="ship.png"))
-        # return await ctx.send(message, file=discord.File(bio, filename=f"shipping_services.png"))
 
     @commands.command(name="sleepy")
     @commands.guild_only()
@@ -623,43 +615,30 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "bang_suager"), ctx.channel)
-            # return await ctx.send("No. I'm taken, find someone else.")
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "how_are_you_gonna"), ctx.channel)
-            # return await ctx.send("How are you going to do that?")
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "bangs_given", "bangs_received", 2, 3)
         out = generic.gls(locale, "bang_out", [ctx.author.name, user.name, generic.gls(locale, ctx.invoked_with)])
         if ctx.guild.id not in generic.counter_locks:
             out += generic.gls(locale, "bang_counter", [user.name, number, generic.gls(locale, ctx.invoked_with)])
         return await generic.send(out, ctx.channel)
-        # embed.set_footer(text=f"{user.name} has now got {ctx.invoked_with}ed {number} time(s) in this server!")
-        # return await ctx.send(f"{emotes.Scary} {emotes.NotLikeThis} {ctx.author.name} is now "
-        #                       f"{ctx.invoked_with}ing {user.name}...\n{user.name} has now got {ctx.invoked_with}ed "
-        #                       f"{number} time(s) in this server!")
 
     @commands.command(name="bean")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bean(self, ctx: commands.Context, user: discord.Member):
         """ Bean someone """
-        # bean_self = False
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "bean"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "how_are_you_gonna"), ctx.channel)
-            # return await ctx.send(f"{emotes.Deny} How are you gonna do that?")
         if user.id == 302851022790066185:
             return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
-            # return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you are not allowed to do that.")
-            # bean_self = True
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "bean_suager"), ctx.channel)
-            # return await ctx.send(f"{emotes.Deny} {ctx.author.name}, you can't bean me.")
-            # bean_self = True
         if user.id == ctx.guild.owner.id and ctx.author.id != 302851022790066185:
             return await generic.send(generic.gls(locale, "bean_owner"), ctx.channel)
-            # return await ctx.send(f"{emotes.Deny} Imagine beaning the owner, lol")
         bean_self = ctx.author.id in generic.bad_locks
         if not bean_self:
             id1, id2 = ctx.author.id, user.id
@@ -668,18 +647,13 @@ class Social(commands.Cog):
             id1, id2 = -1, ctx.author.id
             # index1, index2 = 25, 24
         number = self.data_update(id1, id2, ctx.guild.id, "beans_given", "beaned", 24, 25)
-        # embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         if not bean_self:
             bean = generic.gls(locale, "bean", [user.name, ctx.guild.name])
             if ctx.guild.id not in generic.counter_locks:
                 bean += generic.gls(locale, "bean3", [user.name, number])
-            # bean = f"{emotes.Allow} {user.name}, you are dismissed from {ctx.guild.name}.\n" \
-            #        f"{user.name} has now been beaned {number} time(s) in this server!"
         else:
             bean = generic.gls(locale, "bean2", [ctx.author.name, ctx.guild.name])
-            # bean = f"{emotes.Deny} {ctx.author.name}, you are dismissed from {ctx.guild.name}."
         return await generic.send(bean, ctx.channel)
-        # return await ctx.send(bean)
 
     @commands.command(name="bad")
     @commands.guild_only()
@@ -697,7 +671,8 @@ class Social(commands.Cog):
             generic.heresy(ctx.author.id)
         # elif ctx.author.id == 424472476106489856:
         elif ctx.author.id in generic.bad_locks:
-            bad_self = True
+            return await generic.send(generic.gls(locale, "bad_locked"), ctx.channel)
+            # bad_self = True
         elif user.id == self.bot.user.id:
             generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
@@ -709,8 +684,6 @@ class Social(commands.Cog):
             # index1, index2 = 23, 22
             user = ctx.author
         self.data_update(id1, id2, ctx.guild.id, "bad_given", "bad_received", 22, 23)
-        # number = data_receive["bad_received"] + 1
-        # embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         return await image_gen(ctx, user, "bad", f"bad_{user.name.lower()}")
 
     @commands.command(name="trash")
@@ -736,8 +709,9 @@ class Social(commands.Cog):
             trash_self = True
         # elif ctx.author.id == 424472476106489856:
         elif ctx.author.id in generic.bad_locks:
-            a2, a1 = a1, a2
-            trash_self = True
+            return await generic.send(generic.gls(locale, "bad_locked"), ctx.channel)
+            # a2, a1 = a1, a2
+            # trash_self = True
         if not trash_self:
             id1, id2 = ctx.author.id, user.id
             # index1, index2 = 28, 29
@@ -748,10 +722,7 @@ class Social(commands.Cog):
         bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
         if bio is None:
             return await generic.send(generic.gls(locale, "image_not_created"), ctx.channel)
-            # return await ctx.send("Something went wrong, couldn't generate image")
-        # embed.set_footer(text=f"{user.name} has now received {number} high five(s) in this server!")
         return await generic.send(None, ctx.channel, file=discord.File(bio, filename=f"trash_{user.name.lower()}.png"))
-        # return await ctx.send(file=discord.File(bio, filename=f"trash_{user.name}.png"))
 
     @commands.command(name="cookie")
     @commands.guild_only()

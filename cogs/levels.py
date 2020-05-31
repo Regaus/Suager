@@ -11,8 +11,19 @@ from utils import time, database, http, generic
 from utils.generic import random_colour, value_string, round_value
 
 max_level = 5000
-level_xp = [2250, 3000]
-money_amounts = [75, 175]
+xp_amounts = [2250, 3000]
+money_amounts = [75, 125]
+
+
+async def catch_colour(ctx: commands.Context, c: int):
+    locale = generic.get_lang(ctx.guild)
+    if c == -1:
+        await generic.send(generic.gls(locale, "colour_value_len"), ctx.channel)
+    if c == -2:
+        await generic.send(generic.gls(locale, "col_error2"), ctx.channel)
+    if c == -3:
+        await generic.send(generic.gls(locale, "col_3"), ctx.channel)
+    return c >= 0
 
 
 def similarity(a: str, b: str or None):
@@ -165,7 +176,7 @@ class Leveling(commands.Cog):
             heresy = 0.85
         # if last > now - 60:
         #     return
-        x1, x2 = level_xp
+        x1, x2 = xp_amounts
         x3, x4 = money_amounts
         try:
             sm = float(settings['leveling']['xp_multiplier'])
@@ -346,7 +357,8 @@ class Leveling(commands.Cog):
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
-            return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
+            return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
+            # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
         _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
@@ -363,6 +375,7 @@ class Leveling(commands.Cog):
         else:
             level, xp = [0, 0]
         embed = discord.Embed(colour=random_colour())
+        embed.title = generic.gls(locale, "rank_user", [user, ctx.guild.name])
         embed.set_thumbnail(url=user.avatar_url)
         if is_self:
             embed.description = generic.gls(locale, "rank_self")
@@ -389,10 +402,11 @@ class Leveling(commands.Cog):
             else:
                 embed.add_field(name=generic.gls(locale, "experience"), value=f"**{r1}**", inline=False)
                 embed.add_field(name=generic.gls(locale, "level"), value=f"{level:,}", inline=False)
-            x1, x2 = [val * dm for val in level_xp]
+            x1, x2 = [val * dm for val in xp_amounts]
             o1, o2 = int(x1), int(x2)
             embed.add_field(name=generic.gls(locale, "xp_per_message"), inline=False, value=f"{o1}-{o2}")
-        return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
+        # return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
 
     @commands.command(name="rank", aliases=["irank", "ranki"])
     @commands.guild_only()
@@ -408,7 +422,8 @@ class Leveling(commands.Cog):
             user = who or ctx.author
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
-                return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
+                return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
+                # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
             data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
@@ -506,7 +521,8 @@ class Leveling(commands.Cog):
             user = who or ctx.author
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
-                return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
+                return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
+                # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
             # data = self.db.fetch("SELECT * FROM leveling WHERE uid=?", (user.id,))
             _data = self.db.fetch("SELECT * FROM leveling")
             coll = {}
@@ -551,18 +567,15 @@ class Leveling(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         c = int_colour(colour)
-        if c == -1:
-            return await ctx.send("The colour must be either 3 or 6 digits long")
-        if c == -2:
-            return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
-        if c == -3:
-            return await ctx.send("Remove the `#`...")
-        data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
-        if data:
-            db = self.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
-        else:
-            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
-        return await ctx.send(f"Updated your font colour to #{colour}\nDatabase status: {db}")
+        cc = await catch_colour(ctx, c)
+        if cc:
+            data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+            if data:
+                db = self.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
+            else:
+                db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
+            return await generic.send(generic.gls(locale, "crank_font", [colour, db]), ctx.channel)
+            # return await ctx.send(f"Updated your font colour to #{colour}\nDatabase status: {db}")
 
     @custom_rank.command(name="progress")
     async def crank_progress(self, ctx: commands.Context, colour: str):
@@ -573,18 +586,15 @@ class Leveling(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         c = int_colour(colour)
-        if c == -1:
-            return await ctx.send("The colour must be either 3 or 6 digits long")
-        if c == -2:
-            return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
-        if c == -3:
-            return await ctx.send("Remove the `#`...")
-        data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
-        if data:
-            db = self.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
-        else:
-            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
-        return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
+        cc = await catch_colour(ctx, c)
+        if cc:
+            data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+            if data:
+                db = self.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
+            else:
+                db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
+            return await generic.send(generic.gls(locale, "crank_pb", [colour, db]), ctx.channel)
+            # return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @custom_rank.command(name="background", aliases=["bg"])
     async def crank_bg(self, ctx: commands.Context, colour: str):
@@ -595,18 +605,15 @@ class Leveling(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         c = int_colour(colour)
-        if c == -1:
-            return await ctx.send("The colour must be either 3 or 6 digits long")
-        if c == -2:
-            return await ctx.send("An error occurred. Are you sure the colour is a HEX value (0-9 and A-F)?")
-        if c == -3:
-            return await ctx.send("Remove the `#`...")
-        data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
-        if data:
-            db = self.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
-        else:
-            db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
-        return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
+        cc = await catch_colour(ctx, c)
+        if cc:
+            data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+            if data:
+                db = self.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
+            else:
+                db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
+            return await generic.send(generic.gls(locale, "crank_bg", [colour, db]), ctx.channel)
+            # return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @commands.command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -651,7 +658,7 @@ class Leveling(commands.Cog):
         base = generic.gls(locale, "xp_level_base", [ctx.author.name, f"{level:,}", needed])
         extra = ""
         if xp < r:
-            x1, x2 = [val * dm for val in level_xp]
+            x1, x2 = [val * dm for val in xp_amounts]
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
             # m1, m2 = int(a1) + 1, int(a2) + 1
             try:
@@ -716,7 +723,7 @@ class Leveling(commands.Cog):
         r4 = 100 if r4 > 100 else r4
         r5 = f"{level + 1:,}"
         normal = 1
-        x1, x2 = [val * normal * dm for val in level_xp]
+        x1, x2 = [val * normal * dm for val in xp_amounts]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         # m1, m2 = int(a1) + 1, int(a2) + 1
         try:
@@ -739,57 +746,63 @@ class Leveling(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        async with ctx.typing():
-            data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
-            if not data:
-                return await generic.send(generic.gls(locale, "levels_no_data"), ctx.channel)
-                # return await ctx.send("I have no data at all for this server... Weird")
-            block = "```fix\n"
-            un = []   # User names
-            xp = []   # XP
-            # unl = []  # User name lengths
-            xpl = []  # XP string lengths
-            for user in data:
-                name = f"{user['name']}#{user['disc']:04d}"
-                un.append(name)
-                # unl.append(len(name))
-                val = f"{value_string(user['xp'])}"
-                xp.append(val)
-                xpl.append(len(val))
-            spaces = max(xpl) + 5
-            place = "unknown"
-            n = 0
-            for x in range(len(data)):
-                if data[x]['uid'] == ctx.author.id:
-                    place = f"#{x + 1}"
-                    n = x + 1
-                    break
-            try:
-                page = int(top)
-            except ValueError:
+        data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
+        if not data:
+            return await generic.send(generic.gls(locale, "levels_no_data"), ctx.channel)
+            # return await ctx.send("I have no data at all for this server... Weird")
+        block = "```fix\n"
+        un = []   # User names
+        xp = []   # XP
+        # unl = []  # User name lengths
+        xpl = []  # XP string lengths
+        for user in data:
+            name = f"{user['name']}#{user['disc']:04d}"
+            un.append(name)
+            # unl.append(len(name))
+            # val = f"{value_string(user['xp'])}"
+            val = f"{user['xp']:,}"
+            xp.append(val)
+            xpl.append(len(val))
+        # spaces = max(xpl) + 5
+        place = "unknown"
+        n = 0
+        for x in range(len(data)):
+            if data[x]['uid'] == ctx.author.id:
+                place = f"#{x + 1}"
+                n = x + 1
+                break
+        try:
+            page = int(top)
+            if page < 1:
                 page = None
+        except ValueError:
+            page = None
+        start = 0
+        try:
             if (n <= 10 or top.lower() == "top") and page is None:
                 _data = data[:10]
                 start = 1
+                spaces = max(xpl[:10]) + 5
             elif page is not None:
                 _data = data[(page - 1)*10:page*10]
                 start = page * 10 - 9
+                spaces = max(xpl[(page - 1)*10:page*10]) + 5
             else:
                 _data = data[n-5:n+5]
                 start = n - 4
-            if _data:
-                for i, val in enumerate(_data, start=start):
-                    k = i - 1
-                    who = un[k]
-                    if val['uid'] == ctx.author.id:
-                        who = f"-> {who}"
-                    s = ' '
-                    sp = xpl[k]
-                    block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
-            else:
-                block += "No data available"
-            return await generic.send(generic.gls(locale, "levels_lb", [ctx.guild.name, place, block, start, start + 9]), ctx.channel)
-            # return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
+                spaces = max(xpl[n-5:n+5]) + 5
+            for i, val in enumerate(_data, start=start):
+                k = i - 1
+                who = un[k]
+                if val['uid'] == ctx.author.id:
+                    who = f"-> {who}"
+                s = ' '
+                sp = xpl[k]
+                block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+        except ValueError:
+            block += "No data available"
+        return await generic.send(generic.gls(locale, "levels_lb", [ctx.guild.name, place, block, start, start + 9]), ctx.channel)
+        # return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
 
     @commands.command(name="glevels")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -800,62 +813,67 @@ class Leveling(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        async with ctx.typing():
-            data = self.db.fetch("SELECT * FROM leveling", ())
-            coll = {}
-            for i in data:
-                if i['uid'] not in coll:
-                    coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
-                coll[i['uid']][0] += i['xp']
-            sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
-            r = len(sl)
-            # r = len(sl) if len(sl) < 10 else 10
-            block = "```fix\n"
-            un, xp, xpl = [], [], []
-            for thing in range(r):
-                v = sl[thing][1]
-                un.append(v[1])
-                x = value_string(v[0])
-                xp.append(x)
-                xpl.append(len(x))
-            spaces = max(xpl) + 5
-            place = "unknown"
-            n = 0
-            for someone in range(len(sl)):
-                if sl[someone][0] == ctx.author.id:
-                    place = f"#{someone + 1}"
-                    n = someone + 1
-                    break
-            s = ' '
-            try:
-                page = int(top)
-            except ValueError:
+        data = self.db.fetch("SELECT * FROM leveling", ())
+        coll = {}
+        for i in data:
+            if i['uid'] not in coll:
+                coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
+            coll[i['uid']][0] += i['xp']
+        sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
+        r = len(sl)
+        # r = len(sl) if len(sl) < 10 else 10
+        block = "```fix\n"
+        un, xp, xpl = [], [], []
+        for thing in range(r):
+            v = sl[thing][1]
+            un.append(v[1])
+            # x = value_string(v[0])
+            x = f"{v[0]:,}"
+            xp.append(x)
+            xpl.append(len(x))
+        place = "unknown"
+        n = 0
+        for someone in range(len(sl)):
+            if sl[someone][0] == ctx.author.id:
+                place = f"#{someone + 1}"
+                n = someone + 1
+                break
+        s = ' '
+        try:
+            page = int(top)
+            if page < 1:
                 page = None
+        except ValueError:
+            page = None
+        start = 0
+        try:
             if (n <= 10 or top.lower() == "top") and page is None:
                 _data = sl[:10]
                 start = 1
+                spaces = max(xpl[:10]) + 5
             elif page is not None:
                 _data = sl[(page - 1)*10:page*10]
                 start = page * 10 - 9
+                spaces = max(xpl[(page - 1)*10:page*10]) + 5
             else:
                 _data = sl[n-5:n+5]
                 start = n - 4
-            # for i, d in enumerate(sl[:10], start=1):
-            if _data:
-                for i, d in enumerate(_data, start=start):
-                    try:
-                        k = i - 1
-                        who = un[k]
-                        if d[0] == ctx.author.id:
-                            who = f"-> {who}"
-                        sp = xpl[k]
-                        block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
-                    except IndexError:
-                        pass
-            else:
-                block += "No data available"
-            return await generic.send(generic.gls(locale, "levels_global", [place, block, start, start + 9]), ctx.channel)
-            # return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
+                spaces = max(xpl[n-5:n+5]) + 5
+            for i, d in enumerate(_data, start=start):
+                try:
+                    k = i - 1
+                    who = un[k]
+                    if d[0] == ctx.author.id:
+                        who = f"-> {who}"
+                    sp = xpl[k]
+                    block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+                except IndexError:
+                    pass
+        except ValueError:
+            block += "No data available"
+        # for i, d in enumerate(sl[:10], start=1):
+        return await generic.send(generic.gls(locale, "levels_global", [place, block, start, start + 9]), ctx.channel)
+        # return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
 
 
 def setup(bot):

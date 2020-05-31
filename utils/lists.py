@@ -22,19 +22,15 @@ server_icons = ["https://cdn.discordapp.com/attachments/714583916706791494/71458
                 "https://cdn.discordapp.com/attachments/714583916706791494/714584228150640721/9.png",
                 "https://cdn.discordapp.com/attachments/714583916706791494/714584238686732319/10.png",
                 "https://cdn.discordapp.com/attachments/714583916706791494/714584244940439593/11.png"]
-playing = ["Grand Theft Auto V", "with Regaus", "without you", "with your feelings", "Custom Status", "with the Nuriki Cult", "PyCharm",
-           "a game", "Русские Вперёд!", ",/help"]
-phrases = ["Imagine being forced to work 24/7", "Reminder that AlexFlipnote is a furry"]
-# phrases = ["Being a bot is hard sometimes.", "Hey, at least I'm not LIDL xelA!",
-#            "Hey, how's your day going?", "Ever wanted to take a break from all this hard work? I can't.",
-#            "xelA is a meanie :(", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
+playing = ["with Regaus", "without you", "with nobody", "alone", "Custom Status", "with the Nuriki Cult", "PyCharm", "Русские Вперёд!", ",/help", "nothing"]
+phrases = ["Imagine not being forced to work 24/7", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
 image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586,
                   'c': 675769002613669918, 'b': 675771077057839104, 's': 683486714873905171, 'n': 690573072536961075,
                   'r': 691739503160852591, 'v': 671897418589143051, 'u': 694148497766875186, 'm': 694151734603415632,
                   'i': 696485411869950003, 'P': 702280684907003986, 'B': 702280732755624469}
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
 ball_response = ['Yes', 'No', 'Take a wild guess...', 'Very doubtful', 'Sure', 'Without a doubt', 'Most likely', 'Might be possible',
-                 "You'll be the judge", 'no... (╯°□°）╯︵ ┻━┻', 'Highly unlikely', 'You really think so?']
+                 "You'll be the judge", 'No. (╯°□°）╯︵ ┻━┻', 'Highly unlikely', 'You really think so?']
 hearts = list("❤️🧡💛💚💙💜🖤🤎🤍")
 hello = ["Good aftermidnight", "Good morning", "Good afternoon", "Good evening"]
 
