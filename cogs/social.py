@@ -451,10 +451,8 @@ class Social(commands.Cog):
             if user1.id != 302851022790066185 and user2.id != 302851022790066185:
                 return await generic.send(generic.gls(locale, "ship_suager"), ctx.channel)
             pr = True
-            # return await ctx.send(f"Sorry, but I wasn't programmed to feel love :( {emotes.AlexHeartBroken}")
         if (user1.bot ^ user2.bot) and not pr:
             return await generic.send(generic.gls(locale, "bots_love"), ctx.channel)
-            # return await ctx.send(f"Bots can't be shipped, they can't love :( {emotes.AlexHeartBroken}")
         if user1 == user2:
             return await generic.send(generic.gls(locale, "ship_self"), ctx.channel)
         av1 = user1.avatar_url_as(size=1024)
@@ -463,7 +461,6 @@ class Social(commands.Cog):
         bio = BytesIO(await http.get(link, res_method="read"))
         if bio is None:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
-            # return await ctx.send("Something went wrong, couldn't generate image")
         __names = [len(user1.name), len(user2.name)]
         _names = [int(x / 2) for x in __names]
         names = [user1.name[:_names[0]], user2.name[_names[1]:]]
@@ -471,7 +468,6 @@ class Social(commands.Cog):
         names2 = [user2.name[:_names[1]], user1.name[_names[0]:]]
         name2 = ''.join(names2)
         message = generic.gls(locale, "ship", [name, name2])
-        # message = f"Nice shipping there!\nShip names: **{name}** or **{name2}**\n"
         data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         data_receive1 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user1.id, ctx.guild.id))
         data_receive2 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user2.id, ctx.guild.id))
@@ -528,16 +524,13 @@ class Social(commands.Cog):
             self.sleepy = await lists.get_images(self.bot, 's')
         embed = discord.Embed(colour=generic.random_colour())
         embed.title = generic.gls(locale, "sleepy", [ctx.author.name])
-        # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.sleepy))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "sleepy", 32)
         if ctx.guild.id in generic.counter_locks:
             embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "sleepy2", [ctx.author.name, number]))
-        # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="cry")
     @commands.guild_only()
@@ -551,16 +544,13 @@ class Social(commands.Cog):
             self.cry = await lists.get_images(self.bot, 'r')
         embed = discord.Embed(colour=generic.random_colour())
         embed.title = generic.gls(locale, "cry", [ctx.author.name])
-        # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.cry))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "cried", 31)
         if ctx.guild.id in generic.counter_locks:
             embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "cry2", [ctx.author.name, number]))
-        # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="blush")
     @commands.guild_only()
@@ -574,16 +564,13 @@ class Social(commands.Cog):
             self.blush = await lists.get_images(self.bot, 'u')
         embed = discord.Embed(colour=generic.random_colour())
         embed.title = generic.gls(locale, "blush", [ctx.author.name])
-        # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.blush))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "blushed", 30)
         if ctx.guild.id in generic.counter_locks:
             embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "blush2", [ctx.author.name, number]))
-        # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="smile")
     @commands.guild_only()
@@ -597,16 +584,13 @@ class Social(commands.Cog):
             self.smile = await lists.get_images(self.bot, 'm')
         embed = discord.Embed(colour=generic.random_colour())
         embed.title = generic.gls(locale, "smile", [ctx.author.name])
-        # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.smile))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "smiled", 33)
         if ctx.guild.id in generic.counter_locks:
             embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "smile2", [ctx.author.name, number]))
-        # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
     @commands.guild_only()
@@ -647,10 +631,8 @@ class Social(commands.Cog):
         bean_self = ctx.author.id in generic.bad_locks
         if not bean_self:
             id1, id2 = ctx.author.id, user.id
-            # index1, index2 = 24, 25
         else:
             id1, id2 = -1, ctx.author.id
-            # index1, index2 = 25, 24
         number = self.data_update(id1, id2, ctx.guild.id, "beans_given", "beaned", 24, 25)
         if not bean_self:
             bean = generic.gls(locale, "bean", [user.name, ctx.guild.name])
@@ -674,19 +656,15 @@ class Social(commands.Cog):
         if user.id == 302851022790066185:
             bad_self = True
             generic.heresy(ctx.author.id)
-        # elif ctx.author.id == 424472476106489856:
         elif ctx.author.id in generic.bad_locks:
-            return await generic.send(generic.gls(locale, "bad_locked"), ctx.channel)
-            # bad_self = True
+            return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
         elif user.id == self.bot.user.id:
             generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
         if not bad_self:
             id1, id2 = ctx.author.id, user.id
-            # index1, index2 = 22, 23
         else:
             id1, id2 = -1, ctx.author.id
-            # index1, index2 = 23, 22
             user = ctx.author
         self.data_update(id1, id2, ctx.guild.id, "bad_given", "bad_received", 22, 23)
         return await image_gen(ctx, user, "bad", f"bad_{user.name.lower()}")
@@ -702,27 +680,20 @@ class Social(commands.Cog):
         trash_self = False
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "bad_self"), ctx.channel)
-            # return await ctx.send("Don't call yourself trash")
         if user.id == self.bot.user.id:
             generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
-            # return await ctx.send(f"You dare calling me trash? {emotes.AlexHeartBroken}")
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
             generic.heresy(ctx.author.id)
             a2, a1 = a1, a2
             trash_self = True
-        # elif ctx.author.id == 424472476106489856:
         elif ctx.author.id in generic.bad_locks:
-            return await generic.send(generic.gls(locale, "bad_locked"), ctx.channel)
-            # a2, a1 = a1, a2
-            # trash_self = True
+            return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
         if not trash_self:
             id1, id2 = ctx.author.id, user.id
-            # index1, index2 = 28, 29
         else:
             id1, id2 = user.id, ctx.author.id
-            # index1, index2 = 23, 22
         self.data_update(id1, id2, ctx.guild.id, "trash_given", "trashed", 28, 29)
         bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
         if bio is None:
@@ -739,17 +710,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
-        # if ctx.guild.id == 690162603275714574:  # OtakuTalk
-        #     roles = [r.id for r in user.roles]
-        #     if 696468113675255888 in roles:  # lemon squad
-        #         return await ctx.send(f"Sour lemons like {user.name} don't deserve our cookies.")
         output = give(ctx.author.name, user.name, locale, "🍪")
         number = self.data_update3(user.id, ctx.guild.id, "cookies_received", "cookies_eaten", 36)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "cookie_plural")])
-        # output += f"\n{user.name} now has {number} cookie(s) in this server!"
         return await generic.send(output, ctx.channel)
-        # return await ctx.send(output)
 
     @commands.command(name="lemon")
     @commands.guild_only()
@@ -761,17 +725,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
-        # if ctx.guild.id == 690162603275714574:  # OtakuTalk
-        #     roles = [r.id for r in user.roles]
-        #     if 695246056945877053 in roles:  # Cookie Army
-        #         return await ctx.send("You can't give lemons to a cookie.")
         output = give(ctx.author.name, user.name, locale, "🍋")
         number = self.data_update3(user.id, ctx.guild.id, "lemons_received", "lemons_eaten", 40)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "lemon_plural")])
-        # output += f"\n{user.name} now has {number} lemon(s) in this server!"
         return await generic.send(output, ctx.channel)
-        # return await ctx.send(output)
 
     @commands.command(name="carrot")
     @commands.guild_only()
@@ -783,13 +740,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
         output = give(ctx.author.name, user.name, locale, "🥕")
         number = self.data_update3(user.id, ctx.guild.id, "carrots_received", "carrots_eaten", 34)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "carrot_plural")])
-        # output += f"\n{user.name} now has {number} carrot(s) in this server!"
         return await generic.send(output, ctx.channel)
-        # return await ctx.send(output)
 
     @commands.command(name="fruit", aliases=["fruitsnacks"])
     @commands.guild_only()
@@ -801,13 +755,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"Don't be greedy, {ctx.author.name}! Share it!")
         output = give(ctx.author.name, user.name, locale, random.choice(list("🍏🍎🍐🍊🍌🍉🍇🍓🍒🍍")))
         number = self.data_update3(user.id, ctx.guild.id, "fruits_received", "fruits_eaten", 38)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "fruit_plural")])
-        # output += f"\n{user.name} now has {number} fruit(s) in this server!"
         return await generic.send(output, ctx.channel)
-        # return await ctx.send(output)
 
     @commands.command(name="eat")
     @commands.guild_only()
@@ -825,26 +776,19 @@ class Social(commands.Cog):
             fr, fe = "fruits_received", "fruits_eaten"
         elif what == "lemon":
             fr, fe = "lemons_received", "lemons_eaten"
-        # elif what.lower() in ["<@273916273732222979>", "<@!273916273732222979>", "adde", "adde the chicken noodle"]:
-        #     return await ctx.send(f"{ctx.author.name} just ate a piece of Adde the Chicken Noodle.")
         else:
             return await generic.send(generic.gls(locale, "eat_allowed"), ctx.channel)
-            # return await ctx.send("You can only eat the following: cookie, carrot, fruit, lemon, and "
-            #                       "Adde the Chicken Noodle.")
         data = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         wp, ws = generic.gls(locale, f"{what}_plural"), generic.gls(locale, f"{what}_singular")
         if not data:
             return await generic.send(generic.gls(locale, "eat_none", [wp]), ctx.channel)
-            # return await ctx.send(f"You don't have any {what}s right now...")
         left = data[fr] - data[fe]
         if left < 1:
             return await generic.send(generic.gls(locale, "eat_none_left", [wp]), ctx.channel)
-            # return await ctx.send(f"You don't have any {what}s left...")
         left -= 1
         self.db.fetchrow(f"UPDATE counters SET {fe}=? WHERE uid=? AND gid=?",
                          (data[fe] + 1, ctx.author.id, ctx.guild.id))
         return await generic.send(generic.gls(locale, "eat", [ctx.author.name, ws, left]), ctx.channel)
-        # return await ctx.send(f"{ctx.author.name} just ate a {what}. You have {left} left.")
 
     @commands.command(name="reloadimages")
     @commands.is_owner()
@@ -866,10 +810,8 @@ class Social(commands.Cog):
         self.poke = await lists.get_images(self.bot, 'P')
         self.boop = await lists.get_images(self.bot, 'B')
         if generic.get_config()["logs"]:
-            # await logs.log_channel(self.bot, 'changes').send('Reloaded KB images')
             logs.log("changes", "Reloaded Social images")
         return await generic.send("Successfully reloaded images", ctx.channel)
-        # return await ctx.send("Successfully reloaded images")
 
     @commands.command(name="counters", aliases=["spamstats"])
     @commands.guild_only()
@@ -914,7 +856,6 @@ class Social(commands.Cog):
                               f"{fr:,} fruits received\n{fe:,} fruits eaten\n{fl:,} fruits left\n\n"
                               f"{lr:,} lemons received\n{le:,} lemons eaten\n{ll:,} lemons left")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(f"Spam stats for {user.name} in {ctx.guild.name}", embed=embed)
 
     @commands.command(name="top")
     @commands.guild_only()
@@ -942,8 +883,6 @@ class Social(commands.Cog):
             for j in range(_range):
                 key = local_keys[j]
                 key_name = self.key_names[self.names[i]][j]
-                # key_name = local_keys[j].replace("_", " ")
-                # key_name = key_name.title()
                 d = data[j]
                 if d is not None:
                     if d[key] is not None and d[key] > 0:
@@ -952,7 +891,6 @@ class Social(commands.Cog):
                 output = "No data available"
             embed.add_field(name=name, value=output, inline=False)
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(f"Top spammers in {ctx.guild.name}", embed=embed)
 
 
 def setup(bot):

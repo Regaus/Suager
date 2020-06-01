@@ -13,12 +13,12 @@ from utils import generic, permissions, time, database, logs, data_io, http, emo
 
 
 def insert_returns(body):
-    # insert return stmt if the last expression is a expression statement
+    # insert return statement if the last expression is a expression statement
     if isinstance(body[-1], ast.Expr):
         body[-1] = ast.Return(body[-1].value)
         ast.fix_missing_locations(body[-1])
 
-    # for if statements, we insert returns into the body and the orelse
+    # for if statements, we insert returns into the body and the or-else
     if isinstance(body[-1], ast.If):
         insert_returns(body[-1].body)
         insert_returns(body[-1].orelse)
@@ -56,34 +56,26 @@ async def eval_(ctx: commands.Context, cmd):
         exec(compile(parsed, filename="<ast>", mode="exec"), env)
 
         result = (await eval(f"{fn_name}()", env))
-        # return await ctx.send(result)
         if ctx.guild is None:
             limit = 8000000
         else:
             limit = int(ctx.guild.filesize_limit / 1.05)
         if len(str(result)) == 0 or result is None:
             return await generic.send("Code has been run, however returned no result.", ctx.channel)
-            # return await ctx.send("Code has been run, however returned no result.")
         elif len(str(result)) in range(2001, limit + 1):
             async with ctx.typing():
                 data = BytesIO(str(result).encode('utf-8'))
                 return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
                                           file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
-                # return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)",
-                #                       file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
         elif len(str(result)) > limit:
             async with ctx.typing():
                 data = BytesIO(str(result)[-limit:].encode('utf-8'))
                 return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)\nSending last {limit:,} chars", ctx.channel,
                                           file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
-            # return await generic.send(f"Result was way too long... ({len(str(result)):,} chars)", ctx.channel)
-            # return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
         else:
             return await generic.send(str(result), ctx.channel)
-            # return await ctx.send(str(result))
     except Exception as e:
         return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-        # return await ctx.send(f"{type(e).__name__}: {e}")
 
 
 def reload_util(name: str):
@@ -101,18 +93,12 @@ def reload_module(folder: str, name: str):
         importlib.reload(module_name)
     except ModuleNotFoundError:
         return f"Couldn't find module named {name_maker}"
-        # return await ctx.send(f"Couldn't find module named {name_maker}")
     except Exception as e:
         error = generic.traceback_maker(e)
         return f"Module {name_maker} returned an error and was not reloaded...\n{error}"
-        # return await ctx.send(f"Module {name_maker} returned an error and was not reloaded...\n{error}")
     reloaded = f"Reloaded module {name_maker}"
-    # await generic.send(reloaded, ctx.channel)
-    # await ctx.send(reloaded)
     if generic.get_config()["logs"]:
         logs.log("changes", f"{time.time()} > {reloaded}")
-        # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
-        # logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")'
     return reloaded
 
 
@@ -133,7 +119,6 @@ class Admin(commands.Cog):
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "channel_locked"), ctx.channel)
         if ctx.author.id == 86477779717066752:
             out = "admin_source"
-            # return await ctx.send(f"**{ctx.author.name}**... No, but you are the author of the original source code")
         elif ctx.author.id in self.config["owners"]:
             out = "admin_yes"
         else:
@@ -147,10 +132,8 @@ class Admin(commands.Cog):
         try:
             data = self.db.execute(query)
             return await generic.send(data, ctx.channel)
-            # return await ctx.send(f"{data}")
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="fetch", aliases=["select"])
     @commands.check(permissions.is_owner)
@@ -167,26 +150,20 @@ class Admin(commands.Cog):
             rl = len(str(result))
             if rl == 0 or result is None:
                 return await generic.send("Code has been run, however returned no result.", ctx.channel)
-                # return await ctx.send("Code has been run, however returned no result.")
             elif rl in range(2001, limit + 1):
                 async with ctx.typing():
                     data = BytesIO(str(result).encode('utf-8'))
                     return await generic.send(f"Result was a bit too long... ({rl:,} chars)", ctx.channel,
                                               file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
-                    # return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)",
-                    #                       file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
             elif rl > limit:
                 async with ctx.typing():
                     data = BytesIO(str(result)[-limit:].encode('utf-8'))
                     return await generic.send(f"Result was a bit too long... ({rl:,} chars)\nSending last {limit:,} chars", ctx.channel,
                                               file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
-                # return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
             else:
                 return await generic.send(str(result), ctx.channel)
-                # return await ctx.send(str(result))
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="log", aliases=["logs"])
     @commands.check(permissions.is_owner)
@@ -206,30 +183,21 @@ class Admin(commands.Cog):
                 limit = 8000000
             else:
                 limit = int(ctx.guild.filesize_limit / 1.05)
-            # return await ctx.send(result)
             rl = len(str(result))
             if rl == 0 or result is None:
                 return await generic.send("Nothing was found...", ctx.channel)
-                # return await ctx.send("Code has been run, however returned no result.")
             elif 0 < rl <= limit:
                 async with ctx.typing():
                     data = BytesIO(str(result).encode('utf-8'))
                     return await generic.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
                                               file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
-                    # return await generic.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
-                    #                           file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():
                     data = BytesIO(str(result)[-limit:].encode('utf-8'))
                     return await generic.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", ctx.channel,
                                               file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
-                # return await ctx.send(f"Result was way too long... ({len(str(result)):,} chars)")
-            # else:
-            #     return await generic.send(str(result), ctx.channel)
-            # return await ctx.send(str(result))
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)
@@ -237,7 +205,7 @@ class Admin(commands.Cog):
         """ Evaluates input.
         Input is interpreted as newline separated statements.
         If the last statement is an expression, that is the return value.
-        Such that `>eval 1 + 1` gives `2` as the result.
+        Such that `//eval 1 + 1` gives `2` as the result.
         """
         return await eval_(ctx, cmd)
 
@@ -249,14 +217,10 @@ class Admin(commands.Cog):
             self.bot.reload_extension(f"cogs.{name}")
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"{type(e).__name__}: {e}")
         reloaded = f"Reloaded extension **cogs/{name}.py**"
         await generic.send(reloaded, ctx.channel)
-        # await ctx.send(reloaded)
         if generic.get_config()["logs"]:
             logs.log("changes", f"{time.time()} > {reloaded}")
-            # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
-            # logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
     @commands.command(name="reloadall", aliases=["rall", "ra"])
     @commands.check(permissions.is_owner)
@@ -274,11 +238,8 @@ class Admin(commands.Cog):
             output = "\n".join([f"**{g[0]}** ```fix\n{g[1]}```" for g in error_collection])
             return await generic.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}",
                                       ctx.channel)
-            # return await ctx.send(f"Attempted to reload all extensions, was able to reload, "
-            #                       f"however the following failed...\n\n{output}")
         await generic.send("Successfully reloaded all extensions", ctx.channel)
         logs.log("changes", f"{time.time()} > Successfully reloaded all extensions")
-        # await ctx.send("Successfully reloaded all extensions")
 
     @commands.command(name="reloadutil", aliases=["ru"])
     @commands.check(permissions.is_owner)
@@ -302,14 +263,10 @@ class Admin(commands.Cog):
             self.bot.load_extension(f"cogs.{name}")
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"```diff\n- {e}```")
         reloaded = f"Loaded extension **{name}.py**"
-        # await ctx.send(reloaded)
         await generic.send(reloaded, ctx.channel)
         if generic.get_config()["logs"]:
             logs.log("changes", f"{time.time()} > {reloaded}")
-            # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
-            # logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
     @commands.command(name="unload", aliases=["ul"])
     @commands.check(permissions.is_owner)
@@ -319,14 +276,10 @@ class Admin(commands.Cog):
             self.bot.unload_extension(f"cogs.{name}")
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-            # return await ctx.send(f"```diff\n- {e}```")
         reloaded = f"Unloaded extension **{name}.py**"
         await generic.send(reloaded, ctx.channel)
-        # await ctx.send(reloaded)
         if generic.get_config()["logs"]:
             logs.log("changes", f"{time.time()} > {reloaded}")
-            # await logs.log_channel(self.bot, 'changes').send(f"{time.time()} > {reloaded}")
-            # logs.save(logs.get_place(version, "changes"), f"{time.time()} > {reloaded}")
 
     @commands.command(name="shutdown")
     @commands.check(permissions.is_owner)
@@ -335,11 +288,8 @@ class Admin(commands.Cog):
         import time as _time
         import sys
         await generic.send("Shutting down...", ctx.channel)
-        # await ctx.send('Shutting down...')
         if generic.get_config()["logs"]:
             logs.log("uptime", f"{time.time()} > Shutting down from command...")
-            # await logs.log_channel(self.bot, 'uptime').send(f"{time.time()} > Shutting down from command...")
-            # logs.save(logs.get_place(version, "uptime"), f"{time.time()} > Shutting down from command...")
         _time.sleep(1)
         sys.stderr.close()
         sys.exit(0)
@@ -349,7 +299,6 @@ class Admin(commands.Cog):
     async def execute(self, ctx: commands.Context, *, text: str):
         """ Do a shell command. """
         message = await generic.send("Loading...", ctx.channel)
-        # message = await ctx.send(f"Loading...")
         proc = await asyncio.create_subprocess_shell(text, stdin=None, stderr=PIPE, stdout=PIPE)
         out = (await proc.stdout.read()).decode('utf-8').strip()
         err = (await proc.stderr.read()).decode('utf-8').strip()
@@ -371,12 +320,9 @@ class Admin(commands.Cog):
                 await message.delete()
                 await generic.send("The result was a bit too long.. so here is a text file instead 👍", ctx.channel,
                                    file=discord.File(data, filename=time.file_ts('Execute')))
-                # await ctx.send(content=f"The result was a bit too long.. so here is a text file instead 👍",
-                #                file=discord.File(data, filename=time.file_ts(f'Result')))
             except asyncio.TimeoutError as e:
                 await message.delete()
                 return await generic.send(str(e), ctx.channel)
-                # return await ctx.send(e)
         else:
             await message.edit(content=f"```fix\n{content}\n```")
 
@@ -424,13 +370,11 @@ class Admin(commands.Cog):
             data_io.change_version("full_version", new_version)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
-            # return await ctx.send(e)
         try:
             for cog in self.admin_mod:
                 self.bot.reload_extension(cog)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
-            # return await ctx.send(e)
         to_send = f"Changed full version from **{old_version}** to **{new_version}**"
         if generic.get_config()["logs"]:
             logs.log("version_changes", f"{time.time()} > {to_send}")
@@ -445,13 +389,11 @@ class Admin(commands.Cog):
             data_io.change_version("version", new_version)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
-            # return await ctx.send(e)
         try:
             for cog in self.admin_mod:
                 self.bot.reload_extension(cog)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
-            # return await ctx.send(e)
         to_send = f"Changed short version from **{old_version}** to **{new_version}**"
         if generic.get_config()["logs"]:
             logs.log("version_changes", f"{time.time()} > {to_send}")
@@ -468,7 +410,7 @@ class Admin(commands.Cog):
         reload = reload_util("generic")
         w1 = "added" if action == "add" else "removed"
         w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} Tier {tier} Heretic List\n"
+        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} Tier {tier} Infidel List\n"
                                   f"Reload status: {reload}", ctx.channel)
 
     @config.command(name="heretics2", aliases=["hl2", "1up"])
@@ -477,7 +419,6 @@ class Admin(commands.Cog):
         """ Move someone higher up in the Heretic List """
         try:
             ret = generic.heresy(uid)
-            # data_io.change_values("heretics", str(tier), action, uid)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
         reload = reload_util("generic")
@@ -486,12 +427,8 @@ class Admin(commands.Cog):
         elif ret == 4:
             out = f"{emotes.Deny} <@{uid}> ({self.bot.get_user(uid)}) is already Tier 3."
         else:
-            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Heretic."
+            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Infidel."
         return await generic.send(f"{out}\n{reload}", ctx.channel)
-        # w1 = "added" if action == "add" else "removed"
-        # w2 = "to" if action == "add" else "from"
-        # return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} Tier {tier} Heretic List\n"
-        #                           f"Reload status: {reload}", ctx.channel)
 
     @config.command(name="heretics3", aliases=["hl3", "1down"])
     @commands.check(permissions.is_owner)
@@ -499,16 +436,15 @@ class Admin(commands.Cog):
         """ Move someone down in the Heretic List """
         try:
             ret = generic.heresy_down(uid)
-            # data_io.change_values("heretics", str(tier), action, uid)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
         reload = reload_util("generic")
         if ret == -1:
             out = f"{emotes.Deny} Nothing happened."
         elif ret == 0:
-            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is no longer a Heretic."
+            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is no longer an Infidel."
         else:
-            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Heretic."
+            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Infidel."
         return await generic.send(f"{out}\n{reload}", ctx.channel)
 
     @config.command(name="lovelocks", aliases=["love", "ll"])
@@ -541,8 +477,9 @@ class Admin(commands.Cog):
 
     @config.command(name="loveexceptions", aliases=["le"])
     @commands.check(permissions.is_owner)
-    async def config_love_exceptions(self, ctx: commands.Context, action: str, uid: int, lid: int):  # UID = Who to except, LID = Locked user
-        """ Update the love exceptions list """
+    async def config_love_exceptions(self, ctx: commands.Context, action: str, uid: int, lid: int):
+        """ Update the love exceptions list
+        uid = exception, lid = locked user """
         try:
             data_io.change_values("love_exceptions", str(lid), action, uid)
         except Exception as e:
@@ -615,6 +552,10 @@ class Admin(commands.Cog):
         except IndexError:
             return "None"
 
+    def get_val(self, what: list) -> str:
+        val = "\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in what])
+        return val if val else "No data available"
+
     @commands.command(name="heretics", aliases=["infidels"])
     @commands.check(permissions.is_owner)
     async def heretic_list(self, ctx: commands.Context):
@@ -623,9 +564,9 @@ class Admin(commands.Cog):
             return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         embed.title = "The Infidel List (Stages 1-3)"
-        embed.add_field(name="Tier 1", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_1]), inline=False)
-        embed.add_field(name="Tier 2", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_2]), inline=False)
-        embed.add_field(name="Tier 3", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_3]), inline=False)
+        embed.add_field(name="Tier 1", value=self.get_val(generic.tier_1), inline=False)
+        embed.add_field(name="Tier 2", value=self.get_val(generic.tier_2), inline=False)
+        embed.add_field(name="Tier 3", value=self.get_val(generic.tier_3), inline=False)
         return await generic.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="locks", aliases=["heretics2", "infidels2"])
@@ -636,16 +577,17 @@ class Admin(commands.Cog):
             return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         embed.title = "The Locks List (Stages 4-6)"
-        embed.add_field(name="Stage 4 Bad Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.bad_locks]), inline=False)
-        embed.add_field(name="Stage 5 Love Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks]), inline=False)
-        embed.add_field(name="Stage 6 Love Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks2]), inline=False)
+        embed.add_field(name="Stage 4 Bad Locks", value=self.get_val(generic.bad_locks), inline=False)
+        embed.add_field(name="Stage 5 Love Locks", value=self.get_val(generic.love_locks), inline=False)
+        embed.add_field(name="Stage 6 Love Locks", value=self.get_val(generic.love_locks2), inline=False)
         lev = ""
         le = generic.love_exceptions
         for lock in le:
             for exc in le[str(lock)]:
                 lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
+        if lev == "":
+            lev = "No data available"
         embed.add_field(name="Love Exceptions", value=lev, inline=True)
-        # embed.add_field(name="LE", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_exceptions]), inline=False)
         return await generic.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="lv2l", aliases=["heretics3", "regausmad", "infidels3"])

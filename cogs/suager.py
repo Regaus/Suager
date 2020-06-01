@@ -12,10 +12,8 @@ from utils import generic, time, lists
 class Suager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.creation_date = datetime(2020, 3, 2, 18)  # this was v4
-        self.creation_date = datetime(2020, 12, 31, 23, 59, 59, tzinfo=tz.utc)  # Date of creation of v5 (placeholder) || Note to self: make this time be in UTC
-        # self.birthday = datetime(2018, 12, 6, 1, 2, tzinfo=tz.utc)  # Date when the user was created
-        self.birthday = datetime(2019, 5, 13, 21, 2, tzinfo=tz.utc)  # Apparently the actual first versions were at a different time
+        self.creation_date = datetime(2020, 6, 1, 20, 18, tzinfo=tz.utc)  # Release v5.0
+        self.birthday = datetime(2019, 5, 13, 21, 2, tzinfo=tz.utc)  # First version
 
     @commands.command(name="source")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -74,7 +72,6 @@ class Suager(commands.Cog):
             embed.add_field(name=generic.gls(locale, "dates"), inline=False, value=generic.gls(locale, "dates_info", [birthday, v5_created, last_update]))
             embed.title = generic.gls(locale, "about_suager", [str(self.bot.user), config["full_version"]])
             return await generic.send(None, ctx.channel, embed=embed)
-            # return await ctx.send(embed=embed)
 
     @commands.command(name="servers", aliases=["guilds"])
     @commands.is_owner()
@@ -111,9 +108,7 @@ class Suager(commands.Cog):
                 return await ctx.message.add_reaction("✉")
             except discord.Forbidden:
                 return await generic.send(generic.gls(locale, "invite_to_sl_failed"), ctx.channel)
-            # return await ctx.send(f"**Here you go {ctx.author.name}\n{generic.invite}**")
         return await generic.send("But this is my home already!", ctx.channel)
-        # return await ctx.send("This is my how, j'know <3")
 
     @commands.command(name="ping")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)

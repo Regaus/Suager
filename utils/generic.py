@@ -39,8 +39,6 @@ settings_template = {
         {"cost": 2, "role": 0}
     ]
 }
-# levels_template = deepcopy(settings_template)
-# levels_template["leveling"]["enabled"] = False
 
 
 async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None,
@@ -65,9 +63,7 @@ async def send(text: str or None, channel: discord.TextChannel, *, embed: discor
 
 
 def gls(locale: str, key: str, values: list = None):
-    strings = {
-        "ru": ru.data, "en": en.data, "debug": {}
-    }
+    strings = {"ru": ru.data, "en": en.data, "debug": {}}
     use = strings.get(locale, strings["en"])
     out = use.get(key, key)
     if values is not None:
@@ -115,6 +111,14 @@ def get_config():
     return json.loads(open("config.json", "r").read())
 
 
+def get_locks():
+    try:
+        return json.loads(open("data/locks.json", "r").read())
+    except FileNotFoundError:
+        return {"love_locks": [], "love_locks_s6": [], "love_exceptions": {}, "bad_locks": [], "channel_locks": [], "server_locks": {},
+                "counter_locks": [], "heretics": {"1": [], "2": [], "3": []}}
+
+
 def round_value(value):
     try:
         if value < 10:
@@ -137,7 +141,6 @@ def string_make(val, sa: int = 0, negative: bool = False, big: bool = False):
     :return: The value's string
     """
     minus = "-" if negative else ""
-    # res = ['', "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "O", "N", "D"]
     res = ['', 'K', 'mil', 'bil', 'tri', 'qua', 'qui', 'sext', 'sept', 'oct', 'non', 'dec']
     yes = ['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion', 'quintillion', 'sextillion', 'septillion',
            'octillion', 'nonillion', 'decillion']
@@ -199,28 +202,25 @@ def reason(who, why=None):
 async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here's the results:", loop=None):
     if not loop:
         return await ctx.send("The result was empty...")
-
     pretty = "\r\n".join([f"[{str(num).zfill(2)}] {data}" for num, data in enumerate(loop, start=1)])
-
     if len(loop) < 15:
         return await ctx.send(f"{resultmsg}```ini\n{pretty}```")
-
     data = BytesIO(pretty.encode('utf-8'))
     return await send(resultmsg, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
 
 
 invite = "https://discord.gg/cw7czUx"
-# invite = "https://discord.gg/senko/"
 config = get_config()
 owners = config["owners"]
-love_locks = config["love_locks"]
-love_locks2 = config["love_locks_s6"]
-love_exceptions = config["love_exceptions"]
-bad_locks = config["bad_locks"]
-channel_locks = config["channel_locks"]
-server_locks = config["server_locks"]
-counter_locks = config["counter_locks"]
-heretics = config["heretics"]
+locks = get_locks()
+love_locks = locks["love_locks"]
+love_locks2 = locks["love_locks_s6"]
+love_exceptions = locks["love_exceptions"]
+bad_locks = locks["bad_locks"]
+channel_locks = locks["channel_locks"]
+server_locks = locks["server_locks"]
+counter_locks = locks["counter_locks"]
+heretics = locks["heretics"]
 tier_1 = heretics["1"]
 tier_2 = heretics["2"]
 tier_3 = heretics["3"]
@@ -232,7 +232,6 @@ def heresy(uid: int):
     t2 = uid in tier_2
     t3 = uid in tier_3
     t0 = not (t1 or t2 or t3)
-    # data_io.change_values("heretics", str(tier), action, uid)
     val1 = "heretics"
     tier = ["1", "2", "3"]
     a1, a2 = "add", "remove"
@@ -263,8 +262,6 @@ def heresy_down(uid: int):
     t1 = uid in tier_1
     t2 = uid in tier_2
     t3 = uid in tier_3
-    # t0 = not (t1 and t2 and t3)
-    # data_io.change_values("heretics", str(tier), action, uid)
     val1 = "heretics"
     tier = ["1", "2", "3"]
     a1, a2 = "add", "remove"
@@ -325,7 +322,6 @@ def is_love_locked2(user: discord.Member, author: discord.Member) -> bool:
 
 
 def line_count():
-    # docstring = False
     file_amount, functions, comments, lines, classes = 0, 0, 0, 0, 0
 
     for dir_path, dir_name, file_names in os.walk("."):
