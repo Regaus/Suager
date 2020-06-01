@@ -138,12 +138,14 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
+        if generic.is_love_locked2(user, ctx.author):
+            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "pats_given", "pats_received", 16, 17)
-        embed.description = generic.gls(locale, "pat", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "pat", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.pat))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "pat2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -168,12 +170,14 @@ class Social(commands.Cog):
         # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
+        if generic.is_love_locked2(user, ctx.author):
+            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "hugs_given", "hugs_received", 10, 11)
-        embed.description = generic.gls(locale, "hug", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "hug", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.hug))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "hug2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -195,15 +199,16 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "cuddle_suager", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
-        # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
+        if generic.is_love_locked2(user, ctx.author):
+            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "cuddles_given", "cuddles_received", 6, 7)
-        embed.description = generic.gls(locale, "cuddle", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "cuddle", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.cuddle))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "cuddle2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -225,14 +230,12 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "lick_suager", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "lick_bot", [user.name]), ctx.channel)
-        # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
-        #     return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "licks_given", "licks_received", 14, 15)
-        embed.description = generic.gls(locale, "lick", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "lick", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.lick))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "lick2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -253,15 +256,16 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "kiss_suager", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "kiss_bot", [user.name]), ctx.channel)
-        # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
+        if generic.is_love_locked2(user, ctx.author):
+            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "kisses_given", "kisses_received", 12, 13)
-        embed.description = generic.gls(locale, "kiss", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "kiss", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.kiss))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "kiss2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -288,10 +292,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bite_bot", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "bites_given", "bites_received", 4, 5)
-        embed.description = generic.gls(locale, "bite", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "bite", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.bite))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "bite2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -319,10 +323,10 @@ class Social(commands.Cog):
                 self.slap = await lists.get_images(self.bot, 'v')
             embed = discord.Embed(colour=generic.random_colour())
             number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "slaps_given", "slaps_received", 18, 19)
-            embed.description = generic.gls(locale, "slap", [user.name, ctx.author.name])
+            embed.title = generic.gls(locale, "slap", [user.name, ctx.author.name])
             embed.set_image(url=random.choice(self.slap))
             if ctx.guild.id in generic.counter_locks:
-                embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+                embed.set_footer(text=generic.gls(locale, "counters_disabled"))
             else:
                 embed.set_footer(text=generic.gls(locale, "slap2", [user.name, number]))
         else:
@@ -348,10 +352,10 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "sniffs_given", "sniffs_received", 20, 21)
         s = generic.gls(locale, f"{ctx.invoked_with}ed")
-        embed.description = generic.gls(locale, "smell", [user.name, ctx.author.name, s])
+        embed.title = generic.gls(locale, "smell", [user.name, ctx.author.name, s])
         embed.set_image(url=random.choice(self.smell))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "smell2", [user.name, number, s]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -374,10 +378,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "highfive_bot", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "high_fives_given", "high_fives_received", 8, 9)
-        embed.description = generic.gls(locale, "highfive", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "highfive", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.highfive))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "highfive2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -400,10 +404,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "poke_bot", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "pokes_given", "pokes_received", 42, 43)
-        embed.description = generic.gls(locale, "poke", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "poke", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.poke))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "poke2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -426,10 +430,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "boop_bot", [user.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "boops_given", "boops_received", 44, 45)
-        embed.description = generic.gls(locale, "boop", [user.name, ctx.author.name])
+        embed.title = generic.gls(locale, "boop", [user.name, ctx.author.name])
         embed.set_image(url=random.choice(self.boop))
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "boop2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
@@ -523,12 +527,12 @@ class Social(commands.Cog):
         if is_fucked(self.sleepy):
             self.sleepy = await lists.get_images(self.bot, 's')
         embed = discord.Embed(colour=generic.random_colour())
-        embed.description = generic.gls(locale, "sleepy", [ctx.author.name])
+        embed.title = generic.gls(locale, "sleepy", [ctx.author.name])
         # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.sleepy))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "sleepy", 32)
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "sleepy2", [ctx.author.name, number]))
         # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
@@ -546,12 +550,12 @@ class Social(commands.Cog):
         if is_fucked(self.cry):
             self.cry = await lists.get_images(self.bot, 'r')
         embed = discord.Embed(colour=generic.random_colour())
-        embed.description = generic.gls(locale, "cry", [ctx.author.name])
+        embed.title = generic.gls(locale, "cry", [ctx.author.name])
         # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.cry))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "cried", 31)
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "cry2", [ctx.author.name, number]))
         # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
@@ -569,12 +573,12 @@ class Social(commands.Cog):
         if is_fucked(self.blush):
             self.blush = await lists.get_images(self.bot, 'u')
         embed = discord.Embed(colour=generic.random_colour())
-        embed.description = generic.gls(locale, "blush", [ctx.author.name])
+        embed.title = generic.gls(locale, "blush", [ctx.author.name])
         # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.blush))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "blushed", 30)
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "blush2", [ctx.author.name, number]))
         # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
@@ -592,12 +596,12 @@ class Social(commands.Cog):
         if is_fucked(self.smile):
             self.smile = await lists.get_images(self.bot, 'm')
         embed = discord.Embed(colour=generic.random_colour())
-        embed.description = generic.gls(locale, "smile", [ctx.author.name])
+        embed.title = generic.gls(locale, "smile", [ctx.author.name])
         # embed.description = f"**{ctx.author.name}** is sleepy..."
         embed.set_image(url=random.choice(self.smile))
         number = self.data_update2(ctx.author.id, ctx.guild.id, "smiled", 33)
         if ctx.guild.id in generic.counter_locks:
-            embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
+            embed.set_footer(text=generic.gls(locale, "counters_disabled"))
         else:
             embed.set_footer(text=generic.gls(locale, "smile2", [ctx.author.name, number]))
         # embed.set_footer(text=f"{ctx.author.name} has now been sleepy {number} time(s) in this server!")
@@ -882,6 +886,7 @@ class Social(commands.Cog):
         if not data:
             return await ctx.send("It doesn't seem I have anything saved for you...")
         embed = discord.Embed(colour=generic.random_colour())
+        embed.title = generic.gls(locale, "spam_stats", [user.name, ctx.guild.name])
         embed.set_thumbnail(url=user.avatar_url_as(static_format="png", size=1024))
         for i in range(len(self.names) - 1):
             if i == 0 and generic.is_locked(ctx.guild, "bang"):
@@ -908,7 +913,7 @@ class Social(commands.Cog):
                               f"{ar:,} cookies received\n{ae:,} cookies eaten\n{al:,} cookies left\n\n"
                               f"{fr:,} fruits received\n{fe:,} fruits eaten\n{fl:,} fruits left\n\n"
                               f"{lr:,} lemons received\n{le:,} lemons eaten\n{ll:,} lemons left")
-        return await generic.send(generic.gls(locale, "spam_stats", [user.name, ctx.guild.name]), ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
         # return await ctx.send(f"Spam stats for {user.name} in {ctx.guild.name}", embed=embed)
 
     @commands.command(name="top")
@@ -922,6 +927,7 @@ class Social(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
+        embed.title = generic.gls(locale, "top_counters", [ctx.guild.name])
         embed.set_thumbnail(url=ctx.guild.icon_url_as(static_format="png", size=1024))
         for i in range(len(self.names)):
             if i == 0 and (generic.is_locked(ctx.guild, "bang") or ctx.guild.id == 568148147457490954):
@@ -945,7 +951,7 @@ class Social(commands.Cog):
             if output == "":
                 output = "No data available"
             embed.add_field(name=name, value=output, inline=False)
-        return await generic.send(generic.gls(locale, "top_counters", [ctx.guild.name]), ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
         # return await ctx.send(f"Top spammers in {ctx.guild.name}", embed=embed)
 
 

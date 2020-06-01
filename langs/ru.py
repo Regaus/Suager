@@ -348,7 +348,7 @@ data = {
     "tz_set": "<val1>, your timezone has been set to **<val2>**.\nDB status: <val3>",
     "tz_invalid": "The timezone you specified <val1> was not found. Attached below is the list of pytz timezones.",
     "time_local": "\n<val1>: **<val2>**",
-    "counters_disabled": "Counters are hidden in this server - you can still check them with `<val1>counters`.",
+    "counters_disabled": "Counters are hidden in this server.",
     "channel_must_be_nsfw": "You can only use this command in an NSFW channel",
     "allowed_filters": "This is the list of filters: `<val1>`",
     "invalid_colour": "Invalid value specified, using default...",

@@ -209,12 +209,12 @@ async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here'
     return await send(resultmsg, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
 
 
-# version = get("config.json").version
 invite = "https://discord.gg/cw7czUx"
 # invite = "https://discord.gg/senko/"
 config = get_config()
 owners = config["owners"]
 love_locks = config["love_locks"]
+love_locks2 = config["love_locks_s6"]
 love_exceptions = config["love_exceptions"]
 bad_locks = config["bad_locks"]
 channel_locks = config["channel_locks"]
@@ -224,7 +224,6 @@ heretics = config["heretics"]
 tier_1 = heretics["1"]
 tier_2 = heretics["2"]
 tier_3 = heretics["3"]
-# tier_4 = heretics["4"]
 db = database.Database()
 
 
@@ -309,7 +308,6 @@ def is_locked(guild: discord.Guild or None, cmd: str):
     if str(gid) not in server_locks:
         return False
     return cmd in server_locks[str(gid)]
-# prefixes = 'data/prefixes'
 
 
 def is_love_locked(user: discord.Member, author: discord.Member) -> bool:
@@ -317,6 +315,13 @@ def is_love_locked(user: discord.Member, author: discord.Member) -> bool:
         return (user.id in love_locks and (author.id not in love_exceptions[str(user.id)])) and author.id != 597373963571691520  # Nuriki
     except KeyError:
         return user.id in love_locks and author.id != 597373963571691520
+
+
+def is_love_locked2(user: discord.Member, author: discord.Member) -> bool:
+    try:
+        return (author.id in love_locks2 and (user.id not in love_exceptions[str(author.id)])) and user.id != 597373963571691520  # Nuriki
+    except KeyError:
+        return author.id in love_locks2 and user.id != 597373963571691520
 
 
 def line_count():

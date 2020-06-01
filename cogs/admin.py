@@ -514,7 +514,7 @@ class Admin(commands.Cog):
     @config.command(name="lovelocks", aliases=["love", "ll"])
     @commands.check(permissions.is_owner)
     async def config_love_locks(self, ctx: commands.Context, action: str, uid: int):
-        """ Update the love locks list """
+        """ Update the Stage 5 love locks list """
         try:
             data_io.change_values("love_locks", None, action, uid)
         except Exception as e:
@@ -522,7 +522,21 @@ class Admin(commands.Cog):
         reload = reload_util("generic")
         w1 = "added" if action == "add" else "removed"
         w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Love Locks List\n"
+        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Stage 5 Love Locks List\n"
+                                  f"Reload status: {reload}", ctx.channel)
+
+    @config.command(name="lovelocks2", aliases=["love2", "ll2", "stage6"])
+    @commands.check(permissions.is_owner)
+    async def config_love_locks2(self, ctx: commands.Context, action: str, uid: int):
+        """ Update the Stage 6 love locks list """
+        try:
+            data_io.change_values("love_locks_s6", None, action, uid)
+        except Exception as e:
+            return await generic.send(str(e), ctx.channel)
+        reload = reload_util("generic")
+        w1 = "added" if action == "add" else "removed"
+        w2 = "to" if action == "add" else "from"
+        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Stage 6 Love Locks List\n"
                                   f"Reload status: {reload}", ctx.channel)
 
     @config.command(name="loveexceptions", aliases=["le"])
@@ -601,26 +615,30 @@ class Admin(commands.Cog):
         except IndexError:
             return "None"
 
-    @commands.command(name="heretics")
+    @commands.command(name="heretics", aliases=["infidels"])
     @commands.check(permissions.is_owner)
     async def heretic_list(self, ctx: commands.Context):
-        """ Heretic List """
+        """ Infidel List """
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
+        embed.title = "The Infidel List (Stages 1-3)"
         embed.add_field(name="Tier 1", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_1]), inline=False)
         embed.add_field(name="Tier 2", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_2]), inline=False)
         embed.add_field(name="Tier 3", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.tier_3]), inline=False)
-        return await generic.send("Here is a list of heretics", ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="locks", aliases=["heretics2"])
+    @commands.command(name="locks", aliases=["heretics2", "infidels2"])
     @commands.check(permissions.is_owner)
     async def heretic_list2(self, ctx: commands.Context):
         """ Locks list """
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
-        embed.add_field(name="Love Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks]), inline=False)
+        embed.title = "The Locks List (Stages 4-6)"
+        embed.add_field(name="Stage 4 Bad Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.bad_locks]), inline=False)
+        embed.add_field(name="Stage 5 Love Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks]), inline=False)
+        embed.add_field(name="Stage 6 Love Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_locks2]), inline=False)
         lev = ""
         le = generic.love_exceptions
         for lock in le:
@@ -628,10 +646,9 @@ class Admin(commands.Cog):
                 lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
         embed.add_field(name="Love Exceptions", value=lev, inline=True)
         # embed.add_field(name="LE", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.love_exceptions]), inline=False)
-        embed.add_field(name="Bad Locks", value="\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in generic.bad_locks]), inline=False)
-        return await generic.send("Here is the locks list", ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="lv2l", aliases=["heretics3", "regausmad"])
+    @commands.command(name="lv2l", aliases=["heretics3", "regausmad", "infidels3"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def heretic_list3(self, ctx: commands.Context):
         """ Imagine being level -2 """
@@ -639,15 +656,12 @@ class Admin(commands.Cog):
             return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         res = self.db.fetch("SELECT * FROM leveling WHERE level=-2")
         embed = discord.Embed(colour=generic.random_colour())
-        # au = []
+        embed.title = "Those who managed to get level -2"
         desc = ""
         for user in res:
-            # if user["uid"] not in au:
             desc += f"<@{user['uid']}> - {user['name']}#{user['disc']:04d} - in {self.bot.get_guild(user['gid'])}\n"
-            #     au.append(user["uid"])
         embed.description = desc
-        # embed.description = "\n".join([" - ".join([f"<@{u['uid']}>", f"{u['name']}#{u['disc']:04d}"]) for u in res])
-        return await generic.send("The list of people who managed to get level -2", ctx.channel, embed=embed)
+        return await generic.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="lv2", aliases=["lv-2"])
     @commands.check(permissions.is_owner)
