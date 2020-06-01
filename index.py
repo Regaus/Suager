@@ -41,15 +41,6 @@ async def get_prefix(_bot, ctx):
         cp = []
     return default + dp + cp + sp
 
-# try:
-#     # times = json.loads('changes.json')
-#     times = json.loads(open('changes.json', 'r').read())
-# except Exception as e:
-#     print(e)
-#     times = changes.copy()
-# times['ad'] = False
-# open('changes.json', 'w+').write(json.dumps(times))
-
 fn = f"data/changes.json"
 try:
     times = json.loads(open(fn, 'r').read())
@@ -71,13 +62,3 @@ for file in os.listdir("cogs"):
         bot.load_extension(f"cogs.{name}")
 # tasks.append(loop.create_task(bot.start(config["token"])))
 bot.run(config["token"])
-
-
-# try:
-#     loop.run_until_complete(asyncio.gather(*tasks))
-# except KeyboardInterrupt:
-#     print("CTRL + C was pressed, closing asyncio...")
-#     loop.close()
-# except asyncio.CancelledError:
-#     print("Process killed, closing asyncio...")
-#     loop.close()

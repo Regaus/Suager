@@ -64,8 +64,10 @@ class Social(commands.Cog):
             data[in_g] = 1
             self.db.execute(self.insert, tuple(data))
         else:
+            n = data_giver[key_g]
+            nu = 1 if n is None else n + 1
             self.db.execute(f"UPDATE counters SET {key_g}=? WHERE uid=? AND gid=?",
-                            (data_giver[key_g] + 1, uid_give, gid))
+                            (nu, uid_give, gid))
         if not data_receive:
             data = self.empty.copy()
             data[0] = uid_receive
@@ -74,9 +76,10 @@ class Social(commands.Cog):
             self.db.execute(self.insert, tuple(data))
             number = 1
         else:
+            n = data_receive[key_r]
+            number = 1 if n is None else n + 1
             self.db.execute(f"UPDATE counters SET {key_r}=? WHERE uid=? AND gid=?",
-                            (data_receive[key_r] + 1, uid_receive, gid))
-            number = data_receive[key_r] + 1
+                            (number, uid_receive, gid))
         return number
 
     def data_update2(self, uid: int, gid: int, key: str, ind: int):
@@ -90,9 +93,10 @@ class Social(commands.Cog):
             self.db.execute(self.insert, tuple(data))
             number = 1
         else:
+            n = data_giver[key]
+            number = 1 if n is None else n + 1
             self.db.execute(f"UPDATE counters SET {key}=? WHERE uid=? AND gid=?",
-                            (data_giver[key] + 1, uid, gid))
-            number = data_giver[key] + 1
+                            (number, uid, gid))
         return number
 
     def data_update3(self, uid: int, gid: int, key: str, key2: str, ind: int):
@@ -106,9 +110,14 @@ class Social(commands.Cog):
             self.db.execute(self.insert, tuple(data))
             number = 1
         else:
+            n = data_giver[key]
+            number = 1 if n is None else n + 1
+            n2 = data_giver[key2]
+            if n2 is None:
+                n2 = 0
             self.db.execute(f"UPDATE counters SET {key}=? WHERE uid=? AND gid=?",
-                            (data_giver[key] + 1, uid, gid))
-            number = data_giver[key] + 1 - data_giver[key2]
+                            (number, uid, gid))
+            number -= n2
         return number
 
     @commands.command(name="pat", aliases=["pet"])
@@ -123,29 +132,21 @@ class Social(commands.Cog):
             self.pat = await lists.get_images(self.bot, 'p')
         if ctx.author == user:
             return await generic.send(generic.gls(locale, "pat_self"), ctx.channel)
-            # return await ctx.send("Don't be like that ;-;")
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "pat_suager", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"Thanks, {ctx.author.name} :3 {emotes.AlexHeart} {emotes.AlexPat}")
         if user.bot:
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
-        # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
-        # if user.id == 424472476106489856 and ctx.author.id not in [689158123352883340]:
-        #     return await ctx.send(f"{emotes.Deny} Those who kill Regaus deserve no love.")
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "pats_given", "pats_received", 16, 17)
         embed.description = generic.gls(locale, "pat", [user.name, ctx.author.name])
-        # embed.description = f"**{user.name}** got a pat from **{ctx.author.name}**"
         embed.set_image(url=random.choice(self.pat))
         if ctx.guild.id in generic.counter_locks:
             embed.set_footer(text=generic.gls(locale, "counters_disabled", [ctx.prefix]))
         else:
             embed.set_footer(text=generic.gls(locale, "pat2", [user.name, number]))
-        # embed.set_footer(text=f"{user.name} has now received {number} pat(s) in this server!")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="hug")
     @commands.guild_only()
