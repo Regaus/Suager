@@ -3,6 +3,7 @@ import json
 import os
 import pathlib
 import random
+import sys
 import traceback
 from datetime import datetime
 from io import BytesIO
@@ -12,7 +13,11 @@ import discord
 from langs import en, ru
 from utils import time, database, data_io
 
-prefix_template = {'prefixes': [], 'default': True}
+
+def print_error(text: str):
+    return sys.stderr.write(f"{text}\n")
+
+
 settings_template = {
     'locale': 'en',
     'prefixes': [],
@@ -132,56 +137,6 @@ def round_value(value):
         return e
 
 
-def string_make(val, sa: int = 0, negative: bool = False, big: bool = False):
-    """
-    :param val: The value
-    :param sa: The amount of 000's
-    :param negative: Whether the value is negative or positive
-    :param big: Whether to format like "mil" or "million"
-    :return: The value's string
-    """
-    minus = "-" if negative else ""
-    res = ['', 'K', 'mil', 'bil', 'tri', 'qua', 'qui', 'sext', 'sept', 'oct', 'non', 'dec']
-    yes = ['', 'thousand', 'million', 'billion', 'trillion', 'quadrillion', 'quintillion', 'sextillion', 'septillion',
-           'octillion', 'nonillion', 'decillion']
-    if sa >= len(res):
-        return f"{minus}{round_value(val):,}e{sa * 3}"
-    return f"{minus}{round_value(val):,} {res[sa]}" if not big else f"{minus}{round_value(val):,} {yes[sa]}"
-
-
-def value_string(val, sa: int = 0, k: bool = False, negative: bool = False, big: bool = False):
-    """
-    :param val: the value
-    :param sa: The amount of times it was already divided by 1000
-    :param k: Whether to show thousands, or to only start showing string for 1 million+
-    :param negative: Whether the value is negative or not
-    :param big: Whether to format like "mil" or "million"
-    :return: The value's string
-    """
-    if val == float("inf"):
-        return "Infinity"
-    elif val == float("inf") * -1:
-        return "Negative Infinity"
-    if val != val:
-        return "NaN"
-    if val < 0:
-        val *= -1
-        negative = True
-    try:
-        if val < 1e6 and sa == 0 and not k:
-            m = "-" if negative else ""
-            return f"{m}{round_value(val):,}"
-        if val / 1000 >= 1:
-            return value_string(val / 1000, sa + 1, k, negative, big)
-        return string_make(val, sa, negative, big)
-    except OverflowError:
-        return "An overflow error's worth"
-    except RecursionError:
-        return "A recursion error's worth"
-    except Exception as e:
-        return f"An error - {e}"
-
-
 def traceback_maker(err, advance: bool = True, text: str = None, guild=None, author=None):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
     n = "\n"
@@ -199,14 +154,14 @@ def reason(who, why=None):
     return f"{r} {why}"
 
 
-async def pretty_results(ctx, filename: str = "Results", resultmsg: str = "Here's the results:", loop=None):
+async def pretty_results(ctx, filename: str = "Results", result: str = "Here's the results:", loop=None):
     if not loop:
         return await ctx.send("The result was empty...")
     pretty = "\r\n".join([f"[{str(num).zfill(2)}] {data}" for num, data in enumerate(loop, start=1)])
     if len(loop) < 15:
-        return await ctx.send(f"{resultmsg}```ini\n{pretty}```")
+        return await ctx.send(f"{result}```ini\n{pretty}```")
     data = BytesIO(pretty.encode('utf-8'))
-    return await send(resultmsg, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
+    return await send(result, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
 
 
 invite = "https://discord.gg/cw7czUx"

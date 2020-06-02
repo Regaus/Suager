@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from utils import database, generic
-from utils.generic import value_string, random_colour, get_config
+from utils.generic import random_colour, get_config
 
 default_currency = "€"
 
@@ -21,8 +21,8 @@ class Economy(commands.Cog):
             currency = default_currency
         else:
             try:
-                set = json.loads(settings["data"])
-                currency = set["currency"]
+                setting = json.loads(settings["data"])
+                currency = setting["currency"]
             except KeyError:
                 currency = default_currency
         return currency
@@ -40,16 +40,11 @@ class Economy(commands.Cog):
         user = who or ctx.author
         if user.bot:
             return await generic.send(generic.gls(locale, "bots_money"), ctx.channel)
-            # return await ctx.send("Bots can't have any money, cuz they're cheaters. I get my money from Regaus, don't worry.")
         data = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not data:
             return await generic.send(generic.gls(locale, "no_money", [user.name]), ctx.channel)
-            # return await ctx.send(f"Doesn't appear like {user.name} has any money at all...")
         currency = self.get_currency(ctx.guild.id)
-        return await generic.send(generic.gls(locale, "balance", [user.name, value_string(data["money"], big=True), currency, ctx.guild.name]),
-                                  ctx.channel)
-        # return await ctx.send(f"**{user.name}** has **{value_string(data['money'], big=True)}{currency}** "
-        #                       f"in **{ctx.guild.name}**")
+        return await generic.send(generic.gls(locale, "balance", [user.name, f"{data['money']:,}", currency, ctx.guild.name]), ctx.channel)
 
     @commands.command(name="donate", aliases=["give"])
     @commands.guild_only()
@@ -63,37 +58,27 @@ class Economy(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if amount < 0:
             return await generic.send(generic.gls(locale, "donate_negative", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"Nice try, {ctx.author.name}")
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "donate_self", [user.name]), ctx.channel)
-            # return await ctx.send(f"{user.name}, giving money to yourself? Greedy.")
         if user.bot:
             return await generic.send(generic.gls(locale, "bots_money"), ctx.channel)
-            # return await ctx.send("Bots can't have any money, cuz they're cheaters. I get my money from Regaus, dw.")
         data1 = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         data2 = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not data1:
             return await generic.send(generic.gls(locale, "no_money2"), ctx.channel)
-            # return await ctx.send("I don't have any data saved for you, and you already trying to give money?")
         if data1['money'] - amount < 0:
             return await generic.send(generic.gls(locale, "no_money3", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"{ctx.author.name}, it doesn't seem like you have enough money to do that rn.")
         money1, money2, donated1 = [data1['money'], data2['money'], data1['donated']]
         money1 -= amount
         donated1 += amount
         money2 += amount
-        self.db.execute("UPDATE economy SET money=?, donated=? WHERE uid=? AND gid=?",
-                        (money1, donated1, ctx.author.id, ctx.guild.id))
+        self.db.execute("UPDATE economy SET money=?, donated=? WHERE uid=? AND gid=?", (money1, donated1, ctx.author.id, ctx.guild.id))
         if data2:
-            self.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?",
-                            (money2, user.id, ctx.guild.id))
+            self.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (money2, user.id, ctx.guild.id))
         else:
-            self.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
+            self.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)", (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
         currency = self.get_currency(ctx.guild.id)
-        return await generic.send(generic.gls(locale, "donate_yes", [ctx.author.name, value_string(amount, big=True), currency, user.name]),
-                                  ctx.channel)
-        # return await ctx.send(f"{ctx.author.name} just gave {amount}{currency} to {user.name}. {emotes.AlexHeart}")
+        return await generic.send(generic.gls(locale, "donate_yes", [ctx.author.name, f"{amount:,}", currency, user.name]), ctx.channel)
 
     @commands.command(name="profile")
     @commands.guild_only()
@@ -109,7 +94,6 @@ class Economy(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await generic.send(generic.gls(locale, "bots_money"), ctx.channel)
-            # return await ctx.send("Bots can't have any money, cuz they're cheaters. I get my money from Regaus, dw.")
         embed = discord.Embed(colour=random_colour())
         embed.set_thumbnail(url=user.avatar_url)
         if is_self:
@@ -123,14 +107,12 @@ class Economy(commands.Cog):
             data = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             if not data:
                 return await generic.send(generic.gls(locale, "no_money", [user.name]), ctx.channel)
-                # return await ctx.send(f"I ain't sure if {user.name} has anything at all...")
-            r1 = value_string(data['money'], big=True)
-            r2 = value_string(data['donated'], big=True)
+            r1 = f"{data['money']:,}"
+            r2 = f"{data['donated']:,}"
             currency = self.get_currency(ctx.guild.id)
             embed.add_field(name=generic.gls(locale, "money"), value=f"{r1}{currency}", inline=False)
             embed.add_field(name=generic.gls(locale, "donated"), value=f"{r2}{currency}", inline=False)
         return await generic.send(generic.gls(locale, "profile", [user.name, ctx.guild.name]), ctx.channel, embed=embed)
-        # return await ctx.send(f"**{user.name}'s** profile in **{ctx.guild.name}**", embed=embed)
 
     @commands.command(name="buy")
     @commands.guild_only()
@@ -186,7 +168,6 @@ class Economy(commands.Cog):
             return await generic.send(generic.gls(locale, "shop_empty"), ctx.channel)
         except discord.Forbidden:
             return await generic.send(generic.gls(locale, "buy_role_forbidden"), ctx.channel)
-        # return await ctx.send(soon)
 
     @commands.command(name="shop")
     @commands.guild_only()
@@ -212,17 +193,13 @@ class Economy(commands.Cog):
             embed = discord.Embed(colour=random_colour())
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.title = generic.gls(locale, "shop", [ctx.guild.name])
-            # embed.title = f"Rewards for having no life in {ctx.guild.name}"
             d = ''
             for role in rewards:
                 d += generic.gls(locale, "shop_item", [f'{role["cost"]}', role["role"], currency])
-                # d += f"Level {role['level']}: <@&{role['role']}>\n"
             embed.description = d
             return await generic.send(None, ctx.channel, embed=embed)
-            # return await ctx.send(embed=embed)
         except KeyError:
             return await generic.send(generic.gls(locale, "shop_empty"), ctx.channel)
-        # return await ctx.send(soon)
 
 
 def setup(bot):

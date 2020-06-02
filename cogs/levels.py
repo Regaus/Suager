@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from discord.ext import commands
 
 from utils import time, database, http, generic
-from utils.generic import random_colour, value_string, round_value
+from utils.generic import random_colour, round_value
 
 max_level = 5000
 xp_amounts = [2250, 3000]
@@ -69,18 +69,6 @@ class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database()
-        # self.ani_emotes = r"<a:(.+):(\d{17,18})>"
-
-    # @commands.Cog.listener()
-    # async def on_message_edit(self, before: discord.Message, ctx: discord.Message):
-    #     if ctx.author.bot or ctx.guild is None:
-    #         return
-    #     if before == ctx:
-    #         return
-    #     if ctx.channel.id in [568148147457490958, 577599230567383058, 570682506127474729, 690254056354087047, 694684764074016799]:
-    #         ani = re.findall(self.ani_emotes, ctx.content)
-    #         if ani:
-    #             await generic.send(f"{ctx.author.mention} smh, nitro", ctx.channel)
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -88,12 +76,6 @@ class Leveling(commands.Cog):
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
-        # if ctx.channel.id in [568148147457490958, 577599230567383058, 570682506127474729, 690254056354087047, 694684764074016799]:
-        #     ani = re.findall(self.ani_emotes, ctx.content)
-        #     if ani:
-        #         await generic.send(f"{ctx.author.mention} smh, nitro", ctx.channel)
-            # if ctx.author.is_avatar_animated():
-            #     await generic.send("imagine having nitro", ctx.channel)
         _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         xp_disabled = False
         anti_spam_xp = False
@@ -150,7 +132,6 @@ class Leveling(commands.Cog):
         dc = mult == 0  # didn't count
         spam = 1
         if anti_spam_xp:
-            # if ctx.content != "" and ctx.type == discord.MessageType.default:
             if similarities[0] == 1:
                 spam = -1 if mult > 0 else 2.5
             if similarities[0] > 0.9:
@@ -174,8 +155,6 @@ class Leveling(commands.Cog):
             heresy = 0.90
         if ctx.author.id in generic.tier_3:
             heresy = 0.85
-        # if last > now - 60:
-        #     return
         x1, x2 = xp_amounts
         x3, x4 = money_amounts
         try:
@@ -240,7 +219,6 @@ class Leveling(commands.Cog):
                     ch = ctx.channel
                 try:
                     await generic.send(send, ch, u=[ctx.author])
-                    # await ch.send(send)
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
@@ -257,7 +235,6 @@ class Leveling(commands.Cog):
                     ch = ctx.channel
                 try:
                     await generic.send(send, ch, u=[ctx.author])
-                    # await ch.send(send)
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             reason = f"Level Rewards - Level {level}"
@@ -291,8 +268,6 @@ class Leveling(commands.Cog):
                 pass  # If no level rewards, don't even bother
             except discord.Forbidden:
                 await generic.send(generic.gls(generic.get_lang(ctx.guild), "level_reward_failed", [ctx.author.name]), ctx.channel)
-                # await ctx.send(f"{ctx.author.name} should have got a level reward, "
-                #                f"but I do not have sufficient permissions to do so.")
             except Exception as e:
                 print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
         _last = last if dc else now
@@ -323,7 +298,6 @@ class Leveling(commands.Cog):
         settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not settings:
             return await generic.send(generic.gls(locale, "rewards_none"), ctx.channel)
-            # return await ctx.send("Doesn't seem like this server has leveling rewards")
         else:
             data = json.loads(settings['data'])
         try:
@@ -332,17 +306,13 @@ class Leveling(commands.Cog):
             embed = discord.Embed(colour=random_colour())
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.title = generic.gls(locale, "rewards_title", [ctx.guild.name])
-            # embed.title = f"Rewards for having no life in {ctx.guild.name}"
             d = ''
             for role in rewards:
                 d += generic.gls(locale, "rewards_reward", [role["level"], role["role"]])
-                # d += f"Level {role['level']}: <@&{role['role']}>\n"
             embed.description = d
             return await generic.send(None, ctx.channel, embed=embed)
-            # return await ctx.send(embed=embed)
         except KeyError:
             return await generic.send(generic.gls(locale, "rewards_none"), ctx.channel)
-            # return await ctx.send("Doesn't seem like this server has leveling rewards...")
 
     @commands.command(name="erank", aliases=["ranke"])
     @commands.guild_only()
@@ -358,7 +328,6 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
-            # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
         _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
@@ -379,18 +348,16 @@ class Leveling(commands.Cog):
         embed.set_thumbnail(url=user.avatar_url)
         if is_self:
             embed.description = generic.gls(locale, "rank_self")
-            # embed.description = "Imagine playing fair in your own XP system. That'd be boring."
             embed.add_field(name=generic.gls(locale, "experience"), value=generic.gls(locale, "more_than_you"), inline=False)
             embed.add_field(name=generic.gls(locale, "level"), value=generic.gls(locale, "higher_than_yours"), inline=False)
         else:
-            # biased = bias.get_bias(self.db, user)
             r1 = f"{xp:,.0f}"
             if level < max_level:
                 yes = levels()   # All levels
                 req = int(yes[level])  # Requirement to next level
                 _req = req - xp
                 r2 = f"{req:,.0f}"
-                r3 = value_string(_req)
+                r3 = f"{_req:,}"
                 prev = int(yes[level-1]) if level != 0 else 0
                 progress = (xp - prev) / (req - prev)
                 r4 = round_value(progress * 100)
@@ -640,7 +607,6 @@ class Leveling(commands.Cog):
             data = None
         if not data:
             xp = float("inf")
-            # return await ctx.send("It doesn't seem like I have any data saved for you right now...")
         else:
             xp = data['xp']
         _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
@@ -652,29 +618,19 @@ class Leveling(commands.Cog):
                 dm = settings['leveling']['xp_multiplier']
             except KeyError:
                 dm = 1
-        # x1, x2 = [val * normal * dm for val in level_xp]
-        # needed = value_string(r, big=True)
         needed = f"{r:,}"
         base = generic.gls(locale, "xp_level_base", [ctx.author.name, f"{level:,}", needed])
         extra = ""
         if xp < r:
             x1, x2 = [val * dm for val in xp_amounts]
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
-            # m1, m2 = int(a1) + 1, int(a2) + 1
             try:
                 t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [a1, a2]]
             except OverflowError:
                 error = "Error"
                 t1, t2 = [error, error]
-            # t1, t2 = [time.timedelta(x * 60, show_seconds=True) for x in [a1, a2]]
-            extra = generic.gls(locale, "xp_level_extra", [value_string(r - xp, big=True), t1, t2])
+            extra = generic.gls(locale, "xp_level_extra", [f"{r - xp:,}", t1, t2])
         return await generic.send(f"{base}{extra}", ctx.channel)
-        # tl = ""
-        # if xp < r:
-        #     tl = f"\nXP left to reach level: **{value_string(r - xp, big=True)}**\n" \
-        #          f"That is **{m1:,} to {m2:,}** more messages.\nTalking time: **{t1} to {t2}**"
-        # return await ctx.send(f"Well, {ctx.author.name}...\nTo reach level **{level:,}** you will need "
-        #                       f"**{needed} XP**{tl}")
 
     @commands.command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()

@@ -14,14 +14,11 @@ async def image_gen(ctx: commands.Context, user: discord.Member, link, filename=
         if filename is None:
             filename = link
         avatar = user.avatar_url_as(size=512, format="png")
-        # print(avatar)
         extra = f"&{extra_args}" if extra_args is not None else ''
         bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", res_method="read"))
         if bio is None:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
-            # return await ctx.send("Something went wrong, couldn't generate image")
         return await generic.send(None, ctx.channel, file=discord.File(bio, filename=f"{filename}.png"))
-        # return await ctx.send(file=discord.File(bio, filename=f"{filename}.png"))
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
@@ -29,11 +26,9 @@ async def api_img_creator(ctx: commands.Context, url, filename, content=None):
         req = await http.get(url, res_method="read")
         if req is None:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
-            # return await ctx.send("I couldn't create the image ;-;")
         bio = BytesIO(req)
         bio.seek(0)
         return await generic.send(content, ctx.channel, file=discord.File(bio, filename=filename))
-        # await ctx.send(content=content, file=discord.File(bio, filename=filename))
 
 
 class Images(commands.Cog):
@@ -50,7 +45,6 @@ class Images(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         async with ctx.typing():
-            # c = ctx.invoked_with
             c = generic.gls(locale, str(ctx.invoked_with).lower())
             c2 = c.capitalize()
             if colour == "random":
@@ -62,10 +56,8 @@ class Images(commands.Cog):
                     a = len(colour)
                     if a != 3 and a != 6:
                         return await generic.send(generic.gls(locale, "colour_value_len"), ctx.channel)
-                        # return await ctx.send(f"Value must be either 3 or 6 digits long")
                 except Exception as e:
                     return await generic.send(generic.gls(locale, "invalid_colour2", [c, c2, e]), ctx.channel)
-                    # return await ctx.send(f"Invalid {c}: {e}\n{c.capitalize()} must be either `random` or a HEX value")
             try:
                 _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
                 data = json.loads(_data)
@@ -75,7 +67,6 @@ class Images(commands.Cog):
                     data = json.loads(_data)
                 except json.JSONDecodeError:
                     return await generic.send(generic.gls(locale, "col_error"), ctx.channel)
-                    # return await ctx.send("Something went wrong, try again")
             if a == 3:
                 d, e, f = colour
                 g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
@@ -90,7 +81,6 @@ class Images(commands.Cog):
             embed.set_thumbnail(url=data["image"])
             embed.set_image(url=data["image_gradient"])
             return await generic.send(None, ctx.channel, embed=embed)
-            # return await ctx.send(f"{c.capitalize()} name: **{data['name']}**", embed=embed)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -136,7 +126,6 @@ class Images(commands.Cog):
         _filter = filter_name.lower()
         if _filter not in filters or _filter == "help":
             return await generic.send(generic.gls(locale, "allowed_filters", ["`, `".join(filters)]), ctx.channel)
-            # return await ctx.send(f"The allowed filter names are:\n`{filters}`")
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
@@ -213,17 +202,12 @@ class Images(commands.Cog):
         parser.add_argument('input', nargs="+", default=None)
         parser.add_argument('-d', '--dark', action='store_true')
         parser.add_argument('-l', '--light', action='store_true')
-
         args, valid_check = parser.parse_args(text)
         if not valid_check:
             return await generic.send(args, ctx.channel)
-            # return await ctx.send(args)
-
         input_text = urllib.parse.quote(' '.join(args.input))
         if len(input_text) > 500:
             return await generic.send(generic.gls(locale, "supreme_limit", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"**{ctx.author.name}**, the Supreme API is only limited to 500 characters...")
-
         dol = ""
         if args.dark:
             dol = "&dark=true"
@@ -231,10 +215,7 @@ class Images(commands.Cog):
             dol = "&light=true"
         if args.dark and args.light:
             return await generic.send(generic.gls(locale, "supreme_dark_light", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"**{ctx.author.name}**, can't you don't do both dark and light at the same time")
-
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
-        # await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
 
 
 def setup(bot):

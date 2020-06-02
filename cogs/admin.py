@@ -399,7 +399,7 @@ class Admin(commands.Cog):
             logs.log("version_changes", f"{time.time()} > {to_send}")
         return await generic.send(to_send, ctx.channel)
 
-    @config.command(name="heretics", aliases=["hl"])
+    @config.command(name="heretics", aliases=["hl", "il"])
     @commands.check(permissions.is_owner)
     async def config_heretics(self, ctx: commands.Context, action: str, tier: int, uid: int):
         """ Update the heretic list """
@@ -413,7 +413,7 @@ class Admin(commands.Cog):
         return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} Tier {tier} Infidel List\n"
                                   f"Reload status: {reload}", ctx.channel)
 
-    @config.command(name="heretics2", aliases=["hl2", "1up"])
+    @config.command(name="heretics2", aliases=["hl2", "1up", "il2"])
     @commands.check(permissions.is_owner)
     async def config_heretics2(self, ctx: commands.Context, uid: int):
         """ Move someone higher up in the Heretic List """
@@ -430,7 +430,7 @@ class Admin(commands.Cog):
             out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Infidel."
         return await generic.send(f"{out}\n{reload}", ctx.channel)
 
-    @config.command(name="heretics3", aliases=["hl3", "1down"])
+    @config.command(name="heretics3", aliases=["hl3", "1down", "il3"])
     @commands.check(permissions.is_owner)
     async def config_heretics3(self, ctx: commands.Context, uid: int):
         """ Move someone down in the Heretic List """
@@ -554,7 +554,7 @@ class Admin(commands.Cog):
 
     def get_val(self, what: list) -> str:
         val = "\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in what])
-        return val if val else "No data available"
+        return val if val else "No data available... yet"
 
     @commands.command(name="heretics", aliases=["infidels"])
     @commands.check(permissions.is_owner)
@@ -586,11 +586,11 @@ class Admin(commands.Cog):
             for exc in le[str(lock)]:
                 lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
         if lev == "":
-            lev = "No data available"
+            lev = "No data available... yet"
         embed.add_field(name="Love Exceptions", value=lev, inline=True)
         return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="lv2l", aliases=["heretics3", "regausmad", "infidels3"])
+    @commands.command(name="lv2l", aliases=["heretics3", "infidels3"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def heretic_list3(self, ctx: commands.Context):
         """ Imagine being level -2 """
@@ -636,13 +636,10 @@ class Admin(commands.Cog):
             await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
             data_io.change_value("config.json", "playing", playing)
             return await generic.send(f"Successfully changed playing status to **{playing}**", ctx.channel)
-            # await ctx.send(f"Successfully changed playing status to **{playing}**")
         except discord.InvalidArgument as err:
             return await generic.send(str(err), ctx.channel)
-            # await ctx.send(err)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
-            # await ctx.send(e)
 
     @change.command(name="username")
     @commands.check(permissions.is_owner)
@@ -651,10 +648,8 @@ class Admin(commands.Cog):
         try:
             await self.bot.user.edit(username=name)
             return await generic.send(f"Successfully changed username to **{name}**", ctx.channel)
-            # await ctx.send(f"Successfully changed username to **{name}**")
         except discord.HTTPException as err:
             return await generic.send(str(err), ctx.channel)
-            # await ctx.send(err)
 
     @change.command(name="nickname")
     @commands.check(permissions.is_owner)
@@ -664,13 +659,10 @@ class Admin(commands.Cog):
             await ctx.guild.me.edit(nick=name)
             if name:
                 return await generic.send(f"Successfully changed nickname to **{name}**", ctx.channel)
-                # await ctx.send(f"Successfully changed nickname to **{name}**")
             else:
                 return await generic.send("Successfully removed nickname", ctx.channel)
-                # await ctx.send("Successfully removed nickname")
         except Exception as err:
             return await generic.send(str(err), ctx.channel)
-            # await ctx.send(err)
 
     @change.command(name="avatar")
     @commands.check(permissions.is_owner)
@@ -680,28 +672,21 @@ class Admin(commands.Cog):
             url = ctx.message.attachments[0].url
         else:
             url = url.strip('<>') if url else None
-
         try:
             bio = await http.get(url, res_method="read")
             await self.bot.user.edit(avatar=bio)
             return await generic.send(f"Successfully changed the avatar. Currently using:\n{url}", ctx.channel)
-            # await ctx.send(f"Successfully changed the avatar. Currently using:\n{url}")
         except aiohttp.InvalidURL:
             return await generic.send("The URL is invalid...", ctx.channel)
-            # await ctx.send("The URL is invalid...")
         except discord.InvalidArgument:
             return await generic.send("This URL does not contain a useable image", ctx.channel)
-            # await ctx.send("This URL does not contain a useable image")
         except discord.HTTPException as err:
             return await generic.send(str(err), ctx.channel)
-            # await ctx.send(err)
         except TypeError:
             return await generic.send("You need to either provide an image URL or upload one with the command", ctx.channel)
-            # await ctx.send("You need to either provide an image URL or upload one with the command")
 
 
 async def status(ctx: commands.Context, _type: int):
-    """ Offline / Online / Restart """
     try:
         await ctx.message.delete()
     except discord.NotFound:
@@ -710,7 +695,6 @@ async def status(ctx: commands.Context, _type: int):
     update = updates[_type]
     now = time.time()
     return await generic.send(f"{now} > **{update}**", ctx.channel)
-    # return await ctx.send(f"{now} > **{update}**")
 
 
 def setup(bot):
