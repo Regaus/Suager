@@ -107,11 +107,11 @@ def random_colour():
     return random.randint(0, 0xffffff)
 
 
-def get_config():
+def get_config() -> dict:
     return json.loads(open("config.json", "r").read())
 
 
-def get_locks():
+def get_locks() -> dict:
     try:
         return json.loads(open("data/locks.json", "r").read())
     except FileNotFoundError:

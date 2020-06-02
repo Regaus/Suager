@@ -30,7 +30,8 @@ def change_values(value1: str, value2: str or None, action: str, value):
     try:
         data1 = json.loads(open("data/locks.json", "r").read())
     except FileNotFoundError:
-        data1 = {}
+        data1 = {"love_locks": [], "love_locks_s6": [], "love_exceptions": {}, "bad_locks": [], "channel_locks": [], "server_locks": {},
+                "counter_locks": [], "heretics": {"1": [], "2": [], "3": []}}
     # data1 = json.loads(open("config.json", "r").read())
     # data2 = json.loads(open("config_example.json", "r").read())
     if action == "add":
@@ -69,5 +70,5 @@ def change_values(value1: str, value2: str or None, action: str, value):
                 except KeyError:
                     data[key1][key2] = []
             change(data1, value1, value2, value)
-    # open("config.json", "w").write(json.dumps(data1, indent=2))
+    open("data/locks.json", "w+").write(json.dumps(data1, indent=2))
     # open("config_example.json", "w").write(json.dumps(data2, indent=2))

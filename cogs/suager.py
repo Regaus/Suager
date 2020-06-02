@@ -12,8 +12,9 @@ from utils import generic, time, lists
 class Suager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.creation_date = datetime(2020, 6, 1, 20, 18, tzinfo=tz.utc)  # Release v5.0
-        self.birthday = datetime(2019, 5, 13, 21, 2, tzinfo=tz.utc)  # First version
+        self.v5_release = datetime(2020, 6, 1, 20, 18, tzinfo=tz.utc)  # Release v5.0
+        self.first_ver = datetime(2019, 5, 13, 21, 2, tzinfo=tz.utc)  # First version
+        self.lines = generic.line_count()
 
     @commands.command(name="source")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
@@ -43,8 +44,7 @@ class Suager(commands.Cog):
             embed.set_thumbnail(url=self.bot.user.avatar_url)
             owners = ", ".join([str(self.bot.get_user(i)) for i in config["owners"]])
             embed.add_field(name=generic.gls(locale, "generic"), inline=True, value=generic.gls(locale, "generic_info", [owners, uptime]))
-            tm = 0
-            tc, vc, cc = 0, 0, 0
+            tm, tc, vc, cc = 0, 0, 0, 0
             for guild in self.bot.guilds:
                 tm += len(guild.members)
                 tc += len(guild.text_channels)
@@ -56,7 +56,7 @@ class Suager(commands.Cog):
             embed.add_field(name=generic.gls(locale, "counts"), inline=True,
                             value=generic.gls(locale, "counts_info", [f"{servers:,}", f"{users:,}", f"{avg_members:,}",
                                                                       len([j.name for j in self.bot.commands])]))
-            files, functions, comments, lines, classes = generic.line_count()
+            files, functions, comments, lines, classes = self.lines
             embed.add_field(name=generic.gls(locale, "code_stats"), inline=True,
                             value=generic.gls(locale, "code_stats_info", [f"{files:,}", f"{lines:,}", f"{comments:,}", f"{functions:,}", f"{classes:,}"]))
             cpu = round(process.cpu_percent() / psutil.cpu_count(), 2)
@@ -66,10 +66,10 @@ class Suager(commands.Cog):
             _version = sys.version_info
             version = f"{_version.major}.{_version.minor}.{_version.micro}"
             embed.add_field(name=generic.gls(locale, "what_i_use"), inline=True, value=f"**discord.py v{discord.__version__}\nPython v{version}**")
-            birthday = time.time_output(self.birthday, tz=True)
-            v5_created = time.time_output(self.creation_date, tz=True)
+            first_version = time.time_output(self.first_ver, tz=True)
+            release_v5 = time.time_output(self.v5_release, tz=True)
             last_update = time.time_output(time.from_ts(config["last_update"], True), tz=True)
-            embed.add_field(name=generic.gls(locale, "dates"), inline=False, value=generic.gls(locale, "dates_info", [birthday, v5_created, last_update]))
+            embed.add_field(name=generic.gls(locale, "dates"), inline=False, value=generic.gls(locale, "dates_info", [first_version, release_v5, last_update]))
             embed.title = generic.gls(locale, "about_suager", [str(self.bot.user), config["full_version"]])
             return await generic.send(None, ctx.channel, embed=embed)
 
