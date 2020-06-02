@@ -421,9 +421,9 @@ class Admin(commands.Cog):
     async def infidel_set(self, ctx: commands.Context, action: str, stage: int, user: discord.User):
         """ Set someone to a specific Stage """
         try:
-            data_io.change_locks("heretics", str(stage), action, user.id)
+            data_io.change_infidels(stage, action, user.id)
         except Exception as e:
-            return await generic.send(str(e), ctx.channel)
+            return await generic.send(f"{type(e).__name__}: {str(e)}", ctx.channel)
         reload = reload_util("generic")
         w1 = "added" if action == "add" else "removed"
         w2 = "to" if action == "add" else "from"

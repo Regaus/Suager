@@ -18,3 +18,6 @@
 ## v5.1.0 - 2 June
 - Major change in how the Infidel List works
 - Fixed floats in //rate
+
+## v5.1.1 - 2 June
+- Fixed Infidel List adding and removal

@@ -28,11 +28,6 @@ def change_version(value: str, new):
 
 def change_locks(value1: str, value2: str or None, action: str, value):
     data1 = locks.get_locks()
-    # try:
-    #     data1 = json.loads(open("data/locks.json", "r").read())
-    # except FileNotFoundError:
-    #     data1 = {"love_locks": [], "love_locks_s6": [], "love_exceptions": {}, "bad_locks": [], "channel_locks": [], "server_locks": {},
-    #             "counter_locks": [], "heretics": {"1": [], "2": [], "3": []}}
     if action == "add":
         if value2 is None:
             def change(data, key, val):
@@ -79,6 +74,6 @@ def change_infidels(tier: int, action: str, uid: int):
     if action == "remove":
         try:
             data1[str(tier)].remove(uid)
-        except IndexError:
+        except ValueError:
             pass  # means it already isn't there
     open("data/infidels.json", "w+").write(json.dumps(data1, indent=2))
