@@ -354,7 +354,97 @@ class Admin(commands.Cog):
         send = "Task succeeded successfully - Tables created." if val else "Task failed successfully - Great, more time to waste on trying to fix that!"
         return await generic.send(send, ctx.channel)
 
-    @commands.group()
+    def get_user(self, uid: int) -> str:
+        try:
+            return str([user for user in self.bot.users if user.id == uid][0])
+        except IndexError:
+            return "None"
+
+    def get_val(self, what: list) -> str:
+        val = "\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in what])
+        return val if val else "No data available... yet"
+
+    @commands.group(name="infidels", aliases=["il"])
+    @commands.check(permissions.is_owner)
+    async def infidel_list(self, ctx: commands.Context):
+        """ The infidel list """
+        if ctx.invoked_subcommand is None:
+            if ctx.channel.id in generic.channel_locks:
+                return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
+            embed = discord.Embed(colour=generic.random_colour())
+            embed.title = "The Infidel List for Suager"
+            embed.timestamp = time.now()
+            sn = ("Stage 1", "Stage 2", "Stage 3", "Stage 4 - Bad Lock", "Stage 5 - Love Lock I", "Stage 6 - Love Lock II", "Stage 7 - Senko Lair Ban")
+            stages = (generic.stage_1, generic.stage_2, generic.stage_3, generic.stage_4, generic.stage_5, generic.stage_6, generic.stage_7)
+            for i in range(len(stages)):
+                embed.add_field(name=sn[i], value=self.get_val(stages[i]), inline=False)
+            lev = ""
+            le = generic.love_exceptions
+            for lock in le:
+                for exc in le[str(lock)]:
+                    lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
+            if lev == "":
+                lev = "No data available... yet"
+            embed.add_field(name="Love Exceptions", value=lev, inline=True)
+            return await generic.send(None, ctx.channel, embed=embed)
+
+    @infidel_list.command(name="up")
+    @commands.check(permissions.is_owner)
+    async def infidel_up(self, ctx: commands.Context, user: discord.User):
+        """ Move someone up the Infidel List """
+        output = generic.infidel_up(user.id)
+        if output == -1:
+            return await generic.send("Something went wrong...", ctx.channel)
+        elif output == -2:
+            return await generic.send(f"{user} is already not on the List", ctx.channel)
+        elif output == 0:
+            return await generic.send(f"{user} is already no longer on the List", ctx.channel)
+        else:
+            reload = reload_util("generic")
+            return await generic.send(f"{user} is now a Stage {output} Infidel\n{reload}", ctx.channel)
+
+    @infidel_list.command(name="down")
+    @commands.check(permissions.is_owner)
+    async def infidel_down(self, ctx: commands.Context, user: discord.User):
+        """ Move someone down the Infidel List """
+        output = generic.infidel_up(user.id)
+        if output == -1:
+            return await generic.send("Something went wrong...", ctx.channel)
+        elif output == 8:
+            return await generic.send(f"{user} is already at Stage 7", ctx.channel)
+        else:
+            reload = reload_util("generic")
+            return await generic.send(f"{user} is now a Stage {output} Infidel\n{reload}", ctx.channel)
+
+    @infidel_list.command(name="set", aliases=["specific"])
+    @commands.check(permissions.is_owner)
+    async def infidel_set(self, ctx: commands.Context, action: str, stage: int, user: discord.User):
+        """ Set someone to a specific Stage """
+        try:
+            data_io.change_locks("heretics", str(stage), action, user.id)
+        except Exception as e:
+            return await generic.send(str(e), ctx.channel)
+        reload = reload_util("generic")
+        w1 = "added" if action == "add" else "removed"
+        w2 = "to" if action == "add" else "from"
+        return await generic.send(f"{w1} {user} {w2} Stage {stage} Infidel List\nReload status: {reload}", ctx.channel)
+
+    @commands.command(name="lv2l", aliases=["infidels2", "il2"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def lv2_list(self, ctx: commands.Context):
+        """ Imagine being level -2 """
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
+        res = self.db.fetch("SELECT * FROM leveling WHERE level=-2")
+        embed = discord.Embed(colour=generic.random_colour())
+        embed.title = "People who managed to get level -2"
+        desc = ""
+        for user in res:
+            desc += f"<@{user['uid']}> - {user['name']}#{user['disc']:04d} - in {self.bot.get_guild(user['gid'])}\n"
+        embed.description = desc
+        return await generic.send(None, ctx.channel, embed=embed)
+
+    @commands.group(name="config")
     @commands.check(permissions.is_owner)
     async def config(self, ctx: commands.Context):
         """ Change bot's configs """
@@ -399,89 +489,13 @@ class Admin(commands.Cog):
             logs.log("version_changes", f"{time.time()} > {to_send}")
         return await generic.send(to_send, ctx.channel)
 
-    @config.command(name="heretics", aliases=["hl", "il"])
-    @commands.check(permissions.is_owner)
-    async def config_heretics(self, ctx: commands.Context, action: str, tier: int, uid: int):
-        """ Update the heretic list """
-        try:
-            data_io.change_values("heretics", str(tier), action, uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        w1 = "added" if action == "add" else "removed"
-        w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} Tier {tier} Infidel List\n"
-                                  f"Reload status: {reload}", ctx.channel)
-
-    @config.command(name="heretics2", aliases=["hl2", "1up", "il2"])
-    @commands.check(permissions.is_owner)
-    async def config_heretics2(self, ctx: commands.Context, uid: int):
-        """ Move someone higher up in the Heretic List """
-        try:
-            ret = generic.heresy(uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        if ret == 0:
-            out = f"{emotes.Deny} Nothing happened."
-        elif ret == 4:
-            out = f"{emotes.Deny} <@{uid}> ({self.bot.get_user(uid)}) is already Tier 3."
-        else:
-            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Infidel."
-        return await generic.send(f"{out}\n{reload}", ctx.channel)
-
-    @config.command(name="heretics3", aliases=["hl3", "1down", "il3"])
-    @commands.check(permissions.is_owner)
-    async def config_heretics3(self, ctx: commands.Context, uid: int):
-        """ Move someone down in the Heretic List """
-        try:
-            ret = generic.heresy_down(uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        if ret == -1:
-            out = f"{emotes.Deny} Nothing happened."
-        elif ret == 0:
-            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is no longer an Infidel."
-        else:
-            out = f"{emotes.Allow} <@{uid}> ({self.bot.get_user(uid)}) is now a Tier {ret} Infidel."
-        return await generic.send(f"{out}\n{reload}", ctx.channel)
-
-    @config.command(name="lovelocks", aliases=["love", "ll"])
-    @commands.check(permissions.is_owner)
-    async def config_love_locks(self, ctx: commands.Context, action: str, uid: int):
-        """ Update the Stage 5 love locks list """
-        try:
-            data_io.change_values("love_locks", None, action, uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        w1 = "added" if action == "add" else "removed"
-        w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Stage 5 Love Locks List\n"
-                                  f"Reload status: {reload}", ctx.channel)
-
-    @config.command(name="lovelocks2", aliases=["love2", "ll2", "stage6"])
-    @commands.check(permissions.is_owner)
-    async def config_love_locks2(self, ctx: commands.Context, action: str, uid: int):
-        """ Update the Stage 6 love locks list """
-        try:
-            data_io.change_values("love_locks_s6", None, action, uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        w1 = "added" if action == "add" else "removed"
-        w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Stage 6 Love Locks List\n"
-                                  f"Reload status: {reload}", ctx.channel)
-
     @config.command(name="loveexceptions", aliases=["le"])
     @commands.check(permissions.is_owner)
     async def config_love_exceptions(self, ctx: commands.Context, action: str, uid: int, lid: int):
         """ Update the love exceptions list
         uid = exception, lid = locked user """
         try:
-            data_io.change_values("love_exceptions", str(lid), action, uid)
+            data_io.change_locks("love_exceptions", str(lid), action, uid)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
         reload = reload_util("generic")
@@ -490,26 +504,12 @@ class Admin(commands.Cog):
         return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Love Exceptions List of <@{lid}>\n"
                                   f"Reload status: {reload}", ctx.channel)
 
-    @config.command(name="badlocks", aliases=["bl"])
-    @commands.check(permissions.is_owner)
-    async def config_bad_locks(self, ctx: commands.Context, action: str, uid: int):
-        """ Update the bad/trash/bean locks list """
-        try:
-            data_io.change_values("bad_locks", None, action, uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        w1 = "added" if action == "add" else "removed"
-        w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Bad Locks List\n"
-                                  f"Reload status: {reload}", ctx.channel)
-
     @config.command(name="channellocks", aliases=["cl"])
     @commands.check(permissions.is_owner)
     async def config_channel_locks(self, ctx: commands.Context, action: str, cid: int):
         """ Update the channel locks list (tell to use bot commands) """
         try:
-            data_io.change_values("channel_locks", None, action, cid)
+            data_io.change_locks("channel_locks", None, action, cid)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
         reload = reload_util("generic")
@@ -523,7 +523,7 @@ class Admin(commands.Cog):
     async def config_server_locks(self, ctx: commands.Context, action: str, gid: int, command: str):
         """ Update the server command locks list (disable commands) """
         try:
-            data_io.change_values("server_locks", str(gid), action, command)
+            data_io.change_locks("server_locks", str(gid), action, command)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
         reload = reload_util("generic")
@@ -537,7 +537,7 @@ class Admin(commands.Cog):
     async def config_counter_locks(self, ctx: commands.Context, action: str, gid: int):
         """ Update the counter locks list """
         try:
-            data_io.change_values("counter_locks", None, action, gid)
+            data_io.change_locks("counter_locks", None, action, gid)
         except Exception as e:
             return await generic.send(str(e), ctx.channel)
         reload = reload_util("generic")
@@ -545,65 +545,6 @@ class Admin(commands.Cog):
         w2 = "to" if action == "add" else "from"
         return await generic.send(f"{emotes.Allow} Successfully {w1} {self.bot.get_guild(gid)} {w2} the Counter Locks List\n"
                                   f"Reload status: {reload}", ctx.channel)
-
-    def get_user(self, uid: int) -> str:
-        try:
-            return str([user for user in self.bot.users if user.id == uid][0])
-        except IndexError:
-            return "None"
-
-    def get_val(self, what: list) -> str:
-        val = "\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in what])
-        return val if val else "No data available... yet"
-
-    @commands.command(name="heretics", aliases=["infidels"])
-    @commands.check(permissions.is_owner)
-    async def heretic_list(self, ctx: commands.Context):
-        """ Infidel List """
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
-        embed = discord.Embed(colour=generic.random_colour())
-        embed.title = "The Infidel List (Stages 1-3)"
-        embed.add_field(name="Tier 1", value=self.get_val(generic.tier_1), inline=False)
-        embed.add_field(name="Tier 2", value=self.get_val(generic.tier_2), inline=False)
-        embed.add_field(name="Tier 3", value=self.get_val(generic.tier_3), inline=False)
-        return await generic.send(None, ctx.channel, embed=embed)
-
-    @commands.command(name="locks", aliases=["heretics2", "infidels2"])
-    @commands.check(permissions.is_owner)
-    async def heretic_list2(self, ctx: commands.Context):
-        """ Locks list """
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
-        embed = discord.Embed(colour=generic.random_colour())
-        embed.title = "The Locks List (Stages 4-6)"
-        embed.add_field(name="Stage 4 Bad Locks", value=self.get_val(generic.bad_locks), inline=False)
-        embed.add_field(name="Stage 5 Love Locks", value=self.get_val(generic.love_locks), inline=False)
-        embed.add_field(name="Stage 6 Love Locks", value=self.get_val(generic.love_locks2), inline=False)
-        lev = ""
-        le = generic.love_exceptions
-        for lock in le:
-            for exc in le[str(lock)]:
-                lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
-        if lev == "":
-            lev = "No data available... yet"
-        embed.add_field(name="Love Exceptions", value=lev, inline=True)
-        return await generic.send(None, ctx.channel, embed=embed)
-
-    @commands.command(name="lv2l", aliases=["heretics3", "infidels3"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def heretic_list3(self, ctx: commands.Context):
-        """ Imagine being level -2 """
-        if ctx.channel.id in generic.channel_locks:
-            return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
-        res = self.db.fetch("SELECT * FROM leveling WHERE level=-2")
-        embed = discord.Embed(colour=generic.random_colour())
-        embed.title = "Those who managed to get level -2"
-        desc = ""
-        for user in res:
-            desc += f"<@{user['uid']}> - {user['name']}#{user['disc']:04d} - in {self.bot.get_guild(user['gid'])}\n"
-        embed.description = desc
-        return await generic.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="lv2", aliases=["lv-2"])
     @commands.check(permissions.is_owner)

@@ -23,7 +23,7 @@ class Ratings(commands.Cog):
         r = random.uniform(0, 100)
         if what.lower() == "senko":
             r = 100
-        return await generic.send(generic.gls(locale, "rate", [what, f"{r:1f}"]), ctx.channel)
+        return await generic.send(generic.gls(locale, "rate", [what, f"{r:.1f}"]), ctx.channel)
 
     @commands.command(name="rateuser")
     @commands.guild_only()

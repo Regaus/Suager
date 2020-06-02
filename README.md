@@ -1,13 +1,12 @@
 # Suager_v5
-Suager v5
-by Regaus
+Suager v5 - a bot by Regaus
 
-My server: https://discord.gg/cw7czUx
+My server: [Senko Lair](https://discord.gg/cw7czUx)
 
-# Requirements
+## Requirements
 - [Python 3.8](https://www.python.org/downloads/)
 
-# Setup
+## Setup
 1. [Create a bot here](https://discord.com/developers/applications)
 2. Copy config_example.json and name it config.json
 NOTE: some functions depend on the existence of both config_example and config, so don't remove it!
@@ -21,5 +20,5 @@ If this works, it works. If it doesn't, it doesn't.
 
 Hopefully this shit will work.
 
-To add your bot to your server use this URL: https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot
-<br>Replace CLIENT_ID with your bot's user ID
+To add your bot to your server use [this URL](https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot) 
+with your bot's user ID in place of CLIENT_ID

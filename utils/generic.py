@@ -11,7 +11,7 @@ from io import BytesIO
 import discord
 
 from langs import en, ru
-from utils import time, database, data_io
+from utils import time, database, data_io, locks
 
 
 def print_error(text: str):
@@ -78,15 +78,6 @@ def gls(locale: str, key: str, values: list = None):
 
 
 def time_ls(locale: str, ts: datetime, *, short: bool = True, show_year: bool = True, show_time: bool = True, show_seconds: bool = True):
-    """
-    :param locale: language to use
-    :param ts: timestamp to use
-    :param short: Whether to use full month name or the first 3 letters
-    :param show_year: whether to show year in the timestamp
-    :param show_time: whether to show time (hh:mm)
-    :param show_seconds: whether to show seconds
-    :return: localised string for timestamp
-    """
     if locale == "ru":
         months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября",
                   "октября", "ноября", "декабря"]
@@ -114,14 +105,6 @@ def random_colour():
 
 def get_config() -> dict:
     return json.loads(open("config.json", "r").read())
-
-
-def get_locks() -> dict:
-    try:
-        return json.loads(open("data/locks.json", "r").read())
-    except FileNotFoundError:
-        return {"love_locks": [], "love_locks_s6": [], "love_exceptions": {}, "bad_locks": [], "channel_locks": [], "server_locks": {},
-                "counter_locks": [], "heretics": {"1": [], "2": [], "3": []}}
 
 
 def round_value(value):
@@ -167,75 +150,56 @@ async def pretty_results(ctx, filename: str = "Results", result: str = "Here's t
 invite = "https://discord.gg/cw7czUx"
 config = get_config()
 owners = config["owners"]
-locks = get_locks()
-love_locks = locks["love_locks"]
-love_locks2 = locks["love_locks_s6"]
-love_exceptions = locks["love_exceptions"]
-bad_locks = locks["bad_locks"]
-channel_locks = locks["channel_locks"]
-server_locks = locks["server_locks"]
-counter_locks = locks["counter_locks"]
-heretics = locks["heretics"]
-tier_1 = heretics["1"]
-tier_2 = heretics["2"]
-tier_3 = heretics["3"]
+locked = locks.get_locks()
+channel_locks = locked["channel_locks"]
+server_locks = locked["server_locks"]
+counter_locks = locked["counter_locks"]
+love_exceptions = locked["love_exceptions"]
+infidels = locks.get_infidels()
+stage_1 = infidels["1"]
+stage_2 = infidels["2"]
+stage_3 = infidels["3"]
+stage_4 = infidels["4"]
+stage_5 = infidels["5"]
+stage_6 = infidels["6"]
+stage_7 = infidels["7"]
 db = database.Database()
 
 
-def heresy(uid: int):
-    t1 = uid in tier_1
-    t2 = uid in tier_2
-    t3 = uid in tier_3
-    t0 = not (t1 or t2 or t3)
-    val1 = "heretics"
-    tier = ["1", "2", "3"]
+def infidel_base(uid: int):
+    t1, t2, t3, t4, t5, t6, t7 = uid in stage_1, uid in stage_2, uid in stage_3, uid in stage_4, uid in stage_5, uid in stage_6, uid in stage_7
+    t0 = not (t1 or t2 or t3 or t4 or t5 or t6 or t7)
+    # tiers = [str(i) for i in range(1, 8)]
     a1, a2 = "add", "remove"
-    ret = 0
-    if t0:
-        data_io.change_values(val1, tier[0], a1, uid)
-        data_io.change_values(val1, tier[1], a2, uid)
-        data_io.change_values(val1, tier[2], a2, uid)
-        ret = 1
-    if t1:
-        data_io.change_values(val1, tier[0], a2, uid)
-        data_io.change_values(val1, tier[1], a1, uid)
-        data_io.change_values(val1, tier[2], a2, uid)
-        ret = 2
-    if t2:
-        data_io.change_values(val1, tier[0], a2, uid)
-        data_io.change_values(val1, tier[1], a2, uid)
-        data_io.change_values(val1, tier[2], a1, uid)
-        ret = 3
-    if t3:
-        data_io.change_values(val1, tier[0], a2, uid)
-        data_io.change_values(val1, tier[1], a2, uid)
-        ret = 4
-    return ret
+    return t0, t1, t2, t3, t4, t5, t6, t7, a1, a2
 
 
-def heresy_down(uid: int):
-    t1 = uid in tier_1
-    t2 = uid in tier_2
-    t3 = uid in tier_3
-    val1 = "heretics"
-    tier = ["1", "2", "3"]
-    a1, a2 = "add", "remove"
-    if t1:
-        data_io.change_values(val1, tier[0], a2, uid)
-        data_io.change_values(val1, tier[1], a2, uid)
-        data_io.change_values(val1, tier[2], a2, uid)
-        return 0
-    if t2:
-        data_io.change_values(val1, tier[0], a1, uid)
-        data_io.change_values(val1, tier[1], a2, uid)
-        data_io.change_values(val1, tier[2], a2, uid)
-        return 1
-    if t3:
-        data_io.change_values(val1, tier[0], a2, uid)
-        data_io.change_values(val1, tier[1], a1, uid)
-        data_io.change_values(val1, tier[2], a2, uid)
-        return 2
-    return -1
+def infidel_up(uid: int):
+    """ Move someone up the Infidel List """
+    t0, t1, t2, t3, t4, t5, t6, t7, a1, a2 = infidel_base(uid)
+    a = 1 if t0 else 2 if t1 else 3 if t2 else 4 if t3 else 5 if t4 else 6 if t5 else 7 if t6 else 8 if t7 else -1
+    if a != -1:  # if it ain't broken
+        for i in range(1, 8):  # Stage 1 - 7
+            if a == 8 and i == 7:
+                continue  # Don't remove Stage 7 if Stage 7 is reached
+            if i == a:
+                data_io.change_infidels(i, a1, uid)
+            if i != a:
+                data_io.change_infidels(i, a2, uid)
+    return a
+
+
+def infidel_down(uid: int):
+    """ Move someone down the Infidel List """
+    t0, t1, t2, t3, t4, t5, t6, t7, a1, a2 = infidel_base(uid)
+    a = -2 if t0 else 0 if t1 else 1 if t2 else 2 if t3 else 3 if t4 else 4 if t5 else 5 if t6 else 6 if t7 else -1
+    if a != -1:  # if it ain't broken
+        for i in range(1, 8):  # Stage 1 - 7
+            if i == a:
+                data_io.change_infidels(i, a1, uid)
+            if i != a:
+                data_io.change_infidels(i, a2, uid)
+    return a
 
 
 def get_lang(guild: discord.Guild = None):
@@ -262,18 +226,23 @@ def is_locked(guild: discord.Guild or None, cmd: str):
     return cmd in server_locks[str(gid)]
 
 
+def is_bad_locked(author: discord.Member) -> bool:
+    return author.id in stage_4 or author.id in stage_5 or author.id in stage_6 or author.id in stage_7
+
+
 def is_love_locked(user: discord.Member, author: discord.Member) -> bool:
     try:
-        return (user.id in love_locks and (author.id not in love_exceptions[str(user.id)])) and author.id != 597373963571691520  # Nuriki
+        return ((user.id in stage_5 or user.id in stage_6 or user.id in stage_7) and (author.id not in love_exceptions[str(user.id)])) \
+               and author.id != 597373963571691520  # Nuriki
     except KeyError:
-        return user.id in love_locks and author.id != 597373963571691520
+        return (user.id in stage_5 or user.id in stage_6 or user.id in stage_7) and author.id != 597373963571691520
 
 
 def is_love_locked2(user: discord.Member, author: discord.Member) -> bool:
     try:
-        return (author.id in love_locks2 and (user.id not in love_exceptions[str(author.id)])) and user.id != 597373963571691520  # Nuriki
+        return ((author.id in stage_6 or author.id in stage_7) and (user.id not in love_exceptions[str(author.id)])) and user.id != 597373963571691520  # Nuriki
     except KeyError:
-        return author.id in love_locks2 and user.id != 597373963571691520
+        return (author.id in stage_6 or author.id in stage_7) and user.id != 597373963571691520
 
 
 def line_count():

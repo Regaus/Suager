@@ -1,6 +1,6 @@
 import json
 
-from utils import time
+from utils import time, locks
 
 
 def change_value(file, value, change_to):
@@ -26,14 +26,13 @@ def change_version(value: str, new):
     open("config_example.json", "w").write(json.dumps(data, indent=2))
 
 
-def change_values(value1: str, value2: str or None, action: str, value):
-    try:
-        data1 = json.loads(open("data/locks.json", "r").read())
-    except FileNotFoundError:
-        data1 = {"love_locks": [], "love_locks_s6": [], "love_exceptions": {}, "bad_locks": [], "channel_locks": [], "server_locks": {},
-                "counter_locks": [], "heretics": {"1": [], "2": [], "3": []}}
-    # data1 = json.loads(open("config.json", "r").read())
-    # data2 = json.loads(open("config_example.json", "r").read())
+def change_locks(value1: str, value2: str or None, action: str, value):
+    data1 = locks.get_locks()
+    # try:
+    #     data1 = json.loads(open("data/locks.json", "r").read())
+    # except FileNotFoundError:
+    #     data1 = {"love_locks": [], "love_locks_s6": [], "love_exceptions": {}, "bad_locks": [], "channel_locks": [], "server_locks": {},
+    #             "counter_locks": [], "heretics": {"1": [], "2": [], "3": []}}
     if action == "add":
         if value2 is None:
             def change(data, key, val):
@@ -71,4 +70,15 @@ def change_values(value1: str, value2: str or None, action: str, value):
                     data[key1][key2] = []
             change(data1, value1, value2, value)
     open("data/locks.json", "w+").write(json.dumps(data1, indent=2))
-    # open("config_example.json", "w").write(json.dumps(data2, indent=2))
+
+
+def change_infidels(tier: int, action: str, uid: int):
+    data1 = locks.get_infidels()
+    if action == "add":
+        data1[str(tier)].append(uid)
+    if action == "remove":
+        try:
+            data1[str(tier)].remove(uid)
+        except IndexError:
+            pass  # means it already isn't there
+    open("data/infidels.json", "w+").write(json.dumps(data1, indent=2))
