@@ -21,3 +21,6 @@
 
 ## v5.1.1 - 2 June
 - Fixed Infidel List adding and removal
+
+## v5.1.2 - 3 June
+- //tell can now ping people

@@ -47,7 +47,7 @@ class Speech(commands.Cog):
         if channel.guild != ctx.guild:
             return await generic.send(generic.gls(locale, "tell_guild_diff", [ctx.guild.name, channel.guild.name]), ctx.channel)
         try:
-            await generic.send(message, channel)
+            await generic.send(message, channel, u=True, r=True)
         except Exception as e:
             return await generic.send(generic.gls(locale, "message_send_error", [e]), ctx.channel)
         return await generic.send(generic.gls(locale, "tell_successful", [channel.mention]), ctx.channel, delete_after=5)
@@ -63,7 +63,7 @@ class Speech(commands.Cog):
         except Exception as e:
             await generic.send(generic.gls(locale, "message_del_error", [e]), ctx.channel, delete_after=5)
         try:
-            await channel.send(message)
+            await generic.send(message, channel, u=True, r=True)
         except Exception as e:
             return await generic.send(generic.gls(locale, "message_send_error", [e]), ctx.channel)
         return await generic.send(generic.gls(locale, "tell_successful", [channel.mention]), ctx.channel, delete_after=5)
@@ -110,7 +110,7 @@ class Speech(commands.Cog):
         if channel.guild != ctx.guild:
             return await generic.send(generic.gls(locale, "tell_guild_diff", [ctx.guild.name, channel.guild.name]), ctx.channel)
         try:
-            await generic.send(message, ctx.channel, file=discord.File(bio, filename=fn, spoiler=spoiler))
+            await generic.send(message, ctx.channel, file=discord.File(bio, filename=fn, spoiler=spoiler), u=True, r=True)
         except Exception as e:
             return await generic.send(generic.gls(locale, "message_send_error", [e]), ctx.channel)
         return await generic.send(generic.gls(locale, "tell_successful", [channel.mention]), ctx.channel, delete_after=5)
@@ -153,7 +153,7 @@ class Speech(commands.Cog):
         if channel.guild != ctx.guild:
             return await generic.send(generic.gls(locale, "tell_guild_diff", [ctx.guild.name, channel.guild.name]), ctx.channel)
         try:
-            await generic.send(None, channel, embed=embed)
+            await generic.send(None, channel, embed=embed, u=True, r=True)
         except Exception as e:
             return await generic.send(generic.gls(locale, "message_send_error", [e]), ctx.channel)
         return await generic.send(generic.gls(locale, "tell_successful", [channel.mention]), ctx.channel, delete_after=5)
