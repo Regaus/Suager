@@ -364,7 +364,7 @@ class Admin(commands.Cog):
         val = "\n".join([" - ".join([f"<@{u}>", self.get_user(u)]) for u in what])
         return val if val else "No data available... yet"
 
-    @commands.group(name="infidels", aliases=["il"])
+    @commands.group(name="infidels", aliases=["il", "heretics"])
     @commands.check(permissions.is_owner)
     async def infidel_list(self, ctx: commands.Context):
         """ The infidel list """
@@ -407,7 +407,7 @@ class Admin(commands.Cog):
     @commands.check(permissions.is_owner)
     async def infidel_down(self, ctx: commands.Context, user: discord.User):
         """ Move someone down the Infidel List """
-        output = generic.infidel_up(user.id)
+        output = generic.infidel_down(user.id)
         if output == -1:
             return await generic.send("Something went wrong...", ctx.channel)
         elif output == 8:
@@ -425,7 +425,7 @@ class Admin(commands.Cog):
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {str(e)}", ctx.channel)
         reload = reload_util("generic")
-        w1 = "added" if action == "add" else "removed"
+        w1 = "Added" if action == "add" else "Removed"
         w2 = "to" if action == "add" else "from"
         return await generic.send(f"{w1} {user} {w2} Stage {stage} Infidel List\nReload status: {reload}", ctx.channel)
 

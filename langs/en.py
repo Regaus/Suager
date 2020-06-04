@@ -22,7 +22,6 @@ data = {
     "settings_upload_no4": f"{emotes.Deny} Error loading file:\n`<val1>`",
     "settings_upload_yes": f"{emotes.Allow} Settings have been updated.\nDB status: <val1>",
     "premium": "No. Just no.",
-    "eat_adde": "<val1>, Adde är inte kyckling nudlar, sluta äta honom.",  # Adde is not a chicken noodle, stop eating him.
     "birthday_today": "Happy birthday <val1>, have a nice birthday and enjoy your role today 🎂🎉",
     "birthday_self": f"I have birthday on **13th May**, thank you for asking. {emotes.AlexHeart}",
     "birthday_none": "**<val1>** has not saved his/her birthday :(",

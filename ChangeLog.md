@@ -24,3 +24,9 @@
 
 ## v5.1.2 - 3 June
 - //tell can now ping people
+
+## v5.1.3 - 4 June
+- Fixed leveling for infidels
+- Fixed social commands
+- //infidels down will now move *down* the list
+- You can't lick me anymore

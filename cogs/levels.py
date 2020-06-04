@@ -149,11 +149,12 @@ class Leveling(commands.Cog):
             lm[1] = lm[0]
             lm[0] = ctx.content
         heresy = 1
-        if ctx.author.id in generic.tier_1:
+        if ctx.author.id in generic.stage_1:
             heresy = 0.95
-        if ctx.author.id in generic.tier_2:
+        if ctx.author.id in generic.stage_2:
             heresy = 0.90
-        if ctx.author.id in generic.tier_3:
+        if ctx.author.id in generic.stage_3 or ctx.author.id in generic.stage_4 or ctx.author.id in generic.stage_5 or ctx.author.id in generic.stage_6 \
+                or ctx.author.id in generic.stage_7:
             heresy = 0.85
         x1, x2 = xp_amounts
         x3, x4 = money_amounts

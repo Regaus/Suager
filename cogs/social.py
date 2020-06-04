@@ -221,6 +221,8 @@ class Social(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "lick"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if user.id == 302851022790066185:
+            return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
         if ctx.author == user:
@@ -283,10 +285,8 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await generic.send(generic.gls(locale, "self_harm_bad"), ctx.channel)
         if user.id == self.bot.user.id:
-            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bite_suager", [ctx.author.name]), ctx.channel)
         if user.id == 302851022790066185:
-            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "not_allowed", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "bite_bot", [user.name]), ctx.channel)
@@ -311,10 +311,8 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await generic.send(generic.gls(locale, "self_harm_bad"), ctx.channel)
         if user.id == self.bot.user.id:
-            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "slap_suager", [ctx.author.name]), ctx.channel)
         if user.id == 302851022790066185:
-            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "not_allowed", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "slap_bot", [user.name]), ctx.channel)
@@ -628,7 +626,7 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bean_suager"), ctx.channel)
         if user.id == ctx.guild.owner.id and ctx.author.id != 302851022790066185:
             return await generic.send(generic.gls(locale, "bean_owner"), ctx.channel)
-        bean_self = ctx.author.id in generic.bad_locks
+        bean_self = generic.is_bad_locked(ctx.author)
         if not bean_self:
             id1, id2 = ctx.author.id, user.id
         else:
@@ -655,11 +653,9 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bad_self"), ctx.channel)
         if user.id == 302851022790066185:
             bad_self = True
-            generic.heresy(ctx.author.id)
-        elif ctx.author.id in generic.bad_locks:
+        elif generic.is_bad_locked(ctx.author):
             return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
         elif user.id == self.bot.user.id:
-            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
         if not bad_self:
             id1, id2 = ctx.author.id, user.id
@@ -681,14 +677,12 @@ class Social(commands.Cog):
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "bad_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            generic.heresy(ctx.author.id)
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
-            generic.heresy(ctx.author.id)
             a2, a1 = a1, a2
             trash_self = True
-        elif ctx.author.id in generic.bad_locks:
+        elif generic.is_bad_locked(ctx.author):
             return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
         if not trash_self:
             id1, id2 = ctx.author.id, user.id
