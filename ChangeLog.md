@@ -33,3 +33,6 @@
 
 ## v5.1.4 - 7 June
 - Better logging system
+
+## v5.1.5 - 7 June
+- Leveling leaderboards will no longer show people who still have Undefined#0000 as name and people who have 0 XP

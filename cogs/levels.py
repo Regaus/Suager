@@ -434,7 +434,7 @@ class Leveling(commands.Cog):
                     prev = -int(al[0])
             except IndexError:
                 prev = 0
-            _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
+            _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
             # place = "unknown"
             place = generic.gls(locale, "rank_place_unknown")
             for x in range(len(_data)):
@@ -492,7 +492,7 @@ class Leveling(commands.Cog):
                 return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
                 # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
             # data = self.db.fetch("SELECT * FROM leveling WHERE uid=?", (user.id,))
-            _data = self.db.fetch("SELECT * FROM leveling")
+            _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
             coll = {}
             for i in _data:
                 if i['uid'] not in coll:
@@ -703,7 +703,7 @@ class Leveling(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        data = self.db.fetch("SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
+        data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
         if not data:
             return await generic.send(generic.gls(locale, "levels_no_data"), ctx.channel)
             # return await ctx.send("I have no data at all for this server... Weird")
@@ -770,7 +770,7 @@ class Leveling(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        data = self.db.fetch("SELECT * FROM leveling", ())
+        data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0", ())
         coll = {}
         for i in data:
             if i['uid'] not in coll:
