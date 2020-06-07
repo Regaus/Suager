@@ -49,3 +49,7 @@
 ## v5.1.6.2 - 7 June
 - Settings template no longer has placeholders 
 - Send should no longer error out if it doesn't have permissions to embed links or attach files
+
+## v5.1.7 - 7 June
+- You can no longer add channels to anti-spam or ignore channels if they are already on the list
+- Fixed some Russian strings

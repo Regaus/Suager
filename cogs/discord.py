@@ -174,6 +174,8 @@ class Discord(commands.Cog):
             settings = settings_template.copy()
         if "anti_spam" not in settings:
             settings["anti_spam"] = {"channels": []}
+        if channel.id in settings["anti_spam"]["channels"]:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_asaa", [channel.name]), ctx.channel)
         settings["anti_spam"]["channels"].append(channel.id)
         stuff = json.dumps(settings)
         if data:
@@ -302,6 +304,8 @@ class Discord(commands.Cog):
         if "leveling" not in settings:
             settings["leveling"] = settings_template["leveling"].copy()
             settings["leveling"]["rewards"] = []
+        if channel.id in settings["leveling"]["ignored_channels"]:
+            return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_liaa", [channel.name]), ctx.channel)
         settings["leveling"]["ignored_channels"].append(channel.id)
         stuff = json.dumps(settings)
         if data:
