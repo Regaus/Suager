@@ -221,12 +221,12 @@ class Social(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "lick"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id != 381870347814830081:  # drip
             return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
         if ctx.author == user:
-            return await generic.send(generic.gls(locale, "alone"), ctx.channel, embed=discord.Embed(colour=generic.random_colour()).set_image(
+            return await generic.send(None, ctx.channel, embed=discord.Embed(colour=generic.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673644219314733106/selflick.gif"))
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "lick_suager", [ctx.author.name]), ctx.channel)

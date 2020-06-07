@@ -41,3 +41,7 @@
 - Bank command: shows leaderboard by money
 - Levels and glevels will now output total users amount
 - Almost finished the Russian translation
+
+## v5.1.6.1 - 7 June
+- Drip can lick me
+- Licking yourself will no longer have any message
