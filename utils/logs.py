@@ -1,5 +1,7 @@
 import os
 
+from utils import time
+
 error_channel = 691442857537568789
 
 
@@ -11,7 +13,12 @@ def create_logs():
 
 
 def log(log_type: str, data: str):
-    stuff = open(f"data/{log_type}.rsf", "a+")
+    date = time.now(False).strftime("%Y-%m-%d")
+    try:
+        os.makedirs(f"data/{date}")
+    except FileExistsError:
+        pass
+    stuff = open(f"data/{date}/{log_type}.rsf", "a+")
     try:
         stuff.write(f"{data}\n")
         stuff.close()

@@ -2,6 +2,7 @@ import ast
 import asyncio
 import importlib
 import os
+import re
 from asyncio.subprocess import PIPE
 from io import BytesIO
 
@@ -170,6 +171,42 @@ class Admin(commands.Cog):
     async def log(self, ctx: commands.Context, log: str, *, search: str = None):
         """ Get logs """
         try:
+            data = ""
+            for path, _, __ in os.walk("data"):
+                if re.compile(r"data\\(\d{4})-(\d{2})-(\d{2})").search(path):
+                    _path = path.replace("\\", "/")
+                    filename = f"{_path}/{log}.rsf"
+                    file = open(filename, "r")
+                    if search is None:
+                        result = file.read()
+                        data += f"{result}"  # Put a newline in the end, just in case
+                    else:
+                        stuff = file.readlines()
+                        result = ""
+                        for line in stuff:
+                            if search in line:
+                                result += line
+                        data += f"{result}"
+            if ctx.guild is None:
+                limit = 8000000
+            else:
+                limit = int(ctx.guild.filesize_limit / 1.05)
+            rl = len(str(data))
+            if rl == 0 or data is None:
+                return await generic.send("Nothing was found...", ctx.channel)
+            elif 0 < rl <= limit:
+                async with ctx.typing():
+                    _data = BytesIO(str(data).encode('utf-8'))
+                    return await generic.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+            elif rl > limit:
+                async with ctx.typing():
+                    _data = BytesIO(str(data)[-limit:].encode('utf-8'))
+                    return await generic.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+        except Exception as e:
+            return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
+        """try:
             if search is None:
                 data = open(f"data/{log}.rsf").read()
                 result = f"{data}"
@@ -198,6 +235,7 @@ class Admin(commands.Cog):
                                               file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
+    """
 
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)

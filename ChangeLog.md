@@ -30,3 +30,6 @@
 - Fixed social commands
 - //infidels down will now move *down* the list
 - You can't lick me anymore
+
+## v5.1.4 - 7 June
+- Better logging system
