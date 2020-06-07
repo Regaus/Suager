@@ -45,3 +45,7 @@
 ## v5.1.6.1 - 7 June
 - Drip can lick me
 - Licking yourself will no longer have any message
+
+## v5.1.6.2 - 7 June
+- Settings template no longer has placeholders 
+- Send should no longer error out if it doesn't have permissions to embed links or attach files

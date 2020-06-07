@@ -23,7 +23,7 @@ settings_template = {
     'prefixes': [],
     'use_default': True,
     'anti_spam': {
-        'channels': [0, 1, 2]
+        'channels': []
     },
     'leveling': {
         'enabled': True,
@@ -31,18 +31,10 @@ settings_template = {
         'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
         'ignored_channels': [],
         'announce_channel': 0,
-        'rewards': [
-            {'level': 5001, 'role': 0},
-            {'level': 5002, 'role': 0}
-        ]
+        'rewards': []
     },
-    # "mute_role": 0,
-    # "warns_to_mute": 3,
     "currency": "€",
-    "shop_items": [
-        {"cost": 1, "role": 0},
-        {"cost": 2, "role": 0}
-    ]
+    "shop_items": []
 }
 
 
@@ -64,7 +56,8 @@ async def send(text: str or None, channel: discord.TextChannel, *, embed: discor
                                   allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
     except discord.Forbidden:
         await channel.send(gls(get_lang(channel.guild), "send_forbidden"))
-        return await channel.send(content=text, delete_after=delete_after, allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
+        if text:
+            return await channel.send(content=text, delete_after=delete_after, allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
 
 
 def gls(locale: str, key: str, values: list = None):
