@@ -36,3 +36,8 @@
 
 ## v5.1.5 - 7 June
 - Leveling leaderboards will no longer show people who still have Undefined#0000 as name and people who have 0 XP
+
+## v5.1.6 - 7 June
+- Bank command: shows leaderboard by money
+- Levels and glevels will now output total users amount
+- Almost finished the Russian translation

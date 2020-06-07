@@ -721,6 +721,7 @@ class Leveling(commands.Cog):
             xp.append(val)
             xpl.append(len(val))
         # spaces = max(xpl) + 5
+        total = len(xp)
         place = "unknown"
         n = 0
         for x in range(len(data)):
@@ -758,7 +759,7 @@ class Leveling(commands.Cog):
                 block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
         except ValueError:
             block += "No data available"
-        return await generic.send(generic.gls(locale, "levels_lb", [ctx.guild.name, place, block, start, start + 9]), ctx.channel)
+        return await generic.send(generic.gls(locale, "levels_lb", [ctx.guild.name, place, block, start, start + 9, total]), ctx.channel)
         # return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
 
     @commands.command(name="glevels")
@@ -788,6 +789,7 @@ class Leveling(commands.Cog):
             x = f"{v[0]:,}"
             xp.append(x)
             xpl.append(len(x))
+        total = len(xp)
         place = "unknown"
         n = 0
         for someone in range(len(sl)):
@@ -829,7 +831,7 @@ class Leveling(commands.Cog):
         except ValueError:
             block += "No data available"
         # for i, d in enumerate(sl[:10], start=1):
-        return await generic.send(generic.gls(locale, "levels_global", [place, block, start, start + 9]), ctx.channel)
+        return await generic.send(generic.gls(locale, "levels_global", [place, block, start, start + 9, total]), ctx.channel)
         # return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
 
 

@@ -201,6 +201,71 @@ class Economy(commands.Cog):
         except KeyError:
             return await generic.send(generic.gls(locale, "shop_empty"), ctx.channel)
 
+    @commands.command(name="bank")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def money_lb(self, ctx: commands.Context, top: str = ""):
+        """ Server's money Leaderboard """
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "levels"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        data = self.db.fetch("SELECT * FROM economy WHERE gid=? AND money!=0 AND disc!=0 ORDER BY money DESC", (ctx.guild.id,))
+        if not data:
+            return await generic.send(generic.gls(locale, "levels_no_data"), ctx.channel)
+        block = "```fix\n"
+        un = []   # User names
+        xp = []   # XP
+        # unl = []  # User name lengths
+        xpl = []  # XP string lengths
+        for user in data:
+            name = f"{user['name']}#{user['disc']:04d}"
+            un.append(name)
+            val = f"{user['money']:,}"
+            xp.append(val)
+            xpl.append(len(val))
+        total = len(xp)
+        place = "unknown"
+        n = 0
+        for x in range(len(data)):
+            if data[x]['uid'] == ctx.author.id:
+                place = f"#{x + 1}"
+                n = x + 1
+                break
+        try:
+            page = int(top)
+            if page < 1:
+                page = None
+        except ValueError:
+            page = None
+        start = 0
+        try:
+            if (n <= 10 or top.lower() == "top") and page is None:
+                _data = data[:10]
+                start = 1
+                spaces = max(xpl[:10]) + 5
+            elif page is not None:
+                _data = data[(page - 1)*10:page*10]
+                start = page * 10 - 9
+                spaces = max(xpl[(page - 1)*10:page*10]) + 5
+            else:
+                _data = data[n-5:n+5]
+                start = n - 4
+                spaces = max(xpl[n-5:n+5]) + 5
+            for i, val in enumerate(_data, start=start):
+                k = i - 1
+                who = un[k]
+                if val['uid'] == ctx.author.id:
+                    who = f"-> {who}"
+                s = ' '
+                sp = xpl[k]
+                block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+        except ValueError:
+            block += "No data available"
+        return await generic.send(generic.gls(locale, "economy_lb", [ctx.guild.name, place, block, start, start + 9, total]), ctx.channel)
+        # return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
