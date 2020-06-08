@@ -600,6 +600,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_must_be_nsfw"), ctx.channel)
         if generic.is_locked(ctx.guild, "bang"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if user.id == 302851022790066185:
+            return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "bang_suager"), ctx.channel)
         if user == ctx.author:

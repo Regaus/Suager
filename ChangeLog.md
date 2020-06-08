@@ -53,3 +53,6 @@
 ## v5.1.7 - 7 June
 - You can no longer add channels to anti-spam or ignore channels if they are already on the list
 - Fixed some Russian strings
+
+## v5.1.7.1 - 8 June
+- Banging me will no longer work
