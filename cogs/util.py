@@ -1,5 +1,6 @@
 import json
 import random
+import urllib.parse
 from datetime import datetime, timedelta
 from io import BytesIO
 
@@ -167,6 +168,12 @@ class Utility(commands.Cog):
                 _time = f"{i['due']} mins"
             trams += f"{i['destination']}: {_time}\n"
         return await generic.send(generic.gls(locale, "luas", [_place, status, trams]), ctx.channel)
+
+    @commands.command(name="google", aliases=["g"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def google(self, ctx: commands.Context, *, what: str):
+        """ Search for something """
+        return await generic.send(f"<https://lmgtfy.com/?q={urllib.parse.quote(what)}>", ctx.channel)
 
 
 def setup(bot):
