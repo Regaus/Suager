@@ -59,7 +59,6 @@ def levels():
     xp = []
     for x in range(max_level):
         base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
-        # base = 1.5 * x ** 2 + 125 * x + 200
         req += int(base)
         xp.append(req)
     return xp
@@ -167,7 +166,6 @@ class Leveling(commands.Cog):
             new = int(random.uniform(x1, x2) * sm * mult * spam * heresy)
             new_money = int(random.uniform(x3, x4) * mult * spam)
         else:
-            # I honestly don't remember what this shit does, but it works :shrug:
             if abs(spam) < 1:
                 st = 1 / spam
             else:
@@ -186,7 +184,6 @@ class Leveling(commands.Cog):
         if not xp_disabled:
             xp += new
         money += new_money
-        # print(td, _td, xp, cogs, _n, mult)
         requirements = levels()
         if not xp_disabled:
             lu, ld = False, False
@@ -366,7 +363,6 @@ class Leveling(commands.Cog):
                 embed.add_field(name=generic.gls(locale, "experience"), value=f"**{r1}**/{r2}", inline=False)
                 embed.add_field(name=generic.gls(locale, "level"), value=f"{level:,}", inline=False)
                 embed.add_field(name=generic.gls(locale, "rank_progress"), value=generic.gls(locale, "rank_progress2", [r4, r3]), inline=False)
-                # embed.add_field(name="Progress to next level", value=f"{r4}% - {r3} XP to level up", inline=False)
             else:
                 embed.add_field(name=generic.gls(locale, "experience"), value=f"**{r1}**", inline=False)
                 embed.add_field(name=generic.gls(locale, "level"), value=f"{level:,}", inline=False)
@@ -374,7 +370,6 @@ class Leveling(commands.Cog):
             o1, o2 = int(x1), int(x2)
             embed.add_field(name=generic.gls(locale, "xp_per_message"), inline=False, value=f"{o1}-{o2}")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(f"**{user}**'s rank in **{ctx.guild.name}:**", embed=embed)
 
     @commands.command(name="rank", aliases=["irank", "ranki"])
     @commands.guild_only()
@@ -391,7 +386,6 @@ class Leveling(commands.Cog):
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
                 return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
-                # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
             data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
@@ -427,20 +421,17 @@ class Leveling(commands.Cog):
             except IndexError:
                 req = float("inf")
                 r2 = "MAX"
-            # r3 = value_string(re)
             try:
                 prev = int(al[level-1]) if level != 0 else 0
                 if level == -1:
                     prev = -int(al[0])
             except IndexError:
                 prev = 0
-            _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
-            # place = "unknown"
+            _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 AND level>=0 ORDER BY xp DESC", (ctx.guild.id,))
             place = generic.gls(locale, "rank_place_unknown")
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
                     place = generic.gls(locale, "rank_place_num", [f"{x+1:,}"])
-                    # place = f"#{x + 1:,}"
                     break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
@@ -456,7 +447,6 @@ class Leveling(commands.Cog):
             done = int(progress * full)
             if done < 0:
                 done = 0
-            # left = full - done
             i1 = Image.new("RGB", (done, 60), color=progress_colour)
             i2 = Image.new("RGB", (full + 10, 70), color=(30, 30, 30))
             box1 = (552, 420, 552 + done, 480)
@@ -465,15 +455,11 @@ class Leveling(commands.Cog):
             img.paste(i1, box1)
             bio = BytesIO()
             img.save(bio, "PNG")
-            # img.save("test.png", "PNG")
             bio.seek(0)
             r = generic.gls(locale, "rank_user", [user, ctx.guild.name])
-            # r = f"**{user}**'s rank in **{ctx.guild.name}**"
             if is_self:
                 r += generic.gls(locale, "rank_self")
-                # r += "\nThat's my card! Did you think I'd play fair?"
             return await generic.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
-            # return await ctx.send(r, file=discord.File(bio, filename="rank.png"))
 
     @commands.command(name="grank", aliases=["rankg"])
     @commands.guild_only()
@@ -490,9 +476,7 @@ class Leveling(commands.Cog):
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
                 return await generic.send(generic.gls(locale, "bot_xp"), ctx.channel)
-                # return await ctx.send("Bots are cheating, so I don't even bother storing their XP.")
-            # data = self.db.fetch("SELECT * FROM leveling WHERE uid=?", (user.id,))
-            _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
+            _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0 AND level>=0")
             coll = {}
             for i in _data:
                 if i['uid'] not in coll:
@@ -509,7 +493,6 @@ class Leveling(commands.Cog):
             for someone in range(len(sl)):
                 if sl[someone][0] == user.id:
                     place = generic.gls(locale, "rank_place_num", [f"{someone + 1:,}"])
-                    # place = f"#{someone + 1}"
                     _xp = xp[someone]
                     break
             return await generic.send(generic.gls(locale, "global_rank", [user, f"{_xp:,}", place]), ctx.channel)
@@ -543,7 +526,6 @@ class Leveling(commands.Cog):
             else:
                 db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
             return await generic.send(generic.gls(locale, "crank_font", [colour, db]), ctx.channel)
-            # return await ctx.send(f"Updated your font colour to #{colour}\nDatabase status: {db}")
 
     @custom_rank.command(name="progress")
     async def crank_progress(self, ctx: commands.Context, colour: str):
@@ -562,7 +544,6 @@ class Leveling(commands.Cog):
             else:
                 db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
             return await generic.send(generic.gls(locale, "crank_pb", [colour, db]), ctx.channel)
-            # return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @custom_rank.command(name="background", aliases=["bg"])
     async def crank_bg(self, ctx: commands.Context, colour: str):
@@ -581,7 +562,6 @@ class Leveling(commands.Cog):
             else:
                 db = self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
             return await generic.send(generic.gls(locale, "crank_bg", [colour, db]), ctx.channel)
-            # return await ctx.send(f"Updated your progress bar colour to #{colour}\nDatabase status: {db}")
 
     @commands.command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -596,12 +576,10 @@ class Leveling(commands.Cog):
             return await ctx.send_help(str(ctx.command))
         if level > max_level or level < max_level * -1 + 1:
             return await generic.send(generic.gls(locale, "max_level", [max_level]), ctx.channel)
-            # return await ctx.send(f"The max level is {max_level}.")
         try:
             r = levels()[level - 1]
         except IndexError:
             return await generic.send(generic.gls(locale, "xl_index_error", [level, max_level]), ctx.channel)
-            # return await ctx.send(f"Level specified - {level:,} gave an IndexError. Max level is {max_level}, btw.")
         if ctx.guild is not None:
             data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         else:
@@ -646,7 +624,6 @@ class Leveling(commands.Cog):
         data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await generic.send(generic.gls(locale, "nl_no_data"), ctx.channel)
-            # return await ctx.send("It doesn't seem like I have any data saved for you right now...")
         _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
@@ -658,7 +635,6 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         r1 = f"{int(xp):,}"
-        # biased = bias.get_bias(self.db, ctx.author)
         yes = levels()
         try:
             r = int(yes[level])
@@ -671,7 +647,6 @@ class Leveling(commands.Cog):
         if level == -1:
             r = 0
             p = -int(yes[0])
-        # r, p = [int(yes[level]), ]
         req = r - xp
         r2 = f"{int(r):,}"
         r3 = f"{int(req):,}"
@@ -682,16 +657,12 @@ class Leveling(commands.Cog):
         normal = 1
         x1, x2 = [val * normal * dm for val in xp_amounts]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
-        # m1, m2 = int(a1) + 1, int(a2) + 1
         try:
             t1, t2 = [time.timedelta(x * 60, show_seconds=True) for x in [a1, a2]]
         except OverflowError:
             error = "Error"
             t1, t2 = [error, error]
         return await generic.send(generic.gls(locale, "next_level_data", [ctx.author.name, r1, r2, r3, r5, r4, t1, t2]), ctx.channel)
-        # return await ctx.send(f"Alright, **{ctx.author.name}**:\nYou currently have **{r1}/{r2}** XP.\nYou need "
-        #                       f"**{r3}** more to reach level **{r5}** (Progress: **{r4}%**).\nMessages left: "
-        #                       f"**{m1} to {m2}**\nEstimated talking time: **{t1} to {t2}**")
 
     @commands.command(name="levels")
     @commands.guild_only()
@@ -703,24 +674,19 @@ class Leveling(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+        data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 AND level>=0 ORDER BY xp DESC", (ctx.guild.id,))
         if not data:
             return await generic.send(generic.gls(locale, "levels_no_data"), ctx.channel)
-            # return await ctx.send("I have no data at all for this server... Weird")
         block = "```fix\n"
         un = []   # User names
         xp = []   # XP
-        # unl = []  # User name lengths
         xpl = []  # XP string lengths
         for user in data:
             name = f"{user['name']}#{user['disc']:04d}"
             un.append(name)
-            # unl.append(len(name))
-            # val = f"{value_string(user['xp'])}"
             val = f"{user['xp']:,}"
             xp.append(val)
             xpl.append(len(val))
-        # spaces = max(xpl) + 5
         total = len(xp)
         place = "unknown"
         n = 0
@@ -760,7 +726,6 @@ class Leveling(commands.Cog):
         except ValueError:
             block += "No data available"
         return await generic.send(generic.gls(locale, "levels_lb", [ctx.guild.name, place, block, start, start + 9, total]), ctx.channel)
-        # return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
 
     @commands.command(name="glevels")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -771,7 +736,7 @@ class Leveling(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0", ())
+        data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0 AND level>=0", ())
         coll = {}
         for i in data:
             if i['uid'] not in coll:
@@ -779,13 +744,11 @@ class Leveling(commands.Cog):
             coll[i['uid']][0] += i['xp']
         sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
         r = len(sl)
-        # r = len(sl) if len(sl) < 10 else 10
         block = "```fix\n"
         un, xp, xpl = [], [], []
         for thing in range(r):
             v = sl[thing][1]
             un.append(v[1])
-            # x = value_string(v[0])
             x = f"{v[0]:,}"
             xp.append(x)
             xpl.append(len(x))
@@ -830,9 +793,7 @@ class Leveling(commands.Cog):
                     pass
         except ValueError:
             block += "No data available"
-        # for i, d in enumerate(sl[:10], start=1):
         return await generic.send(generic.gls(locale, "levels_global", [place, block, start, start + 9, total]), ctx.channel)
-        # return await ctx.send(f"Top users globally - Sorted by XP\nYour place: {place}\n{block}```")
 
 
 def setup(bot):

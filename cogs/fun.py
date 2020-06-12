@@ -10,7 +10,6 @@ from utils import lists, time, emotes, generic
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.banned = [690254056354087047, 694684764074016799]
 
     @commands.command(name="vote", aliases=["petition"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -23,7 +22,6 @@ class Fun(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         a = 1 if ctx.invoked_with.lower() == "vote" else 2
         message = await generic.send(generic.gls(locale, "vote", [generic.gls(locale, f"vote{a}"), ctx.author, question]), ctx.channel)
-        # message = await ctx.send(f"A {ctx.invoked_with.lower()} has been started by {ctx.author} ```fix\n{question}```")
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
         await message.add_reaction(emotes.Deny)
@@ -33,7 +31,6 @@ class Fun(commands.Cog):
     async def epic(self, ctx: commands.Context):
         """ Very epic """
         return await generic.send(emotes.Epic, ctx.channel)
-        # await ctx.send("<a:epic:603691073822261248>")
 
     @commands.command(name="vibecheck")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -46,14 +43,12 @@ class Fun(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         user = who or ctx.author
         message = await generic.send(generic.gls(locale, "vibe_check1", [user.name]), ctx.channel)
-        # message = await ctx.send(f"<a:loading:651883385878478858> Checking {user.name}'s vibe...")
         await asyncio.sleep(3)
         if user.id == 302851022790066185:
             r = 2
         else:
             r = random.randint(1, 2)
         return await message.edit(content=generic.gls(locale, "vibe_check2", [generic.gls(locale, f"vibe_check{r + 2}")]))
-        # return await message.edit(content=f"**{user.name}** {random.choice(['failed', 'passed'])} the vibe check")
 
     @commands.command(name="flip", aliases=["coin"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -63,9 +58,6 @@ class Fun(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         return await generic.send(generic.gls(locale, "coin_flip", [random.choice([generic.gls(locale, f"coin_flip{i}") for i in [1, 2]])]), ctx.channel)
-        # message = await ctx.send("<a:loading:651883385878478858> Flipping a coin...")
-        # await asyncio.sleep(3)
-        # return await message.edit(content=f"The coin landed on {random.choice(['Heads', 'Tails'])}")
 
     @commands.command()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -79,7 +71,6 @@ class Fun(commands.Cog):
                 return await generic.send(generic.gls(locale, "beer_self", [ctx.author.name]), ctx.channel, file=discord.File("assets/party.gif", "party.gif"))
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "beer_me"), ctx.channel)
-            # return await ctx.send("*drinks beer with you* 🍻")
         if user.bot:
             return await generic.send(generic.gls(locale, "beer_bot", [user.name]), ctx.channel)
         beer_offer = generic.gls(locale, "beer_offer1", [user.name, ctx.author.name])
@@ -91,7 +82,6 @@ class Fun(commands.Cog):
             if m.message_id == msg.id and m.user_id == user.id and str(m.emoji) == "🍻":
                 return True
             return False
-
         try:
             await msg.add_reaction("🍻")
             await self.bot.wait_for('raw_reaction_add', timeout=30.0, check=reaction_check)
@@ -115,7 +105,6 @@ class Fun(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         return await generic.send(generic.gls(locale, "8ball", [question, random.choice(lists.ball_response)]), ctx.channel)
-        # return await ctx.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}")
 
     @commands.command(name="roll")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -154,8 +143,6 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "quote"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        # if ctx.channel.id in generic.channel_locks:
-        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=random.randint(0, 0xffffff))
         embed.set_thumbnail(url=user.avatar_url)
         embed.title = generic.gls(locale, "quote_begin", [str(user)])
@@ -175,7 +162,6 @@ class Fun(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
         return await generic.send(f"🔁 {ctx.author.name}:\n{reverse}", ctx.channel)
-        # return await ctx.send(f"🔁 {ctx.author.name}:\n{reverse}")
 
     @commands.command(name="notwork")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -184,12 +170,9 @@ class Fun(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "notwork"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        # if ctx.channel.id in generic.channel_locks:
-        #     return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         embed = discord.Embed(colour=random.randint(0, 0xffffff))
         embed.set_image(url="https://cdn.discordapp.com/attachments/577599230567383058/695424749097975808/notwork.png")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
 
 def setup(bot):

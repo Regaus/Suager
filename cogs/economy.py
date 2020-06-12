@@ -217,7 +217,6 @@ class Economy(commands.Cog):
         block = "```fix\n"
         un = []   # User names
         xp = []   # XP
-        # unl = []  # User name lengths
         xpl = []  # XP string lengths
         for user in data:
             name = f"{user['name']}#{user['disc']:04d}"
@@ -264,7 +263,6 @@ class Economy(commands.Cog):
         except ValueError:
             block += "No data available"
         return await generic.send(generic.gls(locale, "economy_lb", [ctx.guild.name, place, block, start, start + 9, total]), ctx.channel)
-        # return await ctx.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\n{block}```")
 
 
 def setup(bot):

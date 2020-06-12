@@ -269,7 +269,7 @@ class Discord(commands.Cog):
         return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lm", [value, res]), ctx.channel)
 
     @set_lvl.command(name="message", aliases=["lum", "msg"])
-    async def lvl_lum(self, ctx: commands.Context, value: str):
+    async def lvl_lum(self, ctx: commands.Context, *, value: str):
         """ Set level up message """
         data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:

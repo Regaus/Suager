@@ -62,3 +62,7 @@
 
 ## v5.1.8.1 - 10 June
 - requirements.txt should now install the correct version of discord.py (1.4.0a)
+
+## v5.1.9 - 12 June
+- Searching logs for a specific date
+- Levels will no longer show people with negative level

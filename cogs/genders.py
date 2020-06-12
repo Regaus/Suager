@@ -51,12 +51,10 @@ class Genders(commands.Cog):
         data = self.db.fetchrow(select, (ctx.author.id,))
         if data:
             return await generic.send(generic.gls(locale, "gender_already_assigned", [ctx.author.name, data["gender"]]), ctx.channel)
-            # return await ctx.send(f"{ctx.author.mention} I already know your gender! You can't change it...")
         valid_genders = ["male", "female", "other", "invalid"]
         choice = gender.lower()
         if choice not in valid_genders:
             return await generic.send(generic.gls(locale, "gender_invalid", [choice, ", ".join(valid_genders)]), ctx.channel)
-            # return await ctx.send(f"{choice} is not a valid gender now, is it?\nValid genders: `{', '.join(valid_genders)}`")
         gr = roles.get(ctx.guild.id, [0, 0, 0])
         if choice == "male":
             remove = [ctx.guild.get_role(x) for x in [gr[1], gr[2]]]
@@ -69,7 +67,6 @@ class Genders(commands.Cog):
             rid = ctx.guild.get_role(gr[2])
         else:
             return await generic.send(generic.gls(locale, "gender_invalid2"), ctx.channel)
-            # return await ctx.send("Are you sure your choice is either `male`, `female`, `other` or `invalid`?")
         r = self.db.execute(insert, (ctx.author.id, choice))
         if ctx.guild.id in roles:
             for role in remove:
@@ -77,9 +74,7 @@ class Genders(commands.Cog):
                     await ctx.author.remove_roles(role, reason="User assigned gender")
             if rid is not None:
                 await ctx.author.add_roles(rid, reason="User assigned gender")
-        # open(f"data/gender/{ctx.author.id}.json", "w+").write(json.dumps(data))
         return await generic.send(generic.gls(locale, "gender_set", [ctx.author.name, choice, r]), ctx.channel)
-        # return await ctx.send(f"{ctx.author.mention} Set your gender to {choice}.\n{r}")
 
     @commands.command(name="setgender")
     @commands.is_owner()
@@ -91,8 +86,6 @@ class Genders(commands.Cog):
         choice = gender.lower()
         if choice not in valid_genders:
             return await generic.send(generic.gls(locale, "gender_invalid", [choice, ", ".join(valid_genders)]), ctx.channel)
-            # return await ctx.send(f"{choice} is not a valid gender, is it?\n"
-            #                       f"Valid genders: `{', '.join(valid_genders)}`")
         gr = roles.get(ctx.guild.id, [0, 0, 0])
         if choice == "male":
             remove = [ctx.guild.get_role(x) for x in [gr[1], gr[2]]]
@@ -105,7 +98,6 @@ class Genders(commands.Cog):
             rid = ctx.guild.get_role(gr[2])
         else:
             return await generic.send(generic.gls(locale, "gender_invalid2"), ctx.channel)
-            # return await ctx.send("Are you sure your choice is either `male`, `female`, `other` or `invalid`?")
         d = self.db.fetchrow(select, (user.id,))
         if d:
             r = self.db.execute(update, (choice, user.id))
@@ -118,7 +110,6 @@ class Genders(commands.Cog):
             if rid is not None:
                 await user.add_roles(rid, reason="User assigned gender")
         return await generic.send(generic.gls(locale, "gender_force_set", [user.name, choice, r]), ctx.channel)
-        # return await ctx.send(f"{ctx.author.mention} Set {user.name}'s gender to {choice}.\n{r}")
 
 
 def setup(bot):

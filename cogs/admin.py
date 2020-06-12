@@ -166,7 +166,7 @@ class Admin(commands.Cog):
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
 
-    @commands.command(name="log", aliases=["logs"])
+    @commands.group(name="log", aliases=["logs"], invoke_without_command=True)
     @commands.check(permissions.is_owner)
     async def log(self, ctx: commands.Context, log: str, *, search: str = None):
         """ Get logs """
@@ -206,36 +206,43 @@ class Admin(commands.Cog):
                                               file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-        """try:
+
+    @log.command(name="date")
+    @commands.check(permissions.is_owner)
+    async def log_date(self, ctx: commands.Context, date: str, log_file: str, *, search: str = None):
+        """ Get logs """
+        try:
+            filename = f"data/{date}/{log_file}.rsf"
+            file = open(filename, "r")
             if search is None:
-                data = open(f"data/{log}.rsf").read()
-                result = f"{data}"
+                result = file.read()
+                data = f"{result}"  # Put a newline in the end, just in case
             else:
-                data = open(f"data/{log}.rsf").readlines()
+                stuff = file.readlines()
                 result = ""
-                for line in data:
+                for line in stuff:
                     if search in line:
                         result += line
+                data = f"{result}"
             if ctx.guild is None:
                 limit = 8000000
             else:
                 limit = int(ctx.guild.filesize_limit / 1.05)
-            rl = len(str(result))
-            if rl == 0 or result is None:
+            rl = len(str(data))
+            if rl == 0 or data is None:
                 return await generic.send("Nothing was found...", ctx.channel)
             elif 0 < rl <= limit:
                 async with ctx.typing():
-                    data = BytesIO(str(result).encode('utf-8'))
-                    return await generic.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
-                                              file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
+                    _data = BytesIO(str(data).encode('utf-8'))
+                    return await generic.send(f"Results for {log_file}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():
-                    data = BytesIO(str(result)[-limit:].encode('utf-8'))
-                    return await generic.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", ctx.channel,
-                                              file=discord.File(data, filename=f"{time.file_ts('Logs')}"))
+                    _data = BytesIO(str(data)[-limit:].encode('utf-8'))
+                    return await generic.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
         except Exception as e:
             return await generic.send(f"{type(e).__name__}: {e}", ctx.channel)
-    """
 
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)
@@ -586,18 +593,18 @@ class Admin(commands.Cog):
 
     @commands.command(name="lv2", aliases=["lv-2"])
     @commands.check(permissions.is_owner)
-    async def lv2(self, ctx: commands.Context, user: discord.User, guild: discord.Guild = None):
+    async def lv2(self, ctx: commands.Context, user: discord.User, gid: int = None):
         """ Set someone to level -2 """
-        guild = guild or ctx.guild
-        ret = self.db.execute("UPDATE leveling SET level=-2 WHERE uid=? AND gid=?", (user.id, guild.id))
+        guild = gid or ctx.guild.id
+        ret = self.db.execute("UPDATE leveling SET level=-2 WHERE uid=? AND gid=?", (user.id, guild))
         return await generic.send(ret, ctx.channel)
 
     @commands.command(name="lv0")
     @commands.check(permissions.is_owner)
-    async def lv0(self, ctx: commands.Context, user: discord.User, guild: discord.Guild = None):
+    async def lv0(self, ctx: commands.Context, user: discord.User, gid: int = None):
         """ Restore someone's levels """
-        guild = guild or ctx.guild
-        ret = self.db.execute("UPDATE leveling SET level=0 WHERE uid=? AND gid=?", (user.id, guild.id))
+        guild = gid or ctx.guild.id
+        ret = self.db.execute("UPDATE leveling SET level=0 WHERE uid=? AND gid=?", (user.id, guild))
         return await generic.send(ret, ctx.channel)
 
     @commands.group()
