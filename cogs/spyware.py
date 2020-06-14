@@ -53,6 +53,8 @@ class Spyware(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
+        if after.guild.id == 706574018928443442 and after.id == self.bot.user.id:
+            await after.edit(nick="Suwuager")
         logging = generic.get_config()["spyware"]
         if not logging:
             return

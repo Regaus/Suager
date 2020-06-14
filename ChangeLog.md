@@ -72,3 +72,7 @@
 - Anyone except choco can sniff me
 - Licc is now an alias of lick 
 - Added some 8ball responses
+
+## v5.1.10.1 - 14 June
+- Changing Suager's nickname in odashi won't work anymore
+- Added kith and kish as aliases for kiss

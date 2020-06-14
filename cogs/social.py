@@ -242,7 +242,7 @@ class Social(commands.Cog):
             embed.set_footer(text=generic.gls(locale, "lick2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="kiss")
+    @commands.command(name="kiss", aliases=["kith", "kish"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def kiss(self, ctx: commands.Context, user: discord.Member):
