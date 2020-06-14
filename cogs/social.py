@@ -213,7 +213,7 @@ class Social(commands.Cog):
             embed.set_footer(text=generic.gls(locale, "cuddle2", [user.name, number]))
         return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="lick")
+    @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lick(self, ctx: commands.Context, user: discord.Member):
@@ -221,7 +221,7 @@ class Social(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "lick"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id != 381870347814830081:  # drip
+        if user.id == 302851022790066185 and ctx.author.id == 667187968145883146:  # choco
             return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
@@ -347,6 +347,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "smell_suager", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "smell_bot", [user.name]), ctx.channel)
+        if user.id == 302851022790066185 and ctx.author.id == 667187968145883146:  # choco
+            return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "sniffs_given", "sniffs_received", 20, 21)
         s = generic.gls(locale, f"{ctx.invoked_with}ed")

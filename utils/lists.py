@@ -30,7 +30,8 @@ image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 6720972
                   'i': 696485411869950003, 'P': 702280684907003986, 'B': 702280732755624469}
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
 ball_response = ['Yes', 'No', 'Take a wild guess...', 'Very doubtful', 'Sure', 'Without a doubt', 'Most likely', 'Might be possible',
-                 "You'll be the judge", 'No. (╯°□°）╯︵ ┻━┻', 'Highly unlikely', 'You really think so?']
+                 "You'll be the judge", 'No. (╯°□°）╯︵ ┻━┻', 'Highly unlikely', 'You really think so?', 'Why would you think that?',
+                 "Isn't the answer obvious?", 'Of course not!', 'Of course, yes!']
 hearts = list("❤️🧡💛💚💙💜🖤🤎🤍")
 hello = ["Good aftermidnight", "Good morning", "Good afternoon", "Good evening"]
 

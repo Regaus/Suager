@@ -66,3 +66,9 @@
 ## v5.1.9 - 12 June
 - Searching logs for a specific date
 - Levels will no longer show people with negative level
+
+## v5.1.10 - 14 June
+- Anyone except choco can lick me
+- Anyone except choco can sniff me
+- Licc is now an alias of lick 
+- Added some 8ball responses
