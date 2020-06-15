@@ -76,3 +76,7 @@
 ## v5.1.10.1 - 14 June
 - Changing Suager's nickname in odashi won't work anymore
 - Added kith and kish as aliases for kiss
+
+## v5.1.10.2 - 15 June
+- Locked Cryptic from lick
+- Better love lock message

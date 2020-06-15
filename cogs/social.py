@@ -221,7 +221,7 @@ class Social(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "lick"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id == 667187968145883146:  # choco
+        if (user.id == 302851022790066185 and ctx.author.id == 667187968145883146) or user.id == 523275160799805471:  # choco / cryptic
             return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')

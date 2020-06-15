@@ -139,7 +139,7 @@ data = {
     "rank_progress2": "<val1>% - <val2> XP to level up",
     "xp_per_message": "XP per message",
     "global_rank": "**<val1>** has **<val2> XP** globally and is **<val3>** on the leaderboard.",
-    "love_locked": f"{emotes.Deny} Imagine annoying Regaus so much he locks the command for you, <val1>.",
+    "love_locked": f"{emotes.Deny} This action cannot be done to <val1>.",
     "bad_locked": "Says the bad one, <val1>...",
     "server_banner": "**<val1>**'s server banner\n<val2>",
     "server_splash": "**<val1>**'s server invite background\n<val2>",
