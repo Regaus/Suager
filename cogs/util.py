@@ -10,7 +10,7 @@ import pytz
 import timeago
 from discord.ext import commands
 
-from utils import time, generic, http, database
+from utils import time, generic, http, database, bases
 
 
 class Utility(commands.Cog):
@@ -35,7 +35,66 @@ class Utility(commands.Cog):
             tzn = _tzn.upper() if _tzl <= 3 else _tzn.title()
             send += generic.gls(locale, "time_local", [tzn, time.time_output(time.set_tz(time.now(True), data["tz"]), tz=True, seconds=True)])
         return await generic.send(send, ctx.channel)
-        # return await ctx.send(f"It is **{time.time()}** for me and therefore the world, {ctx.author.name}.")
+
+    @commands.command(name="time2", aliases=["timek", "kargadia"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def time_kargadia(self, ctx: commands.Context):
+        """ Time in Kargadia """
+        return await generic.send(time.date_kargadia(), ctx.channel)
+
+    @commands.command(name="base", aliases=["bases", "bc"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def base_conversions(self, ctx: commands.Context, conversion: str, number: str, base: int, caps: bool = False):
+        """ Convert numbers between bases
+
+        Use "to" to convert decimal (base-10) to a base
+        Use "from" to convert from the base to decimal (base-10)
+        Caps is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to base 10."""
+        if base > 36:
+            return await generic.send(f"{ctx.author.name}, Bases above 36 are not supported", ctx.channel)
+        if conversion == "to":
+            return await generic.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
+        if conversion == "from":
+            return await generic.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+
+    @commands.command(name="owoify", aliases=["owo", "furry"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def base_conversions(self, ctx: commands.Context, *, string: str):
+        """ Converts input into furry language. I'm not sorry. """
+        stuff = string.lower()
+        words = [["ahh", "murr"], ["are", "is"], ["awesome", "pawsome"], ["awful", "pawful"], ["bite", "nom"], ["bulge", "bulgy-wulgy"],
+                 ["butthole", "tailhole"], ["celebrity", "popufur"], ["cheese", "sergal"], ["child", "cub"], ["computer", "protogen"], ["robot", "protogen"],
+                 ["cyborg", "protogen"], ["cum", "cummy wummy~"], ["disease", "pathOwOgen"], ["dog", "good boy"], ["dragon", "derg"], ["eat", "vore"],
+                 ["fuck", "fluff"], ["father", "daddy"], ["foot", "footpaw"], ["for", "fur"], ["hand", "paw"], ["hell", "hecc"], ["hyena", "yeen"],
+                 ["kiss", "lick"], ["lmao", "hehe~"], ["love", "wuv"], ["mouth", "maw"], ["naughty", "knotty"], ["not", "knot"], ["perfect", "purrfect"],
+                 ["persona", "fursona"], ["pervert", "furvert"], ["porn", "yiff"], ["shout", "awoo"], ["source", "sauce"], ["straight", "gay"],
+                 ["tale", "tail"], ["the", "teh"], ["that", "dat"], ["these", "dese"], ["this", "dis"], ["those", "dose"], ["toe", "toe bean"],
+                 ["with", "wif"], ["you", "chu"], ["your", "ur"], ["you're", "ur"]]
+        symbols = [[",", "~"], [";", "~"], [":)", ":3"], [":0", "OwO"], [":d", "UwU"], ["xd", "x3"], ["  ", " uwu "]]
+        phrases = [["forgive me", "sorry"], ["i have sinned", "I've been naughty"], ["i've sinned", "I've been naughty"], ["have sex with", "yiff"],
+                   ["old person", "greymuzzle"], ["what's this", "OwO what's this"]]
+        faces = ["(o´∀`o)", "(#｀ε´)", "(๑•̀ㅁ•́๑)✧", "(*≧m≦*)", "(・`ω´・)", "UwU", "OwO", ">w<", "｡ﾟ( ﾟ^∀^ﾟ)ﾟ｡", "ヾ(｀ε´)ﾉ",
+                 "(´• ω •`)", "o(>ω<)o", "(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧", "(⁀ᗢ⁀)", "(￣ε￣＠)", "( 〃▽〃)", "(o^ ^o)", "ヾ(*'▽'*)"]
+        for word in words:
+            stuff = stuff.replace(f"{word[0]} ", f"{word[1]} ")
+        for phrase in phrases:
+            stuff = stuff.replace(phrase[0], phrase[1])
+        for symbol in symbols:
+            stuff = stuff.replace(symbol[0], symbol[1])
+        output = ""
+        for letter in stuff:
+            if letter in ["!", "?"]:
+                letter += f" {random.choice(faces)}"
+            output += letter
+        replacements = [["r", "w"], ["l", "w"], ["na", "nya"], ["ne", "nye"], ["ni", "nyi"], ["no", "nyo"], ["nu", "nyu"], ["nyaughty", "naughty"]]
+        for thing in replacements:
+            output = output.replace(thing[0], thing[1])
+        sentences = output.split(".")
+        output = ''.join([s.capitalize() for s in sentences])
+        i = [[" i ", " I "], ["i've", "I've"], ["i'm", "I'm"]]
+        for thing in i:
+            output = output.replace(thing[0], thing[1])
+        return await generic.send(f"{ctx.author.name}:\n{output}", ctx.channel)
 
     @commands.command(name="settz")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

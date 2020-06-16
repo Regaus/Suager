@@ -28,16 +28,42 @@ def now_k():
     return t + r
 
 
+def date_kargadia():
+    kst = timezone(td(hours=1, minutes=30), "KST")
+    irl = now(True).astimezone(kst)
+    start = datetime(1970, 1, 1, tzinfo=kst)  # Because why not?
+    total = (irl - start).total_seconds()
+    ml = 32  # month length
+    wl = 8  # week length
+    year = 1700
+    day_length = 37.49865756 * 3600
+    days = total / day_length
+    secs = (days % 1) * day_length
+    kdl = 32 ** 3  # Kargadia's day length
+    ksl = day_length / kdl  # Second length compared to real time
+    ks = int(secs / ksl)
+    h, ms = divmod(ks, 32 * 32)
+    m, s = divmod(ms, 32)
+    dl = int(days)
+    while True:
+        yl = 513 if year % 8 == 0 else 512
+        if dl > yl:
+            year += 1
+            dl -= yl
+        else:
+            break
+    month, day = divmod(dl, ml)
+    dow = dl % wl
+    weekdays = ["Eighth", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh"]
+    return f"{weekdays[dow]}, {day + 1:02d}/{month + 1:02d}/{year} KE {h:02d}:{m:02d}:{s:02d} ({day + 1:02X}/{month + 1:02X}/{year:X}, {h:02X}:{m:02X}:{s:02X})"
+
+
 def time_k(day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):
     return time_output(now_k(), day, seconds, dow, tz)
 
 
 def time(utc: bool = False, day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):
     return time_output(now(utc), day, seconds, dow, tz)
-
-
-# def get_time(timestamp: int, utc: bool = False):
-#     return datetime.utcfromtimestamp(timestamp) if utc else datetime.fromtimestamp(timestamp)
 
 
 def from_ts(timestamp: int or float, utc=False) -> datetime:
@@ -49,7 +75,6 @@ def from_ts(timestamp: int or float, utc=False) -> datetime:
 
 def now_ts() -> float:
     return get_ts(now())
-    # return datetime.timestamp(now(False))
 
 
 def get_ts(when: datetime) -> float:
@@ -64,13 +89,10 @@ def human_join(seq, delim=', ', final='or'):
     size = len(seq)
     if size == 0:
         return ''
-
     if size == 1:
         return seq[0]
-
     if size == 2:
         return f'{seq[0]} {final} {seq[1]}'
-
     return delim.join(seq[:-1]) + f' {final} {seq[-1]}'
 
 
@@ -87,19 +109,6 @@ class Plural:
         return f'{v} {_singular}'
 
 
-# def timedelta(seconds: int, show_seconds: bool = True):
-#     m, s = divmod(seconds, 60)
-#     h, m = divmod(m, 60)
-#     d, h = divmod(h, 24)
-#     d, h, m, s = round(d), round(h), round(m), round(s)
-#     ds = f"{d}d " if d != 0 else ""
-#     hs = f"{h}h " if h != 0 or d != 0 else ""
-#     ms = f"{m}m"
-#     ss = f" {s}s" if show_seconds else ""
-#     return ds + hs + ms + ss
-# Code yoinked from: https://github.com/iDevision/Life/blob/master/Life/cogs/utilities/utils.py
-
-
 def timesince(when: datetime):
     t = now(False) - from_ts(get_ts(when), False)
     # This piece of shit complains about offset-naive and offset-aware datetime, but this horror somehow makes it shut the fuck up about it
@@ -107,40 +116,21 @@ def timesince(when: datetime):
 
 
 def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
-    # _now = source or datetime.utcnow()
     _now = source or now(False)
-    # Microsecond free zone
     _now = _now.replace(microsecond=0)
-    # dt = dt.replace(microsecond=0)
     dt = from_ts(get_ts(dt), False)
-
-    # This implementation uses relativedelta instead of the much more obvious
-    # divmod approach with seconds because the seconds approach is not entirely
-    # accurate once you go over 1 week in terms of accuracy since you have to
-    # hardcode a month as 30 or 31 days.
-    # A query like "11 months" can be interpreted as "11 months and 6 days"
     if dt > _now:
         delta = relativedelta(dt, _now)
         suffix = ''
     else:
         delta = relativedelta(_now, dt)
         suffix = ' ago' if suffix else ''
-
-    attrs = [
-        ('year', 'y'),
-        ('month', 'mo'),
-        ('day', 'd'),
-        ('hour', 'h'),
-        ('minute', 'm'),
-        ('second', 's'),
-    ]
-
+    attrs = [('year', 'y'), ('month', 'mo'), ('day', 'd'), ('hour', 'h'), ('minute', 'm'), ('second', 's')]
     output = []
     for attr, brief_attr in attrs:
         elem = getattr(delta, attr + 's')
         if not elem:
             continue
-
         if attr == 'day':
             weeks = delta.weeks
             if weeks:
@@ -149,18 +139,14 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
                     output.append(format(Plural(weeks), 'week'))
                 else:
                     output.append(f'{weeks}w')
-
         if elem <= 0:
             continue
-
         if brief:
             output.append(f'{elem}{brief_attr}')
         else:
             output.append(format(Plural(elem), attr))
-
     if accuracy is not None:
         output = output[:accuracy]
-
     if len(output) == 0:
         return 'now'
     else:
@@ -172,52 +158,32 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
 
 
 def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: bool = False, show_seconds=True):
-    # _now = source or datetime.utcnow()
-    # _now = source or now(False)
-    # Microsecond free zone
-    # _now = _now.replace(microsecond=0)
-    # dt = dt.replace(microsecond=0)
     n = now(False)
     t = now(False) + td(seconds=seconds)
-    # delta = relativedelta(seconds=seconds).normalized()
     p = "in " if future and suffix else ""
     s = " ago" if not future and suffix else ""
     delta = relativedelta(t, n)
     attrs = [('year', 'y'), ('month', 'mo'), ('day', 'd'), ('hour', 'h'), ('minute', 'm'), ('second', 's')]
-
     output = []
     for attr, brief_attr in attrs:
         elem = getattr(delta, attr + 's')
         if not elem:
             continue
-
         if attr == 'day':
             weeks = delta.weeks
             if weeks:
                 elem -= weeks * 7
                 output.append(f'{weeks}w')
-
         if elem <= 0:
             continue
         if not show_seconds and brief_attr == "s":
             continue
         output.append(f'{elem}{brief_attr}')
-
     if accuracy is not None:
         output = output[:accuracy]
-
     if len(output) == 0:
         return 'now'
     else:
         t = ' '.join(output)
-        # if suffix:
-        #     if future:
-        #         t = 'in ' + t
-        #     else:
-        #         t += ' ago'
         return f"{p}{t}{s}"
-        # if not brief:
-        #     return human_join(output, final='and') + suffix
-        # else:
-        #     return ' '.join(output) + suffix
 # Code adopted from R. Danny

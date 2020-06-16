@@ -84,3 +84,8 @@
 ## v5.1.11 - 16 June
 - Improved lock command
 - Unlocked choco's commands
+
+## v5.1.12 - 16 June
+- Command for base conversions
+- Time for Kargadia
+- Owoify command

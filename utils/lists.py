@@ -23,7 +23,7 @@ server_icons = ["https://cdn.discordapp.com/attachments/714583916706791494/71458
                 "https://cdn.discordapp.com/attachments/714583916706791494/714584238686732319/10.png",
                 "https://cdn.discordapp.com/attachments/714583916706791494/714584244940439593/11.png"]
 playing = ["with Regaus", "without you", "with nobody", "alone", "Custom Status", "with the Nuriki Cult", "PyCharm", "Русские Вперёд!", ",/help", "nothing"]
-phrases = ["Imagine not being forced to work 24/7", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!"]
+phrases = ["Imagine not being forced to work 24/7", "Reminder that AlexFlipnote is a furry", "Русские Вперёд!", "Imagine using decimal"]
 image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 672097261710475294, 'l': 672098660418584586,
                   'c': 675769002613669918, 'b': 675771077057839104, 's': 683486714873905171, 'n': 690573072536961075,
                   'r': 691739503160852591, 'v': 671897418589143051, 'u': 694148497766875186, 'm': 694151734603415632,
