@@ -299,7 +299,7 @@ data = {
     "boop2": "<val1> has now got booped <val2> times in this server",
     "ship_suager": "I was never programmed to feel love...",
     "ship_self": "I don't think that's how it works",
-    "ship": "Nice shipping!\nShip names: **<val1>** or **<val2>**\n",
+    "ship": "Nice shipping!\nPossible ship names:\n1) **<val1>**\n2) **<val2>**\n3) **<val3>**\n4) **<val4>**",
     "ship2": "\n**<val1>** has now been shipped **<val2> times** in this server!",
     "ship3": "\n**<val1>** has now built **<val2> ships** in this server!",
     "spam_stats": "Spam stats for **<val1>** in **<val2>**",

@@ -80,3 +80,7 @@
 ## v5.1.10.2 - 15 June
 - Locked Cryptic from lick
 - Better love lock message
+
+## v5.1.11 - 16 June
+- Improved lock command
+- Unlocked choco's commands

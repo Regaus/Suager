@@ -221,7 +221,7 @@ class Social(commands.Cog):
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "lick"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
-        if (user.id == 302851022790066185 and ctx.author.id == 667187968145883146) or user.id == 523275160799805471:  # choco / cryptic
+        if user.id in [523275160799805471]:  # cryptic
             return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
@@ -347,8 +347,6 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "smell_suager", [ctx.author.name]), ctx.channel)
         if user.bot:
             return await generic.send(generic.gls(locale, "smell_bot", [user.name]), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id == 667187968145883146:  # choco
-            return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "sniffs_given", "sniffs_received", 20, 21)
         s = generic.gls(locale, f"{ctx.invoked_with}ed")
@@ -463,11 +461,19 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "image_not_created"), ctx.channel)
         __names = [len(user1.name), len(user2.name)]
         _names = [int(x / 2) for x in __names]
-        names = [user1.name[:_names[0]], user2.name[_names[1]:]]
-        name = ''.join(names)
-        names2 = [user2.name[:_names[1]], user1.name[_names[0]:]]
-        name2 = ''.join(names2)
-        message = generic.gls(locale, "ship", [name, name2])
+        n1 = user1.name[:_names[0]]
+        n2 = user1.name[_names[0]:]
+        n3 = user2.name[:_names[1]]
+        n4 = user2.name[_names[1]:]
+        name1 = ''.join([n1, n4])
+        name2 = ''.join([n2, n3])
+        name3 = ''.join([n1, n3])
+        name4 = ''.join([n2, n4])
+        # names = [user1.name[:_names[0]], user2.name[_names[1]:]]
+        # name = ''.join(names)
+        # names2 = [user2.name[:_names[1]], user1.name[_names[0]:]]
+        # name2 = ''.join(names2)
+        message = generic.gls(locale, "ship", [name1, name2, name3, name4])
         data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         data_receive1 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user1.id, ctx.guild.id))
         data_receive2 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user2.id, ctx.guild.id))
@@ -477,39 +483,39 @@ class Social(commands.Cog):
             data[1] = ctx.guild.id
             data[27] = 1
             self.db.execute(self.insert, tuple(data))
-            number3 = 1
+            # number3 = 1
         else:
             self.db.execute("UPDATE counters SET ships_built=? WHERE uid=? AND gid=?",
                             (data_giver["ships_built"] + 1, ctx.author.id, ctx.guild.id))
-            number3 = data_giver["ships_built"] + 1
+            # number3 = data_giver["ships_built"] + 1
         if not data_receive1:
             data = self.empty.copy()
             data[0] = user1.id
             data[1] = ctx.guild.id
             data[26] = 1
             self.db.execute(self.insert, tuple(data))
-            number = 1
+            # number = 1
         else:
             self.db.execute("UPDATE counters SET shipped=? WHERE uid=? AND gid=?",
                             (data_receive1["shipped"] + 1, user1.id, ctx.guild.id))
-            number = data_receive1["shipped"] + 1
+            # number = data_receive1["shipped"] + 1
         if not data_receive2:
             data = self.empty.copy()
             data[0] = user2.id
             data[1] = ctx.guild.id
             data[26] = 1
             self.db.execute(self.insert, tuple(data))
-            number2 = 1
+            # number2 = 1
         else:
             self.db.execute("UPDATE counters SET shipped=? WHERE uid=? AND gid=?",
                             (data_receive2["shipped"] + 1, user2.id, ctx.guild.id))
-            number2 = data_receive2["shipped"] + 1
-        if ctx.guild.id in generic.counter_locks:
-            message += "\n" + generic.gls(locale, "counters_disabled", [ctx.prefix])
-        else:
-            message += generic.gls(locale, "ship2", [user1.name, number])
-            message += generic.gls(locale, "ship2", [user2.name, number2])
-            message += generic.gls(locale, "ship3", [ctx.author.name, number3])
+            # number2 = data_receive2["shipped"] + 1
+        # if ctx.guild.id in generic.counter_locks:
+        #     message += "\n" + generic.gls(locale, "counters_disabled", [ctx.prefix])
+        # else:
+        #     message += generic.gls(locale, "ship2", [user1.name, number])
+        #     message += generic.gls(locale, "ship2", [user2.name, number2])
+        #     message += generic.gls(locale, "ship3", [ctx.author.name, number3])
         return await generic.send(message, ctx.channel, file=discord.File(bio, filename="ship.png"))
 
     @commands.command(name="sleepy")
