@@ -65,7 +65,7 @@ class Utility(commands.Cog):
         words = [["ahh", "murr"], ["are", "is"], ["awesome", "pawsome"], ["awful", "pawful"], ["bite", "nom"], ["bulge", "bulgy-wulgy"],
                  ["butthole", "tailhole"], ["celebrity", "popufur"], ["cheese", "sergal"], ["child", "cub"], ["computer", "protogen"], ["robot", "protogen"],
                  ["cyborg", "protogen"], ["cum", "cummy wummy~"], ["disease", "pathOwOgen"], ["dog", "good boy"], ["dragon", "derg"], ["eat", "vore"],
-                 ["fuck", "fluff"], ["father", "daddy"], ["foot", "footpaw"], ["for", "fur"], ["hand", "paw"], ["hell", "hecc"], ["hyena", "yeen"],
+                 ["fuck", "fluff"], ["father", "daddy"], ["foot", "footpaw"], ["for ", "fur "], ["hand", "paw"], ["hell", "hecc"], ["hyena", "yeen"],
                  ["kiss", "lick"], ["lmao", "hehe~"], ["love", "wuv"], ["mouth", "maw"], ["naughty", "knotty"], ["not", "knot"], ["perfect", "purrfect"],
                  ["persona", "fursona"], ["pervert", "furvert"], ["porn", "yiff"], ["shout", "awoo"], ["source", "sauce"], ["straight", "gay"],
                  ["tale", "tail"], ["the", "teh"], ["that", "dat"], ["these", "dese"], ["this", "dis"], ["those", "dose"], ["toe", "toe bean"],
@@ -76,7 +76,7 @@ class Utility(commands.Cog):
         faces = ["(o´∀`o)", "(#｀ε´)", "(๑•̀ㅁ•́๑)✧", "(*≧m≦*)", "(・`ω´・)", "UwU", "OwO", ">w<", "｡ﾟ( ﾟ^∀^ﾟ)ﾟ｡", "ヾ(｀ε´)ﾉ",
                  "(´• ω •`)", "o(>ω<)o", "(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧", "(⁀ᗢ⁀)", "(￣ε￣＠)", "( 〃▽〃)", "(o^ ^o)", "ヾ(*'▽'*)"]
         for word in words:
-            stuff = stuff.replace(f"{word[0]} ", f"{word[1]} ")
+            stuff = stuff.replace(word[0], word[1])
         for phrase in phrases:
             stuff = stuff.replace(phrase[0], phrase[1])
         for symbol in symbols:
