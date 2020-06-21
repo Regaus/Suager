@@ -31,11 +31,11 @@ def now_k():
 def date_kargadia():
     kst = timezone(td(hours=1, minutes=30), "KST")
     irl = now(True).astimezone(kst)
-    start = datetime(1970, 1, 1, tzinfo=kst)  # Because why not?
+    start = datetime(2000, 1, 1, 8, tzinfo=kst)  # Because why not?
     total = (irl - start).total_seconds()
     ml = 32  # month length
     wl = 8  # week length
-    year = 1700
+    year = 1074
     day_length = 37.49865756 * 3600
     days = total / day_length
     secs = (days % 1) * day_length
@@ -55,12 +55,12 @@ def date_kargadia():
     month, day = divmod(dl, ml)
     dow = dl % wl
     weekdays = ["Senka", "Navaite", "Sennen", "Karga", "Teinen", "Kannaite", "Sua", "Shira"]
-    parts = ["rea", "sea", "vea", "tea"]
+    parts = ["tea", "rea", "sea", "vea"]
     part = h // 8
     day_name = f"{weekdays[dow]}{parts[part]}"
     months = ["Senkannar", "Shirannar", "Kanvamar", "Shokamar", "Nurinnar", "Aijamar", "Kionnar", "Nuudamar", "Bauzemar", "Tvinkannar",
               "Suannar", "Kittinnar", "Dekimar", "Haltannar", "Kaivennar", "Kärasmar"]
-    return f"{day_name}, {day + 1:02d} {months[month]} {year} KE {h:02d}:{m:02d}:{s:02d} ({day + 1:02X}/{month + 1:02X}/{year:X}, {h:02X}:{m:02X}:{s:02X})"
+    return f"{day_name}, {day + 1:02X}/{month + 1:02X}/{year:X} RE {h:02X}:{m:02X}:{s:02X} ({day + 1:02d} {months[month]} {year}, {h:02d}:{m:02d}:{s:02d})"
 
 
 def time_k(day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):

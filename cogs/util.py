@@ -44,7 +44,7 @@ class Utility(commands.Cog):
 
     @commands.command(name="base", aliases=["bases", "bc"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def base_conversions(self, ctx: commands.Context, conversion: str, number: str, base: int, caps: bool = False):
+    async def base_conversions(self, ctx: commands.Context, conversion: str, base: int, number: str, caps: bool = False):
         """ Convert numbers between bases
 
         Use "to" to convert decimal (base-10) to a base
@@ -52,14 +52,17 @@ class Utility(commands.Cog):
         Caps is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to base 10."""
         if base > 36:
             return await generic.send(f"{ctx.author.name}, Bases above 36 are not supported", ctx.channel)
-        if conversion == "to":
-            return await generic.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
-        if conversion == "from":
-            return await generic.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+        try:
+            if conversion == "to":
+                return await generic.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
+            if conversion == "from":
+                return await generic.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+        except ValueError:
+            return await generic.send(f"{ctx.author.name}, this number is invalid.", ctx.channel)
 
     @commands.command(name="owoify", aliases=["owo", "furry"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def base_conversions(self, ctx: commands.Context, *, string: str):
+    async def owo(self, ctx: commands.Context, *, string: str):
         """ Converts input into furry language. I'm not sorry. """
         stuff = string.lower()
         words = [["ahh", "murr"], ["are", "is"], ["awesome", "pawsome"], ["awful", "pawful"], ["bite", "nom"], ["bulge", "bulgy-wulgy"],

@@ -96,3 +96,7 @@
 
 ## v5.1.12.2 - 21 June
 - Improved time2
+
+## v5.1.12.3 - 21 June
+- Hopefully done with time2
+- Fixed bases command
