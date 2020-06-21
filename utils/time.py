@@ -54,10 +54,13 @@ def date_kargadia():
             break
     month, day = divmod(dl, ml)
     dow = dl % wl
-    weekdays = ["Eighth", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh"]
+    weekdays = ["Senka", "Navaite", "Sennen", "Karga", "Teinen", "Kannaite", "Sua", "Shira"]
+    parts = ["rea", "sea", "vea", "tea"]
+    part = h // 8
+    day_name = f"{weekdays[dow]}{parts[part]}"
     months = ["Senkannar", "Shirannar", "Kanvamar", "Shokamar", "Nurinnar", "Aijamar", "Kionnar", "Nuudamar", "Bauzemar", "Tvinkannar",
               "Suannar", "Kittinnar", "Dekimar", "Haltannar", "Kaivennar", "Kärasmar"]
-    return f"{weekdays[dow]}, {day + 1:02d} {months[month]} {year} KE {h:02d}:{m:02d}:{s:02d} ({day + 1:02X}/{month + 1:02X}/{year:X}, {h:02X}:{m:02X}:{s:02X})"
+    return f"{day_name}, {day + 1:02d} {months[month]} {year} KE {h:02d}:{m:02d}:{s:02d} ({day + 1:02X}/{month + 1:02X}/{year:X}, {h:02X}:{m:02X}:{s:02X})"
 
 
 def time_k(day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):

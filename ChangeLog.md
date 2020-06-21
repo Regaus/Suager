@@ -93,3 +93,6 @@
 ## v5.1.12.1 - 19 June
 - Improved time2
 - Slightly changed owoify
+
+## v5.1.12.2 - 21 June
+- Improved time2
