@@ -100,3 +100,6 @@
 ## v5.1.12.3 - 21 June
 - Hopefully done with time2
 - Fixed bases command
+
+## v5.1.13 - 22 June
+- More ship names

@@ -465,15 +465,15 @@ class Social(commands.Cog):
         n2 = user1.name[_names[0]:]
         n3 = user2.name[:_names[1]]
         n4 = user2.name[_names[1]:]
-        name1 = ''.join([n1, n4])
-        name2 = ''.join([n2, n3])
-        name3 = ''.join([n1, n3])
+        name1 = ''.join([n1, n3])
+        name2 = ''.join([n1, n4])
+        name3 = ''.join([n2, n3])
         name4 = ''.join([n2, n4])
-        # names = [user1.name[:_names[0]], user2.name[_names[1]:]]
-        # name = ''.join(names)
-        # names2 = [user2.name[:_names[1]], user1.name[_names[0]:]]
-        # name2 = ''.join(names2)
-        message = generic.gls(locale, "ship", [name1, name2, name3, name4])
+        name5 = ''.join([n3, n1])
+        name6 = ''.join([n4, n1])
+        name7 = ''.join([n3, n2])
+        name8 = ''.join([n4, n2])
+        message = generic.gls(locale, "ship", [name1, name2, name3, name4, name5, name6, name7, name8])
         data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         data_receive1 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user1.id, ctx.guild.id))
         data_receive2 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user2.id, ctx.guild.id))
