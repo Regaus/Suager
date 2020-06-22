@@ -54,7 +54,7 @@ def date_kargadia():
             break
     month, day = divmod(dl, ml)
     dow = dl % wl
-    weekdays = ["Senka", "Navaite", "Sennen", "Karga", "Teinen", "Kannaite", "Sua", "Shira"]
+    weekdays = ["Senka", "Navai", "Sanva", "Havlei", "Teine", "Kannai", "Sua", "Shira"]
     parts = ["tea", "rea", "sea", "vea"]
     part = h // 8
     day_name = f"{weekdays[dow]}{parts[part]}"

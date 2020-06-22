@@ -10,7 +10,8 @@ class Tags(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database()
-        self.invalid_names = ["reagus", "reggie", "regoose", "reegaus", "reguas", "regigigas", "suwuager", "suwu", "regauwus"]
+        self.invalid_names = ["reagus", "reggie", "regoose", "reegaus", "reguas", "regigigas", "suwuager", "suwu", "regauwus", "register"]
+        self.invalid_names2 = ["regaus", "suager", "регаус", "reg"]
 
     @commands.group(name="tag", aliases=["tags", "t"], invoke_without_command=True)
     @commands.guild_only()
@@ -37,7 +38,7 @@ class Tags(commands.Cog):
         tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if tag:
             return await generic.send(generic.gls(locale, "tag_already_exists", [tag_name.lower()]), ctx.channel)
-        if (tag_name in ["regaus", "suager"] and ctx.author.id != 302851022790066185) or tag_name in self.invalid_names:
+        if (tag_name.lower() in self.invalid_names2 and ctx.author.id != 302851022790066185) or tag_name.lower() in self.invalid_names:
             return await generic.send(generic.gls(locale, "tag_name_invalid", [ctx.author.name]), ctx.channel)
         self.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                          (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, time.now_ts(), time.now_ts(), 0))
@@ -120,7 +121,7 @@ class Tags(commands.Cog):
         if generic.is_locked(ctx.guild, "tag"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
-        if (new_name in ["regaus", "suager"] and ctx.author.id != 302851022790066185) or new_name in self.invalid_names:
+        if (new_name.lower() in self.invalid_names2 and ctx.author.id != 302851022790066185) or new_name.lower() in self.invalid_names:
             return await generic.send(generic.gls(locale, "tag_name_invalid", [ctx.author.name]), ctx.channel)
         if not tag:
             return await generic.send(generic.gls(locale, "tag_not_found", [tag_name.lower()]), ctx.channel)

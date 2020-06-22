@@ -406,7 +406,7 @@ class Admin(commands.Cog):
             lev = ""
             le = generic.love_exceptions
             for lock in le:
-                for exc in le[str(lock)]:
+                for exc in le[lock]:
                     lev += f"<@{exc}> - {self.get_user(exc)} for {self.get_user(int(lock))}\n"
             if lev == "":
                 lev = "No data available... yet"
