@@ -58,9 +58,9 @@ def date_kargadia():
     parts = ["tea", "rea", "sea", "vea"]
     part = h // 8
     day_name = f"{weekdays[dow]}{parts[part]}"
-    months = ["Senkannar", "Shirannar", "Kanvamar", "Shokamar", "Nurinnar", "Aijamar", "Kionnar", "Nuudamar", "Bauzemar", "Tvinkannar",
-              "Suannar", "Kittinnar", "Dekimar", "Haltannar", "Kaivennar", "Kärasmar"]
-    return f"{day_name}, {day + 1:02X}/{month + 1:02X}/{year:X} RE {h:02X}:{m:02X}:{s:02X} ({day + 1:02d} {months[month]} {year}, {h:02d}:{m:02d}:{s:02d})"
+    months = ["Senkannar", "Shirannar", "Kanvamar", "Shokamar", "Nurinnar", "Aijamar", "Kionnar", "Nuudamar",
+              "Bauzemar", "Tvinkannar", "Suannar", "Kittinnar", "Dekimar", "Haltannar", "Kaivennar", "Kärasmar"]
+    return f"{day_name}, {day + 1:02d}/{month + 1:02d}/{year}, {h:02d}:{m:02d}:{s:02d} ({day + 1:02X} {months[month]} {year:X} RE, {h:02X}:{m:02X}:{s:02X})"
 
 
 def time_k(day: bool = True, seconds: bool = True, dow: bool = False, tz: bool = False):
@@ -71,7 +71,7 @@ def time(utc: bool = False, day: bool = True, seconds: bool = True, dow: bool = 
     return time_output(now(utc), day, seconds, dow, tz)
 
 
-def from_ts(timestamp: int or float, utc=False) -> datetime:
+def from_ts(timestamp: int or float, utc: bool = True) -> datetime:
     from utils.generic import config
     if utc:
         return datetime.fromtimestamp(timestamp, tz=timezone.utc)
@@ -120,16 +120,18 @@ def timesince(when: datetime):
     return timedelta(int(t.total_seconds()))
 
 
-def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
+def human_timedelta(dt: datetime, *, source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = True):
     _now = source or now(False)
     _now = _now.replace(microsecond=0)
     dt = from_ts(get_ts(dt), False)
     if dt > _now:
         delta = relativedelta(dt, _now)
         suffix = ''
+        prefix = 'in ' if suffix else ''
     else:
         delta = relativedelta(_now, dt)
         suffix = ' ago' if suffix else ''
+        prefix = ''
     attrs = [('year', 'y'), ('month', 'mo'), ('day', 'd'), ('hour', 'h'), ('minute', 'm'), ('second', 's')]
     output = []
     for attr, brief_attr in attrs:
@@ -156,13 +158,17 @@ def human_timedelta(dt, *, source=None, accuracy=3, brief=False, suffix=True):
         return 'now'
     else:
         if not brief:
-            return human_join(output, final='and') + suffix
+            return prefix + human_join(output, final='and') + suffix
         else:
-            return ' '.join(output) + suffix
-# Code from R. Danny
+            return prefix + ' '.join(output) + suffix
+# Code based on R. Danny
 
 
-def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: bool = False, show_seconds=True):
+def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: bool = False):
+    return human_timedelta(now(False) + td(seconds=seconds if future else -seconds), accuracy=accuracy, suffix=suffix, brief=True)
+
+
+"""
     n = now(False)
     t = now(False) + td(seconds=seconds)
     p = "in " if future and suffix else ""
@@ -191,4 +197,4 @@ def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: boo
     else:
         t = ' '.join(output)
         return f"{p}{t}{s}"
-# Code adopted from R. Danny
+"""

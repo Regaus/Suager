@@ -138,8 +138,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
-        if generic.is_love_locked2(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+        # if generic.is_love_locked2(user, ctx.author):
+        #     return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "pats_given", "pats_received", 16, 17)
         embed.title = generic.gls(locale, "pat", [user.name, ctx.author.name])
@@ -170,8 +170,8 @@ class Social(commands.Cog):
         # if user.id in generic.love_locks and ctx.author.id not in generic.love_exceptions:
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
-        if generic.is_love_locked2(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+        # if generic.is_love_locked2(user, ctx.author):
+        #     return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "hugs_given", "hugs_received", 10, 11)
         embed.title = generic.gls(locale, "hug", [user.name, ctx.author.name])
@@ -201,8 +201,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "inter_bot", [user.name]), ctx.channel)
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
-        if generic.is_love_locked2(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+        # if generic.is_love_locked2(user, ctx.author):
+        #     return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "cuddles_given", "cuddles_received", 6, 7)
         embed.title = generic.gls(locale, "cuddle", [user.name, ctx.author.name])
@@ -260,8 +260,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "kiss_bot", [user.name]), ctx.channel)
         if generic.is_love_locked(user, ctx.author):
             return await generic.send(generic.gls(locale, "love_locked", [user.name]), ctx.channel)
-        if generic.is_love_locked2(user, ctx.author):
-            return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
+        # if generic.is_love_locked2(user, ctx.author):
+        #     return await generic.send(generic.gls(locale, "love_locked", [ctx.author.name]), ctx.channel)
         embed = discord.Embed(colour=generic.random_colour())
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "kisses_given", "kisses_received", 12, 13)
         embed.title = generic.gls(locale, "kiss", [user.name, ctx.author.name])
@@ -636,18 +636,18 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bean_suager"), ctx.channel)
         if user.id == ctx.guild.owner.id and ctx.author.id != 302851022790066185:
             return await generic.send(generic.gls(locale, "bean_owner"), ctx.channel)
-        bean_self = generic.is_bad_locked(ctx.author)
-        if not bean_self:
-            id1, id2 = ctx.author.id, user.id
-        else:
-            id1, id2 = -1, ctx.author.id
+        # bean_self = generic.is_bad_locked(ctx.author)
+        # if not bean_self:
+        id1, id2 = ctx.author.id, user.id
+        # else:
+        #     id1, id2 = -1, ctx.author.id
         number = self.data_update(id1, id2, ctx.guild.id, "beans_given", "beaned", 24, 25)
-        if not bean_self:
-            bean = generic.gls(locale, "bean", [user.name, ctx.guild.name])
-            if ctx.guild.id not in generic.counter_locks:
-                bean += generic.gls(locale, "bean3", [user.name, number])
-        else:
-            bean = generic.gls(locale, "bean2", [ctx.author.name, ctx.guild.name])
+        # if not bean_self:
+        bean = generic.gls(locale, "bean", [user.name, ctx.guild.name])
+        if ctx.guild.id not in generic.counter_locks:
+            bean += generic.gls(locale, "bean3", [user.name, number])
+        # else:
+        #     bean = generic.gls(locale, "bean2", [ctx.author.name, ctx.guild.name])
         return await generic.send(bean, ctx.channel)
 
     @commands.command(name="bad")
@@ -663,8 +663,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bad_self"), ctx.channel)
         if user.id == 302851022790066185:
             bad_self = True
-        elif generic.is_bad_locked(ctx.author):
-            return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
+        # elif generic.is_bad_locked(ctx.author):
+        #     return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
         elif user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "bad_suager"), ctx.channel)
         if not bad_self:
@@ -692,8 +692,8 @@ class Social(commands.Cog):
         if user.id == 302851022790066185:
             a2, a1 = a1, a2
             trash_self = True
-        elif generic.is_bad_locked(ctx.author):
-            return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
+        # elif generic.is_bad_locked(ctx.author):
+        #     return await generic.send(generic.gls(locale, "bad_locked", [ctx.author.name]), ctx.channel)
         if not trash_self:
             id1, id2 = ctx.author.id, user.id
         else:

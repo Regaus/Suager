@@ -4,7 +4,7 @@ from utils import generic
 
 
 class Placeholder(commands.Cog):
-    @commands.command(name="placeholder", hidden=True)
+    @commands.command(name="placeholder")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def placeholder(self, ctx: commands.Context):
         """ Placeholder """

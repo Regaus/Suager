@@ -196,5 +196,15 @@ tables = [
         Column("pokes_received", 0, False),
         Column("boops_given", 0, False),
         Column("boops_received", 0, False)
+    ]),
+    Table("tags", [
+        Column("gid", 0, True),
+        Column("creator", 0, True),
+        Column("owner", 0, True),
+        Column("name", 2, True),
+        Column("content", 2, True),
+        Column("created", 0, True),
+        Column("edited", 0, True),
+        Column("usage", 0, True)
     ])
 ]

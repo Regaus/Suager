@@ -18,12 +18,10 @@ def insert_returns(body):
     if isinstance(body[-1], ast.Expr):
         body[-1] = ast.Return(body[-1].value)
         ast.fix_missing_locations(body[-1])
-
     # for if statements, we insert returns into the body and the or-else
     if isinstance(body[-1], ast.If):
         insert_returns(body[-1].body)
         insert_returns(body[-1].orelse)
-
     # for with blocks, again we insert returns into the body
     if isinstance(body[-1], ast.With):
         insert_returns(body[-1].body)
@@ -32,20 +30,12 @@ def insert_returns(body):
 async def eval_(ctx: commands.Context, cmd):
     try:
         fn_name = "_eval_expr"
-
         cmd = cmd.strip("` ")
-
-        # add a layer of indentation
         cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
-
-        # wrap in async def body
         body = f"async def {fn_name}():\n{cmd}"
-
         parsed = ast.parse(body)
         body = parsed.body[0].body
-
         insert_returns(body)
-
         env = {
             'bot': ctx.bot,
             'discord': discord,
@@ -55,7 +45,6 @@ async def eval_(ctx: commands.Context, cmd):
             '__import__': __import__,
         }
         exec(compile(parsed, filename="<ast>", mode="exec"), env)
-
         result = (await eval(f"{fn_name}()", env))
         if ctx.guild is None:
             limit = 8000000
@@ -247,11 +236,7 @@ class Admin(commands.Cog):
     @commands.command(name='eval')
     @commands.check(permissions.is_owner)
     async def eval_cmd(self, ctx: commands.Context, *, cmd):
-        """ Evaluates input.
-        Input is interpreted as newline separated statements.
-        If the last statement is an expression, that is the return value.
-        Such that `//eval 1 + 1` gives `2` as the result.
-        """
+        """ Evaluates input. """
         return await eval_(ctx, cmd)
 
     @commands.command(name="reload", aliases=["r"])
@@ -281,8 +266,7 @@ class Admin(commands.Cog):
                     error_collection.append([file, generic.traceback_maker(e, advance=False)])
         if error_collection:
             output = "\n".join([f"**{g[0]}** ```fix\n{g[1]}```" for g in error_collection])
-            return await generic.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}",
-                                      ctx.channel)
+            return await generic.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}", ctx.channel)
         await generic.send("Successfully reloaded all extensions", ctx.channel)
         logs.log("changes", f"{time.time()} > Successfully reloaded all extensions")
 
@@ -347,18 +331,14 @@ class Admin(commands.Cog):
         proc = await asyncio.create_subprocess_shell(text, stdin=None, stderr=PIPE, stdout=PIPE)
         out = (await proc.stdout.read()).decode('utf-8').strip()
         err = (await proc.stderr.read()).decode('utf-8').strip()
-
         if not out and not err:
             await message.delete()
             return await ctx.message.add_reaction('👌')
-
         content = ""
-
         if err:
             content += f"Error:\r\n{err}\r\n{'-' * 30}\r\n"
         if out:
             content += out
-
         if len(content) > 1500:
             try:
                 data = BytesIO(content.encode('utf-8'))
@@ -419,8 +399,8 @@ class Admin(commands.Cog):
             embed = discord.Embed(colour=generic.random_colour())
             embed.title = "The Infidel List for Suager"
             embed.timestamp = time.now()
-            sn = ("Stage 1", "Stage 2", "Stage 3", "Stage 4 - Bad Lock", "Stage 5 - Love Lock I", "Stage 6 - Love Lock II", "Stage 7 - Senko Lair Ban")
-            stages = (generic.stage_1, generic.stage_2, generic.stage_3, generic.stage_4, generic.stage_5, generic.stage_6, generic.stage_7)
+            sn = ("Stage 1", "Stage 2", "Stage 3", "Stage 4")
+            stages = (generic.stage_1, generic.stage_2, generic.stage_3, generic.stage_4)
             for i in range(len(stages)):
                 embed.add_field(name=sn[i], value=self.get_val(stages[i]), inline=False)
             lev = ""
@@ -455,8 +435,8 @@ class Admin(commands.Cog):
         output = generic.infidel_down(user.id)
         if output == -1:
             return await generic.send("Something went wrong...", ctx.channel)
-        elif output == 8:
-            return await generic.send(f"{user} is already at Stage 7", ctx.channel)
+        elif output == 5:
+            return await generic.send(f"{user} is already at Stage 4", ctx.channel)
         else:
             reload = reload_util("generic")
             return await generic.send(f"{user} is now a Stage {output} Infidel\n{reload}", ctx.channel)
@@ -489,14 +469,14 @@ class Admin(commands.Cog):
         embed.description = desc
         return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.group(name="config")
-    @commands.check(permissions.is_owner)
-    async def config(self, ctx: commands.Context):
-        """ Change bot's configs """
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(str(ctx.command))
+    # @commands.group(name="config")
+    # @commands.check(permissions.is_owner)
+    # async def config(self, ctx: commands.Context):
+    #     """ Change bot's configs """
+    #     if ctx.invoked_subcommand is None:
+    #         await ctx.send_help(str(ctx.command))
 
-    @config.command(name="fullversion", aliases=["fversion", "version", "fv", "v"])
+    @commands.command(name="version", aliases=["fversion", "fullversion", "fv", "v"])
     @commands.check(permissions.is_owner)
     async def change_full_version(self, ctx: commands.Context, new_version: str):
         """ Change version (full) """
@@ -515,7 +495,7 @@ class Admin(commands.Cog):
             logs.log("version_changes", f"{time.time()} > {to_send}")
         return await generic.send(to_send, ctx.channel)
 
-    @config.command(name="shortversion", aliases=["sversion", "sv"])
+    @commands.command(name="sversion", aliases=["shortversion", "sv"])
     @commands.check(permissions.is_owner)
     async def change_short_version(self, ctx: commands.Context, new_version: str):
         """ Change version (short) """
@@ -534,22 +514,29 @@ class Admin(commands.Cog):
             logs.log("version_changes", f"{time.time()} > {to_send}")
         return await generic.send(to_send, ctx.channel)
 
-    @config.command(name="loveexceptions", aliases=["le"])
-    @commands.check(permissions.is_owner)
-    async def config_love_exceptions(self, ctx: commands.Context, action: str, uid: int, lid: int):
-        """ Update the love exceptions list
-        uid = exception, lid = locked user """
-        try:
-            data_io.change_locks("love_exceptions", str(lid), action, uid)
-        except Exception as e:
-            return await generic.send(str(e), ctx.channel)
-        reload = reload_util("generic")
-        w1 = "added" if action == "add" else "removed"
-        w2 = "to" if action == "add" else "from"
-        return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Love Exceptions List of <@{lid}>\n"
-                                  f"Reload status: {reload}", ctx.channel)
+    # @config.command(name="loveexceptions", aliases=["le"])
+    # @commands.check(permissions.is_owner)
+    # async def config_love_exceptions(self, ctx: commands.Context, action: str, uid: int, lid: int):
+    #     """ Update the love exceptions list
+    #     uid = exception, lid = locked user """
+    #     try:
+    #         data_io.change_locks("love_exceptions", str(lid), action, uid)
+    #     except Exception as e:
+    #         return await generic.send(str(e), ctx.channel)
+    #     reload = reload_util("generic")
+    #     w1 = "added" if action == "add" else "removed"
+    #     w2 = "to" if action == "add" else "from"
+    #     return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Love Exceptions List of <@{lid}>\n"
+    #                               f"Reload status: {reload}", ctx.channel)
 
-    @config.command(name="channellocks", aliases=["cl"])
+    @commands.group(name="locks", aliases=["lock", "lc"])
+    @commands.check(permissions.is_owner)
+    async def locks(self, ctx: commands.Context):
+        """ Change bot's locks """
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(str(ctx.command))
+
+    @locks.command(name="channellocks", aliases=["cl"])
     @commands.check(permissions.is_owner)
     async def config_channel_locks(self, ctx: commands.Context, action: str, cid: int):
         """ Update the channel locks list (tell to use bot commands) """
@@ -563,7 +550,7 @@ class Admin(commands.Cog):
         return await generic.send(f"{emotes.Allow} Successfully {w1} <#{cid}> ({self.bot.get_channel(cid)}) {w2} the Channel Locks List\n"
                                   f"Reload status: {reload}", ctx.channel)
 
-    @config.command(name="serverlocks", aliases=["sl"])
+    @locks.command(name="serverlocks", aliases=["sl"])
     @commands.check(permissions.is_owner)
     async def config_server_locks(self, ctx: commands.Context, action: str, gid: int, command: str):
         """ Update the server command locks list (disable commands) """
@@ -577,7 +564,7 @@ class Admin(commands.Cog):
         return await generic.send(f"{emotes.Allow} Successfully {w1} `{command}` {w2} the Server Locks List for {self.bot.get_guild(gid)}\n"
                                   f"Reload status: {reload}", ctx.channel)
 
-    @config.command(name="counterlocks", aliases=["cl2", "nl"])
+    @locks.command(name="counterlocks", aliases=["cl2", "nl"])
     @commands.check(permissions.is_owner)
     async def config_counter_locks(self, ctx: commands.Context, action: str, gid: int):
         """ Update the counter locks list """

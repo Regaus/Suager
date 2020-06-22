@@ -103,3 +103,10 @@
 
 ## v5.1.13 - 22 June
 - More ship names
+
+## v5.2.0 - 22 June
+- Removed Stages 5, 6, and 7
+- timedelta now uses human_timedelta
+- Fixed vibe check
+- Restructured admin commands a bit
+- Tags system

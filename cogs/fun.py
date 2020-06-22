@@ -48,7 +48,7 @@ class Fun(commands.Cog):
             r = 2
         else:
             r = random.randint(1, 2)
-        return await message.edit(content=generic.gls(locale, "vibe_check2", [generic.gls(locale, f"vibe_check{r + 2}")]))
+        return await message.edit(content=generic.gls(locale, "vibe_check2", [user.name, generic.gls(locale, f"vibe_check{r + 2}")]))
 
     @commands.command(name="flip", aliases=["coin"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

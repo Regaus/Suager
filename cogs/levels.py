@@ -119,12 +119,12 @@ class Leveling(commands.Cog):
         now = time.now_ts()
         td = now - last
         _td = now - ls
-        mr = random.uniform(5, 10)
+        # mr = random.uniform(5, 10)
         if (td < 1 or _td < 1) and anti_spam_xp:
             mult = -0.25 / _td
-        elif td < mr:
+        elif td < 7:
             mult = 0
-        elif mr <= td < 60:
+        elif 7 <= td < 60:
             mult = td / 60
         else:
             mult = 1
@@ -152,9 +152,10 @@ class Leveling(commands.Cog):
             heresy = 0.95
         if ctx.author.id in generic.stage_2:
             heresy = 0.90
-        if ctx.author.id in generic.stage_3 or ctx.author.id in generic.stage_4 or ctx.author.id in generic.stage_5 or ctx.author.id in generic.stage_6 \
-                or ctx.author.id in generic.stage_7:
+        if ctx.author.id in generic.stage_3:
             heresy = 0.85
+        if ctx.author.id in generic.stage_4:
+            heresy = 0.8
         x1, x2 = xp_amounts
         x3, x4 = money_amounts
         try:
@@ -220,7 +221,7 @@ class Leveling(commands.Cog):
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                send = f"{ctx.author.mention} is now **level {level:,}** <a:UmmOK:693575304622637087>"
+                send = f"{ctx.author.mention} is now **level {level:,}** <a:UmmOK:706884864632291351>"
                 try:
                     ac = settings['leveling']['announce_channel']
                     if ac != 0:
@@ -604,7 +605,7 @@ class Leveling(commands.Cog):
             x1, x2 = [val * dm for val in xp_amounts]
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
             try:
-                t1, t2 = [time.timedelta(x * 60, show_seconds=False) for x in [a1, a2]]
+                t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
             except OverflowError:
                 error = "Error"
                 t1, t2 = [error, error]
@@ -658,7 +659,7 @@ class Leveling(commands.Cog):
         x1, x2 = [val * normal * dm for val in xp_amounts]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         try:
-            t1, t2 = [time.timedelta(x * 60, show_seconds=True) for x in [a1, a2]]
+            t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
         except OverflowError:
             error = "Error"
             t1, t2 = [error, error]

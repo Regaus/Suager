@@ -147,34 +147,33 @@ locked = locks.get_locks()
 channel_locks = locked["channel_locks"]
 server_locks = locked["server_locks"]
 counter_locks = locked["counter_locks"]
-love_exceptions = locked["love_exceptions"]
+love_locks = [424472476106489856, 523275160799805471]
+love_exceptions = {424472476106489856: [417390734690484224, 273916273732222979, 689158123352883340],
+                   523275160799805471: [302851022790066185, 273916273732222979, 707457134102708284, 667187968145883146]}
 infidels = locks.get_infidels()
 stage_1 = infidels["1"]
 stage_2 = infidels["2"]
 stage_3 = infidels["3"]
 stage_4 = infidels["4"]
-stage_5 = infidels["5"]
-stage_6 = infidels["6"]
-stage_7 = infidels["7"]
 db = database.Database()
 
 
 def infidel_base(uid: int):
-    t1, t2, t3, t4, t5, t6, t7 = uid in stage_1, uid in stage_2, uid in stage_3, uid in stage_4, uid in stage_5, uid in stage_6, uid in stage_7
-    t0 = not (t1 or t2 or t3 or t4 or t5 or t6 or t7)
+    t1, t2, t3, t4 = uid in stage_1, uid in stage_2, uid in stage_3, uid in stage_4
+    t0 = not (t1 or t2 or t3 or t4)
     # tiers = [str(i) for i in range(1, 8)]
     a1, a2 = "add", "remove"
-    return t0, t1, t2, t3, t4, t5, t6, t7, a1, a2
+    return t0, t1, t2, t3, t4, a1, a2
 
 
 def infidel_up(uid: int):
     """ Move someone up the Infidel List """
-    t0, t1, t2, t3, t4, t5, t6, t7, a1, a2 = infidel_base(uid)
-    a = 1 if t0 else 2 if t1 else 3 if t2 else 4 if t3 else 5 if t4 else 6 if t5 else 7 if t6 else 8 if t7 else -1
+    t0, t1, t2, t3, t4, a1, a2 = infidel_base(uid)
+    a = 1 if t0 else 2 if t1 else 3 if t2 else 4 if t3 else 5 if t4 else -1
     if a != -1:  # if it ain't broken
-        for i in range(1, 8):  # Stage 1 - 7
-            if a == 8 and i == 7:
-                continue  # Don't remove Stage 7 if Stage 7 is reached
+        for i in range(1, 5):  # Stages 1 - 4
+            if a == 5 and i == 4:
+                continue  # Don't remove Stage 4 if Stage 4 is reached
             if i == a:
                 data_io.change_infidels(i, a1, uid)
             if i != a:
@@ -184,10 +183,10 @@ def infidel_up(uid: int):
 
 def infidel_down(uid: int):
     """ Move someone down the Infidel List """
-    t0, t1, t2, t3, t4, t5, t6, t7, a1, a2 = infidel_base(uid)
-    a = -2 if t0 else 0 if t1 else 1 if t2 else 2 if t3 else 3 if t4 else 4 if t5 else 5 if t6 else 6 if t7 else -1
+    t0, t1, t2, t3, t4, a1, a2 = infidel_base(uid)
+    a = -2 if t0 else 0 if t1 else 1 if t2 else 2 if t3 else 3 if t4 else -1
     if a != -1:  # if it ain't broken
-        for i in range(1, 8):  # Stage 1 - 7
+        for i in range(1, 5):  # Stages 1 - 4
             if i == a:
                 data_io.change_infidels(i, a1, uid)
             if i != a:
@@ -219,23 +218,22 @@ def is_locked(guild: discord.Guild or None, cmd: str):
     return cmd in server_locks[str(gid)]
 
 
-def is_bad_locked(author: discord.Member) -> bool:
-    return author.id in stage_4 or author.id in stage_5 or author.id in stage_6 or author.id in stage_7
+# def is_bad_locked(author: discord.Member) -> bool:
+#     return author.id in stage_4 or author.id in stage_5 or author.id in stage_6 or author.id in stage_7
 
 
 def is_love_locked(user: discord.Member, author: discord.Member) -> bool:
     try:
-        return ((user.id in stage_5 or user.id in stage_6 or user.id in stage_7) and (author.id not in love_exceptions[str(user.id)])) \
-               and author.id != 597373963571691520  # Nuriki
+        return ((user.id in love_locks) and (author.id not in love_exceptions[user.id])) and author.id != 597373963571691520  # Nuriki
     except KeyError:
-        return (user.id in stage_5 or user.id in stage_6 or user.id in stage_7) and author.id != 597373963571691520
+        return (user.id in love_locks) and author.id != 597373963571691520
 
 
-def is_love_locked2(user: discord.Member, author: discord.Member) -> bool:
-    try:
-        return ((author.id in stage_6 or author.id in stage_7) and (user.id not in love_exceptions[str(author.id)])) and user.id != 597373963571691520  # Nuriki
-    except KeyError:
-        return (author.id in stage_6 or author.id in stage_7) and user.id != 597373963571691520
+# def is_love_locked2(user: discord.Member, author: discord.Member) -> bool:
+#     try:
+#         return ((author.id in stage_6 or author.id in stage_7) and (user.id not in love_exceptions[str(author.id)])) and user.id != 597373963571691520
+#     except KeyError:
+#         return (author.id in stage_6 or author.id in stage_7) and user.id != 597373963571691520
 
 
 def line_count():

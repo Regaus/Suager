@@ -393,7 +393,6 @@ class Discord(commands.Cog):
         if level in levels:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "su_lra_la"), ctx.channel)
         rr.append({"level": level, "role": role.id})
-        # settings["leveling"]["ignored_channels"].append(channel.id)
         settings["leveling"]["rewards"] = rr
         stuff = json.dumps(settings)
         if data:
@@ -501,19 +500,15 @@ class Discord(commands.Cog):
         """ Yoink all emotes """
         channel = self.bot.get_channel(676154789159239740)
         await generic.send(f"This stash of emotes was made on {time.time()}", channel)
-        # await channel.send(f"This stash of emotes was made on {time.time()}")
         for guild in self.bot.guilds:
             emotes = sorted([e for e in guild.emojis if len(e.roles) == 0 and e.available], key=lambda e: e.name)
             paginator = commands.Paginator(suffix='', prefix='')
             for emote in emotes:
                 paginator.add_line(f'{emote.name} = "`{emote}`"')
             await generic.send(f"Next lot -> {guild.name}\n\n\n", channel)
-            # await channel.send(f"Next lot -> {guild.name}\n\n\n")
             for page in paginator.pages:
                 await generic.send(page, channel)
-                # await channel.send(page)
         return await generic.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.", ctx.channel, u=True)
-        # return await ctx.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.")
 
     @commands.command(name="emojis2")
     @commands.is_owner()
@@ -522,26 +517,14 @@ class Discord(commands.Cog):
         channel = self.bot.get_channel(712703923793952780)
         await generic.send("Yoinking emotes...", ctx.channel)
         await generic.send(f"This stash of emotes was made on {time.time()}", channel)
-        # await channel.send(f"This stash of emotes was made on {time.time()}")
         for guild in self.bot.guilds:
-            # len(e.roles) == 0 and
             emotes = sorted([e for e in guild.emojis if e.available], key=lambda e: e.name)
-            # paginator = commands.Paginator(suffix='', prefix='')
-            # for emote in emotes:
-            #     paginator.add_line(f'{emote.name} = "`{emote}`"')
             await generic.send(f"Next lot -> {guild.name}\n\n\n", channel)
             for emote in emotes:
-                # embed = discord.Embed(colour=generic.random_colour())
-                # embed.set_image(url=emote.url)
                 bio = BytesIO(await http.get(str(emote.url), res_method="read"))
                 ext = "gif" if emote.animated else "png"
                 await generic.send(f"{emote.name} - {emote.id}", channel, file=discord.File(bio, filename=f"{emote.name}_{emote.id}.{ext}"))
-            # # await channel.send(f"Next lot -> {guild.name}\n\n\n")
-            # for page in paginator.pages:
-            #     await generic.send(page, channel)
-            #     # await channel.send(page)
         return await generic.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.", ctx.channel, u=True)
-        # return await ctx.send(f"Done yoinking emotes, {ctx.author.mention}, you may fuck off now.")
 
     @commands.command(name="avatar")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -552,11 +535,8 @@ class Discord(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        # if ctx.channel.id in self.banned:
-        #     return
         user = who or ctx.author
         return await generic.send(generic.gls(locale, "avatar", [user.name, user.avatar_url_as(size=1024, static_format="png")]), ctx.channel)
-        # return await ctx.send(f"Avatar to **{user.name}**\n{user.avatar_url_as(size=1024, static_format='png')}")
 
     @commands.command(name="roles")
     @commands.guild_only()
@@ -574,8 +554,6 @@ class Discord(commands.Cog):
         data = BytesIO(all_roles.encode('utf-8'))
         return await generic.send(generic.gls(locale, "roles_in_server", [ctx.guild.name]), ctx.channel,
                                   file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
-        # return await ctx.send(content=f"Roles in **{ctx.guild.name}**",
-        #                       file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
 
     @commands.command(name="joinedat")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -588,7 +566,6 @@ class Discord(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         user = who or ctx.author
         return await generic.send(generic.gls(locale, "user_joined_at", [user, ctx.guild.name, time.time_output(user.joined_at)]), ctx.channel)
-        # return await ctx.send(f"**{user}** joined **{ctx.guild.name}** on {time.time_output(user.joined_at)}")
 
     @commands.command(name="user")
     @commands.guild_only()
@@ -630,14 +607,11 @@ class Discord(commands.Cog):
                 elif b.type == discord.ActivityType.listening:
                     embed.add_field(name=generic.gls(locale, "current_activity"), inline=False,
                                     value=f"Listening to {b.name}\n{b.title} by {', '.join(b.artists)} - {b.album}")
-            # embed.add_field(name="Activity", value=who.activity)
         except AttributeError:
             embed.add_field(name=generic.gls(locale, "current_activity"), value=generic.gls(locale, "no"), inline=False)
         if len(user.roles) < 15:
             r = user.roles
             r.sort(key=lambda x: x.position, reverse=True)
-            # roles = ', '.join([f"<@&{x.id}>" for x in user.roles if x is not ctx.guild.default_role]) \
-            #     if len(user.roles) > 1 else 'None' + f"\n({len(user.roles)} roles overall)"
             ar = [f"<@&{x.id}>" for x in r if x.id != ctx.guild.default_role.id]
             roles = ', '.join(ar) if ar else 'None'
             b = len(user.roles) - 1
@@ -646,7 +620,6 @@ class Discord(commands.Cog):
             roles = f"There's {len(user.roles) - 1} of them"
         embed.add_field(name=generic.gls(locale, "roles"), value=roles, inline=False)
         return await generic.send(None, ctx.channel, embed=embed)
-        # await ctx.send(f"", embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -661,38 +634,25 @@ class Discord(commands.Cog):
             description=generic.gls(locale, "emoji_desc", [emoji.name, emoji.id, emoji.animated, emoji.guild.name, time.time_output(emoji.created_at),
                                                            emoji.url]), colour=generic.random_colour()
         ).set_image(url=emoji.url).set_author(name=ctx.author, icon_url=ctx.author.avatar_url))
-        # return await ctx.send(f"{ctx.author.name}:", embed=discord.Embed(
-        #     description=f"Name: {emoji.name}\nID: {emoji.id}\nAnimated: {emoji.animated}\nServer: {emoji.guild.name}\n"
-        #                 f"Created: {time.time_output(emoji.created_at)}\n[Copy Link]({emoji.url})",
-        #     colour=generic.random_colour()).set_image(url=emoji.url).set_author(
-        #     name=ctx.author, icon_url=ctx.author.avatar_url))
 
     @commands.command(name="customrole", aliases=["cr"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
     async def custom_role(self, ctx: commands.Context, *, stuff: str):
         """ Custom Role (only in supported servers)
-
-         Arguments:
         -c/--colour/--color: Set role colour
         -n/--name: Set role name """
         if ctx.guild.id in generic.config["custom_role"]:
             data = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             if not data:
                 return await generic.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}", ctx.channel)
-                # return await ctx.send(f"Doesn't seem like you have a custom role, {ctx.author.name}")
             parser = argparser.Arguments()
-            # parser.add_argument('input', nargs="+", default=None)
             parser.add_argument('-c', '--colour', '--color', nargs=1)
             parser.add_argument('-n', '--name', nargs="+")
-
             args, valid_check = parser.parse_args(stuff)
             if not valid_check:
                 return await generic.send(args, ctx.channel)
-                # return await ctx.send(args)
-
             role = ctx.guild.get_role(data['rid'])
-
             if args.colour is not None:
                 c = args.colour[0]
                 a = len(c)
@@ -704,30 +664,22 @@ class Discord(commands.Cog):
                             col = int(c, base=16)
                         except Exception as e:
                             return await generic.send(f"Invalid colour - {type(e).__name__}: {e}", ctx.channel)
-                            # return await ctx.send(f"Invalid colour - {type(e).__name__}: {e}")
                     else:
                         return await generic.send("Colour must be either 3 or 6 HEX digits long.", ctx.channel)
-                        # return await ctx.send("Colour must be either 3 or 6 HEX digits long.")
                 colour = discord.Colour(col)
             else:
                 colour = role.colour
-
             try:
                 name = ' '.join(args.name)
             except TypeError:
                 name = role.name
-
             try:
                 await role.edit(name=name, colour=colour, reason="Custom Role change")
             except Exception as e:
                 return await generic.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}", ctx.channel)
-                # return await ctx.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}")
             return await generic.send(f"Successfully updated your custom role, {ctx.author.name}", ctx.channel)
-            # return await ctx.send(f"Successfully updated your custom role, {ctx.author.name}")
         else:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "cr_not_available"), ctx.channel)
-            # return await generic.send(generic.gls(generic.get_lang(ctx.guild), "only_in_senko_lair"), ctx.channel)
-            # return await ctx.send("This command is only available in Senko Lair.")
 
     @commands.command(name="grantrole")
     @commands.guild_only()
@@ -736,20 +688,16 @@ class Discord(commands.Cog):
     async def grant_custom_role(self, ctx: commands.Context, user: discord.Member, role: discord.Role):
         """ Grant custom role """
         if ctx.guild.id in generic.config["custom_role"]:
-            # if ctx.guild.id == 568148147457490954:
             already = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=?, gid=?", (user.id, ctx.guild.id))
             if not already:
                 result = self.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
                 await user.add_roles(role, reason="Custom Role grant")
                 return await generic.send(f"Granted {role.name} to {user.name}: {result}", ctx.channel)
-                # return await ctx.send(f"Granted {role.name} to {user.name}: {result}")
             else:
                 result = self.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
                 return await generic.send(f"Updated custom role of {user.name} to {role.name}: {result}", ctx.channel)
-                # return await ctx.send(f"Updated custom role of {user.name} to {role.name}: {result}")
         else:
             return await generic.send(generic.gls(generic.get_lang(ctx.guild), "cr_not_available"), ctx.channel)
-            # return await ctx.send("This is only available in Senko Lair")
 
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
@@ -761,8 +709,6 @@ class Discord(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        # if ctx.channel.id in self.banned:
-        #     return
         if ctx.invoked_subcommand is None:
             bots = sum(1 for member in ctx.guild.members if member.bot)
             embed = discord.Embed(colour=generic.random_colour())
@@ -790,14 +736,10 @@ class Discord(commands.Cog):
             total_emotes = len(ctx.guild.emojis)
             embed.add_field(name=generic.gls(locale, "emotes"), inline=True,
                             value=generic.gls(locale, "emotes2", [ctx.guild.emoji_limit, ani_emotes, total_emotes - ani_emotes, total_emotes]))
-            # value=f"{len(ctx.guild.text_channels)} text channels\n"
-            #       f"{len(ctx.guild.categories)} categories\n"
-            #       f"{len(ctx.guild.voice_channels)} voice channels")
             embed.add_field(name=generic.gls(locale, "created_at"), inline=False,  # value=generic.gls(locale, "server_ca"))
                             value=f"{time.time_output(ctx.guild.created_at)} - "
                                   f"{time.human_timedelta(ctx.guild.created_at)}")
             return await generic.send(None, ctx.channel, embed=embed)
-            # return await ctx.send(f"About **{ctx.guild.name}**", embed=embed)
 
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx: commands.Context):
@@ -808,7 +750,6 @@ class Discord(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         return await generic.send(generic.gls(locale, "server_icon", [ctx.guild.name, ctx.guild.icon_url_as(size=1024, static_format="png")]), ctx.channel)
-        # return await ctx.send(f"Icon of **{ctx.guild.name}**:\n{ctx.guild.icon_url_as(size=1024)}")
 
     @server.command(name="banner")
     async def server_banner(self, ctx: commands.Context):
@@ -823,8 +764,6 @@ class Discord(commands.Cog):
             return await generic.send(generic.gls(locale, "server_banner", [ctx.guild.name, link]), ctx.channel)
         else:
             return await generic.send(generic.gls(locale, "server_banner_none", [ctx.guild.name]), ctx.channel)
-        # return await generic.send(generic.gls(locale, "server_banner", [ctx.guild.name, ctx.guild.banner_url_as(size=4096, format="png")]), ctx.channel)
-        # return await ctx.send(f"Icon of **{ctx.guild.name}**:\n{ctx.guild.icon_url_as(size=1024)}")
 
     @server.command(name="invite", aliases=["splash"])
     async def server_invite(self, ctx: commands.Context):
@@ -839,7 +778,6 @@ class Discord(commands.Cog):
             return await generic.send(generic.gls(locale, "server_splash", [ctx.guild.name, link]), ctx.channel)
         else:
             return await generic.send(generic.gls(locale, "server_splash_none", [ctx.guild.name]), ctx.channel)
-        # return await ctx.send(f"Icon of **{ctx.guild.name}**:\n{ctx.guild.icon_url_as(size=1024)}")
 
     @server.command(name="bots")
     async def server_bots(self, ctx: commands.Context):
@@ -855,7 +793,6 @@ class Discord(commands.Cog):
             n = str(i+1) if i >= 9 else f"0{i+1}"
             m += f"[{n}] {bots[i]}\n"
         return await generic.send(generic.gls(locale, "bots_in_server", [ctx.guild.name, m]), ctx.channel)
-        # return await ctx.send(f"Bots in **{ctx.guild.name}**: ```ini\n{m}```")
 
     @server.command(name="status")
     async def server_status(self, ctx: commands.Context):
@@ -924,25 +861,11 @@ class Discord(commands.Cog):
                         value=generic.gls(locale, "status2", [e1, f"{so:,}", f"{po:.2f}", f"{mo:,}", f"{do:,}", f"{wo:,}", e2, f"{si:,}",
                                                               f"{pi:.2f}", f"{mi:,}", f"{di:,}", f"{wi:,}", e3, f"{sd:,}", f"{pd:.2f}", f"{md:,}",
                                                               f"{dd:,}", f"{wd:,}", e4, f"{sn:,}", f"{pn:.2f}"]))
-        # embed.add_field(name="Status", inline=False, value=f"{e1} Online: {so:,} - {po:.2f}%, of which:\n"
-        #                                                    f"Mobile: {mo:,} | Desktop: {do:,} | Web: {wo:,}\n\n"
-        #                                                    f"{e2} Idle: {si:,} - {pi:.2f}%, of which:\n"
-        #                                                    f"Mobile: {mi:,} | Desktop: {di:,} | Web: {wi:,}\n\n"
-        #                                                    f"{e3} Dungeons and Dragons: {sd:,} - {pd:.2f}%, of which:\n"
-        #                                                    f"Mobile: {md:,} | Desktop: {dd:,} | Web: {wd:,}\n\n"
-        #                                                    f"{e4} Offline: {sn:,} - {pn:.2f}%")
         o = m - sn
         apg, apt, apl, apc, apn = ag / o * 100, at / o * 100, al / o * 100, ac / o * 100, an / o * 100
         embed.add_field(name=generic.gls(locale, "activities"), inline=False,
                         value=generic.gls(locale, "activities2", [f"{o:,}", a1, f"{ag:,}", f"{apg:.2f}", a4, f"{ac:,}", f"{apc:.2f}", a2, f"{at:,}",
                                                                   f"{apt:.2f}", a3, f"{al:,}", f"{apl:.2f}", a5, f"{an:,}", f"{apn:.2f}"]))
-        # embed.add_field(name="Activities", inline=False, value=f"Out of {o:,} people online:\n"
-        #                                                        f"{a1} Playing a game: {ag:,} - {apg:.2f}%\n"
-        #                                                        f"{a4} Playing Custom Status: {ac:,} - {apc:.2f}%\n"
-        #                                                        f"{a2} Streaming: {at:,} - {apt:.2f}%\n"
-        #                                                        f"{a3} Listening: {al:,} - {apl:.2f}%\n"
-        #                                                        f"{a5} Doing nothing: {an:,} - {apn:.2f}%")
-        # return await ctx.send(embed=embed)
         return await generic.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="prefix")
@@ -956,7 +879,6 @@ class Discord(commands.Cog):
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         _data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        # _data = self.db.fetchrow(f"SELECT * FROM data_{self.type} WHERE type=? AND id=?", ("settings", ctx.guild.id))
         if not _data:
             dp = generic.get_config()["prefixes"]
             cp = None
@@ -973,7 +895,6 @@ class Discord(commands.Cog):
         if cp is not None and cp != []:
             embed.add_field(name=generic.gls(locale, "custom_prefixes"), value='\n'.join(cp), inline=True)
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(f"Prefixes for {ctx.guild.name}", embed=embed)
 
 
 def setup(bot):
