@@ -29,9 +29,8 @@ def now_k():
 
 
 def date_kargadia():
-    kst = timezone(td(hours=1, minutes=30), "KST")
-    irl = now(True).astimezone(kst)
-    start = datetime(2000, 1, 1, 8, tzinfo=kst)  # Because why not?
+    irl = now(True)
+    start = datetime(2000, 1, 1, 6, 30, tzinfo=timezone.utc)
     total = (irl - start).total_seconds()
     ml = 32  # month length
     wl = 8  # week length
@@ -166,35 +165,3 @@ def human_timedelta(dt: datetime, *, source: datetime = None, accuracy: int = 3,
 
 def timedelta(seconds: int, accuracy: int = 3, future: bool = False, suffix: bool = False):
     return human_timedelta(now(False) + td(seconds=seconds if future else -seconds), accuracy=accuracy, suffix=suffix, brief=True)
-
-
-"""
-    n = now(False)
-    t = now(False) + td(seconds=seconds)
-    p = "in " if future and suffix else ""
-    s = " ago" if not future and suffix else ""
-    delta = relativedelta(t, n)
-    attrs = [('year', 'y'), ('month', 'mo'), ('day', 'd'), ('hour', 'h'), ('minute', 'm'), ('second', 's')]
-    output = []
-    for attr, brief_attr in attrs:
-        elem = getattr(delta, attr + 's')
-        if not elem:
-            continue
-        if attr == 'day':
-            weeks = delta.weeks
-            if weeks:
-                elem -= weeks * 7
-                output.append(f'{weeks}w')
-        if elem <= 0:
-            continue
-        if not show_seconds and brief_attr == "s":
-            continue
-        output.append(f'{elem}{brief_attr}')
-    if accuracy is not None:
-        output = output[:accuracy]
-    if len(output) == 0:
-        return 'now'
-    else:
-        t = ' '.join(output)
-        return f"{p}{t}{s}"
-"""

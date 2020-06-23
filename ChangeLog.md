@@ -115,3 +115,6 @@
 - Fixed love exception list
 - Updated invalid tag names list
 - Russian translation for tags
+
+## v5.2.1 - 23 June
+- No more counters in embeds
