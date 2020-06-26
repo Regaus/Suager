@@ -607,6 +607,8 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "bean_not_allowed"), ctx.channel)
         if user.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "bang_suager"), ctx.channel)
+        if user.bot:
+            return await generic.send(generic.gls(locale, "bang_bot"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "how_are_you_gonna"), ctx.channel)
         number = self.data_update(ctx.author.id, user.id, ctx.guild.id, "bangs_given", "bangs_received", 2, 3)
@@ -710,6 +712,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await generic.send(generic.gls(locale, "feed_suager"), ctx.channel)
+        if user.bot:
+            return await generic.send(generic.gls(locale, "feed_bot"), ctx.channel)
         output = give(ctx.author.name, user.name, locale, "🍪")
         number = self.data_update3(user.id, ctx.guild.id, "cookies_received", "cookies_eaten", 36)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "cookie_plural")])
@@ -725,6 +731,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await generic.send(generic.gls(locale, "feed_suager"), ctx.channel)
+        if user.bot:
+            return await generic.send(generic.gls(locale, "feed_bot"), ctx.channel)
         output = give(ctx.author.name, user.name, locale, "🍋")
         number = self.data_update3(user.id, ctx.guild.id, "lemons_received", "lemons_eaten", 40)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "lemon_plural")])
@@ -740,6 +750,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await generic.send(generic.gls(locale, "feed_suager"), ctx.channel)
+        if user.bot:
+            return await generic.send(generic.gls(locale, "feed_bot"), ctx.channel)
         output = give(ctx.author.name, user.name, locale, "🥕")
         number = self.data_update3(user.id, ctx.guild.id, "carrots_received", "carrots_eaten", 34)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "carrot_plural")])
@@ -755,6 +769,10 @@ class Social(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if user == ctx.author:
             return await generic.send(generic.gls(locale, "no_greedy", [ctx.author.name]), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await generic.send(generic.gls(locale, "feed_suager"), ctx.channel)
+        if user.bot:
+            return await generic.send(generic.gls(locale, "feed_bot"), ctx.channel)
         output = give(ctx.author.name, user.name, locale, random.choice(list("🍏🍎🍐🍊🍌🍉🍇🍓🍒🍍")))
         number = self.data_update3(user.id, ctx.guild.id, "fruits_received", "fruits_eaten", 38)
         output += generic.gls(locale, "food_counter", [user.name, number, generic.gls(locale, "fruit_plural")])

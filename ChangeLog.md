@@ -118,3 +118,12 @@
 
 ## v5.2.1 - 23 June
 - No more counters in embeds
+
+## v5.3.0 - 26 June
+- Negative leveling
+- You can't bang bots
+- You can't feed bots
+- Made Suager narcissistic in terms of hotness
+- Fixed shop settings description
+- Fixed weather command breaking when country is not available
+- Renamed USA to Enslaved Shooting Range in weater

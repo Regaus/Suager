@@ -151,24 +151,29 @@ class Utility(commands.Cog):
 
     @commands.command(name="weather")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def weather(self, ctx: commands.Context, *, _place: commands.clean_content):
+    async def weather(self, ctx: commands.Context, *, place: str):
         """ Check weather in a place """
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "weather"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        place = str(_place)
         try:
             bio = await http.get(f"http://api.openweathermap.org/data/2.5/weather?appid={generic.get_config()['weather_key']}&q={place}", res_method="read")
             data = json.loads(str(bio.decode('utf-8')))
             code = data["cod"]
             if code == 200:
                 embed = discord.Embed(colour=random.randint(0, 0xffffff))
-                country = data['sys']['country']
-                tz = data['timezone']
+                try:
+                    country = data['sys']['country']
+                    tz = data['timezone']
+                except KeyError:
+                    country = ""
+                    tz = 0
                 local_time = time.time_output((time.now(True) + timedelta(seconds=tz)))
-                country_name = country_converter.convert(names=[country], to="name_short")
+                country_name = country_converter.convert(names=[country], to="name_short") if country else "Error"
+                if country.lower() == "us":
+                    country_name = "Enslaved Shooting Range"
                 emote = f":flag_{country.lower()}:"
                 embed.title = generic.gls(locale, "weather_output", [emote, data["name"], country_name])
                 embed.description = generic.gls(locale, "weather_output2", [local_time])

@@ -435,7 +435,7 @@ class Discord(commands.Cog):
 
     @settings.group(name="shop")
     async def set_shop(self, ctx: commands.Context):
-        """ Set level rewards for the server """
+        """ Let members buy roles """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 

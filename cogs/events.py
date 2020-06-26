@@ -163,7 +163,7 @@ class Events(commands.Cog):
         send = f"{time.time()} > Successfully connected. {lists.hello[when]}."
         if self.config["logs"]:
             logs.log("uptime", f"{time.time()} > Server is online")
-        slc = self.bot.get_channel(577599230567383058)
+        slc = self.bot.get_channel(610482988123422750)
         if slc is not None:
             await slc.send(send)
         ad = times['ad']

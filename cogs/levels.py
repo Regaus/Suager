@@ -54,12 +54,12 @@ def int_colour(colour: str):
         return -2
 
 
-def levels():
+def levels(multiplier: float):
     req = 0
     xp = []
     for x in range(max_level):
         base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
-        req += int(base)
+        req += int(base * (multiplier ** 0.7))
         xp.append(req)
     return xp
 
@@ -148,6 +148,10 @@ class Leveling(commands.Cog):
             lm[1] = lm[0]
             lm[0] = ctx.content
         heresy = 1
+        if ctx.author.id == 302851022790066185:
+            heresy = 1.1
+        if ctx.author.id == 697576152281382924:
+            heresy = 1.05
         if ctx.author.id in generic.stage_1:
             heresy = 0.95
         if ctx.author.id in generic.stage_2:
@@ -185,21 +189,33 @@ class Leveling(commands.Cog):
         if not xp_disabled:
             xp += new
         money += new_money
-        requirements = levels()
+        requirements = levels(sm)
         if not xp_disabled:
             lu, ld = False, False
-            if level == -1 and xp > 0:
-                level = 0
-                lu = True
-            while level < max_level and xp >= requirements[level]:
-                level += 1
-                lu = True
-            while level > 0 and xp < requirements[level - 1]:
-                level -= 1
-                ld = True
-            if level == 0 and xp < 0:
-                level = -1
-                ld = True
+            if level >= 0:
+                while level < max_level and xp >= requirements[level]:
+                    level += 1
+                    lu = True
+                while level > 0 and xp < requirements[level - 1]:
+                    level -= 1
+                    ld = True
+                if level == 0 and xp < 0:
+                    level = -1
+                    ld = True
+            elif level == -1:
+                if xp >= 0:
+                    level = 0
+                    lu = True
+                if xp < -requirements[0]:
+                    level -= 1
+                    ld = True
+            else:
+                while -max_level <= level < -1 and xp >= -requirements[(-level) - 2]:
+                    level += 1
+                    lu = True
+                while level >= -max_level and xp < -requirements[(-level) - 1]:
+                    level -= 1
+                    ld = True
             if lu:
                 try:
                     send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
@@ -316,7 +332,7 @@ class Leveling(commands.Cog):
     @commands.command(name="erank", aliases=["ranke"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def rank(self, ctx, *, who: discord.Member = None):
+    async def rank_embed(self, ctx, *, who: discord.Member = None):
         """ Rank as embed """
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "ranke"):
@@ -352,12 +368,29 @@ class Leveling(commands.Cog):
         else:
             r1 = f"{xp:,.0f}"
             if level < max_level:
-                yes = levels()   # All levels
-                req = int(yes[level])  # Requirement to next level
+                yes = levels(dm)   # All levels
+                try:
+                    if level >= 0:
+                        req = int(yes[level])  # Requirement to next level
+                    elif level == -1:
+                        req = 0
+                    else:
+                        req = int(-yes[(-level) - 2])
+                except IndexError:
+                    req = float("inf")
+                try:
+                    if level > 0:
+                        prev = int(yes[level-1])
+                    elif level == 0:
+                        prev = 0
+                    else:
+                        prev = -int(yes[(-level) - 1])
+                except IndexError:
+                    prev = 0
                 _req = req - xp
                 r2 = f"{req:,.0f}"
                 r3 = f"{_req:,}"
-                prev = int(yes[level-1]) if level != 0 else 0
+                # prev = int(yes[level-1]) if level != 0 else 0
                 progress = (xp - prev) / (req - prev)
                 r4 = round_value(progress * 100)
                 r4 = 100 if r4 > 100 else r4
@@ -372,7 +405,7 @@ class Leveling(commands.Cog):
             embed.add_field(name=generic.gls(locale, "xp_per_message"), inline=False, value=f"{o1}-{o2}")
         return await generic.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="rank", aliases=["irank", "ranki"])
+    @commands.command(name="rank", aliases=["irank", "ranki", "level"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
@@ -412,20 +445,35 @@ class Leveling(commands.Cog):
             font = ImageFont.truetype(font_dir, size=72)
             font_small = ImageFont.truetype(font_dir, size=48)
             dr.text((552, 20), f"{user}", font=font, fill=font_colour)
-            al = levels()   # All levels
+            _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+            if not _settings:
+                dm = 1
+            else:
+                settings = json.loads(_settings['data'])
+                try:
+                    dm = settings['leveling']['xp_multiplier']
+                    dm = 0 if dm < 0 else dm if dm < 10 else 10
+                except KeyError:
+                    dm = 1
+            al = levels(dm)   # All levels
             try:
-                req = int(al[level])  # Requirement to next level
-                if level == -1:
+                if level >= 0:
+                    req = int(al[level])  # Requirement to next level
+                elif level == -1:
                     req = 0
-                # re = req - xp
+                else:
+                    req = int(-al[(-level) - 2])
                 r2 = f"{req:,.0f}"
             except IndexError:
                 req = float("inf")
                 r2 = "MAX"
             try:
-                prev = int(al[level-1]) if level != 0 else 0
-                if level == -1:
-                    prev = -int(al[0])
+                if level > 0:
+                    prev = int(al[level-1])
+                elif level == 0:
+                    prev = 0
+                else:
+                    prev = -int(al[(-level) - 1])
             except IndexError:
                 prev = 0
             _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 AND level>=0 ORDER BY xp DESC", (ctx.guild.id,))
@@ -577,8 +625,24 @@ class Leveling(commands.Cog):
             return await ctx.send_help(str(ctx.command))
         if level > max_level or level < max_level * -1 + 1:
             return await generic.send(generic.gls(locale, "max_level", [max_level]), ctx.channel)
+        _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not _settings:
+            dm = 1
+        else:
+            settings = json.loads(_settings['data'])
+            try:
+                dm = settings['leveling']['xp_multiplier']
+                dm = 0 if dm < 0 else dm if dm < 10 else 10
+            except KeyError:
+                dm = 1
+        al = levels(dm)
         try:
-            r = levels()[level - 1]
+            if level > 0:
+                r = int(al[level - 1])
+            elif level == 0:
+                r = 0
+            else:
+                r = -int(al[(-level) - 1])
         except IndexError:
             return await generic.send(generic.gls(locale, "xl_index_error", [level, max_level]), ctx.channel)
         if ctx.guild is not None:
@@ -636,18 +700,25 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         r1 = f"{int(xp):,}"
-        yes = levels()
+        yes = levels(dm)
         try:
-            r = int(yes[level])
+            if level >= 0:
+                r = int(yes[level])  # Requirement to next level
+            elif level == -1:
+                r = 0
+            else:
+                r = int(-yes[(-level) - 2])
         except IndexError:
-            r = -1
+            r = float("inf")
         try:
-            p = int(yes[level-1]) if level != 0 else 0
+            if level > 0:
+                p = int(yes[level-1])
+            elif level == 0:
+                p = 0
+            else:
+                p = -int(yes[(-level) - 1])
         except IndexError:
             p = 0
-        if level == -1:
-            r = 0
-            p = -int(yes[0])
         req = r - xp
         r2 = f"{int(r):,}"
         r3 = f"{int(req):,}"
@@ -665,7 +736,7 @@ class Leveling(commands.Cog):
             t1, t2 = [error, error]
         return await generic.send(generic.gls(locale, "next_level_data", [ctx.author.name, r1, r2, r3, r5, r4, t1, t2]), ctx.channel)
 
-    @commands.command(name="levels")
+    @commands.command(name="levels", aliases=["ranks"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def levels_lb(self, ctx: commands.Context, top: str = ""):

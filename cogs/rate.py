@@ -3,7 +3,7 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import generic
+from utils import generic, emotes
 
 
 class Ratings(commands.Cog):
@@ -19,7 +19,7 @@ class Ratings(commands.Cog):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
-        random.seed(what)
+        random.seed(what.lower())
         r = random.uniform(0, 100)
         if what.lower() == "senko":
             r = 100
@@ -37,8 +37,6 @@ class Ratings(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         random.seed(who.id)
         r1, r2 = [50, 100]
-        # if who.id == ctx.author.id:
-        #     return await ctx.send(f"{ctx.author.mention} I like you the way you are! {emotes.AlexPat}")
         r = round(random.uniform(r1, r2), 1)
         custom = {
             94762492923748352: r1 - 0.1,   # Bowser65
@@ -54,7 +52,6 @@ class Ratings(commands.Cog):
         }
         result = custom.get(who.id, r)
         return await generic.send(generic.gls(locale, "rate", [who.name, f"{result:.1f}"]), ctx.channel)
-        # return await ctx.send(f"I'd rate {who.name} a **{result:.1f}/100**")
 
     @commands.command(name="babyrate")
     @commands.guild_only()
@@ -68,13 +65,10 @@ class Ratings(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if user1 == user2:
             return await generic.send(generic.gls(locale, "lc_same"), ctx.channel)
-            # return await ctx.send("I don't think that's how it works...")
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "baby_rate_self", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"I wasn't programmed for this, {ctx.author.name}...")
         if user1.bot or user2.bot:
             return await generic.send(generic.gls(locale, "baby_rate_bot"), ctx.channel)
-            # return await ctx.send("Bot's can't feel love...")
         seed = user1.id + user2.id
         random.seed(seed)
         rate = random.randint(0, 100)
@@ -82,10 +76,7 @@ class Ratings(commands.Cog):
         if user1.id in no and user2.id in no:
             rate = 0
         embed = discord.Embed(colour=generic.random_colour(), description=generic.gls(locale, "baby_rate", [user1.mention, user2.mention, rate]))
-        #                       description=f"The chance of {user1.mention} and {user2.mention} "
-        #                                   f"having a baby is **{rate}**%")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="love", aliases=["lovecalc"])
     @commands.guild_only()
@@ -99,13 +90,10 @@ class Ratings(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         if user1 == user2:
             return await generic.send(generic.gls(locale, "lc_same"), ctx.channel)
-            # return await ctx.send("I don't think that's how it works...")
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             return await generic.send(generic.gls(locale, "already_taken", [ctx.author.name]), ctx.channel)
-            # return await ctx.send(f"{ctx.author.name}, I'm already t-taken...")
         if user1.bot ^ user2.bot:
             return await generic.send(generic.gls(locale, "bots_love"), ctx.channel)
-            # return await ctx.send("Bot's can't feel love...")
         seed = user1.id - user2.id
         random.seed(seed)
         rate = random.randint(0, 100)
@@ -113,9 +101,7 @@ class Ratings(commands.Cog):
         if user1.id in no and user2.id in no:
             rate = 0
         embed = discord.Embed(colour=generic.random_colour(), description=generic.gls(locale, "love_calc", [user1.mention, user2.mention, rate]))
-        #                       description=f"Love level between {user1.mention} and {user2.mention} is **{rate}**%")
         return await generic.send(None, ctx.channel, embed=embed)
-        # return await ctx.send(embed=embed)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -128,21 +114,19 @@ class Ratings(commands.Cog):
             return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
         user = who or ctx.author
         random.seed(user.id - 1)
-        # step1 = int(random.randint(2000, 11700))
         step1 = round(random.uniform(0, 100), 2)
-        # step3 = step1 / 117
         custom = {
-            302851022790066185: 99.99,
-            # 527729196688998415: 99.97,   # Aya
-            597373963571691520: 99.99,   # Nuriki
+            302851022790066185: 100,
+            597373963571691520: 100,   # Nuriki
+            609423646347231282: 100,   # Suager
         }
         step4 = custom.get(user.id, step1)
         if 0 < step4 < 50:
-            emote = "<:sadcat:620306629124161536>"
+            emote = emotes.SadCat
         elif 50 <= step4 < 75:
-            emote = "<:pog:610583684663345192>"
+            emote = emotes.Pog
         else:
-            emote = "<:LewdMegumin:679069449701163045>"
+            emote = emotes.LewdMegumin
         return await generic.send(generic.gls(locale, "hot_calc", [user.name, step4, emote]), ctx.channel)
 
     @commands.command(name="iq")
@@ -157,16 +141,12 @@ class Ratings(commands.Cog):
         user = who or ctx.author
         random.seed(user.id + 1)
         ri = random.randint(75, 175)
-        # b = bias.get_bias(self.db, user)
         if user.id == 302851022790066185:
             ri = 151
         if user.id == self.bot.user.id:
             ri = 2147483647 * 1.17
         r = ri / 1.17
         return await generic.send(generic.gls(locale, "iq", [user.name, f"{r:,.2f}"]), ctx.channel)
-        # msg = await ctx.send(f"{emotes.Loading} Checking {user.name}'s IQ...")
-        # await asyncio.sleep(3)
-        # return await msg.edit(content=f"**{user.name}'s** IQ is **{r:,.2f}**")
 
 
 def setup(bot):
