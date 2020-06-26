@@ -11,7 +11,7 @@ from io import BytesIO
 import discord
 
 from langs import en, ru
-from utils import time, database, data_io, locks
+from utils import time, database, data_io, locks, emotes
 
 
 def print_error(text: str):
@@ -28,7 +28,7 @@ settings_template = {
     'leveling': {
         'enabled': True,
         'xp_multiplier': 1.0,
-        'level_up_message': "[MENTION] is now level **[LEVEL]**! <a:forsendiscosnake:613403121686937601>",
+        'level_up_message': f"[MENTION] is now level **[LEVEL]**! {emotes.ForsenDiscoSnake}",
         'ignored_channels': [],
         'announce_channel': 0,
         'rewards': []

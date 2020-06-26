@@ -126,4 +126,7 @@
 - Made Suager narcissistic in terms of hotness
 - Fixed shop settings description
 - Fixed weather command breaking when country is not available
-- Renamed USA to Enslaved Shooting Range in weater
+- Renamed USA to Enslaved Shooting Range in weather
+
+## v5.3.1 - 26 June
+- Level -2 command now sets to level -5001

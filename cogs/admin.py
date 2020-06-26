@@ -457,24 +457,17 @@ class Admin(commands.Cog):
     @commands.command(name="lv2l", aliases=["infidels2", "il2"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lv2_list(self, ctx: commands.Context):
-        """ Imagine being level -2 """
+        """ Imagine being level -5001 """
         if ctx.channel.id in generic.channel_locks:
             return await generic.send(generic.gls("en", "channel_locked"), ctx.channel)
         res = self.db.fetch("SELECT * FROM leveling WHERE level=-2")
         embed = discord.Embed(colour=generic.random_colour())
-        embed.title = "People who managed to get level -2"
+        embed.title = "People who managed to get level -5001"
         desc = ""
         for user in res:
             desc += f"<@{user['uid']}> - {user['name']}#{user['disc']:04d} - in {self.bot.get_guild(user['gid'])}\n"
         embed.description = desc
         return await generic.send(None, ctx.channel, embed=embed)
-
-    # @commands.group(name="config")
-    # @commands.check(permissions.is_owner)
-    # async def config(self, ctx: commands.Context):
-    #     """ Change bot's configs """
-    #     if ctx.invoked_subcommand is None:
-    #         await ctx.send_help(str(ctx.command))
 
     @commands.command(name="version", aliases=["fversion", "fullversion", "fv", "v"])
     @commands.check(permissions.is_owner)
@@ -513,21 +506,6 @@ class Admin(commands.Cog):
         if generic.get_config()["logs"]:
             logs.log("version_changes", f"{time.time()} > {to_send}")
         return await generic.send(to_send, ctx.channel)
-
-    # @config.command(name="loveexceptions", aliases=["le"])
-    # @commands.check(permissions.is_owner)
-    # async def config_love_exceptions(self, ctx: commands.Context, action: str, uid: int, lid: int):
-    #     """ Update the love exceptions list
-    #     uid = exception, lid = locked user """
-    #     try:
-    #         data_io.change_locks("love_exceptions", str(lid), action, uid)
-    #     except Exception as e:
-    #         return await generic.send(str(e), ctx.channel)
-    #     reload = reload_util("generic")
-    #     w1 = "added" if action == "add" else "removed"
-    #     w2 = "to" if action == "add" else "from"
-    #     return await generic.send(f"{emotes.Allow} Successfully {w1} <@{uid}> ({self.bot.get_user(uid)}) {w2} the Love Exceptions List of <@{lid}>\n"
-    #                               f"Reload status: {reload}", ctx.channel)
 
     @commands.group(name="locks", aliases=["lock", "lc"])
     @commands.check(permissions.is_owner)
@@ -581,9 +559,9 @@ class Admin(commands.Cog):
     @commands.command(name="lv2", aliases=["lv-2"])
     @commands.check(permissions.is_owner)
     async def lv2(self, ctx: commands.Context, user: discord.User, gid: int = None):
-        """ Set someone to level -2 """
+        """ Set someone to level -5001 """
         guild = gid or ctx.guild.id
-        ret = self.db.execute("UPDATE leveling SET level=-2 WHERE uid=? AND gid=?", (user.id, guild))
+        ret = self.db.execute("UPDATE leveling SET level=-5001 WHERE uid=? AND gid=?", (user.id, guild))
         return await generic.send(ret, ctx.channel)
 
     @commands.command(name="lv0")

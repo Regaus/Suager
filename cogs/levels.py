@@ -7,7 +7,7 @@ import discord
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from discord.ext import commands
 
-from utils import time, database, http, generic
+from utils import time, database, http, generic, emotes
 from utils.generic import random_colour, round_value
 
 max_level = 5000
@@ -221,7 +221,7 @@ class Leveling(commands.Cog):
                     send = str(settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
                         .replace('[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
                 except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! <a:forsendiscosnake:613403121686937601>"
+                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
                 try:
                     ac = settings['leveling']['announce_channel']
                     if ac != 0:
@@ -237,7 +237,7 @@ class Leveling(commands.Cog):
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                send = f"{ctx.author.mention} is now **level {level:,}** <a:UmmOK:706884864632291351>"
+                send = f"{ctx.author.mention} is now **level {level:,}** {emotes.UmmOK}"
                 try:
                     ac = settings['leveling']['announce_channel']
                     if ac != 0:
