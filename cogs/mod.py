@@ -48,13 +48,17 @@ class Moderation(commands.Cog):
     @commands.command(name="kick")
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(kick_members=True)
     async def kick_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Kick a user from the server """
         locale = generic.get_lang(ctx.guild)
-        invalid = [o for o in self.config()["owners"]]
+        invalid = self.config()["owners"]
         invalid.append(self.bot.user.id)
+        invalid.append(ctx.guild.owner.id)
         if member == ctx.author:
             return await generic.send(generic.gls(locale, "self_harm_bad"), ctx.channel)
+        elif member.top_role.position <= ctx.author.top_role.position:
+            return await generic.send(generic.gls(locale, "kick_forbidden"), ctx.channel)
         elif member.id in invalid:
             return await generic.send(generic.gls(locale, "kick_invalid"), ctx.channel)
         try:
@@ -67,6 +71,7 @@ class Moderation(commands.Cog):
     @commands.command(name="ban")
     @commands.guild_only()
     @permissions.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
     async def ban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Ban a user from the server """
         locale = generic.get_lang(ctx.guild)
@@ -74,6 +79,8 @@ class Moderation(commands.Cog):
         invalid.append(self.bot.user.id)
         if member == ctx.author.id:
             return await generic.send(generic.gls(locale, "self_harm_bad"), ctx.channel)
+        elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position <= ctx.author.top_role.position):
+            return await generic.send(generic.gls(locale, "ban_forbidden"), ctx.channel)
         elif member in invalid:
             return await generic.send(generic.gls(locale, "ban_invalid"), ctx.channel)
         try:
@@ -86,6 +93,7 @@ class Moderation(commands.Cog):
     @commands.command(name="massban")
     @commands.guild_only()
     @permissions.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
     async def mass_ban(self, ctx: commands.Context, reason: str, *who: MemberID):
         """ Mass ban users from the server """
         locale = generic.get_lang(ctx.guild)
@@ -97,6 +105,8 @@ class Moderation(commands.Cog):
             for member in who:
                 if member in invalid:
                     return await generic.send(generic.gls(locale, "ban_invalid"), ctx.channel)
+                elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position <= ctx.author.top_role.position):
+                    return await generic.send(generic.gls(locale, "ban_forbidden"), ctx.channel)
         banned = 0
         failed = 0
         for member in who:
@@ -111,6 +121,7 @@ class Moderation(commands.Cog):
     @commands.command(name="unban")
     @commands.guild_only()
     @permissions.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
     async def unban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Unban a user """
         try:
@@ -128,6 +139,8 @@ class Moderation(commands.Cog):
         """ Sets a user's nickname """
         locale = generic.get_lang(ctx.guild)
         try:
+            if member.top_role.position <= ctx.author.top_role.position and member != ctx.author:
+                return await generic.send(generic.gls(locale, "nick_forbidden"), ctx.channel)
             await member.edit(nick=name, reason=default.reason(ctx.author, "Changed by command"))
             if name is None:
                 message = generic.gls(locale, "nickname_reset", [member.name])

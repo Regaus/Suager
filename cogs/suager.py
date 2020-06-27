@@ -17,7 +17,7 @@ class Suager(commands.Cog):
         self.lines = generic.line_count()
 
     @commands.command(name="source")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def source(self, ctx: commands.Context):
         """ Source codes <3 """
         locale = generic.get_lang(ctx.guild)
@@ -27,7 +27,7 @@ class Suager(commands.Cog):
                                                                   "<https://github.com/AlexFlipnote/birthday.py>", ctx.channel)
 
     @commands.command(name="stats", aliases=["info", "about", "status"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def stats(self, ctx: commands.Context):
         """ Bot stats"""
         locale = generic.get_lang(ctx.guild)
@@ -85,7 +85,7 @@ class Suager(commands.Cog):
         # return await ctx.send(message)
 
     @commands.command(name="invite")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def invite(self, ctx: commands.Context):
         """ Invite me to your own server! """
         locale = generic.get_lang(ctx.guild)
@@ -95,7 +95,7 @@ class Suager(commands.Cog):
         return await generic.send(generic.gls(locale, "invite_bot", [ctx.author.name, perms, self.bot.user.id]), ctx.channel)
 
     @commands.command(name="botserver")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def my_server(self, ctx: commands.Context):
         """ Get an invite to my server """
         locale = generic.get_lang(ctx.guild)
@@ -111,7 +111,7 @@ class Suager(commands.Cog):
         return await generic.send("But this is my home already!", ctx.channel)
 
     @commands.command(name="ping")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def ping(self, ctx: commands.Context):
         """ Ping Pong """
         locale = generic.get_lang(ctx.guild)

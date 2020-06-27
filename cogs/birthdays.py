@@ -69,7 +69,7 @@ class Birthdays(commands.Cog):
             return None
 
     @commands.group(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
         """ Check your birthday or other people """
         locale = generic.get_lang(ctx.guild)

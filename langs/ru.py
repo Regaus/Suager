@@ -192,6 +192,7 @@ data = {
     "mass_banned": f"Забанил пользователей за <val3> {emotes.BlobCatCoffee}\n{emotes.Allow} Удачно: <val1>\n{emotes.Deny} Неудачно: <val2>",
     "ban_invalid": f"{emotes.Deny} Я не могу забанить себя, или моих создателей... {emotes.BlobCatPolice}",
     "self_harm_bad": f"{emotes.Deny} Вред себе = плохо {emotes.BlobCatPolice}",
+    "kick_invalid": f"{emotes.Deny} Я не могу выгнать себя, или моих создателей... {emotes.BlobCatPolice}",
     "banned": f"{emotes.Allow} <val1> (<val2>) был забанен за <val3> {emotes.BlobCatCoffee}",
     "send_forbidden": f"{emotes.Deny} Не смог отправить сообщение. Возможно, у меня нет прав на вставку ссылок или прикрепление файлов.",
     "kicked": f"{emotes.Allow} <val1> (<val2>) был выгнан за <val3> {emotes.BlobCatCoffee}",
@@ -424,4 +425,7 @@ data = {
     "tag_claim_own": "<val1>, ты уже владеешь этим тегом.",
     "tag_claim_deny": "<val1>, этот тег принадлежит участнику этого сервера.",
     "tag_claimed": "<val1>, теперь ты владелец тега `<val2>`.",
+    "kick_forbidden": "Нельзя выгнать пользователя, кто тебе равен, или выше тебя.",
+    "ban_forbidden": "Нельзя забанить пользователя, кто тебе равен, или выше тебя.",
+    "nick_forbidden": "Нельзя изменить ник пользователя, кто тебе равен, или выше тебя.",
 }

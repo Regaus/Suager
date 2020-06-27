@@ -189,8 +189,9 @@ data = {
     "nickname_changed": "Changed **<val1>'s** nickname to **<val2>**",
     "unbanned": f"{emotes.Allow} Successfully unbanned <val1> (<val2>) for <val3> {emotes.BlobCatCoffee}",
     "mass_banned": f"Banned people for <val3> {emotes.BlobCatCoffee}\n{emotes.Allow} Successful: <val1>\n{emotes.Deny} Failed: <val2>",
-    "ban_invalid": f"{emotes.Deny} I can't ban myself, nor my owners... {emotes.BlobCatPolice}",
+    "ban_invalid": f"{emotes.Deny} I can't ban myself, my owners, or the server owner... {emotes.BlobCatPolice}",
     "self_harm_bad": f"{emotes.Deny} Self harm bad {emotes.BlobCatPolice}",
+    "kick_invalid": f"{emotes.Deny} I can't kick myself, my owners, or the server owner... {emotes.BlobCatPolice}",
     "banned": f"{emotes.Allow} Successfully banned <val1> (<val2>) for <val3> {emotes.BlobCatCoffee}",
     "send_forbidden": f"{emotes.Deny} Failed to send message properly. I might be missing embed links or attach files permissions.",
     "kicked": f"{emotes.Allow} Successfully kicked <val1> (<val2>) for <val3> {emotes.BlobCatCoffee}",
@@ -422,4 +423,7 @@ data = {
     "tag_claim_own": "<val1>, you already own this tag.",
     "tag_claim_deny": "<val1>, this tag belongs to a member of this server.",
     "tag_claimed": "<val1>, you are now the owner of the tag `<val2>`.",
+    "kick_forbidden": "You can't kick someone with equal top role, or who is above you.",
+    "ban_forbidden": "You can't ban someone with equal top role, or who is above you.",
+    "nick_forbidden": "You can't change the nickname of someone with equal top role, or who is above you.",
 }

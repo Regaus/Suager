@@ -133,3 +133,8 @@
 
 ## v5.3.2 - 27 June
 - Meme generation
+
+## v5.3.3 - 27 June
+- Meme command should now stretch image if you input long text
+- Moderation commands should now account for user permissions
+- Fixed some cooldowns
