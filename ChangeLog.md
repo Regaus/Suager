@@ -130,3 +130,6 @@
 
 ## v5.3.1 - 26 June
 - Level -2 command now sets to level -5001
+
+## v5.3.2 - 27 June
+- Meme generation

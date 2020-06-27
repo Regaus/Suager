@@ -6,6 +6,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
+from PIL import Image, ImageDraw, ImageFont
 from utils import http, argparser, generic
 
 
@@ -216,6 +217,30 @@ class Images(commands.Cog):
         if args.dark and args.light:
             return await generic.send(generic.gls(locale, "supreme_dark_light", [ctx.author.name]), ctx.channel)
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
+
+    @commands.command(name="meme")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.guild)
+    async def meme_generator(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        """ Create a meme """
+        locale = generic.get_lang(ctx.guild)
+        if generic.is_locked(ctx.guild, "meme"):
+            return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
+        if ctx.channel.id in generic.channel_locks:
+            return await generic.send(generic.gls(locale, "channel_locked"), ctx.channel)
+        async with ctx.typing():
+            font_colour = (255, 0, 0)
+            img = Image.new("RGB", (1200, 600), color=(0, 0, 0))
+            dr = ImageDraw.Draw(img)
+            font_dir = "assets/impact.ttf"
+            font = ImageFont.truetype(font_dir, size=72)
+            tw, _th = dr.textsize(text.upper(), font=font)
+            bw, _bh = dr.textsize("BOTTOM TEXT", font=font)
+            dr.text(((1200 - tw) // 2, 20), text.upper(), font=font, fill=font_colour)
+            dr.text(((1200 - bw) // 2, 510), "BOTTOM TEXT", font=font, fill=font_colour)
+            bio = BytesIO()
+            img.save(bio, "PNG")
+            bio.seek(0)
+            return await generic.send(None, ctx.channel, file=discord.File(bio, filename="meme.png"))
 
 
 def setup(bot):
