@@ -125,6 +125,9 @@ class Tags(commands.Cog):
             return await generic.send(generic.gls(locale, "tag_name_invalid", [ctx.author.name]), ctx.channel)
         if not tag:
             return await generic.send(generic.gls(locale, "tag_not_found", [tag_name.lower()]), ctx.channel)
+        _tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, new_name.lower()))
+        if _tag:
+            return await generic.send(generic.gls(locale, "tag_already_exists", [new_name.lower()]), ctx.channel)
         if tag["owner"] != ctx.author.id:
             return await generic.send(generic.gls(locale, "tag_rename_deny", [ctx.author.name]), ctx.channel)
         else:

@@ -138,3 +138,7 @@
 - Meme command should now stretch image if you input long text
 - Moderation commands should now account for user permissions
 - Fixed some cooldowns
+
+## v5.3.4 - 27 June
+- //colour random should now work properly
+- You should no longer be able to rename a tag to a name that is already used

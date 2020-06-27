@@ -39,7 +39,7 @@ class Images(commands.Cog):
     @commands.command(name="colour", aliases=["color"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def colour(self, ctx: commands.Context, colour: str):
-        """ Colours! """
+        """ Information on a colour """
         locale = generic.get_lang(ctx.guild)
         if generic.is_locked(ctx.guild, "colour"):
             return await generic.send(generic.gls(locale, "server_locked"), ctx.channel)
@@ -48,7 +48,7 @@ class Images(commands.Cog):
         async with ctx.typing():
             c = generic.gls(locale, str(ctx.invoked_with).lower())
             c2 = c.capitalize()
-            if colour == "random":
+            if colour.lower() == "random":
                 _colour = hex(random.randint(0, 0xffffff))[2:]
                 a = 6
             else:
@@ -73,7 +73,7 @@ class Images(commands.Cog):
                 g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
                 embed = discord.Embed(colour=g)
             else:
-                embed = discord.Embed(colour=int(colour, base=16))
+                embed = discord.Embed(colour=int(colour, base=16) if colour.lower() != "random" else int(_colour, base=16))
             embed.add_field(name=generic.gls(locale, "hex_value"), value=data["hex"], inline=True)
             embed.add_field(name=generic.gls(locale, "rgb_value"), value=data["rgb"], inline=True)
             embed.add_field(name=generic.gls(locale, "integer"), value=data["int"], inline=True)
