@@ -145,3 +145,7 @@
 
 ## v5.3.4.1 - 28 June
 - owoify will no longer show the !?'s and just replace them
+
+## v5.3.4.2 - 28 June
+- Added another forbidden tag name
+- Made grant role actually work

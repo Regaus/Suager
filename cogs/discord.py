@@ -688,7 +688,7 @@ class Discord(commands.Cog):
     async def grant_custom_role(self, ctx: commands.Context, user: discord.Member, role: discord.Role):
         """ Grant custom role """
         if ctx.guild.id in generic.config["custom_role"]:
-            already = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=?, gid=?", (user.id, ctx.guild.id))
+            already = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             if not already:
                 result = self.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
                 await user.add_roles(role, reason="Custom Role grant")

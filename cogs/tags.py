@@ -11,7 +11,7 @@ class Tags(commands.Cog):
         self.bot = bot
         self.db = database.Database()
         self.invalid_names = ["reagus", "reggie", "regoose", "reegaus", "reguas", "regigigas", "suwuager", "suwu", "regauwus", "register"]
-        self.invalid_names2 = ["regaus", "suager", "регаус", "reg"]
+        self.invalid_names2 = ["regaus", "suager", "регаус", "reg", "рег"]
 
     @commands.group(name="tag", aliases=["tags", "t"], invoke_without_command=True)
     @commands.guild_only()
