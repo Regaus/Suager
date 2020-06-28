@@ -142,3 +142,6 @@
 ## v5.3.4 - 27 June
 - //colour random should now work properly
 - You should no longer be able to rename a tag to a name that is already used
+
+## v5.3.4.1 - 28 June
+- owoify will no longer show the !?'s and just replace them

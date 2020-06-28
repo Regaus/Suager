@@ -87,7 +87,7 @@ class Utility(commands.Cog):
         output = ""
         for letter in stuff:
             if letter in ["!", "?"]:
-                letter += f" {random.choice(faces)}"
+                letter = f" {random.choice(faces)}"
             output += letter
         replacements = [["r", "w"], ["l", "w"], ["na", "nya"], ["ne", "nye"], ["ni", "nyi"], ["no", "nyo"], ["nu", "nyu"], ["nyaughty", "naughty"]]
         for thing in replacements:
