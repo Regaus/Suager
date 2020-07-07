@@ -158,3 +158,7 @@
 - XP displayed will now be 100x smaller
 - XP requirements will no longer depend on server multiplier
 - Added some stuff that will never matter
+
+## v6.0-alpha2 - 7 July
+- Time for Zeivela and Kaltaryna proof-of-concept created
+- `ri` as alias for reload images command

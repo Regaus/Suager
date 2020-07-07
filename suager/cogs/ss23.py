@@ -19,9 +19,9 @@ class SS23(commands.Cog):
             dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
         ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
         tk = ss23.date_kargadia(dt)  # Time in Kargadia
-        tz = "Placeholder"
-        tq = "Placeholder"
-        return await general.send(f"Time on Earth: **{ti}**\nTime on Zeivela: **{tz}**\nTime in Kargadia: **{tk}**\nTime on Placeholder: **{tq}**", ctx.channel)
+        tz = ss23.date_zeivela(dt)  # Time on Zeivela
+        tq = ss23.date_kaltaryna(dt)  # Time in Kaltaryna
+        return await general.send(f"Time on Earth: **{ti}**\nTime on Zeivela: **{tz}**\nTime in Kargadia: **{tk}**\nTime in Kaltaryna: **{tq}**", ctx.channel)
 
 
 def setup(bot):

@@ -624,7 +624,7 @@ class Social(commands.Cog):
         self.db.fetchrow(f"UPDATE counters SET {fe}=? WHERE uid=? AND gid=?", (data[fe] + 1, ctx.author.id, ctx.guild.id))
         return await general.send(f"**{ctx.author.name}** just ate a **{what}** and has **{left}** left.", ctx.channel)
 
-    @commands.command(name="reloadimages")
+    @commands.command(name="reloadimages", aliases=["ri"])
     @commands.is_owner()
     async def reload_images(self, ctx: commands.Context):
         """ Reload all images """
