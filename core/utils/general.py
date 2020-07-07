@@ -1,0 +1,86 @@
+import json
+import os
+import random
+import sys
+import traceback
+from io import BytesIO
+
+import discord
+
+from core.utils import time
+
+
+def get_config() -> dict:
+    return json.loads(open("config_v6.json", "r", encoding="utf-8").read())
+
+
+def create_dirs():
+    config = get_config()
+    for bot in config["bots"]:
+        make_dir(f"data/{bot['internal_name']}")
+        make_dir(f"data/{bot['internal_name']}/logs")
+
+
+def make_dir(dir_name):
+    try:
+        os.makedirs(dir_name)
+    except FileExistsError:
+        pass
+
+
+async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None,
+               delete_after: float = None, e: bool = False, u: bool or list = False, r: bool or list = False):
+    try:
+        return await channel.send(content=text, embed=embed, file=file, delete_after=delete_after,
+                                  allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
+    except discord.Forbidden:
+        await channel.send("Failed to send message. Please make sure that I have sufficient permissions (embed links and/or attach files)")
+        if text:
+            return await channel.send(content=text, delete_after=delete_after, allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
+
+
+def traceback_maker(err, text: str = None, guild=None, author=None):
+    _traceback = ''.join(traceback.format_tb(err.__traceback__))
+    n = "\n"
+    g = f'Guild: {guild.name}\n' if guild is not None else ''
+    a = f'User: {author.name}\n' if author is not None else ''
+    error = f'{g}{a}```py\n{f"{text}{n}" if text is not None else ""}{_traceback}{type(err).__name__}: {err}\n```'
+    return error
+
+
+def print_error(text: str):
+    return sys.stderr.write(f"{text}\n")
+
+
+def random_colour():
+    return random.randint(0, 0xffffff)
+
+
+def reason(who, why=None):
+    r = f"[ {who} ]"
+    if why is None:
+        return f"{r} No reason specified"
+    return f"{r} {why}"
+
+
+async def pretty_results(ctx, filename: str = "Results", result: str = "Here's the results:", loop=None):
+    if not loop:
+        return await ctx.send("The result was empty...")
+    pretty = "\r\n".join([f"[{str(num).zfill(2)}] {data}" for num, data in enumerate(loop, start=1)])
+    if len(loop) < 15:
+        return await ctx.send(f"{result}```ini\n{pretty}```")
+    data = BytesIO(pretty.encode('utf-8'))
+    return await send(result, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
+
+
+def round_value(value):
+    try:
+        if value < 10:
+            rounded = round(value, 2)
+        elif 10 <= value < 100:
+            rounded = round(value, 1)
+        else:
+            rounded = int(value)
+        return rounded
+    except Exception as e:
+        return e

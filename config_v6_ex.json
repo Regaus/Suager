@@ -1,0 +1,71 @@
+{
+  "bots": [
+    {
+      "name": "Core Bot",
+      "internal_name": "core_bot",
+      "token": "token",
+      "admins": [],
+      "join_message": "Join message",
+      "prefixes": [
+        "c/",
+        "C/"
+      ],
+      "short_version": "1.0a",
+      "version": "1.0-alpha1",
+      "last_update": 1593803395,
+      "first_version": 1593803395,
+      "major_release": 1593803395,
+      "playing_rate": 60,
+      "playing": [
+        "Sample Text"
+      ],
+      "logs": true,
+      "timezone": "UTC",
+      "exclude_core_cogs": [],
+      "home_server_id": 0,
+      "home_invite": "",
+      "error_channel": 0
+    },
+    {
+      "name": "Suager",
+      "internal_name": "suager",
+      "token": "token",
+      "admins": [],
+      "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:651113509689491457>",
+      "prefixes": [
+        "s/",
+        "S/"
+      ],
+      "short_version": "6.0a",
+      "version": "6.0-alpha1",
+      "last_update": 1594151751,
+      "first_version": 1557781320,
+      "major_release": -1,
+      "playing_rate": 60,
+      "playing": [
+        "with Regaus",
+        "without you",
+        "with nobody",
+        "alone",
+        "Custom Status",
+        "with the Nuriki Cult",
+        "PyCharm",
+        "\u0420\u00a0\u0421\u0453\u0421\u0403\u0421\u0403\u0420\u0454\u0420\u0451\u0420\u00b5 \u0420\u2019\u0420\u0457\u0420\u00b5\u0421\u0402\u0421\u2018\u0420\u0491!",
+        ",/help",
+        "nothing"
+      ],
+      "logs": true,
+      "timezone": "Europe/Dublin",
+      "exclude_core_cogs": [],
+      "home_server_id": 568148147457490954,
+      "home_invite": "",
+      "error_channel": 691442857537568789
+    }
+  ],
+  "owner_prefixes": [
+    "s.",
+    "S."
+  ],
+  "owners": [],
+  "weather_api_token": "token"
+}

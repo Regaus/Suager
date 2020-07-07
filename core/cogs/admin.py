@@ -1,0 +1,526 @@
+import ast
+import asyncio
+import importlib
+import os
+import re
+from asyncio.subprocess import PIPE
+from io import BytesIO
+
+import aiohttp
+import discord
+from discord.ext import commands
+
+from core.utils import database, general, time, logger, emotes, permissions, data_io, http
+
+
+def insert_returns(body):
+    # insert return statement if the last expression is a expression statement
+    if isinstance(body[-1], ast.Expr):
+        body[-1] = ast.Return(body[-1].value)
+        ast.fix_missing_locations(body[-1])
+    # for if statements, we insert returns into the body and the or-else
+    if isinstance(body[-1], ast.If):
+        insert_returns(body[-1].body)
+        insert_returns(body[-1].orelse)
+    # for with blocks, again we insert returns into the body
+    if isinstance(body[-1], ast.With):
+        insert_returns(body[-1].body)
+
+
+async def eval_(ctx: commands.Context, cmd):
+    try:
+        fn_name = "_eval_expr"
+        cmd = cmd.strip("` ")
+        cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
+        body = f"async def {fn_name}():\n{cmd}"
+        parsed = ast.parse(body)
+        body = parsed.body[0].body
+        insert_returns(body)
+        env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': database.Database(ctx.bot.name), '__import__': __import__}
+        exec(compile(parsed, filename="<ast>", mode="exec"), env)
+        result = (await eval(f"{fn_name}()", env))
+        if ctx.guild is None:
+            limit = 8000000
+        else:
+            limit = int(ctx.guild.filesize_limit / 1.05)
+        if len(str(result)) == 0 or result is None:
+            return await general.send("Code has completed. No result was returned.", ctx.channel)
+        elif len(str(result)) in range(2001, limit + 1):
+            async with ctx.typing():
+                data = BytesIO(str(result).encode('utf-8'))
+                return await general.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
+                                          file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
+        elif len(str(result)) > limit:
+            async with ctx.typing():
+                data = BytesIO(str(result)[-limit:].encode('utf-8'))
+                return await general.send(f"Result was a bit too long... ({len(str(result)):,} chars)\nSending last {limit:,} chars", ctx.channel,
+                                          file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
+        else:
+            return await general.send(str(result), ctx.channel)
+    except Exception as e:
+        return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+
+def reload_util(base: str, name: str, bot):
+    return reload_module(base, "utils", name, bot)
+
+
+def reload_module(base: str, folder: str, name: str, bot):
+    name_maker = f"**{base}/{folder}/{name}.py**"
+    try:
+        module_name = importlib.import_module(f"{base}.{folder}.{name}")
+        importlib.reload(module_name)
+    except ModuleNotFoundError:
+        return f"Could not find module named {name_maker}"
+    except Exception as e:
+        error = general.traceback_maker(e)
+        return f"Module {name_maker} returned an error and was not reloaded...\n{error}"
+    reloaded = f"Reloaded module {name_maker}"
+    if general.get_config()["bots"][bot.index]["logs"]:
+        logger.log(bot.name, "changes", f"{time.time()} > {bot.local_config['name']} > {reloaded}")
+    return reloaded
+
+
+def reload_extension(bot, base: str, name: str):
+    try:
+        bot.reload_extension(f"{base}.cogs.{name}")
+    except Exception as e:
+        return f"{type(e).__name__}: {e}"
+    reloaded = f"Reloaded extension **{base}/cogs/{name}.py**"
+    lc = general.get_config()["bots"][bot.index]
+    if lc["logs"]:
+        logger.log(bot.name, "changes", f"{time.time()} > {lc['name']} > {reloaded}")
+    return reloaded
+
+
+class Admin(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.config = general.get_config()
+        self.db = database.Database(self.bot.name)
+
+    @commands.command(name="amiowner")
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def are_you_owner(self, ctx: commands.Context):
+        """ Are you admin? """
+        if ctx.author.id in self.config["owners"]:
+            out = f"{emotes.Allow} Yes, {ctx.author.name}, you are an owner"
+        else:
+            out = f"{emotes.Deny} No, {ctx.author.name}, back off"
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="amiadmin")
+    @commands.cooldown(1, 2, commands.BucketType.user)
+    async def are_you_admin(self, ctx: commands.Context):
+        """ Are you admin? """
+        if ctx.author.id in self.bot.local_config["admins"]:
+            out = f"{emotes.Allow} Yes, {ctx.author.name}, you are an admin"
+        else:
+            out = f"{emotes.Deny} No, {ctx.author.name}, you are not admin, pleb."
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="db")
+    @commands.check(permissions.is_owner)
+    async def db_command(self, ctx: commands.Context, *, query: str):
+        """ Database query """
+        try:
+            data = self.db.execute(query)
+            return await general.send(data, ctx.channel)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.command(name="fetch", aliases=["select"])
+    @commands.check(permissions.is_owner)
+    async def db_fetch(self, ctx: commands.Context, *, query: str):
+        """ Fetch data from db """
+        try:
+            data = self.db.fetch("SELECT " + query)
+            result = f"{data}"
+            if ctx.guild is None:
+                limit = 8000000
+            else:
+                limit = int(ctx.guild.filesize_limit / 1.05)
+            # return await ctx.send(result)
+            rl = len(str(result))
+            if rl == 0 or result is None:
+                return await general.send("No result was returned.", ctx.channel)
+            elif rl in range(2001, limit + 1):
+                async with ctx.typing():
+                    data = BytesIO(str(result).encode('utf-8'))
+                    return await general.send(f"Result was a bit too long... ({rl:,} chars)", ctx.channel,
+                                              file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
+            elif rl > limit:
+                async with ctx.typing():
+                    data = BytesIO(str(result)[-limit:].encode('utf-8'))
+                    return await general.send(f"Result was a bit too long... ({rl:,} chars)\nSending last {limit:,} chars", ctx.channel,
+                                              file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
+            else:
+                return await general.send(str(result), ctx.channel)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.group(name="log", aliases=["logs"], invoke_without_command=True)
+    @commands.check(permissions.is_owner)
+    async def log(self, ctx: commands.Context, log: str, *, search: str = None):
+        """ Get logs """
+        try:
+            data = ""
+            for path, _, __ in os.walk(f"data/{self.bot.name}/logs"):
+                if re.compile(r"data\\(\d{4})-(\d{2})-(\d{2})").search(path):
+                    _path = path.replace("\\", "/")
+                    filename = f"{_path}/{log}.rsf"
+                    file = open(filename, "r")
+                    if search is None:
+                        result = file.read()
+                        data += f"{result}"  # Put a newline in the end, just in case
+                    else:
+                        stuff = file.readlines()
+                        result = ""
+                        for line in stuff:
+                            if search in line:
+                                result += line
+                        data += f"{result}"
+            if ctx.guild is None:
+                limit = 8000000
+            else:
+                limit = int(ctx.guild.filesize_limit / 1.05)
+            rl = len(str(data))
+            if rl == 0 or data is None:
+                return await general.send("Nothing was found...", ctx.channel)
+            elif 0 < rl <= limit:
+                async with ctx.typing():
+                    _data = BytesIO(str(data).encode('utf-8'))
+                    return await general.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+            elif rl > limit:
+                async with ctx.typing():
+                    _data = BytesIO(str(data)[-limit:].encode('utf-8'))
+                    return await general.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @log.command(name="date")
+    @commands.check(permissions.is_owner)
+    async def log_date(self, ctx: commands.Context, date: str, log_file: str, *, search: str = None):
+        """ Get logs """
+        try:
+            filename = f"data/{self.bot.name}/logs/{date}/{log_file}.rsf"
+            file = open(filename, "r")
+            if search is None:
+                result = file.read()
+                data = f"{result}"  # Put a newline in the end, just in case
+            else:
+                stuff = file.readlines()
+                result = ""
+                for line in stuff:
+                    if search in line:
+                        result += line
+                data = f"{result}"
+            if ctx.guild is None:
+                limit = 8000000
+            else:
+                limit = int(ctx.guild.filesize_limit / 1.05)
+            rl = len(str(data))
+            if rl == 0 or data is None:
+                return await general.send("Nothing was found...", ctx.channel)
+            elif 0 < rl <= limit:
+                async with ctx.typing():
+                    _data = BytesIO(str(data).encode('utf-8'))
+                    return await general.send(f"Results for {log_file}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+            elif rl > limit:
+                async with ctx.typing():
+                    _data = BytesIO(str(data)[-limit:].encode('utf-8'))
+                    return await general.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest", ctx.channel,
+                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.command(name='eval')
+    @commands.check(permissions.is_owner)
+    async def eval_cmd(self, ctx: commands.Context, *, cmd):
+        """ Evaluates input. """
+        return await eval_(ctx, cmd)
+
+    @commands.command(name="reload", aliases=["re", "r"])
+    @commands.check(permissions.is_owner)
+    async def reload(self, ctx: commands.Context, name: str):
+        """ Reloads an extension. """
+        out = reload_extension(self.bot, self.bot.name, name)
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="reloadcore", aliases=["rc"])
+    @commands.check(permissions.is_owner)
+    async def reload_core(self, ctx: commands.Context, name: str):
+        """ Reloads a core extension. """
+        out = reload_extension(self.bot, "core", name)
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="reloadall", aliases=["rall", "ra"])
+    @commands.check(permissions.is_owner)
+    async def reload_all(self, ctx: commands.Context):
+        """ Reloads all extensions. """
+        error_collection = []
+        try:
+            for file in os.listdir(os.path.join(self.bot.name, "cogs")):
+                if file.endswith(".py"):
+                    name = file[:-3]
+                    try:
+                        self.bot.reload_extension(f"{self.bot.name}.cogs.{name}")
+                    except Exception as e:
+                        error_collection.append([file, f"{type(e).__name__}: {e}"])
+        except FileNotFoundError:
+            pass
+        for file in os.listdir(os.path.join("core", "cogs")):
+            if file.endswith(".py"):
+                name = file[:-3]
+                if name not in self.bot.local_config["exclude_core_cogs"]:
+                    try:
+                        self.bot.reload_extension(f"core.cogs.{name}")
+                    except Exception as e:
+                        error_collection.append([file, f"{type(e).__name__}: {e}"])
+        if error_collection:
+            output = "\n".join([f"**{g[0]}** ```fix\n{g[1]}```" for g in error_collection])
+            return await general.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}", ctx.channel)
+        await general.send("Successfully reloaded all extensions", ctx.channel)
+        logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Successfully reloaded all extensions")
+
+    @commands.command(name="reloadutil", aliases=["ru"])
+    @commands.check(permissions.is_owner)
+    async def reload_utils(self, ctx: commands.Context, name: str):
+        """ Reloads a utility module. """
+        out = reload_util(self.bot.name, name, self.bot)
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="reloadcoreutil", aliases=["rcu"])
+    @commands.check(permissions.is_owner)
+    async def reload_locale(self, ctx: commands.Context, name: str):
+        """ Reloads a core utility module. """
+        out = reload_util("core", name, self.bot)
+        return await general.send(out, ctx.channel)
+
+    async def load_ext(self, ctx, name1: str, name2: str):
+        try:
+            self.bot.load_extension(f"{name1}.cogs.{name2}")
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        reloaded = f"Loaded extension **{name1}/cogs/{name2}.py**"
+        await general.send(reloaded, ctx.channel)
+        if self.bot.local_config["logs"]:
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
+
+    async def unload_ext(self, ctx, name1: str, name2: str):
+        try:
+            self.bot.unload_extension(f"{name1}.cogs.{name2}")
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        reloaded = f"Loaded extension **{name1}/cogs/{name2}.py**"
+        await general.send(reloaded, ctx.channel)
+        if self.bot.local_config["logs"]:
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
+
+    @commands.command(name="load", aliases=["l"])
+    @commands.check(permissions.is_owner)
+    async def load(self, ctx: commands.Context, name: str):
+        """ Loads an extension. """
+        return await self.load_ext(ctx, self.bot.name, name)
+
+    @commands.command(name="loadcore", aliases=["lc"])
+    @commands.check(permissions.is_owner)
+    async def load_core(self, ctx: commands.Context, name: str):
+        """ Loads a core extension. """
+        return await self.load_ext(ctx, "core", name)
+
+    @commands.command(name="unload", aliases=["ul"])
+    @commands.check(permissions.is_owner)
+    async def unload(self, ctx: commands.Context, name: str):
+        """ Unloads an extension. """
+        return await self.unload_ext(ctx, self.bot.name, name)
+
+    @commands.command(name="unloadcore", aliases=["ulc"])
+    @commands.check(permissions.is_owner)
+    async def unload(self, ctx: commands.Context, name: str):
+        """ Unloads a core extension. """
+        return await self.unload_ext(ctx, "core", name)
+
+    def reload_config(self):
+        config = general.get_config()
+        self.bot.config = config
+        self.bot.local_config = config["bots"][self.bot.index]
+        reloaded = "Reloaded config_v6.json"
+        if self.bot.local_config["logs"]:
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
+        return reloaded
+
+    @commands.command(name="updateconfig", aliases=["uc"])
+    @commands.check(permissions.is_owner)
+    async def update_config(self, ctx: commands.Context):
+        """ Reload config """
+        reloaded = self.reload_config()
+        return await general.send(reloaded, ctx.channel)
+
+    @commands.command(name="shutdown")
+    @commands.check(permissions.is_owner)
+    async def shutdown(self, ctx: commands.Context):
+        """ Shut down the bot """
+        import time as _time
+        import sys
+        await general.send("Shutting down...", ctx.channel)
+        if self.bot.local_config["logs"]:
+            logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.local_config['name']} > Shutting down from command...")
+        _time.sleep(1)
+        sys.stderr.close()
+        sys.exit(0)
+
+    @commands.command(name="execute", aliases=["exec"])
+    @commands.check(permissions.is_owner)
+    async def execute(self, ctx: commands.Context, *, text: str):
+        """ Do a shell command. """
+        message = await general.send("Loading...", ctx.channel)
+        proc = await asyncio.create_subprocess_shell(text, stdin=None, stderr=PIPE, stdout=PIPE)
+        out = (await proc.stdout.read()).decode('utf-8').strip()
+        err = (await proc.stderr.read()).decode('utf-8').strip()
+        if not out and not err:
+            await message.delete()
+            return await ctx.message.add_reaction('👌')
+        content = ""
+        if err:
+            content += f"Error:\r\n{err}\r\n{'-' * 30}\r\n"
+        if out:
+            content += out
+        if len(content) > 1500:
+            try:
+                data = BytesIO(content.encode('utf-8'))
+                await message.delete()
+                await general.send("The result was a bit too long.. so here is a text file instead 👍", ctx.channel,
+                                   file=discord.File(data, filename=time.file_ts('Execute')))
+            except asyncio.TimeoutError as e:
+                await message.delete()
+                return await general.send(str(e), ctx.channel)
+        else:
+            await message.edit(content=f"```fix\n{content}\n```")
+
+    @commands.command(name="online", aliases=["on"])
+    @commands.check(permissions.is_owner)
+    async def online(self, ctx: commands.Context):
+        """ Server is online """
+        return await status(ctx, 1)
+
+    @commands.command(name="offline", aliases=["off"])
+    @commands.check(permissions.is_owner)
+    async def offline(self, ctx: commands.Context):
+        """ Server is offline """
+        return await status(ctx, 0)
+
+    @commands.command(name="restart", aliases=["res"])
+    @commands.check(permissions.is_owner)
+    async def restart(self, ctx: commands.Context):
+        """ Restart incoming """
+        return await status(ctx, 2)
+
+    @commands.command(name="tables", aliases=["create", "recreate"])
+    @commands.is_owner()
+    async def recreate_tables(self, ctx: commands.Context):
+        """ Recreate all tables """
+        module_name = importlib.import_module(f"core.utils.database")
+        importlib.reload(module_name)
+        val = database.creation()
+        send = "Task succeeded successfully" if val else "Task failed successfully"
+        return await general.send(send, ctx.channel)
+
+    @commands.command(name="version", aliases=["fversion", "fullversion", "fv", "v"])
+    @commands.check(permissions.is_owner)
+    async def change_full_version(self, ctx: commands.Context, new_version: str):
+        """ Change version (full) """
+        try:
+            old_version = self.bot.local_config["version"]
+            data_io.change_version("version", new_version, self.bot.index)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        self.reload_config()
+        to_send = f"Changed full version from **{old_version}** to **{new_version}**"
+        if self.bot.local_config["logs"]:
+            logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.local_config['name']} > {to_send}")
+        return await general.send(to_send, ctx.channel)
+
+    @commands.command(name="sversion", aliases=["shortversion", "sv"])
+    @commands.check(permissions.is_owner)
+    async def change_short_version(self, ctx: commands.Context, new_version: str):
+        """ Change version (short) """
+        try:
+            old_version = self.bot.local_config["short_version"]
+            data_io.change_version("short_version", new_version, self.bot.index)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        self.reload_config()
+        to_send = f"Changed short version from **{old_version}** to **{new_version}**"
+        if self.bot.local_config["logs"]:
+            logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.local_config['name']} > {to_send}")
+        return await general.send(to_send, ctx.channel)
+
+    @commands.group()
+    @commands.check(permissions.is_owner)
+    async def change(self, ctx: commands.Context):
+        """ Change bot's data """
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(str(ctx.command))
+
+    @change.command(name="username")
+    @commands.check(permissions.is_owner)
+    async def change_username(self, ctx: commands.Context, *, name: str):
+        """ Change username. """
+        try:
+            await self.bot.user.edit(username=name)
+            return await general.send(f"Successfully changed username to **{name}**", ctx.channel)
+        except discord.HTTPException as err:
+            return await general.send(str(err), ctx.channel)
+
+    @change.command(name="nickname")
+    @commands.check(permissions.is_owner)
+    async def change_nickname(self, ctx: commands.Context, *, name: str = None):
+        """ Change nickname. """
+        try:
+            await ctx.guild.me.edit(nick=name)
+            if name:
+                return await general.send(f"Successfully changed nickname to **{name}**", ctx.channel)
+            else:
+                return await general.send("Successfully removed nickname", ctx.channel)
+        except Exception as err:
+            return await general.send(str(err), ctx.channel)
+
+    @change.command(name="avatar")
+    @commands.check(permissions.is_owner)
+    async def change_avatar(self, ctx: commands.Context, url: str = None):
+        """ Change avatar. """
+        if url is None and len(ctx.message.attachments) == 1:
+            url = ctx.message.attachments[0].url
+        else:
+            url = url.strip('<>') if url else None
+        try:
+            bio = await http.get(url, res_method="read")
+            await self.bot.user.edit(avatar=bio)
+            return await general.send(f"Successfully changed the avatar. Currently using:\n{url}", ctx.channel)
+        except aiohttp.InvalidURL:
+            return await general.send("The URL is invalid...", ctx.channel)
+        except discord.InvalidArgument:
+            return await general.send("This URL does not contain a useable image", ctx.channel)
+        except discord.HTTPException as err:
+            return await general.send(str(err), ctx.channel)
+        except TypeError:
+            return await general.send("You need to either provide an image URL or upload one with the command", ctx.channel)
+
+
+async def status(ctx: commands.Context, _type: int):
+    try:
+        await ctx.message.delete()
+    except discord.NotFound:
+        pass
+    updates = ["Server is offline", "Server is online", "Restart incoming"]
+    update = updates[_type]
+    now = time.time()
+    return await general.send(f"{now} > **{update}**", ctx.channel)
+
+
+def setup(bot):
+    bot.add_cog(Admin(bot))

@@ -26,10 +26,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 .idea/
-config.json
 MANIFEST
 data/
-database.db
+config_v6.json
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

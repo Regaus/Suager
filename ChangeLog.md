@@ -149,3 +149,12 @@
 ## v5.3.4.2 - 28 June
 - Added another forbidden tag name
 - Made grant role actually work
+
+## v6.0-alpha1 - 7 July
+- Support for multiple bots running
+- Removed Infidel List
+- Removed language support, at least for now.
+- Removed gender support
+- XP displayed will now be 100x smaller
+- XP requirements will no longer depend on server multiplier
+- Added some stuff that will never matter
