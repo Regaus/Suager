@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import discord
 from discord.ext import commands
 
 from core.utils import general, time, emotes
@@ -22,6 +23,27 @@ class SS23(commands.Cog):
         tz = ss23.date_zeivela(dt)  # Time on Zeivela
         tq = ss23.date_kaltaryna(dt)  # Time in Kaltaryna
         return await general.send(f"Time on Earth: **{ti}**\nTime on Zeivela: **{tz}**\nTime in Kargadia: **{tk}**\nTime in Kaltaryna: **{tq}**", ctx.channel)
+
+    @commands.command(name="weather23", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def weather23(self, ctx: commands.Context, *, place: str):
+        """ Weather in a place in SS23 """
+        try:
+            weather = ss23.Weather(place.title())
+            embed = discord.Embed(colour=general.random_colour())
+            embed.title = f"Weather in **{weather.city}, {weather.planet}**"
+            embed.description = f"Local Time: **{weather.time_out}**"
+            temp_c = round(weather.temperature, 1)
+            embed.add_field(name="Temperature", value=f"{temp_c}°C", inline=False)
+            speed_kmh = round(weather.wind_speed, 1)
+            embed.add_field(name="Wind Speed", value=f"{speed_kmh} km/h", inline=False)
+            embed.add_field(name="Is raining?", value="Yes" if weather.is_raining else "No", inline=False)
+            embed.timestamp = time.now(None)
+            return await general.send(None, ctx.channel, embed=embed)
+        except Exception as e:
+            if ctx.channel.id == 610482988123422750:
+                await general.send(general.traceback_maker(e), ctx.channel)
+            return await general.send(f"An error occurred: `{type(e).__name__}: {e}`.\nThe place {place} may not exist.", ctx.channel)
 
 
 def setup(bot):

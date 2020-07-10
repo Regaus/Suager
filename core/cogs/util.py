@@ -176,7 +176,7 @@ class Utility(commands.Cog):
                     country_name = "Enslaved Shooting Range"
                 emote = f":flag_{country.lower()}:"
                 embed.title = f"{emote} Weather in **{data['name']}, {country_name}**"
-                embed.description = f"Local Time: {local_time}"
+                embed.description = f"Local Time: **{local_time}**"
                 weather_icon = data['weather'][0]['icon']
                 embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
                 embed.add_field(name="Current Weather", value=data['weather'][0]['description'].capitalize(), inline=True)

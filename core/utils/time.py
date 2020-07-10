@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 
 def time_output(when: datetime, day: bool = True, seconds: bool = False, dow: bool = False, tz: bool = False):
     d, n = "%a, ", ''
-    m = "03.999 July" if (when.day == 4 and when.month == 7) else "%d %b"
+    m = "34 June" if (when.day == 4 and when.month == 7) else "%d %b"
     f = f"{f'{d if dow else n}{m} %Y, ' if day else ''}%H:%M{':%S' if seconds else ''}{' %Z' if tz else ''}"
     return when.strftime(f)
 

@@ -162,3 +162,8 @@
 ## v6.0-alpha2 - 7 July
 - Time for Zeivela and Kaltaryna proof-of-concept created
 - `ri` as alias for reload images command
+
+## v6.0-alpha3 - 10 July
+- TBL with stats and clan
+- Improved handling of SS23 time
+- SS23 "Weather"

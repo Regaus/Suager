@@ -537,6 +537,9 @@ class Leveling(commands.Cog):
             except OverflowError:
                 error = "Never"
                 t1, t2 = [error, error]
+            except OSError:
+                error = "Error"
+                t1, t2 = [error, error]
             extra = f"\nXP left: **{(r - xp) / 100:,.0f}**\nEst. time: **{t1} to {t2}**"
         return await general.send(f"{base}{extra}", ctx.channel)
 
@@ -594,6 +597,9 @@ class Leveling(commands.Cog):
             t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
         except OverflowError:
             error = "Never"
+            t1, t2 = [error, error]
+        except OSError:
+            error = "Error"
             t1, t2 = [error, error]
         return await general.send(f"**{ctx.author.name}** - You have **{r1}/{r2} XP**.\nYou need **{r3}** more to reach **level {r5}** (Progress: **{r4}%**)\n"
                                   f"Est. talking time: **{t1} to {t2}**", ctx.channel)
