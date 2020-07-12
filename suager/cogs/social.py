@@ -181,13 +181,13 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """ Lick someone """
-        if user.id in [302851022790066185]:
-            return await general.send("You are not allowed to do that.", ctx.channel)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
         if ctx.author == user:
             return await general.send(None, ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673644219314733106/selflick.gif"))
+        if user.id == 302851022790066185:
+            return await general.send("How about you don't?", ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send("Why would you do that?", ctx.channel)
         if user.bot:
@@ -208,7 +208,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send("Alone?", ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send("I am not programmed to feel love...", ctx.channel)
+            return await general.send("I am not programmed to feel love.", ctx.channel)
         if user.bot:
             return await general.send("Bots weren't programmed to feel love, though...", ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
@@ -229,7 +229,7 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await general.send(f"We are no longer friends, {ctx.author.name}", ctx.channel)
         if user.id == 302851022790066185:
-            return await general.send("You are not allowed to do that.", ctx.channel)
+            return await general.send("How about no", ctx.channel)
         if user.bot:
             return await general.send(f"What did {user.name} even do to you?", ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
@@ -238,7 +238,7 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(self.bite))
         return await general.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="slap", aliases=["kill", "shoot", "punch", "hit"])
+    @commands.command(name="slap")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def slap(self, ctx: commands.Context, user: discord.Member):
@@ -248,19 +248,16 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await general.send(f"We are no longer friends, {ctx.author.name}", ctx.channel)
         if user.id == 302851022790066185:
-            return await general.send("You are not allowed to do that.", ctx.channel)
+            return await general.send("You can't do that.", ctx.channel)
         if user.bot:
             return await general.send(f"What did {user.name} even do to you?", ctx.channel)
-        if str(ctx.invoked_with).lower() == "slap":
-            if is_fucked(self.slap):
-                self.slap = await lists.get_images(self.bot, 'v')
-            embed = discord.Embed(colour=general.random_colour())
-            self.data_update(ctx.author.id, user.id, ctx.guild.id, "slaps_given", "slaps_received", 18, 19)
-            embed.title = f"**{user.name}** just got slapped by **{ctx.author.name}**"
-            embed.set_image(url=random.choice(self.slap))
-        else:
-            embed = None
-        return await general.send(f"Violence is not the answer, {ctx.author.name}", ctx.channel, embed=embed)
+        if is_fucked(self.slap):
+            self.slap = await lists.get_images(self.bot, 'v')
+        embed = discord.Embed(colour=general.random_colour())
+        self.data_update(ctx.author.id, user.id, ctx.guild.id, "slaps_given", "slaps_received", 18, 19)
+        embed.title = f"**{user.name}** just got slapped by **{ctx.author.name}**"
+        embed.set_image(url=random.choice(self.slap))
+        return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="sniff")
     @commands.guild_only()
@@ -271,6 +268,8 @@ class Social(commands.Cog):
             self.smell = await lists.get_images(self.bot, 'n')
         if ctx.author == user:
             return await general.send(f"Why though? {emotes.UmmOK}", ctx.channel)
+        if user.id == 302851022790066185:
+            return await general.send("How about you don't?", ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(f"Why would you do that?", ctx.channel)
         if user.bot:

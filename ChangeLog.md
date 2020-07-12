@@ -167,3 +167,8 @@
 - TBL with stats and clan
 - Improved handling of SS23 time
 - SS23 "Weather"
+
+## v6.0-alpha4 - 13 July
+- Hopefully fixed data_io encoding issues
+- Ratings now remind you that you're talking to a bot
+- Fixed some stuff with ss23 weather

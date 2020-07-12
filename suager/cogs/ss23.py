@@ -34,10 +34,27 @@ class SS23(commands.Cog):
             embed.title = f"Weather in **{weather.city}, {weather.planet}**"
             embed.description = f"Local Time: **{weather.time_out}**"
             temp_c = round(weather.temperature, 1)
-            embed.add_field(name="Temperature", value=f"{temp_c}°C", inline=False)
+            embed.add_field(name="Temperature", value=f"{temp_c}°C | **placeholder**", inline=False)
             speed_kmh = round(weather.wind_speed, 1)
-            embed.add_field(name="Wind Speed", value=f"{speed_kmh} km/h", inline=False)
-            embed.add_field(name="Is raining?", value="Yes" if weather.is_raining else "No", inline=False)
+            if weather.planet == "Kargadia":
+                kp_base = 0.8192
+                kp_hour = 37.49865756 / 32
+                m_name = "ks/h (kp/c)"
+            elif weather.planet == "Kaltaryna":
+                kp_base = 0.8192
+                kp_hour = 51.642812 / 64
+                m_name = "ks/h (kp/c)"
+            else:
+                kp_base = 1
+                kp_hour = 1
+                m_name = "unknown"
+            speed_kpc = round(weather.wind_speed / kp_base * kp_hour, 1)
+            embed.add_field(name="Wind Speed", value=f"{speed_kmh} km/h | **{speed_kpc} {m_name}**", inline=False)
+            if weather.is_raining:
+                rain = "It's raining" if temp_c > 0 else "It's snowing"
+            else:
+                rain = "It's dry so far"
+            embed.add_field(name="Precipitation", value=rain, inline=False)
             embed.timestamp = time.now(None)
             return await general.send(None, ctx.channel, embed=embed)
         except Exception as e:

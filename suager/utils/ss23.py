@@ -86,10 +86,12 @@ class ZeivelaTime:
         self.tz_name = tzn
         wl = 6  # week length
         dow = ds % wl
-        weekdays = ["Kavderus", "Henrin", "Tahnall", "Hintarin", "Kaasdehte", "Vinhirus"]
+        weekdays = ["Vantakku", "Vantallu", "Hennettu", "Kaiva", "Leiva", "Kahkatu"]
         self.day_name = f"Keina te {weekdays[dow]}"
-        self.months = ["Tinnerus", "Hednerus", "Hainerus", "Katterus", "Neiteverus", "Zeivellus",
-                       "Pentallus", "Tebarrus", "Faitualus", "Sitterus", "Kaggarus", "Maivarus"]
+        if self.day == 37:
+            self.day_name = f"Keine te Vantakku-Tahnall"
+        self.months = ["Vinhirus", "Kavderus", "Tinnerus", "Hednerus", "Hainerus", "Katterus",
+                       "Neiteverus", "Zeivellus", "Pentallus", "Tebarrus", "Faitualus", "Kaggarus"]
 
     def str_dec(self, dow: bool = True, month: bool = False, tz: bool = True):
         dn = f"{self.day_name}, " if dow else ""
@@ -149,10 +151,11 @@ class KaltarynaTime:
         self.tz_name = tzn
         wl = 8  # week length
         dow = ds % wl
-        weekdays = ["Senka", "Navaite", "Sanvakkar", "Havasleisar", "Teinear", "Kannaite", "Suvaker", "Shira"]
-        self.day_name = f"Sea af {weekdays[dow]}"
-        self.months = ["Senka", "Shira", "Kanvu", "Shokka", "Nurikkus", "Aija", "Kiommi", "Nuutal",
-                       "Baaser", "Finkal", "Suvaker", "Kitte", "Dekear", "Kaltanner", "Kaiveal", "Karasmar"]
+        weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
+        day_part = "Sea" if self.hour in range(12, 52) else "Tea"
+        self.day_name = f"{day_part} af {weekdays[dow]}"
+        self.months = ["Senka", "Shira", "Kan", "Shoka", "Nurikus", "Aii", "Kiona", "Nutal",
+                       "Bassar", "Finkal", "Suvaker", "Kitte", "Dekear", "Kaltanner", "Kaiveal", "Karasmar"]
 
     def str_dec(self, dow: bool = True, month: bool = False, tz: bool = True):
         dn = f"{self.day_name}, " if dow else ""
@@ -229,11 +232,9 @@ class Weather:
             offset = -343
         y, x, tzn = places[self.city]
         y += offset
-        if y < 0:
-            y += 1800
         long = y / 5
         if long > 180:
-            long = -(180 - long)
+            long = -(360 - long)
         lat = x / 5
         if lat < 90:
             lat = 90 - lat
@@ -259,7 +260,39 @@ class Weather:
                     "temperature_high_night": [32, 30, 28, 24, 20, 17, 18, 21, 23, 24, 29, 30, 32, 33, 33, 33],
                     "rain_chance": [61, 52, 50, 47, 25, 17, 22, 37, 42, 47, 52, 63, 92, 90, 79],
                     "winds_mult": 0.47
-                }
+                },
+                "Sentatebaria": {
+                    "temperature_low_day": [-4, -7, -13, -17, -22, -27, -28, -26, -21, -17, -12, -6, 1, 7, 12, 5],
+                    "temperature_high_day": [6, 0, -4, -11, -16, -19, -21, -17, -12, -8, -4, -1, 12, 18, 22, 14],
+                    "temperature_low_night": [-11, -19, -23, -30, -31, -36, -41, -40, -27, -21, -17, -11, -7, -2, 7, -1],
+                    "temperature_high_night": [1, -6, -12, -14, -19, -25, -26, -24, -17, -15, -11, -5, -1, 5, 7, 2],
+                    "rain_chance": [37, 31, 21, 17, 9, 6, 5, 8, 11, 13, 17, 27, 33, 40, 39],
+                    "winds_mult": 0.81
+                },
+                "Kitnagar": {
+                    "temperature_low_day": [11, 7, 3, -1, -7, -14, -13, -10, -2, 4, 7, 11, 21, 20, 19, 17],
+                    "temperature_high_day": [17, 14, 9, 5, -1, -7, -10, -4, 6, 11, 18, 21, 27, 30, 30, 29],
+                    "temperature_low_night": [4, 1, -5, -10, -15, -20, -21, -14, -6, -1, 1, 5, 9, 10, 11, 7],
+                    "temperature_high_night": [12, 9, 5, 0, -4, -10, -9, -9, -5, 6, 10, 15, 20, 21, 20, 17],
+                    "rain_chance": [37, 31, 21, 17, 9, 6, 5, 8, 11, 13, 17, 27, 33, 40, 39],
+                    "winds_mult": 0.81
+                },
+                "Murrangar": {
+                    "temperature_low_day": [-51, -47, -34, -30, -27, -25, -24, -24, -27, -31, -37, -41, -50, -57, -63, -57],
+                    "temperature_high_day": [-42, -33, -27, -24, -21, -20, -19, -20, -22, -25, -30, -33, -41, -47, -51, -49],
+                    "temperature_low_night": [-52, -47, -36, -32, -30, -27, -26, -25, -29, -33, -40, -43, -51, -60, -63, -59],
+                    "temperature_high_night": [-43, -35, -29, -26, -22, -21, -20, -20, -22, -26, -31, -34, -42, -49, -52, -50],
+                    "rain_chance": [11, 14, 16, 20, 21, 22, 21, 20, 19, 17, 14, 13, 9, 6, 4, 7],
+                    "winds_mult": 1.27
+                },
+                "Peaskar": {
+                    "temperature_low_day": [27, 32, 37, 42, 45, 50, 54, 53, 45, 37, 27, 25, 22, 19, 16, 22],
+                    "temperature_high_day": [32, 41, 47, 50, 53, 57, 61, 63, 57, 47, 39, 32, 29, 27, 24, 29],
+                    "temperature_low_night": [13, 19, 20, 21, 23, 27, 24, 21, 19, 18, 14, 12, 9, 7, 7, 10],
+                    "temperature_high_night": [27, 33, 38, 43, 46, 48, 50, 48, 42, 39, 30, 28, 24, 20, 21, 26],
+                    "rain_chance": [1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 1],
+                    "winds_mult": 0.72
+                },
             }
         }[self.planet][self.city]
 
@@ -273,15 +306,19 @@ class Weather:
             ranges = self.weather_patterns["temperature_low_night"], self.weather_patterns["temperature_high_night"]
         month = self.time.month
         _low, _high = ranges
-        low, high = _low[month], _high[month]
-        rain_chance = self.weather_patterns["rain_chance"][month]
+        low, high = _low[month - 1], _high[month - 1]
+        rain_chance = self.weather_patterns["rain_chance"][month - 1]
         wind_low, wind_high = [val * self.weather_patterns["winds_mult"] for val in [20, 40]]
         seed = month * 100 + self.time.day
         random.seed(seed)
         overall_temp = random.uniform(low, high)
         overall_wind = random.uniform(wind_low, wind_high)
         hour_float = (self.time.hour - 1) + self.time.minute / day_length
-        multipliers = [1.07, 1.01, 0.96, 0.92, 0.88, 0.84, 0.83, 0.87, 0.91, 0.95, 0.98, 1.02, 1.06, 1.1, 1.13, 1.16, 1.14, 1.11, 1.09, 1.08]
+        # multipliers = [1.07, 1.01, 0.96, 0.92, 0.88, 0.84, 0.83, 0.87, 0.91, 0.95, 0.98, 1.02, 1.06, 1.1, 1.13, 1.16, 1.14, 1.11, 1.09, 1.08]
+        multipliers = [-3, -4, -5, -6, -7, -7, -4, -2, 0, 2, 3, 4, 6, 7, 8, 9, 8, 6, 3, 0]
         part = int(hour_float / day_length * 20)
-        is_raining = rain_chance > random.random()
-        return overall_temp * multipliers[part], is_raining, overall_wind * random.uniform(0.9, 1.1)
+        random.seed(seed * day_length ** 2 + hour_float * day_length)
+        wind_speed = overall_wind * random.uniform(0.9, 1.1)
+        is_raining = random.uniform(1, 100) < rain_chance
+        additional = multipliers[part] * random.uniform(0.9, 1.1)
+        return overall_temp + additional, is_raining, wind_speed
