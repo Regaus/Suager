@@ -213,6 +213,24 @@ class Utility(commands.Cog):
             return await general.send(f"Couldn't get weather for {place}:\n`{type(e).__name__}: {e}`", ctx.channel)
         return await general.send(None, ctx.channel, embed=embed)
 
+    @commands.command(name="luas")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
+        """ Data for Luas """
+        import luas.api
+        client = luas.api.LuasClient()
+        _place = str(place).title() if len(str(place)) != 3 else str(place)
+        data = client.stop_details(_place)
+        status = data['status']
+        trams = ''
+        for i in data['trams']:
+            if i['due'] == 'DUE':
+                _time = 'DUE'
+            else:
+                _time = f"{i['due']} mins"
+            trams += f"{i['destination']}: {_time}\n"
+        return await general.send(f"Data for {_place}:\n{status}\n{trams}", ctx.channel)
+
 
 def setup(bot):
     bot.add_cog(Utility(bot))

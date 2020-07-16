@@ -120,25 +120,24 @@ async def tbl_game(ctx, db):
             pass_time = f"{m}m {s:02d}s"
             m, s = divmod(lvl_len_int, 60)
             lvl_len = f"{m}m {s:02d}s"
-            player["nuts"] += nuts
-            player["xp"] += xp
-            player["sh_xp"] += sh_xp
-            player["points"] += points
+            player["nuts"] += int(nuts)
+            player["xp"] += int(xp)
+            player["sh_xp"] += int(sh_xp)
+            player["points"] += int(points)
             new_level, ld, _title = xp_level(new_level, player["xp"])
             player["coins"] += ld
-            limit = 119 + new_level
+            limit = 119 + new_level if new_level != 200 else 320
             if energy < limit:
                 if ld > 0:
                     energy = limit
                 else:
-                    energy += pass_time_int / 60
+                    energy += lvl_len_int / 60
                     if energy > limit:
                         energy = limit
-            elapsed = time.timesince(now_dt)
             place_str = f"You came **#{place:,}/{people - 1:,}**"
             saves_str = f"Saves: **{saves:,}**"
-            sh_xp_str = f"\nShaman XP: **{sh_xp:,}**" if cool else ""
-            message_data = f"{time.time()} > {ctx.author.name} > TBL\nRound: {_runs}\nLocation: **{loc['name']}**\nElapsed: {elapsed}\n" \
+            sh_xp_str = f"\nShaman XP: **{sh_xp:,.0f}**" if cool else ""
+            message_data = f"{time.time()} > {ctx.author.name} > TBL\nRound: {_runs}\nLocation: **{loc['name']}**\n" \
                            f"Energy remaining: **{energy:,.0f}**\n\nThis round's results:\nLevel length: **{lvl_len}**\n"
             if live:
                 if not cool:
@@ -149,10 +148,10 @@ async def tbl_game(ctx, db):
                 message_data += "You did not win this round."
                 if cool:
                     message_data += f"\n{saves_str}"
-            message_data += f"\nRewards:\nNuts: **{nuts:,}** - New total: **{player['nuts']:,}**\nXP: **{xp:,}** - New total: **{player['xp']:,}** - " \
+            message_data += f"\nRewards:\nNuts: **{nuts:,.0f}** - New total: **{player['nuts']:,}**\nXP: **{xp:,.0f}** - New total: **{player['xp']:,}** - " \
                             f"Level **{new_level}**{sh_xp_str}"
             await message.edit(content=message_data)
-            await asyncio.sleep(random.uniform(1.5, 2.5))
+            await asyncio.sleep(2)
         new_level, ld, title = xp_level(level, player['xp'])
         level_up = f"__You are now Level **{new_level}**! New title: **{title}**__\n" if ld > 0 else ""
         new_sh_level = sh_level(player['sh_xp'])
@@ -180,7 +179,7 @@ async def tbl_game(ctx, db):
         message_data = f"{time.time()} > {ctx.author.name} > TBL over\nTime taken: **{total_time}**\nNew stats:\nEnergy left: **{energy:,.0f}**\n" \
                        f"Nuts: **{player['nuts']:,}**\nXP: **{player['xp']:,}** | Level **{new_level}**\nShaman XP: **{player['sh_xp']:,}** | " \
                        f"Level **{new_sh_level}**\nClan XP: **{clan['xp']:,}** | Level **{cl_level}**\n{level_up}\nCheck `{ctx.prefix}tbl stats` to see your " \
-                       f"stats or `{ctx.prefix}tbl clan` for the clan stats. Use `{ctx.prefix}tbl explain` for details on things"
+                       f"stats or `{ctx.prefix}tbl clan` for the clan stats. Use `{ctx.prefix}tbl details` for details on things"
         return await message.edit(content=message_data)
     except Exception as e:
         if ctx.channel.id == 610482988123422750:
@@ -201,7 +200,7 @@ def get_location(lid: int, level: int):
 
 def get_activity(loc_act: list):
     """ Get location's activity """
-    now = ss23.time_kargadia()
+    now = ss23.time_kargadia(tz=2.5)
     month = now.month
     month_var = [1.51, 1.37, 1.22, 1.09, 1.00, 0.93, 0.87, 0.91, 0.96, 1.01, 1.17, 1.27, 1.59, 2.01, 2.31, 1.97]
     hour = now.hour + (now.minute / 32)
@@ -212,7 +211,7 @@ def get_activity(loc_act: list):
 
 def regen_energy(current: int, regen_time: int, level: int, now: int):
     td = now - regen_time
-    limit = 119 + level
+    limit = 119 + level if level != 200 else 320
     if current >= limit:
         return current, now
     else:

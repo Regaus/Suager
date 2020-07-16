@@ -303,7 +303,7 @@ locations = [
     },
     {
         "id": 17,
-        "name": "Da 2'a Laitaa Deaktanvan",
+        "name": "Da Deva Laitaa Deaktanvan",
         "ru": "Корабль Спасения",
         "en": "The Second Ship of Salvation",
         "desc_en": "Scientists didn't give up and built the second Ship of Salvation to escape the planet. This is the only hope for salvation.",
@@ -325,31 +325,31 @@ locations = [
 totems = [
     {
         "name": "Totem of Growth",
-        "desc": "Creates <val>% more Araksan for you.",
+        "desc": "Provides you with **%s more Nuts**.",
         "name_ru": "Тотем Роста",
-        "desc_ru": "Создает на <val>% больше орехов.",  # 1.08 + 0.02 * level
+        "desc_ru": "Создает на %s больше орехов.",  # 1.08 + 0.02 * level
     },
     {
         "name": "Totem of Coolness",
-        "desc": "Get <val>% more XP - become cool faster.",
+        "desc": "Get **%s more XP** - become cool faster.",
         "name_ru": "Тотем Крутости",
-        "desc_ru": "Получаешь на <val>% больше опыта - быстрее становишься крутым.",  # 1.06 + 0.04 * level
+        "desc_ru": "Получаешь на %s больше опыта - быстрее становишься крутым.",  # 1.06 + 0.04 * level
     },
     {
         "name": "Totem of Shamanery",
-        "desc": "You are a cool shaman, you get <val>% Shaman XP",
+        "desc": "You become a cooler shaman, you get **%s more Shaman XP**",
         "name_ru": "Тотем Шаманства",
-        "desc_ru": "Ты - крутой шаман. За это ты получаешь на <val>% больше опыта шамана.",  # 1.075 + 0.025 * level
+        "desc_ru": "Ты - крутой шаман. За это ты получаешь на %s больше опыта шамана.",  # 1.075 + 0.025 * level
     },
     {
         "name": "Totem of Senko",
-        "desc": "Now at least one person cares about you.\nNo real effect.",
+        "desc": "Now at least one more person cares about you. No real effect.",
         "name_ru": "Тотем Сенко",
         "desc_ru": "Теперь хотя бы один человек заботится о тебе.\nНет эффекта.",
     },
     {
         "name": "Totem of Cthulhu",
-        "desc": "Well, uh.. Why not? Just makes this even weirder\nNo real effect.",
+        "desc": "Well, uh.. Why not? At least it makes this even weirder. No real effect.",
         "name_ru": "Тотем Ктулху",
         "desc_ru": "Ну а почему бы и нет?\nНет эффекта.",
     },
@@ -1116,7 +1116,8 @@ xp_levels = [
 ]
 
 
-sh_levels = [80, 300, 720, 1400, 2400, 3780, 5600, 7920, 10800, 14300, 18480, 23400, 29120, 35700, 40044, 45408, 52152, 60636, 71220, 84264, 100128, 119172,
-             141756, 168240, 198984, 234348, 274692, 320376, 371760, 403274, 436469, 471883, 510058, 551532, 596846, 646541, 701155, 761230, 827304, 899918,
-             979613, 1066927, 1162402, 1266576, 1330905, 1399713, 1474442, 1556531, 1647419, 1748548]
-clan_levels = [int(3 * x ** 2 + 250 * x + 400) for x in range(60)]
+# sh_levels = [80, 300, 720, 1400, 2400, 3780, 5600, 7920, 10800, 14300, 18480, 23400, 29120, 35700, 40044, 45408, 52152, 60636, 71220, 84264, 100128, 119172,
+#              141756, 168240, 198984, 234348, 274692, 320376, 371760, 403274, 436469, 471883, 510058, 551532, 596846, 646541, 701155, 761230, 827304, 899918,
+#              979613, 1066927, 1162402, 1266576, 1330905, 1399713, 1474442, 1556531, 1647419, 1748548]
+sh_levels = [int(0.25 * x ** 4 + 2 * x ** 3 + 10 * x ** 2 + 200 * x + 80) for x in range(125)]
+clan_levels = [int(0.2 * x ** 3 + 3 * x ** 2 + 250 * x + 400) for x in range(200)]

@@ -62,6 +62,15 @@ class SS23(commands.Cog):
                 await general.send(general.traceback_maker(e), ctx.channel)
             return await general.send(f"An error occurred: `{type(e).__name__}: {e}`.\nThe place {place} may not exist.", ctx.channel)
 
+    @commands.command(name="timetb", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def time_tbl(self, ctx: commands.Context):
+        """ Time in TBL """
+        dt = time.now(None)
+        ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
+        tk = ss23.time_kargadia(dt, tz=2.5, tzn="TBT").str_dec(True, False, True)  # Time in Kargadia
+        return await general.send(f"Time on Earth: **{ti}**\nTime in TBL: **{tk}**", ctx.channel)
+
 
 def setup(bot):
     bot.add_cog(SS23(bot))

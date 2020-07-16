@@ -51,10 +51,23 @@ def levels():
     xp = []
     # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
     for x in range(max_level):
+        base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
+        req += int(base)
         if x not in [69, 420, 666, 1337]:
-            base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
-            req += int(base)
-            xp.append(req)
+            xp.append(int(req))
+        else:
+            xp.append(xp[-1])
+    return xp
+
+
+def levels_global():
+    req = 0
+    xp = []
+    for x in range(2000):
+        base = 0.7 * x ** 5 + 1.5 * x ** 4 + 20 * x ** 3 + 75 * x ** 2 + 200 * x + 500
+        req += int(base)
+        if x not in [69, 420, 666, 1337]:
+            xp.append(int(req))
         else:
             xp.append(xp[-1])
     return xp
@@ -419,31 +432,37 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check your or someone's rank """
-        async with ctx.typing():
-            user = who or ctx.author
-            is_self = user.id == self.bot.user.id
-            if user.bot and not is_self:
-                return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
-            _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
-            coll = {}
-            for i in _data:
-                if i['uid'] not in coll:
-                    coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
-                coll[i['uid']][0] += i['xp']
-            sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
-            r = len(sl)
-            xp = []
-            for thing in range(r):
-                v = sl[thing][1]
-                xp.append(v[0])
-            place = "Undefined"
-            _xp = 0
-            for someone in range(len(sl)):
-                if sl[someone][0] == user.id:
-                    place = f"#{someone + 1:,}"
-                    _xp = xp[someone]
-                    break
-            return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard", ctx.channel)
+        user = who or ctx.author
+        is_self = user.id == self.bot.user.id
+        if user.bot and not is_self:
+            return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
+        _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
+        coll = {}
+        for i in _data:
+            if i['uid'] not in coll:
+                coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
+            coll[i['uid']][0] += i['xp']
+        sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
+        r = len(sl)
+        xp = []
+        for thing in range(r):
+            v = sl[thing][1]
+            xp.append(v[0])
+        place = "Undefined"
+        _xp = 0
+        for someone in range(len(sl)):
+            if sl[someone][0] == user.id:
+                place = f"#{someone + 1:,}"
+                _xp = xp[someone]
+                break
+        al = levels_global()
+        level = 0
+        for lvl in al:
+            if _xp >= lvl:
+                level += 1
+            else:
+                break
+        return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard\nGlobal Level: {level:,}", ctx.channel)
 
     @commands.group(name="crank", aliases=["customrank"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

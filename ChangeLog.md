@@ -172,3 +172,9 @@
 - Hopefully fixed data_io encoding issues
 - Ratings now remind you that you're talking to a bot
 - Fixed some stuff with ss23 weather
+
+## v6.0-alpha5 - 16 July
+- Improved TBL and added some details
+- Added DLRAM
+- Added timetb command
+- Added some stuff which will be later used for translations

@@ -62,21 +62,32 @@ async def eval_(ctx: commands.Context, cmd):
 
 
 def reload_util(base: str, name: str, bot):
-    return reload_module(base, "utils", name, bot)
+    return reload_module_base(base, "utils", name, bot)
 
 
-def reload_module(base: str, folder: str, name: str, bot):
+def reload_langs(bot):
+    name_maker = f"**languages/langs.py**"
+    module_name = "languages.langs"
+    return reload_module(name_maker, module_name, bot)
+
+
+def reload_module_base(base: str, folder: str, name: str, bot):
     name_maker = f"**{base}/{folder}/{name}.py**"
+    module_name = f"{base}.{folder}.{name}"
+    return reload_module(name_maker, module_name, bot)
+
+
+def reload_module(human_name: str, module_name: str, bot):
     try:
-        module_name = importlib.import_module(f"{base}.{folder}.{name}")
-        importlib.reload(module_name)
+        module = importlib.import_module(module_name)
+        importlib.reload(module)
     except ModuleNotFoundError:
-        return f"Could not find module named {name_maker}"
+        return f"Could not find module named {human_name}"
     except Exception as e:
         error = general.traceback_maker(e)
-        return f"Module {name_maker} returned an error and was not reloaded...\n{error}"
-    reloaded = f"Reloaded module {name_maker}"
-    if general.get_config()["bots"][bot.index]["logs"]:
+        return f"Module {human_name} returned an error and was not reloaded...\n{error}"
+    reloaded = f"Reloaded module {human_name}"
+    if bot.local_config["logs"]:
         logger.log(bot.name, "changes", f"{time.time()} > {bot.local_config['name']} > {reloaded}")
     return reloaded
 
@@ -295,9 +306,16 @@ class Admin(commands.Cog):
 
     @commands.command(name="reloadcoreutil", aliases=["rcu"])
     @commands.check(permissions.is_owner)
-    async def reload_locale(self, ctx: commands.Context, name: str):
+    async def reload_core_util(self, ctx: commands.Context, name: str):
         """ Reloads a core utility module. """
         out = reload_util("core", name, self.bot)
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="reloadlangs", aliases=["rl"])
+    @commands.check(permissions.is_owner)
+    async def reload_lang(self, ctx: commands.Context):
+        """ Reloads langs.py """
+        out = reload_langs(self.bot)
         return await general.send(out, ctx.channel)
 
     async def load_ext(self, ctx, name1: str, name2: str):

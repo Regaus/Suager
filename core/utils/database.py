@@ -216,6 +216,15 @@ tables = {
             Column("coins", 0, True),
             Column("upgrade_points", 0, True),  # Temple upgrade points
             Column("name", 0, True)             # Guild name
+        ]),
+        Table("dlram", [
+            Column("gid", 0, True),
+            Column("level", 0, True),
+            Column("ram", 0, True),
+            Column("energy", 0, True),     # Charge
+            Column("time", 0, True),
+            Column("downloads", 0, True),  # Times the download process was executed
+            Column("name", 0, True)
         ])
     ]
 }
