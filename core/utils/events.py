@@ -102,41 +102,39 @@ async def on_ready(self):
     else:
         times['ad'] = True
         open(self.changes, 'w+').write(json.dumps(times))
-
-
-async def playing_changer(self):
-    if self.exists:
-        try:
-            self.config = general.get_config()
-            self.local_config = self.config["bots"][self.bot.index]
-            log = self.local_config["logs"]
-            now = time.now()
+    while len(self.local_config["playing"]) > 1:
+        if self.exists:
             try:
-                times = json.loads(open(self.changes, 'r').read())
+                self.config = general.get_config()
+                self.local_config = self.config["bots"][self.bot.index]
+                log = self.local_config["logs"]
+                now = time.now()
+                try:
+                    times = json.loads(open(self.changes, 'r').read())
+                except Exception as e:
+                    general.print_error(f"{time.time()} > on_ready() > {e}")
+                    times = changes.copy()
+                if len(self.local_config["playing"]) > 1:
+                    this = now.minute * 60 + now.second
+                    that = times['playing']
+                    speed = self.local_config["playing_rate"]
+                    plays = self.local_config["playing"]
+                    a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
+                    if a != b:
+                        play = random.choice(plays)
+                        playing = f"{play} | v{self.local_config['short_version']}"
+                        await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
+                        times["playing"] = this
+                        if log:
+                            logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {playing}")
+                open(self.changes, 'w+').write(json.dumps(times))
+            except PermissionError:
+                general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
+            except aiohttp.ClientConnectorError:
+                general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > The bot tried to do something while disconnected.")
             except Exception as e:
-                general.print_error(f"{time.time()} > on_ready() > {e}")
-                times = changes.copy()
-            if len(self.local_config["playing"]) > 1:
-                this = now.minute * 60 + now.second
-                that = times['playing']
-                speed = self.local_config["playing_rate"]
-                plays = self.local_config["playing"]
-                a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
-                if a != b:
-                    play = random.choice(plays)
-                    playing = f"{play} | v{self.local_config['short_version']}"
-                    await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
-                    times["playing"] = this
-                    if log:
-                        logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {playing}")
-            open(self.changes, 'w+').write(json.dumps(times))
-        except PermissionError:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
-        except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > The bot tried to do something while disconnected.")
-        except Exception as e:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > {type(e).__name__}: {e}")
-    await asyncio.sleep(5)
+                general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > {type(e).__name__}: {e}")
+        await asyncio.sleep(5)
 
 
 async def avatar_changer(self):

@@ -49,11 +49,9 @@ for i in range(len(config["bots"])):
     open(fn, 'w+').write(json.dumps(times))
     bot = bot_data.Bot(command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), case_insensitive=True,
                        help_command=bot_data.HelpFormat(), owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd)
-    bot.start_time = boot_time
     bot.index = i
     bot.local_config = local_config
     bot.config = config
-    bot.admin_ids = local_config["admins"]
     bot.name = local_config["internal_name"]
     try:
         for file in os.listdir(os.path.join(_name, "cogs")):

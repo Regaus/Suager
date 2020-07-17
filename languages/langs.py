@@ -5,6 +5,11 @@ from dateutil.relativedelta import relativedelta
 from core.utils import time
 
 
+month_names = {
+        "en_gb": ["December", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November"]
+    }
+
+
 def gbs(value: int, locale: str = "en_gb") -> str:  # Get Byte String
     """ Gets Byte value name (for dlram) """
     if locale == "en_gb":
@@ -20,10 +25,10 @@ def gbs(value: int, locale: str = "en_gb") -> str:  # Get Byte String
             return f"{value / (step ** i):,.2f} {names[i]}"
 
 
-def gns(value: int, locale: str = "en_gb", fill: int = 0) -> str:  # Get number string
+def gns(value: int, locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
     """ Get a string from an integer """
     if locale == "en_gb":
-        return f"{value:0{fill},d}"
+        return f"{value:0{fill}{',' if commas else ''}d}"
 
 
 def gfs(value: float, locale: str = "en_gb", precision: int = 2, percentage: bool = False) -> str:  # Get float string
@@ -97,3 +102,40 @@ def td_int(seconds: int, locale: str = "en_gb", accuracy: int = 3, is_future: bo
 
 def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool = True, suffix: bool = False) -> str:
     return td_dt(time.from_ts(timestamp, None), locale, accuracy=accuracy, brief=brief, suffix=suffix)
+
+
+def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
+    """ Get localised time string """
+    when = when or time.now(None)
+    month_names_l = month_names.get(locale, month_names["en_gb"])
+    base = ""
+    if date:
+        if dow:
+            weekdays = {
+                "en_gb": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            }
+            weekday = (weekdays.get(locale, weekdays["en_gb"]))[when.weekday()]
+            base += f"{weekday}, "
+        base += gns(when.day, locale, 2)
+        month_name = month_names_l[when.month % 12]
+        month_name_s = month_name[:3]
+        month = month_name if not short else month_name_s
+        base += f" {month} "
+        base += gns(when.year, locale, commas=False) + ", "
+    hour = gns(when.hour, locale, 2)
+    minute = gns(when.minute, locale, 2)
+    second = gns(when.second, locale, 2)
+    base += f"{hour}:{minute}"
+    if seconds:
+        base += f":{second}"
+    if tz:
+        base += f" {when.tzname()}"
+    return base
+
+
+def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
+    month_names_l = month_names.get(locale, month_names["en_gb"])
+    month_name = month_names_l[when.month % 12]
+    month_name_s = month_name[:3]
+    month = month_name if not short else month_name_s
+    return f"{gns(when.day, locale)} {month}{' ' + gns(when.year, locale, 0, False) if year else ''}"

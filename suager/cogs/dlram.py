@@ -54,8 +54,8 @@ class DownloadRAM(commands.Cog):
     @dlram.command(name="recharge")
     async def dlram_regen_info(self, ctx: commands.Context):
         """ Recharge speeds information """
-        return await general.send("Recharge speed starts at **1 per 3 minutes**, and decreases by 1 seconds every 2 levels up to 1 charge per 1 second at "
-                                  "level 358.", ctx.channel)
+        return await general.send("Recharge speed starts at **1 per 3 minutes**, and decreases by 1 seconds every level. Caps at 1 charge per 1 second at "
+                                  "level 179.", ctx.channel)
         # levels = {"1-99": 60, "100-249": 30, "250-999": 15, "1000-2999": 5, "3000+": 1}
         # output = []
         # indent = max([len(key) for key in levels.keys()])

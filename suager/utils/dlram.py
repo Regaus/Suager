@@ -78,7 +78,7 @@ async def download_ram(ctx, db):
                   f"**{ram}/{next_level} RAM**\nThis server is level **{langs.gns(new_level)}**.\nCharge left: **{langs.gns(energy)}/{langs.gns(limit)}**"
         if energy < limit:
             fill = limit - energy
-            regen_speed = 180 - new_level // 2 if new_level < 358 else 1
+            regen_speed = 180 - new_level if new_level < 179 else 1
             # regen_speed = 60 - int(new_level / 500 * 59)
             # regen_speed = 60 if new_level < 100 else 30 if 100 <= new_level < 250 else 15 if 250 <= new_level < 1000 else 5 if 1000 <= new_level < 3000 else 1
             time_req = regen_t + fill * regen_speed
@@ -89,7 +89,7 @@ async def download_ram(ctx, db):
 def regen_energy(current: int, regen_time: int, level: int, now: int):
     td = now - regen_time
     limit = 200 + level * 25
-    regen_speed = 180 - level // 2 if level < 358 else 1
+    regen_speed = 180 - level if level < 179 else 1
     # regen_speed = 60 if level < 100 else 30 if 100 <= level < 250 else 15 if 250 <= level < 1000 else 5 if 1000 <= level < 3000 else 1
     if current >= limit:
         return current, now, regen_speed

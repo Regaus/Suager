@@ -178,3 +178,9 @@
 - Added DLRAM
 - Added timetb command
 - Added some stuff which will be later used for translations
+
+## v6.0-alpha6 - 17 July
+- Added TBL Seasons
+- Added ability to set your location in TBL
+- Improved stats command
+- Improved DLRAM energy regeneration speeds

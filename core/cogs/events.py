@@ -5,7 +5,7 @@ from discord.ext.tasks import loop
 from core.utils import events, time
 
 
-no = {'no': 0}
+no = {'no': 1}
 
 
 class Events(commands.Cog):
@@ -14,14 +14,12 @@ class Events(commands.Cog):
         self.changes = f"data/{self.bot.name}/changes.json"
         self.config = self.bot.config
         self.local_config = self.bot.local_config
-        no['no'] = self.local_config['playing_rate']
+        no["no"] = self.local_config['playing_rate']
         self.exists = False
-        self.playing.start()
         if self.bot.name == "suager":
             self.avatar.start()
 
     def con_unload(self):
-        self.playing.cancel()
         if self.bot.name == "suager":
             self.avatar.cancel()
 
@@ -68,17 +66,9 @@ class Events(commands.Cog):
         self.exists = True
         return await events.on_ready(self)
 
-    @loop(seconds=no['no'])
-    async def playing(self):
-        return await events.playing_changer(self)
-
     @loop(hours=1)
     async def avatar(self):
         return await events.avatar_changer(self)
-
-    @playing.before_loop
-    async def playing_before(self):
-        await self.bot.wait_until_ready()
 
     @avatar.before_loop
     async def avatar_before(self):

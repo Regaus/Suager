@@ -26,13 +26,11 @@ class BotInformation(commands.Cog):
         local_config = self.bot.local_config
         embed = discord.Embed(colour=general.random_colour())
         uptime = time.human_timedelta(self.bot.uptime, brief=True, suffix=False)
-        start_time = time.human_timedelta(self.bot.start_time, brief=True)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
-        admins = "\n".join([str(self.bot.get_user(i)) for i in local_config["admins"]])
         embed.add_field(name="Developers",  value=f"**{owners}**", inline=True)
-        embed.add_field(name="Admins",  value=f"**{admins}**" if admins else "None", inline=True)
-        embed.add_field(name="Uptime", value=f"Boot time: **{start_time}**\nUptime: **{uptime}**")
+        embed.add_field(name="Uptime", value=f"**{uptime}**", inline=True)
+        embed.add_field(name="Commands", value=f"**{len(self.bot.commands)}**", inline=True)
         tm, tc, vc, cc = 0, 0, 0, 0
         for guild in self.bot.guilds:
             tm += len(guild.members)
@@ -42,9 +40,9 @@ class BotInformation(commands.Cog):
         users = len(self.bot.users)
         avg_members = round(tm / len(self.bot.guilds), 1)
         servers = len(self.bot.guilds)
-        command = len(self.bot.commands)  # command amount
-        embed.add_field(name="Counters", value=f"Commands: **{command}**\nServers: **{servers:,}**\nUsers: **{users:,}**\nAvg. Members: **{avg_members}**")
-        embed.add_field(name="Server counters", value=f"Members: **{tm:,}**\nText channels: **{tc:,}**\nCategories: **{cc:,}**\nVoice channels: **{vc:,}**")
+        embed.add_field(name="User Counters", value=f"Total Members: **{tm:,}**\nUnique Users: **{users:,}**\nAvg. Members: **{avg_members}**", inline=True)
+        embed.add_field(name="Server counters", inline=True,
+                        value=f"Total Servers: **{servers:,}**\nText channels: **{tc:,}**\nCategories: **{cc:,}**\nVoice channels: **{vc:,}**")
         _version = sys.version_info
         version = f"{_version.major}.{_version.minor}.{_version.micro}"
         embed.add_field(name="What I Use", inline=True, value=f"**discord.py v{discord.__version__}\nPython v{version}**")

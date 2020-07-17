@@ -4,7 +4,7 @@ from discord.ext import commands
 
 
 async def check_permissions(ctx, perms, *, check=all):
-    if is_admin(ctx):
+    if is_owner(ctx):
         return True
     resolved = ctx.channel.permissions_for(ctx.author)
     return check(getattr(resolved, name, None) == value for name, value in perms.items())
@@ -30,7 +30,3 @@ def is_nsfw(ctx):
 
 def is_owner(ctx):
     return ctx.author.id in ctx.bot.config["owners"]
-
-
-def is_admin(ctx):
-    return is_owner(ctx) or ctx.author.id in ctx.bot.local_config["admins"]

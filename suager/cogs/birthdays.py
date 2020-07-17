@@ -109,7 +109,7 @@ class Birthdays(commands.Cog):
         return await general.send(f"Okay, your birthday is now saved as **{date}**", ctx.channel)
 
     @birthday.command(name="forceset", aliases=["force"])
-    @commands.check(permissions.is_admin)
+    @commands.check(permissions.is_owner)
     async def force_set(self, ctx: commands.Context, user: discord.User, *, new_time: str):
         """ Force-set someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
@@ -117,7 +117,7 @@ class Birthdays(commands.Cog):
         return await general.send(data, ctx.channel)
 
     @birthday.command(name="insert")
-    @commands.check(permissions.is_admin)
+    @commands.check(permissions.is_owner)
     async def insert(self, ctx: commands.Context, user: discord.User, *, new_time: str):
         """ Insert someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")

@@ -215,7 +215,8 @@ tables = {
             Column("nuts", 0, True),            # Araksan
             Column("coins", 0, True),
             Column("upgrade_points", 0, True),  # Temple upgrade points
-            Column("name", 0, True)             # Guild name
+            Column("name", 0, True),            # Guild name
+            Column("usage", 3, True)            # Whether someone is running TBL at the moment
         ]),
         Table("dlram", [
             Column("gid", 0, True),

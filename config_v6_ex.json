@@ -11,8 +11,8 @@
         "C/"
       ],
       "short_version": "1.0b",
-      "version": "1.0-beta1",
-      "last_update": 1594596193,
+      "version": "1.0-beta2",
+      "last_update": 1595019708,
       "first_version": 1593803395,
       "major_release": 1593803395,
       "playing_rate": 60,
@@ -37,8 +37,8 @@
         "S/"
       ],
       "short_version": "6.0a",
-      "version": "6.0-alpha4",
-      "last_update": 1594596212,
+      "version": "6.0-alpha6",
+      "last_update": 1595019708,
       "first_version": 1557781320,
       "major_release": -1,
       "playing_rate": 60,

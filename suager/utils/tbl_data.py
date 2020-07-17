@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 locations = [
     {
         "id": 1,
@@ -158,7 +160,7 @@ locations = [
     },
     {
         "id": 9,
-        "name": "Plakannat Diaran Vaitekan",
+        "name": "Pulkannat Diaran Vaitekan",
         "ru": "Равнины Штормов",
         "en": "The Plains of Storms",
         "desc_en": "Right in the center of the planet a storm started to rage. Dangers that would chill your soul await those who dare enter here.",
@@ -331,7 +333,7 @@ totems = [
     },
     {
         "name": "Totem of Coolness",
-        "desc": "Get **%s more XP** - become cool faster.",
+        "desc": "You get **%s more XP** and become cool faster.",
         "name_ru": "Тотем Крутости",
         "desc_ru": "Получаешь на %s больше опыта - быстрее становишься крутым.",  # 1.06 + 0.04 * level
     },
@@ -1121,3 +1123,44 @@ xp_levels = [
 #              979613, 1066927, 1162402, 1266576, 1330905, 1399713, 1474442, 1556531, 1647419, 1748548]
 sh_levels = [int(0.25 * x ** 4 + 2 * x ** 3 + 10 * x ** 2 + 200 * x + 80) for x in range(125)]
 clan_levels = [int(0.2 * x ** 3 + 3 * x ** 2 + 250 * x + 400) for x in range(200)]
+
+
+def dt(year: int, month: int, day: int, hour: int = 0, minute: int = 0) -> datetime:
+    return datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
+
+
+events = {
+    "nuts": [
+        [dt(2020, 7, 18), dt(2020, 7, 20), 1.5]
+    ],
+    "xp": [
+        [dt(2020, 7, 24, 12), dt(2020, 7, 27), 1.5]
+    ]
+}
+seasons = {
+    # 0: [dt(2020, 7, 1), dt(2020, 7, 17, 19, 27)],
+    1: [dt(2020, 7, 17), dt(2020, 9, 1)],
+    2: [dt(2020, 9, 1), dt(2020, 10, 1)],
+    3: [dt(2020, 10, 1), dt(2020, 10, 30)],
+    4: [dt(2020, 10, 30), dt(2020, 11, 30)],
+    5: [dt(2020, 11, 30), dt(2020, 12, 25)],
+    6: [dt(2020, 12, 25), dt(2021, 1, 27)],
+    7: [dt(2021, 1, 27), dt(2021, 2, 23)],
+    8: [dt(2021, 2, 23), dt(2021, 3, 17)],
+    9: [dt(2021, 3, 17), dt(2021, 4, 18)],
+    10: [dt(2021, 4, 18), dt(2021, 5, 19)],
+    11: [dt(2021, 5, 19), dt(2021, 6, 16)],
+    12: [dt(2021, 6, 16), dt(2021, 7, 13)],
+    13: [dt(2021, 7, 13), dt(2021, 8, 21)],
+    14: [dt(2021, 8, 21), dt(2021, 10, 1)],
+    15: [dt(2021, 10, 1), dt(2021, 10, 30)],
+    16: [dt(2021, 10, 30), dt(2021, 11, 30)],
+    17: [dt(2021, 11, 30), dt(2021, 12, 25)],
+    18: [dt(2021, 12, 25), dt(2022, 1, 27)],
+    19: [dt(2022, 1, 27), dt(2022, 3, 1)],
+    20: [dt(2022, 3, 1), dt(2022, 4, 2)],
+    21: [dt(2022, 4, 2), dt(2022, 5, 1)],
+    22: [dt(2022, 5, 1), dt(2022, 6, 1)],
+    23: [dt(2022, 6, 1), dt(2022, 7, 1)],
+    24: [dt(2022, 7, 1), dt(2022, 8, 1)]
+}

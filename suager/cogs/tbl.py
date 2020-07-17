@@ -1,3 +1,4 @@
+import asyncio
 import json
 
 import discord
@@ -12,10 +13,36 @@ class TBL(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database(self.bot.name)
+        self.season = tbl.get_season()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        while True:
+            season = tbl.get_season()
+            if season != self.season:
+                channel = self.bot.get_channel(733751281184931850)
+                all_players = self.db.fetch("SELECT * FROM tbl_player")
+                old_points = []
+                for player in all_players:
+                    old_points.append({"name": f"{player['name']}#{player['disc']:04d}", "points": player["points"], 'id': player['uid']})
+                old_points.sort(key=lambda x: x["points"], reverse=True)
+                top_5 = ""
+                emotes = ["🥇", "🥈", "🥉", "🏆", "🏆"]
+                prize = [50, 30, 20, 10, 5]
+                prizes = [langs.plural(i, "coin") for i in prize]
+                for place, user in enumerate(old_points[:5], start=1):
+                    emote = emotes[place - 1]
+                    top_5 += f"\n{emote} **#{place}: {user['name']}** at **{user['points']:,} Points** - Prize: **{prizes[place - 1]}**"
+                    self.db.execute("UPDATE tbl_player SET coins=coins+? WHERE uid=?", (prize[place - 1], user["id"]))
+                self.db.execute("UPDATE tbl_player SET points=points/10, nuts=nuts+(points/5)")
+                await general.send(f"Season {self.season} has now ended! Here are the Top 5 people of the past season:{top_5}\n"
+                                   f"1/10 of everyone's League Points will carry over to the next season, and some will be converted to extra Nuts.\n"
+                                   f"The top 5 will also receive some extra coins.", channel)
+                self.season = season
+            await asyncio.sleep(60)
 
     @commands.group(name="tbl")
     @commands.guild_only()
-    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def tbl(self, ctx: commands.Context):
         """ TBL """
@@ -25,6 +52,7 @@ class TBL(commands.Cog):
             #                           f"Use `{ctx.prefix}help tbl` for the list of commands available", ctx.channel)
 
     @tbl.command(name="play")
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     async def tbl_play(self, ctx: commands.Context):
         """ Play TBL """
         return await tbl.tbl_game(ctx, self.db)
@@ -74,7 +102,7 @@ class TBL(commands.Cog):
                 break
         embed.add_field(name="League", inline=False, value=f"**{league}** - **{points:,}/{next_league}** points")
         energy, regen_t = tbl.regen_energy(player["energy"], player["time"], player["level"], now)
-        limit = 119 + level
+        limit = 119 + level if level != 200 else 320
         next_in = f" - Next in: **{time.timedelta(60 - (now - regen_t))}**" if energy < limit else ""
         embed.add_field(name="Energy", inline=False, value=f"**{energy:,.0f}/{limit}**{next_in}")
         return await general.send(None, ctx.channel, embed=embed)
@@ -122,6 +150,8 @@ class TBL(commands.Cog):
         clan, exists = tbl.get_clan(ctx.guild, self.db)
         if not exists:
             return await general.send(f"This clan has not been fully created yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
+        if clan["usage"]:
+            return await general.send("TBL is running in this clan at the moment, so this function is currently unavailable. Try again later.", ctx.channel)
         choice = what.lower()
         if choice == "nuts":
             nuts = player["nuts"]
@@ -155,6 +185,8 @@ class TBL(commands.Cog):
         clan, exists = tbl.get_clan(ctx.guild, self.db)
         if not exists:
             return await general.send(f"This clan has not been fully created yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
+        if clan["usage"]:
+            return await general.send("TBL is running in this clan at the moment, so this function is currently unavailable. Try again later.", ctx.channel)
         levels = json.loads(clan["temple_levels"])
         if totem_id <= 0:
             return await general.send(f"Please enter a totem ID. These can be found with `{ctx.prefix}tbl details totems`.", ctx.channel)
@@ -176,6 +208,8 @@ class TBL(commands.Cog):
         clan, exists = tbl.get_clan(ctx.guild, self.db)
         if not exists:
             return await general.send(f"This clan has not been fully created yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
+        if clan["usage"]:
+            return await general.send("TBL is running in this clan at the moment, so this function is currently unavailable. Try again later.", ctx.channel)
         totems = json.loads(clan["temples"])
         nuts = clan["nuts"]
         totem_amount = len(tbl_data.totems)
@@ -215,6 +249,23 @@ class TBL(commands.Cog):
         name = f"Set **{tbl_data.totems[totem_id - 1]['name']}** to" if totem_id > 0 else "**Reset**"
         return await general.send(f"{name} to Slot **{slot}** for **{c}**.", ctx.channel)
 
+    @tbl.command(name="location")
+    async def tbl_set_location(self, ctx: commands.Context, location_id: int = -1):
+        """ Set your location """
+        player, exists = tbl.get_player(ctx.author, self.db, 0)
+        if not exists:
+            return await general.send(f"You have not played TBL yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
+        locations = tbl_data.locations
+        if location_id < 0:
+            return await general.send("You need to specify which location you want to be in. Entering `0` will reset it, entering `1`-`17` will set you to the "
+                                      "specified one", ctx.channel)
+        if location_id > len(locations):
+            return await general.send(f"Location with ID {location_id} does not exist.", ctx.channel)
+        location = tbl.get_location(location_id, 201)
+        output = f"Set your location to **{location['name']} ({location['en']})**" if location_id > 0 else "**Reset** you location"
+        self.db.execute("UPDATE tbl_player SET location=? WHERE uid=?", (location_id, ctx.author.id))
+        return await general.send(f"{output}. Note that if your level is not high enough to be there, it will be set to the nearest available.", ctx.channel)
+
     @tbl.group(name="details", aliases=["documentation", "docs", "explain"])
     async def tbl_docs(self, ctx: commands.Context):
         """ Information about TBL """
@@ -226,6 +277,7 @@ class TBL(commands.Cog):
                 "totems": "Explains the clan totems and what they do",
                 "leagues": "Shows details on leagues",
                 "clans": "What clans do",
+                "seasons": "Shows details on league seasons"
             }
             data = [[key, value] for key, value in sub_commands.items()]
             data.sort(key=lambda x: x[0])
@@ -243,8 +295,8 @@ class TBL(commands.Cog):
             "The more people are active - the higher rewards you can potentially get from each round.\nAt the end of a round, a portion of energy will "
             "regenerate, based on the level length, and then the game will continue until you don't have enough energy to do so.\n\nFor each round you can get "
             "the following rewards:\nNuts, XP, and Clan XP - each winning round,\nExtra nuts and XP, and also Shaman XP - for each save if you are shaman "
-            "during the round.\nIf you win, you also get League Points, which are used for leaderboards. ~~Note to self: might use for seasonal "
-            "rewards later.~~", ctx.channel)
+            "during the round.\nIf you win, you also get League Points, which are used for leaderboards. League Seasons last around a month and will reward "
+            "you with extra Nuts, and the top 5 will also get extra Coins.", ctx.channel)
 
     @tbl_docs.command(name="levels")
     async def tbl_docs_levels(self, ctx: commands.Context):
@@ -266,7 +318,7 @@ class TBL(commands.Cog):
         for i in range(len(levels)):
             totem = totems[i]
             level = levels[i]
-            effect = 0.08 + 0.02 * level if i == 0 else 0.06 + 0.04 * level if i == 1 else 0.075 + 0.025 * level if i == 2 else -1
+            effect = 0.06 + 0.04 * level if i == 0 else 0.07 + 0.03 * level if i == 1 else 0.075 + 0.025 * level if i == 2 else -1
             effect_str = langs.gfs(effect, "en_gb", 1, True)
             if effect != -1:
                 totem_desc = totem['desc'] % effect_str
@@ -292,7 +344,29 @@ class TBL(commands.Cog):
             points.append(langs.gns(league['score']))
         for i in range(1, len(leagues)):
             outputs.append(f"`{names[i]:<{len(max(names))}} - {points[i]:>{len(points[-1])}} Points`")
-        await general.send("These are the leagues in TBL:\n" + "\n".join(outputs) + "\nYou get league points by winning rounds in TBL.", ctx.channel)
+        season_end = tbl_data.seasons[self.season][1]
+        await general.send("You get league points by winning rounds in TBL.\nThose who have the highest points at the end of a season will receive coins. "
+                           "Everyone gets 1/5 of their points converted into extra Nuts, 1/10 of their league points get carried over into the next season. "
+                           "There is an extra reward for being in the top 5 at the end of the season\nThe current season is "
+                           f"**Season {langs.gns(self.season)}** - Ends in **{langs.td_dt(season_end, brief=True)}**", ctx.channel)
+        await general.send("These are the leagues in TBL:\n" + "\n".join(outputs), ctx.channel)
+        # await general.send("\nAnd these are the prizes for being in the top 5 globally:\n" +
+        #                    "\n".join([f"#{i}: **{p}**" for i, p in enumerate(prizes, start=1)]), ctx.channel)
+
+    @tbl_docs.command(name="seasons")
+    async def tbl_docs_seasons(self, ctx: commands.Context):
+        """ Information on TBL Seasons """
+        seasons = list(tbl_data.seasons.items())
+        season_b = self.season - 2 if self.season - 2 > 0 else 0
+        season_l = self.season + 8
+        season_data = ""
+        for season, data in seasons[season_b:season_l]:
+            season_data += f"\nSeason {langs.gns(season)}: from **{langs.gts_date(data[0])}** to **{langs.gts_date(data[1])}**"
+            if season == self.season:
+                season_data += " __(current season)__"
+        await general.send("TBL has League Seasons, which means that about every month 1/5 of your League Points is converted into Nuts, and 1/10 of the "
+                           "points carry over into the next Season. People who are in the Top 5 also get extra coins. Here are a few past seasons and "
+                           f"the upcoming ones:{season_data}", ctx.channel)
 
     @tbl_docs.command(name="locations")
     async def tbl_docs_loc(self, ctx: commands.Context, location_id: int = 0):

@@ -129,7 +129,7 @@ class Fun(commands.Cog):
         return await general.send(None, ctx.channel, file=discord.File("assets/notwork.png"))
 
     @commands.command(name="dm")
-    @commands.check(permissions.is_admin)
+    @commands.check(permissions.is_owner)
     async def dm(self, ctx: commands.Context, user_id: int, *, message: str):
         """ DM a user """
         try:
@@ -164,7 +164,7 @@ class Fun(commands.Cog):
         return await general.send(f"{emotes.Allow} Successfully sent the message to {channel.mention}", ctx.channel, delete_after=5)
 
     @commands.command(name="atell")
-    @commands.check(permissions.is_admin)
+    @commands.check(permissions.is_owner)
     async def admin_tell(self, ctx: commands.Context, channel_id: int, *, message: str):
         """ Say something to a channel """
         channel = self.bot.get_channel(channel_id)
