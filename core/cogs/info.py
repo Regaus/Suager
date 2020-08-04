@@ -35,7 +35,8 @@ class BotInformation(commands.Cog):
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=langs.gls("info_stats_developers", locale),  value=f"**{owners}**", inline=True)
-        uptime = time.human_timedelta(self.bot.uptime, brief=True, suffix=False)
+        # uptime = time.human_timedelta(self.bot.uptime, brief=True, suffix=False)
+        uptime = langs.td_dt(self.bot.uptime, locale, brief=True, suffix=False)
         embed.add_field(name=langs.gls("info_stats_uptime", locale), value=f"**{uptime}**", inline=True)
         embed.add_field(name=langs.gls("info_stats_commands", locale), value=f"**{len(self.bot.commands)}**", inline=True)
         tm, tc, vc, cc = 0, 0, 0, 0

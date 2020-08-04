@@ -221,7 +221,7 @@
   "ratings_rate": "I think \"{0}\" is **{1}/{2}**",
   "ratings_rate_user": "I rate {0} as **{1}/{2}**",
   "settings_locale_invalid": "`{0}` is not a supported language. Enter this command without specifying any language for the list of all available languages.",
-  "settings_locale_set": "Etar server naat ecaa i `{0}` - **{1}**.\n__Veisen itaendat u de-ukkasaitan iadendat naad i base-A (base-10)! Taida naat an Zemla: `18:3C:3C`/sea!__",
+  "settings_locale_set": "Etar server naat ecaa i `{0}` - **{1}**.\n__Veisen itaendat naad i base-A (base-10)! Taida naat an Zemla: `18:3C:3C`/sea!__",
   "social_alone": "Alone?",
   "social_bad_suager": "If I'm that bad, why am I here?",
   "social_bang_bot": "Why would you ever want to do that to a bot {emotes.KannaSpook}",

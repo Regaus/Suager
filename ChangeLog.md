@@ -195,3 +195,9 @@
 - Improved DLRAM leveling
 - Improved DLRAM game outputs
 - Social counters will now be per-user instead of per-guild
+
+## v6.0-beta2 - 4 August
+- Float outputs in different bases
+- Added "random" filter
+- Added sepia filter
+- Improved some command outputs

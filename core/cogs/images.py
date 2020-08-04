@@ -108,11 +108,15 @@ class Images(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def filter(self, ctx: commands.Context, filter_name: str, *, who: discord.User = None):
         """ Let someone go through a filter
-        Do //filter help to see allowed filters """
+        Enter "help" as filter name to see allowed filters
+        Enter "random" for a random filter
+        """
         user = who or ctx.author
-        filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist", "wide"]
+        filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist", "wide", "sepia"]
         _filter = filter_name.lower()
-        if _filter not in filters or _filter == "help":
+        if _filter == "random":
+            _filter = random.choice(filters)
+        elif _filter not in filters or _filter == "help":
             return await general.send(langs.gls("images_filter_filters", langs.gl(ctx.guild, self.db), "`, `".join(filters)), ctx.channel)
             # return await general.send(f"The allowed filter names are:\n`{'`, `'.join(filters)}`", ctx.channel)
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")

@@ -47,6 +47,17 @@ def gns(value: int, locale: str = "en_gb", fill: int = 0, commas: bool = True) -
 
 def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
     """ Get a string from a float """
+    if locale.startswith("rsl-1"):
+        if per:
+            return gfs(value * 256, locale, pre, False) + "%"
+        base = bases.to_base_float(value, 16, pre, True)
+        _base = base.split(".")
+        if len(_base) == 1:
+            return put_commas(_base[0], step=3)
+        else:
+            _int, _float = _base
+            return f"{put_commas(_int, step=3)}.{_float}"
+        # _base = put_commas(bases.to_base(int(value), 16, True))
     if locale == "ru_ru":
         return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
     return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"

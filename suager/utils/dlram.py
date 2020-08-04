@@ -70,10 +70,10 @@ async def download_ram(ctx, db):
             new_level, ld = xp_level(data["level"], data["ram"])
             al = levels()
             if new_level < max_level:
-                next_level = langs.gbs(al[new_level - 1])
+                next_level = langs.gbs(al[new_level - 1], locale)
             else:
-                next_level = "MAX"
-            ram = langs.gbs(data["ram"])
+                next_level = langs.gls("generic_max", locale)
+            ram = langs.gbs(data["ram"], locale)
             data["level"] = new_level
             data["energy"] = int(energy)
             data["time"] = regen_t

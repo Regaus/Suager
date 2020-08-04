@@ -40,15 +40,17 @@ class Tags(commands.Cog):
         return await general.send(langs.gls("tags_create_success", locale, tag_name.lower(), ctx.author.name), ctx.channel)
         # return await general.send(f"Your tag `{tag_name.lower()}` has been successfully created, {ctx.author.name}.", ctx.channel)
 
-    def get_user(self, guild: discord.Guild, uid: int, locale: str) -> str:
-        try:
-            return str([user for user in guild.members if user.id == uid][0])
-        except IndexError:
-            no = f" | {langs.gls('tags_user_guild', locale)}"
-            try:
-                return str([user for user in self.bot.users if user.id == uid][0]) + no
-            except IndexError:
-                return str(uid) + no
+    async def get_user(self, guild: discord.Guild, uid: int, locale: str) -> str:
+        user = guild.get_member(uid)
+        return str(user) if user is not None else str(await self.bot.fetch_user(uid)) + f" | {langs.gls('tags_user_guild', locale)}"
+        # try:
+        #     return str([user for user in guild.members if user.id == uid][0])
+        # except IndexError:
+        #     no = f" | {langs.gls('tags_user_guild', locale)}"
+        #     # try:
+        #     return str([user for user in self.bot.users if user.id == uid][0]) + no
+        #     # except IndexError:
+        #     #     return str(uid) + no
 
     @tags.command(name="info")
     async def tag_info(self, ctx: commands.Context, *, tag_name: str):
@@ -60,8 +62,8 @@ class Tags(commands.Cog):
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         g = ctx.guild
-        embed.description = langs.gls("tags_info_data", locale, tag["name"], langs.gns(tag["usage"], locale), self.get_user(g, tag["owner"], locale),
-                                      self.get_user(g, tag["creator"], locale), langs.gts(time.from_ts(tag["created"]), locale),
+        embed.description = langs.gls("tags_info_data", locale, tag["name"], langs.gns(tag["usage"], locale), await self.get_user(g, tag["owner"], locale),
+                                      await self.get_user(g, tag["creator"], locale), langs.gts(time.from_ts(tag["created"]), locale),
                                       langs.gts(time.from_ts(tag["edited"]), locale))
         # embed.description = f"Name: {tag['name']}\nUses: {tag['usage']:,}\nOwner: {self.get_user(g, tag['owner'])}\nCreator: " \
         #                     f"{self.get_user(g, tag['creator'])}\nCreated at: {time.time_output(time.from_ts(tag['created']))}\n" \

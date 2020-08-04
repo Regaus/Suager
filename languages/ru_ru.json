@@ -222,7 +222,7 @@
   "ratings_rate": "I think \"{0}\" is **{1}/{2}**",
   "ratings_rate_user": "I rate {0} as **{1}/{2}**",
   "settings_locale_invalid": "`{0}` is not a supported language. Enter this command without specifying any language for the list of all available languages.",
-  "settings_locale_set": "This server's language has been set to `{0}` - **{1}**.",
+  "settings_locale_set": "Язык этого сервера теперь `{0}` - **{1}**.\nЗаметка: в некоторых коммандах могут выводиться неправильные падежи. На данный момент я не могу это исправить.",
   "social_alone": "Alone?",
   "social_bad_suager": "If I'm that bad, why am I here?",
   "social_bang_bot": "Why would you ever want to do that to a bot {emotes.KannaSpook}",
