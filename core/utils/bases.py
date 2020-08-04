@@ -10,6 +10,10 @@ def from_base(value: str, base: int) -> int:
 
 
 def to_base(value, base: int, caps: bool = False) -> str:
+    if base < 2:
+        return "Bases below 2 are not supported."
+    elif base > 36:
+        return "Bases above 36 are not supported."
     value = int(value)
     if value < 0:
         return "-" + to_base(value * -1, base, caps)
@@ -22,6 +26,10 @@ def to_base(value, base: int, caps: bool = False) -> str:
 
 
 def to_base_float(value: float, base: int, precision: int = 2, caps: bool = False):
+    if base < 2:
+        return "Bases below 2 are not supported."
+    elif base > 36:
+        return "Bases above 36 are not supported."
     if value < 0:
         return "-" + to_base_float(value * -1, base, precision, caps)
     if value.is_integer() or precision < 1:

@@ -201,3 +201,7 @@
 - Added "random" filter
 - Added sepia filter
 - Improved some command outputs
+
+## v6.0-beta3 - 4 August
+- Support for floats in base conversions from base 10
+- Removed owoify and neon commands due to no usage

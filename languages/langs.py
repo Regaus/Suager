@@ -58,6 +58,16 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
             _int, _float = _base
             return f"{put_commas(_int, step=3)}.{_float}"
         # _base = put_commas(bases.to_base(int(value), 16, True))
+    if locale.startswith("rsl-2"):
+        if per:
+            return gfs(value * 216, locale, pre, False) + "‰"
+        base = bases.to_base_float(value, 6, pre)
+        _base = base.split(".")
+        if len(_base == 1):
+            return put_commas(_base[0], step=3)
+        else:
+            _int, _float = _base
+            return f"{put_commas(_int, step=3)}.{_float}"
     if locale == "ru_ru":
         return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
     return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"

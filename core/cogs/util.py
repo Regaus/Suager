@@ -48,72 +48,22 @@ class Utility(commands.Cog):
             return await general.send(f"{ctx.author.name}, Bases above 36 are not supported", ctx.channel)
         elif base < 2:
             return await general.send(f"{ctx.author.name}, Bases under 2 are not supported", ctx.channel)
+        conversion = conversion.lower()
+        value = float(number)
         try:
             if conversion == "to":
-                return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
+                return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})", ctx.channel)
+                # return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
             if conversion == "from":
-                return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+                if not value.is_integer():
+                    return await general.send("Conversion of float numbers to base 10 is currently not supported.", ctx.channel)
+                return await general.send(f"{ctx.author.name}: {number:.0f} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+                # return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
         except ValueError:
             return await general.send(f"{ctx.author.name}, this number is invalid.", ctx.channel)
-
-    @commands.command(name="owoify", aliases=["owo", "furry"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def owo(self, ctx: commands.Context, *, string: str):
-        """ Converts input into furry language. I'm not sorry. """
-        stuff = string.lower()
-        words = [["ahh", "murr"], ["are", "is"], ["awesome", "pawsome"], ["awful", "pawful"], ["bite", "nom"], ["bulge", "bulgy-wulgy"],
-                 ["butthole", "tailhole"], ["celebrity", "popufur"], ["cheese", "sergal"], ["child", "cub"], ["computer", "protogen"], ["robot", "protogen"],
-                 ["cyborg", "protogen"], ["cum", "cummy wummy~"], ["disease", "pathOwOgen"], ["dog", "good boy"], ["dragon", "derg"], ["eat", "vore"],
-                 ["fuck", "fluff"], ["father", "daddy"], ["foot", "footpaw"], ["for ", "fur "], ["hand", "paw"], ["hell", "hecc"], ["hyena", "yeen"],
-                 ["kiss", "lick"], ["lmao", "hehe~"], ["love", "wuv"], ["mouth", "maw"], ["naughty", "knotty"], ["not", "knot"], ["perfect", "purrfect"],
-                 ["persona", "fursona"], ["pervert", "furvert"], ["porn", "yiff"], ["shout", "awoo"], ["source", "sauce"], ["straight", "gay"],
-                 ["tale", "tail"], ["the", "teh"], ["that", "dat"], ["these", "dese"], ["this", "dis"], ["those", "dose"], ["toe", "toe bean"],
-                 ["with", "wif"], ["you", "chu"], ["your", "ur"], ["you're", "ur"]]
-        symbols = [[",", "~"], [";", "~"], [":)", ":3"], [":0", "OwO"], [":d", "UwU"], ["xd", "x3"], ["  ", " uwu "]]
-        phrases = [["forgive me", "sorry"], ["i have sinned", "I've been naughty"], ["i've sinned", "I've been naughty"], ["have sex with", "yiff"],
-                   ["old person", "greymuzzle"], ["what's this", "OwO what's this"]]
-        faces = ["(o´∀`o)", "(#｀ε´)", "(๑•̀ㅁ•́๑)✧", "(*≧m≦*)", "(・`ω´・)", "UwU", "OwO", ">w<", "｡ﾟ( ﾟ^∀^ﾟ)ﾟ｡", "ヾ(｀ε´)ﾉ",
-                 "(´• ω •`)", "o(>ω<)o", "(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧", "(⁀ᗢ⁀)", "(￣ε￣＠)", "( 〃▽〃)", "(o^ ^o)", "ヾ(*'▽'*)"]
-        for word in words:
-            stuff = stuff.replace(word[0], word[1])
-        for phrase in phrases:
-            stuff = stuff.replace(phrase[0], phrase[1])
-        for symbol in symbols:
-            stuff = stuff.replace(symbol[0], symbol[1])
-        output = ""
-        for letter in stuff:
-            if letter in ["!", "?"]:
-                letter = f" {random.choice(faces)}"
-            output += letter
-        replacements = [["r", "w"], ["l", "w"], ["na", "nya"], ["ne", "nye"], ["ni", "nyi"], ["no", "nyo"], ["nu", "nyu"], ["nyaughty", "naughty"]]
-        for thing in replacements:
-            output = output.replace(thing[0], thing[1])
-        sentences = output.split(".")
-        output = ''.join([s.capitalize() for s in sentences])
-        i = [[" i ", " I "], ["i've", "I've"], ["i'm", "I'm"]]
-        for thing in i:
-            output = output.replace(thing[0], thing[1])
-        return await general.send(f"{ctx.author.name}:\n{output}", ctx.channel)
-
-    @commands.command(name="neon")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    @commands.check(general.is_suager)
-    async def neon(self, ctx: commands.Context, *, string: str):
-        """ Converts letters into neon emotes """
-        letters_normal = list("NABCDEFGHIJKLMOPQRSTUVWXYZ")
-        letters_neon = ["<a:NN:728657376189874237>", "<a:NA:728657101827866686>", "<a:NB:728657148917317664>", "<a:NC:728657170484166788>",
-                        "<a:ND:728657191732641922>", "<a:NE:728657211089223831>", "<a:NF:728657228160041081>", "<a:NG:728657247516753971>",
-                        "<a:NH:728657267318325309>", "<a:NI:728657284284153977>", "<a:NJ:728657300683882516>", "<a:NK:728657317356240917>",
-                        "<a:NL:728657333495922869>", "<a:NM:728657350981845063>", "<a:NO:728657397672837212>", "<a:NP:728657410784231530>",
-                        "<a:NQ:728657428757086281>", "<a:NR:728657504162021427>", "<a:NS:728657516199936082>", "<a:NT:728657531936833606>",
-                        "<a:NU:728657547472404660>", "<a:NV:728657575813447750>", "<a:NW:728657593882509343>", "<a:NX:728657655685447752>",
-                        "<a:NY:728657683254607963>", "<a:NZ:728658033080533083>"]
-        output = string.upper()
-        for i in range(26):
-            output = output.replace(letters_normal[i], letters_neon[i])
-        if len(output) > 1950:
-            return await general.send(f"{ctx.author.name}, the output text is too long. Try a shorter input.", ctx.channel)
-        return await general.send(f"{ctx.author.name}:\n{output}", ctx.channel)
+        except OverflowError:
+            return await general.send(f"{ctx.author.name}, the number specified is too large to convert to an integer.", ctx.channel)
+        return await general.send(f"You need to specify either `to` or `from`.", ctx.channel)
 
     @commands.command(name="settz")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -200,7 +150,7 @@ class Utility(commands.Cog):
                 _tc = _tk - 273.15
                 _tf = _tc * 1.8 + 32
                 tk, tc, tf = langs.gfs(_tk, locale, 1), langs.gfs(_tc, locale, 1), langs.gfs(_tf, locale, 1)
-                embed.add_field(name=langs.gls("util_weather_temperature", locale), value=f"**{tc}°C** | {tk}K | {tf}°F", inline=True)
+                embed.add_field(name=langs.gls("util_weather_temperature", locale), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=True)
                 embed.add_field(name=langs.gls("util_weather_pressure", locale), value=f"{langs.gns(data['main']['pressure'], locale)} hPa", inline=True)
                 embed.add_field(name=langs.gls("util_weather_humidity", locale), value=langs.gfs(data['main']['humidity'] / 100, locale, 0, True), inline=True)
                 _sm = data['wind']['speed']
