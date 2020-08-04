@@ -72,14 +72,12 @@ class Table:
 
 
 def creation():
-    try:
-        for name, values in tables.items():
-            for table in values:
+    for name, values in tables.items():
+        for table in values:
+            try:
                 table.create(name)
-        return True
-    except Exception as e:
-        print(f"{type(e).__name__}: {e}")
-        return False
+            except Exception as e:
+                print(f"{type(e).__name__}: {e}")
 
 
 tables = {
