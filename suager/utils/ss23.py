@@ -22,8 +22,8 @@ class KargadiaTime:
         parts = ["tea", "rea", "sea", "vea"]
         part = self.hour // 8
         self.day_name = f"{weekdays[dow]}{parts[part]}"
-        self.months = ["Senkannar", "Shirannar", "Kanvamar", "Shokamar", "Nurinnar", "Aijamar", "Kionnar", "Nuudamar",
-                       "Bauzemar", "Tvinkannar", "Suannar", "Kittinnar", "Dekimar", "Haltannar", "Kaivennar", "Kärasmar"]
+        self.months = ["Senkannar", "Shirannar", "Kanvamar", "Árkanmar", "Nurinnar", "Aijamar", "Kíonnar", "Gairannar",
+                       "Bassemar", "Finkannar", "Suvannar", "Kittannar", "Semarmar", "Haltannar", "Kaivynnar", "Kärasmar"]
 
     def str_dec(self, dow: bool = True, month: bool = False, tz: bool = True):
         dn = f"{self.day_name}, " if dow else ""
@@ -154,8 +154,8 @@ class KaltarynaTime:
         weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
         day_part = "Sea" if self.hour in range(12, 52) else "Tea"
         self.day_name = f"{day_part} af {weekdays[dow]}"
-        self.months = ["Senka", "Shira", "Kan", "Shoka", "Nurikus", "Aii", "Kiona", "Nutal",
-                       "Bassar", "Finkal", "Suvaker", "Kitte", "Dekear", "Kaltanner", "Kaiveal", "Karasmar"]
+        self.months = ["Senka", "Shira", "Kanvarus", "Arkanéda", "Nurus", "Aii", "Kiona", "Gairnar",
+                       "Basrus", "Finkal", "Suvaker", "Kitta", "Sémartar", "Kaltnar", "Kaiveal", "Karasnar"]
 
     def str_dec(self, dow: bool = True, month: bool = False, tz: bool = True):
         dn = f"{self.day_name}, " if dow else ""

@@ -6,7 +6,8 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from core.utils import permissions, general, time, database, emotes
+from core.utils import permissions, general, time, database
+from languages import langs
 
 
 class Birthdays(commands.Cog):
@@ -14,7 +15,7 @@ class Birthdays(commands.Cog):
         self.bot = bot
         self.re_timestamp = r"^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])"
         self.db = database.Database(self.bot.name)
-        self.bd_config = {568148147457490954: [568148147457490958, 663661621448802304]}
+        self.bd_config = {568148147457490954: [568148147457490958, 663661621448802304], 706574018928443442: [715620849167761458, 720780796293677109]}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -38,8 +39,7 @@ class Birthdays(commands.Cog):
                             if guild is not None:
                                 user = guild.get_member(g["uid"])
                                 if user is not None:
-                                    await general.send(f"Happy birthday {user.mention}, have a nice birthday and enjoy your role today 🎂🎉",
-                                                       channels[i], u=True)
+                                    await general.send(langs.gls("birthdays_message", langs.gl(guild, self.db), user.mention), channels[i], u=True)
                                     # await channels[i].send(f"Happy birthday {user.mention}, have a nice birthday and enjoy your role today 🎂🎉")
                                     await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
                                     print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
@@ -69,24 +69,27 @@ class Birthdays(commands.Cog):
     async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
         """ Check your birthday or other people """
         if ctx.invoked_subcommand is None:
+            locale = langs.gl(ctx.guild, self.db)
             user = user or ctx.author
             if user.id == self.bot.user.id:
-                return await general.send(f"My birthday is on **13th May**, thanks for asking {emotes.AlexHeart}", ctx.channel)
+                return await general.send(langs.gls("birthdays_birthday_suager", locale), ctx.channel)
             has_birthday = self.check_birthday_noted(user.id)
             if not has_birthday:
-                return await general.send(f"{user.name} doesn't have their birthday saved.", ctx.channel)
-            birthday = has_birthday.strftime("%d %B")
+                return await general.send(langs.gls("birthdays_birthday_not_saved", locale, user.name), ctx.channel)
+            # birthday = has_birthday.strftime("%d %B")
+            birthday = langs.gts_date(has_birthday, locale, False, False)
             if user == ctx.author:
-                return await general.send(f"**Your** birthday is on **{birthday}**", ctx.channel)
-            return await general.send(f"**{user.name}**'s birthday is on **{birthday}**", ctx.channel)
+                return await general.send(langs.gls("birthdays_birthday_your", locale, birthday), ctx.channel)
+            return await general.send(langs.gls("birthdays_birthday_general", locale, birthday), ctx.channel)
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
         """ Set your birthday :) [DD/MM] """
+        locale = langs.gl(ctx.guild, self.db)
         has_birthday = self.check_birthday_noted(ctx.author.id)
         if has_birthday:
-            return await general.send(f"{ctx.author.name}, your birthday is already set to {has_birthday.strftime('%d %B')}. "
-                                      f"Contact a bot admin to change this.", ctx.channel)
+            return await general.send(langs.gls("birthdays_set_already", locale, ctx.author.name, langs.gts_date(has_birthday, locale, False, False)),
+                                      ctx.channel)
         confirm_code = random.randint(10000, 99999)
 
         def check_confirm(m):
@@ -97,16 +100,16 @@ class Birthdays(commands.Cog):
         if re.compile(self.re_timestamp).search(date):
             timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
         else:
-            return await general.send("You need to enter a valid date with the command. Please note that the format is `DD/MM`.", ctx.channel)
-        date = timestamp.strftime("%d %B")
-        confirm_msg = await general.send(f"{ctx.author.name}, do you confirm that your birthday is on **{date}**? Type `{confirm_code}` to confirm this. "
-                                         f"(You'll need to send the valid date to a bot admin to change this later)", ctx.channel)
+            return await general.send(langs.gls("birthdays_set_invalid", locale), ctx.channel)
+        date = langs.gts_date(timestamp, locale, False, False)
+        # date = timestamp.strftime("%d %B")
+        confirm_msg = await general.send(langs.gls("birthdays_set_confirmation", locale, ctx.author.name, date, confirm_code), ctx.channel)
         try:
             await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
         except asyncio.TimeoutError:
-            return await confirm_msg.edit(content=f"~~{confirm_msg.clean_content}~~\nWell, I'm taking that as a no...")
+            return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
         self.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (ctx.author.id, timestamp, False))
-        return await general.send(f"Okay, your birthday is now saved as **{date}**", ctx.channel)
+        return await general.send(langs.gls("birthdays_set_set", locale, ctx.author.name, date), ctx.channel)
 
     @birthday.command(name="forceset", aliases=["force"])
     @commands.check(permissions.is_owner)

@@ -1,52 +1,101 @@
-from datetime import datetime, timedelta
+import json
+import os
+from datetime import datetime, timedelta, timezone
 
 from dateutil.relativedelta import relativedelta
 
-from core.utils import time
+from core.utils import time, emotes, bases
+
+languages = {}
+for file in os.listdir("languages"):
+    if file.endswith(".json"):
+        languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
 
 
-month_names = {
-        "en_gb": ["December", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November"]
-    }
-
-
-def gbs(value: int, locale: str = "en_gb") -> str:  # Get Byte String
+def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get Byte String
     """ Gets Byte value name (for dlram) """
-    if locale == "en_gb":
-        names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
-        step = 1024
-    else:
-        names = "Unknown"
-        step = 1024
+    names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+    step = 1024
+    if locale == "rsl-1_kg" or locale == "rsl-1_ka":
+        value //= 2
+        names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"]
+        step = 4096
+    if locale == "ru_ru":
+        names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
     range_val = len(names)
     for i in range(range_val):
         req = step ** (i + 1)
         if value < req or i == range_val - 1:
-            return f"{value / (step ** i):,.2f} {names[i]}"
+            val = value / (step ** i)
+            number = gns(int(val), locale, 0, True) if precision == 0 else gfs(val, locale, precision, False)
+            return f"{number} {names[i]}"
 
 
 def gns(value: int, locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
     """ Get a string from an integer """
-    if locale == "en_gb":
-        return f"{value:0{fill}{',' if commas else ''}d}"
+    value = int(value)
+    if locale.startswith("rsl-1"):
+        base = f"{value:0{fill}X}"
+        return put_commas(base, step=3) if commas else base
+    if locale.startswith("rsl-2"):
+        base = bases.base_6(value).zfill(fill)
+        return put_commas(base, step=3) if commas else base
+    if locale == "ru_ru":
+        return f"{value:0{fill}{',' if commas else ''}d}".replace(",", " ")
+    return f"{value:0{fill}{',' if commas else ''}d}"
 
 
-def gfs(value: float, locale: str = "en_gb", precision: int = 2, percentage: bool = False) -> str:  # Get float string
+def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
     """ Get a string from a float """
-    if locale == "en_gb":
-        return f"{value:,.{precision}f}" if not percentage else f"{value:,.{precision}%}"
+    if locale == "ru_ru":
+        return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
+    return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
 
 
-def put_commas(string: str) -> str:
+def gl(guild, db):
+    ex = db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
+    if ex and guild:
+        data = db.fetchrow("SELECT * FROM locales WHERE gid=?", (guild.id,))
+        if data:
+            return data["locale"]
+    return "en_gb"
+
+
+def gls(string: str, locale: str = "en_gb", *values, **kw_values) -> str:
+    """ Get language string """
+    output = str((languages.get(locale, languages["en_gb"])).get(string, languages["en_gb"].get(string, f"String not found: {string}")))
+    try:
+        return output.format(*values, **kw_values, emotes=emotes)
+    except IndexError:
+        return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
+
+
+def get_data(key: str, locale: str = "en_gb") -> list:  # Get multiple
+    return (languages.get(locale, languages["en_gb"])).get(key, languages["en_gb"].get(key))
+
+
+def yes(condition: bool, locale: str = "en_gb") -> str:
+    return gls("generic_yes", locale) if condition else gls("generic_no", locale)
+
+
+def put_commas(string: str, step: int = 3) -> str:
     reverse = string[::-1]
-    return (",".join([reverse[i:i+3] for i in range(0, len(reverse), 3)]))[::-1]
+    return (",".join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1]
 
 
-def plural(value: int, name_1: str, name_2: str = '', name_pl: str = '', locale: str = "en_gb") -> str:
-    """ Get plural form """
-    if locale == "en_gb":
-        return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \
-            else f"{gns(value, locale)} {name_2}"
+def plural(v: int, what: str, locale: str = "en_gb") -> str:
+    """ Get plural form of words """
+    name_1, name_2, name_pl = get_data(what, locale)
+    pl = get_data("_pl", locale)
+    p1, p2, p3 = pl
+    v2 = v % int(p3)
+    v3 = v2 % int(p2)
+    simple = ["en_gb", "en_us"]
+    name = (name_1 if v == 1 else name_2) if locale in simple else (name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
+    return f"{gns(v, locale)} {name}"
+    # if locale == "en_gb":
+    #     return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \
+    #         else f"{gns(value, locale)} {name_2}"
 
 
 def join(seq, joiner: str = ', ', final: str = 'and'):
@@ -56,19 +105,20 @@ def join(seq, joiner: str = ', ', final: str = 'and'):
 
 def td_dt(dt: datetime, locale: str = "en_gb", *, source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:
     """ Get a string from datetime differences """
-    if locale:
-        del locale  # Not used yet
     now = (source or time.now(None)).replace(microsecond=0)
-    then = time.from_ts(time.get_ts(dt), None)
-    suf, pre = '', ''
+    then = dt.astimezone(timezone.utc)
+    # then = time.from_ts(time.get_ts(dt), None)
+    # suf, pre = '', ''
     if then > now:
         delta = relativedelta(then, now)
-        pre = "in " if suffix else ""
+        pre = gls("time_in_p", locale) if suffix else ''
+        suf = gls("time_in_s", locale) if suffix else ''
     else:
         delta = relativedelta(now, then)
-        suf = " ago" if suffix else ""
-    attrs = [('years', 'year', 'y'), ('months', 'month', 'mo'), ('days', 'day', 'd'), ('hours', 'hour', 'h'), ('minutes', 'minute', 'm'),
-             ('seconds', 'second', 's')]
+        pre = gls("time_ago_p", locale) if suffix else ''
+        suf = gls("time_ago_s", locale) if suffix else ''
+    attrs = [('years', 'time_year', 'time_y'), ('months', 'time_month', 'time_mo'), ('days', 'time_day', 'time_d'), ('hours', 'time_hour', 'time_h'),
+             ('minutes', 'time_minute', 'time_m'), ('seconds', 'time_second', 'time_s')]
     output = []
     for attr in attrs:
         element = getattr(delta, attr[0])
@@ -78,21 +128,21 @@ def td_dt(dt: datetime, locale: str = "en_gb", *, source: datetime = None, accur
             weeks = delta.weeks
             if weeks:
                 element -= weeks * 7
-                output.append(f"{weeks}w" if brief else plural(weeks, 'week'))
+                output.append(f"{gns(weeks, locale)}{gls('time_w', locale)}" if brief else plural(weeks, 'time_week', locale))
         if element <= 0:
             continue
         if brief:
-            output.append(f"{element}{attr[2]}")
+            output.append(f"{gns(element, locale)}{gls(attr[2], locale)}")
         else:
-            output.append(plural(element, attr[1]))
+            output.append(plural(element, attr[1], locale))
     output = output[:accuracy]
     if len(output) == 0:
-        return "now"
+        return gls("time_now", locale)
     else:
         if brief:
             return pre + ' '.join(output) + suf
         else:
-            return pre + join(output) + suf
+            return pre + join(output, final=gls("generic_and", locale)) + suf
 # Code based on R. Danny
 
 
@@ -107,21 +157,20 @@ def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool 
 def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
-    month_names_l = month_names.get(locale, month_names["en_gb"])
+    month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
         if dow:
-            weekdays = {
-                "en_gb": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            }
-            weekday = (weekdays.get(locale, weekdays["en_gb"]))[when.weekday()]
+            weekdays = get_data("time_weekdays", locale)
+            weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
-        base += gns(when.day, locale, 2)
-        month_name = month_names_l[when.month % 12]
-        month_name_s = month_name[:3]
-        month = month_name if not short else month_name_s
-        base += f" {month} "
-        base += gns(when.year, locale, commas=False) + ", "
+        if locale == "en_us":
+            base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
+        else:
+            month_name = month_names_l[when.month % 12]
+            month_name_s = month_name[:3]
+            month = month_name_s if short else month_name
+            base += f"{gns(when.day, locale, 2)} {month} {gns(when.year, locale, 0, False)}, "
     hour = gns(when.hour, locale, 2)
     minute = gns(when.minute, locale, 2)
     second = gns(when.second, locale, 2)
@@ -134,7 +183,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
 
 
 def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
-    month_names_l = month_names.get(locale, month_names["en_gb"])
+    month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
     month_name_s = month_name[:3]
     month = month_name if not short else month_name_s

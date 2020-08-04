@@ -15,8 +15,8 @@ class SS23(commands.Cog):
         if year is None:
             dt = time.now(None)
         else:
-            if year < 1970:
-                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 1970**.", ctx.channel)
+            if year < 1970 or (year == 1970 and month < 4):
+                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 April 1970**.", ctx.channel)
             dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
         ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
         tk = ss23.date_kargadia(dt)  # Time in Kargadia
@@ -70,6 +70,17 @@ class SS23(commands.Cog):
         ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
         tk = ss23.time_kargadia(dt, tz=2.5, tzn="TBT").str_dec(True, False, True)  # Time in Kargadia
         return await general.send(f"Time on Earth: **{ti}**\nTime in TBL: **{tk}**", ctx.channel)
+
+    @commands.command(name="nlc", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def ne_world_ll_calc(self, ctx: commands.Context, x: int, z: int, border: int = 100000):
+        """ Calculate latitude, local offset of position - NEWorld """
+        lat = -z / border * 90  # Latitude value
+        long = x / border * 180
+        tzl = 48 / 180
+        tz = round(long / tzl)
+        tzo = tz / tzl - long  # Local Offset
+        return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLocal Offset: {tzo:.3f}", ctx.channel)
 
 
 def setup(bot):

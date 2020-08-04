@@ -3,11 +3,9 @@ discord
 git+https://github.com/Rapptz/discord.py@master
 aiohttp
 python-dateutil
-psutil
 asyncio
-timeago
 yarl<1.2
 pytz
+jishaku
 luas.py
-country_converter
 requests

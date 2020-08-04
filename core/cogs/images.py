@@ -8,10 +8,11 @@ from discord.ext import commands
 
 from PIL import Image, ImageDraw, ImageFont
 
-from core.utils import http, general, arg_parser
+from core.utils import http, general, arg_parser, database
+from languages import langs
 
 
-async def image_gen(ctx: commands.Context, user: discord.User, link, filename=None, extra_args=None):
+async def image_gen(ctx: commands.Context, user: discord.User or discord.Member, link, filename=None, extra_args=None):
     async with ctx.typing():
         if filename is None:
             filename = link
@@ -36,14 +37,15 @@ async def api_img_creator(ctx: commands.Context, url, filename, content=None):
 class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = database.Database(self.bot.name)
 
     @commands.command(name="colour", aliases=["color"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def colour(self, ctx: commands.Context, colour: str):
         """ Information on a colour """
+        locale = langs.gl(ctx.guild, self.db)
         async with ctx.typing():
-            c = str(ctx.invoked_with)
-            c2 = c.capitalize()
+            # c = str(ctx.invoked_with)
             if colour.lower() == "random":
                 _colour = hex(random.randint(0, 0xffffff))[2:]
                 a = 6
@@ -52,9 +54,11 @@ class Images(commands.Cog):
                     _colour = hex(int(colour, base=16))[2:]
                     a = len(colour)
                     if a != 3 and a != 6:
-                        return await general.send("The value must be either 3 or 6 digits long.", ctx.channel)
+                        return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
+                        # return await general.send("The value must be either 3 or 6 digits long.", ctx.channel)
                 except Exception as e:
-                    return await general.send(f"Invalid {c} - `{type(e).__name__}: {e}`", ctx.channel)
+                    return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
+                    # return await general.send(f"Invalid {c} - `{type(e).__name__}: {e}`", ctx.channel)
             try:
                 _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
                 data = json.loads(_data)
@@ -66,14 +70,15 @@ class Images(commands.Cog):
                 embed = discord.Embed(colour=g)
             else:
                 embed = discord.Embed(colour=int(_colour, base=16))
-            embed.add_field(name="HEX Value", value=data["hex"], inline=True)
-            embed.add_field(name="RGB Value", value=data["rgb"], inline=True)
-            embed.add_field(name="Integer Value", value=data["int"], inline=True)
-            embed.add_field(name="Brightness", value=data["brightness"], inline=True)
-            embed.add_field(name=f"Font {c2}", value=data["blackorwhite_text"], inline=True)
+            embed.title = langs.gls("images_colour_name", locale, data['name'])
+            embed.add_field(name=langs.gls("images_colour_hex", locale), value=data["hex"], inline=True)
+            embed.add_field(name=langs.gls("images_colour_rgb", locale), value=data["rgb"], inline=True)
+            embed.add_field(name=langs.gls("images_colour_int", locale), value=data["int"], inline=True)
+            embed.add_field(name=langs.gls("images_colour_brightness", locale), value=langs.gns(data["brightness"], locale), inline=True)
+            embed.add_field(name=langs.gls("images_colour_font", locale), value=data["blackorwhite_text"], inline=True)
             embed.set_thumbnail(url=data["image"])
             embed.set_image(url=data["image_gradient"])
-            return await general.send(f"{c2} name: {data['name']}", ctx.channel, embed=embed)
+            return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -105,10 +110,11 @@ class Images(commands.Cog):
         """ Let someone go through a filter
         Do //filter help to see allowed filters """
         user = who or ctx.author
-        filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist"]
+        filters = ["blur", "invert", "b&w", "deepfry", "pixelate", "snow", "gay", "magik", "jpegify", "communist", "wide"]
         _filter = filter_name.lower()
         if _filter not in filters or _filter == "help":
-            return await general.send(f"The allowed filter names are:\n`{'`, `'.join(filters)}`", ctx.channel)
+            return await general.send(langs.gls("images_filter_filters", langs.gl(ctx.guild, self.db), "`, `".join(filters)), ctx.channel)
+            # return await general.send(f"The allowed filter names are:\n`{'`, `'.join(filters)}`", ctx.channel)
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
@@ -127,10 +133,10 @@ class Images(commands.Cog):
 
     @commands.command(name="salty")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def sodium_chloride(self, ctx: commands.Context, *, who: discord.User = None):
+    async def salty(self, ctx: commands.Context, *, who: discord.User = None):
         """ Salty user """
         user = who or ctx.author
-        return await image_gen(ctx, user, "salty", f"sodium_chloride_{user.name.lower()}")
+        return await image_gen(ctx, user, "salty", f"salty_{user.name.lower()}")
 
     @commands.command(name="floor")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -156,6 +162,7 @@ class Images(commands.Cog):
             --dark | Make the background dark
             --light | Make background light
         """
+        locale = langs.gl(ctx.guild, self.db)
         parser = arg_parser.Arguments()
         parser.add_argument('input', nargs="+", default=None)
         parser.add_argument('-d', '--dark', action='store_true')
@@ -165,14 +172,16 @@ class Images(commands.Cog):
             return await general.send(args, ctx.channel)
         input_text = urllib.parse.quote(' '.join(args.input))
         if len(input_text) > 500:
-            return await general.send("The API for this command is limited to 500 characters.", ctx.channel)
+            return await general.send(langs.gls("images_supreme_limit", locale), ctx.channel)
+            # return await general.send("The API for this command is limited to 500 characters.", ctx.channel)
         dol = ""
         if args.dark:
             dol = "&dark=true"
         if args.light:
             dol = "&light=true"
         if args.dark and args.light:
-            return await general.send("You can't use both dark and light at the same time...", ctx.channel)
+            return await general.send(langs.gls("images_supreme_dark_light", locale), ctx.channel)
+            # return await general.send("You can't use both dark and light at the same time...", ctx.channel)
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
 
     @commands.command(name="meme")
@@ -197,7 +206,7 @@ class Images(commands.Cog):
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
-            return await general.send(None, ctx.channel, file=discord.File(bio, filename="meme.png"))
+            return await general.send(str(ctx.author), ctx.channel, file=discord.File(bio, filename="meme.png"))
 
 
 def setup(bot):

@@ -133,53 +133,21 @@ tables = {
             Column("uid", 0, True),
             Column("tz", 2, True)
         ]),
-        Table("counters", [
-            Column("uid", 0, True),
-            Column("gid", 0, True),
-            Column("bangs_given", 0, True),
-            Column("bangs_received", 0, True),
-            Column("bites_given", 0, True),
-            Column("bites_received", 0, True),
-            Column("cuddles_given", 0, True),
-            Column("cuddles_received", 0, True),
-            Column("high_fives_given", 0, True),
-            Column("high_fives_received", 0, True),
-            Column("hugs_given", 0, True),
-            Column("hugs_received", 0, True),
-            Column("kisses_given", 0, True),
-            Column("kisses_received", 0, True),
-            Column("licks_given", 0, True),
-            Column("licks_received", 0, True),
-            Column("pats_given", 0, True),
-            Column("pats_received", 0, True),
-            Column("slaps_given", 0, True),
-            Column("slaps_received", 0, True),
-            Column("sniffs_given", 0, True),
-            Column("sniffs_received", 0, True),
-            Column("bad_given", 0, True),
-            Column("bad_received", 0, True),
-            Column("beaned", 0, True),
-            Column("beans_given", 0, True),
-            Column("shipped", 0, True),
-            Column("ships_built", 0, True),
-            Column("trashed", 0, True),
-            Column("trash_given", 0, True),
-            Column("blushed", 0, True),
-            Column("cried", 0, True),
-            Column("sleepy", 0, True),
-            Column("smiled", 0, True),
-            Column("carrots_received", 0, True),
-            Column("carrots_eaten", 0, True),
-            Column("cookies_received", 0, True),
-            Column("cookies_eaten", 0, True),
-            Column("fruits_received", 0, True),
-            Column("fruits_eaten", 0, True),
-            Column("lemons_received", 0, True),
-            Column("lemons_eaten", 0, True),
-            Column("pokes_given", 0, False),
-            Column("pokes_received", 0, False),
-            Column("boops_given", 0, False),
-            Column("boops_received", 0, False)
+        Table("counters_new", [
+            Column("uid1", 0, True),       # 00
+            Column("uid2", 0, True),       # 01
+            Column("bang", 0, True),       # 02
+            Column("bite", 0, True),       # 03
+            Column("cuddle", 0, True),     # 04
+            Column("high_five", 0, True),  # 05
+            Column("hug", 0, True),        # 06
+            Column("kiss", 0, True),       # 07
+            Column("lick", 0, True),       # 08
+            Column("pat", 0, True),        # 09
+            Column("slap", 0, True),       # 10
+            Column("sniff", 0, True),      # 11
+            Column("poke", 0, True),       # 12
+            Column("boop", 0, True),       # 13
         ]),
         Table("tags", [
             Column("gid", 0, True),
@@ -226,6 +194,10 @@ tables = {
             Column("time", 0, True),
             Column("downloads", 0, True),  # Times the download process was executed
             Column("name", 0, True)
+        ]),
+        Table("locales", [
+            Column("gid", 0, True),
+            Column("locale", 2, True)
         ])
     ]
 }

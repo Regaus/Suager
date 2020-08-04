@@ -84,3 +84,7 @@ def round_value(value):
         return rounded
     except Exception as e:
         return e
+
+
+def is_suager(ctx):
+    return ctx.bot.name == "suager"

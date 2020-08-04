@@ -1,0 +1,9 @@
+{
+  "_name": "English (Simplified)",
+  "discord_role_colour": "Role Color",
+  "discord_server_status_status_data": "{0} Online: {1} - {2}, of which:\nMobile: {3} | Desktop: {4} | Web: {5}\n\n{6} Idle: {7} - {8}, of which:\nMobile: {9} | Desktop: {10} | Web: {11}\n\n{12} Do Not Disturb: {13} - {14}, of which:\nMobile: {15} | Desktop: {16} | Web: {17}\n\n{18} Offline: {19} - {20}",
+  "discord_status_dnd": "Do Not Disturb",
+  "images_colour_font": "Font color",
+  "images_colour_name": "Color name: {0}",
+  "z_data_country_us": "Enslaved Shooting Range"
+}

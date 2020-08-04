@@ -42,7 +42,7 @@ class MemberID(commands.Converter):
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.admins = self.bot.config["owners"] + self.bot.local_config["admins"]
+        self.admins = self.bot.config["owners"]
 
     @commands.command(name="kick")
     @commands.guild_only()
@@ -54,7 +54,7 @@ class Moderation(commands.Cog):
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
         elif member.id == ctx.guild.owner.id:
             return await general.send("Imagine trying to kick the server's owner, lol", ctx.channel)
-        elif member.top_role.position <= ctx.author.top_role.position:
+        elif member.top_role.position >= ctx.author.top_role.position:
             return await general.send("You can't kick a member whose top role is equal to or is above yours.", ctx.channel)
         elif member.id in self.admins:
             return await general.send("I can't kick my owners or admins...", ctx.channel)
@@ -77,14 +77,14 @@ class Moderation(commands.Cog):
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
         elif member == ctx.guild.owner.id:
             return await general.send("Imagine trying to ban the server's owner, lol", ctx.channel)
-        elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position <= ctx.author.top_role.position):
+        elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position):
             return await general.send("You can't ban a member whose top role is equal to or is above yours.", ctx.channel)
         elif member in self.admins:
             return await general.send("I can't ban my owners or admins...", ctx.channel)
         elif member == self.bot.user.id:
             return await general.send(f"We are not friends anymore, {ctx.author.name}.", ctx.channel)
         try:
-            user = self.bot.get_user(member)
+            user = await self.bot.fetch_user(member)
             await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
             return await general.send(f"{emotes.Allow} Successfully banned **{member} ({user})** for **{reason}**", ctx.channel)
         except Exception as e:
@@ -106,7 +106,7 @@ class Moderation(commands.Cog):
                     return await general.send(f"We are not friends anymore, {ctx.author.name}.", ctx.channel)
                 if member == ctx.guild.owner.id:
                     return await general.send("Imagine trying to ban the server's owner, lol", ctx.channel)
-                elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position <= ctx.author.top_role.position):
+                elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position):
                     return await general.send("You can't ban a member whose top role is equal to or is above yours.", ctx.channel)
         banned = 0
         failed = 0
@@ -129,7 +129,7 @@ class Moderation(commands.Cog):
         """ Unban a user """
         try:
             await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
-            user = self.bot.get_user(member)
+            user = await self.bot.fetch_user(member)
             return await general.send(f"{emotes.Allow} Successfully unbanned **{member} ({user})** for {reason}", ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)

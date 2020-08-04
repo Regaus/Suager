@@ -2,10 +2,9 @@ import discord
 from discord.ext import commands
 from discord.ext.tasks import loop
 
-from core.utils import events, time
+from core.utils import events, time, database, general
 
-
-no = {'no': 1}
+playing_rate = 60
 
 
 class Events(commands.Cog):
@@ -13,15 +12,28 @@ class Events(commands.Cog):
         self.bot = bot
         self.changes = f"data/{self.bot.name}/changes.json"
         self.config = self.bot.config
-        self.local_config = self.bot.local_config
-        no["no"] = self.local_config['playing_rate']
+        self.db = database.Database(self.bot.name)
         self.exists = False
+        self.local_config = self.bot.local_config
+        global playing_rate
+        playing_rate = self.local_config["playing_rate"]
+        self.playing.start()
         if self.bot.name == "suager":
             self.avatar.start()
 
     def con_unload(self):
+        self.playing.cancel()
         if self.bot.name == "suager":
             self.avatar.cancel()
+
+    @commands.Cog.listener()
+    async def on_message(self, ctx: discord.Message):
+        if ctx.author.id == 667187968145883146:
+            bad = ["reg", "rag", "reh", "<@302851022790066185>", "<@!302851022790066185>"]
+            for word in bad:
+                if word in ctx.content.lower():
+                    await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(739183533792297164))
+                    break
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
@@ -66,9 +78,21 @@ class Events(commands.Cog):
         self.exists = True
         return await events.on_ready(self)
 
+    @loop(seconds=playing_rate)
+    async def playing(self):
+        self.config = general.get_config()
+        self.local_config = self.config["bots"][self.bot.index]
+        global playing_rate
+        playing_rate = self.local_config["playing_rate"]
+        await events.playing_changer(self)
+
+    @playing.before_loop
+    async def playing_before(self):
+        await self.bot.wait_until_ready()
+
     @loop(hours=1)
     async def avatar(self):
-        return await events.avatar_changer(self)
+        await events.avatar_changer(self)
 
     @avatar.before_loop
     async def avatar_before(self):

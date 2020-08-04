@@ -10,7 +10,8 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from core.utils import database, general, time, logger, emotes, permissions, data_io, http
+from core.utils import database, general, time, logger, permissions, data_io, http
+from languages import langs
 
 
 def insert_returns(body):
@@ -110,25 +111,12 @@ class Admin(commands.Cog):
         self.config = general.get_config()
         self.db = database.Database(self.bot.name)
 
-    @commands.command(name="amiowner")
+    @commands.command(name="amiowner", aliases=["amiadmin"])
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def are_you_owner(self, ctx: commands.Context):
-        """ Are you admin? """
-        if ctx.author.id in self.config["owners"]:
-            out = f"{emotes.Allow} Yes, {ctx.author.name}, you are an owner"
-        else:
-            out = f"{emotes.Deny} No, {ctx.author.name}, back off"
-        return await general.send(out, ctx.channel)
-
-    @commands.command(name="amiadmin")
-    @commands.cooldown(1, 2, commands.BucketType.user)
-    async def are_you_admin(self, ctx: commands.Context):
-        """ Are you admin? """
-        if ctx.author.id in self.bot.local_config["admins"]:
-            out = f"{emotes.Allow} Yes, {ctx.author.name}, you are an admin"
-        else:
-            out = f"{emotes.Deny} No, {ctx.author.name}, you are not admin, pleb."
-        return await general.send(out, ctx.channel)
+        """ Do you own the bot? """
+        out = "admin_owner_yes" if ctx.author.id in self.config["owners"] else "admin_owner_no"
+        return await general.send(langs.gls(out, langs.gl(ctx.guild, self.db), ctx.author.name), ctx.channel)
 
     @commands.command(name="db")
     @commands.check(permissions.is_owner)
@@ -358,7 +346,7 @@ class Admin(commands.Cog):
 
     @commands.command(name="unloadcore", aliases=["ulc"])
     @commands.check(permissions.is_owner)
-    async def unload(self, ctx: commands.Context, name: str):
+    async def unload_core(self, ctx: commands.Context, name: str):
         """ Unloads a core extension. """
         return await self.unload_ext(ctx, "core", name)
 
@@ -522,11 +510,17 @@ class Admin(commands.Cog):
         except aiohttp.InvalidURL:
             return await general.send("The URL is invalid...", ctx.channel)
         except discord.InvalidArgument:
-            return await general.send("This URL does not contain a useable image", ctx.channel)
+            return await general.send("This URL does not contain a usable image", ctx.channel)
         except discord.HTTPException as err:
             return await general.send(str(err), ctx.channel)
         except TypeError:
             return await general.send("You need to either provide an image URL or upload one with the command", ctx.channel)
+
+    @commands.command(name="gls")
+    @commands.check(permissions.is_owner)
+    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en_gb"):
+        """ Test a string """
+        return await general.send(langs.languages.get(locale, langs.languages["en_gb"]).get(string, f"String not found: {string}"), ctx.channel)
 
 
 async def status(ctx: commands.Context, _type: int):

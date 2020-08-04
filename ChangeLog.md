@@ -184,3 +184,14 @@
 - Added ability to set your location in TBL
 - Improved stats command
 - Improved DLRAM energy regeneration speeds
+
+## v6.0-beta1 - 4 August
+- Added nlc command for NEWorld lat/lo calculation
+- Updated RSL-1 month names in SS23
+- Nuts and XP multiplier events
+- Support for multiple languages
+- Updated some TBL details
+- Improved DLRAM recharging
+- Improved DLRAM leveling
+- Improved DLRAM game outputs
+- Social counters will now be per-user instead of per-guild

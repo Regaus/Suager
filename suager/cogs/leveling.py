@@ -7,9 +7,10 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from discord.ext import commands
 
 from core.utils import time, database, http, general, emotes
+from languages import langs
 from suager.utils import settings
 
-max_level = 5000
+max_level = 1000
 xp_amounts = [2250, 3000]
 money_amounts = [75, 125]
 
@@ -19,8 +20,8 @@ async def catch_colour(ctx: commands.Context, c: int):
         await general.send("Value must be either 3 or 6 digits long", ctx.channel)
     if c == -2:
         await general.send("An error occurred. Are you sure the value is HEX (0-9 and A-F)?", ctx.channel)
-    if c == -3:
-        await general.send("Remove the `#`...", ctx.channel)
+    # if c == -3:
+    #     await general.send("Remove the `#`...", ctx.channel)
     return c >= 0
 
 
@@ -34,7 +35,7 @@ def get_colour(colour: int):
 def int_colour(colour: str):
     try:
         if colour[0] == "#":
-            return -3
+            colour = colour[1:]
         length = len(colour)
         if length == 3:
             a, b, c = colour
@@ -46,7 +47,7 @@ def int_colour(colour: str):
         return -2
 
 
-def levels():
+def _old_levels():
     req = 0
     xp = []
     # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
@@ -60,11 +61,13 @@ def levels():
     return xp
 
 
-def levels_global():
-    req = 0
+def _levels():
+    req = 15000
     xp = []
-    for x in range(2000):
-        base = 0.7 * x ** 5 + 1.5 * x ** 4 + 20 * x ** 3 + 75 * x ** 2 + 200 * x + 500
+    # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
+    for x in range(max_level):
+        power = 2 + x / 50 if x < 50 else 3 + (x - 50) / 100 if x < 100 else 3.5
+        base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
         req += int(base)
         if x not in [69, 420, 666, 1337]:
             xp.append(int(req))
@@ -73,10 +76,42 @@ def levels_global():
     return xp
 
 
+def _levels_global():
+    req = 15000
+    xp = []
+    for x in range(max_level):
+        base = 125 * x ** 3 + 500 * x ** 2 + 15000 * x
+        req += int(base)
+        if x not in [69, 420, 666, 1337]:
+            xp.append(int(req))
+        else:
+            xp.append(xp[-1])
+    return xp
+
+
+old_levels = _old_levels()
+levels = _levels()
+levels_global = _levels_global()
+
+
 class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database(self.bot.name)
+
+    @commands.command(name="leveling")
+    @commands.is_owner()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def leveling_data(self, ctx: commands.Context):
+        """ Levels data """
+        __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000]
+        outputs = []
+        for level in __levels:
+            _level = level - 1
+            lv1, lv2, lv3 = int(levels[_level] / 100), int(old_levels[_level] / 100), int(levels_global[_level] / 100)
+            outputs.append(f"Level {level:>4} | New {lv1:>14,} | Old {lv2:>13,} | Global {lv3:>15,}")
+        output = "\n".join(outputs)
+        return await general.send(f"```fix\n{output}```", ctx.channel)
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -127,21 +162,21 @@ class Leveling(commands.Cog):
             sm = float(__settings['leveling']['xp_multiplier'])
         except KeyError:
             sm = 1
-        new = int(random.uniform(x1, x2) * sm * mult)
-        new_money = int(random.uniform(x3, x4) * mult)
+        c = 0.67 if ctx.author.id == 667187968145883146 else 1
+        new = int(random.uniform(x1, x2) * sm * mult * c)
+        new_money = int(random.uniform(x3, x4) * mult * c)
         if ctx.author.id == 592345932062916619:
             new = 0
         if not xp_disabled:
             xp += new
         money += new_money
-        requirements = levels()
         if not xp_disabled:
             lu, ld = False, False
             if level >= 0:
-                while level < max_level and xp >= requirements[level]:
+                while level < max_level and xp >= levels[level]:
                     level += 1
                     lu = True
-                while level > 0 and xp < requirements[level - 1]:
+                while level > 0 and xp < levels[level - 1]:
                     level -= 1
                     ld = True
                 if level == 0 and xp < 0:
@@ -151,20 +186,20 @@ class Leveling(commands.Cog):
                 if xp >= 0:
                     level = 0
                     lu = True
-                if xp < -requirements[0]:
+                if xp < -levels[0]:
                     level -= 1
                     ld = True
             else:
-                while -max_level <= level < -1 and xp >= -requirements[(-level) - 2]:
+                while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
                     level += 1
                     lu = True
-                while level >= -max_level and xp < -requirements[(-level) - 1]:
+                while level >= -max_level and xp < -levels[(-level) - 1]:
                     level -= 1
                     ld = True
             if lu:
                 try:
                     send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', f"{level:,}")
+                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(ctx.guild, self.db)))
                 except KeyError:
                     send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
                 try:
@@ -249,9 +284,11 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rewards(self, ctx: commands.Context):
         """ Rewards """
+        locale = langs.gl(ctx.guild, self.db)
         _settings = self.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
-            return await general.send("This server seems to have no leveling rewards", ctx.channel)
+            return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
+            # return await general.send("This server seems to have no leveling rewards", ctx.channel)
         else:
             data = json.loads(_settings['data'])
         try:
@@ -262,91 +299,26 @@ class Leveling(commands.Cog):
             embed.title = f"Rewards for having no life in **{ctx.guild.name}**"
             d = ''
             for role in rewards:
-                d += f"Level {role['level']:,}: <@{role['role']}>"
+                d += langs.gls("leveling_rewards_role", locale, langs.gns(role["level"], locale), role["role"])
+                # d += f"Level {role['level']:,}: <@&{role['role']}>\n"
             embed.description = d
             return await general.send(None, ctx.channel, embed=embed)
         except KeyError:
-            return await general.send("This server seems to have no leveling rewards", ctx.channel)
-
-    @commands.command(name="ranke")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def rank_embed(self, ctx, *, who: discord.Member = None):
-        """ Rank as embed """
-        user = who or ctx.author
-        is_self = user.id == self.bot.user.id
-        if user.bot and not is_self:
-            return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
-        _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if not _settings:
-            dm = 1
-        else:
-            __settings = json.loads(_settings['data'])
-            try:
-                dm = __settings['leveling']['xp_multiplier']
-            except KeyError:
-                dm = 1
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-        if data:
-            level, xp = [data['level'], data['xp']]
-        else:
-            level, xp = [0, 0]
-        embed = discord.Embed(colour=general.random_colour())
-        embed.title = f"**{user}**'s rank in **{ctx.guild.name}**"
-        embed.set_thumbnail(url=user.avatar_url)
-        if is_self:
-            embed.description = "That's my own rank, so I don't have to play fair."
-            embed.add_field(name="Experience", value="More than you", inline=False)
-            embed.add_field(name="Level", value="Higher than you'll ever reach", inline=False)
-        else:
-            r1 = f"{xp / 100:,.0f}"
-            if level < max_level:
-                yes = levels()   # All levels
-                try:
-                    if level >= 0:
-                        req = int(yes[level])  # Requirement to next level
-                    elif level == -1:
-                        req = 0
-                    else:
-                        req = int(-yes[(-level) - 2])
-                except IndexError:
-                    req = float("inf")
-                try:
-                    if level > 0:
-                        prev = int(yes[level-1])
-                    elif level == 0:
-                        prev = 0
-                    else:
-                        prev = -int(yes[(-level) - 1])
-                except IndexError:
-                    prev = 0
-                _req = req - xp
-                r2 = f"{req / 100:,.0f}"
-                r3 = f"{_req / 100:,.0f}"
-                progress = (xp - prev) / (req - prev)
-                r4 = general.round_value(progress * 100)
-                r4 = 100 if r4 > 100 else r4
-                embed.add_field(name="Experience", value=f"**{r1}**/{r2}", inline=False)
-                embed.add_field(name="Level", value=f"{level:,}", inline=False)
-                embed.add_field(name="Progress", value=f"**{r4}%** ({r3} XP to level up)", inline=False)
-            else:
-                embed.add_field(name="Experience", value=f"**{r1}**", inline=False)
-                embed.add_field(name="Level", value=f"{level:,}", inline=False)
-            x1, x2 = [val * dm for val in xp_amounts]
-            o1, o2 = int(x1), int(x2)
-            embed.add_field(name="XP per minute", value=f"{o1 / 100:,.0f}-{o2 / 100:,.0f}", inline=False)
-        return await general.send(None, ctx.channel, embed=embed)
+            return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
+            # return await general.send("This server seems to have no leveling rewards", ctx.channel)
 
     @commands.command(name="rank", aliases=["irank", "ranki", "level"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your or someone's rank """
+        locale = langs.gl(ctx.guild, self.db)
         async with ctx.typing():
             user = who or ctx.author
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
-                return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
+                return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
+                # return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
             data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
@@ -358,7 +330,8 @@ class Leveling(commands.Cog):
                 level, xp = [data['level'], data['xp']]
             else:
                 level, xp = [0, 0]
-            img = Image.new("RGB", (1536, 512), color=background_colour)
+            width = 2048
+            img = Image.new("RGB", (width, 612), color=background_colour)
             dr = ImageDraw.Draw(img)
             try:
                 avatar = BytesIO(await http.get(str(user.avatar_url_as(size=512, format="png")), res_method="read"))
@@ -369,62 +342,82 @@ class Leveling(commands.Cog):
                 avatar = Image.open("assets/error.png")
                 img.paste(avatar)
             font_dir = "assets/font.ttf"
-            font = ImageFont.truetype(font_dir, size=72)
-            font_small = ImageFont.truetype(font_dir, size=48)
-            dr.text((552, 20), f"{user}", font=font, fill=font_colour)
-            al = levels()   # All levels
+            font = ImageFont.truetype(font_dir, size=108)
+            font_small = ImageFont.truetype(font_dir, size=64)
+            text_x = 552
+            dr.text((text_x, 20), f"{user}", font=font, fill=font_colour)
             try:
                 if level >= 0:
-                    req = int(al[level])  # Requirement to next level
+                    req = int(levels[level])  # Requirement to next level
                 elif level == -1:
                     req = 0
                 else:
-                    req = int(-al[(-level) - 2])
-                r2 = f"{req / 100:,.0f}"
+                    req = int(-levels[(-level) - 2])
+                # r2 = f"{req / 100:,.0f}"
+                r2 = langs.gns(int(req / 100), locale)
             except IndexError:
                 req = float("inf")
-                r2 = "MAX"
+                r2 = langs.gls("generic_max", locale)
             try:
                 if level > 0:
-                    prev = int(al[level-1])
+                    prev = int(levels[level-1])
                 elif level == 0:
                     prev = 0
                 else:
-                    prev = -int(al[(-level) - 1])
+                    prev = -int(levels[(-level) - 1])
             except IndexError:
                 prev = 0
             _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
-            place = "Rank Undefined"
+            # place = "Rank Undefined"
+            place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
-                    place = f"Rank #{x+1:,}"
+                    # place = f"Rank #{x+1:,}"
+                    place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale)))
+                    break
+            old_level = 0
+            for lvl in old_levels:
+                if xp >= lvl:
+                    old_level += 1
+                else:
                     break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
-                dr.text((552, 100), f"Level {level:,}", font=font_small, fill=font_colour)
-                dr.text((552, 150), place, font=font_small, fill=font_colour)
-                dr.text((552, 300), f"{xp / 100:,.0f}/{r2} XP\nProgress: {progress*100:.2f}%", font=font_small, fill=font_colour)
+                _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
+                _old_level = langs.gls("leveling_rank_level_old", locale, langs.gns(old_level, locale))
+                dr.text((text_x, 140), f"{place} | {_level} | {_old_level}", font=font_small, fill=font_colour)
+                # dr.text((text_x, 190), ), font=font_small, fill=font_colour)
+                # dr.text((text_x, 250), ), font=font_small, fill=font_colour)
+                # dr.text((552, 300), f"{xp / 100:,.0f}/{r2} XP\nProgress: {progress*100:.2f}%", font=font_small, fill=font_colour)
+                r1 = langs.gns(int(xp / 100), locale)
+                r3 = langs.gfs(progress, locale, 2, True)
+                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns(int((req - xp) / 100), locale)) if level < max_level else ""
+                dr.text((text_x, (308 if r4 else 372)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
                 progress = 0.5
-                dr.text((552, 100), "Level 69,420", font=font_small, fill=font_colour)
-                dr.text((552, 150), "Rank #1", font=font_small, fill=font_colour)
-                dr.text((552, 350), "Infinite XP", font=font_small, fill=font_colour)
-            full = 800
+                place = langs.gls("leaderboards_place", locale, langs.gns(1, locale))
+                _rank = langs.gls("leveling_rank_rank", locale, place)
+                _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
+                dr.text((text_x, 140), f"{_rank} | {_level}", font=font_small, fill=font_colour)
+                # dr.text((text_x, 190), , font=font_small, fill=font_colour)
+                dr.text((text_x, 436), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
+            full = width
             done = int(progress * full)
             if done < 0:
                 done = 0
-            i1 = Image.new("RGB", (done, 60), color=progress_colour)
-            i2 = Image.new("RGB", (full + 10, 70), color=(30, 30, 30))
-            box1 = (552, 420, 552 + done, 480)
-            box2 = (547, 415, 557 + full, 485)  # 2 px bigger
+            i1 = Image.new("RGB", (done, 90), color=progress_colour)
+            i2 = Image.new("RGB", (width, 90), color=(30, 30, 30))
+            box1 = (0, 522, done, 612)
+            box2 = (0, 522, full, 612)  # 2 px bigger
             img.paste(i2, box2)
             img.paste(i1, box1)
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
-            r = f"**{user}**'s rank in **{ctx.guild.name}**"
-            if is_self:
-                r += "That's my own rank, so why should I play fair?"
+            r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
+            # r = f"**{user}**'s rank in **{ctx.guild.name}**"
+            # if is_self:
+            #     r += "That's my own rank, so why should I play fair?"
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
     @commands.command(name="rankg")
@@ -432,10 +425,12 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check your or someone's rank """
+        locale = langs.gl(ctx.guild, self.db)
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
-            return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
+            return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
+            # return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
         _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
         coll = {}
         for i in _data:
@@ -448,21 +443,22 @@ class Leveling(commands.Cog):
         for thing in range(r):
             v = sl[thing][1]
             xp.append(v[0])
-        place = "Undefined"
+        place = langs.gls("generic_unknown", locale)
         _xp = 0
         for someone in range(len(sl)):
             if sl[someone][0] == user.id:
-                place = f"#{someone + 1:,}"
+                place = langs.gls("leaderboards_place", locale, langs.gns(someone + 1, locale))
                 _xp = xp[someone]
                 break
-        al = levels_global()
         level = 0
-        for lvl in al:
+        for lvl in levels_global:
             if _xp >= lvl:
                 level += 1
             else:
                 break
-        return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard\nGlobal Level: {level:,}", ctx.channel)
+        __xp = int(_xp / 100)
+        return await general.send(langs.gls("leveling_rank_global", locale, user, langs.gns(__xp, locale), place, langs.gns(level, locale)), ctx.channel)
+        # return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard\nGlobal Level: {level:,}", ctx.channel
 
     @commands.group(name="crank", aliases=["customrank"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -512,22 +508,22 @@ class Leveling(commands.Cog):
 
     @commands.command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def xp_level(self, ctx: commands.Context, level: int = None):
+    async def xp_level(self, ctx: commands.Context, level: int):
         """ XP required to achieve a level """
-        if level is None:
-            return await ctx.send_help(str(ctx.command))
+        locale = langs.gl(ctx.guild, self.db)
         if level > max_level or level < max_level * -1 + 1:
-            return await general.send(f"The max level is {max_level:,}", ctx.channel)
-        al = levels()
+            return await general.send(langs.gls("leveling_xplevel_max", locale, langs.gns(max_level, locale)), ctx.channel)
+            # return await general.send(f"The max level is {max_level:,}", ctx.channel)
         try:
             if level > 0:
-                r = int(al[level - 1])
+                r = int(levels[level - 1])
             elif level == 0:
                 r = 0
             else:
-                r = -int(al[(-level) - 1])
+                r = -int(levels[(-level) - 1])
         except IndexError:
-            return await general.send(f"An error can occurred - make sure the level specified is below the max level ({max_level:,}).", ctx.channel)
+            return await general.send(langs.gls("leveling_xplevel_max", locale, langs.gns(max_level, locale)), ctx.channel)
+            # return await general.send(f"An error can occurred - make sure the level specified is below the max level ({max_level:,}).", ctx.channel)
         if ctx.guild is not None:
             data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         else:
@@ -545,21 +541,20 @@ class Leveling(commands.Cog):
                 dm = __settings['leveling']['xp_multiplier']
             except KeyError:
                 dm = 1
-        needed = f"{r / 100:,.0f}"
-        base = f"You need **{needed} XP** to reach **level {level:,}**"
+        # needed = f"{r / 100:,.0f}"
+        # base = f"You need **{needed} XP** to reach **level {level:,}**"
+        base = langs.gls("leveling_xplevel_main", locale, langs.gns(int(r / 100), locale), langs.gns(level, locale))
         extra = ""
         if xp < r:
             x1, x2 = [val * dm for val in xp_amounts]
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
             try:
                 t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
-            except OverflowError:
+            except (OverflowError, OSError):
                 error = "Never"
                 t1, t2 = [error, error]
-            except OSError:
-                error = "Error"
-                t1, t2 = [error, error]
-            extra = f"\nXP left: **{(r - xp) / 100:,.0f}**\nEst. time: **{t1} to {t2}**"
+            extra = langs.gls("leveling_xplevel_extra", locale, langs.gns(int((r - xp) / 100), locale), t1, t2)
+            # extra = f"\nXP left: **{(r - xp) / 100:,.0f}**\nEst. time: **{t1} to {t2}**"
         return await general.send(f"{base}{extra}", ctx.channel)
 
     @commands.command(name="nextlevel", aliases=["nl"])
@@ -567,9 +562,11 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def next_level(self, ctx: commands.Context):
         """ XP required for next level """
+        locale = langs.gl(ctx.guild, self.db)
         data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
-            return await general.send("I have no leveling data for you right now...", ctx.channel)
+            return await general.send(langs.gls("leveling_next_level_none", locale), ctx.channel)
+            # return await general.send("I have no leveling data for you right now...", ctx.channel)
         _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
@@ -581,56 +578,56 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         if level == max_level:
-            return await general.send(f"**{ctx.author.name}**, you have already reached the max level. There is nowhere higher for you to go.", ctx.channel)
-        r1 = f"{int(xp / 100):,}"
-        yes = levels()
+            return await general.send(langs.gls("leveling_next_level_max", locale, ctx.author.name), ctx.channel)
+            # return await general.send(f"**{ctx.author.name}**, you have already reached the max level. There is nowhere higher for you to go.", ctx.channel)
+        # r1 = f"{int(xp / 100):,}"
+        r1 = langs.gns(int(xp / 100), locale)
         try:
             if level >= 0:
-                r = int(yes[level])  # Requirement to next level
+                r = int(levels[level])  # Requirement to next level
             elif level == -1:
                 r = 0
             else:
-                r = int(-yes[(-level) - 2])
+                r = int(-levels[(-level) - 2])
         except IndexError:
             r = float("inf")
         try:
             if level > 0:
-                p = int(yes[level-1])
+                p = int(levels[level-1])
             elif level == 0:
                 p = 0
             else:
-                p = -int(yes[(-level) - 1])
+                p = -int(levels[(-level) - 1])
         except IndexError:
             p = 0
         req = r - xp
-        r2 = f"{int(r / 100):,}"
-        r3 = f"{int(req / 100):,}"
         pr = (xp - p) / (r - p)
-        r4 = general.round_value(pr * 100)
-        r4 = 100 if r4 > 100 else r4
-        r5 = f"{level + 1:,}"
+        r2, r3, r4 = langs.gns(int(r / 100), locale), langs.gns(int(req / 100), locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
+        r5 = langs.gns(level, locale)
+        # r2 = f"{int(r / 100):,}"
+        # r3 = f"{int(req / 100):,}"
         normal = 1
         x1, x2 = [val * normal * dm for val in xp_amounts]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         try:
             t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
-        except OverflowError:
+        except (OverflowError, OSError):
             error = "Never"
             t1, t2 = [error, error]
-        except OSError:
-            error = "Error"
-            t1, t2 = [error, error]
-        return await general.send(f"**{ctx.author.name}** - You have **{r1}/{r2} XP**.\nYou need **{r3}** more to reach **level {r5}** (Progress: **{r4}%**)\n"
-                                  f"Est. talking time: **{t1} to {t2}**", ctx.channel)
+        return await general.send(langs.gls("leveling_next_level", locale, ctx.author.name, r1, r2, r3, r5, r4, t1, t2), ctx.channel)
+        # return await general.send(f"**{ctx.author.name}** - You have **{r1}/{r2} XP**.\nYou need **{r3}** more to reach **level {r5}** (Progress: **{r4}%**)\n
+        #                           f"Est. talking time: **{t1} to {t2}**", ctx.channel)
 
     @commands.command(name="levels", aliases=["ranks"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's XP Leaderboard """
+        locale = langs.gl(ctx.guild, self.db)
         data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
         if not data:
-            return await general.send("I have no data saved for this server so far.", ctx.channel)
+            return await general.send(langs.gls("leaderboards_no_data", locale), ctx.channel)
+            # return await general.send("I have no data saved for this server so far.", ctx.channel)
         block = "```fix\n"
         un = []   # User names
         xp = []   # XP
@@ -638,15 +635,16 @@ class Leveling(commands.Cog):
         for user in data:
             name = f"{user['name']}#{user['disc']:04d}"
             un.append(name)
-            val = f"{user['xp'] / 100:,.0f}"
+            # val = f"{user['xp'] / 100:,.0f}"
+            val = langs.gns(int(user["xp"] / 100), locale)
             xp.append(val)
             xpl.append(len(val))
         total = len(xp)
-        place = "unknown"
+        place = langs.gls("generic_unknown", locale)
         n = 0
         for x in range(len(data)):
             if data[x]['uid'] == ctx.author.id:
-                place = f"#{x + 1}"
+                place = langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale, 0, False))
                 n = x + 1
                 break
         try:
@@ -676,16 +674,20 @@ class Leveling(commands.Cog):
                     who = f"-> {who}"
                 s = ' '
                 sp = xpl[k]
-                block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
-        except ValueError:
+                # block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+                block += f"{langs.gns(i, locale, 2, False)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+        except (ValueError, IndexError):
             block += "No data available"
-        return await general.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\nShowing places {start:,} to {start + 9:,} of {total}"
-                                  f"\n{block}```", ctx.channel)
+        s, e, t = langs.gns(start, locale), langs.gns(start + 9, locale), langs.gns(total, locale)
+        return await general.send(langs.gls("leaderboards_levels", locale, ctx.guild.name, place, s, e, t, block), ctx.channel)
+        # return await general.send(f"Top users in {ctx.guild.name} - Sorted by XP\nYour place: {place}\nShowing places {start:,} to {start + 9:,} of {total}"
+        #                           f"\n{block}```", ctx.channel)
 
     @commands.command(name="glevels")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def global_levels(self, ctx: commands.Context, top: str = ""):
         """ Global XP Leaderboard """
+        locale = langs.gl(ctx.guild, self.db)
         data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0", ())
         coll = {}
         for i in data:
@@ -699,15 +701,16 @@ class Leveling(commands.Cog):
         for thing in range(r):
             v = sl[thing][1]
             un.append(v[1])
-            x = f"{v[0] / 100:,.0f}"
+            # x = f"{v[0] / 100:,.0f}"
+            x = langs.gns(int(v[0] / 100), locale)
             xp.append(x)
             xpl.append(len(x))
         total = len(xp)
-        place = "unknown"
+        place = langs.gls("generic_unknown", locale)
         n = 0
         for someone in range(len(sl)):
             if sl[someone][0] == ctx.author.id:
-                place = f"#{someone + 1}"
+                place = langs.gls("leaderboards_place", locale, langs.gns(someone + 1, locale, 0, False))
                 n = someone + 1
                 break
         s = ' '
@@ -738,13 +741,16 @@ class Leveling(commands.Cog):
                     if d[0] == ctx.author.id:
                         who = f"-> {who}"
                     sp = xpl[k]
-                    block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+                    block += f"{langs.gns(i, locale, 2, False)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
+                    # block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
                 except IndexError:
                     pass
-        except ValueError:
+        except (ValueError, IndexError):
             block += "No data available"
-        return await general.send(f"Top users globally - Sorted by XP\nYour place: {place}\nShowing places {start:,} to {start + 9:,} of {total}"
-                                  f"\n{block}```", ctx.channel)
+        s, e, t = langs.gns(start, locale), langs.gns(start + 9, locale), langs.gns(total, locale)
+        return await general.send(langs.gls("leaderboards_levels_global", locale, place, s, e, t, block), ctx.channel)
+        # return await general.send(f"Top users globally - Sorted by XP\nYour place: {place}\nShowing places {start:,} to {start + 9:,} of {total}"
+        #                           f"\n{block}```", ctx.channel)
 
 
 def setup(bot):
