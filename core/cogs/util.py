@@ -204,6 +204,47 @@ class Utility(commands.Cog):
             trams += f"{i['destination']}: {_time}\n"
         return await general.send(f"Data for {_place}:\n{status}\n{trams}", ctx.channel)
 
+    @commands.command(name="colour", aliases=["color"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def colour(self, ctx: commands.Context, colour: str):
+        """ Information on a colour """
+        locale = langs.gl(ctx.guild, self.db)
+        async with ctx.typing():
+            # c = str(ctx.invoked_with)
+            if colour.lower() == "random":
+                _colour = hex(random.randint(0, 0xffffff))[2:]
+                a = 6
+            else:
+                try:
+                    _colour = hex(int(colour, base=16))[2:]
+                    a = len(colour)
+                    if a != 3 and a != 6:
+                        return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
+                        # return await general.send("The value must be either 3 or 6 digits long.", ctx.channel)
+                except Exception as e:
+                    return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
+                    # return await general.send(f"Invalid {c} - `{type(e).__name__}: {e}`", ctx.channel)
+            try:
+                _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
+                data = json.loads(_data)
+            except json.JSONDecodeError:
+                return await general.send("An error occurred with the API. Try again later.", ctx.channel)
+            if a == 3:
+                d, e, f = colour
+                g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
+                embed = discord.Embed(colour=g)
+            else:
+                embed = discord.Embed(colour=int(_colour, base=16))
+            embed.title = langs.gls("images_colour_name", locale, data['name'])
+            embed.add_field(name=langs.gls("images_colour_hex", locale), value=data["hex"], inline=True)
+            embed.add_field(name=langs.gls("images_colour_rgb", locale), value=data["rgb"], inline=True)
+            embed.add_field(name=langs.gls("images_colour_int", locale), value=data["int"], inline=True)
+            embed.add_field(name=langs.gls("images_colour_brightness", locale), value=langs.gns(data["brightness"], locale), inline=True)
+            embed.add_field(name=langs.gls("images_colour_font", locale), value=data["blackorwhite_text"], inline=True)
+            embed.set_thumbnail(url=data["image"])
+            embed.set_image(url=data["image_gradient"])
+            return await general.send(None, ctx.channel, embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Utility(bot))

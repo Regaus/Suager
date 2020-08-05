@@ -162,6 +162,7 @@
   "images_colour_name": "Colour name: {0}",
   "images_colour_rgb": "RGB value",
   "images_filter_filters": "Supported filters are: `{0}`",
+  "images_npc_split": "The format is `text1 | text2`.",
   "images_supreme_dark_light": "You can't use both dark and light at the same time",
   "images_supreme_limit": "This command's API only supports up to 500 characters.",
   "info_invite_bot": "{0}, use this link to invite me to your server:",

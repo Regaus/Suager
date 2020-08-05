@@ -436,6 +436,8 @@ class Social(commands.Cog):
             # return await general.send(f"Why would you ever want to do that to a bot {emotes.KannaSpook}", ctx.channel)
         if user == ctx.author:
             return await general.send(emotes.UmmOK, ctx.channel)
+        if ctx.author.id in [418151634087182359, 430891116318031872]:
+            return await general.send(f"No futa lolis {emotes.KannaSpook}", ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "bang", 2)
         t1, t2 = ctx.author.name, user.name
         out = langs.gls("social_bang_main", locale, t1, t2)

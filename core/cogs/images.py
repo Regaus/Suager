@@ -1,12 +1,10 @@
-import json
 import random
 import urllib.parse
 from io import BytesIO
 
 import discord
-from discord.ext import commands
-
 from PIL import Image, ImageDraw, ImageFont
+from discord.ext import commands
 
 from core.utils import http, general, arg_parser, database
 from languages import langs
@@ -18,10 +16,11 @@ async def image_gen(ctx: commands.Context, user: discord.User or discord.Member,
             filename = link
         avatar = user.avatar_url_as(size=512, format="png")
         extra = f"&{extra_args}" if extra_args is not None else ''
-        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", res_method="read"))
-        if bio is None:
-            return await general.send("An error occurred creating the image, try again later.", ctx.channel)
-        return await general.send(None, ctx.channel, file=discord.File(bio, filename=f"{filename}.png"))
+        return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
+        # bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", res_method="read"))
+        # if bio is None:
+        #     return await general.send("An error occurred creating the image, try again later.", ctx.channel)
+        # return await general.send(None, ctx.channel, file=discord.File(bio, filename=f"{filename}.png"))
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
@@ -34,51 +33,14 @@ async def api_img_creator(ctx: commands.Context, url, filename, content=None):
         return await general.send(content, ctx.channel, file=discord.File(bio, filename=filename))
 
 
+async def vac_api(ctx: commands.Context, link, filename=None, content=None):
+    return await api_img_creator(ctx, f"https://vacefron.nl/api/{link}", f"{filename}.png" or f"{link.split('?')[0]}.png", content)
+
+
 class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = database.Database(self.bot.name)
-
-    @commands.command(name="colour", aliases=["color"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def colour(self, ctx: commands.Context, colour: str):
-        """ Information on a colour """
-        locale = langs.gl(ctx.guild, self.db)
-        async with ctx.typing():
-            # c = str(ctx.invoked_with)
-            if colour.lower() == "random":
-                _colour = hex(random.randint(0, 0xffffff))[2:]
-                a = 6
-            else:
-                try:
-                    _colour = hex(int(colour, base=16))[2:]
-                    a = len(colour)
-                    if a != 3 and a != 6:
-                        return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
-                        # return await general.send("The value must be either 3 or 6 digits long.", ctx.channel)
-                except Exception as e:
-                    return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
-                    # return await general.send(f"Invalid {c} - `{type(e).__name__}: {e}`", ctx.channel)
-            try:
-                _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
-                data = json.loads(_data)
-            except json.JSONDecodeError:
-                return await general.send("An error occurred with the API. Try again later.", ctx.channel)
-            if a == 3:
-                d, e, f = colour
-                g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
-                embed = discord.Embed(colour=g)
-            else:
-                embed = discord.Embed(colour=int(_colour, base=16))
-            embed.title = langs.gls("images_colour_name", locale, data['name'])
-            embed.add_field(name=langs.gls("images_colour_hex", locale), value=data["hex"], inline=True)
-            embed.add_field(name=langs.gls("images_colour_rgb", locale), value=data["rgb"], inline=True)
-            embed.add_field(name=langs.gls("images_colour_int", locale), value=data["int"], inline=True)
-            embed.add_field(name=langs.gls("images_colour_brightness", locale), value=langs.gns(data["brightness"], locale), inline=True)
-            embed.add_field(name=langs.gls("images_colour_font", locale), value=data["blackorwhite_text"], inline=True)
-            embed.set_thumbnail(url=data["image"])
-            embed.set_image(url=data["image_gradient"])
-            return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -187,6 +149,88 @@ class Images(commands.Cog):
             return await general.send(langs.gls("images_supreme_dark_light", locale), ctx.channel)
             # return await general.send("You can't use both dark and light at the same time...", ctx.channel)
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
+
+    @commands.command(name="carreverse")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def car_reverse(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        """ You see something and drive away """
+        return await vac_api(ctx, f"carreverse?text={urllib.parse.quote(str(text))}")
+
+    @commands.command(name="changemymind")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def change_my_mind(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        """ Change my mind """
+        return await vac_api(ctx, f"changemymind?text={urllib.parse.quote(str(text))}")
+
+    @commands.command(name="water")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def no_water(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        """ Why go to water? """
+        return await vac_api(ctx, f"water?text={urllib.parse.quote(str(text))}")
+
+    @commands.command(name="firsttime")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def first_time(self, ctx: commands.Context, *, who: discord.User = None):
+        """ First time? """
+        user = who or ctx.author
+        return await vac_api(ctx, f"firsttime?user={user.avatar_url_as(format='png')}")
+
+    @commands.command(name="grave")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def grave(self, ctx: commands.Context, *, who: discord.User = None):
+        """ Someone died """
+        user = who or ctx.author
+        return await vac_api(ctx, f"grave?user={user.avatar_url_as(format='png')}")
+
+    @commands.command(name="iamspeed")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def iamspeed(self, ctx: commands.Context, *, who: discord.User = None):
+        """ I am speed """
+        user = who or ctx.author
+        return await vac_api(ctx, f"iamspeed?user={user.avatar_url_as(format='png')}")
+
+    @commands.command(name="milk")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def i_can_milk_you(self, ctx: commands.Context, user1: discord.User, user2: discord.User = None):
+        """ I can milk you """
+        out = f"icanmilkyou?user1={user1.avatar_url_as(format='png')}"
+        fn = f"milk_{user1.id}"
+        if user2 is not None:
+            out += f"&user2={user2.avatar_url_as(format='png')}"
+            fn += f"_{user2.id}"
+        return await vac_api(ctx, out, fn)
+
+    @commands.command(name="heaven")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def heaven(self, ctx: commands.Context, *, who: discord.User = None):
+        """ Stairs to Heaven """
+        user = who or ctx.author
+        return await vac_api(ctx, f"heaven?user={user.avatar_url_as(format='png')}")
+
+    @commands.command(name="stonks")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def stonks(self, ctx: commands.Context, *, who: discord.User = None):
+        """ Stonks """
+        user = who or ctx.author
+        return await vac_api(ctx, f"stonks?user={user.avatar_url_as(format='png')}")
+
+    @commands.command(name="tableflip")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def tableflip(self, ctx: commands.Context, *, who: discord.User = None):
+        """ Someone be angry """
+        user = who or ctx.author
+        return await vac_api(ctx, f"tableflip?user={user.avatar_url_as(format='png')}")
+
+    @commands.command(name="npc")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def npc(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        """ NPC meme """
+        _text = str(text)
+        _split = _text.split(" | ", 1)
+        if len(_split) != 2:
+            return await general.send(langs.gls("images_npc_split", langs.gl(ctx.guild, self.db)), ctx.channel)
+        t1, t2 = _split
+        return await vac_api(ctx, f"npc?text1={urllib.parse.quote(t1)}&text2={urllib.parse.quote(t2)}")
 
     @commands.command(name="meme")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

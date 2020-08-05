@@ -82,9 +82,18 @@ async def on_member_join(self, member: discord.Member):
 async def on_member_remove(self, member: discord.Member):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just left {member.guild.name}")
     if self.bot.name == "suager":
-        self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (member.id, member.guild.id))
-        self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (member.id, member.guild.id))
-        self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (member.id, member.guild.id))
+        # self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (member.id, member.guild.id))
+        uid, gid = member.id, member.guild.id
+        self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
+        # self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (member.id, member.guild.id))
+        sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+        if sel:
+            if sel["xp"] < 0:
+                return
+            elif sel["level"] < 0:
+                self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=?", (uid, gid))
+            else:
+                self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
 
 
 async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):

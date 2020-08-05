@@ -31,7 +31,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
             return f"{number} {names[i]}"
 
 
-def gns(value: int, locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
+def gns(value: int or float, locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
     """ Get a string from an integer """
     try:
         value = int(value)

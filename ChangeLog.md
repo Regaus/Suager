@@ -210,3 +210,9 @@
 - Removed global levels
 - Improved levels
 - Fixed some broken outputs
+
+## v6.0-beta5 - 5 August
+- Added some meme commands from VAC Efron's API
+- Moved colour command to Utility
+- Fixed some leveling commands breaking
+- Improved leveling reset on leave
