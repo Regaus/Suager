@@ -66,7 +66,8 @@ def _levels():
     xp = []
     # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
     for x in range(max_level):
-        power = 2 + x / 50 if x < 50 else 3 + (x - 50) / 100 if x < 100 else 3.5
+        # power = 2 + x / 40 if x < 40 else 3 + (x - 40) / 80 if x < 80 else 3.5
+        power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
         base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
         req += int(base)
         if x not in [69, 420, 666, 1337]:
@@ -76,22 +77,22 @@ def _levels():
     return xp
 
 
-def _levels_global():
-    req = 15000
-    xp = []
-    for x in range(max_level):
-        base = 125 * x ** 3 + 500 * x ** 2 + 15000 * x
-        req += int(base)
-        if x not in [69, 420, 666, 1337]:
-            xp.append(int(req))
-        else:
-            xp.append(xp[-1])
-    return xp
+# def _levels_global():
+#     req = 15000
+#     xp = []
+#     for x in range(max_level):
+#         base = 125 * x ** 3 + 500 * x ** 2 + 15000 * x
+#         req += int(base)
+#         if x not in [69, 420, 666, 1337]:
+#             xp.append(int(req))
+#         else:
+#             xp.append(xp[-1])
+#     return xp
 
 
 old_levels = _old_levels()
 levels = _levels()
-levels_global = _levels_global()
+# levels_global = _levels_global()
 
 
 class Leveling(commands.Cog):
@@ -108,8 +109,10 @@ class Leveling(commands.Cog):
         outputs = []
         for level in __levels:
             _level = level - 1
-            lv1, lv2, lv3 = int(levels[_level] / 100), int(old_levels[_level] / 100), int(levels_global[_level] / 100)
-            outputs.append(f"Level {level:>4} | New {lv1:>14,} | Old {lv2:>13,} | Global {lv3:>15,}")
+            # lv1, lv2, lv3 = int(levels[_level] / 100), int(old_levels[_level] / 100), int(levels_global[_level] / 100)
+            # outputs.append(f"Level {level:>4} | New {lv1:>13,} | Old {lv2:>13,} | Global {lv3:>15,}")
+            lv1, lv2 = int(levels[_level] / 100), int(old_levels[_level] / 100)
+            outputs.append(f"Level {level:>4} | New {lv1:>13,} | Old {lv2:>13,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
 
@@ -451,7 +454,7 @@ class Leveling(commands.Cog):
                 _xp = xp[someone]
                 break
         level = 0
-        for lvl in levels_global:
+        for lvl in levels:
             if _xp >= lvl:
                 level += 1
             else:
