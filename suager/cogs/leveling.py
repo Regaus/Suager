@@ -394,7 +394,7 @@ class Leveling(commands.Cog):
                 # dr.text((552, 300), f"{xp / 100:,.0f}/{r2} XP\nProgress: {progress*100:.2f}%", font=font_small, fill=font_colour)
                 r1 = langs.gns(int(xp / 100), locale)
                 r3 = langs.gfs(progress, locale, 2, True)
-                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns(int((req - xp) / 100), locale)) if level < max_level else ""
+                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp) / 100, locale)) if level < max_level else ""
                 dr.text((text_x, (308 if r4 else 372)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
                 progress = 0.5

@@ -33,7 +33,10 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
 
 def gns(value: int, locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
     """ Get a string from an integer """
-    value = int(value)
+    try:
+        value = int(value)
+    except OverflowError:
+        return "Infinity"
     if locale.startswith("rsl-1"):
         base = f"{value:0{fill}X}"
         return put_commas(base, step=3) if commas else base
