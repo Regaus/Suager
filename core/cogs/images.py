@@ -43,7 +43,7 @@ class Images(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def colourify(self, ctx: commands.Context, user: discord.User = None, colour: str = "7289da"):
         """ Turn a user's avatar into a certain colour """
         if user is None:
@@ -67,7 +67,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}")
 
     @commands.command(name="filter")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def filter(self, ctx: commands.Context, filter_name: str, *, who: discord.User = None):
         """ Let someone go through a filter
         Enter "help" as filter name to see allowed filters
@@ -84,28 +84,28 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def joke_over_head(self, ctx: commands.Context, who: discord.User = None):
         """ Joke over head """
         user = who or ctx.author
         return await image_gen(ctx, user, "jokeoverhead", "joke-over-head")
 
     @commands.command(name="amiajoke")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def am_i_a_joke(self, ctx: commands.Context, *, who: discord.User = None):
         """ Is a user a joke? """
         user = who or ctx.author
         return await image_gen(ctx, user, "amiajoke", f"is_{user.name.lower()}_a_joke")
 
     @commands.command(name="salty")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def salty(self, ctx: commands.Context, *, who: discord.User = None):
         """ Salty user """
         user = who or ctx.author
         return await image_gen(ctx, user, "salty", f"salty_{user.name.lower()}")
 
     @commands.command(name="floor")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def the_floor_is(self, ctx: commands.Context, user: discord.User, *text):
         """ The floor is... """
         __text = '+'.join(text)
@@ -120,7 +120,7 @@ class Images(commands.Cog):
         return await image_gen(ctx, user, "floor", f"the_floor_is_{filename}", f"text={_text}")
 
     @commands.command()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def supreme(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Make a Supreme logo
 
@@ -151,46 +151,46 @@ class Images(commands.Cog):
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
 
     @commands.command(name="carreverse")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def car_reverse(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ You see something and drive away """
         return await vac_api(ctx, f"carreverse?text={urllib.parse.quote(str(text))}")
 
     @commands.command(name="changemymind")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def change_my_mind(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Change my mind """
         return await vac_api(ctx, f"changemymind?text={urllib.parse.quote(str(text))}")
 
     @commands.command(name="water")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def no_water(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Why go to water? """
         return await vac_api(ctx, f"water?text={urllib.parse.quote(str(text))}")
 
     @commands.command(name="firsttime")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def first_time(self, ctx: commands.Context, *, who: discord.User = None):
         """ First time? """
         user = who or ctx.author
         return await vac_api(ctx, f"firsttime?user={user.avatar_url_as(format='png')}")
 
     @commands.command(name="grave")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def grave(self, ctx: commands.Context, *, who: discord.User = None):
         """ Someone died """
         user = who or ctx.author
         return await vac_api(ctx, f"grave?user={user.avatar_url_as(format='png')}")
 
     @commands.command(name="iamspeed")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def iamspeed(self, ctx: commands.Context, *, who: discord.User = None):
         """ I am speed """
         user = who or ctx.author
         return await vac_api(ctx, f"iamspeed?user={user.avatar_url_as(format='png')}")
 
     @commands.command(name="milk")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def i_can_milk_you(self, ctx: commands.Context, user1: discord.User, user2: discord.User = None):
         """ I can milk you """
         out = f"icanmilkyou?user1={user1.avatar_url_as(format='png')}"
@@ -201,28 +201,28 @@ class Images(commands.Cog):
         return await vac_api(ctx, out, fn)
 
     @commands.command(name="heaven")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def heaven(self, ctx: commands.Context, *, who: discord.User = None):
         """ Stairs to Heaven """
         user = who or ctx.author
         return await vac_api(ctx, f"heaven?user={user.avatar_url_as(format='png')}")
 
     @commands.command(name="stonks")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def stonks(self, ctx: commands.Context, *, who: discord.User = None):
         """ Stonks """
         user = who or ctx.author
         return await vac_api(ctx, f"stonks?user={user.avatar_url_as(format='png')}")
 
     @commands.command(name="tableflip")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tableflip(self, ctx: commands.Context, *, who: discord.User = None):
         """ Someone be angry """
         user = who or ctx.author
         return await vac_api(ctx, f"tableflip?user={user.avatar_url_as(format='png')}")
 
     @commands.command(name="npc")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def npc(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ NPC meme """
         _text = str(text)
@@ -233,7 +233,7 @@ class Images(commands.Cog):
         return await vac_api(ctx, f"npc?text1={urllib.parse.quote(t1)}&text2={urllib.parse.quote(t2)}")
 
     @commands.command(name="meme")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def meme_generator(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Create a meme """
         async with ctx.typing():

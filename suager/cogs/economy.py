@@ -33,7 +33,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="balance", aliases=["bal"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def balance(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check someone's balance"""
         locale = langs.gl(ctx.guild, self.db)
@@ -52,7 +52,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="donate", aliases=["give"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def donate(self, ctx: commands.Context, user: discord.Member, amount: int):
         """ Give someone your money """
         locale = langs.gl(ctx.guild, self.db)
@@ -89,7 +89,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="profile")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def profile(self, ctx: commands.Context, who: discord.Member = None):
         """ Check someone's profile """
         locale = langs.gl(ctx.guild, self.db)
@@ -119,7 +119,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="buy")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     @commands.max_concurrency(1, per=commands.BucketType.user)
     async def buy_something(self, ctx: commands.Context, *, role: discord.Role):
         """ Buy a role from the shop """
@@ -180,7 +180,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="shop")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def item_shop(self, ctx: commands.Context):
         """ Item shop """
         locale = langs.gl(ctx.guild, self.db)
@@ -212,7 +212,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="bank")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def money_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's money Leaderboard """
         locale = langs.gl(ctx.guild, self.db)

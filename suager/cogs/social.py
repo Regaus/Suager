@@ -126,7 +126,7 @@ class Social(commands.Cog):
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def pat(self, ctx: commands.Context, user: discord.Member):
         """ Pat someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -150,7 +150,7 @@ class Social(commands.Cog):
 
     @commands.command(name="hug")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def hug(self, ctx: commands.Context, user: discord.Member):
         """ Hug someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -175,7 +175,7 @@ class Social(commands.Cog):
 
     @commands.command(name="cuddle")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def cuddle(self, ctx: commands.Context, user: discord.Member):
         """ Cuddle someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -200,7 +200,7 @@ class Social(commands.Cog):
 
     @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """ Lick someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -229,7 +229,7 @@ class Social(commands.Cog):
 
     @commands.command(name="kiss", aliases=["kith", "kish"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def kiss(self, ctx: commands.Context, user: discord.Member):
         """ Kiss someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -254,7 +254,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bite")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def bite(self, ctx: commands.Context, user: discord.Member):
         """ Bite someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -283,7 +283,7 @@ class Social(commands.Cog):
 
     @commands.command(name="slap")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def slap(self, ctx: commands.Context, user: discord.Member):
         """ Slap someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -312,7 +312,7 @@ class Social(commands.Cog):
 
     @commands.command(name="sniff")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def smell(self, ctx: commands.Context, user: discord.Member):
         """ Sniff someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -341,7 +341,7 @@ class Social(commands.Cog):
 
     @commands.command(name="highfive")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def highfive(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a high five """
         locale = langs.gl(ctx.guild, self.db)
@@ -367,7 +367,7 @@ class Social(commands.Cog):
 
     @commands.command(name="poke")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def poke(self, ctx: commands.Context, user: discord.Member):
         """ Poke someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -393,7 +393,7 @@ class Social(commands.Cog):
 
     @commands.command(name="boop", aliases=["bap"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def boop(self, ctx: commands.Context, user: discord.Member):
         """ Why is this a thing? """
         locale = langs.gl(ctx.guild, self.db)
@@ -419,7 +419,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def fuck(self, ctx, user: discord.Member):
         """ Bang someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -454,7 +454,7 @@ class Social(commands.Cog):
 
     @commands.command(name="ship")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def ship(self, ctx: commands.Context, user1: discord.Member, user2: discord.Member):
         """ Build a ship """
         locale = langs.gl(ctx.guild, self.db)
@@ -520,7 +520,7 @@ class Social(commands.Cog):
 
     @commands.command(name="sleepy")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def sleepy(self, ctx):
         """ You're sleepy """
         locale = langs.gl(ctx.guild, self.db)
@@ -535,7 +535,7 @@ class Social(commands.Cog):
 
     @commands.command(name="cry")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def cry(self, ctx):
         """ You're crying """
         locale = langs.gl(ctx.guild, self.db)
@@ -550,7 +550,7 @@ class Social(commands.Cog):
 
     @commands.command(name="blush")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def blush(self, ctx):
         """ You blush """
         locale = langs.gl(ctx.guild, self.db)
@@ -565,7 +565,7 @@ class Social(commands.Cog):
 
     @commands.command(name="smile")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def smile(self, ctx):
         """ You're smiling """
         locale = langs.gl(ctx.guild, self.db)
@@ -580,7 +580,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bean")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def bean(self, ctx: commands.Context, user: discord.Member):
         """ Bean someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -603,7 +603,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bad")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def bad(self, ctx: commands.Context, user: discord.Member):
         """ Bad user """
         locale = langs.gl(ctx.guild, self.db)
@@ -627,7 +627,7 @@ class Social(commands.Cog):
 
     @commands.command(name="trash")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
         locale = langs.gl(ctx.guild, self.db)
@@ -653,7 +653,7 @@ class Social(commands.Cog):
 
     @commands.command(name="cookie")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def cookie(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a cookie """
         locale = langs.gl(ctx.guild, self.db)
@@ -668,7 +668,7 @@ class Social(commands.Cog):
 
     @commands.command(name="lemon")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def lemon(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a lemon """
         locale = langs.gl(ctx.guild, self.db)
@@ -683,7 +683,7 @@ class Social(commands.Cog):
 
     @commands.command(name="carrot")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def carrot(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a carrot """
         locale = langs.gl(ctx.guild, self.db)
@@ -698,7 +698,7 @@ class Social(commands.Cog):
 
     @commands.command(name="fruit")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def fruit_snacks(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a fruit """
         locale = langs.gl(ctx.guild, self.db)

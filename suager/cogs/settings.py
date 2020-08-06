@@ -17,7 +17,7 @@ class Settings(commands.Cog):
     @commands.group(name="settings", aliases=["set"])
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def settings(self, ctx: commands.Context):
         """ Server settings """
         if ctx.invoked_subcommand is None:

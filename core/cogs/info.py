@@ -14,7 +14,7 @@ class BotInformation(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="source")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def source(self, ctx: commands.Context):
         """ Source codes """
         links = "\n<https://github.com/AlexFlipnote/discord_bot.py>\n<https://github.com/AlexFlipnote/birthday.py>"
@@ -23,7 +23,7 @@ class BotInformation(commands.Cog):
         #                           "<https://github.com/AlexFlipnote/birthday.py>", ctx.channel)
 
     @commands.command(name="stats", aliases=["info", "about", "status"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def stats(self, ctx: commands.Context):
         """ Bot stats"""
         locale = langs.gl(ctx.guild, self.db)
@@ -31,7 +31,7 @@ class BotInformation(commands.Cog):
         local_config = self.bot.local_config
         embed = discord.Embed(colour=general.random_colour())
         # embed.title = f"ℹ About {local_config['name']} | {self.bot.user} | v{local_config['version']}"
-        embed.title = langs.gls("info_stats_about", locale, local_config["name"], self.bot.user, local_config["version"])
+        embed.title = langs.gls("info_stats_about", locale, self.bot.user, local_config["version"])
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=langs.gls("info_stats_developers", locale),  value=f"**{owners}**", inline=True)
@@ -85,7 +85,7 @@ class BotInformation(commands.Cog):
         return await general.send(f"{send}\n```fix\n{message}```", ctx.channel)
 
     @commands.command(name="invite")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def invite(self, ctx: commands.Context):
         """ Invite me to your own server! """
         perms = 470150231
@@ -93,7 +93,7 @@ class BotInformation(commands.Cog):
         return await general.send(langs.gls("info_invite_bot", langs.gl(ctx.guild, self.db), ctx.author.name) + link, ctx.channel)
 
     @commands.command(name="botserver")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def my_server(self, ctx: commands.Context):
         """ Get an invite to my server """
         locale = langs.gl(ctx.guild, self.db)
@@ -119,7 +119,7 @@ class BotInformation(commands.Cog):
             # return await general.send("But this is my home already!", ctx.channel)
 
     @commands.command(name="ping")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def ping(self, ctx: commands.Context):
         """ Ping Pong """
         import time as _time

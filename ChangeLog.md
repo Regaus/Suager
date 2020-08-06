@@ -216,3 +216,7 @@
 - Moved colour command to Utility
 - Fixed some leveling commands breaking
 - Improved leveling reset on leave
+
+## v6.0-beta6 - 6 August
+- Improved cooldowns
+- Russian translation almost done

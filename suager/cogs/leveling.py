@@ -102,7 +102,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="leveling")
     @commands.is_owner()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
         __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000]
@@ -284,7 +284,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="rewards")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def rewards(self, ctx: commands.Context):
         """ Rewards """
         locale = langs.gl(ctx.guild, self.db)
@@ -299,7 +299,8 @@ class Leveling(commands.Cog):
             rewards.sort(key=lambda x: x['level'])
             embed = discord.Embed(colour=general.random_colour())
             embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.title = f"Rewards for having no life in **{ctx.guild.name}**"
+            # embed.title = f"Rewards for having no life in **{ctx.guild.name}**"
+            embed.title = langs.gls("leveling_rewards_title", locale, ctx.guild.name)
             d = ''
             for role in rewards:
                 d += langs.gls("leveling_rewards_role", locale, langs.gns(role["level"], locale), role["role"])
@@ -312,7 +313,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="rank", aliases=["irank", "ranki", "level"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your or someone's rank """
         locale = langs.gl(ctx.guild, self.db)
@@ -425,7 +426,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="rankg")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check your or someone's rank """
         locale = langs.gl(ctx.guild, self.db)
@@ -464,7 +465,7 @@ class Leveling(commands.Cog):
         # return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard\nGlobal Level: {level:,}", ctx.channel
 
     @commands.group(name="crank", aliases=["customrank"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
         """ Customise your rank """
         if ctx.invoked_subcommand is None:
@@ -562,7 +563,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def next_level(self, ctx: commands.Context):
         """ XP required for next level """
         locale = langs.gl(ctx.guild, self.db)
@@ -623,7 +624,7 @@ class Leveling(commands.Cog):
 
     @commands.command(name="levels", aliases=["ranks"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's XP Leaderboard """
         locale = langs.gl(ctx.guild, self.db)
@@ -687,7 +688,7 @@ class Leveling(commands.Cog):
         #                           f"\n{block}```", ctx.channel)
 
     @commands.command(name="glevels")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def global_levels(self, ctx: commands.Context, top: str = ""):
         """ Global XP Leaderboard """
         locale = langs.gl(ctx.guild, self.db)

@@ -14,7 +14,7 @@ class Entertainment(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="vote", aliases=["petition"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def vote(self, ctx: commands.Context, *, question: str):
         """ Start a vote """
         locale = langs.gl(ctx.guild, self.db)
@@ -38,7 +38,7 @@ class Entertainment(commands.Cog):
         return await general.send("𓆏", ctx.channel)
 
     @commands.command(name="vibecheck")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def vibe_check(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your vibe """
         locale = langs.gl(ctx.guild, self.db)
@@ -51,7 +51,7 @@ class Entertainment(commands.Cog):
         return await message.edit(content=responses[1] if user.id == 302851022790066185 else random.choice(responses))
 
     @commands.command(name="flip", aliases=["coin"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def flip_a_coin(self, ctx: commands.Context):
         """ Flip a coin """
         locale = langs.gl(ctx.guild, self.db)
@@ -60,7 +60,7 @@ class Entertainment(commands.Cog):
 
     @commands.command(name="beer")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def beer(self, ctx: commands.Context, user: discord.Member = None, *, reason: str = ""):
         """ Give someone a beer! 🍻 """
         locale = langs.gl(ctx.guild, self.db)
@@ -103,7 +103,7 @@ class Entertainment(commands.Cog):
             return await msg.edit(content=beer)
 
     @commands.command(name="8ball", aliases=["eightball"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def eight_ball(self, ctx: commands.Context, *, question: commands.clean_content):
         """ Consult the 8-Ball """
         locale = langs.gl(ctx.guild, self.db)
@@ -112,7 +112,7 @@ class Entertainment(commands.Cog):
         # return await general.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}", ctx.channel)
 
     @commands.command(name="roll")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def roll(self, ctx: commands.Context, num1: int = 6, num2: int = 1):
         """ Rolls a number between given range """
         locale = langs.gl(ctx.guild, self.db)
@@ -138,7 +138,7 @@ class Entertainment(commands.Cog):
 
     @commands.command(name="quote")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def quote(self, ctx: commands.Context, user: discord.User, *, text: str):
         """ Make a very true quote """
         locale = langs.gl(ctx.guild, self.db)
@@ -151,14 +151,14 @@ class Entertainment(commands.Cog):
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="reverse")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def reverse_text(self, ctx: commands.Context, *, text: str):
         """ Reverses text """
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
         return await general.send(f"🔁 {ctx.author.name}:\n{reverse}", ctx.channel)
 
     @commands.command(name="notwork")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def notwork(self, ctx: commands.Context):
         """ That's not how it works you little shit """
         return await general.send(None, ctx.channel, file=discord.File("assets/notwork.png"))
@@ -183,7 +183,7 @@ class Entertainment(commands.Cog):
     @commands.command(name="tell")
     @commands.guild_only()
     @permissions.has_permissions(manage_messages=True)
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tell(self, ctx: commands.Context, channel: discord.TextChannel, *, message: str):
         """ Say something to a channel """
         locale = langs.gl(ctx.guild, self.db)
@@ -220,7 +220,7 @@ class Entertainment(commands.Cog):
 
     @commands.command(name="say")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def say(self, ctx: commands.Context, *, message: str):
         """ Make me speak! """
         locale = langs.gl(ctx.guild, self.db)

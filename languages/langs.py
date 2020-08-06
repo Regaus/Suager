@@ -16,7 +16,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
-    if locale == "rsl-1_kg" or locale == "rsl-1_ka":
+    if locale.startswith("rsl-1"):
         value //= 2
         names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"]
         step = 4096
@@ -115,7 +115,8 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
     v2 = v % int(p3)
     v3 = v2 % int(p2)
     simple = ["en_gb", "en_us"]
-    name = (name_1 if v == 1 else name_2) if locale in simple else (name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
+    name = name_pl if v == 0 else (name_1 if v == 1 else name_2) if locale in simple else (
+        name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
     return f"{gns(v, locale)} {name}"
     # if locale == "en_gb":
     #     return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \

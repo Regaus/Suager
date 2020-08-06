@@ -17,7 +17,7 @@ class Utility(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="time")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def current_time(self, ctx: commands.Context):
         """ Current time """
         locale = langs.gl(ctx.guild, self.db)
@@ -37,7 +37,7 @@ class Utility(commands.Cog):
         return await general.send(send, ctx.channel)
 
     @commands.command(name="base", aliases=["bases", "bc"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def base_conversions(self, ctx: commands.Context, conversion: str, base: int, number: str, caps: bool = False):
         """ Convert numbers between bases
 
@@ -66,7 +66,7 @@ class Utility(commands.Cog):
         return await general.send(f"You need to specify either `to` or `from`.", ctx.channel)
 
     @commands.command(name="settz")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def set_timezone(self, ctx: commands.Context, tz: str):
         """ Set your timezone """
         try:
@@ -82,7 +82,7 @@ class Utility(commands.Cog):
             return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
 
     @commands.command(name="timesince", aliases=["timeuntil"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Time difference """
         locale = langs.gl(ctx.guild, self.db)
@@ -100,7 +100,7 @@ class Utility(commands.Cog):
                         break
             else:
                 date = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
-            difference = langs.td_dt(date, locale, accuracy=7, brief=False, suffix=False)  # time.human_timedelta(date, accuracy=7)
+            difference = langs.td_dt(date, locale, accuracy=7, brief=False, suffix=True)  # time.human_timedelta(date, accuracy=7)
             current_time = langs.gts(now, locale, True, False, True, True, True)  # time.time_output(now, True, True, True)
             specified_time = langs.gts(date, locale, True, False, True, True, True)  # time.time_output(date, True, True, True)
             return await general.send(langs.gls("util_timesince", locale, current_time, specified_time, difference), ctx.channel)
@@ -110,7 +110,7 @@ class Utility(commands.Cog):
             # return await general.send(f"An error has occurred\n`{type(e).__name__}: {e}`", ctx.channel)
 
     @commands.command(name="weather")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=7, type=commands.BucketType.user)
     async def weather(self, ctx: commands.Context, *, place: str):
         """ Check weather in a place """
         locale = langs.gl(ctx.guild, self.db)
@@ -187,7 +187,7 @@ class Utility(commands.Cog):
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="luas")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
         """ Data for Luas """
         import luas.api
@@ -205,7 +205,7 @@ class Utility(commands.Cog):
         return await general.send(f"Data for {_place}:\n{status}\n{trams}", ctx.channel)
 
     @commands.command(name="colour", aliases=["color"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def colour(self, ctx: commands.Context, colour: str):
         """ Information on a colour """
         locale = langs.gl(ctx.guild, self.db)

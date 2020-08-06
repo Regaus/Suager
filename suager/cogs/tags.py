@@ -14,7 +14,7 @@ class Tags(commands.Cog):
 
     @commands.group(name="tag", aliases=["tags", "t"], invoke_without_command=True)
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tags(self, ctx: commands.Context, *, tag_name: str):
         """ Tags """
         if ctx.invoked_subcommand is None:
@@ -36,7 +36,7 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_create_already", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"Tag `{tag_name.lower()}` already exists", ctx.channel)
         self.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                         (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, time.now_ts(), time.now_ts(), 0))
+                         (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0))
         return await general.send(langs.gls("tags_create_success", locale, tag_name.lower(), ctx.author.name), ctx.channel)
         # return await general.send(f"Your tag `{tag_name.lower()}` has been successfully created, {ctx.author.name}.", ctx.channel)
 
@@ -114,7 +114,7 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_edit_deny", locale), ctx.channel)
             # return await general.send("You can't edit a tag you don't own", ctx.channel)
         else:
-            self.db.execute("UPDATE tags SET content=?, edited=? WHERE gid=? AND name=?", (new_content, time.now_ts(), ctx.guild.id, tag_name.lower()))
+            self.db.execute("UPDATE tags SET content=?, edited=? WHERE gid=? AND name=?", (new_content, int(time.now_ts()), ctx.guild.id, tag_name.lower()))
             return await general.send(langs.gls("tags_edit_success", locale, tag["name"]), ctx.channel)
             # return await general.send(f"The tag `{tag['name']}` has been successfully edited.", ctx.channel)
 
@@ -134,7 +134,7 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_rename_deny", locale), ctx.channel)
             # return await general.send("You can't rename a tag you don't own", ctx.channel)
         else:
-            self.db.execute("UPDATE tags SET name=?, edited=? WHERE gid=? AND name=?", (new_name.lower(), time.now_ts(), ctx.guild.id, tag['name']))
+            self.db.execute("UPDATE tags SET name=?, edited=? WHERE gid=? AND name=?", (new_name.lower(), int(time.now_ts()), ctx.guild.id, tag['name']))
             return await general.send(langs.gls("tags_rename_success", locale, tag["name"], new_name.lower()), ctx.channel)
             # return await general.send(f"The tag `{tag['name']}` has been successfully renamed to `{new_name.lower()}`.", ctx.channel)
 
@@ -184,7 +184,7 @@ class Tags(commands.Cog):
             # return await general.send(f"{user.name} has no tags so far.", ctx.channel)
         block = "```fix"
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
-            block += f"\n{langs.gns(i, locale, 2, True)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
+            block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
         return await general.send(langs.gls("tags_user", locale, user, langs.gns(page, locale), langs.gns(len(tags) // 20 + 1, locale), block), ctx.channel)
         # return await general.send(f"Tags belonging to user {user.name} | Page {page} of {len(tags) // 20 + 1}\n{block}```", ctx.channel)
 
@@ -198,7 +198,7 @@ class Tags(commands.Cog):
             # return await general.send(f"There are no tags in {ctx.guild.name} so far.", ctx.channel)
         block = "```fix"
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
-            block += f"\n{langs.gns(i, locale, 2, True)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
+            block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
             # block += f"\n[{i:02d}] {d['name']} | Uses: {d['usage']:,}"
         return await general.send(langs.gls("tags_all", locale, ctx.guild, langs.gns(page, locale), langs.gns(len(tags) // 20 + 1, locale), block), ctx.channel)
         # return await general.send(f"Tags in {ctx.guild.name} - Sorted by name | Page {page} of {len(tags) // 20 + 1}\n{block}```", ctx.channel)
@@ -213,7 +213,7 @@ class Tags(commands.Cog):
             # return await general.send(f"There are no tags in {ctx.guild.name} so far.", ctx.channel)
         block = "```fix"
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
-            block += f"\n{langs.gns(i, locale, 2, True)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
+            block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
             # block += f"\n[{i:02d}] {d['name']} | Uses: {d['usage']:,}"
         return await general.send(langs.gls("tags_top", locale, ctx.guild, langs.gns(page, locale), langs.gns(len(tags) // 20 + 1, locale), block), ctx.channel)
         # return await general.send(f"Tags in {ctx.guild.name} - Sorted by usage | Page {page} of {len(tags) // 20 + 1}\n{block}```", ctx.channel)

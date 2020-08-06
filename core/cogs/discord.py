@@ -3,8 +3,12 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from core.utils import general, time, database
+from core.utils import arg_parser, database, general, time
 from languages import langs
+
+
+def is_senko_lair(ctx):
+    return ctx.guild.id == 568148147457490954
 
 
 class Discord(commands.Cog):
@@ -13,7 +17,7 @@ class Discord(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="avatar")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
         user = who or ctx.author
@@ -32,7 +36,7 @@ class Discord(commands.Cog):
 
     @commands.group(name="role")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=7, type=commands.BucketType.user)
     async def role(self, ctx: commands.Context, *, role: discord.Role = None):
         """ Information on roles in the current server """
         if ctx.invoked_subcommand is None:
@@ -63,7 +67,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="joinedat")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def joined_at(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check when someone joined server """
         user = who or ctx.author
@@ -72,7 +76,7 @@ class Discord(commands.Cog):
         # return await general.send(f"**{user.name}** joined **{ctx.guild.name}** at **{time.time_output(user.joined_at)}**", ctx.channel)
 
     @commands.command(name="createdat")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def created_at(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check when someone created their account """
         user = who or ctx.author
@@ -81,7 +85,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="user")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def user(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Get info about user """
         user = who or ctx.author
@@ -137,7 +141,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="whois")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def who_is(self, ctx: commands.Context, *, user_id: int):
         """ Get info about a user """
         locale = langs.gl(ctx.guild, self.db)
@@ -154,7 +158,7 @@ class Discord(commands.Cog):
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def emoji(self, ctx: commands.Context, emoji: discord.Emoji):
         """ Information on an emoji """
         locale = langs.gl(ctx.guild, self.db)
@@ -170,7 +174,7 @@ class Discord(commands.Cog):
 
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=7, type=commands.BucketType.user)
     async def server(self, ctx: commands.Context):
         """ Information about the current server """
         if ctx.invoked_subcommand is None:
@@ -321,6 +325,64 @@ class Discord(commands.Cog):
         #                 value=f"Out of {o:,} people online:\n{a1} Playing a game: {ag:,} - {apg:.2f}%\n{a4} Custom Status: {ac:,} - {apc:.2f}%\n{a2} "
         #                       f"Streaming: {at:,} - {apt:.2f}%\n{a3} Listening: {al:,} - {apl:.2f}%\n{a5} Doing nothing: {an:,} - {apn:.2f}%")
         return await general.send(None, ctx.channel, embed=embed)
+
+    @commands.command(name="customrole", aliases=["cr"])
+    @commands.guild_only()
+    @commands.check(is_senko_lair)
+    @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
+    async def custom_role(self, ctx: commands.Context, *, stuff: str):
+        """ Custom Role (only in Senko Lair)
+        -c/--colour/--color: Set role colour
+        -n/--name: Set role name """
+        data = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        if not data:
+            return await general.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}", ctx.channel)
+        parser = arg_parser.Arguments()
+        parser.add_argument('-c', '--colour', '--color', nargs=1)
+        parser.add_argument('-n', '--name', nargs="+")
+        args, valid_check = parser.parse_args(stuff)
+        if not valid_check:
+            return await general.send(args, ctx.channel)
+        role = ctx.guild.get_role(data['rid'])
+        if args.colour is not None:
+            c = args.colour[0]
+            a = len(c)
+            if c == "random":
+                col = general.random_colour()
+            else:
+                if a == 6 or a == 3:
+                    try:
+                        col = int(c, base=16)
+                    except Exception as e:
+                        return await general.send(f"Invalid colour - {type(e).__name__}: {e}", ctx.channel)
+                else:
+                    return await general.send("Colour must be either 3 or 6 HEX digits long.", ctx.channel)
+            colour = discord.Colour(col)
+        else:
+            colour = role.colour
+        try:
+            name = ' '.join(args.name)
+        except TypeError:
+            name = role.name
+        try:
+            await role.edit(name=name, colour=colour, reason="Custom Role change")
+        except Exception as e:
+            return await general.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}", ctx.channel)
+        return await general.send(f"Successfully updated your custom role, {ctx.author.name}", ctx.channel)
+
+    @commands.command(name="grantrole")
+    @commands.guild_only()
+    @commands.is_owner()
+    async def grant_custom_role(self, ctx: commands.Context, user: discord.Member, role: discord.Role):
+        """ Grant custom role """
+        already = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if not already:
+            result = self.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
+            await user.add_roles(role, reason="Custom Role grant")
+            return await general.send(f"Granted {role.name} to {user.name}: {result}", ctx.channel)
+        else:
+            result = self.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
+            return await general.send(f"Updated custom role of {user.name} to {role.name}: {result}", ctx.channel)
 
 
 def setup(bot):

@@ -43,7 +43,7 @@ class Games(commands.Cog):
 
     @commands.group(name="dlram")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def dlram(self, ctx: commands.Context):
         """ Download more RAM """
         if ctx.invoked_subcommand is None:
@@ -114,7 +114,7 @@ class Games(commands.Cog):
 
     @commands.group(name="tbl")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tbl(self, ctx: commands.Context):
         """ TBL """
         if ctx.invoked_subcommand is None:
@@ -354,7 +354,7 @@ class Games(commands.Cog):
                 if totem_id == 0:
                     return await general.send(langs.gls("tbl_totem_set_expired", locale), ctx.channel)
                     # return await general.send("This totem has already expired, you can't reset it.", ctx.channel)
-                cost = (13 if slot == 2 else 37) * ctx.guild.member_count
+                cost = (47 if slot == 2 else 177) * ctx.guild.member_count
                 if nuts < cost:
                     n = langs.gns(nuts, locale)
                     c = langs.plural(cost, "tbl_nuts", locale)
@@ -431,8 +431,8 @@ class Games(commands.Cog):
             effect_str = langs.gfs(effect, locale, 1, True)
             totem_desc = langs.gls(totem['desc'], locale, effect_str)
             outputs.append(f"{i + 1}) **{langs.gls(totem['name'], locale)}** - Level **{langs.gns(level, locale)}**:\n{totem_desc}")
-        cost_2 = langs.plural(13 * ctx.guild.member_count, "tbl_nuts", locale)
-        cost_3 = langs.plural(37 * ctx.guild.member_count, "tbl_nuts", locale)
+        cost_2 = langs.plural(47 * ctx.guild.member_count, "tbl_nuts", locale)
+        cost_3 = langs.plural(177 * ctx.guild.member_count, "tbl_nuts", locale)
         return await general.send(langs.gls("tbl_details_totems", locale, "\n".join(outputs), ctx.prefix, cost_2, cost_3), ctx.channel)
         # return await general.send("This is information on your clan's totems.\n\n" + "\n".join(outputs) +
         #                          f"\n\nYou can check current totem stats using `{ctx.prefix}tbl clan`.\nYou can assign totems using `{ctx.prefix}tbl totems`."

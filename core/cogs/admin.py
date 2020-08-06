@@ -280,7 +280,7 @@ class Admin(commands.Cog):
                     except Exception as e:
                         error_collection.append([file, f"{type(e).__name__}: {e}"])
         if error_collection:
-            output = "\n".join([f"**{g[0]}** ```fix\n{g[1]}```" for g in error_collection])
+            output = "\n".join([f"**{g[0]}** - `{g[1]}`" for g in error_collection])
             return await general.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}", ctx.channel)
         await general.send("Successfully reloaded all extensions", ctx.channel)
         logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Successfully reloaded all extensions")
