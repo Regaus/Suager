@@ -21,7 +21,7 @@
   "birthdays_set_already": "**{0}**, your birthday is already set to **{1}**. Contact the bot owner to change this.",
   "birthdays_set_invalid": "You need to enter a valid date with the command. Please note that the format is `DD/MM`.",
   "birthdays_set_confirmation": "**{0}**, do you confirm that your birthday is on **{1}**? Type `{2}` to confirm.\nYou'll need to send the valid date to the bot owner to change this date afterwards.",
-  "birthdays_set_set": "**{0}**, your birthday is now saved as **{1}**",
+  "birthdays_set_set": "**{0}**, your birthday is now saved as **{1}**.",
   "discord_avatar": "ℹ Avatar for **{0}**\n{1}",
   "discord_created_at": "**{0}** created their account on **{1}**",
   "discord_emoji": "{0} Name: {1}\n{0} ID: {2}\nIs animated: {3}\nServer ID: {4}\nCreated at: {5}\n[{0} URL]({6})",

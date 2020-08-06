@@ -220,3 +220,7 @@
 ## v6.0-beta6 - 6 August
 - Improved cooldowns
 - Russian translation almost done
+
+## v6.0-beta7 - 7 August
+- Fixed a few minor bugs
+- RSL-1 translations for birthdays and discord cogs

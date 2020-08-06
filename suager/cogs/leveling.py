@@ -553,7 +553,8 @@ class Leveling(commands.Cog):
             x1, x2 = [val * dm for val in xp_amounts]
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
             try:
-                t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
+                # t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
+                t1, t2 = [langs.td_int(x * 60, locale) for x in [a1, a2]]
             except (OverflowError, OSError):
                 error = "Never"
                 t1, t2 = [error, error]
@@ -614,7 +615,8 @@ class Leveling(commands.Cog):
         x1, x2 = [val * normal * dm for val in xp_amounts]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         try:
-            t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
+            # t1, t2 = [time.timedelta(x * 60) for x in [a1, a2]]
+            t1, t2 = [langs.td_int(x * 60, locale) for x in [a1, a2]]
         except (OverflowError, OSError):
             error = "Never"
             t1, t2 = [error, error]
