@@ -143,7 +143,7 @@ class Moderation(commands.Cog):
         try:
             if member.id == ctx.guild.owner.id:
                 return await general.send("The server owner's nickname can't be edited.", ctx.channel)
-            if member.top_role.position <= ctx.author.top_role.position and member != ctx.author:
+            if member.top_role.position >= ctx.author.top_role.position and member != ctx.author:
                 return await general.send("You can't change the nickname of a member whose top role is equal to or is above yours.", ctx.channel)
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             if name is None:

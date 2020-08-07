@@ -64,7 +64,7 @@ class Birthdays(commands.Cog):
         return data["birthday"] if data else None
 
     @commands.group(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.max_concurrency(1, per=commands.BucketType.user)
     async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
         """ Check your birthday or other people """

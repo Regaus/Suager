@@ -223,7 +223,7 @@
   "ratings_pickle": "**{0}**'s pickle size is **{1}cm** ({2}in)",
   "ratings_rate": "I think \"{0}\" is **{1}/{2}**",
   "ratings_rate_user": "I rate {0} as **{1}/{2}**",
-  "settings_locale_invalid": "`{0}` is not a supported language. Enter this command without specifying any language for the list of all available languages.",
+  "settings_locale_invalid": "`{0}` is not a supported language. Use the `{1}languages` command for the list of all available languages.",
   "settings_locale_set": "This server's language has been set to `{0}` - **{1}**.",
   "social_alone": "Alone?",
   "social_bad_suager": "If I'm that bad, why am I here?",

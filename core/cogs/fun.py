@@ -26,13 +26,13 @@ class Entertainment(commands.Cog):
         await message.add_reaction(emotes.Deny)
 
     @commands.command(name="epic")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def epic(self, ctx: commands.Context):
-        """ This is an epic moment """
+        """ This be an epic moment """
         return await general.send(emotes.Epic, ctx.channel)
 
     @commands.command(name="frogge", aliases=["𓆏"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def frogge(self, ctx: commands.Context):
         """ 𓆏 """
         return await general.send("𓆏", ctx.channel)
@@ -51,7 +51,7 @@ class Entertainment(commands.Cog):
         return await message.edit(content=responses[1] if user.id == 302851022790066185 else random.choice(responses))
 
     @commands.command(name="flip", aliases=["coin"])
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def flip_a_coin(self, ctx: commands.Context):
         """ Flip a coin """
         locale = langs.gl(ctx.guild, self.db)
@@ -103,7 +103,7 @@ class Entertainment(commands.Cog):
             return await msg.edit(content=beer)
 
     @commands.command(name="8ball", aliases=["eightball"])
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def eight_ball(self, ctx: commands.Context, *, question: commands.clean_content):
         """ Consult the 8-Ball """
         locale = langs.gl(ctx.guild, self.db)
@@ -112,7 +112,7 @@ class Entertainment(commands.Cog):
         # return await general.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}", ctx.channel)
 
     @commands.command(name="roll")
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def roll(self, ctx: commands.Context, num1: int = 6, num2: int = 1):
         """ Rolls a number between given range """
         locale = langs.gl(ctx.guild, self.db)
@@ -126,7 +126,7 @@ class Entertainment(commands.Cog):
         # return await general.send(f"{ctx.author.name} rolled **{v1:,}-{v2:,}** and got **{r:,}**", ctx.channel)
 
     @commands.command(name="f")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def pay_respects(self, ctx: commands.Context, *, text: str = None):
         """ Press F to pay respects """
         locale = langs.gl(ctx.guild, self.db)
@@ -138,7 +138,7 @@ class Entertainment(commands.Cog):
 
     @commands.command(name="quote")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def quote(self, ctx: commands.Context, user: discord.User, *, text: str):
         """ Make a very true quote """
         locale = langs.gl(ctx.guild, self.db)
@@ -151,7 +151,7 @@ class Entertainment(commands.Cog):
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="reverse")
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def reverse_text(self, ctx: commands.Context, *, text: str):
         """ Reverses text """
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")

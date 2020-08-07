@@ -14,6 +14,20 @@ class Settings(commands.Cog):
         self.bot = bot
         self.db = database.Database(self.bot.name)
 
+    @commands.command(name="languages")
+    async def languages(self, ctx: commands.Context):
+        """ List of all supported languages """
+        languages = [f"`{key}`: {langs.gls('_name', key)}" for key in langs.languages.keys()]
+        real, con, = [], []
+        for language in languages:
+            if language.startswith("`rsl-"):
+                con.append(language)
+            else:
+                real.append(language)
+        out = "Here are supported Earth languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
+        return await general.send(out, ctx.channel)
+        # return await general.send("Here is a list of supported languages:\n" + "\n".join(languages), ctx.channel)
+
     @commands.group(name="settings", aliases=["set"])
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
@@ -36,14 +50,11 @@ class Settings(commands.Cog):
             #                               file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
 
     @settings.command(name="locale", aliases=["language"])
-    async def set_locale(self, ctx: commands.Context, new_locale: str = None):
+    async def set_locale(self, ctx: commands.Context, new_locale: str):
         """ Change the bot's language in this server """
         old_locale = langs.gl(ctx.guild, self.db)
-        if new_locale is None:
-            languages = [f"`{key}`: {langs.gls('_name', key)}" for key in langs.languages.keys()]
-            return await general.send("Here is a list of supported languages:\n" + "\n".join(languages), ctx.channel)
         if new_locale not in langs.languages.keys():
-            return await general.send(langs.gls("settings_locale_invalid", old_locale, new_locale), ctx.channel)
+            return await general.send(langs.gls("settings_locale_invalid", old_locale, new_locale, ctx.prefix), ctx.channel)
         locale = self.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
         if locale:
             self.db.execute("UPDATE locales SET locale=? WHERE gid=?", (new_locale, ctx.guild.id))

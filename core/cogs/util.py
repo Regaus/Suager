@@ -17,7 +17,7 @@ class Utility(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="time")
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def current_time(self, ctx: commands.Context):
         """ Current time """
         locale = langs.gl(ctx.guild, self.db)
@@ -37,7 +37,7 @@ class Utility(commands.Cog):
         return await general.send(send, ctx.channel)
 
     @commands.command(name="base", aliases=["bases", "bc"])
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def base_conversions(self, ctx: commands.Context, conversion: str, base: int, number: str, caps: bool = False):
         """ Convert numbers between bases
 
@@ -110,7 +110,7 @@ class Utility(commands.Cog):
             # return await general.send(f"An error has occurred\n`{type(e).__name__}: {e}`", ctx.channel)
 
     @commands.command(name="weather")
-    @commands.cooldown(rate=1, per=7, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def weather(self, ctx: commands.Context, *, place: str):
         """ Check weather in a place """
         locale = langs.gl(ctx.guild, self.db)
@@ -187,7 +187,7 @@ class Utility(commands.Cog):
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="luas")
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
         """ Data for Luas """
         import luas.api

@@ -13,7 +13,7 @@ class Ratings(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="pickle")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def pickle_size(self, ctx, *, who: discord.User = None):
         """ Measure someone's pickle """
         locale = langs.gl(ctx.guild, self.db)
@@ -30,7 +30,7 @@ class Ratings(commands.Cog):
         #                           f"At least the random number generator said so.", ctx.channel)
 
     @commands.command(name="rate")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rate(self, ctx: commands.Context, *, what: str):
         """ Rate something """
         locale = langs.gl(ctx.guild, self.db)
@@ -45,7 +45,7 @@ class Ratings(commands.Cog):
         #                           f"my creator wrote for your entertainment, I don't form opinions on things the way you humans do.", ctx.channel)
 
     @commands.command(name="rateuser")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rate_user(self, ctx: commands.Context, *, who: discord.User = None):
         """ Rate someone """
         locale = langs.gl(ctx.guild, self.db)
@@ -65,7 +65,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="babyrate")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def baby_rate(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
         """ Chance of 2 users having a baby """
         locale = langs.gl(ctx.guild, self.db)
@@ -88,7 +88,7 @@ class Ratings(commands.Cog):
 
     @commands.command(name="love", aliases=["lovecalc"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def love_calc(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
         """ Calculate the amount of love between 2 users """
         locale = langs.gl(ctx.guild, self.db)
@@ -109,7 +109,7 @@ class Ratings(commands.Cog):
         #                           f"generation capabilities.", ctx.channel)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def hotness(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check how hot someone is """
         locale = langs.gl(ctx.guild, self.db)
@@ -128,7 +128,7 @@ class Ratings(commands.Cog):
         # return await general.send(f"**{user.name}** is **{rate:.2f}%** hot {emote}. I'm a bot, I don't see things as \"hot\" like you do.", ctx.channel)
 
     @commands.command(name="iq")
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def iq_test(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check Someone's IQ """
         locale = langs.gl(ctx.guild, self.db)

@@ -36,7 +36,7 @@ class Discord(commands.Cog):
 
     @commands.group(name="role")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=7, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def role(self, ctx: commands.Context, *, role: discord.Role = None):
         """ Information on roles in the current server """
         if ctx.invoked_subcommand is None:
@@ -67,7 +67,7 @@ class Discord(commands.Cog):
 
     @commands.command(name="joinedat")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def joined_at(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check when someone joined server """
         user = who or ctx.author
@@ -76,7 +76,7 @@ class Discord(commands.Cog):
         # return await general.send(f"**{user.name}** joined **{ctx.guild.name}** at **{time.time_output(user.joined_at)}**", ctx.channel)
 
     @commands.command(name="createdat")
-    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def created_at(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check when someone created their account """
         user = who or ctx.author
@@ -174,7 +174,7 @@ class Discord(commands.Cog):
 
     @commands.group(name="server", aliases=["guild"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=7, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def server(self, ctx: commands.Context):
         """ Information about the current server """
         if ctx.invoked_subcommand is None:

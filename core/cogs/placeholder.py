@@ -10,7 +10,7 @@ class Placeholder(commands.Cog):
         self.db = database.Database(self.bot.name)
 
     @commands.command(name="placeholder")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def placeholder(self, ctx: commands.Context):
         """ Placeholder """
         locale = langs.gl(ctx.guild, self.db)

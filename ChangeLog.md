@@ -224,3 +224,8 @@
 ## v6.0-beta7 - 7 August
 - Fixed a few minor bugs
 - RSL-1 translations for birthdays and discord cogs
+
+## v6.0-beta8
+- Updated cooldowns to be a little bit less strict
+- RSL-1 translation for DLRAM and economy
+- The list of languages can now be accessed as a separate command

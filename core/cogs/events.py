@@ -35,7 +35,10 @@ class Events(commands.Cog):
                     await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(739183533792297164))
                     break
         if ctx.channel.id == 572857995852251169:
-            await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(740665941712568340))
+            try:
+                await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(740665941712568340))
+            except AttributeError:
+                pass
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
