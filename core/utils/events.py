@@ -61,6 +61,12 @@ async def on_guild_remove(self, guild):
     if self.local_config["logs"]:
         logger.log(self.bot.name, "guilds", send)
     print(send)
+    if self.bot.name == "suager":
+        self.db.execute("DELETE FROM leveling WHERE gid=?", (guild.id,))
+        self.db.execute("DELETE FROM economy WHERE gid=?", (guild.id,))
+        self.db.execute("DELETE FROM tags WHERE gid=?", (guild.id,))
+        self.db.execute("DELETE FROM tbl_clan WHERE gid=?", (guild.id,))
+        self.db.execute("DELETE FROM dlram WHERE gid=?", (guild.id,))
 
 
 async def on_command(self, ctx):
@@ -77,15 +83,18 @@ async def on_command(self, ctx):
 
 async def on_member_join(self, member: discord.Member):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just joined {member.guild.name}")
+    if self.bot.name == "suager":
+        if member.guild.id == 568148147457490954:
+            await general.send(f"Welcome {member.name} to Senko Lair!", self.bot.get_channel(610836120321785869))
 
 
 async def on_member_remove(self, member: discord.Member):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just left {member.guild.name}")
     if self.bot.name == "suager":
-        # self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (member.id, member.guild.id))
+        if member.guild.id == 568148147457490954:
+            await general.send(f"{member.name} just abandoned Senko Lair...", self.bot.get_channel(610836120321785869))
         uid, gid = member.id, member.guild.id
         self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
-        # self.db.execute("DELETE FROM counters WHERE uid=? AND gid=?", (member.id, member.guild.id))
         sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
         if sel:
             if sel["xp"] < 0:
@@ -124,36 +133,21 @@ async def on_ready(self):
 
 
 async def playing_changer(self):
-    if len(self.local_config["playing"]) > 1:
-        if self.exists:
-            try:
-                log = self.local_config["logs"]
-                # now = time.now()
-                # try:
-                #     times = json.loads(open(self.changes, 'r').read())
-                # except Exception as e:
-                #     general.print_error(f"{time.time()} > on_ready() > {e}")
-                #     times = changes.copy()
-                # if len(self.local_config["playing"]) > 1:
-                #     this = now.minute * 60 + now.second
-                #     that = times['playing']
-                #     speed = self.local_config["playing_rate"]
-                plays = self.local_config["playing"]
-                #     a, b = [int(this / speed) % len(plays), int(that / speed) % len(plays)]
-                #     if a != b:
-                play = random.choice(plays)
-                playing = f"{play} | v{self.local_config['short_version']}"
-                await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
-                #         times["playing"] = this
-                if log:
-                    logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {playing}")
-                # open(self.changes, 'w+').write(json.dumps(times))
-            except PermissionError:
-                general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
-            except aiohttp.ClientConnectorError:
-                general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > The bot tried to do something while disconnected.")
-            except Exception as e:
-                general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > {type(e).__name__}: {e}")
+    if self.exists:
+        try:
+            log = self.local_config["logs"]
+            plays = self.local_config["playing"]
+            play = random.choice(plays)
+            playing = f"{play} | v{self.local_config['short_version']}"
+            await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
+            if log:
+                logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {playing}")
+        except PermissionError:
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
+        except aiohttp.ClientConnectorError:
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > The bot tried to do something while disconnected.")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > {type(e).__name__}: {e}")
 
 
 async def avatar_changer(self):
@@ -162,19 +156,7 @@ async def avatar_changer(self):
             self.config = general.get_config()
             self.local_config = self.config["bots"][self.bot.index]
             log = self.local_config["logs"]
-            # now = time.now()
-            # try:
-            #     times = json.loads(open(self.changes, 'r').read())
-            # except Exception as e:
-            #     general.print_error(f"{time.time()} > on_ready() > {e}")
-            #     times = changes.copy()
-            # that, last = times['avatar']
-            # hour = now.hour
-            # if hour != that:
             avatars = lists.avatars
-            # al = len(avatars)
-            #     an = last + 1 if last < al - 1 else 0
-            #     avatar = avatars[an]
             avatar = random.choice(avatars)
             e = False
             s1, s2 = [f"{time.time()} > {self.bot.name} > Avatar updated", f"{time.time()} > {self.bot.name} > Didn't change avatar due to an error"]
@@ -186,8 +168,6 @@ async def avatar_changer(self):
             send = s2 if e else s1
             if log:
                 logger.log(self.bot.name, "avatar", send)
-            #     times['avatar'] = [hour, an]
-            # open(self.changes, 'w+').write(json.dumps(times))
         except PermissionError:
             general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
         except aiohttp.ClientConnectorError:

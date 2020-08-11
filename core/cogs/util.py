@@ -49,16 +49,15 @@ class Utility(commands.Cog):
         elif base < 2:
             return await general.send(f"{ctx.author.name}, Bases under 2 are not supported", ctx.channel)
         conversion = conversion.lower()
-        value = float(number)
         try:
             if conversion == "to":
+                value = float(number)
                 return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})", ctx.channel)
                 # return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
             if conversion == "from":
-                if not value.is_integer():
+                if "." in number:
                     return await general.send("Conversion of float numbers to base 10 is currently not supported.", ctx.channel)
-                return await general.send(f"{ctx.author.name}: {number:.0f} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
-                # return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+                return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
         except ValueError:
             return await general.send(f"{ctx.author.name}, this number is invalid.", ctx.channel)
         except OverflowError:

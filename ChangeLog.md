@@ -225,7 +225,16 @@
 - Fixed a few minor bugs
 - RSL-1 translations for birthdays and discord cogs
 
-## v6.0-beta8
+## v6.0-beta8 - 8 August
 - Updated cooldowns to be a little bit less strict
 - RSL-1 translation for DLRAM and economy
 - The list of languages can now be accessed as a separate command
+
+## v6.0-beta9 - 11 August
+- `//bases from` now works again
+- RSL-1 translations for Entertainment, Images, Bot info, Leaderboards, Leveling, Ratings, and Social commands
+- Improved blocked message logger
+
+## v6.0-beta10 - 12 August
+- When the bot is removed from a server, it will now delete data associated with it
+- Welcome and goodbye messages for Senko Lair

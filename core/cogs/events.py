@@ -20,6 +20,8 @@ class Events(commands.Cog):
         self.playing.start()
         if self.bot.name == "suager":
             self.avatar.start()
+        self.blocked = [667187968145883146]
+        self.bad = ["re", "rag", "<@302851022790066185>", "<@!302851022790066185>"]
 
     def con_unload(self):
         self.playing.cancel()
@@ -28,15 +30,19 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
-        if ctx.author.id == 667187968145883146:
-            bad = ["reg", "rag", "reh", "<@302851022790066185>", "<@!302851022790066185>"]
-            for word in bad:
+        if (ctx.guild.id == 568148147457490954 and ctx.channel.id == 568148147457490958) and "<a:SM_rape:568254043030421536>" in ctx.content:
+            try:
+                await ctx.delete()
+            except discord.NotFound:
+                pass
+        if ctx.author.id in self.blocked:
+            for word in self.bad:
                 if word in ctx.content.lower():
                     await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(739183533792297164))
                     break
         if ctx.channel.id == 572857995852251169:
             try:
-                await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(740665941712568340))
+                await general.send(f"{ctx.author} | #{ctx.channel.name} | {time.time()}\n{ctx.content}", self.bot.get_channel(740665941712568340))
             except AttributeError:
                 pass
 
