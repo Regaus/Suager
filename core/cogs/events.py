@@ -22,6 +22,8 @@ class Events(commands.Cog):
             self.avatar.start()
         self.blocked = [667187968145883146]
         self.bad = ["re", "rag", "<@302851022790066185>", "<@!302851022790066185>"]
+        self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340]]
+        self.blocked_logs = self.bot.get_channel(739183533792297164)
 
     def con_unload(self):
         self.playing.cancel()
@@ -35,16 +37,19 @@ class Events(commands.Cog):
                 await ctx.delete()
             except discord.NotFound:
                 pass
-        if ctx.author.id in self.blocked:
-            for word in self.bad:
-                if word in ctx.content.lower():
-                    await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.bot.get_channel(739183533792297164))
-                    break
-        if ctx.channel.id == 572857995852251169:
-            try:
-                await general.send(f"{ctx.author} | #{ctx.channel.name} | {time.time()}\n{ctx.content}", self.bot.get_channel(740665941712568340))
-            except AttributeError:
-                pass
+        if self.blocked_logs is not None:
+            if ctx.author.id in self.blocked:
+                for word in self.bad:
+                    if word in ctx.content.lower():
+                        await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.blocked_logs)
+                        break
+        if ctx.channel.id == 742886280911913010:
+            for channel in self.updates:
+                try:
+                    if channel is not None:
+                        await general.send(f"{ctx.author} | #{ctx.channel.name} ({ctx.guild.name}) | {time.time()}\n{ctx.content}", channel)
+                except Exception as e:
+                    await general.send(f"on_message > Update announcement > {channel} > {type(e).__name__}: {e}", ctx.channel)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):

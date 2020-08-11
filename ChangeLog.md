@@ -238,3 +238,7 @@
 ## v6.0-beta10 - 12 August
 - When the bot is removed from a server, it will now delete data associated with it
 - Welcome and goodbye messages for Senko Lair
+
+## v6.0-beta11 - 12 August
+- Improved how blocked logs work
+- Suager updates will now be sent from Suager testing server
