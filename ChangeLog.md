@@ -248,3 +248,6 @@
 - "Old level" now shows the level before this update, instead of v5 leveling
 - Improved DLRAM charge limit and recharge speed
 - Improved TBL energy limits
+
+## v6.0-beta13 - 12 August
+- RSL-1 for Tags and Utility, and also some of TBL

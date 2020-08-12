@@ -155,7 +155,7 @@ class KaltarynaTime:
         day_part = "Sea" if self.hour in range(12, 52) else "Tea"
         self.day_name = f"{day_part} af {weekdays[dow]}"
         self.months = ["Senka", "Shira", "Kanvarus", "Arkanéda", "Nurus", "Aii", "Kiona", "Gairnar",
-                       "Basrus", "Finkal", "Suvaker", "Kitta", "Sémartar", "Kaltnar", "Kaiveal", "Karasnar"]
+                       "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
 
     def str_dec(self, dow: bool = True, month: bool = False, tz: bool = True):
         dn = f"{self.day_name}, " if dow else ""
