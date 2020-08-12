@@ -93,21 +93,24 @@ class Games(commands.Cog):
     @dlram.command(name="data")
     async def dlram_regen(self, ctx: commands.Context):
         """ DLRAM data on charge speeds for levels """
-        levels = [1, 2, 3, 4, 5, 10, 15, 20, 40, 60, 80, 100, 150, 200, 350, 500, 750, 1000, 1750, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000]
+        levels = [1, 2, 3, 4, 5, 10, 15, 20, 40, 60, 80, 100, 150, 200, 375, 500, 625, 750, 1023, 1024]
         _levels = dlram.levels()
         outputs = []
         for level in levels:
             limit, regen_speed = dlram.speed_limit(level)
             fill = regen_speed * limit
             h, m = divmod(int(fill), 3600)
-            m, s = divmod(m, 60)
-            _time = f"{h:02d}h {m:02d}m {s:02d}s"
-            ram = langs.gbs(_levels[level - 1], "en_gb", 1)
-            outputs.append(f"Level {level:>5} | Charge {limit:>7} | Recharge {regen_speed:>8.4f}s | Fill {_time:>11} | RAM {ram:>11}")
-        for i in range(int(len(outputs) / 20) + 1):
-            r, e = i * 20, (i + 1) * 20
-            output = "\n".join(outputs[r:e])
-            await general.send(f"```fix\n{output}```", ctx.channel)
+            m //= 60
+            # m, s = divmod(m, 60)
+            _time = f"{h:02d}h {m:02d}m"
+            _ram = _levels[level - 1]
+            ram = langs.gbs(_ram, "en_gb", 1)
+            diff = langs.gbs((_ram - _levels[level - 2]) if level > 1 else _ram, "en_gb", 1)
+            outputs.append(f"Level {level:>4} | Limit {limit:>10,} | Regen {regen_speed:>7.4f}s | Fill {_time:>07} | RAM {ram:>9} | Diff {diff:>9}")
+        # for i in range(int(len(outputs) / 20) + 1):
+        #     r, e = i * 20, (i + 1) * 20
+        output = "\n".join(outputs)
+        await general.send(f"```fix\n{output}```", ctx.channel)
         # _outputs = "\n".join(outputs)
         # output = "\n".join(outputs)
         # print(len(output))
@@ -178,7 +181,8 @@ class Games(commands.Cog):
         p = langs.gns(points, locale)
         embed.add_field(name=langs.gls("tbl_stats_league", locale), inline=False, value=langs.gls("tbl_stats_league_data", locale, league, p, next_league))
         energy, regen_t = tbl.regen_energy(player["energy"], player["time"], player["level"], now)
-        limit = 119 + level if level <= 200 else 320 if level == 200 else 420
+        limit = tbl.energy_limit(level)
+        # limit = 119 + level if level <= 200 else 320 if level == 200 else 420
         # next_in = f" - Next in: **{time.timedelta(60 - (now - regen_t))}**" if energy < limit else ""
         next_in = langs.gls("tbl_stats_energy_next", locale, langs.td_int(60 - (now - regen_t), locale, is_future=True)) if energy < limit else ""
         _e, _l = langs.gns(int(energy), locale), langs.gns(limit, locale)

@@ -10,9 +10,10 @@ from core.utils import time, database, http, general, emotes
 from languages import langs
 from suager.utils import settings
 
-max_level = 1000
+max_level = 256
 xp_amounts = [2250, 3000]
 money_amounts = [75, 125]
+bad = [69, 420, 666, 1337]
 
 
 async def catch_colour(ctx: commands.Context, c: int):
@@ -47,14 +48,28 @@ def int_colour(colour: str):
         return -2
 
 
+# def _old_levels():
+#     req = 0
+#     xp = []
+#     # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
+#     for x in range(max_level):
+#         base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
+#         req += int(base)
+#         if x not in bad:
+#             xp.append(int(req))
+#         else:
+#             xp.append(xp[-1])
+#     return xp
+
+
 def _old_levels():
-    req = 0
+    req = 15000
     xp = []
-    # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
     for x in range(max_level):
-        base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
+        power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
+        base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
         req += int(base)
-        if x not in [69, 420, 666, 1337]:
+        if x not in bad:
             xp.append(int(req))
         else:
             xp.append(xp[-1])
@@ -62,15 +77,14 @@ def _old_levels():
 
 
 def _levels():
-    req = 15000
+    req = 25000
     xp = []
-    # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
     for x in range(max_level):
         # power = 2 + x / 40 if x < 40 else 3 + (x - 40) / 80 if x < 80 else 3.5
         power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
-        base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
+        base = x ** power + 200 * x ** 2 + 7500 * x + 25000
         req += int(base)
-        if x not in [69, 420, 666, 1337]:
+        if x not in bad:
             xp.append(int(req))
         else:
             xp.append(xp[-1])
@@ -104,14 +118,15 @@ class Leveling(commands.Cog):
     @commands.is_owner()
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
-        __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000]
+        __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 69, 75, 80, 90, 100, 125, 150, 175, 200, 225, 250, 256]
         outputs = []
         for level in __levels:
             _level = level - 1
             # lv1, lv2, lv3 = int(levels[_level] / 100), int(old_levels[_level] / 100), int(levels_global[_level] / 100)
             # outputs.append(f"Level {level:>4} | New {lv1:>13,} | Old {lv2:>13,} | Global {lv3:>15,}")
             lv1, lv2 = int(levels[_level] / 100), int(old_levels[_level] / 100)
-            outputs.append(f"Level {level:>4} | New {lv1:>13,} | Old {lv2:>13,}")
+            diff = lv1 - int(levels[_level - 1] / 100) if level > 1 else lv1
+            outputs.append(f"Level {level:>3} | New {lv1:>10,} | Req {diff:>7,} | Old {lv2:>10,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
 
@@ -464,7 +479,7 @@ class Leveling(commands.Cog):
         # return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard\nGlobal Level: {level:,}", ctx.channel
 
     @commands.group(name="crank", aliases=["customrank"])
-    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
         """ Customise your rank """
         if ctx.invoked_subcommand is None:

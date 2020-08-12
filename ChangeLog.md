@@ -242,3 +242,9 @@
 ## v6.0-beta11 - 12 August
 - Improved how blocked logs work
 - Suager updates will now be sent from Suager testing server
+
+## v6.0-beta12 - 12 August
+- Improved leveling for the lower levels
+- "Old level" now shows the level before this update, instead of v5 leveling
+- Improved DLRAM charge limit and recharge speed
+- Improved TBL energy limits

@@ -3,7 +3,7 @@ import random
 from core.utils import time, general
 from languages import langs
 
-max_level = 25000
+max_level = 1024
 sel_data = f"SELECT * FROM dlram WHERE gid=?"
 
 
@@ -11,7 +11,7 @@ def levels():
     req = 0
     xp = []
     for x in range(max_level):
-        base = (x ** (3 + x / 2500) if x <= 5000 else x ** 5) + 16 * x ** 3 + 256 * x ** 2 + 524288 * x + 1048576
+        base = 16 * x ** (3 + x / 100 if x <= 300 else 6) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
         req += int(base)
         if x not in [69, 420, 666, 1337]:
             xp.append(int(req))
@@ -64,8 +64,9 @@ async def download_ram(ctx, db):
                 _xp += new_ram
                 _new_level, _ld = xp_level(_new_level, _xp)
                 if _ld != 0:
-                    limit = 256 if _new_level < 8 else _new_level * 32
-                    energy += int(limit / ((10 + _new_level / 200) if _new_level < 1000 else 15) * _ld)
+                    limit, _ = speed_limit(_new_level)
+                    # limit = 256 if _new_level < 8 else _new_level * 32
+                    energy += int((limit / ((10 + _new_level / 40) if _new_level < 200 else 15)) * _ld)
             data["ram"] += downloaded
             new_level, ld = xp_level(data["level"], data["ram"])
             al = levels()
@@ -106,9 +107,27 @@ async def download_ram(ctx, db):
 
 
 def speed_limit(level: int):
-    limit = 256 if level < 4 else level * 64
-    regen_speed = (192 / (level * (0.675 - (level / 20000 * 0.75 if level < 10000 else 0.375)))) if level != 1 else 192
-    return limit, regen_speed
+    if level == max_level:
+        limit = 4194304
+    else:
+        limit = 256
+        for i in range(1, level + 1):
+            if i < 4:
+                continue
+            elif 4 <= i < 64:
+                limit += 64
+            elif 64 <= i < 256:
+                limit += 256
+            elif 256 <= i < 512:
+                limit += 1024
+            elif 512 <= i < 1024:
+                limit += 4096
+            # else:
+            #     limit += 8192
+    # regen_speed = (192 / (level * (0.7 - (level / 5000 * 0.6 if level < 2500 else 0.3)))) if level != 1 else 192
+    # regen_speed = 192 if level == 1 else 192 / ((level - 1) * (0.5 + level / 25))
+    regen_speed = 400 / (level * (0.5 + level / (36 - level / 64)))
+    return limit, regen_speed if regen_speed < 60 else 60
 
 
 def regen_energy(current: int, regen_time: int, level: int, now: int):

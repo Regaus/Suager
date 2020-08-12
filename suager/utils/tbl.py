@@ -144,7 +144,8 @@ async def tbl_game(ctx, db):
             player["points"] += int(points)
             new_level, ld, _title = xp_level(new_level, player["xp"])
             player["coins"] += ld
-            limit = 119 + new_level if new_level <= 200 else 320 if level == 200 else 420
+            limit = energy_limit(new_level)
+            # limit = 119 + new_level if new_level <= 200 else 320 if level == 200 else 420
             if energy < limit:
                 if ld > 0:
                     energy = limit
@@ -251,9 +252,24 @@ def get_activity(loc_act: list):
     return int(((loc_act[int(part)] * mod + loc_act[int(part + 1) % al] * (4 - mod)) / 4) * month_var[month - 1])
 
 
+def energy_limit(level: int):
+    limit = 119
+    for lvl in range(1, level + 1):
+        if lvl < 200:
+            limit += 1
+        elif lvl == 200:
+            limit += 2
+        elif lvl == 201:
+            limit += 100
+        else:
+            limit += 25
+    return limit
+
+
 def regen_energy(current: int, regen_time: int, level: int, now: int):
     td = now - regen_time
-    limit = 119 + level if level <= 200 else 320 if level == 200 else 420
+    limit = energy_limit(level)
+    # limit = 119 + level if level <= 200 else 320 if level == 200 else 420
     if current >= limit:
         return current, now
     else:
