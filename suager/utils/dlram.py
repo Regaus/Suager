@@ -11,7 +11,7 @@ def levels():
     req = 0
     xp = []
     for x in range(max_level):
-        base = 16 * x ** (3 + x / 100 if x <= 300 else 6) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
+        base = 16 * x ** (3 + x / 200 if x <= 500 else 5.5) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
         req += int(base)
         if x not in [69, 420, 666, 1337]:
             xp.append(int(req))
@@ -108,25 +108,30 @@ async def download_ram(ctx, db):
 
 def speed_limit(level: int):
     if level == max_level:
-        limit = 4194304
+        limit = 12582912
     else:
         limit = 256
         for i in range(1, level + 1):
-            if i < 4:
+            if i < 5:
                 continue
-            elif 4 <= i < 64:
+            elif 5 <= i < 32:
                 limit += 64
-            elif 64 <= i < 256:
+            elif 32 <= i < 64:
+                limit += 128
+            elif 64 <= i < 128:
                 limit += 256
-            elif 256 <= i < 512:
+            elif 128 <= i < 192:
                 limit += 1024
-            elif 512 <= i < 1024:
+            elif 192 <= i < 384:
                 limit += 4096
-            # else:
-            #     limit += 8192
+            elif 384 <= i < 512:
+                limit += 8192
+            else:
+                limit += 16384
     # regen_speed = (192 / (level * (0.7 - (level / 5000 * 0.6 if level < 2500 else 0.3)))) if level != 1 else 192
     # regen_speed = 192 if level == 1 else 192 / ((level - 1) * (0.5 + level / 25))
-    regen_speed = 400 / (level * (0.5 + level / (36 - level / 64)))
+    start = (400 if level < 192 else 400 - (level - 128) / 2 if 128 <= level < 512 else 208)
+    regen_speed = start / (level * (0.5 + level / ((36 - level / 64) if level < 256 else (32 - (level - 256) / 16) if 256 <= level < 640 else 8)))
     return limit, regen_speed if regen_speed < 60 else 60
 
 

@@ -251,3 +251,7 @@
 
 ## v6.0-beta13 - 12 August
 - RSL-1 for Tags and Utility, and also some of TBL
+
+## v6.0-beta14 - 13 August
+- Hopefully done messing around with DLRAM
+- Fixed the server icon command not showing any output

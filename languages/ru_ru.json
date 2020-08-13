@@ -51,7 +51,7 @@
   "discord_server_channels_data": "Текстовых каналов: {0}\nКатегорий: {1}\nГолосовых каналов: {2}",
   "discord_server_emotes": "Эмоции",
   "discord_server_emotes_data": "{0}/{2} неанимированных\n{1}/{2} анимированных\n{3} всего",
-  "discord_server_icon": "Иконка сервера **{0}**",
+  "discord_server_icon": "Иконка сервера **{0}**\n{1}",
   "discord_server_id": "ID Сервера",
   "discord_server_inv_bg": "**{0}** invite background\n{1}",
   "discord_server_inv_bg_none": "**{0}** has no invite background",

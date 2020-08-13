@@ -51,7 +51,7 @@
   "discord_server_channels_data": "Salvadan kairakainallat: {0}\nHaitevimat: {1}\nGailasan kairakainallat: {2}",
   "discord_server_emotes": "Emotteat",
   "discord_server_emotes_data": "{0}/{2} de-diartannan\n{1}/{2} diartannan\n{3} iveisen",
-  "discord_server_icon": "Ikonna **{0}**'n",
+  "discord_server_icon": "Ikonna **{0}**'n\n{1}",
   "discord_server_id": "ID Syrvyran",
   "discord_server_inv_bg": "<invite background> **{0}**'n \n{1}",
   "discord_server_inv_bg_none": "**{0}** iviat de <invite background>",

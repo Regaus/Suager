@@ -51,7 +51,7 @@
   "discord_server_channels_data": "Salvat-kairakainallat: {0}\nHaitevimat: {1}\nGailas-kairakainallat: {2}",
   "discord_server_emotes": "Emotteat",
   "discord_server_emotes_data": "{0}/{2} de-diartannan\n{1}/{2} diartannan\n{3} iveisen",
-  "discord_server_icon": "Ikonna af **{0}**",
+  "discord_server_icon": "Ikonna af **{0}**\n{1}",
   "discord_server_id": "ID af Server",
   "discord_server_inv_bg": "<Invite background> af **{0}**\n{1}",
   "discord_server_inv_bg_none": "**{0}** iviat de <invite background>",
