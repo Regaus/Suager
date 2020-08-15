@@ -1,32 +1,6 @@
 {
   "bots": [
     {
-      "name": "Core Bot",
-      "internal_name": "core_bot",
-      "token": "token",
-      "admins": [],
-      "join_message": "Join message",
-      "prefixes": [
-        "c/",
-        "C/"
-      ],
-      "short_version": "1.0",
-      "version": "1.0.1",
-      "last_update": 1596641500,
-      "first_version": 1593803395,
-      "major_release": 1596549310,
-      "playing_rate": 60,
-      "playing": [
-        "Sample Text"
-      ],
-      "logs": true,
-      "timezone": "UTC",
-      "exclude_core_cogs": [],
-      "home_server_id": 0,
-      "home_invite": "",
-      "error_channel": 0
-    },
-    {
       "name": "Suager",
       "internal_name": "suager",
       "token": "token",
@@ -36,23 +10,24 @@
         "s/",
         "S/"
       ],
-      "short_version": "6.0b",
-      "version": "6.0-beta14",
-      "last_update": 1597358293,
+      "short_version": "6.0",
+      "version": "6.0.0",
+      "last_update": 1597500778,
       "first_version": 1557781320,
-      "major_release": -1,
+      "major_release": 1597500778,
       "playing_rate": 60,
       "playing": [
         "with Regaus",
         "without you",
         "with nobody",
-        "alone",
+        "with your feelings",
         "Custom Status",
         "with the Nuriki Cult",
         "PyCharm",
         "\u0420\u0443\u0441\u0441\u043a\u0438\u0435 \u0412\u043f\u0435\u0440\u0451\u0434!",
         ",/help",
-        "nothing"
+        "nothing",
+        "<Game object at 0x0000020B2A99F880>"
       ],
       "logs": true,
       "timezone": "Europe/Dublin",

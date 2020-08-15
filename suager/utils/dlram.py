@@ -11,7 +11,8 @@ def levels():
     req = 0
     xp = []
     for x in range(max_level):
-        base = 16 * x ** (3 + x / 200 if x <= 500 else 5.5) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
+        # base = 16 * x ** (3 + x / 200 if x <= 500 else 5.5) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
+        base = 16 * x ** (3 + x / 1024 if x <= 921 else 3.9) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
         req += int(base)
         if x not in [69, 420, 666, 1337]:
             xp.append(int(req))
@@ -48,7 +49,7 @@ async def download_ram(ctx, db):
         #                           ctx.channel)
     async with ctx.typing():
         try:
-            ram_range = 1, 131072
+            ram_range = 131072, 2097152
             r1, r2 = ram_range
             downloaded = 0
             runs = 0
@@ -132,7 +133,9 @@ def speed_limit(level: int):
     # regen_speed = 192 if level == 1 else 192 / ((level - 1) * (0.5 + level / 25))
     start = (400 if level < 192 else 400 - (level - 128) / 2 if 128 <= level < 512 else 208)
     regen_speed = start / (level * (0.5 + level / ((36 - level / 64) if level < 256 else (32 - (level - 256) / 16) if 256 <= level < 640 else 8)))
-    return limit, regen_speed if regen_speed < 60 else 60
+    limit //= 16
+    regen_speed *= 16
+    return limit, regen_speed if regen_speed < 900 else 900
 
 
 def regen_energy(current: int, regen_time: int, level: int, now: int):

@@ -255,3 +255,9 @@
 ## v6.0-beta14 - 13 August
 - Hopefully done messing around with DLRAM
 - Fixed the server icon command not showing any output
+
+## v6.0.0 - 15 August
+- Removed "old levels"
+- Updated DLRAM levels, and reduced energy amount
+- Removed "core bot" from config example
+- Updating short version will no longer change the last update time

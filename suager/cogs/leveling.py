@@ -62,18 +62,18 @@ def int_colour(colour: str):
 #     return xp
 
 
-def _old_levels():
-    req = 15000
-    xp = []
-    for x in range(max_level):
-        power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
-        base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
-        req += int(base)
-        if x not in bad:
-            xp.append(int(req))
-        else:
-            xp.append(xp[-1])
-    return xp
+# def _old_levels():
+#     req = 15000
+#     xp = []
+#     for x in range(max_level):
+#         power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
+#         base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
+#         req += int(base)
+#         if x not in bad:
+#             xp.append(int(req))
+#         else:
+#             xp.append(xp[-1])
+#     return xp
 
 
 def _levels():
@@ -104,7 +104,7 @@ def _levels():
 #     return xp
 
 
-old_levels = _old_levels()
+# old_levels = _old_levels()
 levels = _levels()
 # levels_global = _levels_global()
 
@@ -124,9 +124,11 @@ class Leveling(commands.Cog):
             _level = level - 1
             # lv1, lv2, lv3 = int(levels[_level] / 100), int(old_levels[_level] / 100), int(levels_global[_level] / 100)
             # outputs.append(f"Level {level:>4} | New {lv1:>13,} | Old {lv2:>13,} | Global {lv3:>15,}")
-            lv1, lv2 = int(levels[_level] / 100), int(old_levels[_level] / 100)
+            # lv1, lv2 = int(levels[_level] / 100), int(old_levels[_level] / 100)
+            lv1 = int(levels[_level] / 100)
             diff = lv1 - int(levels[_level - 1] / 100) if level > 1 else lv1
-            outputs.append(f"Level {level:>3} | New {lv1:>10,} | Req {diff:>7,} | Old {lv2:>10,}")
+            # outputs.append(f"Level {level:>3} | New {lv1:>10,} | Req {diff:>7,} | Old {lv2:>10,}")
+            outputs.append(f"Level {level:>3} | New {lv1:>10,} | Req {diff:>7,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
 
@@ -393,17 +395,18 @@ class Leveling(commands.Cog):
                     # place = f"Rank #{x+1:,}"
                     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale)))
                     break
-            old_level = 0
-            for lvl in old_levels:
-                if xp >= lvl:
-                    old_level += 1
-                else:
-                    break
+            # old_level = 0
+            # for lvl in old_levels:
+            #     if xp >= lvl:
+            #         old_level += 1
+            #     else:
+            #         break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
-                _old_level = langs.gls("leveling_rank_level_old", locale, langs.gns(old_level, locale))
-                dr.text((text_x, 140), f"{place} | {_level} | {_old_level}", font=font_small, fill=font_colour)
+                # _old_level = langs.gls("leveling_rank_level_old", locale, langs.gns(old_level, locale))
+                dr.text((text_x, 140), f"{place} | {_level}", font=font_small, fill=font_colour)
+                # dr.text((text_x, 140), f"{place} | {_level} | {_old_level}", font=font_small, fill=font_colour)
                 # dr.text((text_x, 190), ), font=font_small, fill=font_colour)
                 # dr.text((text_x, 250), ), font=font_small, fill=font_colour)
                 # dr.text((552, 300), f"{xp / 100:,.0f}/{r2} XP\nProgress: {progress*100:.2f}%", font=font_small, fill=font_colour)
@@ -438,7 +441,7 @@ class Leveling(commands.Cog):
             #     r += "That's my own rank, so why should I play fair?"
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
-    @commands.command(name="rankg")
+    @commands.command(name="rankg", aliases=["grank"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
@@ -479,7 +482,7 @@ class Leveling(commands.Cog):
         # return await general.send(f"**{user}** has **{_xp / 100:,.0f} global XP** and is **{place}** on the leaderboard\nGlobal Level: {level:,}", ctx.channel
 
     @commands.group(name="crank", aliases=["customrank"])
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
         """ Customise your rank """
         if ctx.invoked_subcommand is None:

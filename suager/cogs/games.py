@@ -106,7 +106,7 @@ class Games(commands.Cog):
             _ram = _levels[level - 1]
             ram = langs.gbs(_ram, "en_gb", 1)
             diff = langs.gbs((_ram - _levels[level - 2]) if level > 1 else _ram, "en_gb", 1)
-            outputs.append(f"Level {level:>4} | Limit {limit:>10,} | Regen {regen_speed:>7.4f}s | Fill {_time:>07} | RAM {ram:>9} | Diff {diff:>9}")
+            outputs.append(f"Level {level:>4} | Limit {limit:>7,} | Regen {regen_speed:>8.4f}s | Fill {_time:>07} | RAM {ram:>9} | Diff {diff:>9}")
         # for i in range(int(len(outputs) / 20) + 1):
         #     r, e = i * 20, (i + 1) * 20
         output = "\n".join(outputs)

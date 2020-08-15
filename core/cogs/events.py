@@ -32,11 +32,12 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
-        if (ctx.guild.id == 568148147457490954 and ctx.channel.id == 568148147457490958) and "<a:SM_rape:568254043030421536>" in ctx.content:
-            try:
-                await ctx.delete()
-            except discord.NotFound:
-                pass
+        if ctx.guild is not None:
+            if (ctx.guild.id == 568148147457490954 and ctx.channel.id == 568148147457490958) and "<a:SM_rape:568254043030421536>" in ctx.content:
+                try:
+                    await ctx.delete()
+                except discord.NotFound:
+                    pass
         if self.blocked_logs is not None:
             if ctx.author.id in self.blocked:
                 for word in self.bad:
