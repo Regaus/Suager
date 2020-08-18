@@ -14,7 +14,7 @@ def levels():
         # base = 16 * x ** (3 + x / 200 if x <= 500 else 5.5) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
         base = 16 * x ** (3 + x / 1024 if x <= 921 else 3.9) + 256 * x ** 3 + 8192 * x ** 2 + 1048576 * x + 4194304
         req += int(base)
-        if x not in [69, 420, 666, 1337]:
+        if x not in [68, 419, 665, 1336]:
             xp.append(int(req))
         else:
             xp.append(xp[-1])

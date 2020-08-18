@@ -168,7 +168,7 @@ class Admin(commands.Cog):
                 if re.compile(r"data\\(\d{4})-(\d{2})-(\d{2})").search(path):
                     _path = path.replace("\\", "/")
                     filename = f"{_path}/{log}.rsf"
-                    file = open(filename, "r")
+                    file = open(filename, "r", encoding="utf-8")
                     if search is None:
                         result = file.read()
                         data += f"{result}"  # Put a newline in the end, just in case
@@ -205,7 +205,7 @@ class Admin(commands.Cog):
         """ Get logs """
         try:
             filename = f"data/{self.bot.name}/logs/{date}/{log_file}.rsf"
-            file = open(filename, "r")
+            file = open(filename, "r", encoding="utf-8")
             if search is None:
                 result = file.read()
                 data = f"{result}"  # Put a newline in the end, just in case

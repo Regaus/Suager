@@ -44,3 +44,19 @@ def to_base_float(value: float, base: int, precision: int = 2, caps: bool = Fals
             out += values[int(part)]
             # out += str(int(value * base ** i) % base * 10 ** (-i))
         return out
+
+
+def from_base_float(value: str, base: int, precision: int = 2):
+    if base < 2:
+        return "Bases below 2 are not supported."
+    elif base > 36:
+        return "Bases above 36 are not supported."
+    if value.startswith("-"):
+        return from_base_float(value[1:], base, precision) * -1
+    if "." not in value or precision < 1:
+        return from_base(value, base)
+    else:
+        val1, val2 = value.split(".")
+        out = from_base(val1, base)
+        out += round(int(val2, base=base) / (base ** len(val2)), precision)
+        return out

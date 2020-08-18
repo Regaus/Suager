@@ -4,8 +4,6 @@ from discord.ext.tasks import loop
 
 from core.utils import events, time, database, general
 
-playing_rate = 60
-
 
 class Events(commands.Cog):
     def __init__(self, bot):
@@ -15,8 +13,6 @@ class Events(commands.Cog):
         self.db = database.Database(self.bot.name)
         self.exists = False
         self.local_config = self.bot.local_config
-        global playing_rate
-        playing_rate = self.local_config["playing_rate"]
         self.playing.start()
         if self.bot.name == "suager":
             self.avatar.start()
@@ -95,12 +91,10 @@ class Events(commands.Cog):
         self.exists = True
         return await events.on_ready(self)
 
-    @loop(seconds=playing_rate)
+    @loop(seconds=300)
     async def playing(self):
         self.config = general.get_config()
         self.local_config = self.config["bots"][self.bot.index]
-        global playing_rate
-        playing_rate = self.local_config["playing_rate"]
         await events.playing_changer(self)
 
     @playing.before_loop

@@ -68,7 +68,10 @@ class Tags(commands.Cog):
         # embed.description = f"Name: {tag['name']}\nUses: {tag['usage']:,}\nOwner: {self.get_user(g, tag['owner'])}\nCreator: " \
         #                     f"{self.get_user(g, tag['creator'])}\nCreated at: {time.time_output(time.from_ts(tag['created']))}\n" \
         #                     f"Last edited: {time.time_output(time.from_ts(tag['edited']))}"
-        embed.add_field(name=langs.gls("tags_info_content", locale), value=tag["content"])
+        c = tag["content"]
+        if len(c) > 1024:
+            c = f"{c[:1021]}..."
+        embed.add_field(name=langs.gls("tags_info_content", locale), value=c)
         return await general.send(langs.gls("tags_info_about", locale, tag["name"]), ctx.channel, embed=embed)
         # return await general.send(f"ℹ About tag {tag['name']}", ctx.channel, embed=embed)
 

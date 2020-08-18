@@ -125,10 +125,10 @@ class Games(commands.Cog):
             # return await general.send(f"Use `{ctx.prefix}tbl play` to play\nUse `{ctx.prefix}tbl stats` to see stats\n"
             #                           f"Use `{ctx.prefix}help tbl` for the list of commands available", ctx.channel)
 
-    @tbl.command(name="play")
+    @tbl.command(name="run", aliases=["play"])
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     async def tbl_play(self, ctx: commands.Context):
-        """ Play TBL """
+        """ Force Suager to do some calculations for TBL """
         return await tbl.tbl_game(ctx, self.db)
 
     @tbl.command(name="stats")

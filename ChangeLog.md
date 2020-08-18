@@ -261,3 +261,12 @@
 - Updated DLRAM levels, and reduced energy amount
 - Removed "core bot" from config example
 - Updating short version will no longer change the last update time
+
+## v6.0.1 - 18 August
+- Fixed level rewards allowing default role to be rewarded, and allowing to set levels below -256
+- Fixed tag info breaking when content was too long
+- //tbl run is now an alias to //tbl play
+- Fixed DLRAM skipping level 69 and alike
+- Fixed playing status changing quicker than it was supposed to
+- Fixed logs not opening properly
+- Added support for float conversions to base 10 from other bases

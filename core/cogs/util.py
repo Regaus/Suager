@@ -56,12 +56,13 @@ class Utility(commands.Cog):
                 # return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
             if conversion == "from":
                 if "." in number:
-                    return await general.send("Conversion of float numbers to base 10 is currently not supported.", ctx.channel)
+                    return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base_float(number, base, 10)} (base 10)", ctx.channel)
+                    # return await general.send("Conversion of float numbers to base 10 is currently not supported.", ctx.channel)
                 return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
         except ValueError:
             return await general.send(f"{ctx.author.name}, this number is invalid.", ctx.channel)
         except OverflowError:
-            return await general.send(f"{ctx.author.name}, the number specified is too large to convert to an integer.", ctx.channel)
+            return await general.send(f"{ctx.author.name}, the number specified is too large to convert to a proper value.", ctx.channel)
         return await general.send(f"You need to specify either `to` or `from`.", ctx.channel)
 
     @commands.command(name="settz")

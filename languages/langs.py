@@ -122,14 +122,22 @@ def put_commas(string: str, step: int = 3) -> str:
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    name_1, name_2, name_pl = get_data(what, locale)
-    pl = get_data("_pl", locale)
-    p1, p2, p3 = pl
-    v2 = v % int(p3)
-    v3 = v2 % int(p2)
-    simple = ["en_gb", "en_us"]
-    name = name_pl if v == 0 else (name_1 if v == 1 else name_2) if locale in simple else (
-        name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
+    if locale.startswith("rsl-3"):
+        _1, _2, _3, _4, _10, _nur = get_data(what, locale)
+        if v > 160000:
+            name = _nur
+        else:
+            mod = v % 20
+            name = _1 if mod == 1 else _2 if mod == 2 else _3 if mod == 3 else _4 if 4 <= mod < 10 else _10
+    else:
+        name_1, name_2, name_pl = get_data(what, locale)
+        pl = get_data("_pl", locale)
+        p1, p2, p3 = pl
+        v2 = v % int(p3)
+        v3 = v2 % int(p2)
+        simple = ["en_gb", "en_us"]
+        name = name_pl if v == 0 else (name_1 if v == 1 else name_2) if locale in simple else (
+            name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
     return f"{gns(v, locale)} {name}"
     # if locale == "en_gb":
     #     return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \

@@ -327,7 +327,7 @@ class Settings(commands.Cog):
         if channel is not None:
             return await general.send(f"Level ups will now be announced in {channel.mention}", ctx.channel)
         else:
-            return await general.send(f"Level ups will not be announced where they happen", ctx.channel)
+            return await general.send(f"Level ups will now be announced where they happen", ctx.channel)
 
     @set_lvl.group(name="rewards", aliases=["rr", "lr"])
     async def lvl_rr(self, ctx: commands.Context):
@@ -338,8 +338,10 @@ class Settings(commands.Cog):
     @lvl_rr.command(name="add")
     async def rr_add(self, ctx: commands.Context, role: discord.Role, level: int):
         """ Add a level reward """
-        if level > max_level:
+        if level > max_level or level <= -max_level:
             return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
+        if role.is_default():
+            return await general.send("You can't award the default role", ctx.channel)
         data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:
             _settings = json.loads(data["data"])
