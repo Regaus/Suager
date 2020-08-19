@@ -91,7 +91,7 @@ class Events(commands.Cog):
         self.exists = True
         return await events.on_ready(self)
 
-    @loop(seconds=300)
+    @loop(minutes=1)
     async def playing(self):
         self.config = general.get_config()
         self.local_config = self.config["bots"][self.bot.index]

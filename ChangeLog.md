@@ -270,3 +270,9 @@
 - Fixed playing status changing quicker than it was supposed to
 - Fixed logs not opening properly
 - Added support for float conversions to base 10 from other bases
+
+## v6.0.2 - 19 August
+- Fixed Suager status changes and added some more
+- Ability to change the activity type for Suager
+- Improved the way the log command works
+- Removed core_bot from database tables

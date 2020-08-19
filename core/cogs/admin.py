@@ -165,20 +165,31 @@ class Admin(commands.Cog):
         try:
             data = ""
             for path, _, __ in os.walk(f"data/{self.bot.name}/logs"):
-                if re.compile(r"data\\(\d{4})-(\d{2})-(\d{2})").search(path):
-                    _path = path.replace("\\", "/")
-                    filename = f"{_path}/{log}.rsf"
-                    file = open(filename, "r", encoding="utf-8")
+                if re.compile(r"(\d{4})-(\d{2})-(\d{2})").search(path):
+                    filename = os.path.join(path, f"{log}.rsf")
+                    # _path = path.replace("\\", "/")
+                    # filename = f"{_path}/{log}.rsf"
+                    try:
+                        file = open(filename, "r", encoding="utf-8")
+                    except FileNotFoundError:
+                        # await general.send(f"File `{filename}` not found.", ctx.channel)
+                        continue
                     if search is None:
-                        result = file.read()
-                        data += f"{result}"  # Put a newline in the end, just in case
+                        try:
+                            result = file.read()
+                            data += f"{result}"  # Put a newline in the end, just in case
+                        except UnicodeDecodeError as e:
+                            await general.send(f"`{filename}`: Encoding broke - `{e}`", ctx.channel)
                     else:
-                        stuff = file.readlines()
-                        result = ""
-                        for line in stuff:
-                            if search in line:
-                                result += line
-                        data += f"{result}"
+                        try:
+                            stuff = file.readlines()
+                            result = ""
+                            for line in stuff:
+                                if search in line:
+                                    result += line
+                            data += f"{result}"
+                        except UnicodeDecodeError as e:
+                            await general.send(f"`{filename}`: Encoding broke - `{e}`", ctx.channel)
             if ctx.guild is None:
                 limit = 8000000
             else:

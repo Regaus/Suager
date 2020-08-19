@@ -81,12 +81,6 @@ def creation():
 
 
 tables = {
-    "core_bot": [
-        Table("timezones", [
-            Column("uid", 0, True),
-            Column("tz", 2, True)
-        ]),
-    ],
     "suager": [
         Table("birthdays", [
             Column("uid", 0, True),
@@ -115,7 +109,7 @@ tables = {
             Column("uid", 0, True),
             Column("gid", 0, True),
             Column("level", 0, True),
-            Column("xp", 0, True),  # int since 4.1
+            Column("xp", 0, True),
             Column("last", 1, True),
             Column("last_sent", 1, False),
             Column("name", 2, True),
@@ -158,15 +152,15 @@ tables = {
             Column("usage", 0, True)
         ]),
         Table("tbl_player", [
-            Column("uid", 0, True),      # User ID
+            Column("uid", 0, True),       # User ID
             Column("level", 0, True),
             Column("xp", 0, True),
-            Column("nuts", 0, True),     # Araksan
+            Column("nuts", 0, True),      # Araksan
             Column("coins", 0, True),
             Column("sh_xp", 0, True),
             Column("energy", 0, True),
-            Column("time", 0, True),     # Energy regeneration time
-            Column("points", 0, True),   # League points
+            Column("time", 0, True),      # Energy regeneration time
+            Column("points", 0, True),    # League points
             Column("runs", 0, True),
             Column("location", 0, True),  # Current location
             Column("name", 2, True),      # User name

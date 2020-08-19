@@ -136,10 +136,35 @@ async def playing_changer(self):
     if self.exists:
         try:
             log = self.local_config["logs"]
-            plays = self.local_config["playing"]
-            play = random.choice(plays)
-            playing = f"{play} | v{self.local_config['short_version']}"
-            await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
+            # plays = self.local_config["playing"]
+            fv, sv = f"v{self.local_config['version']}", f"v{self.local_config['short_version']}"
+            plays = {
+                "suager": [
+                    [0, fv],
+                    [0, f"with Regaus | {sv}"],
+                    [0, f"without you | {sv}"],
+                    [0, f"with nobody | {sv}"],
+                    [0, "with your feelings"],
+                    [0, "Custom Status"],
+                    [0, "with the Nuriki Cult"],
+                    [0, f"PyCharm | {sv}"],
+                    [1, "Русские Вперёд!"],
+                    [0, f"{self.local_config['prefixes'][0]}help | {sv}"],
+                    [2, "Music"],
+                    [0, "<CustomActivity name='Something interesting' emoji=<PartialEmoji animated=False name='SenkoDX' id=709828828184445009>>"],
+                    [0, "<Game object at 0x000001C86D4D1520>"],
+                    [0, "<Game object at 0x0000020B2A99F880>"],
+                    [0, "nothing"],
+                    [1, "nothing"],
+                    [2, "nothing"],
+                    [3, "you"],
+                    [3, f"{len(self.bot.guilds):,} guilds"],
+                    [0, f"with {len(self.bot.users):,} users"]
+                ]
+            }
+            activity, playing = random.choice(plays.get(self.bot.name))
+            # playing = f"{play} | v{self.local_config['short_version']}"
+            await self.bot.change_presence(activity=discord.Activity(type=activity, name=playing), status=discord.Status.dnd)
             if log:
                 logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {playing}")
         except PermissionError:
