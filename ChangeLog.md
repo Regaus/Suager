@@ -276,3 +276,6 @@
 - Ability to change the activity type for Suager
 - Improved the way the log command works
 - Removed core_bot from database tables
+
+## v6.0.3 - 19 August
+- Logging avatars again

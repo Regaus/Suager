@@ -1,14 +1,19 @@
+import os
+from io import BytesIO
+
+import discord
 from discord.ext import commands
 
-from core.utils import logger, time
+from core.utils import http, logger, time
 
 
 class Spyware(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.self = [609423646347231282, 568149836927467542, 520042197391769610, 577608850316853251, 610040320280887296]
 
     @commands.Cog.listener()
-    async def on_user_update(self, before, after):
+    async def on_user_update(self, before: discord.User, after: discord.User):
         if not self.bot.local_config["logs"]:
             return
         to = time.time()
@@ -19,16 +24,32 @@ class Spyware(commands.Cog):
             send = f"{to} > {n1} ({uid}) is now known as {n2}"
             logger.log(self.bot.name, log, send)
         a1, a2 = [before.avatar, after.avatar]
+        al = self.bot.get_channel(745760639955370083)
         if a1 != a2:
             send = f"{to} > {n2} ({uid}) changed their avatar"
             logger.log(self.bot.name, "user_avatars", send)
+            if uid not in self.self:
+                avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
+                avatar2 = BytesIO()
+                avatar2.write(avatar.read())
+                ext = "gif" if after.is_avatar_animated() else "png"
+                try:
+                    os.makedirs(f"data/avatars/{after.id}")
+                except FileExistsError:
+                    pass
+                with open(f"data/avatars/{after.id}/{a2}.{ext}", "wb+") as output:
+                    output.write(avatar.read())
+                if al is None:
+                    print("No avatar log channel found.")
+                else:
+                    await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(f"data/avatars/{after.id}/{a2}.{ext}"))
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
             send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
             logger.log(self.bot.name, log, send)
 
     @commands.Cog.listener()
-    async def on_member_update(self, before, after):
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
         if not self.bot.local_config["logs"]:
             return
         to = time.time()
