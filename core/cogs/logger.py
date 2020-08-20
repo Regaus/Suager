@@ -30,8 +30,6 @@ class Spyware(commands.Cog):
             logger.log(self.bot.name, "user_avatars", send)
             if uid not in self.self:
                 avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
-                avatar2 = BytesIO()
-                avatar2.write(avatar.read())
                 ext = "gif" if after.is_avatar_animated() else "png"
                 try:
                     os.makedirs(f"data/avatars/{after.id}")
