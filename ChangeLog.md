@@ -279,3 +279,7 @@
 
 ## v6.0.3 - 19 August
 - Logging avatars again
+
+## v6.0.4 - 21 August
+- Fixed user statuses showing up incorrectly
+- Updated the playing statuses of Suager

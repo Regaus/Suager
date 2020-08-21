@@ -84,6 +84,7 @@
   "discord_user_status": "Saivela",
   "discord_user_streaming": "Stream'at{2}an {0}\n{1}",
   "discord_user_username": "Iktangar-Inema",
+  "discord_user_watching": "Veisteat {0}",
   "dlram_charge_none": "**{0}**, te de ivias hintevima ecaa. Vitliar aviad **{1}**",
   "dlram_no_subcommand": "Iktanhar `{0}dlram run`, anri kubelsa af RA-Baivia ta se en ahaltan.",
   "dlram_message": "**{0}**:\nTa-ahaltat: **{1}**\nTe ahaltak **{2} af RA-Baivia** ta se\nEtar server iviat ecaa **{3}/{4} af RA-Baivia**\nEtar server ecaa an Koo **{5}**\nAstaila hintevima: **{6}/{7}**\nSaikarsa af avihintevima: **{8}** i dalcaa.\nVeistear `dlram stats`, anri da nuva saddalva af etar server en zaivan.",

@@ -11,6 +11,10 @@ def is_senko_lair(ctx):
     return ctx.guild.id == 568148147457490954
 
 
+def get_attr(cls, attr):
+    return getattr(cls, attr) if hasattr(cls, attr) else "undefined"
+
+
 class Discord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -101,28 +105,38 @@ class Discord(commands.Cog):
         embed.add_field(name=langs.gls("discord_user_joined_at", locale), value=langs.gts(user.joined_at, locale, short=False), inline=True)
         embed.add_field(name=langs.gls("discord_user_status", locale), value=langs.gls(f"discord_status_{user.status}", locale), inline=True)
         try:
-            a = list(user.activities)
-            if not a:
+            # a = list(user.activities)
+            b = user.activity
+            # if not a:
+            if b is None:
                 embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("generic_none", locale), inline=False)
             else:
-                b = a[0]
+                # b = a[0]
                 if b.type == discord.ActivityType.custom:
                     e = f"{b.emoji} " if b.emoji is not None else ''
                     n = b.name if b.name is not None else ''
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_custom_status", locale, e, n), inline=False)
                 elif b.type == discord.ActivityType.streaming:
-                    c = b.platform
+                    # c = b.platform
+                    c = get_attr(b, "platform")
                     d = b.name if b.name else ''
-                    e = f" {b.game} " if b.game else ''
+                    # e = f" {b.game} " if b.game else ''
+                    e = f" {e} " if (e := get_attr(b, "game")) else ""
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_streaming", locale, c, d, e), inline=False)
                 elif b.type == discord.ActivityType.playing:
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_playing", locale, b.name), inline=False)
                 elif b.type == discord.ActivityType.listening:
                     c = b.name
-                    d = b.title
-                    e = ", ".join(b.artists)
-                    f = b.album
-                    embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_playing", locale, c, d, e, f), inline=False)
+                    # d = b.title
+                    # e = ", ".join(b.artists)
+                    # f = b.album
+                    d = get_attr(b, "title")
+                    e = ", ".join(e) if (e := get_attr(b, "artists")) else e
+                    f = get_attr(b, "album")
+                    embed.add_field(name=langs.gls("discord_user_activity", locale), inline=False,
+                                    value=langs.gls("discord_user_listening", locale, c, d, e, f))
+                elif b.type == discord.ActivityType.watching:
+                    embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_watching", locale, b.name), inline=False)
         except AttributeError:
             embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("generic_unknown", locale), inline=False)
         if len(user.roles) < 15:
