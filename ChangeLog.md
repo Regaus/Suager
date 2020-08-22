@@ -283,3 +283,7 @@
 ## v6.0.4 - 21 August
 - Fixed user statuses showing up incorrectly
 - Updated the playing statuses of Suager
+
+## v6.0.5 - 22 August
+- Fixed some output bugs
+- Added partial translation to Ancient RSL-3

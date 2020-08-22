@@ -194,7 +194,7 @@
   "leveling_next_level": "**{0}** - Ivias **{1}/{2} aivikkad**.\nTe nihtaras **{3}**, anri an **koo {4}** en naan (Killata: **{5}**)\nTe taisas kaigan **{6} - {7}**",
   "leveling_next_level_none": "Mu zaiva deneda av te...",
   "leveling_next_level_max": "**{0}**, te naas an das igubalses koo",
-  "leveling_rank": "Kai hiarar {0} naat i {1}",
+  "leveling_rank": "Kai hiarar **{0}** naat i **{1}**",
   "leveling_rank_bot": "Bot'tat de maikan aivikkad ivian.",
   "leveling_rank_global": "**{0}** iviat **{1} aivikkad veinidan**. Heiste: **{2}**.\nVeinida-koo: **{3}**",
   "leveling_rank_level": "Koo {0}",

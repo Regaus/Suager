@@ -79,7 +79,7 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
             return gfs(value * 400, locale, pre, False) + "%"
         base = bases.to_base_float(value, 20, pre, True)
         _base = base.split(".")
-        if len(_base == 1):
+        if len(_base) == 1:
             return put_commas(_base[0], step=4)
         else:
             _int, _float = _base
@@ -206,12 +206,16 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
-        if dow:
+        if dow and not locale.startswith("rsl-3"):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
         if locale == "en_us":
             base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
+        elif locale.startswith("rsl-3"):
+            month_name = month_names_l[when.month % 12]
+            base += f"Silvada selazat {gns(when.day, locale, 2)}-jü silvada sodazhykulyjü {month_name} " \
+                    f"silvada shykulyjü {gns(when.year, locale, 0, False)}-jü, "
         else:
             month_name = month_names_l[when.month % 12]
             month_name_s = month_name[:3]
@@ -231,6 +235,11 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
 def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
-    month_name_s = month_name[:3]
-    month = month_name if not short else month_name_s
-    return f"{gns(when.day, locale)} {month}{' ' + gns(when.year, locale, 0, False) if year else ''}"
+    if locale.startswith("rsl-3"):
+        month_name = month_names_l[when.month % 12]
+        return f"Silvada selazat {gns(when.day, locale, 2)}-jü silvada sodazhykulyjü {month_name}" \
+               f"{f' silvada shykulyjü {gns(when.year, locale, 0, False)}-jü' if year else ''}"
+    else:
+        month_name_s = month_name[:3]
+        month = month_name if not short else month_name_s
+        return f"{gns(when.day, locale)} {month}{' ' + gns(when.year, locale, 0, False) if year else ''}"

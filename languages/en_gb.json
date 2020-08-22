@@ -196,7 +196,7 @@
   "leveling_next_level": "**{0}** - You have **{1}/{2} XP**.\nYou need **{3}** more to reach **level {4}** (Progress: **{5}**)\nEst. talking time: **{6} to {7}**",
   "leveling_next_level_none": "I have no data saved for you right now...",
   "leveling_next_level_max": "**{0}**, you have already reached the max level.",
-  "leveling_rank": "{0}'s rank in {1}",
+  "leveling_rank": "**{0}**'s rank in **{1}**",
   "leveling_rank_bot": "I don't count the XP of bots, as they're cheaters.",
   "leveling_rank_global": "**{0}** has **{1} global XP** and is **{2}**.\nGlobal level: **{3}**",
   "leveling_rank_level": "Level {0}",
