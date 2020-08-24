@@ -291,3 +291,7 @@
 ## v6.0.6 - 24 August
 - Continued the RSL-3a translation
 - Added //pain command, which displays your rank in RLS-3a
+
+## v6.0.7 - 24 August
+- Fixed //nextlevel showing incorrect level
+- Changed TBL energy limits slightly

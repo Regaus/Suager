@@ -636,7 +636,7 @@ class Leveling(commands.Cog):
         req = r - xp
         pr = (xp - p) / (r - p)
         r2, r3, r4 = langs.gns(r / 100, locale), langs.gns(req / 100, locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
-        r5 = langs.gns(level, locale)
+        r5 = langs.gns(level + 1, locale)
         # r2 = f"{int(r / 100):,}"
         # r3 = f"{int(req / 100):,}"
         normal = 1

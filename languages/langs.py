@@ -138,7 +138,8 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
         simple = ["en_gb", "en_us"]
         name = name_pl if v == 0 else (name_1 if v == 1 else name_2) if locale in simple else (
             name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
-    return f"{gns(v, locale)} {name}" if not locale.startswith("rsl-3") else f"{name} {gns(v, locale)}"
+    reverse = ["rsl-3a"]
+    return f"{gns(v, locale)} {name}" if locale not in reverse else f"{name} {gns(v, locale)}"
     # if locale == "en_gb":
     #     return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \
     #         else f"{gns(value, locale)} {name_2}"

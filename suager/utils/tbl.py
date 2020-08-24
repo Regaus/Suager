@@ -261,6 +261,8 @@ def energy_limit(level: int):
             limit += 2
         elif lvl == 201:
             limit += 100
+        elif lvl == 202:
+            limit += 30
         else:
             limit += 25
     return limit
