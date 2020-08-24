@@ -287,3 +287,7 @@
 ## v6.0.5 - 22 August
 - Fixed some output bugs
 - Added partial translation to Ancient RSL-3
+
+## v6.0.6 - 24 August
+- Continued the RSL-3a translation
+- Added //pain command, which displays your rank in RLS-3a

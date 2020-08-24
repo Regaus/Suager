@@ -327,12 +327,7 @@ class Leveling(commands.Cog):
             return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
             # return await general.send("This server seems to have no leveling rewards", ctx.channel)
 
-    @commands.command(name="rank", aliases=["irank", "ranki", "level"])
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
-        """ Check your or someone's rank """
-        locale = langs.gl(ctx.guild, self.db)
+    async def level(self, ctx: commands.Context, who: discord.Member or None, locale: str):
         async with ctx.typing():
             user = who or ctx.author
             is_self = user.id == self.bot.user.id
@@ -440,6 +435,22 @@ class Leveling(commands.Cog):
             # if is_self:
             #     r += "That's my own rank, so why should I play fair?"
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
+
+    @commands.command(name="rank", aliases=["irank", "ranki", "level"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
+        """ Check your or someone's rank """
+        locale = langs.gl(ctx.guild, self.db)
+        return await self.level(ctx, who, locale)
+
+    @commands.command(name="pain")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def rank_painful(self, ctx: commands.Context):
+        """ Your rank, but in a painful version """
+        locale = "rsl-3a"
+        return await self.level(ctx, None, locale)
 
     @commands.command(name="rankg", aliases=["grank"])
     @commands.guild_only()

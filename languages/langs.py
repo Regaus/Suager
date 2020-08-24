@@ -66,7 +66,7 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
         # _base = put_commas(bases.to_base(int(value), 16, True))
     if locale.startswith("rsl-2"):
         if per:
-            return gfs(value * 216, locale, pre, False) + "‰"
+            return gfs(value * 216, locale, pre, False) + "/1000"
         base = bases.to_base_float(value, 6, pre)
         _base = base.split(".")
         if len(_base) == 1:
@@ -138,7 +138,7 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
         simple = ["en_gb", "en_us"]
         name = name_pl if v == 0 else (name_1 if v == 1 else name_2) if locale in simple else (
             name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1)
-    return f"{gns(v, locale)} {name}"
+    return f"{gns(v, locale)} {name}" if not locale.startswith("rsl-3") else f"{name} {gns(v, locale)}"
     # if locale == "en_gb":
     #     return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \
     #         else f"{gns(value, locale)} {name_2}"
@@ -170,7 +170,7 @@ def td_dt(dt: datetime, locale: str = "en_gb", *, source: datetime = None, accur
         element = getattr(delta, attr[0])
         if not element:
             continue
-        if attr[0] == "days":
+        if attr[0] == "days" and not locale.startswith("rsl-3"):
             weeks = delta.weeks
             if weeks:
                 element -= weeks * 7
@@ -214,8 +214,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
             base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
         elif locale.startswith("rsl-3"):
             month_name = month_names_l[when.month % 12]
-            base += f"Silvada selazat {gns(when.day, locale, 2)}-jü silvada sodazhykulyjü {month_name} " \
-                    f"silvada shykulyjü {gns(when.year, locale, 0, False)}-jü, "
+            base += f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name} s.sh. {gns(when.year, locale, 0, False)}, "
         else:
             month_name = month_names_l[when.month % 12]
             month_name_s = month_name[:3]
@@ -237,8 +236,7 @@ def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: b
     month_name = month_names_l[when.month % 12]
     if locale.startswith("rsl-3"):
         month_name = month_names_l[when.month % 12]
-        return f"Silvada selazat {gns(when.day, locale, 2)}-jü silvada sodazhykulyjü {month_name}" \
-               f"{f' silvada shykulyjü {gns(when.year, locale, 0, False)}-jü' if year else ''}"
+        return f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name}{f' s.sh. {gns(when.year, locale, 0, False)}' if year else ''}"
     else:
         month_name_s = month_name[:3]
         month = month_name if not short else month_name_s
