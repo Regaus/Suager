@@ -295,3 +295,7 @@
 ## v6.0.7 - 24 August
 - Fixed //nextlevel showing incorrect level
 - Changed TBL energy limits slightly
+
+## v6.0.8 - 25 August
+- Made plurals work better in English
+- Fixed a bug which broke the //user command when they had above 15 roles

@@ -148,7 +148,7 @@ class Discord(commands.Cog):
             roles += langs.gls("discord_user_roles_overall", locale, langs.gns(b, locale))
             # roles += f"\n({b} overall)"
         else:
-            roles = langs.gls("discord_user_roles_many", locale, langs.gns(len(user.roles - 1)))
+            roles = langs.gls("discord_user_roles_many", locale, langs.gns(len(user.roles) - 1))
             # roles = f"There's {len(user.roles) - 1} of them"
         embed.add_field(name=langs.gls("discord_user_roles", locale), value=roles, inline=False)
         return await general.send(None, ctx.channel, embed=embed)
