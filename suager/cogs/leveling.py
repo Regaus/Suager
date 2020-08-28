@@ -3,17 +3,13 @@ import random
 from io import BytesIO
 
 import discord
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
-from core.utils import time, database, http, general, emotes
+from core.utils import emotes, general, http, time
 from languages import langs
+from suager.cogs.birthdays import Ctx
 from suager.utils import settings
-
-max_level = 256
-xp_amounts = [2250, 3000]
-money_amounts = [75, 125]
-bad = [69, 420, 666, 1337]
 
 
 async def catch_colour(ctx: commands.Context, c: int):
@@ -48,34 +44,6 @@ def int_colour(colour: str):
         return -2
 
 
-# def _old_levels():
-#     req = 0
-#     xp = []
-#     # mult = multiplier ** 0.001 if multiplier >= 1 else multiplier ** 0.75
-#     for x in range(max_level):
-#         base = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
-#         req += int(base)
-#         if x not in bad:
-#             xp.append(int(req))
-#         else:
-#             xp.append(xp[-1])
-#     return xp
-
-
-# def _old_levels():
-#     req = 15000
-#     xp = []
-#     for x in range(max_level):
-#         power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
-#         base = x ** power + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
-#         req += int(base)
-#         if x not in bad:
-#             xp.append(int(req))
-#         else:
-#             xp.append(xp[-1])
-#     return xp
-
-
 def _levels():
     req = 25000
     xp = []
@@ -91,28 +59,16 @@ def _levels():
     return xp
 
 
-# def _levels_global():
-#     req = 15000
-#     xp = []
-#     for x in range(max_level):
-#         base = 125 * x ** 3 + 500 * x ** 2 + 15000 * x
-#         req += int(base)
-#         if x not in [69, 420, 666, 1337]:
-#             xp.append(int(req))
-#         else:
-#             xp.append(xp[-1])
-#     return xp
-
-
-# old_levels = _old_levels()
+max_level = 256
+bad = [69, 420, 666, 1337]
 levels = _levels()
-# levels_global = _levels_global()
+xp_amounts = [2250, 3000]
+money_amounts = [75, 125]
 
 
 class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="leveling")
     @commands.is_owner()
@@ -138,7 +94,7 @@ class Leveling(commands.Cog):
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
-        _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         xp_disabled = False
         if _settings:
             __settings = json.loads(_settings['data'])
@@ -153,12 +109,12 @@ class Leveling(commands.Cog):
         else:
             __settings = settings.template.copy()
             xp_disabled = True
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if data:
             level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
         else:
             level, xp, last, ls = [0, 0, 0, 0]
-        data2 = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data2 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if data2:
             money = data2["money"]
         else:
@@ -218,7 +174,7 @@ class Leveling(commands.Cog):
             if lu:
                 try:
                     send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(ctx.guild, self.db)))
+                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
                 except KeyError:
                     send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
                 try:
@@ -236,7 +192,12 @@ class Leveling(commands.Cog):
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                send = f"{ctx.author.mention} is now **level {level:,}** {emotes.UmmOK}"
+                # send = f"{ctx.author.mention} is now **level {level:,}** {emotes.UmmOK}"
+                try:
+                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
+                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(ctx)))
+                except KeyError:
+                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.UmmOK}"
                 try:
                     ac = __settings['leveling']['announce_channel']
                     if ac != 0:
@@ -286,25 +247,25 @@ class Leveling(commands.Cog):
                 print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
         _last = last if dc else now
         if data:
-            self.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
-                            (level, xp, _last, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+            self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
+                                (level, xp, _last, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
         else:
-            self.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
+            self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
         if data2:
-            self.db.execute("UPDATE economy SET money=?, last=?, name=?, disc=? WHERE uid=? AND gid=?",
-                            (money, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+            self.bot.db.execute("UPDATE economy SET money=?, last=?, name=?, disc=? WHERE uid=? AND gid=?",
+                                (money, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
         else:
-            self.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)",
-                            (ctx.author.id, ctx.guild.id, money, now, 0, ctx.author.name, ctx.author.discriminator))
+            self.bot.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                (ctx.author.id, ctx.guild.id, money, now, 0, ctx.author.name, ctx.author.discriminator))
 
     @commands.command(name="rewards")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def rewards(self, ctx: commands.Context):
         """ Rewards """
-        locale = langs.gl(ctx.guild, self.db)
-        _settings = self.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        _settings = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
             # return await general.send("This server seems to have no leveling rewards", ctx.channel)
@@ -334,8 +295,8 @@ class Leveling(commands.Cog):
             if user.bot and not is_self:
                 return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
                 # return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
-            data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-            custom = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
+            data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
                 font_colour, progress_colour, background_colour = \
                     get_colour(custom["font"]), get_colour(custom["progress"]), get_colour(custom["background"])
@@ -382,7 +343,7 @@ class Leveling(commands.Cog):
                     prev = -int(levels[(-level) - 1])
             except IndexError:
                 prev = 0
-            _data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+            _data = self.bot.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
             # place = "Rank Undefined"
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
             for x in range(len(_data)):
@@ -441,7 +402,7 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your or someone's rank """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         return await self.level(ctx, who, locale)
 
     @commands.command(name="pain")
@@ -457,13 +418,13 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check your or someone's rank """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
             # return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
-        _data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
+        _data = self.bot.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
         coll = {}
         for i in _data:
             if i['uid'] not in coll:
@@ -505,11 +466,11 @@ class Leveling(commands.Cog):
         c = int_colour(colour)
         cc = await catch_colour(ctx, c)
         if cc:
-            data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+            data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
             if data:
-                self.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
+                self.bot.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
             else:
-                self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
+                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
             return await general.send(f"Set your font colour to #{colour}", ctx.channel)
 
     @custom_rank.command(name="progress")
@@ -518,11 +479,11 @@ class Leveling(commands.Cog):
         c = int_colour(colour)
         cc = await catch_colour(ctx, c)
         if cc:
-            data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+            data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
             if data:
-                self.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
+                self.bot.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
             else:
-                self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
+                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
             return await general.send(f"Set your progress bar colour to #{colour}", ctx.channel)
 
     @custom_rank.command(name="background", aliases=["bg"])
@@ -531,18 +492,18 @@ class Leveling(commands.Cog):
         c = int_colour(colour)
         cc = await catch_colour(ctx, c)
         if cc:
-            data = self.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+            data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
             if data:
-                self.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
+                self.bot.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
             else:
-                self.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
+                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
             return await general.send(f"Set your background colour to #{colour}", ctx.channel)
 
     @commands.command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def xp_level(self, ctx: commands.Context, level: int):
         """ XP required to achieve a level """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if level > max_level or level < max_level * -1 + 1:
             return await general.send(langs.gls("leveling_xplevel_max", locale, langs.gns(max_level, locale)), ctx.channel)
             # return await general.send(f"The max level is {max_level:,}", ctx.channel)
@@ -557,14 +518,14 @@ class Leveling(commands.Cog):
             return await general.send(langs.gls("leveling_xplevel_max", locale, langs.gns(max_level, locale)), ctx.channel)
             # return await general.send(f"An error can occurred - make sure the level specified is below the max level ({max_level:,}).", ctx.channel)
         if ctx.guild is not None:
-            data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         else:
             data = None
         if not data:
             xp = float("inf")
         else:
             xp = data['xp']
-        _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
         else:
@@ -595,12 +556,12 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def next_level(self, ctx: commands.Context):
         """ XP required for next level """
-        locale = langs.gl(ctx.guild, self.db)
-        data = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        locale = langs.gl(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await general.send(langs.gls("leveling_next_level_none", locale), ctx.channel)
             # return await general.send("I have no leveling data for you right now...", ctx.channel)
-        _settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
         else:
@@ -657,8 +618,8 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's XP Leaderboard """
-        locale = langs.gl(ctx.guild, self.db)
-        data = self.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        data = self.bot.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
         if not data:
             return await general.send(langs.gls("leaderboards_no_data", locale), ctx.channel)
             # return await general.send("I have no data saved for this server so far.", ctx.channel)
@@ -721,8 +682,8 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def global_levels(self, ctx: commands.Context, top: str = ""):
         """ Global XP Leaderboard """
-        locale = langs.gl(ctx.guild, self.db)
-        data = self.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0", ())
+        locale = langs.gl(ctx)
+        data = self.bot.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0", ())
         coll = {}
         for i in data:
             if i['uid'] not in coll:

@@ -175,7 +175,7 @@ tables = {
             Column("nuts", 0, True),            # Araksan
             Column("coins", 0, True),
             Column("upgrade_points", 0, True),  # Temple upgrade points
-            Column("name", 0, True),            # Guild name
+            Column("name", 2, True),            # Guild name
             Column("usage", 3, True)            # Whether someone is running TBL at the moment
         ]),
         Table("dlram", [
@@ -185,11 +185,25 @@ tables = {
             Column("energy", 0, True),     # Charge
             Column("time", 0, True),
             Column("downloads", 0, True),  # Times the download process was executed
-            Column("name", 0, True)
+            Column("name", 2, True)
         ]),
         Table("locales", [
             Column("gid", 0, True),
             Column("locale", 2, True)
+        ]),
+        Table("aqos", [
+            Column("uid", 0, True),
+            Column("level", 0, True),
+            Column("level_length", 0, True),
+            Column("level_progress", 1, True),
+            Column("energy", 1, True),
+            Column("energy_used", 0, True),
+            Column("time", 1, True),
+            Column("score", 0, True),
+            Column("xp", 1, True),
+            Column("xp_level", 0, True),
+            Column("name", 2, True),
+            Column("disc", 0, True)
         ])
     ]
 }

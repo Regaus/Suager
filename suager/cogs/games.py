@@ -4,15 +4,14 @@ import json
 import discord
 from discord.ext import commands
 
-from core.utils import general, database, time, permissions
+from core.utils import general, permissions, time
 from languages import langs
-from suager.utils import dlram, tbl, tbl_data
+from suager.utils import aqos, dlram, tbl, tbl_data
 
 
 class Games(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
         self.season = tbl.get_season()
 
     @commands.Cog.listener()
@@ -20,8 +19,8 @@ class Games(commands.Cog):
         while True:
             season = tbl.get_season()
             if season != self.season:
-                channel = self.bot.get_channel(733751281184931850)
-                all_players = self.db.fetch("SELECT * FROM tbl_player")
+                channel = self.bot.get_channel(748624699180711996)
+                all_players = self.bot.db.fetch("SELECT * FROM tbl_player")
                 old_points = []
                 for player in all_players:
                     old_points.append({"name": f"{player['name']}#{player['disc']:04d}", "points": player["points"], 'id': player['uid']})
@@ -33,13 +32,54 @@ class Games(commands.Cog):
                 for place, user in enumerate(old_points[:5], start=1):
                     emote = emotes[place - 1]
                     top_5 += f"\n{emote} **#{place}: {user['name']}** at **{user['points']:,} Points** - Prize: **{prizes[place - 1]}**"
-                    self.db.execute("UPDATE tbl_player SET coins=coins+? WHERE uid=?", (prize[place - 1], user["id"]))
-                self.db.execute("UPDATE tbl_player SET points=points/10, nuts=nuts+(points/5)")
+                    self.bot.db.execute("UPDATE tbl_player SET coins=coins+? WHERE uid=?", (prize[place - 1], user["id"]))
+                self.bot.db.execute("UPDATE tbl_player SET points=points/10, nuts=nuts+(points/5)")
                 await general.send(f"Season {self.season} has now ended! Here are the Top 5 people of the past season:{top_5}\n"
                                    f"1/10 of everyone's League Points will carry over to the next season, and some will be converted to extra Nuts.\n"
                                    f"The top 5 will also receive some extra coins.", channel)
                 self.season = season
             await asyncio.sleep(60)
+
+    @commands.group(name="aqos")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def aqos(self, ctx: commands.Context):
+        """ Aqos """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @aqos.command(name="run")
+    @commands.max_concurrency(1, per=commands.BucketType.user, wait=True)
+    async def aqos_run(self, ctx: commands.Context):
+        """ Play Aqos """
+        return await aqos.aqos_game(ctx)
+
+    @aqos.command(name="stats")
+    async def aqos_stats(self, ctx: commands.Context, who: discord.User = None):
+        """ See your or someone else's stats in Aqos """
+        locale = langs.gl(ctx)
+        now_ts = time.now_ts()
+        user = who or ctx.author
+        data, _ = aqos.get_player(user, self.bot.db, now_ts)
+        embed = discord.Embed(colour=general.random_colour())
+        embed.title = langs.gls("aqos_stats", locale, ctx.author.name)
+        embed.set_thumbnail(url=user.avatar_url)
+        xp_nl = langs.gns(aqos.levels[data["xp_level"]], locale) if data["xp_level"] < aqos.max_xp_level else langs.gls("generic_max", locale)
+        temple = aqos.Temple(data["level"], data["xp_level"], data["score"], locale)
+        level, next_temple = langs.gns(data["level"], locale), langs.gns(temple.next_temple, locale)
+        embed.add_field(name=langs.gls("aqos_stats_level", locale), inline=False,
+                        value=langs.gls("aqos_stats_level_data", locale, level, next_temple, temple.name))
+        xp, xp_level = langs.gns(data["xp"], locale), langs.gns(data["xp_level"], locale)
+        embed.add_field(name=langs.gls("aqos_stats_xp", locale), inline=False, value=langs.gls("aqos_stats_xp_data", locale, xp, xp_nl, xp_level))
+        energy, regen = aqos.regen_energy(data["energy"], data["time"], now_ts, temple)
+        energy_str = f"**{langs.gns(data['energy'], locale)}/{langs.gns(temple.energy_limit)}**"
+        if data["energy"] < temple.energy_limit:
+            fill = temple.energy_limit - data["energy"]
+            next_in = langs.td_ts(regen + temple.energy_regen, locale, brief=True, suffix=True)
+            full_in = langs.td_ts(regen + temple.energy_regen * fill, locale, brief=True, suffix=True)
+            energy_str += langs.gls("aqos_stats_energy_data", locale, next_in, full_in)
+        embed.add_field(name=langs.gls("aqos_stats_energy", locale), inline=False, value=energy_str)
+        embed.add_field(name=langs.gls("aqos_stats_usage", locale), inline=False, value=langs.gns(data["energy_used"], locale))
+        return await general.send(None, ctx.channel, embed=embed)
 
     @commands.group(name="dlram")
     @commands.guild_only()
@@ -47,21 +87,21 @@ class Games(commands.Cog):
     async def dlram(self, ctx: commands.Context):
         """ Download more RAM """
         if ctx.invoked_subcommand is None:
-            return await general.send(langs.gls("dlram_no_subcommand", langs.gl(ctx.guild, self.db), ctx.prefix), ctx.channel)
+            return await general.send(langs.gls("dlram_no_subcommand", langs.gl(ctx), ctx.prefix), ctx.channel)
             # return await general.send(f"Use `{ctx.prefix}dlram run` to download more RAM", ctx.channel)
 
     @dlram.command(name="run")
-    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=False)
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     async def dlram_run(self, ctx: commands.Context):
         """ Download more RAM """
-        return await dlram.download_ram(ctx, self.db)
+        return await dlram.download_ram(ctx)
 
     @dlram.command(name="stats")
     async def dlram_stats(self, ctx: commands.Context):
         """ See your server's stats in DLRAM """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         now_ts = int(time.now_ts())
-        data, exists = dlram.get_data(ctx.guild, self.db, now_ts)
+        data, exists = dlram.get_data(ctx.guild, self.bot.db, now_ts)
         if not exists:
             return await general.send(langs.gls("dlram_stats_none", locale), ctx.channel)
             # return await general.send("This server has no stats available yet.", ctx.channel)
@@ -129,15 +169,15 @@ class Games(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     async def tbl_play(self, ctx: commands.Context):
         """ Force Suager to do some calculations for TBL """
-        return await tbl.tbl_game(ctx, self.db)
+        return await tbl.tbl_game(ctx)
 
     @tbl.command(name="stats")
     async def tbl_stats(self, ctx: commands.Context, who: discord.User = None):
         """ See your own or someone else's stats """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         now = int(time.now_ts())
-        player, _no = tbl.get_player(user, self.db, now)
+        player, _no = tbl.get_player(user, self.bot.db, now)
         if not _no:
             return await general.send(langs.gls("tbl_stats_no_data", locale, user.name), ctx.channel)
             # return await general.send(f"{user.name} has not played TBL yet, so no data is available", ctx.channel)
@@ -192,8 +232,8 @@ class Games(commands.Cog):
     @tbl.command(name="clan")
     async def tbl_clan(self, ctx: commands.Context):
         """ Stats about your clan (server) """
-        locale = langs.gl(ctx.guild, self.db)
-        clan, _no = tbl.get_clan(ctx.guild, self.db)
+        locale = langs.gl(ctx)
+        clan, _no = tbl.get_clan(ctx.guild, self.bot.db)
         if not _no:
             return await general.send(langs.gls("tbl_stats_no_data", locale, ctx.guild.name), ctx.channel)
             # return await general.send("There is no data available about this clan so far.", ctx.channel)
@@ -234,13 +274,13 @@ class Games(commands.Cog):
     @tbl.command(name="donate")
     async def tbl_donate(self, ctx: commands.Context, what: str, value: int):
         """ Donate to your TBL clan """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         now = int(time.now_ts())
-        player, exists = tbl.get_player(ctx.author, self.db, now)
+        player, exists = tbl.get_player(ctx.author, self.bot.db, now)
         if not exists:
             return await general.send(langs.gls("tbl_stats_no_data", locale, ctx.author.name), ctx.channel)
             # return await general.send(f"You have not played TBL yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
-        clan, exists = tbl.get_clan(ctx.guild, self.db)
+        clan, exists = tbl.get_clan(ctx.guild, self.bot.db)
         if not exists:
             return await general.send(langs.gls("tbl_stats_no_data", locale, ctx.guild.name), ctx.channel)
             # return await general.send(f"This clan has not been fully created yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
@@ -253,16 +293,16 @@ class Games(commands.Cog):
             if nuts < value:
                 return await general.send(langs.gls("tbl_donate_nuts", locale), ctx.channel)
                 # return await general.send("You don't have enough Nuts to do that.", ctx.channel)
-            self.db.execute("UPDATE tbl_player SET nuts=nuts-? WHERE uid=?", (value, ctx.author.id))
-            self.db.execute("UPDATE tbl_clan SET nuts=nuts+? WHERE gid=?", (value, ctx.guild.id))
+            self.bot.db.execute("UPDATE tbl_player SET nuts=nuts-? WHERE uid=?", (value, ctx.author.id))
+            self.bot.db.execute("UPDATE tbl_clan SET nuts=nuts+? WHERE gid=?", (value, ctx.guild.id))
             word = langs.plural(value, "tbl_nuts", locale)
         elif choice == "coins":
             coins = player["coins"]
             if coins < value:
                 return await general.send(langs.gls("tbl_donate_nuts", locale), ctx.channel)
                 # return await general.send("You don't have enough Coins to do that.", ctx.channel)
-            self.db.execute("UPDATE tbl_player SET coins=coins-? WHERE uid=?", (value, ctx.author.id))
-            self.db.execute("UPDATE tbl_clan SET coins=coins+? WHERE gid=?", (value, ctx.guild.id))
+            self.bot.db.execute("UPDATE tbl_player SET coins=coins-? WHERE uid=?", (value, ctx.author.id))
+            self.bot.db.execute("UPDATE tbl_clan SET coins=coins+? WHERE gid=?", (value, ctx.guild.id))
             word = langs.plural(value, "tbl_coins", locale)
         else:
             return await general.send(langs.gls("tbl_donate_invalid", locale), ctx.channel)
@@ -275,7 +315,7 @@ class Games(commands.Cog):
     async def tbl_totems(self, ctx: commands.Context):
         """ Set TBL totems for your clan """
         if ctx.invoked_subcommand is None:
-            locale = langs.gl(ctx.guild, self.db)
+            locale = langs.gl(ctx)
             return await general.send(langs.gls("tbl_totems_help", locale, ctx.prefix), ctx.channel)
             # return await general.send(f"`{ctx.prefix}tbl details totems` for information on totems\n`{ctx.prefix}tbl totems set` to set a totem\n"
             #                           f"`{ctx.prefix}tbl totems upgrade` to upgrade a totem", ctx.channel)
@@ -283,8 +323,8 @@ class Games(commands.Cog):
     @tbl_totems.command(name="upgrade")
     async def tbl_totem_upgrade(self, ctx: commands.Context, totem_id: int = 0, upgrades: int = 1):
         """ Upgrade a TBL totem """
-        locale = langs.gl(ctx.guild, self.db)
-        clan, exists = tbl.get_clan(ctx.guild, self.db)
+        locale = langs.gl(ctx)
+        clan, exists = tbl.get_clan(ctx.guild, self.bot.db)
         if upgrades < 1:
             return await general.send(langs.gls("tbl_totem_upgrade_negative2", locale), ctx.channel)
         if not exists:
@@ -305,7 +345,7 @@ class Games(commands.Cog):
             #                           "You will get more from leveling the clan up by playing TBL.", ctx.channel)
         levels = json.loads(clan["temple_levels"])
         levels[totem_id - 1] += upgrades
-        self.db.execute("UPDATE tbl_clan SET upgrade_points=upgrade_points-?, temple_levels=? WHERE gid=?", (upgrades, json.dumps(levels), ctx.guild.id))
+        self.bot.db.execute("UPDATE tbl_clan SET upgrade_points=upgrade_points-?, temple_levels=? WHERE gid=?", (upgrades, json.dumps(levels), ctx.guild.id))
         new_level = langs.gns(levels[totem_id - 1], locale)
         times = langs.plural(upgrades, "generic_times", locale)
         name = langs.gls(tbl_data.totems[totem_id - 1]['name'], locale)
@@ -316,8 +356,8 @@ class Games(commands.Cog):
     @tbl_totems.command(name="set")
     async def tbl_totem_set(self, ctx: commands.Context, slot: int = 0, totem_id: int = -1):
         """ Set a TBL totem """
-        locale = langs.gl(ctx.guild, self.db)
-        clan, exists = tbl.get_clan(ctx.guild, self.db)
+        locale = langs.gl(ctx)
+        clan, exists = tbl.get_clan(ctx.guild, self.bot.db)
         if not exists:
             return await general.send(langs.gls("tbl_stats_no_data", locale, ctx.guild.name), ctx.channel)
             # return await general.send(f"This clan has not been fully created yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
@@ -367,7 +407,7 @@ class Games(commands.Cog):
                 totems[slot - 1]["expiry"] = now + 72 * 3600
                 nuts -= cost
                 c = langs.plural(cost, "tbl_nuts", locale)
-        self.db.execute("UPDATE tbl_clan SET nuts=?, temples=? WHERE gid=?", (nuts, json.dumps(totems), ctx.guild.id))
+        self.bot.db.execute("UPDATE tbl_clan SET nuts=?, temples=? WHERE gid=?", (nuts, json.dumps(totems), ctx.guild.id))
         name = langs.gls("tbl_totem_set_set", locale, langs.gls(tbl_data.totems[totem_id - 1]['name'], locale)) if totem_id > 0 else \
             langs.gls("tbl_totem_set_reset", locale)
         return await general.send(langs.gls("tbl_totem_set", locale, name, slot, c), ctx.channel)
@@ -377,8 +417,8 @@ class Games(commands.Cog):
     @tbl.command(name="location")
     async def tbl_set_location(self, ctx: commands.Context, location_id: int = -1):
         """ Set your location """
-        locale = langs.gl(ctx.guild, self.db)
-        player, exists = tbl.get_player(ctx.author, self.db, 0)
+        locale = langs.gl(ctx)
+        player, exists = tbl.get_player(ctx.author, self.bot.db, 0)
         if not exists:
             return await general.send(langs.gls("tbl_stats_no_data", locale, ctx.author.name), ctx.channel)
             # return await general.send(f"You have not played TBL yet. Run `{ctx.prefix}tbl play` at least once before using this.", ctx.channel)
@@ -394,7 +434,7 @@ class Games(commands.Cog):
         output = langs.gls("tbl_location_set", locale, location['name'], langs.gls(location['en'], locale)) if location_id > 0 else \
             langs.gls("tbl_location_reset", locale)
         # output = f"Set your location to **{location['name']} ({location['en']})**" if location_id > 0 else "**Reset** you location"
-        self.db.execute("UPDATE tbl_player SET location=? WHERE uid=?", (location_id, ctx.author.id))
+        self.bot.db.execute("UPDATE tbl_player SET location=? WHERE uid=?", (location_id, ctx.author.id))
         return await general.send(langs.gls("tbl_location_success", locale, output), ctx.channel)
         # return await general.send(f"{output}. Note that if your level is not high enough to be there, it will be set to the nearest available.", ctx.channel)
 
@@ -402,7 +442,7 @@ class Games(commands.Cog):
     async def tbl_docs(self, ctx: commands.Context):
         """ Information about TBL """
         if ctx.invoked_subcommand is None:
-            locale = langs.gl(ctx.guild, self.db)
+            locale = langs.gl(ctx)
             sub_commands = ["clans", "game", "leagues", "levels", "locations", "seasons", "totems"]
             sub_commands.sort()
             _data = [f"`{key}` - {langs.gls(f'tbl_details_subcommands_{key}', locale)}" for key in sub_commands]
@@ -412,18 +452,18 @@ class Games(commands.Cog):
     @tbl_docs.command(name="game")
     async def tbl_docs_game(self, ctx: commands.Context):
         """ Information on how TBL works """
-        return await general.send(langs.gls("tbl_details_game", langs.gl(ctx.guild, self.db)), ctx.channel)
+        return await general.send(langs.gls("tbl_details_game", langs.gl(ctx)), ctx.channel)
 
     @tbl_docs.command(name="levels")
     async def tbl_docs_levels(self, ctx: commands.Context):
         """ Information on levels """
-        return await general.send(langs.gls("tbl_details_levels", langs.gl(ctx.guild, self.db)), ctx.channel)
+        return await general.send(langs.gls("tbl_details_levels", langs.gl(ctx)), ctx.channel)
 
     @tbl_docs.command(name="totems")
     async def tbl_docs_totems(self, ctx: commands.Context):
         """ Information on totems """
-        locale = langs.gl(ctx.guild, self.db)
-        clan, _ = tbl.get_clan(ctx.guild, self.db)
+        locale = langs.gl(ctx)
+        clan, _ = tbl.get_clan(ctx.guild, self.bot.db)
         del _
         levels = json.loads(clan["temple_levels"])
         totems = tbl_data.totems
@@ -446,7 +486,7 @@ class Games(commands.Cog):
     @tbl_docs.command(name="leagues")
     async def tbl_docs_leagues(self, ctx: commands.Context):
         """ Information on TBL Leagues """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         leagues = tbl_data.leagues
         names = []
         points = []
@@ -473,7 +513,7 @@ class Games(commands.Cog):
     @tbl_docs.command(name="seasons")
     async def tbl_docs_seasons(self, ctx: commands.Context):
         """ Information on TBL Seasons """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         seasons = list(tbl_data.seasons.items())
         season_b = self.season - 2 if self.season - 2 > 0 else 0
         season_l = self.season + 8
@@ -492,7 +532,7 @@ class Games(commands.Cog):
     @tbl_docs.command(name="locations")
     async def tbl_docs_loc(self, ctx: commands.Context, location_id: int = 0):
         """ Information on TBL locations """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if location_id == 0:
             locations = tbl_data.locations
             data = []
@@ -520,7 +560,7 @@ class Games(commands.Cog):
             embed.add_field(name=langs.gls("tbl_details_locations_league", locale), value=f"**{langs.gns(p1, locale)}-{langs.gns(p2, locale)}**", inline=True)
             embed.add_field(name=langs.gls("tbl_details_locations_length", locale), inline=True,
                             value=f"**{langs.td_int(location['ll'], locale, brief=True, suffix=False)}**")
-            player, _ = tbl.get_player(ctx.author, self.db, time.now_ts())
+            player, _ = tbl.get_player(ctx.author, self.bot.db, time.now_ts())
             level = player['level']
             death_rate = location['dr'] / (1 + (level - 1) / 64)
             dr, lvl = langs.gfs(death_rate, locale, 0, True), langs.gns(level, locale)
@@ -533,13 +573,13 @@ class Games(commands.Cog):
     @tbl_docs.command(name="clans")
     async def tbl_clans(self, ctx: commands.Context):
         """ Tells more about clans """
-        return await general.send(langs.gls("tbl_details_clans", langs.gl(ctx.guild, self.db), ctx.prefix), ctx.channel)
+        return await general.send(langs.gls("tbl_details_clans", langs.gl(ctx), ctx.prefix), ctx.channel)
 
     @tbl.command(name="leaderboard", aliases=["top", "lb"])
     async def tbl_leaderboard(self, ctx: commands.Context, page: int = 0):
         """ TBL Leaderboard """
-        locale = langs.gl(ctx.guild, self.db)
-        data = self.db.fetch("SELECT * FROM tbl_player ORDER BY points DESC")
+        locale = langs.gl(ctx)
+        data = self.bot.db.fetch("SELECT * FROM tbl_player ORDER BY points DESC")
         if not data:
             return await general.send(langs.gls("leaderboards_no_data", locale), ctx.channel)
             # return await general.send("I have no data saved for this server so far.", ctx.channel)

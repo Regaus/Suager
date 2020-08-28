@@ -37,8 +37,9 @@ def get_data(guild, db, now_ts: float):
     return data, True
 
 
-async def download_ram(ctx, db):
-    locale = langs.gl(ctx.guild, db)
+async def download_ram(ctx):
+    locale = langs.gl(ctx)
+    db = ctx.bot.db
     now_ts = int(time.now_ts())
     data, wd = get_data(ctx.guild, db, now_ts)
     energy, regen_t, regen_speed = regen_energy(data["energy"], data["time"], data["level"], now_ts)
@@ -102,7 +103,7 @@ async def download_ram(ctx, db):
                 # message += f"\nCharge will be full in **{time.timedelta(int(time_req - time.now_ts()))}**"
             return await general.send(message, ctx.channel)
         except Exception as e:
-            if ctx.channel.id == 610482988123422750:
+            if ctx.channel.id == 738440590445772802:
                 await general.send(general.traceback_maker(e), ctx.channel)
             return await general.send(langs.gls("tbl_game_error", locale, type(e).__name__, str(e)), ctx.channel)
 

@@ -4,21 +4,20 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from core.utils import general, time, database
+from core.utils import general, time
 from languages import langs
 
 
 class BotInformation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="source")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def source(self, ctx: commands.Context):
         """ Source codes """
         links = "\n<https://github.com/AlexFlipnote/discord_bot.py>\n<https://github.com/AlexFlipnote/birthday.py>"
-        return await general.send(langs.gls("info_source", langs.gl(ctx.guild, self.db)) + links, ctx.channel)
+        return await general.send(langs.gls("info_source", langs.gl(ctx)) + links, ctx.channel)
         # return await general.send("There are the links you can use if you want to make your own bot\n<https://github.com/AlexFlipnote/discord_bot.py>\n"
         #                           "<https://github.com/AlexFlipnote/birthday.py>", ctx.channel)
 
@@ -26,7 +25,7 @@ class BotInformation(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def stats(self, ctx: commands.Context):
         """ Bot stats"""
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         config = self.bot.config
         local_config = self.bot.local_config
         embed = discord.Embed(colour=general.random_colour())
@@ -90,13 +89,13 @@ class BotInformation(commands.Cog):
         """ Invite me to your own server! """
         perms = 470150231
         link = f"\n<https://discordapp.com/oauth2/authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>"
-        return await general.send(langs.gls("info_invite_bot", langs.gl(ctx.guild, self.db), ctx.author.name) + link, ctx.channel)
+        return await general.send(langs.gls("info_invite_bot", langs.gl(ctx), ctx.author.name) + link, ctx.channel)
 
     @commands.command(name="botserver")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def my_server(self, ctx: commands.Context):
         """ Get an invite to my server """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if isinstance(ctx.channel, discord.DMChannel) or ctx.guild.id != self.bot.local_config["home_server_id"]:
             invite = self.bot.local_config["home_invite"]
             if invite:
@@ -123,7 +122,7 @@ class BotInformation(commands.Cog):
     async def ping(self, ctx: commands.Context):
         """ Ping Pong """
         import time as _time
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         ws = int(self.bot.latency * 1000)
         r1 = langs.gls("info_ping_1", locale, langs.gns(ws))
         # r1 = f"Message Send: undefined\nMessage Edit: undefined\nWS Latency: {ws:,}ms"

@@ -89,13 +89,22 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
     return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
 
 
-def gl(guild, db):
-    ex = db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
-    if ex and guild:
-        data = db.fetchrow("SELECT * FROM locales WHERE gid=?", (guild.id,))
+# def gl(guild, db):
+#     ex = db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
+#     if ex and guild:
+#         data = db.fetchrow("SELECT * FROM locales WHERE gid=?", (guild.id,))
+#         if data:
+#             return data["locale"]
+#     return "en_gb"
+
+
+def gl(ctx):
+    ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
+    if ex and ctx.guild is not None:
+        data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
         if data:
             return data["locale"]
-    return "en_gb"
+    return ctx.bot.local_config["default_locale"]
 
 
 def gls(string: str, locale: str = "en_gb", *values, **kw_values) -> str:

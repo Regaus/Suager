@@ -3,7 +3,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from core.utils import arg_parser, database, general, time
+from core.utils import arg_parser, general, time
 from languages import langs
 
 
@@ -18,14 +18,13 @@ def get_attr(cls, attr):
 class Discord(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="avatar")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
         user = who or ctx.author
-        return await general.send(langs.gls("discord_avatar", langs.gl(ctx.guild, self.db), user.name, user.avatar_url_as(size=1024, static_format='png')),
+        return await general.send(langs.gls("discord_avatar", langs.gl(ctx), user.name, user.avatar_url_as(size=1024, static_format='png')),
                                   ctx.channel)
 
     @commands.command(name="avatar2")
@@ -44,7 +43,7 @@ class Discord(commands.Cog):
     async def role(self, ctx: commands.Context, *, role: discord.Role = None):
         """ Information on roles in the current server """
         if ctx.invoked_subcommand is None:
-            locale = langs.gl(ctx.guild, self.db)
+            locale = langs.gl(ctx)
             if role is None:
                 all_roles = ""
                 for num, role in enumerate(sorted(ctx.guild.roles, reverse=True), start=1):
@@ -75,7 +74,7 @@ class Discord(commands.Cog):
     async def joined_at(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check when someone joined server """
         user = who or ctx.author
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         return await general.send(langs.gls("discord_joined_at", locale, user, ctx.guild.name, langs.gts(user.joined_at, locale, short=False)), ctx.channel)
         # return await general.send(f"**{user.name}** joined **{ctx.guild.name}** at **{time.time_output(user.joined_at)}**", ctx.channel)
 
@@ -84,7 +83,7 @@ class Discord(commands.Cog):
     async def created_at(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check when someone created their account """
         user = who or ctx.author
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         return await general.send(langs.gls("discord_created_at", locale, user, langs.gts(user.joined_at, locale, short=False)), ctx.channel)
 
     @commands.command(name="user")
@@ -93,7 +92,7 @@ class Discord(commands.Cog):
     async def user(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Get info about user """
         user = who or ctx.author
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = langs.gls("discord_user_about", locale, user.name)
         # embed.title = f"ℹ About user {user.name}"
@@ -158,7 +157,7 @@ class Discord(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def who_is(self, ctx: commands.Context, *, user_id: int):
         """ Get info about a user """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         try:
             user = await self.bot.fetch_user(user_id)
         except discord.NotFound as e:
@@ -175,7 +174,7 @@ class Discord(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def emoji(self, ctx: commands.Context, emoji: discord.Emoji):
         """ Information on an emoji """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         e = str(ctx.invoked_with)
         c = langs.gls(f"discord_emoji_{e}", locale)
         embed = discord.Embed(colour=general.random_colour())
@@ -192,7 +191,7 @@ class Discord(commands.Cog):
     async def server(self, ctx: commands.Context):
         """ Information about the current server """
         if ctx.invoked_subcommand is None:
-            locale = langs.gl(ctx.guild, self.db)
+            locale = langs.gl(ctx)
             bots = sum(1 for member in ctx.guild.members if member.bot)
             bots_amt = bots / ctx.guild.member_count
             embed = discord.Embed(colour=general.random_colour())
@@ -237,14 +236,14 @@ class Discord(commands.Cog):
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx: commands.Context):
         """ Get server icon """
-        return await general.send(langs.gls("discord_server_icon", langs.gl(ctx.guild, self.db), ctx.guild.name,
+        return await general.send(langs.gls("discord_server_icon", langs.gl(ctx), ctx.guild.name,
                                             ctx.guild.icon_url_as(size=1024, static_format='png')), ctx.channel)
 
     @server.command(name="banner")
     async def server_banner(self, ctx: commands.Context):
         """ Get server banner """
         link = ctx.guild.banner_url_as(size=4096, format="png")
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if link:
             return await general.send(langs.gls("discord_server_banner", locale, ctx.guild.name, link), ctx.channel)
         else:
@@ -254,7 +253,7 @@ class Discord(commands.Cog):
     async def server_invite(self, ctx: commands.Context):
         """ Get server invite splash """
         link = ctx.guild.splash_url_as(size=4096, format="png")
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if link:
             return await general.send(langs.gls("discord_server_inv_bg", locale, ctx.guild.name, link), ctx.channel)
         else:
@@ -264,7 +263,7 @@ class Discord(commands.Cog):
     async def server_bots(self, ctx: commands.Context):
         """ Bots in the server """
         bots = [a for a in ctx.guild.members if a.bot]
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         m = ''
         for i in range(len(bots)):
             m += f"[{langs.gns(i + 1, locale, 2, False)}] {bots[i]}\n"
@@ -279,10 +278,8 @@ class Discord(commands.Cog):
     @server.command(name="status")
     async def server_status(self, ctx: commands.Context):
         """ Server members' status """
-        locale = langs.gl(ctx.guild, self.db)
-        so, si, sd, sn = 0, 0, 0, 0
-        mo, mi, md, do, di, dd, wo, wi, wd = 0, 0, 0, 0, 0, 0, 0, 0, 0
-        al, ag, at, ac, an = 0, 0, 0, 0, 0
+        locale = langs.gl(ctx)
+        so, si, sd, sn, mo, mi, md, do, di, dd, wo, wi, wd, al, ag, at, ac, an = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         m = 0
         for member in ctx.guild.members:
             m += 1
@@ -348,7 +345,7 @@ class Discord(commands.Cog):
         """ Custom Role (only in Senko Lair)
         -c/--colour/--color: Set role colour
         -n/--name: Set role name """
-        data = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await general.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}", ctx.channel)
         parser = arg_parser.Arguments()
@@ -389,13 +386,13 @@ class Discord(commands.Cog):
     @commands.is_owner()
     async def grant_custom_role(self, ctx: commands.Context, user: discord.Member, role: discord.Role):
         """ Grant custom role """
-        already = self.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        already = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not already:
-            result = self.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
+            result = self.bot.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
             await user.add_roles(role, reason="Custom Role grant")
             return await general.send(f"Granted {role.name} to {user.name}: {result}", ctx.channel)
         else:
-            result = self.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
+            result = self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
             return await general.send(f"Updated custom role of {user.name} to {role.name}: {result}", ctx.channel)
 
 

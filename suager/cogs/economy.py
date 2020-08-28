@@ -4,7 +4,7 @@ import json
 import discord
 from discord.ext import commands
 
-from core.utils import database, general
+from core.utils import general
 from languages import langs
 
 default_currency = "€"
@@ -17,10 +17,9 @@ def get_ps(currency):
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     def get_currency(self, gid):
-        settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (gid,))
+        settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (gid,))
         if not settings:
             currency = default_currency
         else:
@@ -36,12 +35,12 @@ class Economy(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def balance(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check someone's balance"""
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         if user.bot:
             return await general.send(langs.gls("economy_balance_bots", locale), ctx.channel)
             # return await general.send("Bots are cheating, so I don't count their money.", ctx.channel)
-        data = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        data = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not data:
             return await general.send(langs.gls("economy_balance_none", locale, user.name), ctx.channel)
             # return await general.send(f"{user.name} doesn't seem to have any money.", ctx.channel)
@@ -55,7 +54,7 @@ class Economy(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def donate(self, ctx: commands.Context, user: discord.Member, amount: int):
         """ Give someone your money """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if amount < 0:
             return await general.send(langs.gls("economy_donate_negative", locale, ctx.author.name), ctx.channel)
             # return await general.send(f"Nice try, {ctx.author.name}", ctx.channel)
@@ -65,8 +64,8 @@ class Economy(commands.Cog):
         if user.bot:
             return await general.send(langs.gls("economy_balance_bots", locale), ctx.channel)
             # return await general.send("I don't count bots' money, so you can't give them any.", ctx.channel)
-        data1 = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        data2 = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        data1 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data2 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not data1 or data1["money"] - amount < 0:
             return await general.send(langs.gls("economy_donate_not_enough", locale, ctx.author.name), ctx.channel)
         #     return await general.send("It appears that you don't have any money to begin with...", ctx.channel)
@@ -76,11 +75,11 @@ class Economy(commands.Cog):
         money1 -= amount
         donated1 += amount
         money2 += amount
-        self.db.execute("UPDATE economy SET money=?, donated=? WHERE uid=? AND gid=?", (money1, donated1, ctx.author.id, ctx.guild.id))
+        self.bot.db.execute("UPDATE economy SET money=?, donated=? WHERE uid=? AND gid=?", (money1, donated1, ctx.author.id, ctx.guild.id))
         if data2:
-            self.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (money2, user.id, ctx.guild.id))
+            self.bot.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (money2, user.id, ctx.guild.id))
         else:
-            self.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)", (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
+            self.bot.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)", (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
         currency = self.get_currency(ctx.guild.id)
         pre, suf = get_ps(currency)
         greed = langs.gls("economy_donate_zero", locale) if amount == 0 else ""
@@ -92,7 +91,7 @@ class Economy(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def profile(self, ctx: commands.Context, who: discord.Member = None):
         """ Check someone's profile """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
@@ -105,7 +104,7 @@ class Economy(commands.Cog):
             embed.add_field(name=langs.gls("economy_profile_balance", locale), value=langs.gls("economy_profile_balance_self", locale), inline=False)
             embed.add_field(name=langs.gls("economy_profile_donated", locale), value=langs.gls("economy_profile_donated_self", locale), inline=False)
         else:
-            data = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            data = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             if not data:
                 return await general.send(langs.gls("economy_balance_none", locale, user.name), ctx.channel)
                 # return await general.send(f"{user.name} has no money...", ctx.channel)
@@ -123,13 +122,13 @@ class Economy(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.user)
     async def buy_something(self, ctx: commands.Context, *, role: discord.Role):
         """ Buy a role from the shop """
-        locale = langs.gl(ctx.guild, self.db)
-        settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not settings:
             return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
             # return await general.send("This server doesn't sell anything", ctx.channel)
         data = json.loads(settings["data"])
-        user = self.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        user = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not user:
             return await general.send(langs.gls("economy_buy_no_money", locale), ctx.channel)
             # return await general.send("You don't seem to have any money to begin with.", ctx.channel)
@@ -168,7 +167,7 @@ class Economy(commands.Cog):
                 return await confirm_msg.edit(content=langs.gls("generic_timeout", locale, confirm_msg.clean_content))
             await ctx.author.add_roles(role, reason="Bought role")
             user["money"] -= _role["cost"]
-            self.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (user["money"], ctx.author.id, ctx.guild.id))
+            self.bot.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (user["money"], ctx.author.id, ctx.guild.id))
             return await general.send(langs.gls("economy_buy", locale, ctx.author.name, role.name, pre, cost, suf), ctx.channel)
             # return await general.send(f"{ctx.author.name} just bought the role {role.name} for {_role['cost']}{currency}", ctx.channel)
         except KeyError:
@@ -183,8 +182,8 @@ class Economy(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def item_shop(self, ctx: commands.Context):
         """ Item shop """
-        locale = langs.gl(ctx.guild, self.db)
-        settings = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not settings:
             return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
             # return await general.send("This server doesn't sell anything", ctx.channel)
@@ -215,8 +214,8 @@ class Economy(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def money_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's money Leaderboard """
-        locale = langs.gl(ctx.guild, self.db)
-        data = self.db.fetch("SELECT * FROM economy WHERE gid=? AND money!=0 AND disc!=0 ORDER BY money DESC", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        data = self.bot.db.fetch("SELECT * FROM economy WHERE gid=? AND money!=0 AND disc!=0 ORDER BY money DESC", (ctx.guild.id,))
         if not data:
             return await general.send(langs.gls("leaderboards_no_data", locale), ctx.channel)
             # return await general.send("I have no data saved for this server so far.", ctx.channel)

@@ -44,8 +44,9 @@ def get_clan(guild, db):
     return clan, True
 
 
-async def tbl_game(ctx, db):
-    locale = langs.gl(ctx.guild, db)
+async def tbl_game(ctx):
+    locale = langs.gl(ctx)
+    db = ctx.bot.db
     now_ts = time.now_ts()
     player, wp = get_player(ctx.author, db, now_ts)
     clan, wc = get_clan(ctx.guild, db)
@@ -222,7 +223,7 @@ async def tbl_game(ctx, db):
         #                f"stats or `{ctx.prefix}tbl clan` for the clan stats. Use `{ctx.prefix}tbl details` for details on things"
         return await message.edit(content=message_data)
     except Exception as e:
-        if ctx.channel.id == 610482988123422750:
+        if ctx.channel.id == 738440590445772802:
             await general.send(general.traceback_maker(e), ctx.channel)
         return await general.send(langs.gls("tbl_game_error", locale, type(e).__name__, str(e)), ctx.channel)
         # return await general.send(f"An error has occurred.\n`{type(e).__name__}: {e}`\nData was reverted.", ctx.channel)

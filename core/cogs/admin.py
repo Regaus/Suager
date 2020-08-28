@@ -37,7 +37,7 @@ async def eval_(ctx: commands.Context, cmd):
         parsed = ast.parse(body)
         body = parsed.body[0].body
         insert_returns(body)
-        env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': database.Database(ctx.bot.name), '__import__': __import__}
+        env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': ctx.bot.db, '__import__': __import__}
         exec(compile(parsed, filename="<ast>", mode="exec"), env)
         result = (await eval(f"{fn_name}()", env))
         if ctx.guild is None:
@@ -109,21 +109,20 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = general.get_config()
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="amiowner", aliases=["amiadmin"])
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def are_you_owner(self, ctx: commands.Context):
         """ Do you own the bot? """
         out = "admin_owner_yes" if ctx.author.id in self.config["owners"] else "admin_owner_no"
-        return await general.send(langs.gls(out, langs.gl(ctx.guild, self.db), ctx.author.name), ctx.channel)
+        return await general.send(langs.gls(out, langs.gl(ctx), ctx.author.name), ctx.channel)
 
     @commands.command(name="db")
     @commands.check(permissions.is_owner)
     async def db_command(self, ctx: commands.Context, *, query: str):
         """ Database query """
         try:
-            data = self.db.execute(query)
+            data = self.bot.db.execute(query)
             return await general.send(data, ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
@@ -133,7 +132,7 @@ class Admin(commands.Cog):
     async def db_fetch(self, ctx: commands.Context, *, query: str):
         """ Fetch data from db """
         try:
-            data = self.db.fetch("SELECT " + query)
+            data = self.bot.db.fetch("SELECT " + query)
             result = f"{data}"
             if ctx.guild is None:
                 limit = 8000000

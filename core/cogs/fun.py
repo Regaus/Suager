@@ -4,20 +4,19 @@ import random
 import discord
 from discord.ext import commands
 
-from core.utils import general, emotes, lists, time, permissions, database
+from core.utils import emotes, general, lists, permissions, time
 from languages import langs
 
 
 class Entertainment(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="vote", aliases=["petition"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def vote(self, ctx: commands.Context, *, question: str):
         """ Start a vote """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         message = await general.send(langs.gls("fun_vote", locale, ctx.author.name, langs.gls(f"fun_vote_{str(ctx.invoked_with).lower()}", locale), question),
                                      ctx.channel)
         # message = await general.send(f"{ctx.author.name} starts a {ctx.invoked_with}: ```fix\n{question}```", ctx.channel)
@@ -41,7 +40,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def vibe_check(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your vibe """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         message = await general.send(langs.gls("fun_vibe_begin", locale, user.name), ctx.channel)
         # message = await general.send(f"{emotes.Loading} Checking {user.name}'s vibe...", ctx.channel)
@@ -54,7 +53,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def flip_a_coin(self, ctx: commands.Context):
         """ Flip a coin """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         return await general.send(langs.gls("fun_coin_main", locale, langs.gls(f"fun_coin_{random.choice(['heads', 'tails'])}", locale)), ctx.channel)
         # return await general.send(f"The coin landed on: **{random.choice(['Heads', 'Tails'])}**", ctx.channel)
 
@@ -63,7 +62,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def beer(self, ctx: commands.Context, user: discord.Member = None, *, reason: str = ""):
         """ Give someone a beer! 🍻 """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if not user or user.id == ctx.author.id:
             async with ctx.typing():
                 # return await general.send(f"{ctx.author.name} is partying alone...",
@@ -106,7 +105,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def eight_ball(self, ctx: commands.Context, *, question: commands.clean_content):
         """ Consult the 8-Ball """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         return await general.send(langs.gls("fun_8ball", locale, ctx.author.name, question, random.choice(langs.get_data("fun_8ball_responses", locale))),
                                   ctx.channel)
         # return await general.send(f"**Question:** {question}\n**Answer:** {random.choice(lists.ball_response)}", ctx.channel)
@@ -115,7 +114,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def roll(self, ctx: commands.Context, num1: int = 6, num2: int = 1):
         """ Rolls a number between given range """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if num1 > num2:
             v1, v2 = [num2, num1]
         else:
@@ -129,7 +128,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def pay_respects(self, ctx: commands.Context, *, text: str = None):
         """ Press F to pay respects """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         heart = random.choice(lists.hearts)
         return await general.send(langs.gls("fun_f_none" if text is None else "fun_f_text", locale, ctx.author.name, heart, text), ctx.channel)
         # if text is None:
@@ -141,7 +140,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def quote(self, ctx: commands.Context, user: discord.User, *, text: str):
         """ Make a very true quote """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         embed = discord.Embed(colour=random.randint(0, 0xffffff))
         embed.set_thumbnail(url=user.avatar_url)
         embed.title = langs.gls("fun_quote_begin", locale, user)
@@ -186,7 +185,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tell(self, ctx: commands.Context, channel: discord.TextChannel, *, message: str):
         """ Say something to a channel """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         try:
             await ctx.message.delete()
         except Exception as e:
@@ -223,7 +222,7 @@ class Entertainment(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def say(self, ctx: commands.Context, *, message: str):
         """ Make me speak! """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         try:
             await ctx.message.delete()
         except Exception as e:

@@ -3,20 +3,19 @@ import random
 import discord
 from discord.ext import commands
 
-from core.utils import general, emotes, database
+from core.utils import emotes, general
 from languages import langs
 
 
 class Ratings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="pickle")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def pickle_size(self, ctx, *, who: discord.User = None):
         """ Measure someone's pickle """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         random.seed(user.id)
         _result = random.uniform(10, 30)
@@ -33,7 +32,7 @@ class Ratings(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rate(self, ctx: commands.Context, *, what: str):
         """ Rate something """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         random.seed(what.lower())
         _pl = langs.get_data("_pl", locale)
         _max = int(_pl[2])
@@ -48,7 +47,7 @@ class Ratings(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rate_user(self, ctx: commands.Context, *, who: discord.User = None):
         """ Rate someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         who = who or ctx.author
         random.seed(who.id)
         _pl = langs.get_data("_pl", locale)
@@ -68,7 +67,7 @@ class Ratings(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def baby_rate(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
         """ Chance of 2 users having a baby """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user1 == user2:
             return await general.send(langs.gls("ratings_baby_rate_self", locale), ctx.channel)
             # return await general.send("I don't think that's how it works...", ctx.channel)
@@ -91,7 +90,7 @@ class Ratings(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def love_calc(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
         """ Calculate the amount of love between 2 users """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user1 == user2:
             return await general.send(langs.gls("ratings_baby_rate_self", locale), ctx.channel)
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
@@ -112,7 +111,7 @@ class Ratings(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def hotness(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check how hot someone is """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         random.seed(user.id - 1)
         # step1 = random.uniform(0, 100)
@@ -131,7 +130,7 @@ class Ratings(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def iq_test(self, ctx: commands.Context, *, who: discord.User = None):
         """ Check Someone's IQ """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         # if user.bot:
         #     return await general.send(f"**{user.name}**'s IQ is **undefined**. We bots don't measure our intelligence. We don't care.", ctx.channel)

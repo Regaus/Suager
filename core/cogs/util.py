@@ -7,20 +7,19 @@ import discord
 import pytz
 from discord.ext import commands
 
-from core.utils import database, time, general, bases, http
+from core.utils import bases, general, http, time
 from languages import langs
 
 
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="time")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def current_time(self, ctx: commands.Context):
         """ Current time """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         send = ""
         if ctx.guild.id == 568148147457490954:
             send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
@@ -28,7 +27,7 @@ class Utility(commands.Cog):
         send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"
         # send = f"Senko Lair: **{time.time_k(tz=True)}**\n" if self.bot.name == "suager" else ""
         # send += f"Bot Time: **{time.time(self.bot.local_config['timezone'], _tz=True)}**\nUTC/GMT: **{time.time(None, _tz=True)}**"
-        data = self.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+        data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
         if data:
             _tzn = data["tz"]
             _tzl = len(_tzn)
@@ -70,12 +69,12 @@ class Utility(commands.Cog):
     async def set_timezone(self, ctx: commands.Context, tz: str):
         """ Set your timezone """
         try:
-            data = self.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+            data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             _tz = pytz.timezone(tz)
             if data:
-                self.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
+                self.bot.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
             else:
-                self.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
+                self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
             return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
         except pytz.exceptions.UnknownTimeZoneError:
             file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
@@ -85,7 +84,7 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Time difference """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         try:
             now = time.now(None)
             date = datetime(now.year, 1, 1)
@@ -113,7 +112,7 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def weather(self, ctx: commands.Context, *, place: str):
         """ Check weather in a place """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         lang = "en" if locale.startswith("rsl") else locale.split("_")[0]
         try:
             token = self.bot.config["weather_api_token"]
@@ -208,7 +207,7 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def colour(self, ctx: commands.Context, colour: str):
         """ Information on a colour """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         async with ctx.typing():
             # c = str(ctx.invoked_with)
             if colour.lower() == "random":

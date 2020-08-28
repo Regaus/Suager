@@ -14,7 +14,7 @@ changes = {"playing": 3601, "avatar": [25, -1], "ad": False}
 
 
 async def on_command_error(self, ctx, err):
-    locale = langs.gl(ctx.guild, self.db)
+    locale = langs.gl(ctx)
     if isinstance(err, commands.errors.MissingRequiredArgument) or isinstance(err, commands.errors.BadArgument):
         helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
         await ctx.send_help(helper)

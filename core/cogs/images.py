@@ -3,10 +3,10 @@ import urllib.parse
 from io import BytesIO
 
 import discord
-from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
 
-from core.utils import http, general, arg_parser, database
+from core.utils import arg_parser, general, http
 from languages import langs
 
 
@@ -40,7 +40,6 @@ async def vac_api(ctx: commands.Context, link, filename=None, content=None):
 class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -79,7 +78,7 @@ class Images(commands.Cog):
         if _filter == "random":
             _filter = random.choice(filters)
         elif _filter not in filters or _filter == "help":
-            return await general.send(langs.gls("images_filter_filters", langs.gl(ctx.guild, self.db), "`, `".join(filters)), ctx.channel)
+            return await general.send(langs.gls("images_filter_filters", langs.gl(ctx), "`, `".join(filters)), ctx.channel)
             # return await general.send(f"The allowed filter names are:\n`{'`, `'.join(filters)}`", ctx.channel)
         return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
@@ -128,7 +127,7 @@ class Images(commands.Cog):
             --dark | Make the background dark
             --light | Make background light
         """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         parser = arg_parser.Arguments()
         parser.add_argument('input', nargs="+", default=None)
         parser.add_argument('-d', '--dark', action='store_true')
@@ -228,7 +227,7 @@ class Images(commands.Cog):
         _text = str(text)
         _split = _text.split(" | ", 1)
         if len(_split) != 2:
-            return await general.send(langs.gls("images_npc_split", langs.gl(ctx.guild, self.db)), ctx.channel)
+            return await general.send(langs.gls("images_npc_split", langs.gl(ctx)), ctx.channel)
         t1, t2 = _split
         return await vac_api(ctx, f"npc?text1={urllib.parse.quote(t1)}&text2={urllib.parse.quote(t2)}")
 

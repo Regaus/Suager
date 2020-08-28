@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ext.tasks import loop
 
-from core.utils import events, time, database, general
+from core.utils import events, general, time
 
 
 class Events(commands.Cog):
@@ -10,7 +10,6 @@ class Events(commands.Cog):
         self.bot = bot
         self.changes = f"data/{self.bot.name}/changes.json"
         self.config = self.bot.config
-        self.db = database.Database(self.bot.name)
         self.exists = False
         self.local_config = self.bot.local_config
         self.playing.start()

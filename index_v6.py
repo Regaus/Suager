@@ -20,9 +20,9 @@ tasks = []
 async def get_prefix(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    db = database.Database(_bot.name)
+    # db = database.Database(_bot.name)
     try:
-        settings = db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        settings = _bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if settings:
             data = json.loads(settings['data'])
             if data["use_default"]:
@@ -55,6 +55,9 @@ for i in range(len(config["bots"])):
     bot.local_config = local_config
     bot.config = config
     bot.name = local_config["internal_name"]
+    bot.db = database.Database(bot.name)
+    if bot.name == "suager":
+        bot.db.execute("UPDATE tbl_clan SET usage=0")
     try:
         for file in os.listdir(os.path.join(_name, "cogs")):
             if file.endswith(".py"):

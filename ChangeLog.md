@@ -299,3 +299,8 @@
 ## v6.0.8 - 25 August
 - Made plurals work better in English
 - Fixed a bug which broke the //user command when they had above 15 roles
+
+## v6.1.0 - 28 August
+- Added Aqos
+- Improved language support
+- Updated social cooldowns

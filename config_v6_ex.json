@@ -10,17 +10,18 @@
         "s/",
         "S/"
       ],
-      "short_version": "6.0",
-      "version": "6.0.7",
-      "last_update": 1598303698,
+      "short_version": "6.1",
+      "version": "6.1",
+      "last_update": 1598577623,
       "first_version": 1557781320,
-      "major_release": 1597500778,
+      "major_release": 1598577623,
       "logs": true,
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],
-      "home_server_id": 568148147457490954,
+      "home_server_id": 738425418637639775,
       "home_invite": "",
-      "error_channel": 691442857537568789
+      "error_channel": 738442483591151638,
+      "default_locale": "en_gb"
     }
   ],
   "owner_prefixes": [

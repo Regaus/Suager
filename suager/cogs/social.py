@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from core.cogs.images import image_gen
-from core.utils import database, general, http, emotes
+from core.utils import emotes, general, http
 from languages import langs
 from suager.utils import lists
 
@@ -36,7 +36,6 @@ class Social(commands.Cog):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
             self.poke, self.boop = [lists.error] * 15
-        self.db = database.Database(self.bot.name)
         self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 13}?)"
         self.empty = [0] * 14
         # self.names = ["Redacted", "Social interaction", "Edit this text", "Statuses", "Foods"]
@@ -66,19 +65,19 @@ class Social(commands.Cog):
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
         """ Update database - interactions """
-        data_giver = self.db.fetchrow("SELECT * FROM counters_new WHERE uid1=? AND uid2=?", (uid_give, uid_receive))
-        data_receive = self.db.fetchrow("SELECT * FROM counters_new WHERE uid1=? AND uid2=?", (uid_receive, uid_give))
+        data_giver = self.bot.db.fetchrow("SELECT * FROM counters_new WHERE uid1=? AND uid2=?", (uid_give, uid_receive))
+        data_receive = self.bot.db.fetchrow("SELECT * FROM counters_new WHERE uid1=? AND uid2=?", (uid_receive, uid_give))
         if not data_giver:
             data = self.empty.copy()
             data[0] = uid_give
             data[1] = uid_receive
             data[ind] = 1
-            self.db.execute(self.insert, tuple(data))
+            self.bot.db.execute(self.insert, tuple(data))
             number1 = 1
         else:
             n = data_giver[key]
             nu = 1 if n is None else n + 1
-            self.db.execute(f"UPDATE counters_new SET {key}=? WHERE uid1=? AND uid2=?", (nu, uid_give, uid_receive))
+            self.bot.db.execute(f"UPDATE counters_new SET {key}=? WHERE uid1=? AND uid2=?", (nu, uid_give, uid_receive))
             n2 = data_giver[key]
             number1 = 1 if n2 is None else n2 + 1
         if not data_receive:
@@ -126,10 +125,10 @@ class Social(commands.Cog):
 
     @commands.command(name="pat", aliases=["pet"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def pat(self, ctx: commands.Context, user: discord.Member):
         """ Pat someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.pat):
             self.pat = await lists.get_images(self.bot, 'p')
         if ctx.author == user:
@@ -150,10 +149,10 @@ class Social(commands.Cog):
 
     @commands.command(name="hug")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def hug(self, ctx: commands.Context, user: discord.Member):
         """ Hug someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.hug):
             self.hug = await lists.get_images(self.bot, 'h')
         if ctx.author == user:
@@ -175,10 +174,10 @@ class Social(commands.Cog):
 
     @commands.command(name="cuddle")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cuddle(self, ctx: commands.Context, user: discord.Member):
         """ Cuddle someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.cuddle):
             self.cuddle = await lists.get_images(self.bot, 'c')
         if ctx.author == user:
@@ -200,10 +199,10 @@ class Social(commands.Cog):
 
     @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """ Lick someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.lick):
             self.lick = await lists.get_images(self.bot, 'l')
         if ctx.author == user:
@@ -229,10 +228,10 @@ class Social(commands.Cog):
 
     @commands.command(name="kiss", aliases=["kith", "kish"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def kiss(self, ctx: commands.Context, user: discord.Member):
         """ Kiss someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.kiss):
             self.kiss = await lists.get_images(self.bot, 'k')
         if ctx.author == user:
@@ -254,10 +253,10 @@ class Social(commands.Cog):
 
     @commands.command(name="bite")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bite(self, ctx: commands.Context, user: discord.Member):
         """ Bite someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.bite):
             self.bite = await lists.get_images(self.bot, 'b')
         if ctx.author == user:
@@ -283,10 +282,10 @@ class Social(commands.Cog):
 
     @commands.command(name="slap")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def slap(self, ctx: commands.Context, user: discord.Member):
         """ Slap someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if ctx.author == user:
             return await general.send(langs.gls("social_slap_self", locale), ctx.channel)
             # return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
@@ -312,10 +311,10 @@ class Social(commands.Cog):
 
     @commands.command(name="sniff")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def smell(self, ctx: commands.Context, user: discord.Member):
         """ Sniff someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.smell):
             self.smell = await lists.get_images(self.bot, 'n')
         if ctx.author == user:
@@ -341,10 +340,10 @@ class Social(commands.Cog):
 
     @commands.command(name="highfive")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def highfive(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a high five """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.highfive):
             self.highfive = await lists.get_images(self.bot, 'i')
         if ctx.author == user:
@@ -367,10 +366,10 @@ class Social(commands.Cog):
 
     @commands.command(name="poke")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def poke(self, ctx: commands.Context, user: discord.Member):
         """ Poke someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.poke):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
@@ -393,10 +392,10 @@ class Social(commands.Cog):
 
     @commands.command(name="boop", aliases=["bap"])
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def boop(self, ctx: commands.Context, user: discord.Member):
         """ Why is this a thing? """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.boop):
             self.boop = await lists.get_images(self.bot, 'B')
         if ctx.author == user:
@@ -419,10 +418,10 @@ class Social(commands.Cog):
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def fuck(self, ctx, user: discord.Member):
         """ Bang someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if not ctx.channel.is_nsfw():
             return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
             # return await general.send("This command can only be used in **NSFW channels**.", ctx.channel)
@@ -457,10 +456,10 @@ class Social(commands.Cog):
 
     @commands.command(name="ship")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def ship(self, ctx: commands.Context, user1: discord.Member, user2: discord.Member):
         """ Build a ship """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         pr = False
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             if user1.id != 302851022790066185 and user2.id != 302851022790066185:
@@ -523,10 +522,10 @@ class Social(commands.Cog):
 
     @commands.command(name="sleepy")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def sleepy(self, ctx):
         """ You're sleepy """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.sleepy):
             self.sleepy = await lists.get_images(self.bot, 's')
         embed = discord.Embed(colour=general.random_colour())
@@ -538,10 +537,10 @@ class Social(commands.Cog):
 
     @commands.command(name="cry")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def cry(self, ctx):
         """ You're crying """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.cry):
             self.cry = await lists.get_images(self.bot, 'r')
         embed = discord.Embed(colour=general.random_colour())
@@ -553,10 +552,10 @@ class Social(commands.Cog):
 
     @commands.command(name="blush")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def blush(self, ctx):
         """ You blush """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.blush):
             self.blush = await lists.get_images(self.bot, 'u')
         embed = discord.Embed(colour=general.random_colour())
@@ -568,10 +567,10 @@ class Social(commands.Cog):
 
     @commands.command(name="smile")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def smile(self, ctx):
         """ You're smiling """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if is_fucked(self.smile):
             self.smile = await lists.get_images(self.bot, 'm')
         embed = discord.Embed(colour=general.random_colour())
@@ -583,10 +582,10 @@ class Social(commands.Cog):
 
     @commands.command(name="bean")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bean(self, ctx: commands.Context, user: discord.Member):
         """ Bean someone """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.id == 302851022790066185:
@@ -606,10 +605,10 @@ class Social(commands.Cog):
 
     @commands.command(name="bad")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bad(self, ctx: commands.Context, user: discord.Member):
         """ Bad user """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         bad_self = False
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
@@ -630,10 +629,10 @@ class Social(commands.Cog):
 
     @commands.command(name="trash")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def trash(self, ctx, user: discord.Member):
         """ Show someone their home """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         # trash_self = False
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
@@ -656,10 +655,10 @@ class Social(commands.Cog):
 
     @commands.command(name="cookie")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cookie(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a cookie """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
@@ -671,10 +670,10 @@ class Social(commands.Cog):
 
     @commands.command(name="lemon")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lemon(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a lemon """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
@@ -686,10 +685,10 @@ class Social(commands.Cog):
 
     @commands.command(name="carrot")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def carrot(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a carrot """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
@@ -701,10 +700,10 @@ class Social(commands.Cog):
 
     @commands.command(name="fruit")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def fruit_snacks(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a fruit """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:

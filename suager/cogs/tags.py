@@ -3,14 +3,13 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from core.utils import general, database, time, permissions
+from core.utils import general, permissions, time
 from languages import langs
 
 
 class Tags(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.db = database.Database(self.bot.name)
 
     @commands.group(name="tag", aliases=["tags", "t"], invoke_without_command=True)
     @commands.guild_only()
@@ -18,25 +17,25 @@ class Tags(commands.Cog):
     async def tags(self, ctx: commands.Context, *, tag_name: str):
         """ Tags """
         if ctx.invoked_subcommand is None:
-            tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+            tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
             if tag:
-                self.db.execute("UPDATE tags SET usage=usage+1 WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+                self.bot.db.execute("UPDATE tags SET usage=usage+1 WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
                 return await general.send(tag["content"], ctx.channel)
             else:
-                locale = langs.gl(ctx.guild, self.db)
+                locale = langs.gl(ctx)
                 return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
                 # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
 
     @tags.command(name="create")
     async def create_tag(self, ctx: commands.Context, tag_name: str, *, content: str):
         """ Create a new tag """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if tag:
             return await general.send(langs.gls("tags_create_already", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"Tag `{tag_name.lower()}` already exists", ctx.channel)
-        self.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                         (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0))
+        self.bot.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                             (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0))
         return await general.send(langs.gls("tags_create_success", locale, tag_name.lower(), ctx.author.name), ctx.channel)
         # return await general.send(f"Your tag `{tag_name.lower()}` has been successfully created, {ctx.author.name}.", ctx.channel)
 
@@ -55,8 +54,8 @@ class Tags(commands.Cog):
     @tags.command(name="info")
     async def tag_info(self, ctx: commands.Context, *, tag_name: str):
         """ See info about a tag """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if not tag:
             return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
@@ -78,8 +77,8 @@ class Tags(commands.Cog):
     @tags.command(name="delete", aliases=["del"])
     async def delete_tag(self, ctx: commands.Context, *, tag_name: str):
         """ Delete a tag """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if not tag:
             return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
@@ -98,7 +97,7 @@ class Tags(commands.Cog):
             except asyncio.TimeoutError:
                 # content = "Okay then, nothing will be deleted..."
                 return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
-            self.db.execute("DELETE FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag['name']))
+            self.bot.db.execute("DELETE FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag['name']))
             return await general.send(langs.gls("tags_delete_success", locale, tag["name"]), ctx.channel)
             # return await general.send(f"The tag `{tag['name']}` has been successfully deleted.", ctx.channel)
         else:
@@ -108,8 +107,8 @@ class Tags(commands.Cog):
     @tags.command(name="edit")
     async def edit_tag(self, ctx: commands.Context, tag_name: str, *, new_content: str):
         """ Edit a tag """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if not tag:
             return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
@@ -117,19 +116,19 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_edit_deny", locale), ctx.channel)
             # return await general.send("You can't edit a tag you don't own", ctx.channel)
         else:
-            self.db.execute("UPDATE tags SET content=?, edited=? WHERE gid=? AND name=?", (new_content, int(time.now_ts()), ctx.guild.id, tag_name.lower()))
+            self.bot.db.execute("UPDATE tags SET content=?, edited=? WHERE gid=? AND name=?", (new_content, int(time.now_ts()), ctx.guild.id, tag_name.lower()))
             return await general.send(langs.gls("tags_edit_success", locale, tag["name"]), ctx.channel)
             # return await general.send(f"The tag `{tag['name']}` has been successfully edited.", ctx.channel)
 
     @tags.command(name="rename")
     async def rename_tag(self, ctx: commands.Context, tag_name: str, *, new_name: str):
         """ Rename a tag """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if not tag:
             return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
-        _tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, new_name.lower()))
+        _tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, new_name.lower()))
         if _tag:
             return await general.send(langs.gls("tags_rename_already", locale, new_name.lower()), ctx.channel)
             # return await general.send(f"There is already a tag named `{tag_name.lower()}`", ctx.channel)
@@ -137,15 +136,15 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_rename_deny", locale), ctx.channel)
             # return await general.send("You can't rename a tag you don't own", ctx.channel)
         else:
-            self.db.execute("UPDATE tags SET name=?, edited=? WHERE gid=? AND name=?", (new_name.lower(), int(time.now_ts()), ctx.guild.id, tag['name']))
+            self.bot.db.execute("UPDATE tags SET name=?, edited=? WHERE gid=? AND name=?", (new_name.lower(), int(time.now_ts()), ctx.guild.id, tag['name']))
             return await general.send(langs.gls("tags_rename_success", locale, tag["name"], new_name.lower()), ctx.channel)
             # return await general.send(f"The tag `{tag['name']}` has been successfully renamed to `{new_name.lower()}`.", ctx.channel)
 
     @tags.command(name="transfer")
     async def transfer_tag(self, ctx: commands.Context, tag_name: str, *, user: discord.Member):
         """ Transfer your tag to someone else """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if not tag:
             return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
@@ -153,15 +152,15 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_transfer_deny", locale), ctx.channel)
             # return await general.send(f"{ctx.author.name}, you can't transfer a tag you don't own", ctx.channel)
         else:
-            self.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (user.id, ctx.guild.id, tag_name.lower()))
+            self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (user.id, ctx.guild.id, tag_name.lower()))
             return await general.send(langs.gls("tags_transfer_success", locale, tag["name"], user), ctx.channel)
             # return await general.send(f"The tag `{tag['name']}` has now been transferred to {user}.", ctx.channel)
 
     @tags.command(name="claim")
     async def claim_tag(self, ctx: commands.Context, *, tag_name: str):
         """ Claim a tag of a user who left the server """
-        locale = langs.gl(ctx.guild, self.db)
-        tag = self.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        locale = langs.gl(ctx)
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
         if not tag:
             return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
             # return await general.send(f"There is no tag named `{tag_name.lower()}`", ctx.channel)
@@ -172,16 +171,16 @@ class Tags(commands.Cog):
             return await general.send(langs.gls("tags_claim_server", locale), ctx.channel)
             # return await general.send(f"{ctx.author.name}, this tag belongs to a user who's still in this server.", ctx.channel)
         else:
-            self.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (ctx.author.id, ctx.guild.id, tag["name"]))
+            self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (ctx.author.id, ctx.guild.id, tag["name"]))
             return await general.send(langs.gls("tags_claim_success", locale, ctx.author.name, tag["name"]), ctx.channel)
             # return await general.send(f"{ctx.author.name}, you now own the tag `{tag['name']}`", ctx.channel)
 
     @tags.command(name="user")
     async def tags_user(self, ctx: commands.Context, who: discord.Member = None, page: int = 1):
         """ See someone's tags """
-        locale = langs.gl(ctx.guild, self.db)
+        locale = langs.gl(ctx)
         user = who or ctx.author
-        tags = self.db.fetch("SELECT * FROM tags WHERE owner=? AND gid=? ORDER BY name", (user.id, ctx.guild.id))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE owner=? AND gid=? ORDER BY name", (user.id, ctx.guild.id))
         if not tags:
             return await general.send(langs.gls("tags_user_none", locale, user.name), ctx.channel)
             # return await general.send(f"{user.name} has no tags so far.", ctx.channel)
@@ -194,8 +193,8 @@ class Tags(commands.Cog):
     @tags.command(name="all")
     async def tags_all(self, ctx: commands.Context, page: int = 1):
         """ See all tags sorted alphabetically """
-        locale = langs.gl(ctx.guild, self.db)
-        tags = self.db.fetch("SELECT * FROM tags WHERE gid=? ORDER BY name", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? ORDER BY name", (ctx.guild.id,))
         if not tags:
             return await general.send(langs.gls("tags_list_none", locale, ctx.guild.name), ctx.channel)
             # return await general.send(f"There are no tags in {ctx.guild.name} so far.", ctx.channel)
@@ -209,8 +208,8 @@ class Tags(commands.Cog):
     @tags.command(name="top")
     async def tags_top(self, ctx: commands.Context, page: int = 1):
         """ See all tags sorted by usage """
-        locale = langs.gl(ctx.guild, self.db)
-        tags = self.db.fetch("SELECT * FROM tags WHERE gid=? ORDER BY usage DESC", (ctx.guild.id,))
+        locale = langs.gl(ctx)
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? ORDER BY usage DESC", (ctx.guild.id,))
         if not tags:
             return await general.send(langs.gls("tags_list_none", locale, ctx.guild.name), ctx.channel)
             # return await general.send(f"There are no tags in {ctx.guild.name} so far.", ctx.channel)
