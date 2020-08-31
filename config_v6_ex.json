@@ -11,10 +11,10 @@
         "S/"
       ],
       "short_version": "6.1",
-      "version": "6.1",
-      "last_update": 1598577623,
+      "version": "6.1.1",
+      "last_update": 1598905278,
       "first_version": 1557781320,
-      "major_release": 1598577623,
+      "major_release": 1597500778,
       "logs": true,
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],

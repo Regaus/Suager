@@ -86,6 +86,9 @@ async def on_member_join(self, member: discord.Member):
     if self.bot.name == "suager":
         if member.guild.id == 568148147457490954:
             await general.send(f"Welcome {member.name} to Senko Lair!", self.bot.get_channel(610836120321785869))
+    if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
+        if member.name[0] < "A":
+            await member.edit(reason="De-hoist", nick=f"z{member.name}")
 
 
 async def on_member_remove(self, member: discord.Member):

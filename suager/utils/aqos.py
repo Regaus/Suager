@@ -288,6 +288,7 @@ async def aqos_game(ctx):
                 if user["level"] % 6 in [0, 4]:
                     user["score"] += int(round(knowledge.level_score ** 0.7 * knowledge.br_length, -2))
                     user["energy"] -= knowledge.br_length
+                    _runs += knowledge.br_length
                 user["level_progress"] -= user["level_length"]
                 knowledge = Temple(user["level"], user["xp_level"], user["score"], locale)
                 l1, l2 = knowledge.level_length

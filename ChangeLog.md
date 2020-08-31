@@ -304,3 +304,6 @@
 - Added Aqos
 - Improved language support
 - Updated social cooldowns
+
+## v6.1.1 - 31 August
+- De-hoisting for SL
