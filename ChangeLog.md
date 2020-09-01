@@ -307,3 +307,9 @@
 
 ## v6.1.1 - 31 August
 - De-hoisting for SL
+
+## v6.1.2 - 1 September
+- Fixed a bug breaking leveling down
+- Fixed a bug breaking leave server event
+- Fixed a bug breaking TBL season update
+- Fixed a bug that sometimes prevented update messages from sending

@@ -28,7 +28,7 @@ class Games(commands.Cog):
                 top_5 = ""
                 emotes = ["🥇", "🥈", "🥉", "🏆", "🏆"]
                 prize = [50, 30, 20, 10, 5]
-                prizes = [langs.plural(i, "coin") for i in prize]
+                prizes = [langs.plural(i, "tbl_coins") for i in prize]
                 for place, user in enumerate(old_points[:5], start=1):
                     emote = emotes[place - 1]
                     top_5 += f"\n{emote} **#{place}: {user['name']}** at **{user['points']:,} Points** - Prize: **{prizes[place - 1]}**"

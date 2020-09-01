@@ -195,7 +195,7 @@ class Leveling(commands.Cog):
                 # send = f"{ctx.author.mention} is now **level {level:,}** {emotes.UmmOK}"
                 try:
                     send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(ctx)))
+                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
                 except KeyError:
                     send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.UmmOK}"
                 try:

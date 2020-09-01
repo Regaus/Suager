@@ -8,6 +8,7 @@ from core.utils import events, general, time
 class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.db = self.bot.db
         self.changes = f"data/{self.bot.name}/changes.json"
         self.config = self.bot.config
         self.exists = False
@@ -88,6 +89,8 @@ class Events(commands.Cog):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(None)
         self.exists = True
+        self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340]]
+        self.blocked_logs = self.bot.get_channel(739183533792297164)
         return await events.on_ready(self)
 
     @loop(minutes=1)
