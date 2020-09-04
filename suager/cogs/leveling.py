@@ -130,7 +130,11 @@ class Leveling(commands.Cog):
             mult = (td - 5) / 55
         else:
             mult = 1
+        if _td > 60:
+            mult = 1
+        full = mult == 1
         dc = mult == 0  # didn't count
+        # await ctx.channel.send(f"Last TD {td:.2f}\nMinute TD {_td:.2f}\nMultiplier {mult:.2f}")
         x1, x2 = xp_amounts
         x3, x4 = money_amounts
         try:
@@ -245,10 +249,12 @@ class Leveling(commands.Cog):
                 await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.", ctx.channel)
             except Exception as e:
                 print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
-        _last = last if dc else now
+        # _last = last if dc else now
+        last_send = last if dc else now
+        minute = now if full else ls
         if data:
             self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
-                                (level, xp, _last, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+                                (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
         else:
             self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))

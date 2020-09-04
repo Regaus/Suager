@@ -321,3 +321,6 @@
 
 ## v6.1.2.2 - 4 September
 - Hopefully fixed image gen not working from ImportError if a package is not supported
+
+## v6.1.3 - 4 September
+- Updated the leveling system
