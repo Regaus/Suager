@@ -142,6 +142,7 @@ class Leveling(commands.Cog):
         except KeyError:
             sm = 1
         c = 0.67 if ctx.author.id == 667187968145883146 else 1
+        c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069, 746173049174229142] else c
         new = int(random.uniform(x1, x2) * sm * mult * c)
         new_money = int(random.uniform(x3, x4) * mult * c)
         if ctx.author.id == 592345932062916619:
