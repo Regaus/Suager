@@ -318,8 +318,12 @@ class Leveling(commands.Cog):
                 avatar = Image.open("assets/error.png")
                 img.paste(avatar)
             font_dir = "assets/font.ttf"
-            font = ImageFont.truetype(font_dir, size=108)
-            font_small = ImageFont.truetype(font_dir, size=64)
+            try:
+                font = ImageFont.truetype(font_dir, size=108)
+                font_small = ImageFont.truetype(font_dir, size=64)
+            except ImportError:
+                await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
+                font, font_small = None, None
             text_x = 552
             dr.text((text_x, 20), f"{user}", font=font, fill=font_colour)
             try:

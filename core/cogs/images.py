@@ -241,7 +241,10 @@ class Images(commands.Cog):
             img = Image.new("RGB", (width, 600), color=(0, 0, 0))
             dr = ImageDraw.Draw(img)
             font_dir = "assets/impact.ttf"
-            font = ImageFont.truetype(font_dir, size=72)
+            try:
+                font = ImageFont.truetype(font_dir, size=72)
+            except ImportError:
+                return await general.send("It seems that image generation does not work properly here...", ctx.channel)
             tw, _th = dr.textsize(text.upper(), font=font)
             if tw > 1200:
                 width = tw + 20

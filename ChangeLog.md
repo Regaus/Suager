@@ -318,3 +318,6 @@
 - Fixed bases trying to treat an integer as a float
 - Fixed Suager on_ready breaking because playing is no longer a key in the config
 - SL time is now also displayed in the test server
+
+## v6.1.2.2 - 4 September
+- Hopefully fixed image gen not working from ImportError if a package is not supported
