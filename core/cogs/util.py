@@ -21,7 +21,7 @@ class Utility(commands.Cog):
         """ Current time """
         locale = langs.gl(ctx)
         send = ""
-        if ctx.guild.id == 568148147457490954:
+        if ctx.guild.id in [568148147457490954, 738425418637639775]:
             send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
         send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, True, False, True, True))
         send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"

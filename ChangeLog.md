@@ -313,3 +313,8 @@
 - Fixed a bug breaking leave server event
 - Fixed a bug breaking TBL season update
 - Fixed a bug that sometimes prevented update messages from sending
+
+## v6.1.2.1 - 4 September
+- Fixed bases trying to treat an integer as a float
+- Fixed Suager on_ready breaking because playing is no longer a key in the config
+- SL time is now also displayed in the test server

@@ -32,6 +32,7 @@ def to_base_float(value: float, base: int, precision: int = 2, caps: bool = Fals
         return "Bases above 36 are not supported."
     if value < 0:
         return "-" + to_base_float(value * -1, base, precision, caps)
+    value = float(value)  # Because apparently it's too fucking stupid for that
     if value.is_integer() or precision < 1:
         return to_base(int(value), base, caps)
     else:

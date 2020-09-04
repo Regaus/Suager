@@ -123,7 +123,8 @@ async def on_ready(self):
     except Exception as e:
         print(e)
         times = changes.copy()
-    playing = f"{self.local_config['playing'][0]} | v{self.local_config['short_version']}"
+    # playing = f"{self.local_config['playing'][0]} | v{self.local_config['short_version']}"
+    playing = f"Loading... | v{self.local_config['short_version']}"
     await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
     if self.local_config["logs"]:
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.local_config['name']} > Bot is online")
