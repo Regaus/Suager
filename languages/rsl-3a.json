@@ -21,6 +21,7 @@
   "aqos_stats_energy_data": "\nNext energy: **{0}**\nFull energy: **{1}**",
   "aqos_stats_level": "Aqos Progress",
   "aqos_stats_level_data": "Level **{0}** of **{1}**\n{2}",
+  "aqos_stats_score": "Score",
   "aqos_stats_usage": "Energy used",
   "aqos_stats_xp": "Experience",
   "aqos_stats_xp_data": "**{0}/{1}** XP\nXP Level **{2}**",

@@ -324,3 +324,8 @@
 
 ## v6.1.3 - 4 September
 - Updated the leveling system
+
+## v6.1.4 - 5 September
+- Fixed Aqos stats energy output
+- Added score to Aqos stats
+- Added number translation to RSL-1

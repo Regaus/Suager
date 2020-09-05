@@ -71,13 +71,14 @@ class Games(commands.Cog):
         xp, xp_level = langs.gns(data["xp"], locale), langs.gns(data["xp_level"], locale)
         embed.add_field(name=langs.gls("aqos_stats_xp", locale), inline=False, value=langs.gls("aqos_stats_xp_data", locale, xp, xp_nl, xp_level))
         energy, regen = aqos.regen_energy(data["energy"], data["time"], now_ts, temple)
-        energy_str = f"**{langs.gns(data['energy'], locale)}/{langs.gns(temple.energy_limit)}**"
-        if data["energy"] < temple.energy_limit:
-            fill = temple.energy_limit - data["energy"]
+        energy_str = f"**{langs.gns(energy, locale)}/{langs.gns(temple.energy_limit)}**"
+        if energy < temple.energy_limit:
+            fill = temple.energy_limit - energy
             next_in = langs.td_ts(regen + temple.energy_regen, locale, brief=True, suffix=True)
             full_in = langs.td_ts(regen + temple.energy_regen * fill, locale, brief=True, suffix=True)
             energy_str += langs.gls("aqos_stats_energy_data", locale, next_in, full_in)
         embed.add_field(name=langs.gls("aqos_stats_energy", locale), inline=False, value=energy_str)
+        embed.add_field(name=langs.gls("aqos_stats_score", locale), inline=False, value=langs.gns(data["score"], locale))
         embed.add_field(name=langs.gls("aqos_stats_usage", locale), inline=False, value=langs.gns(data["energy_used"], locale))
         return await general.send(None, ctx.channel, embed=embed)
 

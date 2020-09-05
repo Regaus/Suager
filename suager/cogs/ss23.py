@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 import discord
 from discord.ext import commands
 
-from core.utils import general, time, emotes
+from core.utils import bases, general, time, emotes
 from suager.utils import ss23
 
 
@@ -81,6 +81,78 @@ class SS23(commands.Cog):
         tz = round(long / tzl)
         tzo = tz / tzl - long  # Local Offset
         return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLocal Offset: {tzo:.3f}", ctx.channel)
+
+    @commands.command(name="rsln", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def rsl_numbers(self, ctx: commands.Context, language: int, number: int):
+        """ Translates number input into RSL """
+        if number < 0:
+            return await general.send("Negative numbers are not supported.", ctx.channel)
+        if language == 1:
+            max_number = int(str(10 ** 24), base=16)
+            if number > max_number:
+                return await general.send(f"The value you entered is above the maximum value translate-able ({max_number:,})", ctx.channel)
+            numbers = {
+                "0": "des/deneda",
+                "1": ["ukka", "devi", "teri", "cegi", "paki", "senki", "ekki", "onni", "zunni", "dovi", "tori", "cogi", "bagi", "soni", "enni"],
+                "11": ["uveri", "devuverri", "teruverri", "ceguverri", "pakuverri", "senkuverri", "ekkuverri", "onnuverri",
+                       "zunuverri", "dovuverri", "toruverri", "coguverri", "baguverri", "sonuverri", "ennuverri"],
+                "10": ["verri", "deveri", "tereri", "ceveri", "paveri", "seneri", "ekeri", "oneri",
+                       "zuveri", "doveri", "toreri", "coveri", "baneri", "soneri", "eneri"],
+                "21": ["uk u", "dev u", "ter u", "ceg u", "pak u", "senk-u", "ekk-u", "onn-u", "zunn-u", "dov u", "tor u", "cog u", "bag u", "son u", "enn-u"],
+                "100": ["setti", "settin", "settar"],
+                "1000": ["kiari", "kiarin", "kiarar"],
+                "big": [["ugaristu", "ugaristun", "ugaristar"], ["devaristu", "devaristun", "devaristar"], ["teráristu", "teráristun", "teráristar"],
+                        ["cegaristu", "cegaristun", "cegaristar"], ["pakaristu", "pakaristun", "pakaristar"], ["senkaristu", "senkaristun", "senkaristar"]]
+            }
+            exp = 16
+        else:
+            return await general.send(f"RSL-{language} is currently not supported.", ctx.channel)
+
+        def thousand(val: int):
+            def less_100(value: int):
+                if value == 0:
+                    return numbers["0"]
+                elif 1 <= value < exp:
+                    return numbers["1"][value - 1]
+                elif value == exp:
+                    return numbers["10"][0]
+                elif 16 < value < 32:
+                    return numbers["11"][value - 17]
+                elif 32 <= value < 256:
+                    div, mod = divmod(value, 16)
+                    base = numbers["21"][mod - 1] + " " if mod > 0 else ""
+                    tens = numbers["10"][div - 1]
+                    return f"{base}{tens}"
+                else:
+                    return "Error"
+
+            def hundreds(value: int):
+                ind = 0 if value == 1 else 1 if 1 < value < 8 else 2
+                return "" if value < 1 else less_100(value) + f" {numbers['100'][ind]}, "
+
+            return f"{hundreds(val // 256)}{less_100(val % 256)}"
+
+        def large():
+            # exponents = [int(str(10 ** val), base=16) for val in [3, 6, 9, 12, 15, 18, 21]]
+            values = []
+            value = number
+            for i in range(7):
+                value //= 4096
+                values.append(value % 4096)
+            outputs = []
+            for i in range(7):
+                val = values[i]
+                if val > 0:
+                    n1, n2, n3 = numbers["1000"] if i == 0 else numbers["big"][i - 1]
+                    name = n3 if 16 <= val % 256 <= 32 or val % 16 >= 8 else n2 if val % 16 != 1 else n1
+                    outputs.append(f"{thousand(val)} {name}, ")
+            return "".join(outputs[::-1])
+
+        _number = bases.to_base(number, 16, True)
+        # output = f"{hundreds(number // 256)}{less_100(number % 256)}"
+        output = f"{large()}{thousand(number % 4096)}"
+        return await general.send(f"Base-10: {number:,}\nBase-16: {_number}\nRSL-{language}: {output}", ctx.channel)
 
 
 def setup(bot):
