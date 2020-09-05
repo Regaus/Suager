@@ -112,7 +112,7 @@ class SS23(commands.Cog):
         def thousand(val: int):
             def less_100(value: int):
                 if value == 0:
-                    return numbers["0"]
+                    return ""
                 elif 1 <= value < exp:
                     return numbers["1"][value - 1]
                 elif value == exp:
@@ -127,11 +127,12 @@ class SS23(commands.Cog):
                 else:
                     return "Error"
 
-            def hundreds(value: int):
+            def hundreds(value: int, mod: int):
                 ind = 0 if value == 1 else 1 if 1 < value < 8 else 2
-                return "" if value < 1 else less_100(value) + f" {numbers['100'][ind]}, "
+                return "" if value < 1 else less_100(value) + f" {numbers['100'][ind]}{', ' if mod != 0 else ''}"
 
-            return f"{hundreds(val // 256)}{less_100(val % 256)}"
+            a, b = divmod(val, 256)
+            return f"{hundreds(a, b)}{less_100(b)}"
 
         def large():
             # exponents = [int(str(10 ** val), base=16) for val in [3, 6, 9, 12, 15, 18, 21]]
@@ -152,6 +153,8 @@ class SS23(commands.Cog):
         _number = bases.to_base(number, 16, True)
         # output = f"{hundreds(number // 256)}{less_100(number % 256)}"
         output = f"{large()}{thousand(number % 4096)}"
+        if number == 0:
+            output = numbers["0"]
         return await general.send(f"Base-10: {number:,}\nBase-16: {_number}\nRSL-{language}: {output}", ctx.channel)
 
 
