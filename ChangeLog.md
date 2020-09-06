@@ -329,3 +329,10 @@
 - Fixed Aqos stats energy output
 - Added score to Aqos stats
 - Added number translation to RSL-1
+
+## v6.1.5 - 6 September
+- The max level is now 250
+- The first level's requirement is now 250 XP
+- Improved RSL-1 number translation algorithm
+- Tag pages should no longer show that there are more pages than there actually are
+- Suager will now use base-10 even in RSL mode

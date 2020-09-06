@@ -5,7 +5,7 @@ from sqlite3 import OperationalError
 
 import discord
 
-from core.utils import general, database, time, bot_data
+from core.utils import bot_data, database, general, time
 from core.utils.events import changes
 
 boot_time = time.now(None)

@@ -1,4 +1,5 @@
 import asyncio
+from math import ceil
 
 import discord
 from discord.ext import commands
@@ -187,7 +188,7 @@ class Tags(commands.Cog):
         block = "```fix"
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
             block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
-        return await general.send(langs.gls("tags_user", locale, user, langs.gns(page, locale), langs.gns(len(tags) // 20 + 1, locale), block), ctx.channel)
+        return await general.send(langs.gls("tags_user", locale, user, langs.gns(page, locale), langs.gns(ceil(len(tags) / 20), locale), block), ctx.channel)
         # return await general.send(f"Tags belonging to user {user.name} | Page {page} of {len(tags) // 20 + 1}\n{block}```", ctx.channel)
 
     @tags.command(name="all")
@@ -202,7 +203,8 @@ class Tags(commands.Cog):
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
             block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
             # block += f"\n[{i:02d}] {d['name']} | Uses: {d['usage']:,}"
-        return await general.send(langs.gls("tags_all", locale, ctx.guild, langs.gns(page, locale), langs.gns(len(tags) // 20 + 1, locale), block), ctx.channel)
+        return await general.send(langs.gls("tags_all", locale, ctx.guild, langs.gns(page, locale), langs.gns(ceil(len(tags) / 20), locale), block),
+                                  ctx.channel)
         # return await general.send(f"Tags in {ctx.guild.name} - Sorted by name | Page {page} of {len(tags) // 20 + 1}\n{block}```", ctx.channel)
 
     @tags.command(name="top")
@@ -217,7 +219,8 @@ class Tags(commands.Cog):
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
             block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
             # block += f"\n[{i:02d}] {d['name']} | Uses: {d['usage']:,}"
-        return await general.send(langs.gls("tags_top", locale, ctx.guild, langs.gns(page, locale), langs.gns(len(tags) // 20 + 1, locale), block), ctx.channel)
+        return await general.send(langs.gls("tags_top", locale, ctx.guild, langs.gns(page, locale), langs.gns(ceil(len(tags) / 20), locale), block),
+                                  ctx.channel)
         # return await general.send(f"Tags in {ctx.guild.name} - Sorted by usage | Page {page} of {len(tags) // 20 + 1}\n{block}```", ctx.channel)
 
 

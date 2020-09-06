@@ -45,21 +45,23 @@ def int_colour(colour: str):
 
 
 def _levels():
-    req = 25000
+    req = 0
     xp = []
     for x in range(max_level):
         # power = 2 + x / 40 if x < 40 else 3 + (x - 40) / 80 if x < 80 else 3.5
-        power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
+        # power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
+        power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5
         base = x ** power + 200 * x ** 2 + 7500 * x + 25000
         req += int(base)
         if x not in bad:
             xp.append(int(req))
         else:
+            xp[-1] = req
             xp.append(xp[-1])
     return xp
 
 
-max_level = 256
+max_level = 250
 bad = [69, 420, 666, 1337]
 levels = _levels()
 xp_amounts = [2250, 3000]
@@ -74,7 +76,7 @@ class Leveling(commands.Cog):
     @commands.is_owner()
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
-        __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 69, 75, 80, 90, 100, 125, 150, 175, 200, 225, 250, 256]
+        __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 69, 75, 80, 90, 100, 125, 150, 175, 200, 225, 250]
         outputs = []
         for level in __levels:
             _level = level - 1
@@ -84,7 +86,7 @@ class Leveling(commands.Cog):
             lv1 = int(levels[_level] / 100)
             diff = lv1 - int(levels[_level - 1] / 100) if level > 1 else lv1
             # outputs.append(f"Level {level:>3} | New {lv1:>10,} | Req {diff:>7,} | Old {lv2:>10,}")
-            outputs.append(f"Level {level:>3} | New {lv1:>10,} | Req {diff:>7,}")
+            outputs.append(f"Level {level:>3} | Req {lv1:>10,} | Diff {diff:>7,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
 

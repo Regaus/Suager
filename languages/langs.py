@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 from dateutil.relativedelta import relativedelta
 
-from core.utils import time, emotes, bases
+from core.utils import emotes, time
 
 languages = {}
 for file in os.listdir("languages"):
@@ -37,15 +37,6 @@ def gns(value: int or float, locale: str = "en_gb", fill: int = 0, commas: bool 
         value = int(value)
     except OverflowError:
         return "Infinity"
-    if locale.startswith("rsl-1"):
-        base = f"{value:0{fill}X}"
-        return put_commas(base, step=3) if commas else base
-    if locale.startswith("rsl-2"):
-        base = bases.base_6(value).zfill(fill)
-        return put_commas(base, step=6) if commas else base
-    if locale.startswith("rsl-3"):
-        base = bases.to_base(value, 20, True).zfill(fill)
-        return put_commas(base, step=4) if commas else base
     if locale == "ru_ru":
         return f"{value:0{fill}{',' if commas else ''}d}".replace(",", " ")
     return f"{value:0{fill}{',' if commas else ''}d}"
@@ -53,37 +44,6 @@ def gns(value: int or float, locale: str = "en_gb", fill: int = 0, commas: bool 
 
 def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
     """ Get a string from a float """
-    if locale.startswith("rsl-1"):
-        if per:
-            return gfs(value * 256, locale, pre, False) + "%"
-        base = bases.to_base_float(value, 16, pre, True)
-        _base = base.split(".")
-        if len(_base) == 1:
-            return put_commas(_base[0], step=3)
-        else:
-            _int, _float = _base
-            return f"{put_commas(_int, step=3)}.{_float}"
-        # _base = put_commas(bases.to_base(int(value), 16, True))
-    if locale.startswith("rsl-2"):
-        if per:
-            return gfs(value * 216, locale, pre, False) + "/1000"
-        base = bases.to_base_float(value, 6, pre)
-        _base = base.split(".")
-        if len(_base) == 1:
-            return put_commas(_base[0], step=6)
-        else:
-            _int, _float = _base
-            return f"{put_commas(_int, step=6)}.{_float}"
-    if locale.startswith("rsl-3"):
-        if per:
-            return gfs(value * 400, locale, pre, False) + "%"
-        base = bases.to_base_float(value, 20, pre, True)
-        _base = base.split(".")
-        if len(_base) == 1:
-            return put_commas(_base[0], step=4)
-        else:
-            _int, _float = _base
-            return f"{put_commas(_int, step=4)}.{_float}"
     if locale == "ru_ru":
         return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
     return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
@@ -124,9 +84,9 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
     return gls("generic_yes", locale) if condition else gls("generic_no", locale)
 
 
-def put_commas(string: str, step: int = 3) -> str:
-    reverse = string[::-1]
-    return (",".join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1]
+# def put_commas(string: str, step: int = 3) -> str:
+#     reverse = string[::-1]
+#     return (",".join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1]
 
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
@@ -151,9 +111,6 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
         name = name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1
     reverse = ["rsl-3a"]
     return f"{name} {gns(v, locale)}" if locale in reverse else f"{gns(v, locale)} {name}"
-    # if locale == "en_gb":
-    #     return f"{gns(value, locale)} {name_1}" if value == 1 else f"{gns(value, locale)} {name_1}s" if not name_2 or name_pl \
-    #         else f"{gns(value, locale)} {name_2}"
 
 
 def join(seq, joiner: str = ', ', final: str = 'and'):

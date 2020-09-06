@@ -84,12 +84,12 @@ class SS23(commands.Cog):
 
     @commands.command(name="rsln", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def rsl_numbers(self, ctx: commands.Context, language: int, number: int):
+    async def rsl_numbers(self, ctx: commands.Context, language: str, number: int):
         """ Translates number input into RSL """
         if number < 0:
             return await general.send("Negative numbers are not supported.", ctx.channel)
-        if language == 1:
-            max_number = int(str(10 ** 24), base=16)
+        if language == "1":
+            max_number = int(str(10 ** 24), base=16) - 1
             if number > max_number:
                 return await general.send(f"The value you entered is above the maximum value translate-able ({max_number:,})", ctx.channel)
             numbers = {
@@ -107,7 +107,7 @@ class SS23(commands.Cog):
             }
             exp = 16
         else:
-            return await general.send(f"RSL-{language} is currently not supported.", ctx.channel)
+            return await general.send(f"RSL-{language} is currently not supported.\nRSL's available: 1.", ctx.channel)
 
         def thousand(val: int):
             def less_100(value: int):
@@ -117,10 +117,10 @@ class SS23(commands.Cog):
                     return numbers["1"][value - 1]
                 elif value == exp:
                     return numbers["10"][0]
-                elif 16 < value < 32:
+                elif exp < value < 2 * exp:
                     return numbers["11"][value - 17]
-                elif 32 <= value < 256:
-                    div, mod = divmod(value, 16)
+                elif 2 * exp <= value < exp * exp:
+                    div, mod = divmod(value, exp)
                     base = numbers["21"][mod - 1] + " " if mod > 0 else ""
                     tens = numbers["10"][div - 1]
                     return f"{base}{tens}"
@@ -131,7 +131,7 @@ class SS23(commands.Cog):
                 ind = 0 if value == 1 else 1 if 1 < value < 8 else 2
                 return "" if value < 1 else less_100(value) + f" {numbers['100'][ind]}{', ' if mod != 0 else ''}"
 
-            a, b = divmod(val, 256)
+            a, b = divmod(val, exp * exp)
             return f"{hundreds(a, b)}{less_100(b)}"
 
         def large():
@@ -139,23 +139,23 @@ class SS23(commands.Cog):
             values = []
             value = number
             for i in range(7):
-                value //= 4096
-                values.append(value % 4096)
+                value //= exp ** 3
+                values.append(value % (exp ** 3))
             outputs = []
             for i in range(7):
                 val = values[i]
                 if val > 0:
                     n1, n2, n3 = numbers["1000"] if i == 0 else numbers["big"][i - 1]
-                    name = n3 if 16 <= val % 256 <= 32 or val % 16 >= 8 else n2 if val % 16 != 1 else n1
+                    name = n3 if exp <= val % (exp ** 2) <= 2 * exp or val % exp >= 8 else n2 if val % exp != 1 else n1
                     outputs.append(f"{thousand(val)} {name}, ")
             return "".join(outputs[::-1])
 
-        _number = bases.to_base(number, 16, True)
+        _number = bases.to_base(number, exp, True)
         # output = f"{hundreds(number // 256)}{less_100(number % 256)}"
-        output = f"{large()}{thousand(number % 4096)}"
+        output = f"{large()}{thousand(number % (exp ** 3))}"
         if number == 0:
             output = numbers["0"]
-        return await general.send(f"Base-10: {number:,}\nBase-16: {_number}\nRSL-{language}: {output}", ctx.channel)
+        return await general.send(f"Base-10: {number:,}\nBase-{exp}: {_number}\nRSL-{language}: {output}", ctx.channel)
 
 
 def setup(bot):
