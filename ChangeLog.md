@@ -336,3 +336,9 @@
 - Improved RSL-1 number translation algorithm
 - Tag pages should no longer show that there are more pages than there actually are
 - Suager will now use base-10 even in RSL mode
+
+## v6.1.6 - 8 September
+- The max level is now 500
+- Added old levels command, which shows information about older leveling systems
+- Added s u c c command
+- Suppress the existence of RSLs in //languages unless the person and guild are trusted with that shit

@@ -23,7 +23,12 @@ class Settings(commands.Cog):
                 con.append(language)
             else:
                 real.append(language)
-        out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
+        trusted = [302851022790066185, 577637595392245770, 651179888988127270, 418151634087182359, 430891116318031872, 291665491221807104]
+        trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
+        if ctx.author.id in trusted and ctx.guild.id in trusted_servers:
+            out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
+        else:
+            out = "Here are supported languages:\n" + "\n".join(real)
         return await general.send(out, ctx.channel)
         # return await general.send("Here is a list of supported languages:\n" + "\n".join(languages), ctx.channel)
 
@@ -35,18 +40,6 @@ class Settings(commands.Cog):
         """ Server settings """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
-            # data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-            # if data:
-            #     try:
-            #         send = BytesIO(data['data'].encode('utf-8'))
-            #     except AttributeError:
-            #         send = BytesIO(data['data'])
-            #     return await general.send(f"Here are the current settings for {ctx.guild.name}. Use `{ctx.prefix}settings upload` to update them.",
-            #                               ctx.channel, file=discord.File(send, filename=time.file_ts("Settings", "json")))
-            # else:
-            #     send = BytesIO(json.dumps(settings.template.copy(), indent=4).encode('utf-8'))
-            #     return await general.send(f"This is the settings template. Use `{ctx.prefix}settings upload` to upload them.", ctx.channel,
-            #                               file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
 
     @settings.command(name="locale", aliases=["language"])
     async def set_locale(self, ctx: commands.Context, new_locale: str):
@@ -60,39 +53,6 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO locales VALUES (?, ?)", (ctx.guild.id, new_locale))
         return await general.send(langs.gls("settings_locale_set", new_locale, new_locale, langs.gls("_name", new_locale)), ctx.channel)
-
-    # @settings.command(name="template")
-    # async def settings_template(self, ctx: commands.Context):
-    #     """ Settings template """
-    #     send = BytesIO(json.dumps(settings.template.copy(), indent=4).encode('utf-8'))
-    #     return await general.send(f"Here's the settings template for you.\nUpload with `{ctx.prefix}settings upload`\nFor leveling, [USER] will show user's "
-    #                               f"name, and [MENTION] will @mention them", ctx.channel,
-    #                               file=discord.File(send, filename=time.file_ts("SettingsTemplate", "json")))
-
-    # @settings.command(name="upload")
-    # async def settings_upload(self, ctx: commands.Context):
-    #     """ Upload cogs server settings """
-    #     ma = ctx.message.attachments
-    #     if len(ma) == 1:
-    #         name = ma[0].filename
-    #         if not name.endswith('json'):
-    #             return await general.send("This must be a JSON file", ctx.channel)
-    #         try:
-    #             stuff = await ma[0].read()
-    #         except discord.HTTPException or discord.NotFound:
-    #             return await general.send("There was an error getting the file", ctx.channel)
-    #     else:
-    #         return await general.send("There must be exactly one JSON file", ctx.channel)
-    #     try:
-    #         json.loads(stuff)
-    #     except Exception as e:
-    #         return await general.send(f"An error has occurred - `{type(e).__name__}: {e}`", ctx.channel)
-    #     data = self.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     if data:
-    #         self.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
-    #     else:
-    #         self.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-    #     return await general.send(f"Settings for {ctx.guild.name} have been updated", ctx.channel)
 
     @settings.command(name="currency")
     async def set_currency(self, ctx: commands.Context, new: str):

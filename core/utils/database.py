@@ -140,6 +140,7 @@ tables = {
             Column("sniff", 0, True),      # 11
             Column("poke", 0, True),       # 12
             Column("boop", 0, True),       # 13
+            Column("suck", 0, True),       # 14
         ]),
         Table("tags", [
             Column("gid", 0, True),

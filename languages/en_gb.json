@@ -281,6 +281,8 @@
   "social_smile": "{0} is smiling",
   "social_sniff": "{0} sniffed {1}",
   "social_sniff_suager": "Why did you do that? {emotes.Wha}",
+  "social_suck_counter": "{0} did that to {1} {2}",
+  "social_suck_main": "**{0}** is now sucking **{1}**...",
   "tags_all": "Tags in {0} - Sorted by name\nPage {1} of {2}\n{3}```",
   "tags_claim_owned": "You already own this tag.",
   "tags_claim_server": "You can't claim a tag which belongs to a user who's still in this server.",

@@ -50,8 +50,10 @@ def _levels():
     for x in range(max_level):
         # power = 2 + x / 40 if x < 40 else 3 + (x - 40) / 80 if x < 80 else 3.5
         # power = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
-        power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5
-        base = x ** power + 200 * x ** 2 + 7500 * x + 25000
+        # power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5 - (x - 250) / 600 if x < 500 else 2
+        power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
+        multiplier = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
+        base = x ** power + multiplier * x ** 2 + 7500 * x + 25000
         req += int(base)
         if x not in bad:
             xp.append(int(req))
@@ -61,9 +63,54 @@ def _levels():
     return xp
 
 
-max_level = 250
+def _level_history():
+    keys = ["v3", "v4", "v5", "v6_beta4", "v6_beta12", "v615", "v616"]
+    req = {}
+    xp = {}
+    for key in keys:
+        req[key] = 0
+        xp[key] = []
+    req["v6_beta4"] = 15000
+    req["v6_beta12"] = 25000
+    # 25000
+    for x in range(max_level):
+        v3 = x ** 2 + x * 75 + 200
+        req["v3"] += v3 * 100  # To scale them up to current leveling system
+        v4 = 1.5 * x ** 2 + 125 * x + 200
+        req["v4"] += v4 * 100  # To scale them up to current leveling system
+        v5 = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
+        req["v5"] += v5
+        # v6g = 0.7 * x ** 5 + 1.5 * x ** 4 + 20 * x ** 3 + 75 * x ** 2 + 200 * x + 500
+        # req["v6_global"] += v6g
+        power_6b = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
+        v6b = x ** power_6b + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
+        req["v6_beta4"] += v6b
+        v6b12 = x ** power_6b + 200 * x ** 2 + 7500 * x + 25000
+        req["v6_beta12"] += v6b12
+        power_61 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5
+        v615 = x ** power_61 + 200 * x ** 2 + 7500 * x + 25000
+        req["v615"] += v615
+        power_616 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
+        multiplier_616 = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
+        v616 = x ** power_616 + multiplier_616 * x ** 2 + 7500 * x + 25000
+        req["v616"] += v616
+        if x not in bad:
+            for key in keys:
+                xp[key].append(req[key])
+        else:
+            for key in keys:
+                xp[key].append(xp[key][-1])
+    return xp
+
+
+def convert_xp(xp: float):
+    return int(xp / 100)
+
+
+max_level = 500
 bad = [69, 420, 666, 1337]
 levels = _levels()
+level_history = _level_history()
 xp_amounts = [2250, 3000]
 money_amounts = [75, 125]
 
@@ -76,7 +123,7 @@ class Leveling(commands.Cog):
     @commands.is_owner()
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
-        __levels = [1, 2, 3, 5, 10, 20, 30, 40, 50, 60, 69, 75, 80, 90, 100, 125, 150, 175, 200, 225, 250]
+        __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
         outputs = []
         for level in __levels:
             _level = level - 1
@@ -89,6 +136,35 @@ class Leveling(commands.Cog):
             outputs.append(f"Level {level:>3} | Req {lv1:>10,} | Diff {diff:>7,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
+
+    @commands.command(name="oldlevels")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def old_levels(self, ctx: commands.Context, level: int = None):
+        """ See previous Suager leveling systems """
+        names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6_beta4": "Suager v6-beta4", "v6_beta12": "Suager v6-beta12",
+                 "v615": "Suager v6.1.5", "v616": "Suager v6.1.6"}
+        if level is not None:
+            if level > max_level:
+                return await general.send(f"The max level is {max_level:,}", ctx.channel)
+            output = ""
+            for key, name in names.items():
+                output += f"\n`{name:<16} -> {convert_xp(level_history[key][level - 1]):>11,} XP`"
+            return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
+        else:
+            xp_ = self.bot.db.fetchrow("SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            xp = xp_["xp"] if xp_ else 0
+            output = ""
+            for key, name in names.items():
+                level = 0
+                for level_req in level_history[key]:
+                    if xp >= level_req:
+                        level += 1
+                    else:
+                        break
+                output += f"\n`{name:<16} -> Level {level:>3}`"
+            return await general.send(f"{ctx.author.name}, you have **{xp // 100:,} XP** in this server. Here are the levels you could have been on "
+                                      f"in the old leveling system:{output}", ctx.channel)
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):

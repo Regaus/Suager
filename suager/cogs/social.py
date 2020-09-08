@@ -36,8 +36,8 @@ class Social(commands.Cog):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
             self.poke, self.boop = [lists.error] * 15
-        self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 13}?)"
-        self.empty = [0] * 14
+        self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 14}?)"
+        self.empty = [0] * 15
         # self.names = ["Redacted", "Social interaction", "Edit this text", "Statuses", "Foods"]
         # n1, n2, n3, n4, n5 = self.names
         # self.keys = {
@@ -454,6 +454,33 @@ class Social(commands.Cog):
         #     out += f"\nThis has now happened {number} times in this server"
         return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
 
+    @commands.command(name="suck", aliases=["succ"], hidden=True)
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def suck(self, ctx, user: discord.Member):
+        """ Succ someone """
+        locale = langs.gl(ctx)
+        if not ctx.channel.is_nsfw():
+            return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
+        if user.bot:
+            return await general.send(langs.gls("social_bang_bot", locale), ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        # lolis = [418151634087182359, 430891116318031872]
+        # if ctx.author.id in lolis:
+        #     return await general.send(f"No futa lolis {emotes.KannaSpook}", ctx.channel)
+        # elif user.id in lolis and ctx.channel.id != 671520521174777869:
+        #     return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "suck", 14)
+        t1, t2 = ctx.author.name, user.name
+        out = langs.gls("social_suck_main", locale, t1, t2)
+        _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
+        counter1 = langs.gls("social_suck_counter", locale, t1, t2, _given)
+        counter2 = langs.gls("social_suck_counter", locale, t2, t1, _received)
+        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
+
     @commands.command(name="ship")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -488,36 +515,6 @@ class Social(commands.Cog):
         # message = "Nice shipping!\nPossible ship names:"
         for i, j in enumerate(names, start=1):
             message += f"\n{langs.gns(i, locale)}) **{j}**"
-        # data_giver = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        # data_receive1 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user1.id, ctx.guild.id))
-        # data_receive2 = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user2.id, ctx.guild.id))
-        # if not data_giver:
-        #     data = self.empty.copy()
-        #     data[0] = ctx.author.id
-        #     data[1] = ctx.guild.id
-        #     data[27] = 1
-        #     self.db.execute(self.insert, tuple(data))
-        # else:
-        #     self.db.execute("UPDATE counters SET ships_built=? WHERE uid=? AND gid=?",
-        #                     (data_giver["ships_built"] + 1, ctx.author.id, ctx.guild.id))
-        # if not data_receive1:
-        #     data = self.empty.copy()
-        #     data[0] = user1.id
-        #     data[1] = ctx.guild.id
-        #     data[26] = 1
-        #     self.db.execute(self.insert, tuple(data))
-        # else:
-        #     self.db.execute("UPDATE counters SET shipped=? WHERE uid=? AND gid=?",
-        #                     (data_receive1["shipped"] + 1, user1.id, ctx.guild.id))
-        # if not data_receive2:
-        #     data = self.empty.copy()
-        #     data[0] = user2.id
-        #     data[1] = ctx.guild.id
-        #     data[26] = 1
-        #     self.db.execute(self.insert, tuple(data))
-        # else:
-        #     self.db.execute("UPDATE counters SET shipped=? WHERE uid=? AND gid=?",
-        #                     (data_receive2["shipped"] + 1, user2.id, ctx.guild.id))
         return await general.send(message, ctx.channel, file=discord.File(bio, filename="ship.png"))
 
     @commands.command(name="sleepy")
@@ -717,31 +714,6 @@ class Social(commands.Cog):
         # output += f"**{user.name}** now has **{number} fruits** in **{ctx.guild.name}**"
         return await general.send(output, ctx.channel)
 
-    # @commands.command(name="eat")
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    # async def eat_something(self, ctx: commands.Context, what: str):
-    #     """ Eat something """
-    #     if what == "cookie":
-    #         fr, fe = "cookies_received", "cookies_eaten"
-    #     elif what == "carrot":
-    #         fr, fe = "carrots_received", "carrots_eaten"
-    #     elif what == "fruit":
-    #         fr, fe = "fruits_received", "fruits_eaten"
-    #     elif what == "lemon":
-    #         fr, fe = "lemons_received", "lemons_eaten"
-    #     else:
-    #         return await general.send("You can only eat cookies, carrots, fruits, and lemons.", ctx.channel)
-    #     data = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-    #     if not data:
-    #         return await general.send(f"You have no {what}s right now...", ctx.channel)
-    #     left = data[fr] - data[fe]
-    #     if left < 1:
-    #         return await general.send(f"You have no {what}s left...", ctx.channel)
-    #     left -= 1
-    #     self.db.fetchrow(f"UPDATE counters SET {fe}=? WHERE uid=? AND gid=?", (data[fe] + 1, ctx.author.id, ctx.guild.id))
-    #     return await general.send(f"**{ctx.author.name}** just ate a **{what}** and has **{left}** left.", ctx.channel)
-
     @commands.command(name="reloadimages", aliases=["ri"])
     @commands.is_owner()
     async def reload_images(self, ctx: commands.Context):
@@ -762,43 +734,6 @@ class Social(commands.Cog):
         self.poke = await lists.get_images(self.bot, 'P')
         self.boop = await lists.get_images(self.bot, 'B')
         return await general.send("Successfully reloaded images", ctx.channel)
-
-    # @commands.command(name="counters", aliases=["spamstats"])
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    # async def counters(self, ctx: commands.Context, who: discord.Member = None):
-    #     """ Check your or someone else's counts! """
-    #     user = who or ctx.author
-    #     data = self.db.fetchrow("SELECT * FROM counters WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-    #     if not data:
-    #         return await ctx.send(f"There is no data available for {user}...")
-    #     embed = discord.Embed(colour=general.random_colour())
-    #     embed.title = f"Spam stats for **{user.name}** in **{ctx.guild.name}**"
-    #     embed.set_thumbnail(url=user.avatar_url_as(static_format="png", size=1024))
-    #     for i in range(1, len(self.names) - 1):
-    #         value = ""
-    #         for j in range(len(self.keys[self.names[i]])):
-    #             val = data[self.keys[self.names[i]][j]]
-    #             name = self.key_names[self.names[i]][j]
-    #             if val is not None and val > 0:
-    #                 value += f"{val:,} - {name}\n"
-    #         if value == "":
-    #             value = "No data available"
-    #         embed.add_field(name=self.names[i], inline=False, value=value)
-    #     cr, ce = data["carrots_received"], data["carrots_eaten"]
-    #     cl = cr - ce
-    #     ar, ae = data["cookies_received"], data["cookies_eaten"]
-    #     al = ar - ae
-    #     fr, fe = data["fruits_received"], data["fruits_eaten"]
-    #     fl = fr - fe
-    #     lr, le = data["lemons_received"], data["lemons_eaten"]
-    #     ll = lr - le
-    #     embed.add_field(name=self.names[4], inline=False,
-    #                     value=f"{cr:,} carrots received\n{ce:,} carrots eaten\n{cl:,} carrots left\n\n"
-    #                           f"{ar:,} cookies received\n{ae:,} cookies eaten\n{al:,} cookies left\n\n"
-    #                           f"{fr:,} fruits received\n{fe:,} fruits eaten\n{fl:,} fruits left\n\n"
-    #                           f"{lr:,} lemons received\n{le:,} lemons eaten\n{ll:,} lemons left")
-    #     return await general.send(None, ctx.channel, embed=embed)
 
 
 def setup(bot):
