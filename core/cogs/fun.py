@@ -218,6 +218,7 @@ class Entertainment(commands.Cog):
         return await general.send(f"{emotes.Allow} Successfully sent the message to {channel.mention}", ctx.channel, delete_after=5)
 
     @commands.command(name="say")
+    @commands.check(lambda ctx: not (ctx.author.id == 667187968145883146 and ctx.guild.id == 568148147457490954))
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def say(self, ctx: commands.Context, *, message: str):

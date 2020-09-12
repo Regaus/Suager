@@ -162,11 +162,11 @@ async def tbl_game(ctx):
             # sh_xp_str = f"\nShaman XP: **{langs.gns(int(sh_xp), locale)}**" if cool else ""
             message_data = f"**{ctx.author.name}**:\n"
             if nuts_mult != 1:
-                _m, _e = langs.gfs(nuts_mult, locale), langs.td_dt(nuts_end, brief=True, suffix=False)
+                _m, _e = langs.gfs(nuts_mult, locale), langs.td_dt(nuts_end, locale, brief=True, suffix=False)
                 message_data += langs.gls("tbl_game_events_nuts", locale, _m, _e, a[_runs % 4])
                 # message_data += f"Current Nuts Multiplier: **x{nuts_mult}** - \\{a[_runs % 4]} Ends in **{langs.td_dt(nuts_end, brief=True)}**\n"
             if xp_mult != 1:
-                _m, _e = langs.gfs(xp_mult, locale), langs.td_dt(xp_end, brief=True, suffix=False)
+                _m, _e = langs.gfs(xp_mult, locale), langs.td_dt(xp_end, locale, brief=True, suffix=False)
                 message_data += langs.gls("tbl_game_events_xp", locale, _m, _e, a[_runs % 4])
                 # message_data += f"Current XP Multiplier: **x{xp_mult}** - \\{a[_runs % 4]} Ends in **{langs.td_dt(xp_end, brief=True)}**\n"
             # message_data += f"Round: **{_runs}**\nLocation: **{loc['name']}**\n" \

@@ -99,7 +99,7 @@ locations = [
     },
     {
         "id": 7,
-        "name": "Dan Veilaran Bylkaden Peaskat",
+        "name": "Dan Veilaran Bylkadan Peaskat",
         "en": "tbl_location07",
         "desc_en": "tbl_description07",
         "energy": 10,
@@ -243,7 +243,7 @@ locations = [
     },
     {
         "id": 16,
-        "name": "Da Seinara Teivavaidaa",
+        "name": "Da Seinankara Teivavaidaa",
         "en": "tbl_location16",
         "desc_en": "tbl_description16",
         "energy": 10,
@@ -259,7 +259,7 @@ locations = [
     },
     {
         "id": 17,
-        "name": "Da Deva Laitaa Deaktanvan",
+        "name": "Da Devida Laitaa Deaktanvan",
         "en": "tbl_location17",
         "desc_en": "tbl_description17",
         "energy": 10,

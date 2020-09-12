@@ -58,7 +58,6 @@ def _levels():
         if x not in bad:
             xp.append(int(req))
         else:
-            xp[-1] = req
             xp.append(xp[-1])
     return xp
 

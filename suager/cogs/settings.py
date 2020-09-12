@@ -23,7 +23,7 @@ class Settings(commands.Cog):
                 con.append(language)
             else:
                 real.append(language)
-        trusted = [302851022790066185, 577637595392245770, 651179888988127270, 418151634087182359, 430891116318031872, 291665491221807104]
+        trusted = [302851022790066185, 577637595392245770, 651179888988127270, 430891116318031872, 291665491221807104]
         trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
         if ctx.author.id in trusted and ctx.guild.id in trusted_servers:
             out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)

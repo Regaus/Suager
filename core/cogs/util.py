@@ -21,18 +21,21 @@ class Utility(commands.Cog):
         """ Current time """
         locale = langs.gl(ctx)
         send = ""
-        if ctx.guild.id in [568148147457490954, 738425418637639775]:
-            send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
-        send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, True, False, True, True))
-        send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"
-        # send = f"Senko Lair: **{time.time_k(tz=True)}**\n" if self.bot.name == "suager" else ""
-        # send += f"Bot Time: **{time.time(self.bot.local_config['timezone'], _tz=True)}**\nUTC/GMT: **{time.time(None, _tz=True)}**"
-        data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
-        if data:
-            _tzn = data["tz"]
-            _tzl = len(_tzn)
-            tzn = _tzn.upper() if _tzl <= 3 else _tzn.title()
-            send += f"\n{tzn}: **{time.time_output(time.set_tz(time.now(None), data['tz']), tz=True, seconds=True)}**"
+        if locale.startswith("rsl-1"):
+            send += f"Taida ecaa: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**"
+        else:
+            if ctx.guild.id in [568148147457490954, 738425418637639775]:
+                send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
+            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, True, False, True, True))
+            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"
+            # send = f"Senko Lair: **{time.time_k(tz=True)}**\n" if self.bot.name == "suager" else ""
+            # send += f"Bot Time: **{time.time(self.bot.local_config['timezone'], _tz=True)}**\nUTC/GMT: **{time.time(None, _tz=True)}**"
+            data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+            if data:
+                _tzn = data["tz"]
+                _tzl = len(_tzn)
+                tzn = _tzn.upper() if _tzl <= 3 else _tzn.title()
+                send += f"\n{tzn}: **{time.time_output(time.set_tz(time.now(None), data['tz']), tz=True, seconds=True)}**"
         return await general.send(send, ctx.channel)
 
     @commands.command(name="base", aliases=["bases", "bc"])

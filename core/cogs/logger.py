@@ -1,4 +1,3 @@
-import os
 from io import BytesIO
 
 import discord
@@ -31,16 +30,17 @@ class Spyware(commands.Cog):
             if uid not in self.self:
                 avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
                 ext = "gif" if after.is_avatar_animated() else "png"
-                try:
-                    os.makedirs(f"data/avatars/{after.id}")
-                except FileExistsError:
-                    pass
-                with open(f"data/avatars/{after.id}/{a2}.{ext}", "wb+") as output:
-                    output.write(avatar.read())
+                # try:
+                #     os.makedirs(f"data/avatars/{after.id}")
+                # except FileExistsError:
+                #     pass
+                # with open(f"data/avatars/{after.id}/{a2}.{ext}", "wb+") as output:
+                #     output.write(avatar.read())
                 if al is None:
                     print("No avatar log channel found.")
                 else:
-                    await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(f"data/avatars/{after.id}/{a2}.{ext}"))
+                    await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
+                # file=discord.File(f"data/avatars/{after.id}/{a2}.{ext}"))
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
             send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"

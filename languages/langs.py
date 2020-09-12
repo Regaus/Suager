@@ -172,18 +172,19 @@ def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool 
 def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
+    if locale.startswith("rsl-1"):
+        when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
-        if dow and not locale.startswith("rsl-3"):
+        if dow and not (locale.startswith("rsl-3") or locale.startswith("rsl-1")):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
-        if locale == "en_us":
+        if locale in ["en_us", "rsl-3a"]:
             base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
-        elif locale.startswith("rsl-3"):
-            month_name = month_names_l[when.month % 12]
-            base += f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name} s.sh. {gns(when.year, locale, 0, False)}, "
+        # elif locale.startswith("rsl-3"):
+        #     base += f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name} s.sh. {gns(when.year, locale, 0, False)}, "
         else:
             month_name = month_names_l[when.month % 12]
             month_name_s = month_name[:3]
@@ -201,11 +202,13 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
 
 
 def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
+    if locale.startswith("rsl-1"):
+        when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
-    if locale.startswith("rsl-3"):
+    if locale == "rsl-3a":
         month_name = month_names_l[when.month % 12]
-        return f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name}{f' s.sh. {gns(when.year, locale, 0, False)}' if year else ''}"
+        return f"{gns(when.day, locale)} s. sod. {month_name}{f' {gns(when.year, locale, 0, False)}' if year else ''}"
     else:
         month_name_s = month_name[:3]
         month = month_name if not short else month_name_s

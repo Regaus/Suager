@@ -550,7 +550,8 @@ class Games(commands.Cog):
             embed.title = langs.gls("tbl_details_locations_title", locale, location_id)
             embed.description = langs.gls(location["desc_en"], locale)
             embed.add_field(name=langs.gls("tbl_details_locations_name", locale), value=location["name"], inline=False)
-            embed.add_field(name=langs.gls("tbl_details_locations_name2", locale), value=langs.gls(location["en"], locale), inline=False)
+            if locale != "rsl-1":
+                embed.add_field(name=langs.gls("tbl_details_locations_name2", locale), value=langs.gls(location["en"], locale), inline=False)
             embed.add_field(name=langs.gls("tbl_details_locations_req", locale), value=f"**{langs.gns(location['level'], locale)}**", inline=True)
             a1, a2 = location["araksan"]
             embed.add_field(name=langs.gls("tbl_details_locations_nuts", locale), value=f"**{langs.gns(a1, locale)}-{langs.gns(a2, locale)}**", inline=True)

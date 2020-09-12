@@ -342,3 +342,16 @@
 - Added old levels command, which shows information about older leveling systems
 - Added s u c c command
 - Suppress the existence of RSLs in //languages unless the person and guild are trusted with that shit
+
+## v6.1.7 - 11-12 September
+- Updated level 69 behaviour
+- Removed hat kid from the "trusted" in //languages
+- Updated RSL-1 and RSL-3 time outputs
+- Removed Kaltaryna RSL-1
+- //time will only output SL time in RSL-1
+- Translated Aqos into Russian and RSL-1
+- Added RSL-1 translation for TBL details commands, location descriptions, and totems
+- TBL events end times will now be translated into their target language
+- Generally updated RSL-1 locale
+- Choco now won't be able to use //say. You're blocked for a fucking reason, god damn it.
+- Avatar changes will now just get logged in their channel, and no longer be saved onto disk.
