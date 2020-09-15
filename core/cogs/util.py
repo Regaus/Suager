@@ -9,6 +9,7 @@ from discord.ext import commands
 
 from core.utils import bases, general, http, time
 from languages import langs
+from suager.utils import ss23
 
 
 class Utility(commands.Cog):
@@ -22,10 +23,20 @@ class Utility(commands.Cog):
         locale = langs.gl(ctx)
         send = ""
         if locale.startswith("rsl-1"):
-            send += f"Taida ecaa: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**"
+            data = ss23.time_kargadia(time.now(None))
+            output = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            send += f"Taida an Zymlä'an: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**\nTaida an Kargadia'n: **{output}**"
+        elif locale == "rsl-5":
+            time1 = langs.gts(time.now(None), locale, True, False, False, True, False)
+            data = ss23.time_kargadia(time.now(None))
+            time3 = f"{data.day:02d} {ss23.rsl_5_kne_months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            data = ss23.time_kargadia_5(time.now(None))
+            time4 = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KDT, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            send += f"Voighowa Zèmlhàiriz (NE-alla): **{time1}**\nVoighowa Zèmlhàiriz (Derataidálla): **Placeholder**\n" \
+                    f"Voighowa Mennaughestaulas (KNE-alla): **{time3}**\nVoighowa Mennaughestaulas (KDT-álla): **{time4}**"
         else:
             if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
+                send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True, "NE"))
             send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, True, False, True, True))
             send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"
             # send = f"Senko Lair: **{time.time_k(tz=True)}**\n" if self.bot.name == "suager" else ""
@@ -88,6 +99,9 @@ class Utility(commands.Cog):
     async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Time difference """
         locale = langs.gl(ctx)
+        if locale in ["rsl-1", "rsl-5"]:
+            if year is not None and year < 277:
+                return await general.send(f"In RSL-1 and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
         try:
             now = time.now(None)
             date = datetime(now.year, 1, 1)

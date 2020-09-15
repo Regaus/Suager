@@ -323,8 +323,8 @@ class Discord(commands.Cog):
         o = m - sn
         os = langs.gns(o, locale)
         lag, lac, lat, lal, lan = langs.gns(ag, locale), langs.gns(ac, locale), langs.gns(at, locale), langs.gns(al, locale), langs.gns(an, locale)
-        apg, apt, apl, apc, apn = langs.gfs(ag / m, locale, 2, True), langs.gfs(at / m, locale, 2, True), langs.gfs(al / m, locale, 2, True), \
-            langs.gfs(ac / m, locale, 2, True), langs.gfs(an / m, locale, 2, True)
+        apg, apt, apl, apc, apn = langs.gfs(ag / o, locale, 2, True), langs.gfs(at / o, locale, 2, True), langs.gfs(al / o, locale, 2, True), \
+            langs.gfs(ac / o, locale, 2, True), langs.gfs(an / o, locale, 2, True)
         embed.add_field(name=langs.gls("discord_server_status_status", locale), inline=False,
                         value=langs.gls("discord_server_status_status_data", locale, e1, lo, po, lom, lod, low, e2, li, pi, lim, lid, liw, e3, ld, pd, ldm,
                                         ldd, ldw, e4, ln, pn))

@@ -91,24 +91,24 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    _1 = ["en_gb", "en_us"]
-    if locale.startswith("rsl-3"):
+    # _1 = ["en_gb", "en_us"]
+    if locale == "rsl-3a":
         _1, _2, _3, _4, _10, _nur = get_data(what, locale)
         if v > 160000:
             name = _nur
         else:
             mod = v % 20
             name = _1 if mod == 1 else _2 if mod == 2 else _3 if mod == 3 else _4 if 4 <= mod < 10 else _10
-    elif locale in _1:
-        name_1, name_2 = get_data(what, locale)
-        name = name_1 if v == 1 else name_2
-    else:
+    elif locale in ["rsl-1", "ru_ru"]:
         name_1, name_2, name_pl = get_data(what, locale)
         pl = get_data("_pl", locale)
         p1, p2, p3 = pl
         v2 = v % int(p3)
         v3 = v2 % int(p2)
         name = name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1
+    else:
+        name_1, name_2 = get_data(what, locale)
+        name = name_1 if v == 1 else name_2
     reverse = ["rsl-3a"]
     return f"{name} {gns(v, locale)}" if locale in reverse else f"{gns(v, locale)} {name}"
 
@@ -169,27 +169,30 @@ def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool 
     return td_dt(time.from_ts(timestamp, None), locale, accuracy=accuracy, brief=brief, suffix=suffix)
 
 
-def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
+def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False,
+        era: str = "AD") -> str:
     """ Get localised time string """
     when = when or time.now(None)
-    if locale.startswith("rsl-1"):
+    era = era or "AD"
+    if locale in ["rsl-1", "rsl-5"]:
         when = time.kargadia_convert(when)
+        era = "NE"
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
-        if dow and not (locale.startswith("rsl-3") or locale.startswith("rsl-1")):
+        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1", "rsl-5"]):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
         if locale in ["en_us", "rsl-3a"]:
-            base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
+            base += f"{when.day:02d}/{when.month:02d}/{when.year:04d} {era}, "
         # elif locale.startswith("rsl-3"):
         #     base += f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name} s.sh. {gns(when.year, locale, 0, False)}, "
         else:
             month_name = month_names_l[when.month % 12]
             month_name_s = month_name[:3]
             month = month_name_s if short else month_name
-            base += f"{gns(when.day, locale, 2)} {month} {gns(when.year, locale, 0, False)}, "
+            base += f"{gns(when.day, locale, 2)} {month} {gns(when.year, locale, 0, False)} {era}, "
     hour = gns(when.hour, locale, 2)
     minute = gns(when.minute, locale, 2)
     second = gns(when.second, locale, 2)
@@ -202,7 +205,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
 
 
 def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
-    if locale.startswith("rsl-1"):
+    if locale in ["rsl-1", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]

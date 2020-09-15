@@ -355,3 +355,14 @@
 - Generally updated RSL-1 locale
 - Choco now won't be able to use //say. You're blocked for a fucking reason, god damn it.
 - Avatar changes will now just get logged in their channel, and no longer be saved onto disk.
+
+## v6.1.8 - 14-15 September
+- Added RSL-5 Kargadia time
+- Added RSL-5 locale (WIP)
+- Custom messages for //time in RSL-1 and -5
+- Timesince will no longer allow dates before 277 AD in RSL-1 and -5 locales
+- Updated plurals function
+- Updated time output functions
+- Time23 will no longer works with dates after 9500 AD
+- Removed timetb
+- Fixed server status showing activity percentages from all members, instead of from online members

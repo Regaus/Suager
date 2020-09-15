@@ -16,13 +16,21 @@ class SS23(commands.Cog):
             dt = time.now(None)
         else:
             if year < 1970 or (year == 1970 and month < 4):
-                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 April 1970**.", ctx.channel)
-            dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 April 1970 AD**.", ctx.channel)
+            if year >= 9500:
+                return await general.send(f"{emotes.Deny} This command does not work with dates after **31 December 9499 AD, 23:59:59 UTC**", ctx.channel)
+            try:
+                dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+            except ValueError as e:
+                return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
         ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
-        tk = ss23.date_kargadia(dt)  # Time in Kargadia
-        tz = ss23.date_zeivela(dt)  # Time on Zeivela
-        tq = ss23.date_kaltaryna(dt)  # Time in Kaltaryna
-        return await general.send(f"Time on Earth: **{ti}**\nTime on Zeivela: **{tz}**\nTime in Kargadia: **{tk}**\nTime in Kaltaryna: **{tq}**", ctx.channel)
+        tk = ss23.date_kargadia(dt)  # Time in Kargadia RSL-1
+        tz = ss23.date_zeivela(dt)  # Time on Zeivela RSL-2
+        tq = ss23.date_kaltaryna(dt)  # Time in Kaltaryna RSL-1
+        td = ss23.date_kargadia_5(dt)  # Time on Kargadia RSL-5
+        return await general.send(f"Time on Earth: **{ti}**\nTime on Zeivela (RSL-2): **{tz}**\nTime on Zeivela (RSL-3): **Placeholder**\n"
+                                  f"Time on Kargadia (RSL-1): **{tk}**\nTime on Kargadia (RSL-5): **{td}**\n"
+                                  f"Time in Kaltaryna (RSL-1): **{tq}**", ctx.channel)
 
     @commands.command(name="weather23", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -61,15 +69,6 @@ class SS23(commands.Cog):
             if ctx.channel.id == 610482988123422750:
                 await general.send(general.traceback_maker(e), ctx.channel)
             return await general.send(f"An error occurred: `{type(e).__name__}: {e}`.\nThe place {place} may not exist.", ctx.channel)
-
-    @commands.command(name="timetb", hidden=True)
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time_tbl(self, ctx: commands.Context):
-        """ Time in TBL """
-        dt = time.now(None)
-        ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
-        tk = ss23.time_kargadia(dt, tz=2.5, tzn="TBT").str_dec(True, False, True)  # Time in Kargadia
-        return await general.send(f"Time on Earth: **{ti}**\nTime in TBL: **{tk}**", ctx.channel)
 
     @commands.command(name="nlc", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

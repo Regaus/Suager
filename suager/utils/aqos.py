@@ -229,6 +229,8 @@ class Temple:
         names = langs.get_data("aqos_temple_names", locale)
         parts = langs.get_data("aqos_temple_parts", locale)
         self.name = langs.gls("aqos_temple_name", locale, names[self.temple], parts[self.part])
+        if self.temple >= 5:
+            self.name = langs.gls("aqos_temple_name_final", locale, names[self.temple])
         self.score_mult = 1 + (level - 1) / 1000 if level < 6001 else 7.0
         self.energy_time = (60 + (level - 1) * 0.01 if level < 7201 else 132.0) / 60  # "Minutes" per energy point
         energy_regen_mult = 1 + (xp_level - 1) / 111 if xp_level < 1001 else 10
@@ -287,7 +289,7 @@ async def aqos_game(ctx):
                 user["score"] += knowledge.level_score
                 if user["level"] % 6 in [0, 4]:
                     user["score"] += int(round(knowledge.level_score ** 0.7 * knowledge.br_length, -2))
-                    user["energy"] -= knowledge.br_length
+                    # user["energy"] -= knowledge.br_length
                     _runs += knowledge.br_length
                 user["level_progress"] -= user["level_length"]
                 knowledge = Temple(user["level"], user["xp_level"], user["score"], locale)

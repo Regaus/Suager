@@ -1,5 +1,5 @@
 {
-  "_name": "RSL-3 (Runastal Sölarono Cürelrunastonkusto)",
+  "_name": "RSL-3 - Runastal Sölarono Cürelrunastonkusto",
   "_pl": ["10", "20", "400"],
   "generic_and": "aji",
   "generic_created_at": "Najla, nülkavü pajü apalawt iilawt",
@@ -26,6 +26,7 @@
   "aqos_stats_xp": "Experience",
   "aqos_stats_xp_data": "**{0}/{1}** XP\nXP Level **{2}**",
   "aqos_temple_name": "{1} Temple of {0}",
+  "aqos_temple_name_final": "Temple of {0}",
   "aqos_temple_names": ["Initiation", "Sanity", "Continuity", "Existence", "Integrity", "Termination"],
   "aqos_temple_parts": ["Copper", "Bronze", "Silver", "Golden", "Platinum"],
   "birthdays_message": "Nalaby sela ekaromagyjü tayle arazat selazat, {0} \uD83C\uDF82\uD83C\uDF89",
