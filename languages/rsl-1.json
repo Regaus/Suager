@@ -423,7 +423,7 @@
   "time_h": "ca",
   "time_m": "d",
   "time_s": "k",
-  "time_month_names": ["Seldar Masailnar", "Nuannar", "Seimannar", "Veisanar", "Hillannar", "Havazdallarinnar", "Sanvaggannar", "Kailaggannar", "Semardannar", "Addanvar", "Halltuavar", "Masailnar"],
+  "time_month_names": ["Seldar Masailnar'an", "Nuannar'an", "Seimannar'an", "Veisanar'an", "Hillannar'an", "Havazdallarinnar'an", "Sanvaggannar'an", "Kailaggannar'an", "Semardannar'an", "Addanvar'an", "Halltuavar'an", "Masailnar'an"],
   "util_time_bot": "Muna taida: **{0}**\n",
   "util_time_sl": "Senka'dar Laikadu: **{0}**\n",
   "util_timesince": "Taida ecaa: **{0}**\nNe te kairak: **{1}**\nIk etes naat: **{2}**",

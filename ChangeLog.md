@@ -366,3 +366,10 @@
 - Time23 will no longer works with dates after 9500 AD
 - Removed timetb
 - Fixed server status showing activity percentages from all members, instead of from online members
+
+## v6.1.9 - 16 September
+- Time23 will now work up to 1687 AD
+- Updated Zeivela-2 output for time23
+- Improved Kargadia time output in RSL-5
+- Added RSL-5 Earth time output
+- Updated case for months in RSL-1 and -2 (both time23 and generic time)

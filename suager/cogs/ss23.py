@@ -15,20 +15,20 @@ class SS23(commands.Cog):
         if year is None:
             dt = time.now(None)
         else:
-            if year < 1970 or (year == 1970 and month < 4):
-                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 April 1970 AD**.", ctx.channel)
+            if year < 1687:
+                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 1687 AD**.", ctx.channel)
             if year >= 9500:
                 return await general.send(f"{emotes.Deny} This command does not work with dates after **31 December 9499 AD, 23:59:59 UTC**", ctx.channel)
             try:
                 dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
             except ValueError as e:
                 return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
-        ti = dt.strftime("%A, %d/%m/%Y AD, %H:%M:%S %Z")  # Time IRL
+        ti = dt.strftime("%A, %d %B %Y AD, %H:%M:%S %Z")  # Time IRL
         tk = ss23.date_kargadia(dt)  # Time in Kargadia RSL-1
         tz = ss23.date_zeivela(dt)  # Time on Zeivela RSL-2
         tq = ss23.date_kaltaryna(dt)  # Time in Kaltaryna RSL-1
         td = ss23.date_kargadia_5(dt)  # Time on Kargadia RSL-5
-        return await general.send(f"Time on Earth: **{ti}**\nTime on Zeivela (RSL-2): **{tz}**\nTime on Zeivela (RSL-3): **Placeholder**\n"
+        return await general.send(f"Time on Earth (English): **{ti}**\nTime on Zeivela (RSL-2): **{tz}**\nTime on Zeivela (RSL-3): **Placeholder**\n"
                                   f"Time on Kargadia (RSL-1): **{tk}**\nTime on Kargadia (RSL-5): **{td}**\n"
                                   f"Time in Kaltaryna (RSL-1): **{tq}**", ctx.channel)
 

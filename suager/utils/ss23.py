@@ -46,11 +46,11 @@ def date_kargadia(when: datetime = None, tz: float = 0, tzn: str = "ST"):
 
 
 def time_zeivela(when: datetime = None, tz: float = 0, tzn: str = "ZST"):
-    irl = when or time.now(None)
-    start = datetime(1970, 4, 1, tzinfo=timezone.utc)
+    irl = (when or time.now(None)) + relativedelta(years=1800)
+    start = datetime(60, 12, 5, 3, 40, tzinfo=timezone.utc)
     total = (irl - start).total_seconds()
     ml = 36  # month length
-    year = 2774
+    year = 1
     day_length = 27.12176253 * 3600
     days = total / day_length
     days += tz / 36
@@ -131,7 +131,7 @@ rsl_5_kne_months = ["Senkannaraljan", "Shirannaraljan", "Kanvamaraljan", "Arkhan
 def time_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     irl = (when or time.now(None)) + relativedelta(years=500)
     # start = datetime(1970, 1, 1, 6, 30, tzinfo=timezone.utc)
-    start = datetime(41, 2, 10, 2, 15, tzinfo=timezone.utc)
+    start = datetime(42, 1, 24, 2, 15, tzinfo=timezone.utc)
     total = (irl - start).total_seconds()
     # ml = 32  # month length
     # year = 1060
@@ -176,6 +176,43 @@ def date_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     # return time_kargadia(when, tz, tzn).str_full()
 
 
+def time_earth_5(when: datetime = None):
+    irl = (when or time.now(None)) + relativedelta(years=500)
+    start = datetime(42, 1, 24, 2, 15, tzinfo=timezone.utc)
+    total = (irl - start).total_seconds()
+    year = 1
+    day_length = 86400
+    days = total / day_length
+    secs = (days % 1) * day_length
+    kdl = 24 * 60 * 60
+    ksl = day_length / kdl
+    ks = int(secs / ksl)
+    h, ms = divmod(ks, 3600)
+    m, s = divmod(ms, 60)
+    dl = int(days)
+    _ds = dl
+    while True:
+        yl = 366 if year % 4 == 0 else 365
+        if dl >= yl:
+            year += 1
+            dl -= yl
+        else:
+            break
+    day = dl
+    month = 1
+    month_lengths = rsl_5_lengths["ZDT"].copy()
+    leap = year % 4 == 0
+    if leap:
+        month_lengths[rsl_5_leap_month["ZDT"]] += 1
+    for length in month_lengths:
+        if day > length:
+            day -= length
+            month += 1
+        else:
+            break
+    return f"{day + 1:02d} {rsl_5_months[month - 1]} {year} DT, {h:02d}:{m:02d}:{s:02d}"
+
+
 class SS23Time:
     def __init__(self, name: str, year: int, month: int, day: int, hour: int, minute: int, second: int, ds: int = 1, tzn: str = "KST"):
         self.year = year
@@ -206,21 +243,23 @@ class SS23Time:
             self.day_name = f"Keina te {weekdays[dow]}"
             if self.day == 37:
                 self.day_name = f"Keine te Vantakku-Tahnall"
-            self.months = ["Vinhirus", "Kavderus", "Tinnerus", "Hednerus", "Hainerus", "Katterus",
-                           "Neiteverus", "Zeivellus", "Pentallus", "Tebarrus", "Faitualus", "Kaggarus"]
+            months = ["Vinhirus", "Kavderus", "Tinnerus", "Hednerus", "Hainerus", "Katterus",
+                      "Neiteverus", "Zeivellus", "Pentallus", "Tebarrus", "Faitualus", "Kaggarus"]
+            self.months = [f"te Vaiku te {month}" for month in months]
         if name == "Kargadia":
             weekdays = ["Senka", "Navai", "Sanva", "Havlei", "Teine", "Kannai", "Sua", "Shira"]
             parts = ["tea", "rea", "sea", "vea"]
             part = self.hour // 8
             self.day_name = f"{weekdays[dow]}{parts[part]}"
-            self.months = ["Senkannar", "Shirannar", "Kanvamar", "Árkanmar", "Nurinnar", "Aijamar", "Kíonnar", "Gairannar",
-                           "Bassemar", "Finkannar", "Suvannar", "Kittannar", "Semarmar", "Haltannar", "Kaivynnar", "Kärasmar"]
+            self.months = ["Senkannar'an", "Shirannar'an", "Kanvamar'an", "Árkanmar'an", "Nurinnar'an", "Aijamar'an", "Kíonnar'an", "Gairannar'an",
+                           "Bassemar'an", "Finkannar'an", "Suvannar'an", "Kittannar'an", "Semarmar'an", "Haltannar'an", "Kaivynnar'an", "Kärasmar'an"]
         if name == "Kaltaryna":
             weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
             day_part = "Sea" if self.hour in range(12, 52) else "Tea"
             self.day_name = f"{day_part} af {weekdays[dow]}"
-            self.months = ["Senka", "Shira", "Kanvarus", "Arkanéda", "Nurus", "Aii", "Kiona", "Gairnar",
-                           "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
+            months = ["Senka", "Shira", "Kanvarus", "Arkanéda", "Nurus", "Aii", "Kiona", "Gairnar",
+                      "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
+            self.months = [f"af Sakku af {month}" for month in months]
         if name == "Kargadia-5":
             self.day_name = rsl_5_days[dow]
             self.months = rsl_5_months
@@ -311,7 +350,7 @@ class Weather:
                     "temperature_high_day": [6, 0, -4, -11, -16, -19, -21, -17, -12, -8, -4, -1, 12, 18, 22, 14],
                     "temperature_low_night": [-11, -19, -23, -30, -31, -36, -41, -40, -27, -21, -17, -11, -7, -2, 7, -1],
                     "temperature_high_night": [1, -6, -12, -14, -19, -25, -26, -24, -17, -15, -11, -5, -1, 5, 7, 2],
-                    "rain_chance": [37, 31, 21, 17, 9, 6, 5, 8, 11, 13, 17, 27, 33, 40, 39],
+                    "rain_chance": [37, 31, 21, 17, 9, 6, 5, 5, 8, 11, 13, 17, 27, 33, 40, 39],
                     "winds_mult": 0.81
                 },
                 "Kitnagar": {
@@ -319,8 +358,8 @@ class Weather:
                     "temperature_high_day": [17, 14, 9, 5, -1, -7, -10, -4, 6, 11, 18, 21, 27, 30, 30, 29],
                     "temperature_low_night": [4, 1, -5, -10, -15, -20, -21, -14, -6, -1, 1, 5, 9, 10, 11, 7],
                     "temperature_high_night": [12, 9, 5, 0, -4, -10, -9, -9, -5, 6, 10, 15, 20, 21, 20, 17],
-                    "rain_chance": [37, 31, 21, 17, 9, 6, 5, 8, 11, 13, 17, 27, 33, 40, 39],
-                    "winds_mult": 0.81
+                    "rain_chance": [29, 27, 22, 18, 16, 12, 8, 11, 13, 14, 17, 22, 29, 36, 40, 36],
+                    "winds_mult": 0.67
                 },
                 "Murrangar": {
                     "temperature_low_day": [-51, -47, -34, -30, -27, -25, -24, -24, -27, -31, -37, -41, -50, -57, -63, -57],
