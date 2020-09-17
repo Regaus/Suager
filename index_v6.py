@@ -49,8 +49,9 @@ for i in range(len(config["bots"])):
         times = changes.copy()
     times['ad'] = False
     open(fn, 'w+').write(json.dumps(times))
-    bot = bot_data.Bot(command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), case_insensitive=True, help_command=bot_data.HelpFormat(),
-                       owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd)
+    blacklist = json.loads(open("blacklist.json", "r").read())
+    bot = bot_data.Bot(blacklist, command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
+                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd)
     bot.index = i
     bot.local_config = local_config
     bot.config = config

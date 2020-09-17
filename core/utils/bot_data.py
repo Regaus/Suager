@@ -6,11 +6,12 @@ from core.utils import permissions
 
 
 class Bot(AutoShardedBot):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, blacklist: list, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.blacklist = blacklist
 
     async def on_message(self, msg):
-        if not self.is_ready() or msg.author.bot or not permissions.can_send(msg):
+        if not self.is_ready() or msg.author.bot or not permissions.can_send(msg) or msg.author.id in self.blacklist:
             return
         await self.process_commands(msg)
 

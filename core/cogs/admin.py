@@ -1,6 +1,7 @@
 import ast
 import asyncio
 import importlib
+import json
 import os
 import re
 from asyncio.subprocess import PIPE
@@ -531,6 +532,29 @@ class Admin(commands.Cog):
     async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en_gb"):
         """ Test a string """
         return await general.send(langs.languages.get(locale, langs.languages["en_gb"]).get(string, f"String not found: {string}"), ctx.channel)
+
+    @commands.command(name="blacklist")
+    @commands.check(permissions.is_owner)
+    async def blacklist_add(self, ctx: commands.Context, user: discord.User):
+        """ Blacklist a user from using the bot """
+        blacklist = json.loads(open("blacklist.json", "r").read())
+        blacklist.append(user.id)
+        self.bot.blacklist = blacklist
+        open("blacklist.json", "w+").write(json.dumps(blacklist))
+        return await general.send(f"Added {user.id} ({user}) to the Blacklist", ctx.channel)
+
+    @commands.command(name="whitelist")
+    @commands.check(permissions.is_owner)
+    async def blacklist_remove(self, ctx: commands.Context, user: discord.User):
+        """ Remove a user from the blacklist """
+        blacklist = json.loads(open("blacklist.json", "r").read())
+        try:
+            blacklist.remove(user.id)
+            self.bot.blacklist = blacklist
+            open("blacklist.json", "w+").write(json.dumps(blacklist))
+            return await general.send(f"Removed {user.id} ({user}) from the Blacklist", ctx.channel)
+        except ValueError:
+            return await general.send(f"User {user.id} was not found in the Blacklist", ctx.channel)
 
 
 async def status(ctx: commands.Context, _type: int):

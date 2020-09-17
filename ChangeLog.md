@@ -373,3 +373,7 @@
 - Improved Kargadia time output in RSL-5
 - Added RSL-5 Earth time output
 - Updated case for months in RSL-1 and -2 (both time23 and generic time)
+
+## v6.1.10 - 17 September
+- Added Blacklist
+- Added owner-only commands to add and remove people from the blacklist
