@@ -4,7 +4,6 @@ from io import BytesIO
 
 import discord
 from discord.ext import commands
-from PIL import Image, ImageDraw, ImageFont
 
 from core.utils import arg_parser, general, http
 from languages import langs
@@ -230,33 +229,6 @@ class Images(commands.Cog):
             return await general.send(langs.gls("images_npc_split", langs.gl(ctx)), ctx.channel)
         t1, t2 = _split
         return await vac_api(ctx, f"npc?text1={urllib.parse.quote(t1)}&text2={urllib.parse.quote(t2)}")
-
-    @commands.command(name="meme")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def meme_generator(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
-        """ Create a meme """
-        async with ctx.typing():
-            font_colour = (255, 0, 0)
-            width = 1200
-            img = Image.new("RGB", (width, 600), color=(0, 0, 0))
-            dr = ImageDraw.Draw(img)
-            font_dir = "assets/impact.ttf"
-            try:
-                font = ImageFont.truetype(font_dir, size=72)
-            except ImportError:
-                return await general.send("It seems that image generation does not work properly here...", ctx.channel)
-            tw, _th = dr.textsize(text.upper(), font=font)
-            if tw > 1200:
-                width = tw + 20
-                img = Image.new("RGB", (width, 600), color=(0, 0, 0))
-                dr = ImageDraw.Draw(img)
-            bw, _bh = dr.textsize("BOTTOM TEXT", font=font)
-            dr.text(((width - tw) // 2, 20), text.upper(), font=font, fill=font_colour)
-            dr.text(((width - bw) // 2, 510), "BOTTOM TEXT", font=font, fill=font_colour)
-            bio = BytesIO()
-            img.save(bio, "PNG")
-            bio.seek(0)
-            return await general.send(str(ctx.author), ctx.channel, file=discord.File(bio, filename="meme.png"))
 
 
 def setup(bot):

@@ -319,7 +319,7 @@ async def aqos_game(ctx):
         message_data = langs.gls("aqos_game_output", locale, ctx.author.name, _runs, td, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11)
         return await message.edit(content=message_data)
     except Exception as e:
-        if ctx.channel.id == 738440590445772802:
+        if ctx.channel.id == 742885168997466196:
             await general.send(general.traceback_maker(e), ctx.channel)
         return await general.send(langs.gls("tbl_game_error", locale, type(e).__name__, str(e)), ctx.channel)
 

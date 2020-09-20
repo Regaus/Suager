@@ -163,7 +163,7 @@ locations = [
     },
     {
         "id": 11,
-        "name": "Dar Lias",
+        "name": "Dar Sehkaan-Lias",
         "en": "tbl_location11",
         "desc_en": "tbl_description11",
         "energy": 10,
@@ -211,7 +211,7 @@ locations = [
     },
     {
         "id": 14,
-        "name": "Da Garraikirtinna Temantan",
+        "name": "Garraikirtinna Teinadan",
         "en": "tbl_location14",
         "desc_en": "tbl_description14",
         "energy": 10,
@@ -259,7 +259,7 @@ locations = [
     },
     {
         "id": 17,
-        "name": "Da Devida Laitaa Deaktanvan",
+        "name": "Na Devida Laitaa Deaktanvan",
         "en": "tbl_location17",
         "desc_en": "tbl_description17",
         "energy": 10,
@@ -288,6 +288,38 @@ locations = [
         "act": 150,
         "dr": 0.19,
         "ll": 280
+    },
+    {
+        "id": 19,
+        "name": "Sevarta",
+        "en": "tbl_location19",
+        "desc_en": "tbl_description19",
+        "energy": 10,
+        "araksan": [200, 400],
+        "xp": [2500, 5000],
+        "sh": 275,
+        "points": [7500, 15000],
+        "level": 225,
+        "activity": [4172, 6019, 7298, 7939, 8191, 7541, 6411, 5072],
+        "act": 180,
+        "dr": 0.31,
+        "ll": 290
+    },
+    {
+        "id": 20,
+        "name": "Das Kannaite dan Liidenvirkallden",
+        "en": "tbl_location20",
+        "desc_en": "tbl_description20",
+        "energy": 10,
+        "araksan": [300, 500],
+        "xp": [4000, 6000],
+        "sh": 300,
+        "points": [12500, 17500],
+        "level": 250,
+        "activity": [17558, 20211, 22252, 24931, 23842, 20952, 19211, 17811],
+        "act": 210,
+        "dr": 0.15,
+        "ll": 295
     }
 ]
 
@@ -326,236 +358,262 @@ leagues = [
     {"name": "tbl_league21", "score": 500000},
     {"name": "tbl_league22", "score": 1000000},
     {"name": "tbl_league23", "score": 5000000},
-    {"name": "tbl_league24", "score": 25000000}
+    {"name": "tbl_league24", "score": 25000000},
+    {"name": "tbl_league25", "score": 100000000}
 ]
 
 
 xp_levels = [
-    {"experience": 0, "title": "tbl_rank01"},           # 001
-    {"experience": 50, "title": "tbl_rank01"},          # 002
-    {"experience": 110, "title": "tbl_rank01"},         # 003
-    {"experience": 200, "title": "tbl_rank02"},         # 004
-    {"experience": 300, "title": "tbl_rank02"},         # 005
-    {"experience": 425, "title": "tbl_rank02"},         # 006
-    {"experience": 590, "title": "tbl_rank03"},         # 007
-    {"experience": 1090, "title": "tbl_rank03"},        # 008
-    {"experience": 2565, "title": "tbl_rank03"},        # 009
-    {"experience": 5015, "title": "tbl_rank04"},        # 010
-    {"experience": 8640, "title": "tbl_rank04"},        # 011
-    {"experience": 13340, "title": "tbl_rank04"},       # 012
-    {"experience": 19115, "title": "tbl_rank05"},       # 013
-    {"experience": 25965, "title": "tbl_rank05"},       # 014
-    {"experience": 33890, "title": "tbl_rank05"},       # 015
-    {"experience": 42890, "title": "tbl_rank06"},       # 016
-    {"experience": 50640, "title": "tbl_rank06"},       # 017
-    {"experience": 57230, "title": "tbl_rank06"},       # 018
-    {"experience": 62840, "title": "tbl_rank07"},       # 019
-    {"experience": 67610, "title": "tbl_rank07"},       # 020
-    {"experience": 71670, "title": "tbl_rank07"},       # 021
-    {"experience": 75125, "title": "tbl_rank08"},       # 022
-    {"experience": 78065, "title": "tbl_rank08"},       # 023
-    {"experience": 80565, "title": "tbl_rank08"},       # 024
-    {"experience": 83065, "title": "tbl_rank09"},       # 025
-    {"experience": 86055, "title": "tbl_rank09"},       # 026
-    {"experience": 89635, "title": "tbl_rank09"},       # 027
-    {"experience": 93915, "title": "tbl_rank10"},       # 028
-    {"experience": 99035, "title": "tbl_rank10"},       # 029
-    {"experience": 105165, "title": "tbl_rank10"},      # 030
-    {"experience": 112500, "title": "tbl_rank11"},      # 031
-    {"experience": 121275, "title": "tbl_rank11"},      # 032
-    {"experience": 131775, "title": "tbl_rank11"},      # 033
-    {"experience": 139515, "title": "tbl_rank12"},      # 034
-    {"experience": 147580, "title": "tbl_rank12"},      # 035
-    {"experience": 155985, "title": "tbl_rank12"},      # 036
-    {"experience": 164740, "title": "tbl_rank13"},      # 037
-    {"experience": 173860, "title": "tbl_rank13"},      # 038
-    {"experience": 183360, "title": "tbl_rank13"},      # 039
-    {"experience": 193260, "title": "tbl_rank14"},      # 040
-    {"experience": 203575, "title": "tbl_rank14"},      # 041
-    {"experience": 214325, "title": "tbl_rank14"},      # 042
-    {"experience": 225525, "title": "tbl_rank15"},      # 043
-    {"experience": 237195, "title": "tbl_rank15"},      # 044
-    {"experience": 249350, "title": "tbl_rank15"},      # 045
-    {"experience": 262015, "title": "tbl_rank16"},      # 046
-    {"experience": 275210, "title": "tbl_rank16"},      # 047
-    {"experience": 288955, "title": "tbl_rank16"},      # 048
-    {"experience": 303275, "title": "tbl_rank17"},      # 049
-    {"experience": 318195, "title": "tbl_rank17"},      # 050
-    {"experience": 333740, "title": "tbl_rank17"},      # 051
-    {"experience": 349935, "title": "tbl_rank18"},      # 052
-    {"experience": 366805, "title": "tbl_rank18"},      # 053
-    {"experience": 384385, "title": "tbl_rank18"},      # 054
-    {"experience": 402700, "title": "tbl_rank19"},      # 055
-    {"experience": 421780, "title": "tbl_rank19"},      # 056
-    {"experience": 441660, "title": "tbl_rank19"},      # 057
-    {"experience": 462370, "title": "tbl_rank20"},      # 058
-    {"experience": 483950, "title": "tbl_rank20"},      # 059
-    {"experience": 506430, "title": "tbl_rank20"},      # 060
-    {"experience": 529850, "title": "tbl_rank21"},      # 061
-    {"experience": 554250, "title": "tbl_rank21"},      # 062
-    {"experience": 579670, "title": "tbl_rank21"},      # 063
-    {"experience": 606160, "title": "tbl_rank22"},      # 064
-    {"experience": 633755, "title": "tbl_rank22"},      # 065
-    {"experience": 662505, "title": "tbl_rank22"},      # 066
-    {"experience": 691255, "title": "tbl_rank23"},      # 067
-    {"experience": 719795, "title": "tbl_rank23"},      # 068
-    {"experience": 748130, "title": "tbl_rank23"},      # 069
-    {"experience": 776260, "title": "tbl_rank24"},      # 070
-    {"experience": 804185, "title": "tbl_rank24"},      # 071
-    {"experience": 831905, "title": "tbl_rank24"},      # 072
-    {"experience": 859425, "title": "tbl_rank25"},      # 073
-    {"experience": 886745, "title": "tbl_rank25"},      # 074
-    {"experience": 913865, "title": "tbl_rank25"},      # 075
-    {"experience": 940790, "title": "tbl_rank26"},      # 076
-    {"experience": 967520, "title": "tbl_rank26"},      # 077
-    {"experience": 994055, "title": "tbl_rank26"},      # 078
-    {"experience": 1020395, "title": "tbl_rank27"},     # 079
-    {"experience": 1046545, "title": "tbl_rank27"},     # 080
-    {"experience": 1072745, "title": "tbl_rank27"},     # 081
-    {"experience": 1099120, "title": "tbl_rank28"},     # 082
-    {"experience": 1125670, "title": "tbl_rank28"},     # 083
-    {"experience": 1152400, "title": "tbl_rank28"},     # 084
-    {"experience": 1179310, "title": "tbl_rank29"},     # 085
-    {"experience": 1206400, "title": "tbl_rank29"},     # 086
-    {"experience": 1233670, "title": "tbl_rank29"},     # 087
-    {"experience": 1261125, "title": "tbl_rank30"},     # 088
-    {"experience": 1288765, "title": "tbl_rank30"},     # 089
-    {"experience": 1316590, "title": "tbl_rank30"},     # 090
-    {"experience": 1344600, "title": "tbl_rank31"},     # 091
-    {"experience": 1372800, "title": "tbl_rank31"},     # 092
-    {"experience": 1401190, "title": "tbl_rank31"},     # 093
-    {"experience": 1429770, "title": "tbl_rank32"},     # 094
-    {"experience": 1458540, "title": "tbl_rank32"},     # 095
-    {"experience": 1487500, "title": "tbl_rank32"},     # 096
-    {"experience": 1516660, "title": "tbl_rank33"},     # 097
-    {"experience": 1546010, "title": "tbl_rank33"},     # 098
-    {"experience": 1575560, "title": "tbl_rank33"},     # 099
-    {"experience": 1605310, "title": "tbl_rank34"},     # 100
-    {"experience": 1635260, "title": "tbl_rank34"},     # 101
-    {"experience": 1665410, "title": "tbl_rank34"},     # 102
-    {"experience": 1695760, "title": "tbl_rank35"},     # 103
-    {"experience": 1726310, "title": "tbl_rank35"},     # 104
-    {"experience": 1757070, "title": "tbl_rank35"},     # 105
-    {"experience": 1788035, "title": "tbl_rank36"},     # 106
-    {"experience": 1819205, "title": "tbl_rank36"},     # 107
-    {"experience": 1850585, "title": "tbl_rank36"},     # 108
-    {"experience": 1882175, "title": "tbl_rank37"},     # 109
-    {"experience": 1913975, "title": "tbl_rank37"},     # 110
-    {"experience": 1945990, "title": "tbl_rank37"},     # 111
-    {"experience": 1978220, "title": "tbl_rank38"},     # 112
-    {"experience": 2010665, "title": "tbl_rank38"},     # 113
-    {"experience": 2043330, "title": "tbl_rank38"},     # 114
-    {"experience": 2076215, "title": "tbl_rank39"},     # 115
-    {"experience": 2109320, "title": "tbl_rank39"},     # 116
-    {"experience": 2142645, "title": "tbl_rank39"},     # 117
-    {"experience": 2176195, "title": "tbl_rank40"},     # 118
-    {"experience": 2209970, "title": "tbl_rank40"},     # 119
-    {"experience": 2243970, "title": "tbl_rank40"},     # 120
-    {"experience": 2278370, "title": "tbl_rank41"},     # 121
-    {"experience": 2314270, "title": "tbl_rank41"},     # 122
-    {"experience": 2351735, "title": "tbl_rank41"},     # 123
-    {"experience": 2390830, "title": "tbl_rank42"},     # 124
-    {"experience": 2431630, "title": "tbl_rank42"},     # 125
-    {"experience": 2474210, "title": "tbl_rank42"},     # 126
-    {"experience": 2518645, "title": "tbl_rank43"},     # 127
-    {"experience": 2565015, "title": "tbl_rank43"},     # 128
-    {"experience": 2613405, "title": "tbl_rank43"},     # 129
-    {"experience": 2663905, "title": "tbl_rank44"},     # 130
-    {"experience": 2716605, "title": "tbl_rank44"},     # 131
-    {"experience": 2771605, "title": "tbl_rank44"},     # 132
-    {"experience": 2828995, "title": "tbl_rank45"},     # 133
-    {"experience": 2888890, "title": "tbl_rank45"},     # 134
-    {"experience": 2951395, "title": "tbl_rank45"},     # 135
-    {"experience": 3016625, "title": "tbl_rank46"},     # 136
-    {"experience": 3084695, "title": "tbl_rank46"},     # 137
-    {"experience": 3155735, "title": "tbl_rank46"},     # 138
-    {"experience": 3229865, "title": "tbl_rank47"},     # 139
-    {"experience": 3307225, "title": "tbl_rank47"},     # 140
-    {"experience": 3387960, "title": "tbl_rank47"},     # 141
-    {"experience": 3472210, "title": "tbl_rank48"},     # 142
-    {"experience": 3560130, "title": "tbl_rank48"},     # 143
-    {"experience": 3651885, "title": "tbl_rank48"},     # 144
-    {"experience": 3747635, "title": "tbl_rank49"},     # 145
-    {"experience": 3847560, "title": "tbl_rank49"},     # 146
-    {"experience": 3951840, "title": "tbl_rank49"},     # 147
-    {"experience": 4060665, "title": "tbl_rank50"},     # 148
-    {"experience": 4174230, "title": "tbl_rank50"},     # 149
-    {"experience": 4292745, "title": "tbl_rank50"},     # 150
-    {"experience": 4416425, "title": "tbl_rank51"},     # 151
-    {"experience": 4545495, "title": "tbl_rank51"},     # 152
-    {"experience": 4680190, "title": "tbl_rank51"},     # 153
-    {"experience": 4820755, "title": "tbl_rank52"},     # 154
-    {"experience": 4967445, "title": "tbl_rank52"},     # 155
-    {"experience": 5120525, "title": "tbl_rank52"},     # 156
-    {"experience": 5280275, "title": "tbl_rank53"},     # 157
-    {"experience": 5446985, "title": "tbl_rank53"},     # 158
-    {"experience": 5620960, "title": "tbl_rank53"},     # 159
-    {"experience": 5799935, "title": "tbl_rank54"},     # 160
-    {"experience": 5989405, "title": "tbl_rank54"},     # 161
-    {"experience": 6187135, "title": "tbl_rank54"},     # 162
-    {"experience": 6393480, "title": "tbl_rank55"},     # 163
-    {"experience": 6608815, "title": "tbl_rank55"},     # 164
-    {"experience": 6833535, "title": "tbl_rank55"},     # 165
-    {"experience": 7068045, "title": "tbl_rank56"},     # 166
-    {"experience": 7312775, "title": "tbl_rank56"},     # 167
-    {"experience": 7568175, "title": "tbl_rank56"},     # 168
-    {"experience": 7834700, "title": "tbl_rank57"},     # 169
-    {"experience": 8112840, "title": "tbl_rank57"},     # 170
-    {"experience": 8403100, "title": "tbl_rank57"},     # 171
-    {"experience": 8706010, "title": "tbl_rank58"},     # 172
-    {"experience": 9022120, "title": "tbl_rank58"},     # 173
-    {"experience": 9352005, "title": "tbl_rank58"},     # 174
-    {"experience": 9696265, "title": "tbl_rank59"},     # 175
-    {"experience": 10055525, "title": "tbl_rank59"},    # 176
-    {"experience": 10430440, "title": "tbl_rank59"},    # 177
-    {"experience": 10733350, "title": "tbl_rank60"},    # 178
-    {"experience": 11084726, "title": "tbl_rank60"},    # 179
-    {"experience": 11492322, "title": "tbl_rank60"},    # 180
-    {"experience": 11965133, "title": "tbl_rank59"},    # 181
-    {"experience": 12513594, "title": "tbl_rank59"},    # 182
-    {"experience": 13149808, "title": "tbl_rank59"},    # 183
-    {"experience": 13887817, "title": "tbl_rank61"},    # 184
-    {"experience": 14743907, "title": "tbl_rank61"},    # 185
-    {"experience": 15736972, "title": "tbl_rank61"},    # 186
-    {"experience": 16888927, "title": "tbl_rank62"},    # 187
-    {"experience": 18225195, "title": "tbl_rank62"},    # 188
-    {"experience": 19775266, "title": "tbl_rank62"},    # 189
-    {"experience": 21573348, "title": "tbl_rank63"},    # 190
-    {"experience": 23659123, "title": "tbl_rank63"},    # 191
-    {"experience": 26078622, "title": "tbl_rank63"},    # 192
-    {"experience": 28885241, "title": "tbl_rank64"},    # 193
-    {"experience": 32140919, "title": "tbl_rank64"},    # 194
-    {"experience": 35917505, "title": "tbl_rank64"},    # 195
-    {"experience": 40298345, "title": "tbl_rank65"},    # 196
-    {"experience": 45380120, "title": "tbl_rank65"},    # 197
-    {"experience": 51274979, "title": "tbl_rank65"},    # 198
-    {"experience": 58113015, "title": "tbl_rank66"},    # 199
-    {"experience": 66045137, "title": "tbl_rank67"},    # 200
-    {"experience": 100000000, "title": "tbl_rank68"},   # 201
-    {"experience": 150000000, "title": "tbl_rank68"},   # 202
-    {"experience": 200000000, "title": "tbl_rank68"},   # 203
-    {"experience": 250000000, "title": "tbl_rank68"},   # 204
-    {"experience": 300000000, "title": "tbl_rank68"},   # 205
-    {"experience": 350000000, "title": "tbl_rank68"},   # 206
-    {"experience": 400000000, "title": "tbl_rank68"},   # 207
-    {"experience": 450000000, "title": "tbl_rank68"},   # 208
-    {"experience": 500000000, "title": "tbl_rank68"},   # 209
-    {"experience": 600000000, "title": "tbl_rank68"},   # 210
-    {"experience": 650000000, "title": "tbl_rank68"},   # 211
-    {"experience": 700000000, "title": "tbl_rank68"},   # 212
-    {"experience": 800000000, "title": "tbl_rank68"},   # 213
-    {"experience": 900000000, "title": "tbl_rank68"},   # 214
-    {"experience": 1000000000, "title": "tbl_rank68"},  # 215
-    {"experience": 1100000000, "title": "tbl_rank68"},  # 216
-    {"experience": 1200000000, "title": "tbl_rank68"},  # 217
-    {"experience": 1300000000, "title": "tbl_rank68"},  # 218
-    {"experience": 1400000000, "title": "tbl_rank68"},  # 219
-    {"experience": 1500000000, "title": "tbl_rank68"},  # 220
-    {"experience": 1600000000, "title": "tbl_rank68"},  # 221
-    {"experience": 1700000000, "title": "tbl_rank68"},  # 222
-    {"experience": 1800000000, "title": "tbl_rank68"},  # 223
-    {"experience": 1900000000, "title": "tbl_rank68"},  # 224
-    {"experience": 2000000000, "title": "tbl_rank68"}   # 225
+    {"experience": 0, "title": "tbl_rank01"},            # 001
+    {"experience": 50, "title": "tbl_rank01"},           # 002
+    {"experience": 110, "title": "tbl_rank01"},          # 003
+    {"experience": 200, "title": "tbl_rank02"},          # 004
+    {"experience": 300, "title": "tbl_rank02"},          # 005
+    {"experience": 425, "title": "tbl_rank02"},          # 006
+    {"experience": 590, "title": "tbl_rank03"},          # 007
+    {"experience": 1090, "title": "tbl_rank03"},         # 008
+    {"experience": 2565, "title": "tbl_rank03"},         # 009
+    {"experience": 5015, "title": "tbl_rank04"},         # 010
+    {"experience": 8640, "title": "tbl_rank04"},         # 011
+    {"experience": 13340, "title": "tbl_rank04"},        # 012
+    {"experience": 19115, "title": "tbl_rank05"},        # 013
+    {"experience": 25965, "title": "tbl_rank05"},        # 014
+    {"experience": 33890, "title": "tbl_rank05"},        # 015
+    {"experience": 42890, "title": "tbl_rank06"},        # 016
+    {"experience": 50640, "title": "tbl_rank06"},        # 017
+    {"experience": 57230, "title": "tbl_rank06"},        # 018
+    {"experience": 62840, "title": "tbl_rank07"},        # 019
+    {"experience": 67610, "title": "tbl_rank07"},        # 020
+    {"experience": 71670, "title": "tbl_rank07"},        # 021
+    {"experience": 75125, "title": "tbl_rank08"},        # 022
+    {"experience": 78065, "title": "tbl_rank08"},        # 023
+    {"experience": 80565, "title": "tbl_rank08"},        # 024
+    {"experience": 83065, "title": "tbl_rank09"},        # 025
+    {"experience": 86055, "title": "tbl_rank09"},        # 026
+    {"experience": 89635, "title": "tbl_rank09"},        # 027
+    {"experience": 93915, "title": "tbl_rank10"},        # 028
+    {"experience": 99035, "title": "tbl_rank10"},        # 029
+    {"experience": 105165, "title": "tbl_rank10"},       # 030
+    {"experience": 112500, "title": "tbl_rank11"},       # 031
+    {"experience": 121275, "title": "tbl_rank11"},       # 032
+    {"experience": 131775, "title": "tbl_rank11"},       # 033
+    {"experience": 139515, "title": "tbl_rank12"},       # 034
+    {"experience": 147580, "title": "tbl_rank12"},       # 035
+    {"experience": 155985, "title": "tbl_rank12"},       # 036
+    {"experience": 164740, "title": "tbl_rank13"},       # 037
+    {"experience": 173860, "title": "tbl_rank13"},       # 038
+    {"experience": 183360, "title": "tbl_rank13"},       # 039
+    {"experience": 193260, "title": "tbl_rank14"},       # 040
+    {"experience": 203575, "title": "tbl_rank14"},       # 041
+    {"experience": 214325, "title": "tbl_rank14"},       # 042
+    {"experience": 225525, "title": "tbl_rank15"},       # 043
+    {"experience": 237195, "title": "tbl_rank15"},       # 044
+    {"experience": 249350, "title": "tbl_rank15"},       # 045
+    {"experience": 262015, "title": "tbl_rank16"},       # 046
+    {"experience": 275210, "title": "tbl_rank16"},       # 047
+    {"experience": 288955, "title": "tbl_rank16"},       # 048
+    {"experience": 303275, "title": "tbl_rank17"},       # 049
+    {"experience": 318195, "title": "tbl_rank17"},       # 050
+    {"experience": 333740, "title": "tbl_rank17"},       # 051
+    {"experience": 349935, "title": "tbl_rank18"},       # 052
+    {"experience": 366805, "title": "tbl_rank18"},       # 053
+    {"experience": 384385, "title": "tbl_rank18"},       # 054
+    {"experience": 402700, "title": "tbl_rank19"},       # 055
+    {"experience": 421780, "title": "tbl_rank19"},       # 056
+    {"experience": 441660, "title": "tbl_rank19"},       # 057
+    {"experience": 462370, "title": "tbl_rank20"},       # 058
+    {"experience": 483950, "title": "tbl_rank20"},       # 059
+    {"experience": 506430, "title": "tbl_rank20"},       # 060
+    {"experience": 529850, "title": "tbl_rank21"},       # 061
+    {"experience": 554250, "title": "tbl_rank21"},       # 062
+    {"experience": 579670, "title": "tbl_rank21"},       # 063
+    {"experience": 606160, "title": "tbl_rank22"},       # 064
+    {"experience": 633755, "title": "tbl_rank22"},       # 065
+    {"experience": 662505, "title": "tbl_rank22"},       # 066
+    {"experience": 691255, "title": "tbl_rank23"},       # 067
+    {"experience": 719795, "title": "tbl_rank23"},       # 068
+    {"experience": 748130, "title": "tbl_rank23"},       # 069
+    {"experience": 776260, "title": "tbl_rank24"},       # 070
+    {"experience": 804185, "title": "tbl_rank24"},       # 071
+    {"experience": 831905, "title": "tbl_rank24"},       # 072
+    {"experience": 859425, "title": "tbl_rank25"},       # 073
+    {"experience": 886745, "title": "tbl_rank25"},       # 074
+    {"experience": 913865, "title": "tbl_rank25"},       # 075
+    {"experience": 940790, "title": "tbl_rank26"},       # 076
+    {"experience": 967520, "title": "tbl_rank26"},       # 077
+    {"experience": 994055, "title": "tbl_rank26"},       # 078
+    {"experience": 1020395, "title": "tbl_rank27"},      # 079
+    {"experience": 1046545, "title": "tbl_rank27"},      # 080
+    {"experience": 1072745, "title": "tbl_rank27"},      # 081
+    {"experience": 1099120, "title": "tbl_rank28"},      # 082
+    {"experience": 1125670, "title": "tbl_rank28"},      # 083
+    {"experience": 1152400, "title": "tbl_rank28"},      # 084
+    {"experience": 1179310, "title": "tbl_rank29"},      # 085
+    {"experience": 1206400, "title": "tbl_rank29"},      # 086
+    {"experience": 1233670, "title": "tbl_rank29"},      # 087
+    {"experience": 1261125, "title": "tbl_rank30"},      # 088
+    {"experience": 1288765, "title": "tbl_rank30"},      # 089
+    {"experience": 1316590, "title": "tbl_rank30"},      # 090
+    {"experience": 1344600, "title": "tbl_rank31"},      # 091
+    {"experience": 1372800, "title": "tbl_rank31"},      # 092
+    {"experience": 1401190, "title": "tbl_rank31"},      # 093
+    {"experience": 1429770, "title": "tbl_rank32"},      # 094
+    {"experience": 1458540, "title": "tbl_rank32"},      # 095
+    {"experience": 1487500, "title": "tbl_rank32"},      # 096
+    {"experience": 1516660, "title": "tbl_rank33"},      # 097
+    {"experience": 1546010, "title": "tbl_rank33"},      # 098
+    {"experience": 1575560, "title": "tbl_rank33"},      # 099
+    {"experience": 1605310, "title": "tbl_rank34"},      # 100
+    {"experience": 1635260, "title": "tbl_rank34"},      # 101
+    {"experience": 1665410, "title": "tbl_rank34"},      # 102
+    {"experience": 1695760, "title": "tbl_rank35"},      # 103
+    {"experience": 1726310, "title": "tbl_rank35"},      # 104
+    {"experience": 1757070, "title": "tbl_rank35"},      # 105
+    {"experience": 1788035, "title": "tbl_rank36"},      # 106
+    {"experience": 1819205, "title": "tbl_rank36"},      # 107
+    {"experience": 1850585, "title": "tbl_rank36"},      # 108
+    {"experience": 1882175, "title": "tbl_rank37"},      # 109
+    {"experience": 1913975, "title": "tbl_rank37"},      # 110
+    {"experience": 1945990, "title": "tbl_rank37"},      # 111
+    {"experience": 1978220, "title": "tbl_rank38"},      # 112
+    {"experience": 2010665, "title": "tbl_rank38"},      # 113
+    {"experience": 2043330, "title": "tbl_rank38"},      # 114
+    {"experience": 2076215, "title": "tbl_rank39"},      # 115
+    {"experience": 2109320, "title": "tbl_rank39"},      # 116
+    {"experience": 2142645, "title": "tbl_rank39"},      # 117
+    {"experience": 2176195, "title": "tbl_rank40"},      # 118
+    {"experience": 2209970, "title": "tbl_rank40"},      # 119
+    {"experience": 2243970, "title": "tbl_rank40"},      # 120
+    {"experience": 2278370, "title": "tbl_rank41"},      # 121
+    {"experience": 2314270, "title": "tbl_rank41"},      # 122
+    {"experience": 2351735, "title": "tbl_rank41"},      # 123
+    {"experience": 2390830, "title": "tbl_rank42"},      # 124
+    {"experience": 2431630, "title": "tbl_rank42"},      # 125
+    {"experience": 2474210, "title": "tbl_rank42"},      # 126
+    {"experience": 2518645, "title": "tbl_rank43"},      # 127
+    {"experience": 2565015, "title": "tbl_rank43"},      # 128
+    {"experience": 2613405, "title": "tbl_rank43"},      # 129
+    {"experience": 2663905, "title": "tbl_rank44"},      # 130
+    {"experience": 2716605, "title": "tbl_rank44"},      # 131
+    {"experience": 2771605, "title": "tbl_rank44"},      # 132
+    {"experience": 2828995, "title": "tbl_rank45"},      # 133
+    {"experience": 2888890, "title": "tbl_rank45"},      # 134
+    {"experience": 2951395, "title": "tbl_rank45"},      # 135
+    {"experience": 3016625, "title": "tbl_rank46"},      # 136
+    {"experience": 3084695, "title": "tbl_rank46"},      # 137
+    {"experience": 3155735, "title": "tbl_rank46"},      # 138
+    {"experience": 3229865, "title": "tbl_rank47"},      # 139
+    {"experience": 3307225, "title": "tbl_rank47"},      # 140
+    {"experience": 3387960, "title": "tbl_rank47"},      # 141
+    {"experience": 3472210, "title": "tbl_rank48"},      # 142
+    {"experience": 3560130, "title": "tbl_rank48"},      # 143
+    {"experience": 3651885, "title": "tbl_rank48"},      # 144
+    {"experience": 3747635, "title": "tbl_rank49"},      # 145
+    {"experience": 3847560, "title": "tbl_rank49"},      # 146
+    {"experience": 3951840, "title": "tbl_rank49"},      # 147
+    {"experience": 4060665, "title": "tbl_rank50"},      # 148
+    {"experience": 4174230, "title": "tbl_rank50"},      # 149
+    {"experience": 4292745, "title": "tbl_rank50"},      # 150
+    {"experience": 4416425, "title": "tbl_rank51"},      # 151
+    {"experience": 4545495, "title": "tbl_rank51"},      # 152
+    {"experience": 4680190, "title": "tbl_rank51"},      # 153
+    {"experience": 4820755, "title": "tbl_rank52"},      # 154
+    {"experience": 4967445, "title": "tbl_rank52"},      # 155
+    {"experience": 5120525, "title": "tbl_rank52"},      # 156
+    {"experience": 5280275, "title": "tbl_rank53"},      # 157
+    {"experience": 5446985, "title": "tbl_rank53"},      # 158
+    {"experience": 5620960, "title": "tbl_rank53"},      # 159
+    {"experience": 5799935, "title": "tbl_rank54"},      # 160
+    {"experience": 5989405, "title": "tbl_rank54"},      # 161
+    {"experience": 6187135, "title": "tbl_rank54"},      # 162
+    {"experience": 6393480, "title": "tbl_rank55"},      # 163
+    {"experience": 6608815, "title": "tbl_rank55"},      # 164
+    {"experience": 6833535, "title": "tbl_rank55"},      # 165
+    {"experience": 7068045, "title": "tbl_rank56"},      # 166
+    {"experience": 7312775, "title": "tbl_rank56"},      # 167
+    {"experience": 7568175, "title": "tbl_rank56"},      # 168
+    {"experience": 7834700, "title": "tbl_rank57"},      # 169
+    {"experience": 8112840, "title": "tbl_rank57"},      # 170
+    {"experience": 8403100, "title": "tbl_rank57"},      # 171
+    {"experience": 8706010, "title": "tbl_rank58"},      # 172
+    {"experience": 9022120, "title": "tbl_rank58"},      # 173
+    {"experience": 9352005, "title": "tbl_rank58"},      # 174
+    {"experience": 9696265, "title": "tbl_rank59"},      # 175
+    {"experience": 10055525, "title": "tbl_rank59"},     # 176
+    {"experience": 10430440, "title": "tbl_rank59"},     # 177
+    {"experience": 10733350, "title": "tbl_rank60"},     # 178
+    {"experience": 11084726, "title": "tbl_rank60"},     # 179
+    {"experience": 11492322, "title": "tbl_rank60"},     # 180
+    {"experience": 11965133, "title": "tbl_rank59"},     # 181
+    {"experience": 12513594, "title": "tbl_rank59"},     # 182
+    {"experience": 13149808, "title": "tbl_rank59"},     # 183
+    {"experience": 13887817, "title": "tbl_rank61"},     # 184
+    {"experience": 14743907, "title": "tbl_rank61"},     # 185
+    {"experience": 15736972, "title": "tbl_rank61"},     # 186
+    {"experience": 16888927, "title": "tbl_rank62"},     # 187
+    {"experience": 18225195, "title": "tbl_rank62"},     # 188
+    {"experience": 19775266, "title": "tbl_rank62"},     # 189
+    {"experience": 21573348, "title": "tbl_rank63"},     # 190
+    {"experience": 23659123, "title": "tbl_rank63"},     # 191
+    {"experience": 26078622, "title": "tbl_rank63"},     # 192
+    {"experience": 28885241, "title": "tbl_rank64"},     # 193
+    {"experience": 32140919, "title": "tbl_rank64"},     # 194
+    {"experience": 35917505, "title": "tbl_rank64"},     # 195
+    {"experience": 40298345, "title": "tbl_rank65"},     # 196
+    {"experience": 45380120, "title": "tbl_rank65"},     # 197
+    {"experience": 51274979, "title": "tbl_rank65"},     # 198
+    {"experience": 58113015, "title": "tbl_rank66"},     # 199
+    {"experience": 66045137, "title": "tbl_rank67"},     # 200
+    {"experience": 100000000, "title": "tbl_rank68"},    # 201
+    {"experience": 150000000, "title": "tbl_rank68"},    # 202
+    {"experience": 200000000, "title": "tbl_rank68"},    # 203
+    {"experience": 250000000, "title": "tbl_rank68"},    # 204
+    {"experience": 300000000, "title": "tbl_rank68"},    # 205
+    {"experience": 350000000, "title": "tbl_rank68"},    # 206
+    {"experience": 400000000, "title": "tbl_rank68"},    # 207
+    {"experience": 450000000, "title": "tbl_rank68"},    # 208
+    {"experience": 500000000, "title": "tbl_rank68"},    # 209
+    {"experience": 600000000, "title": "tbl_rank68"},    # 210
+    {"experience": 650000000, "title": "tbl_rank68"},    # 211
+    {"experience": 700000000, "title": "tbl_rank68"},    # 212
+    {"experience": 800000000, "title": "tbl_rank68"},    # 213
+    {"experience": 900000000, "title": "tbl_rank68"},    # 214
+    {"experience": 1000000000, "title": "tbl_rank68"},   # 215
+    {"experience": 1100000000, "title": "tbl_rank68"},   # 216
+    {"experience": 1200000000, "title": "tbl_rank68"},   # 217
+    {"experience": 1300000000, "title": "tbl_rank68"},   # 218
+    {"experience": 1400000000, "title": "tbl_rank68"},   # 219
+    {"experience": 1500000000, "title": "tbl_rank68"},   # 220
+    {"experience": 1600000000, "title": "tbl_rank68"},   # 221
+    {"experience": 1700000000, "title": "tbl_rank68"},   # 222
+    {"experience": 1800000000, "title": "tbl_rank68"},   # 223
+    {"experience": 1900000000, "title": "tbl_rank68"},   # 224
+    {"experience": 2000000000, "title": "tbl_rank68"},   # 225
+    {"experience": 2250000000, "title": "tbl_rank69"},   # 226
+    {"experience": 2500000000, "title": "tbl_rank69"},   # 227
+    {"experience": 2750000000, "title": "tbl_rank69"},   # 228
+    {"experience": 3000000000, "title": "tbl_rank69"},   # 229
+    {"experience": 3250000000, "title": "tbl_rank69"},   # 230
+    {"experience": 3500000000, "title": "tbl_rank69"},   # 231
+    {"experience": 3750000000, "title": "tbl_rank69"},   # 232
+    {"experience": 4000000000, "title": "tbl_rank69"},   # 233
+    {"experience": 4250000000, "title": "tbl_rank69"},   # 234
+    {"experience": 4500000000, "title": "tbl_rank69"},   # 235
+    {"experience": 4750000000, "title": "tbl_rank69"},   # 236
+    {"experience": 5000000000, "title": "tbl_rank69"},   # 237
+    {"experience": 5500000000, "title": "tbl_rank69"},   # 238
+    {"experience": 6000000000, "title": "tbl_rank69"},   # 239
+    {"experience": 6500000000, "title": "tbl_rank69"},   # 240
+    {"experience": 7000000000, "title": "tbl_rank69"},   # 241
+    {"experience": 7500000000, "title": "tbl_rank69"},   # 242
+    {"experience": 8000000000, "title": "tbl_rank69"},   # 243
+    {"experience": 8500000000, "title": "tbl_rank69"},   # 244
+    {"experience": 9000000000, "title": "tbl_rank69"},   # 245
+    {"experience": 9500000000, "title": "tbl_rank69"},   # 246
+    {"experience": 10000000000, "title": "tbl_rank69"},  # 247
+    {"experience": 12500000000, "title": "tbl_rank69"},  # 248
+    {"experience": 15000000000, "title": "tbl_rank69"},  # 249
+    {"experience": 20000000000, "title": "tbl_rank70"},  # 250
 ]
 
 
@@ -566,7 +624,7 @@ sh_levels = [int(0.25 * x ** 4 + 2 * x ** 3 + 10 * x ** 2 + 200 * x + 80) for x 
 sh_levels += [250000000, 300000000, 350000000, 400000000, 500000000, 600000000, 700000000, 800000000, 900000000, 1000000000, 1250000000, 1500000000,
               1750000000, 2000000000, 2500000000, 3000000000, 4000000000, 5000000000, 7500000000, 10000000000, 12500000000, 15000000000, 20000000000,
               30000000000, 100000000000]
-clan_levels = [int(0.2 * x ** 3 + 3 * x ** 2 + 250 * x + 400) for x in range(174)]
+clan_levels = [int(0.2 * x ** 3 + 3 * x ** 2 + 250 * x + 400) for x in range(224)]
 
 
 def dt(year: int, month: int, day: int, hour: int = 0, minute: int = 0) -> datetime:

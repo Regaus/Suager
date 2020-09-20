@@ -57,7 +57,6 @@ async def download_ram(ctx):
             _xp = data["ram"]
             _new_level = data["level"]
             while energy >= 1 and runs <= 1000000:
-                # multiplier = ram_mult(_new_level)
                 multiplier = 1
                 runs += 1
                 new_ram = int(random.randint(r1, r2) * multiplier)
@@ -67,7 +66,6 @@ async def download_ram(ctx):
                 _new_level, _ld = xp_level(_new_level, _xp)
                 if _ld != 0:
                     limit, _ = speed_limit(_new_level)
-                    # limit = 256 if _new_level < 8 else _new_level * 32
                     energy += int((limit / ((10 + _new_level / 40) if _new_level < 200 else 15)) * _ld)
             data["ram"] += downloaded
             new_level, ld = xp_level(data["level"], data["ram"])
@@ -91,19 +89,14 @@ async def download_ram(ctx):
             regen_pm = langs.gfs((1 / regen_speed) * 60, locale, 2)
             message = langs.gls("dlram_message", locale, ctx.author.name, langs.gns(runs, locale), langs.gbs(downloaded, locale), ram, next_level,
                                 langs.gns(new_level, locale), langs.gns(energy, locale), langs.gns(limit, locale), regen_pm)
-            # message = f"{ctx.author.name}: Downloads: **{langs.gns(runs)}**\nYou have downloaded **{langs.gbs(downloaded)} RAM**\nThis server now has " \
-            #           f"**{ram}/{next_level} RAM**\nThis server is level **{langs.gns(new_level)}**.\nCharge left: **{langs.gns(energy)}/{langs.gns(limit)}**"
             if energy < limit:
                 fill = limit - energy
-                # regen_speed = 60 - int(new_level / 500 * 59)
-                # n_speed = 60 if new_level < 100 else 30 if 100 <= new_level < 250 else 15 if 250 <= new_level < 1000 else 5 if 1000 <= new_level < 3000 else 1
                 time_req = regen_t + fill * regen_speed
                 ts = int(time_req - time.now_ts())
                 message += langs.gls("dlram_message_charge", locale, langs.td_int(ts, locale, is_future=True, brief=False, suffix=True))
-                # message += f"\nCharge will be full in **{time.timedelta(int(time_req - time.now_ts()))}**"
             return await general.send(message, ctx.channel)
         except Exception as e:
-            if ctx.channel.id == 738440590445772802:
+            if ctx.channel.id == 742885168997466196:
                 await general.send(general.traceback_maker(e), ctx.channel)
             return await general.send(langs.gls("tbl_game_error", locale, type(e).__name__, str(e)), ctx.channel)
 

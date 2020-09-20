@@ -8,7 +8,7 @@ from languages import langs
 
 
 def is_senko_lair(ctx):
-    return ctx.guild.id == 568148147457490954
+    return ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775]
 
 
 def get_attr(cls, attr):
@@ -24,8 +24,7 @@ class Discord(commands.Cog):
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
         user = who or ctx.author
-        return await general.send(langs.gls("discord_avatar", langs.gl(ctx), user.name, user.avatar_url_as(size=1024, static_format='png')),
-                                  ctx.channel)
+        return await general.send(langs.gls("discord_avatar", langs.gl(ctx), user.name, user.avatar_url_as(size=1024, static_format='png')), ctx.channel)
 
     @commands.command(name="avatar2")
     @commands.is_owner()

@@ -197,7 +197,7 @@ class Games(commands.Cog):
         sh_xp = player["sh_xp"]
         sh_level = tbl.sh_level(sh_xp)
         if sh_level < len(tbl_data.sh_levels):
-            next_sh = f"{langs.gns(tbl_data.sh_levels[sh_level], locale)}"
+            next_sh = f"{langs.gns(tbl_data.sh_levels[sh_level - 1], locale)}"
         else:
             next_sh = langs.gls("generic_max", locale)
         title = langs.gls(tbl_data.xp_levels[level - 1]['title'], locale)

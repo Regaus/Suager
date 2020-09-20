@@ -377,3 +377,18 @@
 ## v6.1.10 - 17 September
 - Added Blacklist
 - Added owner-only commands to add and remove people from the blacklist
+
+## v6.1.11 - 20 September
+- Updated TBL location activity calculation
+- TBL XP levels now go up to 250
+- TBL Clan levels now go up to 225
+- Added 2 new locations to TBL (Unlock on XP levels 225 and 250)
+- Removed TBL round limit
+- TBL now speeds up at further rounds
+- TBL now updates every 1 second instead of 1.5
+- TBL now caps out at 250,000 people activity
+- TBL location now automatically updates on levelup
+- TBL now has a small chance to boost your rewards
+- Fixed TBL stats next shaman level XP requirement output
+- Added chocolatt to the Blacklist
+- Removed meme command
