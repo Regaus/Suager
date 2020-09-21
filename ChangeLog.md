@@ -392,3 +392,6 @@
 - Fixed TBL stats next shaman level XP requirement output
 - Added chocolatt to the Blacklist
 - Removed meme command
+
+## v6.1.11.1 - 21 September
+- The "Magic Help" no longer boosts player count in TBL

@@ -137,7 +137,7 @@ async def tbl_game(ctx):
                 nuts *= 1.5
                 xp *= 2
                 sh_xp *= 1.5
-                people = int(people * random.uniform(0.9, 1.5))
+                # people = int(people * random.uniform(0.9, 1.5))
             player["nuts"] += int(nuts * nuts_mult)
             player["xp"] += int(xp * xp_mult)
             player["sh_xp"] += int(sh_xp)
