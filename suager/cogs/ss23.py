@@ -4,14 +4,14 @@ import discord
 from discord.ext import commands
 
 from core.utils import bases, general, time, emotes
-from suager.utils import ss23
+from suager.utils import ss23, ss24
 
 
 class SS23(commands.Cog):
     @commands.command(name="time23", aliases=["timek", "timez", "timess"], hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time_kargadia(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
-        """ Compare times from Earth with other places """
+    async def time23(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
+        """ Compare times from Earth with SS23 """
         if year is None:
             dt = time.now(None)
         else:
@@ -24,13 +24,35 @@ class SS23(commands.Cog):
             except ValueError as e:
                 return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
         ti = dt.strftime("%A, %d %B %Y AD, %H:%M:%S %Z")  # Time IRL
-        tk = ss23.date_kargadia(dt)  # Time in Kargadia RSL-1
-        tz = ss23.date_zeivela(dt)  # Time on Zeivela RSL-2
-        tq = ss23.date_kaltaryna(dt)  # Time in Kaltaryna RSL-1
-        td = ss23.date_kargadia_5(dt)  # Time on Kargadia RSL-5
-        return await general.send(f"Time on Earth (English): **{ti}**\nTime on Zeivela (RSL-2): **{tz}**\nTime on Zeivela (RSL-3): **Placeholder**\n"
-                                  f"Time on Kargadia (RSL-1): **{tk}**\nTime on Kargadia (RSL-5): **{td}**\n"
-                                  f"Time in Kaltaryna (RSL-1): **{tq}**", ctx.channel)
+        tk = ss23.date_kargadia(dt)        # Time in Kargadia RSL-1
+        tz = ss23.date_zeivela(dt)         # Time on Zeivela RSL-2
+        tq = ss23.date_kaltaryna(dt)       # Time in Kaltaryna RSL-1
+        td = ss23.date_kargadia_5(dt)      # Time on Kargadia RSL-5
+        td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5
+        return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-5): **{td2}**\n"
+                                  f"Time on 23.4 Zeivela (RSL-2): **{tz}**\nTime on 23.4 Zeivela (RSL-3): **Placeholder**\n"
+                                  f"Time on 23.5 Kargadia (RSL-1): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
+                                  f"Time on 23.6 Kaltaryna (RSL-1): **{tq}**", ctx.channel)
+
+    @commands.command(name="time24", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def time24(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
+        """ Compare times from Earth with SS24 """
+        if year is None:
+            dt = time.now(None)
+        else:
+            if year < 477:
+                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 477 AD**.", ctx.channel)
+            try:
+                dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+            except ValueError as e:
+                return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
+        ti = dt.strftime("%A, %d %B %Y, %H:%M:%S %Z")  # Time IRL
+        t24_4_local = ss24.time_sinvimania(dt).str()   # 24.4 Sinvimania Local
+        t24_5_local = ss24.time_hosvalnerus(dt).str()  # 24.5 Hosvalnerus local
+        return await general.send(f"Time on this Earth (English): **{ti}**\n"
+                                  f"Time on 24.4 Sinvimania (RSL-X Solar): **{t24_4_local}**\n"
+                                  f"Time on 24.5 Hosvalnerus (RSL-X): **{t24_5_local}**", ctx.channel)
 
     @commands.command(name="weather23", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

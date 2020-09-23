@@ -395,3 +395,6 @@
 
 ## v6.1.11.1 - 21 September
 - The "Magic Help" no longer boosts player count in TBL
+
+## v6.1.12 - 23 September
+- Updated time23 and added time24

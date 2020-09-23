@@ -122,7 +122,7 @@ rsl_5_months = ["Kultaljanselaljan", "Silaljanselaljan", "Vórastanselaljan", "E
                 "Vannasartenselaljan", "Alvaijanselaljan", "Kòròlaijanselaljan", "Vírynselaljan", "Nùlkadenselaljan", "Règausallanselaljan"]
 rsl_5_lengths = {"ZDT": [20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 21, 20, 20, 20, 20],
                  "KDT": [28, 28, 28, 28, 29, 29, 29, 29, 28, 28, 28, 28, 28, 28, 29, 29, 29, 29]}
-rsl_5_leap_month = {"ZDT": 17, "KDT": 14}
+rsl_5_leap_month = {"ZDT": 16, "KDT": 13}
 rsl_5_kne_months = ["Senkannaraljan", "Shirannaraljan", "Kanvamaraljan", "Arkhanmaraljan", "Nùrinnaraljan", "Aijamaraljan",
                     "Kionnaraljan", "Gairannaraljan", "Bassemaraljan", "Thingannaraljan", "Suwannaraljan", "Kittannaraljan",
                     "Semarmaraljan", "Khalhtannaraljan", "Kaivènnaraljan", "Kjarasmaraljan"]
@@ -138,7 +138,7 @@ def time_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     year = 1
     day_length = 37.49865756 * 3600
     days = total / day_length
-    days += tz / 32
+    days += tz / 40
     secs = (days % 1) * day_length
     kdl = 40 ** 3  # Kargadia's day length
     ksl = day_length / kdl  # Second length compared to real time
@@ -176,7 +176,7 @@ def date_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     # return time_kargadia(when, tz, tzn).str_full()
 
 
-def time_earth_5(when: datetime = None):
+def time_earth_5(when: datetime = None, time23: bool = False):
     irl = (when or time.now(None)) + relativedelta(years=500)
     start = datetime(42, 1, 24, 2, 15, tzinfo=timezone.utc)
     total = (irl - start).total_seconds()
@@ -210,7 +210,9 @@ def time_earth_5(when: datetime = None):
             month += 1
         else:
             break
-    return f"{day + 1:02d} {rsl_5_months[month - 1]} {year} DT, {h:02d}:{m:02d}:{s:02d}"
+    dow = _ds % 10
+    return f"{f'{rsl_5_days[dow]}, ' if time23 else ''}{day + 1:02d} {rsl_5_months[month - 1]} {year} DT, {h:02d}:{m:02d}:{s:02d}" \
+           f"{f' (Month {month})' if time23 else ''}"
 
 
 class SS23Time:
@@ -263,21 +265,6 @@ class SS23Time:
         if name == "Kargadia-5":
             self.day_name = rsl_5_days[dow]
             self.months = rsl_5_months
-
-    # def zeivela(self, dow: bool = True, month: bool = False, tz: bool = True):
-    #     dn = f"{self.day_name}, " if dow else ""
-    #     mn = f" Vaiku te {self.months[self.month - 1]} " if month else f"/{self.month:02d}/"
-    #     return f"{dn}{self.day:02d}{mn}{self.year} ZE, {self.hour:02d}:{self.minute:02d}:{self.second:02d}{f' {self.tz_name}' if tz else ''}"
-
-    # def kaltaryna(self, dow: bool = True, month: bool = False, tz: bool = True):
-    #     dn = f"{self.day_name}, " if dow else ""
-    #     mn = f" Sakku af {self.months[self.month - 1]} " if month else f"/{self.month:02d}/"
-    #     return f"{dn}{self.day:02d}{mn}{self.year} KT, {self.hour:02d}:{self.minute:02d}:{self.second:02d}{f' {self.tz_name}' if tz else ''}"
-
-    # def kargadia(self, dow: bool = True, month: bool = False, tz: bool = True):
-    #     dn = f"{self.day_name}, " if dow else ""
-    #     mn = f" {self.months[self.month - 1]} " if month else f"/{self.month:02d}/"
-    #     return f"{dn}{self.day:02d}{mn}{self.year} KNE, {self.hour:02d}:{self.minute:02d}:{self.second:02d}{f' {self.tz_name}' if tz else ''}"
 
     def str(self, dow: bool = True, era: Optional[str] = "RE", tz: bool = True):
         dn = f"{self.day_name}, " if dow else ""
