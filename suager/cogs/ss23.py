@@ -17,8 +17,8 @@ class SS23(commands.Cog):
         else:
             if year < 1687:
                 return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 1687 AD**.", ctx.channel)
-            if year >= 9500:
-                return await general.send(f"{emotes.Deny} This command does not work with dates after **31 December 9499 AD, 23:59:59 UTC**", ctx.channel)
+            if year >= 8200:
+                return await general.send(f"{emotes.Deny} This command does not work with dates after **31 December 8199 AD, 23:59:59 UTC**", ctx.channel)
             try:
                 dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
             except ValueError as e:
@@ -26,13 +26,13 @@ class SS23(commands.Cog):
         ti = dt.strftime("%A, %d %B %Y AD, %H:%M:%S %Z")  # Time IRL
         tk = ss23.date_kargadia(dt)        # Time in Kargadia RSL-1
         tz = ss23.date_zeivela(dt)         # Time on Zeivela RSL-2
-        tq = ss23.date_kaltaryna(dt)       # Time in Kaltaryna RSL-1
+        tq = ss23.date_kaltaryna(dt)       # Time in Qevenerus/Kaltaryna RSL-1
         td = ss23.date_kargadia_5(dt)      # Time on Kargadia RSL-5
         td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5
         return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-5): **{td2}**\n"
                                   f"Time on 23.4 Zeivela (RSL-2): **{tz}**\nTime on 23.4 Zeivela (RSL-3): **Placeholder**\n"
                                   f"Time on 23.5 Kargadia (RSL-1): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
-                                  f"Time on 23.6 Kaltaryna (RSL-1): **{tq}**", ctx.channel)
+                                  f"Time on 23.6 Qevenerus (RSL-1): **{tq}**", ctx.channel)
 
     @commands.command(name="time24", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

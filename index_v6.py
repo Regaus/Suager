@@ -3,6 +3,7 @@ import json
 import os
 from sqlite3 import OperationalError
 
+import aiohttp
 import discord
 
 from core.utils import bot_data, database, general, time
@@ -51,7 +52,8 @@ for i in range(len(config["bots"])):
     open(fn, 'w+').write(json.dumps(times))
     blacklist = json.loads(open("blacklist.json", "r").read())
     bot = bot_data.Bot(blacklist, command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
-                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd)
+                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
+                       connector=aiohttp.TCPConnector(ssl=False))
     bot.index = i
     bot.local_config = local_config
     bot.config = config

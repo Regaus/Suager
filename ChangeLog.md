@@ -398,3 +398,7 @@
 
 ## v6.1.12 - 23 September
 - Updated time23 and added time24
+
+## v6.1.12.1 - 29 September
+- Renamed 23.6 to planet name instead of place name in time23
+- Connectors have been set to ssl=False to work on my old laptop that I'm trying to host the bot on now
