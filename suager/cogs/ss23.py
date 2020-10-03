@@ -23,16 +23,25 @@ class SS23(commands.Cog):
                 dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
             except ValueError as e:
                 return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
-        ti = dt.strftime("%A, %d %B %Y AD, %H:%M:%S %Z")  # Time IRL
+        ti = dt.strftime("%A, %d %B %Y, %H:%M:%S %Z")  # Time IRL
         tk = ss23.date_kargadia(dt)        # Time in Kargadia RSL-1
         tz = ss23.date_zeivela(dt)         # Time on Zeivela RSL-2
         tq = ss23.date_kaltaryna(dt)       # Time in Qevenerus/Kaltaryna RSL-1
         td = ss23.date_kargadia_5(dt)      # Time on Kargadia RSL-5
-        td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5
-        return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-5): **{td2}**\n"
-                                  f"Time on 23.4 Zeivela (RSL-2): **{tz}**\nTime on 23.4 Zeivela (RSL-3): **Placeholder**\n"
-                                  f"Time on 23.5 Kargadia (RSL-1): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
-                                  f"Time on 23.6 Qevenerus (RSL-1): **{tq}**", ctx.channel)
+        td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5 DT
+        months_1 = ["Seldan Masailnar'an", "Nuannar'an", "Seimannar'an", "Veisanar'an", "Eilannar'an", "Havazdallarinnar'an",
+                    "Sanvaggannar'an", "Kailaggannar'an", "Semardannar'an", "Addanvar'an", "Halltuavar'an", "Masailnar'an"]
+        months_5 = ["Chìlderaljanselaljan", "Anveraijanselaljan", "Síldarinselaljan", "Kûstanselaljan",
+                    "Vullastenselaljan", "Khavastalgèrinselaljan", "Senkanselaljan", "Dhárelanselaljan",
+                    "Silaljanselaljan", "Eijelovvanselaljan", "Haldúvaranselaljan", "Massalanselaljan"]
+        tn = time.kargadia_convert(dt)
+        tn1 = tn.strftime(f"%A, %d {months_1[tn.month % 12]} %Y, %H:%M:%S %Z")
+        tn5 = tn.strftime(f"%A, %d {months_5[tn.month % 12]} %Y, %H:%M:%S %Z")
+        return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-1_kg): **{tn1}**\n"
+                                  f"Time on this Earth (RSL-5 NE): **{tn5}**\nTime on this Earth (RSL-5 DT): **{td2}**\n"
+                                  f"Time on 23.4 Zeivela (Local): **{tz}**\n"
+                                  f"Time on 23.5 Kargadia (RSL-1_kg): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
+                                  f"Time on 23.6 Qevenerus (RSL-1_ka): **{tq}**", ctx.channel)
 
     @commands.command(name="time24", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -51,10 +60,11 @@ class SS23(commands.Cog):
         t24_4_local = ss24.time_sinvimania(dt).str()   # 24.4 Sinvimania Local
         t24_5_local = ss24.time_hosvalnerus(dt).str()  # 24.5 Hosvalnerus local
         return await general.send(f"Time on this Earth (English): **{ti}**\n"
-                                  f"Time on 24.4 Sinvimania (RSL-X Solar): **{t24_4_local}**\n"
-                                  f"Time on 24.5 Hosvalnerus (RSL-X): **{t24_5_local}**", ctx.channel)
+                                  f"Time on 24.4 Sinvimania (Local Solar): **{t24_4_local}**\n"
+                                  f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**", ctx.channel)
 
     @commands.command(name="weather23", hidden=True)
+    @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def weather23(self, ctx: commands.Context, *, place: str):
         """ Weather in a place in SS23 """
@@ -93,6 +103,7 @@ class SS23(commands.Cog):
             return await general.send(f"An error occurred: `{type(e).__name__}: {e}`.\nThe place {place} may not exist.", ctx.channel)
 
     @commands.command(name="nlc", hidden=True)
+    @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def ne_world_ll_calc(self, ctx: commands.Context, x: int, z: int, border: int = 100000):
         """ Calculate latitude, local offset of position - NEWorld """
@@ -104,6 +115,7 @@ class SS23(commands.Cog):
         return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLocal Offset: {tzo:.3f}", ctx.channel)
 
     @commands.command(name="rsln", hidden=True)
+    @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rsl_numbers(self, ctx: commands.Context, language: str, number: int):
         """ Translates number input into RSL """

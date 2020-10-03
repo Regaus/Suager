@@ -402,3 +402,11 @@
 ## v6.1.12.1 - 29 September
 - Renamed 23.6 to planet name instead of place name in time23
 - Connectors have been set to ssl=False to work on my old laptop that I'm trying to host the bot on now
+
+## v6.2.0 - 3 October
+- Removed RSL-3 and RSL-5 locales
+- Removed Aqos, TBL and DLRAM
+- Updated and slightly improved time23 outputs
+- Changed rank font to Whitney
+- Updated some of the strings for Russian and RSL-1 locales
+- Removed pain command

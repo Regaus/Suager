@@ -378,7 +378,6 @@ class Leveling(commands.Cog):
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
                 return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-                # return await general.send("I don't count bots' XP because they're cheaters", ctx.channel)
             data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
@@ -403,13 +402,13 @@ class Leveling(commands.Cog):
                 img.paste(avatar)
             font_dir = "assets/font.ttf"
             try:
-                font = ImageFont.truetype(font_dir, size=108)
+                font = ImageFont.truetype(font_dir, size=128)
                 font_small = ImageFont.truetype(font_dir, size=64)
             except ImportError:
                 await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
                 font, font_small = None, None
-            text_x = 552
-            dr.text((text_x, 20), f"{user}", font=font, fill=font_colour)
+            text_x = 542
+            dr.text((text_x, -10), f"{user}", font=font, fill=font_colour)
             try:
                 if level >= 0:
                     req = int(levels[level])  # Requirement to next level
@@ -417,7 +416,6 @@ class Leveling(commands.Cog):
                     req = 0
                 else:
                     req = int(-levels[(-level) - 2])
-                # r2 = f"{req / 100:,.0f}"
                 r2 = langs.gns(int(req / 100), locale)
             except IndexError:
                 req = float("inf")
@@ -432,40 +430,27 @@ class Leveling(commands.Cog):
             except IndexError:
                 prev = 0
             _data = self.bot.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
-            # place = "Rank Undefined"
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
-                    # place = f"Rank #{x+1:,}"
                     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale)))
                     break
-            # old_level = 0
-            # for lvl in old_levels:
-            #     if xp >= lvl:
-            #         old_level += 1
-            #     else:
-            #         break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
-                # _old_level = langs.gls("leveling_rank_level_old", locale, langs.gns(old_level, locale))
-                dr.text((text_x, 140), f"{place} | {_level}", font=font_small, fill=font_colour)
-                # dr.text((text_x, 140), f"{place} | {_level} | {_old_level}", font=font_small, fill=font_colour)
-                # dr.text((text_x, 190), ), font=font_small, fill=font_colour)
-                # dr.text((text_x, 250), ), font=font_small, fill=font_colour)
-                # dr.text((552, 300), f"{xp / 100:,.0f}/{r2} XP\nProgress: {progress*100:.2f}%", font=font_small, fill=font_colour)
+                dr.text((text_x, 130), f"{place} | {_level}", font=font_small, fill=font_colour)
                 r1 = langs.gns(int(xp / 100), locale)
                 r3 = langs.gfs(progress, locale, 2, True)
                 r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp) / 100, locale)) if level < max_level else ""
-                dr.text((text_x, (308 if r4 else 372)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
+                dr.text((text_x, (298 if r4 else 362)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
                 progress = 0.5
                 place = langs.gls("leaderboards_place", locale, langs.gns(1, locale))
                 _rank = langs.gls("leveling_rank_rank", locale, place)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
-                dr.text((text_x, 140), f"{_rank} | {_level}", font=font_small, fill=font_colour)
+                dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
                 # dr.text((text_x, 190), , font=font_small, fill=font_colour)
-                dr.text((text_x, 436), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
+                dr.text((text_x, 426), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
             full = width
             done = int(progress * full)
             if done < 0:
@@ -485,21 +470,13 @@ class Leveling(commands.Cog):
             #     r += "That's my own rank, so why should I play fair?"
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
-    @commands.command(name="rank", aliases=["irank", "ranki", "level"])
+    @commands.command(name="rank", aliases=["level"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your or someone's rank """
         locale = langs.gl(ctx)
         return await self.level(ctx, who, locale)
-
-    @commands.command(name="pain")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_painful(self, ctx: commands.Context):
-        """ Your rank, but in a painful version """
-        locale = "rsl-3a"
-        return await self.level(ctx, None, locale)
 
     @commands.command(name="rankg", aliases=["grank"])
     @commands.guild_only()

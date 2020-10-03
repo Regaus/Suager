@@ -41,7 +41,7 @@ def time_kargadia(when: datetime = None, tz: float = 0, tzn: str = "ST"):
 
 def date_kargadia(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     data = time_kargadia(when, tz, tzn)
-    return data.str(era="KNE")
+    return data.str()
     # return time_kargadia(when, tz, tzn).str_full()
 
 
@@ -76,7 +76,7 @@ def time_zeivela(when: datetime = None, tz: float = 0, tzn: str = "ZST"):
 
 def date_zeivela(when: datetime = None, tz: float = 0, tzn: str = "ZST"):
     data = time_zeivela(when, tz, tzn)
-    return data.str(era="ZE")
+    return data.str()
     # return time_zeivela(when, tz, tzn).str_full()
 
 
@@ -111,7 +111,7 @@ def time_kaltaryna(when: datetime = None, tz: float = 0, tzn: str = "KST"):
 
 def date_kaltaryna(when: datetime = None, tz: float = 0, tzn: str = "KST"):
     data = time_kaltaryna(when, tz, tzn)
-    return data.str(era="KT")
+    return data.str()
     # return time_kaltaryna(when, tz, tzn).str_full()
 
 
@@ -172,7 +172,7 @@ def time_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
 
 def date_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     data = time_kargadia_5(when, tz, tzn)
-    return data.str(era="KDT")
+    return data.str()
     # return time_kargadia(when, tz, tzn).str_full()
 
 
@@ -211,7 +211,7 @@ def time_earth_5(when: datetime = None, time23: bool = False):
         else:
             break
     dow = _ds % 10
-    return f"{f'{rsl_5_days[dow]}, ' if time23 else ''}{day + 1:02d} {rsl_5_months[month - 1]} {year} DT, {h:02d}:{m:02d}:{s:02d}" \
+    return f"{f'{rsl_5_days[dow]}, ' if time23 else ''}{day + 1:02d} {rsl_5_months[month - 1]} {year}, {h:02d}:{m:02d}:{s:02d}" \
            f"{f' (Month {month})' if time23 else ''}"
 
 
@@ -253,20 +253,20 @@ class SS23Time:
             parts = ["tea", "rea", "sea", "vea"]
             part = self.hour // 8
             self.day_name = f"{weekdays[dow]}{parts[part]}"
-            self.months = ["Senkannar'an", "Shirannar'an", "Kanvamar'an", "Árkanmar'an", "Nurinnar'an", "Aijamar'an", "Kíonnar'an", "Gairannar'an",
+            self.months = ["Senkannar'an", "Shirannar'an", "Kanvamar'an", "Arhanmar'an", "Nurinnar'an", "Aijamar'an", "Kionnar'an", "Gairannar'an",
                            "Bassemar'an", "Finkannar'an", "Suvannar'an", "Kittannar'an", "Semarmar'an", "Haltannar'an", "Kaivynnar'an", "Kärasmar'an"]
         if name == "Kaltaryna":
             weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
             day_part = "Sea" if self.hour in range(12, 52) else "Tea"
-            self.day_name = f"{day_part} af {weekdays[dow]}"
-            months = ["Senka", "Shira", "Kanvarus", "Arkanéda", "Nurus", "Aii", "Kiona", "Gairnar",
+            self.day_name = f"{day_part} ida {weekdays[dow]}"
+            months = ["Senka", "Shira", "Kanvarus", "Arkaneda", "Nurus", "Ai", "Kiona", "Gairnar",
                       "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
-            self.months = [f"af Sakku af {month}" for month in months]
+            self.months = [f"ida Sakku ida {month}" for month in months]
         if name == "Kargadia-5":
             self.day_name = rsl_5_days[dow]
             self.months = rsl_5_months
 
-    def str(self, dow: bool = True, era: Optional[str] = "RE", tz: bool = True):
+    def str(self, dow: bool = True, era: Optional[str] = None, tz: bool = False):
         dn = f"{self.day_name}, " if dow else ""
         mn = self.months[self.month - 1]
         _era = f" {era}" if era is not None else ""

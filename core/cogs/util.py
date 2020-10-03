@@ -26,15 +26,6 @@ class Utility(commands.Cog):
             data = ss23.time_kargadia(time.now(None))
             output = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             send += f"Taida an Zymlä'an: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**\nTaida an Kargadia'n: **{output}**"
-        elif locale == "rsl-5":
-            time1 = langs.gts(time.now(None), locale, True, False, False, True, False)
-            time2 = ss23.time_earth_5(time.now(None))
-            data = ss23.time_kargadia(time.now(None))
-            time3 = f"{data.day:02d} {ss23.rsl_5_kne_months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            data = ss23.time_kargadia_5(time.now(None))
-            time4 = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KDT, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            send += f"Voighowa Zèmlhâlla (NE-alla): **{time1}**\nVoighowa Zèmlhâlla (Derataidálla): **{time2}**\n" \
-                    f"Voighowa Mennaughestaulas (KNE-alla): **{time3}**\nVoighowa Mennaughestaulas (KDT-álla): **{time4}**"
         else:
             if ctx.guild.id in [568148147457490954, 738425418637639775]:
                 send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True, "NE"))

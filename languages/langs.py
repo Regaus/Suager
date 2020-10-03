@@ -16,7 +16,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
-    if locale.startswith("rsl-1"):
+    if locale == "rsl-1":
         value //= 2
         names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"]
         step = 4096
@@ -49,15 +49,6 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
     return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
 
 
-# def gl(guild, db):
-#     ex = db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
-#     if ex and guild:
-#         data = db.fetchrow("SELECT * FROM locales WHERE gid=?", (guild.id,))
-#         if data:
-#             return data["locale"]
-#     return "en_gb"
-
-
 def gl(ctx):
     ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
     if ex and ctx.guild is not None:
@@ -84,22 +75,9 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
     return gls("generic_yes", locale) if condition else gls("generic_no", locale)
 
 
-# def put_commas(string: str, step: int = 3) -> str:
-#     reverse = string[::-1]
-#     return (",".join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1]
-
-
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    # _1 = ["en_gb", "en_us"]
-    if locale == "rsl-3a":
-        _1, _2, _3, _4, _10, _nur = get_data(what, locale)
-        if v > 160000:
-            name = _nur
-        else:
-            mod = v % 20
-            name = _1 if mod == 1 else _2 if mod == 2 else _3 if mod == 3 else _4 if 4 <= mod < 10 else _10
-    elif locale in ["rsl-1", "ru_ru"]:
+    if locale in ["rsl-1", "ru_ru"]:
         name_1, name_2, name_pl = get_data(what, locale)
         pl = get_data("_pl", locale)
         p1, p2, p3 = pl
@@ -109,7 +87,7 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
     else:
         name_1, name_2 = get_data(what, locale)
         name = name_1 if v == 1 else name_2
-    reverse = ["rsl-3a"]
+    reverse = []
     return f"{name} {gns(v, locale)}" if locale in reverse else f"{gns(v, locale)} {name}"
 
 
@@ -122,8 +100,6 @@ def td_dt(dt: datetime, locale: str = "en_gb", *, source: datetime = None, accur
     """ Get a string from datetime differences """
     now = (source or time.now(None)).replace(microsecond=0)
     then = dt.astimezone(timezone.utc)
-    # then = time.from_ts(time.get_ts(dt), None)
-    # suf, pre = '', ''
     if then > now:
         delta = relativedelta(then, now)
         pre = gls("time_in_p", locale) if suffix else ''
@@ -184,10 +160,8 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
-        if locale in ["en_us", "rsl-3a"]:
+        if locale in ["en_us"]:
             base += f"{when.day:02d}/{when.month:02d}/{when.year:04d} {era}, "
-        # elif locale.startswith("rsl-3"):
-        #     base += f"S.sel. {gns(when.day, locale, 2)} silvada sodazhykulyjü {month_name} s.sh. {gns(when.year, locale, 0, False)}, "
         else:
             month_name = month_names_l[when.month % 12]
             month_name_s = month_name[:3]
@@ -209,10 +183,6 @@ def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: b
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
-    if locale == "rsl-3a":
-        month_name = month_names_l[when.month % 12]
-        return f"{gns(when.day, locale)} s. sod. {month_name}{f' {gns(when.year, locale, 0, False)}' if year else ''}"
-    else:
-        month_name_s = month_name[:3]
-        month = month_name if not short else month_name_s
-        return f"{gns(when.day, locale)} {month}{' ' + gns(when.year, locale, 0, False) if year else ''}"
+    month_name_s = month_name[:3]
+    month = month_name if not short else month_name_s
+    return f"{gns(when.day, locale)} {month}{' ' + gns(when.year, locale, 0, False) if year else ''}"
