@@ -36,7 +36,7 @@ class Discord(commands.Cog):
             except Exception as e:
                 await general.send(f"{user} -> {type(e).__name__}: {e}", ctx.channel)
 
-    @commands.group(name="role")
+    @commands.group(name="role", invoke_without_command=True)
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def role(self, ctx: commands.Context, *, role: discord.Role = None):
@@ -47,14 +47,12 @@ class Discord(commands.Cog):
                 all_roles = ""
                 for num, role in enumerate(sorted(ctx.guild.roles, reverse=True), start=1):
                     all_roles += langs.gls("discord_role_list_item", locale, langs.gns(num, locale, 2, False), langs.gns(len(role.members)), role=role)
-                    # all_roles += f"[{num:02d}] {role.id}\t{role.name}\t[Users: {len(role.members)}]\r\n"
                 data = BytesIO(all_roles.encode('utf-8'))
                 return await general.send(langs.gls("discord_role_list", locale, ctx.guild.name), ctx.channel,
                                           file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
             else:
                 embed = discord.Embed(colour=role.colour)
                 embed.title = langs.gls("discord_role_about", locale, role.name)
-                # embed.title = f"ℹ About role {role.name}"
                 embed.set_thumbnail(url=ctx.guild.icon_url)
                 embed.add_field(name=langs.gls("discord_role_name", locale), value=role.name, inline=True)
                 embed.add_field(name=langs.gls("discord_role_id", locale), value=str(role.id), inline=True)
@@ -67,6 +65,22 @@ class Discord(commands.Cog):
                 embed.add_field(name=langs.gls("discord_role_default", locale), value=langs.yes(role.is_default(), locale), inline=True)
                 return await general.send(None, ctx.channel, embed=embed)
 
+    @role.command(name="members")
+    async def role_members(self, ctx: commands.Context, *, role: discord.Role):
+        """ List of members who have a certain role """
+        bots = [a for a in ctx.guild.members if role in a.roles]
+        locale = langs.gl(ctx)
+        m = ''
+        for i in range(len(bots)):
+            m += f"[{langs.gns(i + 1, locale, 2, False)}] {bots[i]}\n"
+        rl = len(m)
+        send = langs.gls("discord_role_members", locale, ctx.guild.name)
+        if rl > 1900:
+            async with ctx.typing():
+                data = BytesIO(str(m).encode('utf-8'))
+                return await general.send(send, ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Role_Members')}"))
+        return await general.send(f"{send}\n```ini\n{m}```", ctx.channel)
+
     @commands.command(name="joinedat")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -75,7 +89,6 @@ class Discord(commands.Cog):
         user = who or ctx.author
         locale = langs.gl(ctx)
         return await general.send(langs.gls("discord_joined_at", locale, user, ctx.guild.name, langs.gts(user.joined_at, locale, short=False)), ctx.channel)
-        # return await general.send(f"**{user.name}** joined **{ctx.guild.name}** at **{time.time_output(user.joined_at)}**", ctx.channel)
 
     @commands.command(name="createdat")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -83,7 +96,7 @@ class Discord(commands.Cog):
         """ Check when someone created their account """
         user = who or ctx.author
         locale = langs.gl(ctx)
-        return await general.send(langs.gls("discord_created_at", locale, user, langs.gts(user.joined_at, locale, short=False)), ctx.channel)
+        return await general.send(langs.gls("discord_created_at", locale, user, langs.gts(user.created_at, locale, short=False)), ctx.channel)
 
     @commands.command(name="user")
     @commands.guild_only()
@@ -94,40 +107,32 @@ class Discord(commands.Cog):
         locale = langs.gl(ctx)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = langs.gls("discord_user_about", locale, user.name)
-        # embed.title = f"ℹ About user {user.name}"
         embed.set_thumbnail(url=user.avatar_url)
         embed.add_field(name=langs.gls("discord_user_username", locale), value=user, inline=True)
         embed.add_field(name=langs.gls("discord_user_nickname", locale), value=user.nick, inline=True)
         embed.add_field(name=langs.gls("discord_user_id", locale), value=user.id, inline=True)
-        embed.add_field(name=langs.gls("generic_created_at", locale), value=langs.gts(user.created_at, locale, short=False), inline=True)
-        embed.add_field(name=langs.gls("discord_user_joined_at", locale), value=langs.gts(user.joined_at, locale, short=False), inline=True)
+        embed.add_field(name=langs.gls("generic_created_at", locale), value=langs.gts(user.created_at, locale, short=False), inline=False)
+        embed.add_field(name=langs.gls("discord_user_joined_at", locale), value=langs.gts(user.joined_at, locale, short=False), inline=False)
+        """
         embed.add_field(name=langs.gls("discord_user_status", locale), value=langs.gls(f"discord_status_{user.status}", locale), inline=True)
         try:
-            # a = list(user.activities)
             b = user.activity
-            # if not a:
             if b is None:
                 embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("generic_none", locale), inline=False)
             else:
-                # b = a[0]
                 if b.type == discord.ActivityType.custom:
                     e = f"{b.emoji} " if b.emoji is not None else ''
                     n = b.name if b.name is not None else ''
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_custom_status", locale, e, n), inline=False)
                 elif b.type == discord.ActivityType.streaming:
-                    # c = b.platform
                     c = get_attr(b, "platform")
                     d = b.name if b.name else ''
-                    # e = f" {b.game} " if b.game else ''
                     e = f" {e} " if (e := get_attr(b, "game")) else ""
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_streaming", locale, c, d, e), inline=False)
                 elif b.type == discord.ActivityType.playing:
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_playing", locale, b.name), inline=False)
                 elif b.type == discord.ActivityType.listening:
                     c = b.name
-                    # d = b.title
-                    # e = ", ".join(b.artists)
-                    # f = b.album
                     d = get_attr(b, "title")
                     e = ", ".join(e) if (e := get_attr(b, "artists")) else e
                     f = get_attr(b, "album")
@@ -135,8 +140,11 @@ class Discord(commands.Cog):
                                     value=langs.gls("discord_user_listening", locale, c, d, e, f))
                 elif b.type == discord.ActivityType.watching:
                     embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_watching", locale, b.name), inline=False)
+                elif b.type == discord.ActivityType.competing:
+                    embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("discord_user_competing", locale, b.name), inline=False)
         except AttributeError:
             embed.add_field(name=langs.gls("discord_user_activity", locale), value=langs.gls("generic_unknown", locale), inline=False)
+        """
         if len(user.roles) < 15:
             r = user.roles
             r.sort(key=lambda x: x.position, reverse=True)
@@ -144,10 +152,8 @@ class Discord(commands.Cog):
             roles = ', '.join(ar) if ar else langs.gls("generic_none", locale)
             b = len(user.roles) - 1
             roles += langs.gls("discord_user_roles_overall", locale, langs.gns(b, locale))
-            # roles += f"\n({b} overall)"
         else:
             roles = langs.gls("discord_user_roles_many", locale, langs.gns(len(user.roles) - 1))
-            # roles = f"There's {len(user.roles) - 1} of them"
         embed.add_field(name=langs.gls("discord_user_roles", locale), value=roles, inline=False)
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -179,8 +185,6 @@ class Discord(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         embed.description = langs.gls("discord_emoji", locale, c, emoji.name, emoji.id, langs.yes(emoji.animated, locale), emoji.guild.id,
                                       langs.gts(emoji.created_at, locale, short=False), emoji.url)
-        # embed.description = f"{c} name: {emoji.name}\n{c} ID: {emoji.id}\nAnimated: {emoji.animated}\nServer: {emoji.guild.id}\n" \
-        #                     f"Created at: {time.time_output(emoji.created_at, tz=True)}\n[Emoji URL]({emoji.url})"
         embed.set_image(url=emoji.url)
         return await general.send(f"{ctx.author.name}:", ctx.channel, embed=embed)
 
@@ -196,7 +200,6 @@ class Discord(commands.Cog):
             embed = discord.Embed(colour=general.random_colour())
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.title = langs.gls("discord_server_about", locale, ctx.guild.name)
-            # embed.title = f"ℹ About server {ctx.guild.name}"
             embed.add_field(name=langs.gls("discord_server_name", locale), value=ctx.guild.name, inline=True)
             embed.add_field(name=langs.gls("discord_server_id", locale), value=ctx.guild.id, inline=True)
             embed.add_field(name=langs.gls("discord_server_owner", locale), inline=True, value=f"{ctx.guild.owner}\n({ctx.guild.owner.display_name})")
@@ -213,20 +216,15 @@ class Discord(commands.Cog):
             t, c, v = len(ctx.guild.text_channels), len(ctx.guild.categories), len(ctx.guild.voice_channels)
             tc, cc, vc = langs.gns(t, locale), langs.gns(c, locale), langs.gns(v, locale)
             embed.add_field(name=langs.gls("discord_server_channels", locale), value=langs.gls("discord_server_channels_data", locale, tc, cc, vc), inline=True)
-            # embed.add_field(name="Channels", inline=True, value=f"Text channels: {len(ctx.guild.text_channels)}\nCategories: {len(ctx.guild.categories)}\n"
-            #                                                     f"Voice channels:{len(ctx.guild.voice_channels)}")
             b, bl, bc = langs.gns(ctx.guild.premium_subscription_count, locale), langs.gns(ctx.guild.premium_tier, locale), \
                 langs.gns(len(ctx.guild.premium_subscribers), locale)
             embed.add_field(name=langs.gls("discord_server_boosts", locale), value=langs.gls("discord_server_boosts_data", locale, b, bl, bc), inline=True)
-            # embed.add_field(name="Boosts", inline=True, value=f"Boosts: {ctx.guild.premium_subscription_count} - Level {ctx.guild.premium_tier}\n"
-            #                                                   f"Boosters: {len(ctx.guild.premium_subscribers)}")
             ani = len([emote for emote in ctx.guild.emojis if emote.animated])
             total_emotes = len(ctx.guild.emojis)
             el = ctx.guild.emoji_limit
             na = total_emotes - ani
             n, a, e, t = langs.gns(na, locale), langs.gns(ani, locale), langs.gns(el, locale), langs.gns(total_emotes, locale)
             embed.add_field(name=langs.gls("discord_server_emotes", locale), value=langs.gls("discord_server_emotes_data", locale, n, a, e, t), inline=True)
-            # embed.add_field(name="Emotes", inline=True, value=f"{na}/{el} Non-animated\n{ani}/{el} Animated\n{total_emotes} Total")
             ca = ctx.guild.created_at
             ct, cd = langs.gts(ca, locale, short=False), langs.td_dt(ca, locale, suffix=True)
             embed.add_field(name=langs.gls("generic_created_at", locale), value=f"{ct}\n{cd}", inline=False)
@@ -272,69 +270,7 @@ class Discord(commands.Cog):
             async with ctx.typing():
                 data = BytesIO(str(m).encode('utf-8'))
                 return await general.send(send, ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Bots')}"))
-        return await general.send(f"{send}\n```fix\n{m}```", ctx.channel)
-
-    @server.command(name="status")
-    async def server_status(self, ctx: commands.Context):
-        """ Server members' status """
-        locale = langs.gl(ctx)
-        so, si, sd, sn, mo, mi, md, do, di, dd, wo, wi, wd, al, ag, at, ac, an = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-        m = 0
-        for member in ctx.guild.members:
-            m += 1
-            s, s1, s2, s3 = member.status, member.mobile_status, member.desktop_status, member.web_status
-            so += 1 if s == discord.Status.online else 0
-            mo += 1 if s1 == discord.Status.online else 0
-            do += 1 if s2 == discord.Status.online else 0
-            wo += 1 if s3 == discord.Status.online else 0
-            si += 1 if s == discord.Status.idle else 0
-            mi += 1 if s1 == discord.Status.idle else 0
-            di += 1 if s2 == discord.Status.idle else 0
-            wi += 1 if s3 == discord.Status.idle else 0
-            sd += 1 if s == discord.Status.dnd else 0
-            md += 1 if s1 == discord.Status.dnd else 0
-            dd += 1 if s2 == discord.Status.dnd else 0
-            wd += 1 if s3 == discord.Status.dnd else 0
-            if s == discord.Status.offline:
-                sn += 1
-            else:
-                activities = list(member.activities)
-                if not activities:
-                    an += 1
-                else:
-                    for a in activities:
-                        ac += 1 if a.type == discord.ActivityType.custom else 0
-                        at += 1 if a.type == discord.ActivityType.streaming else 0
-                        ag += 1 if a.type == discord.ActivityType.playing else 0
-                        al += 1 if a.type == discord.ActivityType.listening else 0
-        embed = discord.Embed(colour=general.random_colour(), title=langs.gls("discord_server_status", locale, ctx.guild.name))
-        embed.set_thumbnail(url=ctx.guild.icon_url)
-        embed.add_field(name=langs.gls("discord_server_status_members", locale), value=f"{m:,}", inline=False)
-        e1, e2, e3, e4 = "<:online:679052892514287635>", "<:idle:679052892828598303>", "<:dnd:679052892782723114> ", \
-                         "<:offline:679052892782592033>"
-        a1, a2, a3, a4, a5 = "🎮", "<:streaming:679055367346323478>", "<:listening:679055367396917250> ", \
-                             "<:pikathink:674330001151229963>", "<:GoodNight:713168586512007189>"
-        lo, li, ld, ln = langs.gns(so, locale), langs.gns(si, locale), langs.gns(sd, locale), langs.gns(sn, locale)
-        lom, lod, low, lim, lid, liw, ldm, ldd, ldw = langs.gns(mo, locale), langs.gns(do, locale), langs.gns(wo, locale), langs.gns(mi, locale), \
-            langs.gns(di, locale), langs.gns(wi, locale), langs.gns(md, locale), langs.gns(dd, locale), langs.gns(wd, locale)
-        po, pi, pd, pn = langs.gfs(so / m, locale, 2, True), langs.gfs(si / m, locale, 2, True), langs.gfs(sd / m, locale, 2, True), \
-            langs.gfs(sn / m, locale, 2, True)
-        o = m - sn
-        os = langs.gns(o, locale)
-        lag, lac, lat, lal, lan = langs.gns(ag, locale), langs.gns(ac, locale), langs.gns(at, locale), langs.gns(al, locale), langs.gns(an, locale)
-        apg, apt, apl, apc, apn = langs.gfs(ag / o, locale, 2, True), langs.gfs(at / o, locale, 2, True), langs.gfs(al / o, locale, 2, True), \
-            langs.gfs(ac / o, locale, 2, True), langs.gfs(an / o, locale, 2, True)
-        embed.add_field(name=langs.gls("discord_server_status_status", locale), inline=False,
-                        value=langs.gls("discord_server_status_status_data", locale, e1, lo, po, lom, lod, low, e2, li, pi, lim, lid, liw, e3, ld, pd, ldm,
-                                        ldd, ldw, e4, ln, pn))
-        #                 value=f"{e1} Online: {so:,} - {po:.2f}%, of which:\nMobile: {mo:,} | Desktop: {do:,} | Web: {wo:,}\n\n{e2} Idle: {si:,} - {pi:.2f}%, "
-        #                       f"of which:\nMobile: {mi:,} | Desktop: {di:,} | Web: {wi:,}\n\n{e3} Dungeons and Dragons: {sd:,} - {pd:.2f}%, of which:\n"
-        #                       f"Mobile: {md:,} | Desktop: {dd:,} | Web: {wd:,}\n\n{e4} Offline: {sn:,} - {pn:.2f}%")
-        embed.add_field(name=langs.gls("discord_server_status_activity", locale), inline=False,
-                        value=langs.gls("discord_server_status_activity_data", locale, os, a1, lag, apg, a4, lac, apc, a2, at, apt, a3, al, apl, a5, an, apn))
-        #                 value=f"Out of {o:,} people online:\n{a1} Playing a game: {ag:,} - {apg:.2f}%\n{a4} Custom Status: {ac:,} - {apc:.2f}%\n{a2} "
-        #                       f"Streaming: {at:,} - {apt:.2f}%\n{a3} Listening: {al:,} - {apl:.2f}%\n{a5} Doing nothing: {an:,} - {apn:.2f}%")
-        return await general.send(None, ctx.channel, embed=embed)
+        return await general.send(f"{send}\n```ini\n{m}```", ctx.channel)
 
     @commands.command(name="customrole", aliases=["cr"])
     @commands.guild_only()

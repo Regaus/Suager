@@ -410,3 +410,30 @@
 - Changed rank font to Whitney
 - Updated some of the strings for Russian and RSL-1 locales
 - Removed pain command
+
+## v6.2.1 - 3 October
+- Updated discord.py to v1.5
+- Commands removed because they no longer work properly:
+  - server status
+- Commands altered because they no longer work properly:
+  - user (will no longer show status and activity)
+- Commands removed due to lack of usage:
+  - amiowner
+  - epic
+  - frogge
+  - notwork
+- Commands added:
+  - achievement
+  - challenge
+  - calling
+  - captcha
+  - facts
+  - scroll
+  - didyoumean
+  - drake
+  - distracted
+  - role members
+- Fixed createdat
+- Updated server bots
+- Colourify now supports 2 colours specified
+- Social commands will now use embed description instead of title

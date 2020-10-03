@@ -1,6 +1,6 @@
 Pillow
 discord
-git+https://github.com/Rapptz/discord.py@master
+discord.py
 aiohttp
 python-dateutil
 asyncio

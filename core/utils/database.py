@@ -152,59 +152,9 @@ tables = {
             Column("edited", 0, True),
             Column("usage", 0, True)
         ]),
-        Table("tbl_player", [
-            Column("uid", 0, True),       # User ID
-            Column("level", 0, True),
-            Column("xp", 0, True),
-            Column("nuts", 0, True),      # Araksan
-            Column("coins", 0, True),
-            Column("sh_xp", 0, True),
-            Column("energy", 0, True),
-            Column("time", 0, True),      # Energy regeneration time
-            Column("points", 0, True),    # League points
-            Column("runs", 0, True),
-            Column("location", 0, True),  # Current location
-            Column("name", 2, True),      # User name
-            Column("disc", 0, True)
-        ]),
-        Table("tbl_clan", [
-            Column("gid", 0, True),             # Guild ID
-            Column("level", 0, True),
-            Column("xp", 0, True),
-            Column("temples", 2, True),         # Active totems/temples in JSON
-            Column("temple_levels", 2, True),   # JSON for temple levels
-            Column("nuts", 0, True),            # Araksan
-            Column("coins", 0, True),
-            Column("upgrade_points", 0, True),  # Temple upgrade points
-            Column("name", 2, True),            # Guild name
-            Column("usage", 3, True)            # Whether someone is running TBL at the moment
-        ]),
-        Table("dlram", [
-            Column("gid", 0, True),
-            Column("level", 0, True),
-            Column("ram", 0, True),
-            Column("energy", 0, True),     # Charge
-            Column("time", 0, True),
-            Column("downloads", 0, True),  # Times the download process was executed
-            Column("name", 2, True)
-        ]),
         Table("locales", [
             Column("gid", 0, True),
             Column("locale", 2, True)
-        ]),
-        Table("aqos", [
-            Column("uid", 0, True),
-            Column("level", 0, True),
-            Column("level_length", 0, True),
-            Column("level_progress", 1, True),
-            Column("energy", 1, True),
-            Column("energy_used", 0, True),
-            Column("time", 1, True),
-            Column("score", 0, True),
-            Column("xp", 1, True),
-            Column("xp_level", 0, True),
-            Column("name", 2, True),
-            Column("disc", 0, True)
         ])
     ]
 }

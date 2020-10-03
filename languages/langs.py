@@ -145,14 +145,11 @@ def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool 
     return td_dt(time.from_ts(timestamp, None), locale, accuracy=accuracy, brief=brief, suffix=suffix)
 
 
-def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False,
-        era: str = "AD") -> str:
+def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
-    era = era or "AD"
     if locale in ["rsl-1", "rsl-5"]:
         when = time.kargadia_convert(when)
-        era = "NE"
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
@@ -161,12 +158,12 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
         if locale in ["en_us"]:
-            base += f"{when.day:02d}/{when.month:02d}/{when.year:04d} {era}, "
+            base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
         else:
             month_name = month_names_l[when.month % 12]
             month_name_s = month_name[:3]
             month = month_name_s if short else month_name
-            base += f"{gns(when.day, locale, 2)} {month} {gns(when.year, locale, 0, False)} {era}, "
+            base += f"{gns(when.day, locale, 2)} {month} {gns(when.year, locale, 0, False)}, "
     hour = gns(when.hour, locale, 2)
     minute = gns(when.minute, locale, 2)
     second = gns(when.second, locale, 2)

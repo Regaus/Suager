@@ -111,13 +111,6 @@ class Admin(commands.Cog):
         self.bot = bot
         self.config = general.get_config()
 
-    @commands.command(name="amiowner", aliases=["amiadmin"])
-    @commands.cooldown(1, 2, commands.BucketType.user)
-    async def are_you_owner(self, ctx: commands.Context):
-        """ Do you own the bot? """
-        out = "admin_owner_yes" if ctx.author.id in self.config["owners"] else "admin_owner_no"
-        return await general.send(langs.gls(out, langs.gl(ctx), ctx.author.name), ctx.channel)
-
     @commands.command(name="db")
     @commands.check(permissions.is_owner)
     async def db_command(self, ctx: commands.Context, *, query: str):

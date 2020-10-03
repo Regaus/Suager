@@ -1,9 +1,9 @@
 # Suager
-Suager - a bot by Regaus
+A bot by Regaus
 
 ## Requirements
 - [Python 3.8](https://www.python.org/downloads/)
-- discord.py v1.4+
+- discord.py v1.5
 - Pillow
 
 ## Setup

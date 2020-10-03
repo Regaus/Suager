@@ -28,11 +28,9 @@ class Utility(commands.Cog):
             send += f"Taida an Zymlä'an: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**\nTaida an Kargadia'n: **{output}**"
         else:
             if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True, "NE"))
+                send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
             send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, True, False, True, True))
             send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"
-            # send = f"Senko Lair: **{time.time_k(tz=True)}**\n" if self.bot.name == "suager" else ""
-            # send += f"Bot Time: **{time.time(self.bot.local_config['timezone'], _tz=True)}**\nUTC/GMT: **{time.time(None, _tz=True)}**"
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             if data:
                 _tzn = data["tz"]
@@ -58,11 +56,9 @@ class Utility(commands.Cog):
             if conversion == "to":
                 value = float(number)
                 return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})", ctx.channel)
-                # return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base(number, base, caps)} (base {base})", ctx.channel)
             if conversion == "from":
                 if "." in number:
                     return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base_float(number, base, 10)} (base 10)", ctx.channel)
-                    # return await general.send("Conversion of float numbers to base 10 is currently not supported.", ctx.channel)
                 return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
         except ValueError:
             return await general.send(f"{ctx.author.name}, this number is invalid.", ctx.channel)
@@ -112,10 +108,8 @@ class Utility(commands.Cog):
             current_time = langs.gts(now, locale, True, False, True, True, True)  # time.time_output(now, True, True, True)
             specified_time = langs.gts(date, locale, True, False, True, True, True)  # time.time_output(date, True, True, True)
             return await general.send(langs.gls("util_timesince", locale, current_time, specified_time, difference), ctx.channel)
-            # return await general.send(f"Current time: **{current_time}**\nSpecified time: **{specified_time}**\nDifference: **{difference}**", ctx.channel)
         except Exception as e:
             return await general.send(langs.gls("util_timesince_error", locale, type(e).__name__, str(e)), ctx.channel)
-            # return await general.send(f"An error has occurred\n`{type(e).__name__}: {e}`", ctx.channel)
 
     @commands.command(name="weather")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -136,7 +130,6 @@ class Utility(commands.Cog):
                 except KeyError:
                     country = ""
                     tz = 0
-                # local_time = time.time_output((time.now(None) + timedelta(seconds=tz)), tz=True)
                 local_time = langs.gts(time.now(None) + timedelta(seconds=tz), locale)
                 if country:
                     country_name = langs.gls(f"z_data_country_{country}", locale)
@@ -144,13 +137,8 @@ class Utility(commands.Cog):
                 else:
                     country_name = "Not a country"
                     emote = ""
-                # country_name = country_converter.convert(names=[country], to="name_short") if country else "Error"
-                # if country.lower() == "us":
-                #     country_name = "Enslaved Shooting Range"
                 embed.title = langs.gls("util_weather_title", locale, data['name'], country_name, emote=emote)
-                # embed.title =  f"{emote} Weather in **{data['name']}, {country_name}**"
                 embed.description = langs.gls("util_weather_desc", locale, local_time)
-                # embed.description = f"Local Time: **{local_time}**"
                 weather_icon = data['weather'][0]['icon']
                 embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
                 embed.add_field(name=langs.gls("util_weather_weather", locale), value=data['weather'][0]['description'].capitalize(), inline=True)
@@ -164,7 +152,6 @@ class Utility(commands.Cog):
                 _sm = data['wind']['speed']
                 _sk = _sm * 3.6
                 _sb = _sk / 1.609  # imperial system bad
-                # sk, sb = [round(_sk, 1), round(_sb, 1)]
                 sm, sk, sb = langs.gfs(_sm, locale, 2), langs.gfs(_sk, locale, 2), langs.gfs(_sb, locale, 2)
                 embed.add_field(name=langs.gls("util_weather_wind", locale), value=langs.gls("util_weather_wind_data", locale, sm, sk, sb), inline=True)
                 embed.add_field(name=langs.gls("util_weather_clouds", locale), value=langs.gfs(data['clouds']['all'] / 100, locale, 0, True), inline=True)
@@ -175,23 +162,15 @@ class Utility(commands.Cog):
                 if sr != 0 and ss != 0:
                     srt = time.from_ts(sr + tz, None)
                     sst = time.from_ts(ss + tz, None)
-                    # sunrise = srt.strftime('%H:%M')
-                    # sunset = sst.strftime('%H:%M')
-                    # tar = timeago.format(srt, now_l)  # Time since/until sunrise
-                    # tas = timeago.format(sst, now_l)  # Time since/until sunset
                     sr, tr = langs.gts(srt, locale, False, seconds=False), langs.td_dt(srt, locale, source=now_l, accuracy=1, suffix=True)
                     ss, ts = langs.gts(sst, locale, False, seconds=False), langs.td_dt(sst, locale, source=now_l, accuracy=1, suffix=True)
                     embed.add_field(name=langs.gls("util_weather_sunrise", locale), value=f"{sr} | {tr}", inline=True)
                     embed.add_field(name=langs.gls("util_weather_sunset", locale), value=f"{ss} | {ts}", inline=True)
-                    # embed.add_field(name="Sunrise", value=f"{sunrise} | {tar}", inline=True)
-                    # embed.add_field(name="Sunset", value=f"{sunset} | {tas}", inline=True)
                 embed.timestamp = now
             else:
                 return await general.send(langs.gls("util_weather_error", locale, place, code, data["message"]), ctx.channel)
-                # return await general.send(f"Couldn't get weather for {place}:\n`{code}: {data['message']}`", ctx.channel)
         except Exception as e:
             return await general.send(langs.gls("util_weather_error", locale, place, type(e).__name__, str(e)), ctx.channel)
-            # return await general.send(f"Couldn't get weather for {place}:\n`{type(e).__name__}: {e}`", ctx.channel)
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="luas")
@@ -228,10 +207,8 @@ class Utility(commands.Cog):
                     a = len(colour)
                     if a != 3 and a != 6:
                         return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
-                        # return await general.send("The value must be either 3 or 6 digits long.", ctx.channel)
                 except Exception as e:
                     return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
-                    # return await general.send(f"Invalid {c} - `{type(e).__name__}: {e}`", ctx.channel)
             try:
                 _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
                 data = json.loads(_data)

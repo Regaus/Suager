@@ -21,7 +21,6 @@ tasks = []
 async def get_prefix(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
-    # db = database.Database(_bot.name)
     try:
         settings = _bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if settings:
@@ -53,7 +52,8 @@ for i in range(len(config["bots"])):
     blacklist = json.loads(open("blacklist.json", "r").read())
     bot = bot_data.Bot(blacklist, command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
-                       connector=aiohttp.TCPConnector(ssl=False))
+                       connector=aiohttp.TCPConnector(ssl=False),
+                       intents=discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True))
     bot.index = i
     bot.local_config = local_config
     bot.config = config

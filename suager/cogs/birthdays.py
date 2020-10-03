@@ -45,7 +45,6 @@ class Birthdays(commands.Cog):
                                 user = guild.get_member(g["uid"])
                                 if user is not None:
                                     await general.send(langs.gls("birthdays_message", langs.gl(Ctx(guild, self.bot)), user.mention), channels[i], u=True)
-                                    # await channels[i].send(f"Happy birthday {user.mention}, have a nice birthday and enjoy your role today 🎂🎉")
                                     await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
                                     print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
                         except Exception as e:
@@ -82,7 +81,6 @@ class Birthdays(commands.Cog):
             has_birthday = self.check_birthday_noted(user.id)
             if not has_birthday:
                 return await general.send(langs.gls("birthdays_birthday_not_saved", locale, user.name), ctx.channel)
-            # birthday = has_birthday.strftime("%d %B")
             birthday = langs.gts_date(has_birthday, locale, False, False)
             if user == ctx.author:
                 return await general.send(langs.gls("birthdays_birthday_your", locale, birthday), ctx.channel)
@@ -108,7 +106,6 @@ class Birthdays(commands.Cog):
         else:
             return await general.send(langs.gls("birthdays_set_invalid", locale), ctx.channel)
         date = langs.gts_date(timestamp, locale, False, False)
-        # date = timestamp.strftime("%d %B")
         confirm_msg = await general.send(langs.gls("birthdays_set_confirmation", locale, ctx.author.name, date, confirm_code), ctx.channel)
         try:
             await self.bot.wait_for('message', timeout=30.0, check=check_confirm)

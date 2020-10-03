@@ -5,7 +5,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from core.utils import arg_parser, general, http
+from core.utils import arg_parser, emotes, general, http
 from languages import langs
 
 
@@ -16,10 +16,6 @@ async def image_gen(ctx: commands.Context, user: discord.User or discord.Member,
         avatar = user.avatar_url_as(size=512, format="png")
         extra = f"&{extra_args}" if extra_args is not None else ''
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
-        # bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", res_method="read"))
-        # if bio is None:
-        #     return await general.send("An error occurred creating the image, try again later.", ctx.channel)
-        # return await general.send(None, ctx.channel, file=discord.File(bio, filename=f"{filename}.png"))
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
@@ -36,24 +32,36 @@ async def vac_api(ctx: commands.Context, link, filename=None, content=None):
     return await api_img_creator(ctx, f"https://vacefron.nl/api/{link}", f"{filename}.png" or f"{link.split('?')[0]}.png", content)
 
 
+async def af_text(ctx: commands.Context, link, content=None):
+    return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}", f"{link.split('?')[0]}.png", content)
+
+
 class Images(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(name="colourify", aliases=["blurple", "colorify"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def colourify(self, ctx: commands.Context, user: discord.User = None, colour: str = "7289da"):
+    async def colourify(self, ctx: commands.Context, user: discord.User = None, colour: str = "7289da", colour2: str = None):
         """ Turn a user's avatar into a certain colour """
         if user is None:
             user = ctx.author
-        z, y, x = "7289da", "Invalid value, using default.", "colourify"
+        z, y, x = "7289da", "Invalid values", "colourify"
         a = len(colour)
+        h = len(colour2) if colour2 is not None else 0
         c = colour
         try:
             int(c, base=16)
         except ValueError:
             await general.send(y, ctx.channel)
             c, a = z, 6
+        g = colour2
+        if g is not None:
+            try:
+                int(g, base=16)
+            except ValueError:
+                await general.send(y, ctx.channel)
+                g, h = None, 0
         if a == 3:
             d, e, f = c
             b = f"{d}{d}{e}{e}{f}{f}"
@@ -62,7 +70,18 @@ class Images(commands.Cog):
         else:
             await general.send(y, ctx.channel)
             b = z
-        return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}")
+        if h == 3:
+            k, l, m = g
+            i = f"{k}{k}{l}{l}{m}{m}"
+        elif h == 6:
+            i = g
+        elif h == 0:
+            i = None
+        else:
+            await general.send(y, ctx.channel)
+            i = None
+        j = f"&b={i}" if i is not None else ""
+        return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}{j}")
 
     @commands.command(name="filter")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -117,6 +136,62 @@ class Images(commands.Cog):
         filename = _filename.lower()
         return await image_gen(ctx, user, "floor", f"the_floor_is_{filename}", f"text={_text}")
 
+    @commands.command(name="achievement")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def achievement(self, ctx: commands.Context, *, text: str):
+        """ Minecraft Achievement """
+        return await af_text(ctx, f"achievement?text={urllib.parse.quote(text)}")
+
+    @commands.command(name="challenge")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def challenge(self, ctx: commands.Context, *, text: str):
+        """ Minecraft Challenge """
+        return await af_text(ctx, f"challenge?text={urllib.parse.quote(text)}")
+
+    @commands.command(name="calling")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def calling(self, ctx: commands.Context, *, text: str):
+        return await af_text(ctx, f"calling?text={urllib.parse.quote(text)}")
+
+    @commands.command(name="captcha")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def captcha(self, ctx: commands.Context, *, text: str):
+        """ You are a robot. """
+        return await af_text(ctx, f"captcha?text={urllib.parse.quote(text)}")
+
+    @commands.command(name="facts")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def facts(self, ctx: commands.Context, *, text: str):
+        """ That is by now a fact """
+        return await af_text(ctx, f"facts?text={urllib.parse.quote(text)}")
+
+    @commands.command(name="scroll")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def scroll(self, ctx: commands.Context, *, text: str):
+        """ Scroll of truth """
+        return await af_text(ctx, f"scroll?text={urllib.parse.quote(text)}")
+
+    @commands.command(name="didyoumean")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def didyoumean(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        """ Did you mean something else """
+        _text = str(text)
+        _split = _text.split(" | ", 1)
+        if len(_split) != 2:
+            return await general.send(langs.gls("images_npc_split", langs.gl(ctx)), ctx.channel)
+        t1, t2 = _split
+        return await af_text(ctx, f"didyoumean?top={urllib.parse.quote(t1)}&bottom={urllib.parse.quote(t2)}")
+
+    @commands.command(name="drake")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def drake(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
+        _text = str(text)
+        _split = _text.split(" | ", 1)
+        if len(_split) != 2:
+            return await general.send(langs.gls("images_npc_split", langs.gl(ctx)), ctx.channel)
+        t1, t2 = _split
+        return await af_text(ctx, f"didyoumean?top={urllib.parse.quote(t1)}&bottom={urllib.parse.quote(t2)}")
+
     @commands.command()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def supreme(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
@@ -137,7 +212,6 @@ class Images(commands.Cog):
         input_text = urllib.parse.quote(' '.join(args.input))
         if len(input_text) > 500:
             return await general.send(langs.gls("images_supreme_limit", locale), ctx.channel)
-            # return await general.send("The API for this command is limited to 500 characters.", ctx.channel)
         dol = ""
         if args.dark:
             dol = "&dark=true"
@@ -145,7 +219,6 @@ class Images(commands.Cog):
             dol = "&light=true"
         if args.dark and args.light:
             return await general.send(langs.gls("images_supreme_dark_light", locale), ctx.channel)
-            # return await general.send("You can't use both dark and light at the same time...", ctx.channel)
         return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
 
     @commands.command(name="carreverse")
@@ -159,6 +232,13 @@ class Images(commands.Cog):
     async def change_my_mind(self, ctx: commands.Context, *, text: commands.clean_content(fix_channel_mentions=True)):
         """ Change my mind """
         return await vac_api(ctx, f"changemymind?text={urllib.parse.quote(str(text))}")
+
+    @commands.command(name="distracted")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def distracted(self, ctx: commands.Context, boyfriend: discord.User, woman: discord.User, girlfriend: discord.User):
+        """ Boyfriend getting distracted """
+        a1, a2, a3 = [x.avatar_url_as(format="png", size=1024) for x in [boyfriend, woman, girlfriend]]
+        return await vac_api(ctx, f"distractedbf?boyfriend={a1}&woman={a2}&girlfriend={a3}")
 
     @commands.command(name="water")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -229,6 +309,74 @@ class Images(commands.Cog):
             return await general.send(langs.gls("images_npc_split", langs.gl(ctx)), ctx.channel)
         t1, t2 = _split
         return await vac_api(ctx, f"npc?text1={urllib.parse.quote(t1)}&text2={urllib.parse.quote(t2)}")
+
+    @commands.command(name="ship")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def ship(self, ctx: commands.Context, user1: discord.Member, user2: discord.Member):
+        """ Build a ship """
+        locale = langs.gl(ctx)
+        pr = False
+        if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
+            if user1.id != 302851022790066185 and user2.id != 302851022790066185:
+                return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
+            pr = True
+        if (user1.bot ^ user2.bot) and not pr:
+            return await general.send(langs.gls("social_ship_bot", locale), ctx.channel)
+        if user1 == user2:
+            return await general.send(langs.gls("social_alone", locale), ctx.channel)
+        av1 = user1.avatar_url_as(size=1024)
+        av2 = user2.avatar_url_as(size=1024)
+        link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
+        bio = BytesIO(await http.get(link, res_method="read"))
+        if bio is None:
+            return await general.send("The image was not generated...", ctx.channel)
+        __names = [len(user1.name), len(user2.name)]
+        _names = [int(x / 2) for x in __names]
+        n1 = user1.name[:_names[0]]
+        n2 = user1.name[_names[0]:]
+        n3 = user2.name[:_names[1]]
+        n4 = user2.name[_names[1]:]
+        names = [f"{n1}{n3}", f"{n1}{n4}", f"{n2}{n3}", f"{n2}{n4}", f"{n3}{n1}", f"{n4}{n1}", f"{n3}{n2}", f"{n4}{n2}"]
+        message = langs.gls("social_ship", locale)
+        for i, j in enumerate(names, start=1):
+            message += f"\n{langs.gns(i, locale)}) **{j}**"
+        return await general.send(message, ctx.channel, file=discord.File(bio, filename="ship.png"))
+
+    @commands.command(name="bad")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def bad(self, ctx: commands.Context, user: discord.Member):
+        """ Bad user """
+        locale = langs.gl(ctx)
+        bad_self = False
+        if user == ctx.author:
+            return await general.send(emotes.AlexPat, ctx.channel)
+        if user.id == 302851022790066185:
+            bad_self = True
+        elif user.id == self.bot.user.id:
+            return await general.send(langs.gls("social_bad_suager", locale), ctx.channel)
+        if bad_self:
+            user = ctx.author
+        return await image_gen(ctx, user, "bad", f"bad_{user.id}")
+
+    @commands.command(name="trash")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def trash(self, ctx, user: discord.Member):
+        """ Show someone their home """
+        locale = langs.gl(ctx)
+        if user == ctx.author:
+            return await general.send(emotes.AlexPat, ctx.channel)
+        if user.id == self.bot.user.id:
+            return await general.send(langs.gls("social_bad_suager", locale), ctx.channel)
+        a1, a2 = [ctx.author.avatar_url, user.avatar_url]
+        if user.id == 302851022790066185:
+            a2, a1 = a1, a2
+        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
+        if bio is None:
+            return await general.send("An error occurred...", ctx.channel)
+        return await general.send(None, ctx.channel, file=discord.File(bio, filename=f"trash_{user.id}.png"))
 
 
 def setup(bot):
