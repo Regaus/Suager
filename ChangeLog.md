@@ -437,3 +437,6 @@
 - Updated server bots
 - Colourify now supports 2 colours specified
 - Social commands will now use embed description instead of title
+
+## v6.2.2 - 3 October
+- Improved and updated playing statuses

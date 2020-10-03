@@ -152,39 +152,55 @@ async def playing_changer(self):
             fv, sv = f"v{self.local_config['version']}", f"v{self.local_config['short_version']}"
             plays = {
                 "suager": [
-                    [0, fv],
-                    [0, "with Regaus"],
-                    [0, "without you"],
-                    [0, "with nobody"],
-                    [0, "with your feelings"],
-                    [0, "Custom Status"],
-                    [0, "with the Nuriki Cult"],
-                    [0, "PyCharm"],
-                    [1, "Русские Вперёд!"],
-                    [0, f"{self.local_config['prefixes'][0]}help | {sv}"],
-                    [2, "music"],
-                    [0, "<CustomActivity name='Something interesting' emoji=<PartialEmoji animated=False name='SenkoDX' id=709828828184445009>>"],
-                    [0, "<Game object at 0x000001C86D4D1520>"],
-                    [3, "anime"],
-                    [0, "nothing"],
-                    [1, "nothing"],
-                    [2, "nothing"],
-                    [3, "you"],
-                    [3, f"{len(self.bot.guilds):,} guilds"],
-                    [0, f"with {len(self.bot.users):,} users"]
+                    {"type": 0, "name": fv},
+                    {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                    {"type": 1, "name": "Nothing", "url": "https://www.twitch.tv/nosmdjf"},
+                    {"type": 2, "name": "Music"},
+                    {"type": 5, "name": "a competition"},
+                    {"type": 0, "name": "with Regaus"},
+                    {"type": 0, "name": "without you"},
+                    {"type": 0, "name": "with nobody"},
+                    {"type": 0, "name": "with your feelings"},
+                    {"type": 0, "name": "Custom Status"},
+                    {"type": 5, "name": "Discord"},
+                    {"type": 3, "name": "Senko"},
+                    {"type": 0, "name": f"{self.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 5, "name": "uselessness"},
+                    {"type": 0, "name": "Nothing"},
+                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
+                    {"type": 3, "name": "you"},
+                    {"type": 0, "name": "None"},
+                    {"type": 0, "name": "KeyError: 'name'"},
+                    {"type": 0, "name": "IndexError: list index out of range"},
+                    {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
+                    {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
+                    {"type": 2, "name": "a song"},
+                    {"type": 2, "name": "10 Hours of Nothing ft. Nobody (Non-Existent Remix by Negative Zero)"},
+                    {"type": 3, "name": "the Void"},
+                    {"type": 5, "name": "Minecraft"},
+                    {"type": 0, "name": "Minecraft"},
+                    {"type": 1, "name": "Minecraft", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
                 ]
             }
-            activity, playing = random.choice(plays.get(self.bot.name))
+            _activity = random.choice(plays.get(self.bot.name))
             # playing = f"{play} | v{self.local_config['short_version']}"
-            await self.bot.change_presence(activity=discord.Activity(type=activity, name=playing), status=discord.Status.dnd)
+            if _activity["type"] == 0:  # Game
+                activity = discord.Game(name=_activity["name"])
+            elif _activity["type"] == 1:  # Streaming
+                name = _activity["name"]
+                activity = discord.Streaming(name=name, details=name, url=_activity["url"])
+            else:
+                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                # activity = discord.Activity(type=activity, name=playing)
+            await self.bot.change_presence(activity=activity, status=discord.Status.dnd)
             if log:
-                logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {playing}")
+                logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {_activity['name']}")
         except PermissionError:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Playing Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > The bot tried to do something while disconnected.")
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > {type(e).__name__}: {e}")
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Playing Changer > {type(e).__name__}: {e}")
 
 
 async def avatar_changer(self):
@@ -206,9 +222,9 @@ async def avatar_changer(self):
             if log:
                 logger.log(self.bot.name, "avatar", send)
         except PermissionError:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > Failed to save changes.")
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Avatar Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > The bot tried to do something while disconnected.")
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Avatar Changer > The bot tried to do something while disconnected.")
         except Exception as e:
-            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > on_ready > {type(e).__name__}: {e}")
+            general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Avatar Changer > {type(e).__name__}: {e}")
     await asyncio.sleep(5)
