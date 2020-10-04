@@ -299,6 +299,8 @@ class Social(commands.Cog):
             self.boop = await lists.get_images(self.bot, 'B')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
+        if user.id == 302851022790066185:
+            return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_boop_suager", locale), ctx.channel)
         if user.bot:

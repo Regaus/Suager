@@ -446,3 +446,8 @@
 - Social commands back to title embed
 - Ship, bad, and trash now use User instead of Member
 - Kuastall-11 for time24
+
+## v6.2.4 - 4 October
+- Finally added mute command (does not support duration)
+- Locked more social actions from being done on me
+- Updated settings mute role response

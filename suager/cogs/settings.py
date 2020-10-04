@@ -435,7 +435,7 @@ class Settings(commands.Cog):
             self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
         else:
             self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-        return await general.send(f"The muted role is set to {role.name}", ctx.channel)
+        return await general.send(f"The muted role has been set to {role.name}", ctx.channel)
 
     @commands.command(name="prefix")
     @commands.guild_only()

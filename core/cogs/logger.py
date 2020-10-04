@@ -51,6 +51,8 @@ class Spyware(commands.Cog):
         if after.guild.id in [568148147457490954, 738425418637639775] and uid not in [302851022790066185]:
             if after.display_name[0] < "A":
                 await after.edit(reason="De-hoist", nick=f"z{after.display_name}")
+        if after.guild.id == 430945139142426634 and uid == self.bot.user.id:
+            await after.guild.me.edit(nick=None)
         n1, n2 = before.nick, after.nick
         if n1 != n2:
             logger.log(self.bot.name, "names", f"{to} > {guild} > {n}'s ({uid}) nickname is now {n2} (from {n1})")

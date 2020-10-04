@@ -1,3 +1,4 @@
+import json
 import re
 
 import discord
@@ -42,7 +43,7 @@ class MemberID(commands.Converter):
 class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.admins = self.bot.config["owners"]
+        # self.admins = self.bot.config["owners"]
 
     @commands.command(name="kick")
     @commands.guild_only()
@@ -56,8 +57,8 @@ class Moderation(commands.Cog):
             return await general.send("Imagine trying to kick the server's owner, lol", ctx.channel)
         elif member.top_role.position >= ctx.author.top_role.position:
             return await general.send("You can't kick a member whose top role is equal to or is above yours.", ctx.channel)
-        elif member.id in self.admins:
-            return await general.send("I can't kick my owners or admins...", ctx.channel)
+        # elif member.id in self.admins:
+        #     return await general.send("I can't kick my owners or admins...", ctx.channel)
         elif member.id == self.bot.user.id:
             return await general.send(f"We are not friends anymore, {ctx.author.name}.", ctx.channel)
         try:
@@ -79,8 +80,8 @@ class Moderation(commands.Cog):
             return await general.send("Imagine trying to ban the server's owner, lol", ctx.channel)
         elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position):
             return await general.send("You can't ban a member whose top role is equal to or is above yours.", ctx.channel)
-        elif member in self.admins:
-            return await general.send("I can't ban my owners or admins...", ctx.channel)
+        # elif member in self.admins:
+        #     return await general.send("I can't ban my owners or admins...", ctx.channel)
         elif member == self.bot.user.id:
             return await general.send(f"We are not friends anymore, {ctx.author.name}.", ctx.channel)
         try:
@@ -100,8 +101,8 @@ class Moderation(commands.Cog):
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
         else:
             for member in who:
-                if member in self.admins:
-                    return await general.send("I can't ban my owners or admins...", ctx.channel)
+                # if member in self.admins:
+                #     return await general.send("I can't ban my owners or admins...", ctx.channel)
                 if member == self.bot.user.id:
                     return await general.send(f"We are not friends anymore, {ctx.author.name}.", ctx.channel)
                 if member == ctx.guild.owner.id:
@@ -153,6 +154,62 @@ class Moderation(commands.Cog):
             return await general.send(message, ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.command(name="mute")
+    @commands.guild_only()
+    @permissions.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    async def mute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+        """ Mute a user """
+        if member.id == self.bot.user.id:
+            return await general.send("Why did you bring me to this server... just to mute me?", ctx.channel)
+        if member == ctx.author:
+            return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
+        _reason = general.reason(ctx.author, reason)
+        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not _data:
+            return await general.send(f"This server does not seem to have a mute role set. Use `{ctx.prefix}settings` to set one.", ctx.channel)
+        data = json.loads(_data["data"])
+        try:
+            mute_role_id = data["mute_role"]
+        except KeyError:
+            return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
+        mute_role = ctx.guild.get_role(mute_role_id)
+        if not mute_role:
+            return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
+        try:
+            await member.add_roles(mute_role, reason=_reason)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        return await general.send(f"{emotes.Allow} Successfully muted **{member}** for **{reason}**", ctx.channel)
+
+    @commands.command(name="unmute")
+    @commands.guild_only()
+    @permissions.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    async def unmute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+        """ Unmute a user """
+        if member == ctx.author:
+            return await general.send(f"Ah yes, unmuting yourself {emotes.BlobCatPolice}", ctx.channel)
+        _reason = general.reason(ctx.author, reason)
+        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not _data:
+            return await general.send(f"This server does not seem to have a mute role set. Use `{ctx.prefix}settings` to set one.", ctx.channel)
+        data = json.loads(_data["data"])
+        try:
+            mute_role_id = data["mute_role"]
+        except KeyError:
+            return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
+        mute_role = ctx.guild.get_role(mute_role_id)
+        if not mute_role:
+            return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
+        try:
+            await member.remove_roles(mute_role, reason=_reason)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        return await general.send(f"{emotes.Allow} Successfully unmuted **{member}** for **{reason}**", ctx.channel)
 
     @commands.group()
     @commands.guild_only()
