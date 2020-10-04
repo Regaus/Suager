@@ -193,7 +193,8 @@ class Admin(commands.Cog):
             elif 0 < rl <= limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
-                    return await general.send(f"Results for {log}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                    lines = len(str(data).splitlines())
+                    return await general.send(f"Results for {log}.rsf - search term `{search}` - {lines:,} lines, {rl:,} chars", ctx.channel,
                                               file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():
@@ -230,7 +231,8 @@ class Admin(commands.Cog):
             elif 0 < rl <= limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
-                    return await general.send(f"Results for {log_file}.rsf - search term `{search}` - {rl:,} chars", ctx.channel,
+                    lines = len(str(data).splitlines())
+                    return await general.send(f"Results for {log_file}.rsf - search term `{search}` - {lines:,} lines, {rl:,} chars", ctx.channel,
                                               file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():

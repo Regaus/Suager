@@ -194,7 +194,15 @@ async def playing_changer(self):
                 # activity = discord.Activity(type=activity, name=playing)
             await self.bot.change_presence(activity=activity, status=discord.Status.dnd)
             if log:
-                logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated playing to {_activity['name']}")
+                name = _activity["name"]
+                status = {
+                    0: "Playing",
+                    1: "Streaming",
+                    2: "Listening to",
+                    3: "Watching",
+                    5: "Competing in"
+                }.get(_activity["type"], "Undefined")
+                logger.log(self.bot.name, "playing", f"{time.time()} > {self.bot.local_config['name']} > Updated activity to {status} {name}")
         except PermissionError:
             general.print_error(f"{time.time()} > {self.bot.local_config['name']} > Playing Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:

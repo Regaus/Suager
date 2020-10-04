@@ -5,14 +5,14 @@
       "internal_name": "suager",
       "token": "token",
       "admins": [],
-      "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:651113509689491457>",
+      "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:762336598645407785>",
       "prefixes": [
         "s/",
         "S/"
       ],
       "short_version": "6.2",
-      "version": "6.2.2",
-      "last_update": 1601749020,
+      "version": "6.2.3",
+      "last_update": 1601836255,
       "first_version": 1557781320,
       "major_release": 1597500778,
       "logs": true,

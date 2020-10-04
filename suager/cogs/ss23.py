@@ -50,8 +50,8 @@ class SS23(commands.Cog):
         if year is None:
             dt = time.now(None)
         else:
-            if year < 477:
-                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 477 AD**.", ctx.channel)
+            if year < 1743:
+                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 1743 AD**.", ctx.channel)
             try:
                 dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
             except ValueError as e:
@@ -59,9 +59,11 @@ class SS23(commands.Cog):
         ti = dt.strftime("%A, %d %B %Y, %H:%M:%S %Z")  # Time IRL
         t24_4_local = ss24.time_sinvimania(dt).str()   # 24.4 Sinvimania Local
         t24_5_local = ss24.time_hosvalnerus(dt).str()  # 24.5 Hosvalnerus local
+        t24_11_1 = ss24.time_kuastall_11(dt).str()
         return await general.send(f"Time on this Earth (English): **{ti}**\n"
                                   f"Time on 24.4 Sinvimania (Local Solar): **{t24_4_local}**\n"
-                                  f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**", ctx.channel)
+                                  f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**\n"
+                                  f"Time on 24.11 Kuastall-11 (RSL-1_ku): **{t24_11_1}**", ctx.channel)
 
     @commands.command(name="weather23", hidden=True)
     @commands.is_owner()

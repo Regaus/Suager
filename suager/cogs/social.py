@@ -75,7 +75,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "pat", 9)
         title, footer = get_data(ctx.author, user, "pat", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.pat))
         return await general.send(None, ctx.channel, embed=embed)
@@ -98,7 +98,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "hug", 6)
         title, footer = get_data(ctx.author, user, "hug", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.hug))
         return await general.send(None, ctx.channel, embed=embed)
@@ -121,7 +121,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "cuddle", 4)
         title, footer = get_data(ctx.author, user, "cuddle", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.cuddle))
         return await general.send(None, ctx.channel, embed=embed)
@@ -146,7 +146,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "lick", 8)
         title, footer = get_data(ctx.author, user, "lick", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.lick))
         return await general.send(None, ctx.channel, embed=embed)
@@ -168,7 +168,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "kiss", 7)
         title, footer = get_data(ctx.author, user, "kiss", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.kiss))
         return await general.send(None, ctx.channel, embed=embed)
@@ -192,7 +192,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "bite", 3)
         title, footer = get_data(ctx.author, user, "bite", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.bite))
         return await general.send(None, ctx.channel, embed=embed)
@@ -216,7 +216,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "slap", 10)
         title, footer = get_data(ctx.author, user, "slap", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.slap))
         return await general.send(None, ctx.channel, embed=embed)
@@ -240,7 +240,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "sniff", 11)
         title, footer = get_data(ctx.author, user, "sniff", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.smell))
         return await general.send(None, ctx.channel, embed=embed)
@@ -262,7 +262,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "high_five", 5)
         title, footer = get_data(ctx.author, user, "high_five", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.highfive))
         return await general.send(None, ctx.channel, embed=embed)
@@ -284,7 +284,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "poke", 12)
         title, footer = get_data(ctx.author, user, "poke", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.poke))
         return await general.send(None, ctx.channel, embed=embed)
@@ -306,7 +306,7 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "boop", 13)
         title, footer = get_data(ctx.author, user, "boop", locale, given, received)
-        embed.description = title
+        embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.boop))
         return await general.send(None, ctx.channel, embed=embed)
@@ -371,7 +371,7 @@ class Social(commands.Cog):
         if is_fucked(self.sleepy):
             self.sleepy = await lists.get_images(self.bot, 's')
         embed = discord.Embed(colour=general.random_colour())
-        embed.description = langs.gls("social_sleepy", locale, ctx.author.name)
+        embed.title = langs.gls("social_sleepy", locale, ctx.author.name)
         embed.set_image(url=random.choice(self.sleepy))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -384,7 +384,7 @@ class Social(commands.Cog):
         if is_fucked(self.cry):
             self.cry = await lists.get_images(self.bot, 'r')
         embed = discord.Embed(colour=general.random_colour())
-        embed.description = langs.gls("social_cry", locale, ctx.author.name)
+        embed.title = langs.gls("social_cry", locale, ctx.author.name)
         embed.set_image(url=random.choice(self.cry))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -397,7 +397,7 @@ class Social(commands.Cog):
         if is_fucked(self.blush):
             self.blush = await lists.get_images(self.bot, 'u')
         embed = discord.Embed(colour=general.random_colour())
-        embed.description = langs.gls("social_blush", locale, ctx.author.name)
+        embed.title = langs.gls("social_blush", locale, ctx.author.name)
         embed.set_image(url=random.choice(self.blush))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -410,7 +410,7 @@ class Social(commands.Cog):
         if is_fucked(self.smile):
             self.smile = await lists.get_images(self.bot, 'm')
         embed = discord.Embed(colour=general.random_colour())
-        embed.description = langs.gls("social_smile", locale, ctx.author.name)
+        embed.title = langs.gls("social_smile", locale, ctx.author.name)
         embed.set_image(url=random.choice(self.smile))
         return await general.send(None, ctx.channel, embed=embed)
 

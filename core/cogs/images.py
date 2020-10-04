@@ -313,7 +313,7 @@ class Images(commands.Cog):
     @commands.command(name="ship")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def ship(self, ctx: commands.Context, user1: discord.Member, user2: discord.Member):
+    async def ship(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
         """ Build a ship """
         locale = langs.gl(ctx)
         pr = False
@@ -346,7 +346,7 @@ class Images(commands.Cog):
     @commands.command(name="bad")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def bad(self, ctx: commands.Context, user: discord.Member):
+    async def bad(self, ctx: commands.Context, user: discord.User):
         """ Bad user """
         locale = langs.gl(ctx)
         bad_self = False
@@ -363,7 +363,7 @@ class Images(commands.Cog):
     @commands.command(name="trash")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def trash(self, ctx, user: discord.Member):
+    async def trash(self, ctx, user: discord.User):
         """ Show someone their home """
         locale = langs.gl(ctx)
         if user == ctx.author:

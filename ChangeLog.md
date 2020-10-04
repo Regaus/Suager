@@ -440,3 +440,9 @@
 
 ## v6.2.2 - 3 October
 - Improved and updated playing statuses
+
+## v6.2.3 - 4 October
+- Improved logs command
+- Social commands back to title embed
+- Ship, bad, and trash now use User instead of Member
+- Kuastall-11 for time24
