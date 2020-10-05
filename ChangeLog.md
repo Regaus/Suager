@@ -451,3 +451,6 @@
 - Finally added mute command (does not support duration)
 - Locked more social actions from being done on me
 - Updated settings mute role response
+
+## v6.2.4.1 - 5 October
+- Updated leveling bias
