@@ -454,3 +454,7 @@
 
 ## v6.2.4.1 - 5 October
 - Updated leveling bias
+
+## v6.2.5 - 9 October
+- Fixed economy shop command
+- Added message read to ping command

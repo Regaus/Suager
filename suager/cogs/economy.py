@@ -177,7 +177,7 @@ class Economy(commands.Cog):
             pre, suf = get_ps(currency)
             d = ''
             for role in rewards:
-                d += f"<@&{role['role']}>: {pre}{langs.gns(role['cost'])}{suf}"
+                d += f"<@&{role['role']}>: {pre}{langs.gns(role['cost'])}{suf}\n"
             embed.description = d
             return await general.send(None, ctx.channel, embed=embed)
         except KeyError:
