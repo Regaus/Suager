@@ -458,3 +458,7 @@
 ## v6.2.5 - 9 October
 - Fixed economy shop command
 - Added message read to ping command
+
+## v6.2.6 - 9 October
+- Improved de-hoist
+- Fixed birthday output

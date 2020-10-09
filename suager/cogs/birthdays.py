@@ -84,7 +84,7 @@ class Birthdays(commands.Cog):
             birthday = langs.gts_date(has_birthday, locale, False, False)
             if user == ctx.author:
                 return await general.send(langs.gls("birthdays_birthday_your", locale, birthday), ctx.channel)
-            return await general.send(langs.gls("birthdays_birthday_general", locale, birthday), ctx.channel)
+            return await general.send(langs.gls("birthdays_birthday_general", locale, str(user), birthday), ctx.channel)
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
