@@ -469,3 +469,7 @@
 - Message on ban and unban from Senko Lair
 - Added tag search and tag unclaimed
 - Added rape command for SR 9
+
+## v6.3.0.1 - 10 October
+- Removed message read from ping
+- Removed cooldown from rape

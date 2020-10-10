@@ -107,19 +107,19 @@ class BotInformation(commands.Cog):
     async def ping(self, ctx: commands.Context):
         """ Ping Pong """
         import time as _time
-        from datetime import datetime
+        # from datetime import datetime
         ws = int(self.bot.latency * 1000)
-        t0 = int((datetime.utcnow() - ctx.message.created_at).total_seconds() * 1000)
+        # t0 = int((datetime.utcnow() - ctx.message.created_at).total_seconds() * 1000)
         t1 = _time.time()
-        r1 = f"Message Read: {t0:,}ms\nMessage Send: undefined\nMessage Edit: undefined\nWS Latency: {ws:,}ms"
+        r1 = f"Message Send: undefined\nMessage Edit: undefined\nWS Latency: {ws:,}ms"
         msg = await general.send(r1, ctx.channel, u=[ctx.author])
         t2 = int((_time.time() - t1) * 1000)
-        r2 = f"Message Read: {t0:,}ms\nMessage Send: {t2:,}ms\nMessage Edit: undefined\nWS Latency: {ws:,}ms"
+        r2 = f"Message Send: {t2:,}ms\nMessage Edit: undefined\nWS Latency: {ws:,}ms"
         # r2 = langs.gls("info_ping_2", locale, langs.gns(ws), langs.gns(t2))
         t2s = _time.time()
         await msg.edit(content=r2)
         t3 = int((_time.time() - t2s) * 1000)
-        r3 = f"Message Read: {t0:,}ms\nMessage Send: {t2:,}ms\nMessage Edit: {t3:,}ms\nWS Latency: {ws:,}ms"
+        r3 = f"Message Send: {t2:,}ms\nMessage Edit: {t3:,}ms\nWS Latency: {ws:,}ms"
         # r3 = langs.gls("info_ping_3", locale, langs.gns(ws), langs.gns(t2), langs.gns(t3))
         await msg.edit(content=r3)
 
