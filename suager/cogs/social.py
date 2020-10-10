@@ -33,6 +33,7 @@ class Social(commands.Cog):
             self.poke, self.boop = [lists.error] * 15
         self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 14}?)"
         self.empty = [0] * 15
+        self.locked = [667187968145883146]
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
         """ Update database - interactions """
@@ -137,7 +138,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(None, ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673644219314733106/selflick.gif"))
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_lick_suager", locale), ctx.channel)
@@ -185,7 +186,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_self", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -207,7 +208,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_self", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -231,7 +232,7 @@ class Social(commands.Cog):
             self.smell = await lists.get_images(self.bot, 'n')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_sniff_suager", locale), ctx.channel)
@@ -277,7 +278,7 @@ class Social(commands.Cog):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_poke_suager", locale, ctx.author.name), ctx.channel)
@@ -301,7 +302,7 @@ class Social(commands.Cog):
             self.boop = await lists.get_images(self.bot, 'B')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_boop_suager", locale), ctx.channel)
@@ -322,8 +323,9 @@ class Social(commands.Cog):
         """ Bang someone """
         locale = langs.gl(ctx)
         if not ctx.channel.is_nsfw():
-            return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
-        if user.id == 302851022790066185:
+            if ctx.channel.id != 764528556507922442:  # Secret Room 9
+                return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
+        if user.id == 302851022790066185 and ctx.author.id != 622735873137573894:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
@@ -351,7 +353,8 @@ class Social(commands.Cog):
         """ Succ someone """
         locale = langs.gl(ctx)
         if not ctx.channel.is_nsfw():
-            return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
+            if ctx.channel.id != 764528556507922442:  # Secret Room 9
+                return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
         if user.bot:
