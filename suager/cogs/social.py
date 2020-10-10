@@ -350,8 +350,8 @@ class Social(commands.Cog):
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.channel.id == 764528556507922442)  # Secret Room 9 only
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def fuck(self, ctx, user: discord.Member):
-        """ Bang someone """
+    async def rape(self, ctx, user: discord.Member):
+        """ Rape someone """
         locale = langs.gl(ctx)
         if user.id == self.bot.user.id:
             return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
