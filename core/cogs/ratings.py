@@ -52,7 +52,8 @@ class Ratings(commands.Cog):
         r = random.randint(r1, r2)
         custom = {
             302851022790066185: r2,  # Me
-            self.bot.user.id: r2,  # Suager
+            self.bot.user.id: r2,    # Suager
+            291665491221807104: r2,  # Leitoxz
         }
         result = custom.get(who.id, r)
         return await general.send(langs.gls("ratings_rate_user", locale, who.name, langs.gns(result, locale), langs.gns(_max, locale)), ctx.channel)
@@ -102,8 +103,9 @@ class Ratings(commands.Cog):
         random.seed(user.id - 1)
         step1 = random.random()
         custom = {
-            302851022790066185: 1,  # Regaus
-            self.bot.user.id: 1,    # Suager
+            302851022790066185: 1,       # Regaus
+            self.bot.user.id: 1,         # Suager
+            291665491221807104: 0.9997,  # Leitoxz
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin

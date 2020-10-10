@@ -473,3 +473,7 @@
 ## v6.3.0.1 - 10 October
 - Removed message read from ping
 - Removed cooldown from rape
+
+## v6.3.0.2 - 11 October
+- Made the network warning different
+- Made Leitoxz 99.9% hot and rated 100%
