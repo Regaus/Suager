@@ -28,10 +28,10 @@ def make_dir(dir_name):
         pass
 
 
-async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None,
+async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None, files: list = None,
                delete_after: float = None, e: bool = False, u: bool or list = False, r: bool or list = False):
     try:
-        return await channel.send(content=text, embed=embed, file=file, delete_after=delete_after,
+        return await channel.send(content=text, embed=embed, file=file, files=files, delete_after=delete_after,
                                   allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
     except discord.Forbidden:
         await channel.send("Failed to send message. Please make sure that I have sufficient permissions (embed links and/or attach files)")

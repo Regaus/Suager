@@ -103,7 +103,7 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(self.hug))
         return await general.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="cuddle")
+    @commands.command(name="cuddle", aliases=["snuggle"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cuddle(self, ctx: commands.Context, user: discord.Member):
@@ -277,6 +277,8 @@ class Social(commands.Cog):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
+        if user.id == 302851022790066185:
+            return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_poke_suager", locale, ctx.author.name), ctx.channel)
         if user.bot:

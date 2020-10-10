@@ -462,3 +462,9 @@
 ## v6.2.6 - 9 October
 - Improved de-hoist
 - Fixed birthday output
+
+## v6.3.0 - 10 October
+- Message delete and edit logs for Senko Lair
+- Locked poke from being used on me
+- Message on ban and unban from Senko Lair
+- Added tag search and tag unclaimed

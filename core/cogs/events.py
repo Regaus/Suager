@@ -1,3 +1,6 @@
+from io import BytesIO
+from typing import List
+
 import discord
 from discord.ext import commands
 from discord.ext.tasks import loop
@@ -110,6 +113,84 @@ class Events(commands.Cog):
     @avatar.before_loop
     async def avatar_before(self):
         await self.bot.wait_until_ready()
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        async def process_msg(cid: int):
+            output = f"A message was deleted in {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
+                     f"Message sent: {message.created_at}\nMessage content: {message.content[:1850]}"
+            files = []
+            for attachment in message.attachments:
+                file = BytesIO()
+                try:
+                    await attachment.save(file)
+                except (discord.NotFound, discord.HTTPException):
+                    pass
+                files.append(discord.File(file, filename=attachment.filename))
+            embed = message.embeds[0] if message.embeds else None
+            await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
+
+        if message.guild.id == 568148147457490954:
+            no = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901, 571025667265658881,
+                  571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075, 571031080908357633, 674342275421175818]
+            if message.channel.id not in no:
+                if not message.author.bot:
+                    await process_msg(764473671090831430)
+        if message.guild.id == 738425418637639775:
+            no = [742885168997466196]
+            if message.channel.id not in no:
+                if not message.author.bot:
+                    await process_msg(764494075663351858)
+
+    @commands.Cog.listener()
+    async def on_bulk_message_delete(self, messages: List[discord.Message]):
+        async def process_msg(cid: int):
+            output = f"A message was deleted in {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
+                     f"Message sent: {message.created_at}\nMessage content: {message.content[:1850]}"
+            files = []
+            for attachment in message.attachments:
+                file = BytesIO()
+                try:
+                    await attachment.save(file)
+                except (discord.NotFound, discord.HTTPException):
+                    pass
+                files.append(discord.File(file, filename=attachment.filename))
+            embed = message.embeds[0] if message.embeds else None
+            await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
+        for message in messages:
+            if message.guild.id == 568148147457490954:
+                no = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
+                      571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
+                      571031080908357633, 674342275421175818]
+                if message.channel.id not in no:
+                    if not message.author.bot:
+                        await process_msg(764473671090831430)
+            if message.guild.id == 738425418637639775:
+                no = [742885168997466196]
+                if message.channel.id not in no:
+                    if not message.author.bot:
+                        await process_msg(764494075663351858)
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        async def process_msg(cid: int):
+            embed = discord.Embed(description=f"Message was edited in {after.channel.mention} ({after.channel.id})\n"
+                                              f"Author: {after.author}\nMessage sent: {after.created_at}")
+            embed.add_field(name="Content Before", value=before.content, inline=False)
+            embed.add_field(name="Content After", value=after.content, inline=False)
+            await general.send(None, self.bot.get_channel(cid), embed=embed)
+
+        if after.guild.id == 568148147457490954:
+            no = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901, 571025667265658881,
+                  571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075, 571031080908357633, 674342275421175818]
+            if after.channel.id not in no:
+                if not after.author.bot:
+                    await process_msg(764473671090831430)
+        if after.guild.id == 738425418637639775:
+            no = [742885168997466196]
+            if after.channel.id not in no:
+                if not after.author.bot:
+                    await process_msg(764494075663351858)
 
 
 def setup(bot):

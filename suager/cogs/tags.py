@@ -37,9 +37,15 @@ class Tags(commands.Cog):
                              (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0))
         return await general.send(langs.gls("tags_create_success", locale, tag_name.lower(), ctx.author.name), ctx.channel)
 
+    async def try_get(self, uid: int):
+        try:
+            return await self.bot.fetch_user(uid)
+        except discord.NotFound:
+            return f"Unknown User {uid}"
+
     async def get_user(self, guild: discord.Guild, uid: int, locale: str) -> str:
         user = guild.get_member(uid)
-        return str(user) if user is not None else str(await self.bot.fetch_user(uid)) + f" | {langs.gls('tags_user_guild', locale)}"
+        return str(user) if user is not None else str(await self.try_get(uid)) + f" | {langs.gls('tags_user_guild', locale)}"
 
     @tags.command(name="info")
     async def tag_info(self, ctx: commands.Context, *, tag_name: str):
@@ -177,6 +183,40 @@ class Tags(commands.Cog):
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
             block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
         return await general.send(langs.gls("tags_top", locale, ctx.guild, langs.gns(page, locale), langs.gns(ceil(len(tags) / 20), locale), block),
+                                  ctx.channel)
+
+    @tags.command(name="search")
+    async def tags_search(self, ctx: commands.Context, search: str, page: int = 1):
+        """ See all tags containing a substring
+         Write search string "like this" if it contains 2 or more words"""
+        locale = langs.gl(ctx)
+        _search = "%" + search.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND (content LIKE ? ESCAPE '!' OR name LIKE ? ESCAPE '!') ORDER BY name",
+                                 (ctx.guild.id, _search, _search))
+        if not tags:
+            return await general.send(langs.gls("tags_search_none", locale, ctx.guild.name), ctx.channel)
+        block = "```fix"
+        for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
+            block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
+        return await general.send(langs.gls("tags_search", locale, ctx.guild, langs.gns(page, locale), langs.gns(ceil(len(tags) / 20), locale), block),
+                                  ctx.channel)
+
+    @tags.command(name="unclaimed", aliases=["claimable"])
+    async def tags_unclaimed(self, ctx: commands.Context, page: int = 1):
+        """ See all tags that are unclaimed"""
+        locale = langs.gl(ctx)
+        members = tuple(m.id for m in ctx.guild.members)
+        self.bot.db.execute("CREATE TEMP TABLE tags_members (uid INTEGER NOT NULL)")
+        for member in members:
+            self.bot.db.execute("INSERT INTO tags_members VALUES (?)", (member,))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND owner NOT IN (SELECT * FROM tags_members) ORDER BY name", (ctx.guild.id,))
+        self.bot.db.execute("DROP TABLE tags_members")
+        if not tags:
+            return await general.send(langs.gls("tags_search_none", locale, ctx.guild.name), ctx.channel)
+        block = "```fix"
+        for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
+            block += f"\n{langs.gns(i, locale, 2, False)}) {d['name']} | {langs.plural(d['usage'], 'tags_list_uses', locale)}"
+        return await general.send(langs.gls("tags_unclaimed", locale, ctx.guild, langs.gns(page, locale), langs.gns(ceil(len(tags) / 20), locale), block),
                                   ctx.channel)
 
 
