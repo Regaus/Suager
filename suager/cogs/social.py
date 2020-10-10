@@ -346,6 +346,26 @@ class Social(commands.Cog):
         counter2 = langs.gls("social_bang_counter", locale, t2, t1, _received)
         return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
 
+    @commands.command(name="rape")
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.channel.id == 764528556507922442)  # Secret Room 9 only
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def fuck(self, ctx, user: discord.Member):
+        """ Bang someone """
+        locale = langs.gl(ctx)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "bang", 2)
+        t1, t2 = ctx.author.name, user.name
+        out = f"**{t1}** is now raping **{t2}**..."
+        # out = langs.gls("social_bang_main", locale, t1, t2)
+        _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
+        counter1 = langs.gls("social_bang_counter", locale, t1, t2, _given)
+        counter2 = langs.gls("social_bang_counter", locale, t2, t1, _received)
+        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
+
     @commands.command(name="suck", aliases=["succ"], hidden=True)
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

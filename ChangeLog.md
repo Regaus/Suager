@@ -468,3 +468,4 @@
 - Locked poke from being used on me
 - Message on ban and unban from Senko Lair
 - Added tag search and tag unclaimed
+- Added rape command for SR 9

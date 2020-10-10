@@ -23,6 +23,9 @@ class Events(commands.Cog):
         self.bad = ["re", "rag", "<@302851022790066185>", "<@!302851022790066185>"]
         self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340]]
         self.blocked_logs = self.bot.get_channel(739183533792297164)
+        self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
+                               571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
+                               571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196]
 
     def con_unload(self):
         self.playing.cancel()
@@ -130,17 +133,10 @@ class Events(commands.Cog):
             embed = message.embeds[0] if message.embeds else None
             await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
 
-        if message.guild.id == 568148147457490954:
-            no = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901, 571025667265658881,
-                  571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075, 571031080908357633, 674342275421175818]
-            if message.channel.id not in no:
+        if message.guild.id in [568148147457490954, 738425418637639775]:
+            if message.channel.id not in self.message_ignore:
                 if not message.author.bot:
-                    await process_msg(764473671090831430)
-        if message.guild.id == 738425418637639775:
-            no = [742885168997466196]
-            if message.channel.id not in no:
-                if not message.author.bot:
-                    await process_msg(764494075663351858)
+                    await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, messages: List[discord.Message]):
@@ -158,18 +154,10 @@ class Events(commands.Cog):
             embed = message.embeds[0] if message.embeds else None
             await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
         for message in messages:
-            if message.guild.id == 568148147457490954:
-                no = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
-                      571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
-                      571031080908357633, 674342275421175818]
-                if message.channel.id not in no:
+            if message.guild.id in [568148147457490954, 738425418637639775]:
+                if message.channel.id not in self.message_ignore:
                     if not message.author.bot:
-                        await process_msg(764473671090831430)
-            if message.guild.id == 738425418637639775:
-                no = [742885168997466196]
-                if message.channel.id not in no:
-                    if not message.author.bot:
-                        await process_msg(764494075663351858)
+                        await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
@@ -180,17 +168,10 @@ class Events(commands.Cog):
             embed.add_field(name="Content After", value=after.content, inline=False)
             await general.send(None, self.bot.get_channel(cid), embed=embed)
 
-        if after.guild.id == 568148147457490954:
-            no = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901, 571025667265658881,
-                  571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075, 571031080908357633, 674342275421175818]
-            if after.channel.id not in no:
+        if after.guild.id in [568148147457490954, 738425418637639775]:
+            if after.channel.id not in self.message_ignore:
                 if not after.author.bot:
-                    await process_msg(764473671090831430)
-        if after.guild.id == 738425418637639775:
-            no = [742885168997466196]
-            if after.channel.id not in no:
-                if not after.author.bot:
-                    await process_msg(764494075663351858)
+                    await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
 
 
 def setup(bot):
