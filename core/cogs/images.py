@@ -19,9 +19,10 @@ async def image_gen(ctx: commands.Context, user: discord.User or discord.Member,
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
-    await general.send("Due to some network problem, it can take a minute to get the data.", ctx.channel, delete_after=30)
+    a = await general.send("There appears to be a network problem at the moment... This message will be deleted when response is received.", ctx.channel)
     async with ctx.channel.typing():
         req = await http.get(url, res_method="read")
+        await a.delete()
         if req is None:
             return await general.send("An error occurred creating the image, try again later.", ctx.channel)
         bio = BytesIO(req)

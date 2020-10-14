@@ -232,7 +232,7 @@ class Social(commands.Cog):
             self.smell = await lists.get_images(self.bot, 'n')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+        if user.id == 302851022790066185:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_sniff_suager", locale), ctx.channel)
@@ -278,7 +278,7 @@ class Social(commands.Cog):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+        if user.id == 302851022790066185:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_poke_suager", locale, ctx.author.name), ctx.channel)
@@ -302,7 +302,7 @@ class Social(commands.Cog):
             self.boop = await lists.get_images(self.bot, 'B')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+        if user.id == 302851022790066185:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_boop_suager", locale), ctx.channel)
