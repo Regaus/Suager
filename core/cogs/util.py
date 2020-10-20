@@ -24,13 +24,19 @@ class Utility(commands.Cog):
         send = ""
         if locale.startswith("rsl-1"):
             data = ss23.time_kargadia(time.now(None))
-            output = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            send += f"Taida an Zymlä'an: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**\nTaida an Kargadia'n: **{output}**"
+            a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            b = langs.gts(time.now(None), locale, True, False, False, True, False)
+            send += langs.gls("util_time_sl", locale, b, a)
+            # output = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            # send += f"Taida an Zymlä'an: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**\nTaida an Kargadia'n: **{output}**"
         else:
             if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                send += langs.gls("util_time_sl", locale, langs.gts(time.now_k(), locale, True, True, False, True, True))
-            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, True, False, True, True))
-            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, True, False, True, True)}**"
+                data = ss23.time_kargadia(time.now(None))
+                a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d} ST"
+                b = langs.gts(time.now_k(), locale, True, False, False, True, True)
+                send += langs.gls("util_time_sl", locale, b, a)
+            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, False, True, True))
+            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, False, True, True)}**"
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             if data:
                 _tzn = data["tz"]

@@ -10,24 +10,29 @@ from languages import langs
 
 
 async def image_gen(ctx: commands.Context, user: discord.User or discord.Member, link, filename=None, extra_args=None):
-    async with ctx.typing():
-        if filename is None:
-            filename = link
-        avatar = user.avatar_url_as(size=512, format="png")
-        extra = f"&{extra_args}" if extra_args is not None else ''
-        return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
+    # async with ctx.typing():
+    if filename is None:
+        filename = link
+    avatar = user.avatar_url_as(size=512, format="png")
+    extra = f"&{extra_args}" if extra_args is not None else ''
+    return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
-    a = await general.send("There appears to be a network problem at the moment... This message will be deleted when response is received.", ctx.channel)
-    async with ctx.channel.typing():
-        req = await http.get(url, res_method="read")
-        await a.delete()
-        if req is None:
-            return await general.send("An error occurred creating the image, try again later.", ctx.channel)
-        bio = BytesIO(req)
-        bio.seek(0)
-        return await general.send(content, ctx.channel, file=discord.File(bio, filename=filename))
+    filename += filename  # This is so that it won't complain about "filename" arg not being used for now
+    embed = discord.Embed()
+    embed.set_image(url=url)
+    embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
+    return await general.send(content, ctx.channel, embed=embed)
+    # a = await general.send("There appears to be a network problem at the moment... This message will be deleted when response is received.", ctx.channel)
+    # async with ctx.channel.typing():
+    #     req = await http.get(url, res_method="read")
+    #     await a.delete()
+    #     if req is None:
+    #         return await general.send("An error occurred creating the image, try again later.", ctx.channel)
+    #     bio = BytesIO(req)
+    #     bio.seek(0)
+    #     return await general.send(content, ctx.channel, file=discord.File(bio, filename=filename))
 
 
 async def vac_api(ctx: commands.Context, link, filename=None, content=None):

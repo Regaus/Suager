@@ -477,3 +477,9 @@
 ## v6.3.0.2 - 11 October
 - Made the network warning different
 - Made Leitoxz 99.9% hot and rated 100%
+
+## v6.3.1 - 20 October
+- Senko Lair time now shows both Earth and Kargadia equivalents
+- Updates Kargadia RSL-1 month names
+- Added Kuastall RSL-1 locale
+- Images cog now uses embeds so that you don't have to wait for a minute to see a single image

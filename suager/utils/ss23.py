@@ -253,8 +253,8 @@ class SS23Time:
             parts = ["tea", "rea", "sea", "vea"]
             part = self.hour // 8
             self.day_name = f"{weekdays[dow]}{parts[part]}"
-            self.months = ["Senkannar'an", "Shirannar'an", "Kanvamar'an", "Arhanmar'an", "Nurinnar'an", "Aijamar'an", "Kionnar'an", "Gairannar'an",
-                           "Bassemar'an", "Finkannar'an", "Suvannar'an", "Kittannar'an", "Semarmar'an", "Haltannar'an", "Kaivynnar'an", "Kärasmar'an"]
+            self.months = ["Senkannaran", "Shirannaran", "Kanvamaran", "Arhanmaran", "Nurinnaran", "Aijamaran", "Kionnaran", "Gairannaran",
+                           "Bassemaran", "Finkannaran", "Suvannaran", "Kittannaran", "Semarmaran", "Haltannaran", "Kaivynnaran", "Kärasmaran"]
         if name == "Kaltaryna":
             weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
             day_part = "Sea" if self.hour in range(12, 52) else "Tea"
