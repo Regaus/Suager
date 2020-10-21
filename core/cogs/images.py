@@ -13,7 +13,7 @@ async def image_gen(ctx: commands.Context, user: discord.User or discord.Member,
     # async with ctx.typing():
     if filename is None:
         filename = link
-    avatar = user.avatar_url_as(size=512, format="png")
+    avatar = user.avatar_url_as(size=2048, format="png")
     extra = f"&{extra_args}" if extra_args is not None else ''
     return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
 

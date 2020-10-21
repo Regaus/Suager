@@ -483,3 +483,6 @@
 - Updates Kargadia RSL-1 month names
 - Added Kuastall RSL-1 locale
 - Images cog now uses embeds so that you don't have to wait for a minute to see a single image
+
+## v6.3.1.1 - 21 October
+- Added some test code to birthdays, maybe will help it not send happy birthdays 4 times in a row

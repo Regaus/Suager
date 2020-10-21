@@ -22,46 +22,49 @@ class Birthdays(commands.Cog):
         self.re_timestamp = r"^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])"
         self.bd_config = {568148147457490954: [568148147457490958, 663661621448802304], 706574018928443442: [715620849167761458, 720780796293677109],
                           738425418637639775: [738425419325243424, 748647340423905420]}
+        self.already = False
 
     @commands.Cog.listener()
     async def on_ready(self):
-        while True:
-            await asyncio.sleep(10)
-            _guilds, _channels, _roles = [], [], []
-            for guild, data in self.bd_config.items():
-                _guilds.append(guild)
-                _channels.append(data[0])
-                _roles.append(data[1])
-            guilds = [self.bot.get_guild(guild) for guild in _guilds]
-            channels = [self.bot.get_channel(cid) for cid in _channels]
-            roles = [discord.Object(id=rid) for rid in _roles]
-            birthday_today = self.bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
-            if birthday_today:
-                for g in birthday_today:
+        if not self.already:
+            self.already = True
+            while True:
+                await asyncio.sleep(10)
+                _guilds, _channels, _roles = [], [], []
+                for guild, data in self.bd_config.items():
+                    _guilds.append(guild)
+                    _channels.append(data[0])
+                    _roles.append(data[1])
+                guilds = [self.bot.get_guild(guild) for guild in _guilds]
+                channels = [self.bot.get_channel(cid) for cid in _channels]
+                roles = [discord.Object(id=rid) for rid in _roles]
+                birthday_today = self.bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
+                if birthday_today:
+                    for g in birthday_today:
+                        for i in range(len(guilds)):
+                            try:
+                                guild = guilds[i]
+                                if guild is not None:
+                                    user = guild.get_member(g["uid"])
+                                    if user is not None:
+                                        await general.send(langs.gls("birthdays_message", langs.gl(Ctx(guild, self.bot)), user.mention), channels[i], u=True)
+                                        await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
+                                        print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
+                            except Exception as e:
+                                print(e)
+                        self.bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (g["uid"],))
+                birthday_over = self.bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
+                for g in birthday_over:
+                    self.bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=?", (g["uid"],))
                     for i in range(len(guilds)):
                         try:
                             guild = guilds[i]
-                            if guild is not None:
-                                user = guild.get_member(g["uid"])
-                                if user is not None:
-                                    await general.send(langs.gls("birthdays_message", langs.gl(Ctx(guild, self.bot)), user.mention), channels[i], u=True)
-                                    await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
-                                    print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
+                            user = guild.get_member(g["uid"])
+                            if user is not None:
+                                await user.remove_roles(roles[i], reason=f"It is no longer {user}'s birthday...")
+                                print(f"{time.time()} > {guild.name} > Removed birthday role from {user.name}")
                         except Exception as e:
                             print(e)
-                    self.bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (g["uid"],))
-            birthday_over = self.bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
-            for g in birthday_over:
-                self.bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=?", (g["uid"],))
-                for i in range(len(guilds)):
-                    try:
-                        guild = guilds[i]
-                        user = guild.get_member(g["uid"])
-                        if user is not None:
-                            await user.remove_roles(roles[i], reason=f"It is no longer {user}'s birthday...")
-                            print(f"{time.time()} > {guild.name} > Removed birthday role from {user.name}")
-                    except Exception as e:
-                        print(e)
 
     def check_birthday_noted(self, user_id):
         """ Convert timestamp string to datetime """
