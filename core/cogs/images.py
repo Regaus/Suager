@@ -1,11 +1,10 @@
 import random
 import urllib.parse
-from io import BytesIO
 
 import discord
 from discord.ext import commands
 
-from core.utils import arg_parser, emotes, general, http
+from core.utils import arg_parser, emotes, general
 from languages import langs
 
 
@@ -335,9 +334,12 @@ class Images(commands.Cog):
         av1 = user1.avatar_url_as(size=1024)
         av2 = user2.avatar_url_as(size=1024)
         link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
-        bio = BytesIO(await http.get(link, res_method="read"))
-        if bio is None:
-            return await general.send("The image was not generated...", ctx.channel)
+        # bio = BytesIO(await http.get(link, res_method="read"))
+        # if bio is None:
+        #     return await general.send("The image was not generated...", ctx.channel)
+        embed = discord.Embed()
+        embed.set_image(url=link)
+        embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
         __names = [len(user1.name), len(user2.name)]
         _names = [int(x / 2) for x in __names]
         n1 = user1.name[:_names[0]]
@@ -348,7 +350,9 @@ class Images(commands.Cog):
         message = langs.gls("social_ship", locale)
         for i, j in enumerate(names, start=1):
             message += f"\n{langs.gns(i, locale)}) **{j}**"
-        return await general.send(message, ctx.channel, file=discord.File(bio, filename="ship.png"))
+        embed.description = message
+        return await general.send(None, ctx.channel, embed=embed)
+        # file=discord.File(bio, filename="ship.png"))
 
     @commands.command(name="bad")
     @commands.guild_only()
@@ -380,10 +384,14 @@ class Images(commands.Cog):
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
             a2, a1 = a1, a2
-        bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
-        if bio is None:
-            return await general.send("An error occurred...", ctx.channel)
-        return await general.send(None, ctx.channel, file=discord.File(bio, filename=f"trash_{user.id}.png"))
+        embed = discord.Embed()
+        embed.set_image(url=f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}")
+        embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
+        return await general.send(None, ctx.channel, embed=embed)
+        # bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
+        # if bio is None:
+        #     return await general.send("An error occurred...", ctx.channel)
+        # return await general.send(None, ctx.channel, file=discord.File(bio, filename=f"trash_{user.id}.png"))
 
 
 def setup(bot):

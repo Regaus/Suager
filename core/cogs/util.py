@@ -7,7 +7,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from core.utils import bases, general, http, time
+from core.utils import bases, emotes, general, http, time
 from languages import langs
 from suager.utils import ss23
 
@@ -123,9 +123,11 @@ class Utility(commands.Cog):
         """ Check weather in a place """
         locale = langs.gl(ctx)
         lang = "en" if locale.startswith("rsl") else locale.split("_")[0]
+        a = await general.send(f"{emotes.Loading} Loading weather for {place}...", ctx.channel)
         try:
             token = self.bot.config["weather_api_token"]
             bio = await http.get(f"http://api.openweathermap.org/data/2.5/weather?appid={token}&lang={lang}&q={place}", res_method="read")
+            await a.delete()
             data = json.loads(str(bio.decode('utf-8')))
             code = data["cod"]
             if code == 200:
@@ -136,7 +138,8 @@ class Utility(commands.Cog):
                 except KeyError:
                     country = ""
                     tz = 0
-                local_time = langs.gts(time.now(None) + timedelta(seconds=tz), locale)
+                _time_locale = locale if locale not in ["rsl-1_kg", "rsl-1_ku", "rsl-5"] else "en_gb"
+                local_time = langs.gts(time.now(None) + timedelta(seconds=tz), _time_locale)
                 if country:
                     country_name = langs.gls(f"z_data_country_{country}", locale)
                     emote = f":flag_{country}: "
@@ -168,8 +171,8 @@ class Utility(commands.Cog):
                 if sr != 0 and ss != 0:
                     srt = time.from_ts(sr + tz, None)
                     sst = time.from_ts(ss + tz, None)
-                    sr, tr = langs.gts(srt, locale, False, seconds=False), langs.td_dt(srt, locale, source=now_l, accuracy=1, suffix=True)
-                    ss, ts = langs.gts(sst, locale, False, seconds=False), langs.td_dt(sst, locale, source=now_l, accuracy=1, suffix=True)
+                    sr, tr = langs.gts(srt, _time_locale, False, seconds=False), langs.td_dt(srt, locale, source=now_l, accuracy=1, suffix=True)
+                    ss, ts = langs.gts(sst, _time_locale, False, seconds=False), langs.td_dt(sst, locale, source=now_l, accuracy=1, suffix=True)
                     embed.add_field(name=langs.gls("util_weather_sunrise", locale), value=f"{sr} | {tr}", inline=True)
                     embed.add_field(name=langs.gls("util_weather_sunset", locale), value=f"{ss} | {ts}", inline=True)
                 embed.timestamp = now

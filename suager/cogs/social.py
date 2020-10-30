@@ -383,11 +383,11 @@ class Social(commands.Cog):
             return await general.send(emotes.UmmOK, ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "suck", 14)
         t1, t2 = ctx.author.name, user.name
-        out = langs.gls("social_suck_main", locale, t1, t2)
+        # out = langs.gls("social_suck_main", locale, t1, t2)
         _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
-        counter1 = langs.gls("social_suck_counter", locale, t1, t2, _given)
-        counter2 = langs.gls("social_suck_counter", locale, t2, t1, _received)
-        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
+        # counter1 = langs.gls("social_suck_counter", locale, t1, t2, _given)
+        # counter2 = langs.gls("social_suck_counter", locale, t2, t1, _received)
+        return await general.send(f"**{t1}** is now sucking **{t2}**...\n{t1} did that to {t2} {_given}\n{t2} did that to {t1} {_received}", ctx.channel)
 
     @commands.command(name="sleepy")
     @commands.guild_only()

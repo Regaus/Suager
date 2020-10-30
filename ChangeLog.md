@@ -486,3 +486,8 @@
 
 ## v6.3.1.1 - 21 October
 - Added some test code to birthdays, maybe will help it not send happy birthdays 4 times in a row
+
+## v6.3.2 - 30 October
+- Fixed weather command time outputs in RSL-1
+- Turned trash and ship into embeds
+- Most of Kuastall RSL-1 translation done

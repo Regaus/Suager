@@ -16,7 +16,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
-    if locale == "rsl-1":
+    if locale in ["rsl-1_kg", "rsl-1_ku"]:
         value //= 2
         names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"]
         step = 4096
@@ -50,6 +50,8 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
 
 
 def gl(ctx):
+    if hasattr(ctx, "channel") and ctx.channel.id == 725835449502924901:
+        return "rsl-1_ku"
     ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
     if ex and ctx.guild is not None:
         data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
@@ -77,7 +79,7 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    if locale in ["rsl-1", "ru_ru"]:
+    if locale in ["rsl-1_kg", "ru_ru"]:
         name_1, name_2, name_pl = get_data(what, locale)
         pl = get_data("_pl", locale)
         p1, p2, p3 = pl
@@ -149,12 +151,12 @@ def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool 
 def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
-    if locale in ["rsl-1", "rsl-1_ku", "rsl-5"]:
+    if locale in ["rsl-1_kg", "rsl-1_ku", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
-        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1", "rsl-1_ku", "rsl-5"]):
+        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1_kg", "rsl-1_ku", "rsl-5"]):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
@@ -177,7 +179,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
 
 
 def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
-    if locale in ["rsl-1", "rsl-1_ku", "rsl-5"]:
+    if locale in ["rsl-1_kg", "rsl-1_ku", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
