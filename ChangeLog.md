@@ -491,3 +491,6 @@
 - Fixed weather command time outputs in RSL-1
 - Turned trash and ship into embeds
 - Most of Kuastall RSL-1 translation done
+
+## v6.3.3 - 31 October
+- Finished Kuastall RSL-1 translation
