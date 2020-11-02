@@ -192,6 +192,45 @@ class SS23(commands.Cog):
             output = numbers["0"]
         return await general.send(f"Base-10: {number:,}\nBase-{exp}: {_number}\nRSL-{language}: {output}", ctx.channel)
 
+    @commands.command("rslt", hidden=True)
+    @commands.is_owner()
+    async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
+        """ Laikattart Sintuvut """
+        if not (10 <= s <= 90):
+            return await general.send("De va edou dejal, no nu so maikal ir te edou kihtemal", ctx.channel)
+        encoding = {10: "dove", 11: "tore", 12: "seghe", 13: "page", 14: "seine", 15: "eghe", 16: "veire",
+                    17: "uveire", 18: "deire", 19: "tevre", 20: "sevre", 21: "pakke", 22: "seire", 23: "eire", 24: "onre",
+                    25: "zeire", 26: "dojere", 27: "tovere", 28: "sejere", 29: "paghere", 30: "seinere", 31: "einere", 32: "devveire"}
+        u = ["ukka", "devi", "tei", "sei", "paki", "seni", "ei", "oni", "zegi", "dove", "tore", "see", "page", "seine", "ee"]
+        v = ["devveire", "tevveire", "seghveire", "pahveire"]
+        shift = s * 128
+        if 10 <= s <= 32:
+            code = encoding[s]
+        else:
+            w, x = divmod(s, 16)
+            if x == 0:
+                code = v[w - 2]
+            else:
+                code = f"{u[x - 1]} u {v[w - 2]}"
+        text = "".join([chr(ord(letter) + shift) for letter in t])
+        return await general.send(f"{code} {text}", ctx.channel)
+
+    @commands.command("rslf", hidden=True)
+    @commands.is_owner()
+    async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
+        """ Laikattarad Sintuvuad """
+        if not (10 < s <= 90):
+            return await general.send("De va edou dejal, no nu so maikal ir te edou kihtemal", ctx.channel)
+        shift = s * 128
+        text = ""
+        for letter in t:
+            try:
+                a = chr(ord(letter) - shift)
+            except ValueError:
+                a = chr(0)
+            text += a
+        return await general.send(text, ctx.channel)
+
 
 def setup(bot):
     bot.add_cog(SS23(bot))
