@@ -193,18 +193,20 @@ class SS23(commands.Cog):
         return await general.send(f"Base-10: {number:,}\nBase-{exp}: {_number}\nRSL-{language}: {output}", ctx.channel)
 
     @commands.command("rslt", hidden=True)
-    @commands.is_owner()
+    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
-        if not (10 <= s <= 90):
+        if not (1 <= s <= 256):
             return await general.send("De va edou dejal, no nu so maikal ir te edou kihtemal", ctx.channel)
-        encoding = {10: "dove", 11: "tore", 12: "seghe", 13: "page", 14: "seine", 15: "eghe", 16: "veire",
+        encoding = {1: "ukka", 2: "devi", 3: "tei", 4: "seghi", 5: "paki", 6: "seni", 7: "ei", 8: "oni",
+                    9: "zegi", 10: "dove", 11: "tore", 12: "seghe", 13: "page", 14: "seine", 15: "eghe", 16: "veire",
                     17: "uveire", 18: "deire", 19: "tevre", 20: "sevre", 21: "pakke", 22: "seire", 23: "eire", 24: "onre",
                     25: "zeire", 26: "dojere", 27: "tovere", 28: "sejere", 29: "paghere", 30: "seinere", 31: "einere", 32: "devveire"}
         u = ["ukka", "devi", "tei", "sei", "paki", "seni", "ei", "oni", "zegi", "dove", "tore", "see", "page", "seine", "ee"]
-        v = ["devveire", "tevveire", "seghveire", "pahveire"]
+        v = ["devveire", "tevveire", "seghveire", "pahveire", "senveire", "eiveire", "onveire",
+             "zeghveire", "dovveire", "torveire", "seiveire", "paiveire", "seineveire", "eghveire", "ukka aragi"]
         shift = s * 128
-        if 10 <= s <= 32:
+        if 1 <= s <= 32:
             code = encoding[s]
         else:
             w, x = divmod(s, 16)
@@ -216,10 +218,10 @@ class SS23(commands.Cog):
         return await general.send(f"{code} {text}", ctx.channel)
 
     @commands.command("rslf", hidden=True)
-    @commands.is_owner()
+    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
-        if not (10 < s <= 90):
+        if not (1 <= s <= 256):
             return await general.send("De va edou dejal, no nu so maikal ir te edou kihtemal", ctx.channel)
         shift = s * 128
         text = ""
