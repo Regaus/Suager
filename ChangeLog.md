@@ -494,3 +494,6 @@
 
 ## v6.3.3 - 31 October
 - Finished Kuastall RSL-1 translation
+
+## v6.3.4 - 7 November
+- Added a semi-broken tts command

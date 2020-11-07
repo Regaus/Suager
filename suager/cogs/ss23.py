@@ -1,13 +1,22 @@
+import os
 from datetime import datetime, timezone
 
 import discord
+import pyttsx3
 from discord.ext import commands
 
-from core.utils import bases, general, time, emotes
+from core.utils import bases, emotes, general, time
 from suager.utils import ss23, ss24
 
 
 class SS23(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        try:
+            self.tts = pyttsx3.init()
+        except AssertionError:
+            self.tts = None
+
     @commands.command(name="time23", aliases=["timek", "timez", "timess"], hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def time23(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
@@ -232,6 +241,18 @@ class SS23(commands.Cog):
                 a = chr(0)
             text += a
         return await general.send(text, ctx.channel)
+
+    @commands.command("tts", hidden=True)
+    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])
+    async def tts_command(self, ctx: commands.Context, *, text: str):
+        """ Text to Speech """
+        if self.tts is not None:
+            self.tts.save_to_file(text, "tts.mp3")
+            self.tts.runAndWait()
+            await general.send(None, ctx.channel, file=discord.File("tts.mp3"))
+            os.remove("tts.mp3")
+        else:
+            return await general.send("This command is not available at the moment", ctx.channel)
 
 
 def setup(bot):
