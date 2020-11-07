@@ -14,7 +14,8 @@ class SS23(commands.Cog):
         self.bot = bot
         try:
             self.tts = pyttsx3.init()
-        except AssertionError:
+        except Exception as _:
+            del _
             self.tts = None
 
     @commands.command(name="time23", aliases=["timek", "timez", "timess"], hidden=True)
