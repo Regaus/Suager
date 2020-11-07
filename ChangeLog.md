@@ -497,3 +497,4 @@
 
 ## v6.3.4 - 7 November
 - Added a semi-broken tts command
+- Fixed one cause of errors breaking the bot

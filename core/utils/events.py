@@ -19,7 +19,7 @@ async def on_command_error(self, ctx, err):
         helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
         await ctx.send_help(helper)
     elif isinstance(err, commands.errors.CommandInvokeError):
-        error = general.traceback_maker(err.original, ctx.message.content, ctx.guild, ctx.author)
+        error = general.traceback_maker(err.original, ctx.message.content[:1000], ctx.guild, ctx.author)
         if "2000 or fewer" in str(err) and len(ctx.message.clean_content) > 1900:
             return await general.send(langs.gls("events_err_message_too_long", locale), ctx.channel)
             # return general.send("You inputted a very long piece of text.. Well, congrats. The command broke.", ctx.channel)

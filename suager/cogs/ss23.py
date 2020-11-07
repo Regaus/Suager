@@ -250,7 +250,10 @@ class SS23(commands.Cog):
         if self.tts is not None:
             self.tts.save_to_file(text, "tts.mp3")
             self.tts.runAndWait()
-            await general.send(None, ctx.channel, file=discord.File("tts.mp3"))
+            try:
+                await general.send(None, ctx.channel, file=discord.File("tts.mp3"))
+            except discord.HTTPException:
+                await general.send("The file generated was too large to send...", ctx.channel)
             os.remove("tts.mp3")
         else:
             return await general.send("This command is not available at the moment", ctx.channel)
