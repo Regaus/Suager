@@ -32,8 +32,7 @@ class Ratings(commands.Cog):
         """ Rate something """
         locale = langs.gl(ctx)
         random.seed(what.lower())
-        _pl = langs.get_data("_pl", locale)
-        _max = int(_pl[2])
+        _max = 100
         r = random.randint(0, _max)
         if what.lower() == "senko":
             r = _max
@@ -46,8 +45,9 @@ class Ratings(commands.Cog):
         locale = langs.gl(ctx)
         who = who or ctx.author
         random.seed(who.id)
-        _pl = langs.get_data("_pl", locale)
-        _max = int(_pl[2])
+        # _pl = langs.get_data("_pl", locale)
+        # _max = int(_pl[2])
+        _max = 100
         r1, r2 = _max // 2, _max
         r = random.randint(r1, r2)
         custom = {
@@ -90,8 +90,9 @@ class Ratings(commands.Cog):
             return await general.send(langs.gls("ratings_love_calc_bots", locale), ctx.channel)
         seed = user1.id - user2.id
         random.seed(seed)
-        # rate = random.uniform(0, 100)
         rate = langs.gfs(random.random(), locale, 2, True)
+        if (user1.id == 291665491221807104 and user2.id == 302851022790066185) or (user2.id == 291665491221807104 and user1.id == 302851022790066185):
+            rate = langs.gfs(1.0, locale, 2, True)
         return await general.send(langs.gls("ratings_love_calc", locale, user1.name, user2.name, rate), ctx.channel)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
@@ -105,7 +106,7 @@ class Ratings(commands.Cog):
         custom = {
             302851022790066185: 1,       # Regaus
             self.bot.user.id: 1,         # Suager
-            291665491221807104: 0.9997,  # Leitoxz
+            291665491221807104: 1,  # Leitoxz
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin
