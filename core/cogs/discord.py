@@ -8,7 +8,7 @@ from languages import langs
 
 
 def is_senko_lair(ctx):
-    return ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775]
+    return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775]
 
 
 def get_attr(cls, attr):

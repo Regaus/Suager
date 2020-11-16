@@ -168,7 +168,7 @@ class Events(commands.Cog):
             embed.add_field(name="Content After", value=after.content, inline=False)
             await general.send(None, self.bot.get_channel(cid), embed=embed)
 
-        if after.guild.id in [568148147457490954, 738425418637639775]:
+        if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
             if after.channel.id not in self.message_ignore:
                 if not after.author.bot:
                     await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)

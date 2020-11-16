@@ -498,3 +498,7 @@
 ## v6.3.4 - 7 November
 - Added a semi-broken tts command
 - Fixed one cause of errors breaking the bot
+
+## v6.3.5 - 16 November
+- Updated locks for social commands aimed at me
+- Added laugh, tickle, punch, kill
