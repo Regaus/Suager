@@ -31,8 +31,8 @@ class Social(commands.Cog):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
             self.poke, self.boop, self.tickle, self.laugh = [lists.error] * 17
-        self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 16}?)"
-        self.empty = [0] * 17
+        self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 17}?)"
+        self.empty = [0] * 18
         self.locked = [667187968145883146]
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
@@ -355,7 +355,7 @@ class Social(commands.Cog):
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185:
-            return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(langs.gls("social_kill_regaus", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "punch", 16)
@@ -364,7 +364,7 @@ class Social(commands.Cog):
 
     @commands.command(name="kill")
     @commands.guild_only()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def kill(self, ctx: commands.Context, user: discord.Member):
         """ Kill someone """
         locale = langs.gl(ctx)
@@ -373,10 +373,21 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
         if user.id == 302851022790066185:
-            return await general.send(langs.gls("social_tickle_regaus", locale, ctx.author.name), ctx.channel)
+            return await general.send(langs.gls("social_kill_regaus", locale, ctx.author.name), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
-        return await general.send(langs.gls("social_kill", locale, ctx.author.name, user.name), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "kill", 17)
+        title = langs.gls("social_kill", locale, ctx.author.name, user.name)
+        base = langs.gls("social_kill_counter", locale, ctx.author.name, user.name)
+        base2 = langs.gls("social_kill_counter", locale, user.name, ctx.author.name)
+        _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
+        footer = f"{base} {_given}\n{base2} {_received}"
+        # title, footer = get_data(ctx.author, user, "kill", locale, given, received)
+        try:
+            await user.edit(nick=f"Dead {user.display_name[:27]}")
+        except Exception as e:
+            await general.send(f"Could not update nickname: `{type(e).__name__}: {e}`", ctx.channel)
+        return await general.send(f"{title}\n{footer}", ctx.channel)
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
     @commands.guild_only()

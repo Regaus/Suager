@@ -502,3 +502,8 @@
 ## v6.3.5 - 16 November
 - Updated locks for social commands aimed at me
 - Added laugh, tickle, punch, kill
+
+## v6.3.6 - 19 November
+- Updated kill command output
+- Added kill counter
+- Updated dehoist nick updater
