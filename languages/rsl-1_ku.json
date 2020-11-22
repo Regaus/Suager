@@ -291,6 +291,7 @@
   "time_m": "ah",
   "time_s": "ai",
   "time_month_names": ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"],
+  "time_weekdays": ["Senarsea", "Sillava Sea", "Sertansea", "Ahtarunsea", "Vastansea", "Hauvinsea", "Sehlunsea"],
   "util_time_bot": "Nunna taida: **{0}**\n",
   "util_time_sl": "Senkadar Laikadu (Zymlä'i): **{0}**\nSenkadar Laikadu (Kargadiai): **{1}**\n",
   "util_timesince": "Taida esaa: **{0}**\nTer kikiara taida: **{1}**\nDeranna: **{2}**",

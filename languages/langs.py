@@ -156,7 +156,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
-        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1_kg", "rsl-1_ku", "rsl-5"]):
+        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1_kg", "rsl-5"]):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
