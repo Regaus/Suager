@@ -290,7 +290,7 @@
   "time_h": "sa",
   "time_m": "ah",
   "time_s": "ai",
-  "time_month_names": ["Vahkandansagadun", "Navadensagadun", "Senkadan Sagadun", "Tevillan Sagadun", "Leitakissagadun", "Havazdallansagadun", "Arhanedansagadun", "Nürijunsadagun", "Kovanan Sagadun", "Eiderunsagadun", "Raivastensagadun", "Suvakynsagadun"],
+  "time_month_names": ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"],
   "util_time_bot": "Nunna taida: **{0}**\n",
   "util_time_sl": "Senkadar Laikadu (Zymlä'i): **{0}**\nSenkadar Laikadu (Kargadiai): **{1}**\n",
   "util_timesince": "Taida esaa: **{0}**\nTer kikiara taida: **{1}**\nDeranna: **{2}**",
