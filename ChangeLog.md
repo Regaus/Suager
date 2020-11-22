@@ -507,3 +507,8 @@
 - Updated kill command output
 - Added kill counter
 - Updated dehoist nick updater
+
+## v6.3.7 - 22 November
+- Fixed AlexFlipnote API
+- Added another message encryption method (beta)
+- Improved colour command

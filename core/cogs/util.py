@@ -205,39 +205,64 @@ class Utility(commands.Cog):
     async def colour(self, ctx: commands.Context, colour: str):
         """ Information on a colour """
         locale = langs.gl(ctx)
-        async with ctx.typing():
-            # c = str(ctx.invoked_with)
-            if colour.lower() == "random":
-                _colour = hex(random.randint(0, 0xffffff))[2:]
-                a = 6
-            else:
-                try:
-                    _colour = hex(int(colour, base=16))[2:]
-                    a = len(colour)
-                    if a != 3 and a != 6:
-                        return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
-                except Exception as e:
-                    return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
+        # async with ctx.typing():
+        # c = str(ctx.invoked_with)
+        if colour.lower() == "random":
+            _colour = hex(random.randint(0, 0xffffff))[2:]
+            a = 6
+        else:
             try:
-                _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read")
-                data = json.loads(_data)
-            except json.JSONDecodeError:
-                return await general.send("An error occurred with the API. Try again later.", ctx.channel)
-            if a == 3:
-                d, e, f = colour
-                g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
-                embed = discord.Embed(colour=g)
-            else:
-                embed = discord.Embed(colour=int(_colour, base=16))
-            embed.title = langs.gls("images_colour_name", locale, data['name'])
-            embed.add_field(name=langs.gls("images_colour_hex", locale), value=data["hex"], inline=True)
-            embed.add_field(name=langs.gls("images_colour_rgb", locale), value=data["rgb"], inline=True)
-            embed.add_field(name=langs.gls("images_colour_int", locale), value=data["int"], inline=True)
-            embed.add_field(name=langs.gls("images_colour_brightness", locale), value=langs.gns(data["brightness"], locale), inline=True)
-            embed.add_field(name=langs.gls("images_colour_font", locale), value=data["blackorwhite_text"], inline=True)
-            embed.set_thumbnail(url=data["image"])
-            embed.set_image(url=data["image_gradient"])
-            return await general.send(None, ctx.channel, embed=embed)
+                _colour = hex(int(colour, base=16))[2:]
+                a = len(colour)
+                if a != 3 and a != 6:
+                    return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
+            except Exception as e:
+                return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
+        message = await general.send(f"{emotes.Loading} Getting data about colour #{colour}...", ctx.channel)
+        try:
+            _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read",
+                                   headers={"Authorization": self.bot.config["alex_api_token"]})
+            data = json.loads(_data)
+        except json.JSONDecodeError:
+            return await general.send("An error occurred with the API. Try again later.", ctx.channel)
+        if a == 3:
+            d, e, f = colour
+            g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
+            embed = discord.Embed(colour=g)
+        else:
+            embed = discord.Embed(colour=int(_colour, base=16))
+        embed.title = langs.gls("images_colour_name", locale, data['name'])
+        embed.add_field(name=langs.gls("images_colour_hex", locale), value=data["hex"], inline=True)
+        embed.add_field(name=langs.gls("images_colour_rgb", locale), value=data["rgb"][4:-1], inline=True)
+        embed.add_field(name=langs.gls("images_colour_int", locale), value=data["int"], inline=True)
+        embed.add_field(name=langs.gls("images_colour_brightness", locale), value=langs.gns(data["brightness"], locale), inline=True)
+        embed.add_field(name=langs.gls("images_colour_font", locale), value=data["blackorwhite_text"], inline=True)
+        embed.set_thumbnail(url=data["image"])
+        embed.set_image(url=data["image_gradient"])
+        return await message.edit(content=None, embed=embed)
+        # return await general.send(None, ctx.channel, embed=embed)
+
+    @commands.command("ehm")
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 577637595392245770, 291665491221807104])
+    async def scream(self, ctx: commands.Context, *, message: str):
+        """ Scream - based on a Powercord plugin (only works properly with ASCII chars) | Beta """
+        res1 = "ยง" + message
+        out1 = ""
+        res2 = list(res1)
+        for item in res2:
+            out1 += bases.to_base(ord(item), 4).zfill(4)
+        res3 = out1.replace("3", "H").replace("2", "h").replace("1", "A").replace("0", "a")
+        key = len(res3) % 2147483647
+        arr = list(res3)
+        for i in range(100):
+            key = (key * 16807) % 2147483647
+            temp = key
+            key = (key * 16807) % 2147483647
+            tmp1 = arr[temp % len(arr)]
+            arr[temp % len(arr)] = arr[key % len(arr)]
+            arr[key % len(arr)] = tmp1
+        return await general.send("".join(arr), ctx.channel)
 
 
 def setup(bot):

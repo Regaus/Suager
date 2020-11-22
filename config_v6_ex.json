@@ -11,8 +11,8 @@
         "S/"
       ],
       "short_version": "6.3",
-      "version": "6.3.6",
-      "last_update": 1605824433,
+      "version": "6.3.7",
+      "last_update": 1606065289,
       "first_version": 1557781320,
       "major_release": 1597500778,
       "logs": true,
@@ -29,5 +29,6 @@
     "S."
   ],
   "owners": [],
-  "weather_api_token": "token"
+  "weather_api_token": "token",
+  "alex_api_token": "token"
 }

@@ -1,20 +1,38 @@
 import random
 import urllib.parse
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
-from core.utils import arg_parser, emotes, general
+from core.utils import arg_parser, emotes, general, http
 from languages import langs
 
 
-async def image_gen(ctx: commands.Context, user: discord.User or discord.Member, link, filename=None, extra_args=None):
+async def af_image_gen(ctx: commands.Context, user: discord.User or discord.Member, link, filename=None, extra_args=None):
     # async with ctx.typing():
     if filename is None:
         filename = link
     avatar = user.avatar_url_as(size=2048, format="png")
     extra = f"&{extra_args}" if extra_args is not None else ''
-    return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
+    return await af_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
+
+
+async def af_img_creator(ctx: commands.Context, url, filename, content=None):
+    token = ctx.bot.config["alex_api_token"]
+    lag = await general.send(f"{emotes.Loading} Getting response from AlexFlipnote API... This may sometimes take a while...", ctx.channel)
+    req = await http.get(url, headers={"Authorization": token}, res_method="read")
+    # req = await http.get(url)
+    await lag.delete()
+    if req is None:
+        return await general.send("No response was received, try again later.", ctx.channel)
+    if type(req) == str:
+        bio = BytesIO(req.encode("utf-8"))
+        filename = filename[:-3] + "json"
+    else:
+        bio = BytesIO(req)
+    bio.seek(0)
+    return await general.send(content, ctx.channel, file=discord.File(bio, filename=filename))
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
@@ -39,7 +57,7 @@ async def vac_api(ctx: commands.Context, link, filename=None, content=None):
 
 
 async def af_text(ctx: commands.Context, link, content=None):
-    return await api_img_creator(ctx, f"https://api.alexflipnote.dev/{link}", f"{link.split('?')[0]}.png", content)
+    return await af_img_creator(ctx, f"https://api.alexflipnote.dev/{link}", f"{link.split('?')[0]}.png", content)
 
 
 class Images(commands.Cog):
@@ -87,7 +105,7 @@ class Images(commands.Cog):
             await general.send(y, ctx.channel)
             i = None
         j = f"&b={i}" if i is not None else ""
-        return await image_gen(ctx, user, x, f"{x}_{b}", f"c={b}{j}")
+        return await af_image_gen(ctx, user, x, f"{x}_{b}", f"c={b}{j}")
 
     @commands.command(name="filter")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -104,28 +122,28 @@ class Images(commands.Cog):
         elif _filter not in filters or _filter == "help":
             return await general.send(langs.gls("images_filter_filters", langs.gl(ctx), "`, `".join(filters)), ctx.channel)
             # return await general.send(f"The allowed filter names are:\n`{'`, `'.join(filters)}`", ctx.channel)
-        return await image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
+        return await af_image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="woosh", aliases=["jokeoverhead"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def joke_over_head(self, ctx: commands.Context, who: discord.User = None):
         """ Joke over head """
         user = who or ctx.author
-        return await image_gen(ctx, user, "jokeoverhead", "joke-over-head")
+        return await af_image_gen(ctx, user, "jokeoverhead", "joke-over-head")
 
     @commands.command(name="amiajoke")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def am_i_a_joke(self, ctx: commands.Context, *, who: discord.User = None):
         """ Is a user a joke? """
         user = who or ctx.author
-        return await image_gen(ctx, user, "amiajoke", f"is_{user.name.lower()}_a_joke")
+        return await af_image_gen(ctx, user, "amiajoke", f"is_{user.name.lower()}_a_joke")
 
     @commands.command(name="salty")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def salty(self, ctx: commands.Context, *, who: discord.User = None):
         """ Salty user """
         user = who or ctx.author
-        return await image_gen(ctx, user, "salty", f"salty_{user.name.lower()}")
+        return await af_image_gen(ctx, user, "salty", f"salty_{user.name.lower()}")
 
     @commands.command(name="floor")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -140,7 +158,7 @@ class Images(commands.Cog):
         if len(_filename) > 32:
             _filename = _filename[:32]
         filename = _filename.lower()
-        return await image_gen(ctx, user, "floor", f"the_floor_is_{filename}", f"text={_text}")
+        return await af_image_gen(ctx, user, "floor", f"the_floor_is_{filename}", f"text={_text}")
 
     @commands.command(name="achievement")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -196,7 +214,7 @@ class Images(commands.Cog):
         if len(_split) != 2:
             return await general.send(langs.gls("images_npc_split", langs.gl(ctx)), ctx.channel)
         t1, t2 = _split
-        return await af_text(ctx, f"didyoumean?top={urllib.parse.quote(t1)}&bottom={urllib.parse.quote(t2)}")
+        return await af_text(ctx, f"drake?top={urllib.parse.quote(t1)}&bottom={urllib.parse.quote(t2)}")
 
     @commands.command()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -225,7 +243,7 @@ class Images(commands.Cog):
             dol = "&light=true"
         if args.dark and args.light:
             return await general.send(langs.gls("images_supreme_dark_light", locale), ctx.channel)
-        return await api_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
+        return await af_img_creator(ctx, f"https://api.alexflipnote.dev/supreme?text={input_text}{dol}", "supreme.png")
 
     @commands.command(name="carreverse")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -337,9 +355,9 @@ class Images(commands.Cog):
         # bio = BytesIO(await http.get(link, res_method="read"))
         # if bio is None:
         #     return await general.send("The image was not generated...", ctx.channel)
-        embed = discord.Embed()
-        embed.set_image(url=link)
-        embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
+        # embed = discord.Embed()
+        # embed.set_image(url=link)
+        # embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
         __names = [len(user1.name), len(user2.name)]
         _names = [int(x / 2) for x in __names]
         n1 = user1.name[:_names[0]]
@@ -350,8 +368,9 @@ class Images(commands.Cog):
         message = langs.gls("social_ship", locale)
         for i, j in enumerate(names, start=1):
             message += f"\n{langs.gns(i, locale)}) **{j}**"
-        embed.description = message
-        return await general.send(None, ctx.channel, embed=embed)
+        return await af_img_creator(ctx, link, "ship.png", message)
+        # embed.description = message
+        # return await general.send(None, ctx.channel, embed=embed)
         # file=discord.File(bio, filename="ship.png"))
 
     @commands.command(name="bad")
@@ -369,7 +388,7 @@ class Images(commands.Cog):
             return await general.send(langs.gls("social_bad_suager", locale), ctx.channel)
         if bad_self:
             user = ctx.author
-        return await image_gen(ctx, user, "bad", f"bad_{user.id}")
+        return await af_image_gen(ctx, user, "bad", "bad")
 
     @commands.command(name="trash")
     @commands.guild_only()
@@ -384,10 +403,11 @@ class Images(commands.Cog):
         a1, a2 = [ctx.author.avatar_url, user.avatar_url]
         if user.id == 302851022790066185:
             a2, a1 = a1, a2
-        embed = discord.Embed()
-        embed.set_image(url=f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}")
-        embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
-        return await general.send(None, ctx.channel, embed=embed)
+        return await af_img_creator(ctx, f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", "trash.png", None)
+        # embed = discord.Embed()
+        # embed.set_image(url=f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}")
+        # embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
+        # return await general.send(None, ctx.channel, embed=embed)
         # bio = BytesIO(await http.get(f"https://api.alexflipnote.dev/trash?face={a1}&trash={a2}", res_method="read"))
         # if bio is None:
         #     return await general.send("An error occurred...", ctx.channel)
