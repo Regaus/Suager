@@ -512,3 +512,12 @@
 - Fixed AlexFlipnote API
 - Added another message encryption method (beta)
 - Improved colour command
+
+## v6.4.0-pre1 - 23 November
+- Renamed old Economy to Social Interaction
+- Replaced currency with Social Interaction Points
+- Removed bal, donate, buy, shop (will return with new Economy)
+- Renamed profile to sip
+- Updated SIP calculations algorithm
+- Updated tables command
+- Updated RSL-1 Kuastall strings

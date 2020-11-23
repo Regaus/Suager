@@ -96,12 +96,12 @@ tables = {
             Column("gid", 0, True),
             Column("data", 2, True)
         ]),
-        Table("economy", [
+        Table("sip", [  # Old Economy
             Column("uid", 0, True),
-            Column("gid", 0, True),
+            # Column("gid", 0, True),
             Column("money", 0, True),
             Column("last", 1, True),
-            Column("donated", 0, True),
+            # Column("donated", 0, True),
             Column("name", 2, True),
             Column("disc", 0, True)
         ]),
@@ -125,7 +125,7 @@ tables = {
             Column("uid", 0, True),
             Column("tz", 2, True)
         ]),
-        Table("counters_new", [
+        Table("counters", [
             Column("uid1", 0, True),       # 00
             Column("uid2", 0, True),       # 01
             Column("bang", 0, True),       # 02

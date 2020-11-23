@@ -31,14 +31,14 @@ class Social(commands.Cog):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
             self.poke, self.boop, self.tickle, self.laugh = [lists.error] * 17
-        self.insert = f"INSERT INTO counters_new VALUES ({'?, ' * 17}?)"
+        self.insert = f"INSERT INTO counters VALUES ({'?, ' * 17}?)"
         self.empty = [0] * 18
         self.locked = [667187968145883146]
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
         """ Update database - interactions """
-        data_giver = self.bot.db.fetchrow("SELECT * FROM counters_new WHERE uid1=? AND uid2=?", (uid_give, uid_receive))
-        data_receive = self.bot.db.fetchrow("SELECT * FROM counters_new WHERE uid1=? AND uid2=?", (uid_receive, uid_give))
+        data_giver = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid_give, uid_receive))
+        data_receive = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid_receive, uid_give))
         if not data_giver:
             data = self.empty.copy()
             data[0] = uid_give
@@ -49,7 +49,7 @@ class Social(commands.Cog):
         else:
             n = data_giver[key]
             nu = 1 if n is None else n + 1
-            self.bot.db.execute(f"UPDATE counters_new SET {key}=? WHERE uid1=? AND uid2=?", (nu, uid_give, uid_receive))
+            self.bot.db.execute(f"UPDATE counters SET {key}=? WHERE uid1=? AND uid2=?", (nu, uid_give, uid_receive))
             n2 = data_giver[key]
             number1 = 1 if n2 is None else n2 + 1
         if not data_receive:

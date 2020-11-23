@@ -437,9 +437,8 @@ class Admin(commands.Cog):
         """ Recreate all tables """
         module_name = importlib.import_module(f"core.utils.database")
         importlib.reload(module_name)
-        val = database.creation()
-        send = "Task succeeded successfully" if val else "Task failed successfully"
-        return await general.send(send, ctx.channel)
+        database.creation()
+        return await general.send("Tables recreated...", ctx.channel)
 
     @commands.command(name="version", aliases=["fversion", "fullversion", "fv", "v"])
     @commands.check(permissions.is_owner)

@@ -169,7 +169,8 @@ class Leveling(commands.Cog):
                     xp_disabled = True
                 ic = __settings['leveling']['ignored_channels']
                 if ctx.channel.id in ic:
-                    return
+                    xp_disabled = True
+                    # return
             except KeyError:
                 pass
         else:
@@ -180,11 +181,13 @@ class Leveling(commands.Cog):
             level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
         else:
             level, xp, last, ls = [0, 0, 0, 0]
-        data2 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data2 = self.bot.db.fetchrow("SELECT * FROM sip WHERE uid=?", (ctx.author.id,))
         if data2:
             money = data2["money"]
+            last2 = data2["last"]
         else:
             money = 0
+            last2 = 0
         if ls is None:
             ls = 0
         now = time.now_ts()
@@ -208,8 +211,13 @@ class Leveling(commands.Cog):
             sm = 1
         c = 0.67 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
         c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069] else c
+        td2 = now - last2
+        if td2 < 60:
+            mult2 = td2 / 60
+        else:
+            mult2 = 1
         new = int(random.uniform(x1, x2) * sm * mult * c)
-        new_money = int(random.uniform(x3, x4) * mult * c)
+        new_money = int(random.uniform(x3, x4) * mult2 * c)
         if ctx.author.id == 592345932062916619:
             new = 0
         if not xp_disabled:
@@ -324,11 +332,11 @@ class Leveling(commands.Cog):
             self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
         if data2:
-            self.bot.db.execute("UPDATE economy SET money=?, last=?, name=?, disc=? WHERE uid=? AND gid=?",
-                                (money, now, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+            self.bot.db.execute("UPDATE sip SET money=?, last=?, name=?, disc=? WHERE uid=?",
+                                (money, now, ctx.author.name, ctx.author.discriminator, ctx.author.id))
         else:
-            self.bot.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                (ctx.author.id, ctx.guild.id, money, now, 0, ctx.author.name, ctx.author.discriminator))
+            self.bot.db.execute("INSERT INTO sip VALUES (?, ?, ?, ?, ?)",
+                                (ctx.author.id, money, now, ctx.author.name, ctx.author.discriminator))
 
     @commands.command(name="rewards")
     @commands.guild_only()
