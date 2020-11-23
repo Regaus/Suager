@@ -528,3 +528,7 @@
 - Accounts can now be created
 - Added balance command
 - Moved all leaderboards to one command
+
+## v6.4.0-pre3 - 23 November
+- Put leaderboards back as separate commands
+- Improved the way it gets the data to not repeat too much code
