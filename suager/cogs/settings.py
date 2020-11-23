@@ -54,21 +54,21 @@ class Settings(commands.Cog):
             self.bot.db.execute("INSERT INTO locales VALUES (?, ?)", (ctx.guild.id, new_locale))
         return await general.send(langs.gls("settings_locale_set", new_locale, new_locale, langs.gls("_name", new_locale)), ctx.channel)
 
-    @settings.command(name="currency")
-    async def set_currency(self, ctx: commands.Context, new: str):
-        """ Change server currency """
-        data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = settings.template.copy()
-        _settings["currency"] = new
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
-        else:
-            self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-        return await general.send(f"Updated the currency to {new}.", ctx.channel)
+    # @settings.command(name="currency")
+    # async def set_currency(self, ctx: commands.Context, new: str):
+    #     """ Change server currency """
+    #     data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+    #     if data:
+    #         _settings = json.loads(data["data"])
+    #     else:
+    #         _settings = settings.template.copy()
+    #     _settings["currency"] = new
+    #     stuff = json.dumps(_settings)
+    #     if data:
+    #         self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+    #     else:
+    #         self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+    #     return await general.send(f"Updated the currency to {new}.", ctx.channel)
 
     @settings.group(name="prefixes")
     async def set_prefixes(self, ctx: commands.Context):

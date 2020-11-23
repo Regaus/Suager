@@ -431,7 +431,7 @@ class Admin(commands.Cog):
         """ Restart incoming """
         return await status(ctx, 2)
 
-    @commands.command(name="tables", aliases=["create", "recreate"])
+    @commands.command(name="tables")
     @commands.is_owner()
     async def recreate_tables(self, ctx: commands.Context):
         """ Recreate all tables """

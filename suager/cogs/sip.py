@@ -58,8 +58,8 @@ class SocialInteractionPoints(commands.Cog):
     @commands.command(name="sip", aliases=["sis"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def si_score(self, ctx: commands.Context, who: discord.Member = None):
-        """ Social Interaction score, the remains of the old Economy system """
+    async def si_score(self, ctx: commands.Context, who: discord.User = None):
+        """ Social Interaction score, the remnants of the old Economy system """
         locale = langs.gl(ctx)
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
@@ -163,67 +163,6 @@ class SocialInteractionPoints(commands.Cog):
     #         return await general.send(None, ctx.channel, embed=embed)
     #     except KeyError:
     #         return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
-
-    @commands.command(name="bank")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def money_lb(self, ctx: commands.Context, top: str = ""):
-        """ Server's money Leaderboard """
-        locale = langs.gl(ctx)
-        data = self.bot.db.fetch("SELECT * FROM sip WHERE money!=0 AND disc!=0 ORDER BY money DESC")
-        if not data:
-            return await general.send(langs.gls("leaderboards_no_data", locale), ctx.channel)
-        block = "```fix\n"
-        un = []   # User names
-        xp = []   # XP
-        xpl = []  # XP string lengths
-        for user in data:
-            name = f"{user['name']}#{user['disc']:04d}"
-            un.append(name)
-            val = langs.gns(user["money"], locale)
-            xp.append(val)
-            xpl.append(len(val))
-        total = len(xp)
-        place = langs.gls("generic_unknown", locale)
-        n = 0
-        for x in range(len(data)):
-            if data[x]['uid'] == ctx.author.id:
-                place = langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale, 0, False))
-                n = x + 1
-                break
-        try:
-            page = int(top)
-            if page < 1:
-                page = None
-        except ValueError:
-            page = None
-        start = 0
-        try:
-            if (n <= 10 or top.lower() == "top") and page is None:
-                _data = data[:10]
-                start = 1
-                spaces = max(xpl[:10]) + 5
-            elif page is not None:
-                _data = data[(page - 1)*10:page*10]
-                start = page * 10 - 9
-                spaces = max(xpl[(page - 1)*10:page*10]) + 5
-            else:
-                _data = data[n-5:n+5]
-                start = n - 4
-                spaces = max(xpl[n-5:n+5]) + 5
-            s = ' '
-            for i, val in enumerate(_data, start=start):
-                k = i - 1
-                who = un[k]
-                if val['uid'] == ctx.author.id:
-                    who = f"-> {who}"
-                sp = xpl[k]
-                # block += f"{i:2d}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
-                block += f"{langs.gns(i, locale, 2, False)}){s*4}{xp[k]}{s*(spaces-sp)}{who}\n"
-        except (ValueError, IndexError):
-            block += "No data available"
-        s, e, t = langs.gns(start, locale), langs.gns(start + 9, locale), langs.gns(total, locale)
-        return await general.send(langs.gls("leaderboards_sip", locale, place, s, e, t, block), ctx.channel)
 
 
 def setup(bot):

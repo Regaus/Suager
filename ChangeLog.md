@@ -521,3 +521,10 @@
 - Updated SIP calculations algorithm
 - Updated tables command
 - Updated RSL-1 Kuastall strings
+
+## v6.4.0-pre2 - 23 November
+- SIP now accepts User instead of Member
+- Added Economy extension
+- Accounts can now be created
+- Added balance command
+- Moved all leaderboards to one command

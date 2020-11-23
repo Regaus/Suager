@@ -105,6 +105,16 @@ tables = {
             Column("name", 2, True),
             Column("disc", 0, True)
         ]),
+        Table("economy", [  # New Economy
+            Column("uid", 0, True),
+            # Column("gid", 0, True),
+            Column("money", 0, True),
+            Column("daily", 0, True),
+            Column("streak", 0, True),
+            Column("rsbk", 2, True),
+            Column("name", 2, True),
+            Column("disc", 0, True)
+        ]),
         Table("leveling", [
             Column("uid", 0, True),
             Column("gid", 0, True),
