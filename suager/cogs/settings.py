@@ -390,7 +390,7 @@ class Settings(commands.Cog):
             self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
         else:
             self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-        return await general.send(f"The role {role.name} is now sold for {cost:,} units.", ctx.channel)
+        return await general.send(f"The role {role.name} is now sold for {cost:,} currency.", ctx.channel)
 
     @set_shop.command(name="remove")
     async def shop_remove(self, ctx: commands.Context, role: discord.Role):

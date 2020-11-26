@@ -532,3 +532,8 @@
 ## v6.4.0-pre3 - 23 November
 - Put leaderboards back as separate commands
 - Improved the way it gets the data to not repeat too much code
+
+## v6.4.0 - 26 November
+- Kill no longer changes nickname
+- Added work and daily commands
+- Re-added buy

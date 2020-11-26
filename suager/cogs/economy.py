@@ -1,10 +1,12 @@
+import asyncio
 import json
+import random
 from textwrap import wrap
 
 import discord
 from discord.ext import commands
 
-from core.utils import general
+from core.utils import general, time
 from languages import langs
 
 currency = "€"
@@ -45,46 +47,66 @@ class Economy(commands.Cog):
         return await general.send(data["rsbk"], ctx.channel)
 
     @commands.command(name="work")
-    @commands.command(rate=1, per=300, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=300, type=commands.BucketType.user)
     async def work(self, ctx: commands.Context):
         """ Earn some money for yourself """
-        return await general.send("Soon™", ctx.channel)
+        locale = langs.gl(ctx)
+        returns = langs.get_data("economy_work", locale)
+        data = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (ctx.author.id,))
+        if not data:
+            return await general.send(langs.gls("economy_work_none", locale), ctx.channel)
+        earn = random.randint(100, 270)
+        self.bot.db.execute("UPDATE economy SET money=money+? WHERE uid=?", (earn, ctx.author.id))
+        return await general.send((random.choice(returns)).format(ctx.author.name, f"{langs.gns(earn, locale)}{currency}"), ctx.channel)
+        # return await general.send("Soon™", ctx.channel)
 
     @commands.command(name="daily")
-    @commands.command(rate=1, per=300, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=300, type=commands.BucketType.user)
     async def daily(self, ctx: commands.Context):
         """ Earn a daily bonus """
-        return await general.send("Soon™", ctx.channel)
+        locale = langs.gl(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (ctx.author.id,))
+        if not data:
+            return await general.send(langs.gls("economy_work_none", locale), ctx.channel)
+        base = 500
+        when = data["daily"] // 86400
+        now = int(time.now_ts()) // 86400
+        if when == now:
+            return await general.send(langs.gls("economy_daily_already", locale, ctx.author, langs.gts_date(time.now(None), locale, False, True)), ctx.channel)
+        diff = now - when
+        streak = 1 if diff > 1 else data["streak"] + 1
+        bonus = 0 if streak < 7 else 15 * streak
+        total = base + bonus
+        self.bot.db.execute("UPDATE economy SET money=money+?, daily=?, streak=? WHERE uid=?", (total, int(time.now_ts()), streak, ctx.author.id))
+        return await general.send(langs.gls("economy_daily", locale, ctx.author.name, f"{langs.gns(total, locale)}{currency}"), ctx.channel)
+        # return await general.send("Soon™", ctx.channel)
 
-    # @commands.command(name="donate", aliases=["give"])
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    # async def donate(self, ctx: commands.Context, user: discord.Member, amount: int):
-    #     """ Give someone your money """
-    #     locale = langs.gl(ctx)
-    #     if amount < 0:
-    #         return await general.send(langs.gls("economy_donate_negative", locale, ctx.author.name), ctx.channel)
-    #     if user == ctx.author:
-    #         return await general.send(langs.gls("economy_donate_self", locale, ctx.author.name), ctx.channel)
-    #    if user.bot:
-    #          return await general.send(langs.gls("economy_balance_bots", locale), ctx.channel)
-    #     data1 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-    #     data2 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-    #     if not data1 or data1["money"] - amount < 0:
-    #         return await general.send(langs.gls("economy_donate_not_enough", locale, ctx.author.name), ctx.channel)
-    #     money1, money2, donated1 = [data1['money'], data2['money'], data1['donated']]
-    #     money1 -= amount
-    #     donated1 += amount
-    #     money2 += amount
-    #     self.bot.db.execute("UPDATE economy SET money=?, donated=? WHERE uid=? AND gid=?", (money1, donated1, ctx.author.id, ctx.guild.id))
-    #     if data2:
-    #         self.bot.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (money2, user.id, ctx.guild.id))
-    #     else:
-    #         self.bot.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)", (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
-    #     currency = get_currency()
-    #     pre, suf = get_ps(currency)
-    #     greed = langs.gls("economy_donate_zero", locale) if amount == 0 else ""
-    #     return await general.send(langs.gls("economy_donate", locale, ctx.author, pre, langs.gns(amount, locale), suf, user.name, greed), ctx.channel)
+    @commands.command(name="donate", aliases=["give"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def donate(self, ctx: commands.Context, user: discord.Member, amount: int):
+        """ Give someone your money """
+        locale = langs.gl(ctx)
+        if amount < 0:
+            return await general.send(langs.gls("economy_donate_negative", locale, ctx.author.name), ctx.channel)
+        if user == ctx.author:
+            return await general.send(langs.gls("economy_donate_self", locale, ctx.author.name), ctx.channel)
+        if user.bot:
+            return await general.send(langs.gls("economy_balance_bots", locale), ctx.channel)
+        data1 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (ctx.author.id,))
+        data2 = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (user.id,))
+        if not data2:
+            return await general.send("Target user does not have an account, cannot transfer money.", ctx.channel)
+        if not data1 or data1["money"] - amount < 0:
+            return await general.send(langs.gls("economy_donate_not_enough", locale, ctx.author.name), ctx.channel)
+        money1, money2 = [data1['money'], data2['money']]
+        money1 -= amount
+        money2 += amount
+        self.bot.db.execute("UPDATE economy SET money=? WHERE uid=?", (money1, ctx.author.id))
+        self.bot.db.execute("UPDATE economy SET money=? WHERE uid=?", (money2, user.id))
+        # self.bot.db.execute("INSERT INTO economy VALUES (?, ?, ?, ?, ?, ?, ?)", (user.id, ctx.guild.id, money2, 0, 0, user.name, user.discriminator))
+        greed = langs.gls("economy_donate_zero", locale) if amount == 0 else ""
+        return await general.send(langs.gls("economy_donate", locale, ctx.author, langs.gns(amount, locale), currency, user.name, greed), ctx.channel)
 
     @commands.command(name="balance", aliases=["bal"])
     @commands.guild_only()
@@ -102,53 +124,52 @@ class Economy(commands.Cog):
             data = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (user.id,))
             if not data:
                 return await general.send(langs.gls("economy_balance_none", locale, user.name), ctx.channel)
-            return await general.send(langs.gls("economy_balance_data", locale, user.name, ctx.guild.name, langs.gns(data["money"], locale), currency),
-                                      ctx.channel)
+            return await general.send(langs.gls("economy_balance_data", locale, user.name, langs.gns(data["money"], locale), currency), ctx.channel)
 
-    # @commands.command(name="buy")
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    # @commands.max_concurrency(1, per=commands.BucketType.user)
-    # async def buy_something(self, ctx: commands.Context, *, role: discord.Role):
-    #     """ Buy a role from the shop """
-    #     locale = langs.gl(ctx)
-    #     settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     if not settings:
-    #         return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
-    #     data = json.loads(settings["data"])
-    #     user = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-    #     if not user:
-    #        return await general.send(langs.gls("economy_buy_no_money", locale), ctx.channel)
-    #     try:
-    #         rewards = data['shop_items']
-    #         roles = [r["role"] for r in rewards]
-    #         if role.id not in roles:
-    #             return await general.send(langs.gls("economy_buy_unavailable", locale, role.name), ctx.channel)
-    #         _role = [r for r in rewards if r["role"] == role.id][0]
-    #         if role in ctx.author.roles:
-    #             return await general.send(langs.gls("economy_buy_already", locale, role.name), ctx.channel)
-    #         cost = langs.gns(_role["cost"], locale)
-    #         if user["money"] < _role["cost"]:
-    #           return await general.send(langs.gls("economy_buy_not_enough", locale, role.name, langs.gns(user["money"], locale), cost, currency), ctx.channel)
+    @commands.command(name="buy")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.max_concurrency(1, per=commands.BucketType.user)
+    async def buy_something(self, ctx: commands.Context, *, role: discord.Role):
+        """ Buy a role from the shop """
+        locale = langs.gl(ctx)
+        settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not settings:
+            return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
+        data = json.loads(settings["data"])
+        user = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (ctx.author.id,))
+        if not user:
+            return await general.send(langs.gls("economy_buy_no_money", locale), ctx.channel)
+        try:
+            rewards = data['shop_items']
+            roles = [r["role"] for r in rewards]
+            if role.id not in roles:
+                return await general.send(langs.gls("economy_buy_unavailable", locale, role.name), ctx.channel)
+            _role = [r for r in rewards if r["role"] == role.id][0]
+            if role in ctx.author.roles:
+                return await general.send(langs.gls("economy_buy_already", locale, role.name), ctx.channel)
+            cost = langs.gns(_role["cost"], locale)
+            if user["money"] < _role["cost"]:
+                return await general.send(langs.gls("economy_buy_not_enough", locale, role.name, langs.gns(user["money"], locale), cost, currency), ctx.channel)
 
-    #         def check_confirm(m):
-    #             if m.author == ctx.author and m.channel == ctx.channel:
-    #                 if m.content.startswith("yes"):
-    #                     return True
-    #             return False
-    #         confirm_msg = await general.send(langs.gls("economy_buy_confirm", locale, ctx.author.name, role.name, cost, currency), ctx.channel)
-    #         try:
-    #             await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
-    #         except asyncio.TimeoutError:
-    #             return await confirm_msg.edit(content=langs.gls("generic_timeout", locale, confirm_msg.clean_content))
-    #         await ctx.author.add_roles(role, reason="Bought role")
-    #         user["money"] -= _role["cost"]
-    #         self.bot.db.execute("UPDATE economy SET money=? WHERE uid=? AND gid=?", (user["money"], ctx.author.id, ctx.guild.id))
-    #         return await general.send(langs.gls("economy_buy", locale, ctx.author.name, role.name, cost, currency), ctx.channel)
-    #     except KeyError:
-    #         return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
-    #     except discord.Forbidden:
-    #         return await general.send(langs.gls("economy_buy_forbidden", locale), ctx.channel)
+            def check_confirm(m):
+                if m.author == ctx.author and m.channel == ctx.channel:
+                    if m.content.startswith("yes"):
+                        return True
+                return False
+            confirm_msg = await general.send(langs.gls("economy_buy_confirm", locale, ctx.author.name, role.name, cost, currency), ctx.channel)
+            try:
+                await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
+            except asyncio.TimeoutError:
+                return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
+            await ctx.author.add_roles(role, reason="Bought role")
+            user["money"] -= _role["cost"]
+            self.bot.db.execute("UPDATE economy SET money=? WHERE uid=?", (user["money"], ctx.author.id,))
+            return await general.send(langs.gls("economy_buy", locale, ctx.author.name, role.name, cost, currency), ctx.channel)
+        except KeyError:
+            return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
+        except discord.Forbidden:
+            return await general.send(langs.gls("economy_buy_forbidden", locale), ctx.channel)
 
     @commands.command(name="shop")
     @commands.guild_only()

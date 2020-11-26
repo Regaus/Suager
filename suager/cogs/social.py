@@ -383,10 +383,10 @@ class Social(commands.Cog):
         _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
         footer = f"{base} {_given}\n{base2} {_received}"
         # title, footer = get_data(ctx.author, user, "kill", locale, given, received)
-        try:
-            await user.edit(nick=f"Dead {user.display_name[:27]}")
-        except Exception as e:
-            await general.send(f"Could not update nickname: `{type(e).__name__}: {e}`", ctx.channel)
+        # try:
+        #     await user.edit(nick=f"Dead {user.display_name[:27]}")
+        # except Exception as e:
+        #     await general.send(f"Could not update nickname: `{type(e).__name__}: {e}`", ctx.channel)
         return await general.send(f"{title}\n{footer}", ctx.channel)
 
     @commands.command(name="bang", aliases=["fuck"], hidden=True)
