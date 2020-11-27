@@ -78,7 +78,7 @@ class Entertainment(commands.Cog):
 
     @commands.command(name="8ball", aliases=["eightball"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def eight_ball(self, ctx: commands.Context, *, question: commands.clean_content):
+    async def eight_ball(self, ctx: commands.Context, *, question: str):
         """ Consult the 8-Ball """
         locale = langs.gl(ctx)
         return await general.send(langs.gls("fun_8ball", locale, ctx.author.name, question, random.choice(langs.get_data("fun_8ball_responses", locale))),

@@ -537,3 +537,7 @@
 - Kill no longer changes nickname
 - Added work and daily commands
 - Re-added buy
+
+## v6.4.1 - 27 November
+- Added a few more NSFW actions
+- Updated 8ball to use strings

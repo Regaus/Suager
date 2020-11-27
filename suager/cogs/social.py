@@ -31,8 +31,8 @@ class Social(commands.Cog):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
             self.poke, self.boop, self.tickle, self.laugh = [lists.error] * 17
-        self.insert = f"INSERT INTO counters VALUES ({'?, ' * 17}?)"
-        self.empty = [0] * 18
+        self.insert = f"INSERT INTO counters VALUES ({'?, ' * 19}?)"
+        self.empty = [0] * 20
         self.locked = [667187968145883146]
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
@@ -389,16 +389,17 @@ class Social(commands.Cog):
         #     await general.send(f"Could not update nickname: `{type(e).__name__}: {e}`", ctx.channel)
         return await general.send(f"{title}\n{footer}", ctx.channel)
 
-    @commands.command(name="bang", aliases=["fuck"], hidden=True)
+    @commands.command(name="bang", aliases=["fuck"])
     @commands.guild_only()
+    @commands.check(lambda ctx: ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def fuck(self, ctx, user: discord.Member):
         """ Bang someone """
         locale = langs.gl(ctx)
-        if not ctx.channel.is_nsfw():
-            if ctx.channel.id != 764528556507922442:  # Secret Room 9
-                return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id != 622735873137573894:
+        # if not ctx.channel.is_nsfw():
+        #     if ctx.channel.id != 764528556507922442:  # Secret Room 9
+        #         return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
+        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
@@ -421,7 +422,7 @@ class Social(commands.Cog):
 
     @commands.command(name="rape")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.channel.id == 764528556507922442)  # Secret Room 9 only
+    @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005])  # Secret Room 9 and testing zone only
     # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rape(self, ctx, user: discord.Member):
         """ Rape someone """
@@ -430,24 +431,28 @@ class Social(commands.Cog):
             return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
         if user == ctx.author:
             return await general.send(emotes.UmmOK, ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "bang", 2)
+        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
+            return await general.send(langs.gls('social_forbidden', locale), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "r", 19)
         t1, t2 = ctx.author.name, user.name
         out = f"**{t1}** is now raping **{t2}**..."
         # out = langs.gls("social_bang_main", locale, t1, t2)
         _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
-        counter1 = langs.gls("social_bang_counter", locale, t1, t2, _given)
-        counter2 = langs.gls("social_bang_counter", locale, t2, t1, _received)
+        counter1, counter2 = f"{t1} raped {t2} {_given}", f"{t2} raped {t1} {_received}"
+        # counter1 = langs.gls("social_bang_counter", locale, t1, t2, _given)
+        # counter2 = langs.gls("social_bang_counter", locale, t2, t1, _received)
         return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
 
-    @commands.command(name="suck", aliases=["succ"], hidden=True)
+    @commands.command(name="suck", aliases=["succ"])
     @commands.guild_only()
+    @commands.check(lambda ctx: ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def suck(self, ctx, user: discord.Member):
         """ Succ someone """
         locale = langs.gl(ctx)
-        if not ctx.channel.is_nsfw():
-            if ctx.channel.id != 764528556507922442:  # Secret Room 9
-                return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
+        # if not ctx.channel.is_nsfw():
+        #     if ctx.channel.id != 764528556507922442:  # Secret Room 9
+        #         return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
         if user.bot:
@@ -461,6 +466,26 @@ class Social(commands.Cog):
         # counter1 = langs.gls("social_suck_counter", locale, t1, t2, _given)
         # counter2 = langs.gls("social_suck_counter", locale, t2, t1, _received)
         return await general.send(f"**{t1}** is now sucking **{t2}**...\n{t1} did that to {t2} {_given}\n{t2} did that to {t1} {_received}", ctx.channel)
+
+    @commands.command(name="facefuck", aliases=["ff"])
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def face_fuck(self, ctx, user: discord.User):
+        """ Face-fuck someone """
+        locale = langs.gl(ctx)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {langs.gls('generic_no', locale)}.", ctx.channel)
+        if user.bot:
+            return await general.send(langs.gls("social_bang_bot", locale), ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
+            return await general.send(langs.gls('social_forbidden', locale), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "ff", 18)
+        t1, t2 = ctx.author.name, user.name
+        _given, _received = langs.plural(given, "generic_times", locale), langs.plural(received, "generic_times", locale)
+        return await general.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}", ctx.channel)
 
     @commands.command(name="sleepy")
     @commands.guild_only()

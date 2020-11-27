@@ -106,7 +106,7 @@ class Ratings(commands.Cog):
         custom = {
             302851022790066185: 1,       # Regaus
             self.bot.user.id: 1,         # Suager
-            291665491221807104: 1,  # Leitoxz
+            291665491221807104: 1,       # Leitoxz
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin
