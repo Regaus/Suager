@@ -22,13 +22,19 @@ class Utility(commands.Cog):
         """ Current time """
         locale = langs.gl(ctx)
         send = ""
-        if locale.startswith("rsl-1"):
+        if locale == "rsl-1_kg":
             data = ss23.time_kargadia(time.now(None))
             a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
             send += langs.gls("util_time_sl", locale, b, a)
-            # output = f"{data.day:02d} {data.months[data.month - 1]} {data.year} KNE, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            # send += f"Taida an Zymlä'an: **{langs.gts(time.now(None), locale, True, False, False, True, False)}**\nTaida an Kargadia'n: **{output}**"
+        if locale == "rsl-1_ku":
+            data = ss23.time_kargadia(time.now(None))
+            a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            b = langs.gts(time.now(None), locale, True, False, False, True, False)
+            z = time.kargadia_convert(time.now(None))
+            m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
+            c = f"{z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
+            send += langs.gls("util_time_sl", locale, c, a, b)
         else:
             if ctx.guild.id in [568148147457490954, 738425418637639775]:
                 data = ss23.time_kargadia(time.now(None))
