@@ -6,7 +6,7 @@ import pyttsx3
 from discord.ext import commands
 
 from core.utils import bases, emotes, general, time
-from suager.utils import ss23, ss24
+from cobble.utils import ss23, ss24
 
 
 class SS23(commands.Cog):

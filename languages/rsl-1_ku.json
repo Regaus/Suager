@@ -177,6 +177,7 @@
   "leveling_rank_bot": "De sihtima AA-azu raivahtazan, naen inas shaidin.",
   "leveling_rank_global": "**{0}** ivjon **{1} AA-azu veini** u nan **{2}** igjarkaduri.\nVeini-kou: **{3}**",
   "leveling_rank_level": "{0}. Kou",
+  "leveling_rank_level_cobble": "{0}. Kaival-Kou",
   "leveling_rank_level_old": "Old level {0}",
   "leveling_rank_rank": "{0} Kattu",
   "leveling_rank_xp": "{0}/{1} Aivialdazan\nKillata: {2}{3}",

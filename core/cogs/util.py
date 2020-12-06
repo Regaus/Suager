@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from core.utils import bases, emotes, general, http, time
 from languages import langs
-from suager.utils import ss23
+from cobble.utils import ss23
 
 
 class Utility(commands.Cog):
@@ -247,28 +247,6 @@ class Utility(commands.Cog):
         embed.set_image(url=data["image_gradient"])
         return await message.edit(content=None, embed=embed)
         # return await general.send(None, ctx.channel, embed=embed)
-
-    @commands.command("ehm")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 577637595392245770, 291665491221807104])
-    async def scream(self, ctx: commands.Context, *, message: str):
-        """ Scream - based on a Powercord plugin (only works properly with ASCII chars) | Beta """
-        res1 = "ยง" + message
-        out1 = ""
-        res2 = list(res1)
-        for item in res2:
-            out1 += bases.to_base(ord(item), 4).zfill(4)
-        res3 = out1.replace("3", "H").replace("2", "h").replace("1", "A").replace("0", "a")
-        key = len(res3) % 2147483647
-        arr = list(res3)
-        for i in range(100):
-            key = (key * 16807) % 2147483647
-            temp = key
-            key = (key * 16807) % 2147483647
-            tmp1 = arr[temp % len(arr)]
-            arr[temp % len(arr)] = arr[key % len(arr)]
-            arr[key % len(arr)] = tmp1
-        return await general.send("".join(arr), ctx.channel)
 
 
 def setup(bot):

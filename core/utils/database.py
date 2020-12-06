@@ -81,6 +81,34 @@ def creation():
 
 
 tables = {
+    "cobble": [
+        Table("custom_rank", [
+            Column("uid", 0, True),
+            Column("font", 0, True),
+            Column("progress", 0, True),
+            Column("background", 0, True)
+        ]),
+        Table("economy", [  # New Economy
+            Column("uid", 0, True),
+            # Column("gid", 0, True),
+            Column("money", 0, True),
+            Column("daily", 0, True),
+            Column("streak", 0, True),
+            Column("rsbk", 2, True),
+            Column("name", 2, True),
+            Column("disc", 0, True)
+        ]),
+        Table("leveling", [
+            Column("uid", 0, True),
+            Column("gid", 0, True),
+            Column("level", 0, True),
+            Column("xp", 0, True),
+            Column("last", 1, True),
+            Column("last_sent", 1, False),
+            Column("name", 2, True),
+            Column("disc", 0, True)
+        ]),
+    ],
     "suager": [
         Table("birthdays", [
             Column("uid", 0, True),
@@ -95,25 +123,6 @@ tables = {
         Table("settings", [
             Column("gid", 0, True),
             Column("data", 2, True)
-        ]),
-        Table("sip", [  # Old Economy
-            Column("uid", 0, True),
-            # Column("gid", 0, True),
-            Column("money", 0, True),
-            Column("last", 1, True),
-            # Column("donated", 0, True),
-            Column("name", 2, True),
-            Column("disc", 0, True)
-        ]),
-        Table("economy", [  # New Economy
-            Column("uid", 0, True),
-            # Column("gid", 0, True),
-            Column("money", 0, True),
-            Column("daily", 0, True),
-            Column("streak", 0, True),
-            Column("rsbk", 2, True),
-            Column("name", 2, True),
-            Column("disc", 0, True)
         ]),
         Table("leveling", [
             Column("uid", 0, True),

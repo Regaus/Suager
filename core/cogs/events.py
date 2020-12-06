@@ -111,7 +111,8 @@ class Events(commands.Cog):
 
     @loop(hours=1)
     async def avatar(self):
-        await events.avatar_changer(self)
+        if self.bot.name == "suager":
+            await events.avatar_changer(self)
 
     @avatar.before_loop
     async def avatar_before(self):

@@ -541,3 +541,9 @@
 ## v6.4.1 - 27 November
 - Added a few more NSFW actions
 - Updated 8ball to use strings
+
+## v6.4.2 - 6 December
+- Removed Social Interaction Points
+- Moved Economy and SS23 to CobbleBot
+- Created CobbleBot
+- Moved leaderboard generator outside of Leveling class

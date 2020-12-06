@@ -161,6 +161,20 @@ async def playing_changer(self):
             # plays = self.local_config["playing"]
             fv, sv = f"v{self.local_config['version']}", f"v{self.local_config['short_version']}"
             plays = {
+                "cobble": [
+                    {"type": 0, "name": fv},
+                    {"type": 1, "name": "Nothing", "url": "https://www.twitch.tv/nosmdjf"},
+                    {"type": 0, "name": "with Regaus"},
+                    {"type": 0, "name": "without you"},
+                    {"type": 0, "name": "with nobody"},
+                    {"type": 0, "name": "with your feelings"},
+                    {"type": 0, "name": f"{self.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 5, "name": "uselessness"},
+                    {"type": 0, "name": "Nothing"},
+                    {"type": 3, "name": "you"},
+                    {"type": 2, "name": "a song"},
+                    {"type": 3, "name": "the Void"},
+                ],
                 "suager": [
                     {"type": 0, "name": fv},
                     {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},

@@ -8,8 +8,6 @@ from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
 from core.utils import emotes, general, http, time
 from languages import langs
-from suager.cogs.birthdays import Ctx
-from suager.utils import settings
 
 
 async def catch_colour(ctx: commands.Context, c: int):
@@ -46,9 +44,7 @@ def _levels():
     req = 0
     xp = []
     for x in range(max_level):
-        power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
-        multiplier = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
-        base = x ** power + multiplier * x ** 2 + 7500 * x + 25000
+        base = 1.25 * x ** 2 + x * 80 + 250
         req += int(base)
         if x not in bad:
             xp.append(int(req))
@@ -58,34 +54,15 @@ def _levels():
 
 
 def _level_history():
-    keys = ["v3", "v4", "v5", "v6_beta4", "v6_beta12", "v615", "v616"]
+    keys = ["v1"]
     req = {}
     xp = {}
     for key in keys:
         req[key] = 0
         xp[key] = []
-    req["v6_beta4"] = 15000
-    req["v6_beta12"] = 25000
-    # 25000
     for x in range(max_level):
-        v3 = x ** 2 + x * 75 + 200
-        req["v3"] += v3 * 100  # To scale them up to current leveling system
-        v4 = 1.5 * x ** 2 + 125 * x + 200
-        req["v4"] += v4 * 100  # To scale them up to current leveling system
-        v5 = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
-        req["v5"] += v5
-        power_6b = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
-        v6b = x ** power_6b + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
-        req["v6_beta4"] += v6b
-        v6b12 = x ** power_6b + 200 * x ** 2 + 7500 * x + 25000
-        req["v6_beta12"] += v6b12
-        power_61 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5
-        v615 = x ** power_61 + 200 * x ** 2 + 7500 * x + 25000
-        req["v615"] += v615
-        power_616 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
-        multiplier_616 = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
-        v616 = x ** power_616 + multiplier_616 * x ** 2 + 7500 * x + 25000
-        req["v616"] += v616
+        v1 = 1.25 * x ** 2 + x * 80 + 250
+        req["v1"] += v1
         if x not in bad:
             for key in keys:
                 xp[key].append(req[key])
@@ -95,15 +72,11 @@ def _level_history():
     return xp
 
 
-def convert_xp(xp: float):
-    return int(xp / 100)
-
-
 max_level = 200
 bad = [69, 420, 666, 1337]
 levels = _levels()
 level_history = _level_history()
-xp_amounts = [2250, 3000]
+xp_amounts = [20, 27]
 
 
 class Leveling(commands.Cog):
@@ -114,7 +87,6 @@ class Leveling(commands.Cog):
     @commands.is_owner()
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
-        # __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
         __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200]
         outputs = []
         for level in __levels:
@@ -130,14 +102,13 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def old_levels(self, ctx: commands.Context, level: int = None):
         """ See previous Suager leveling systems """
-        names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6_beta4": "Suager v6-beta4", "v6_beta12": "Suager v6-beta12",
-                 "v615": "Suager v6.1.5", "v616": "Suager v6.1.6"}
+        names = {"v1": "Kaival Raivahtu v1"}
         if level is not None:
             if level > max_level:
                 return await general.send(f"The max level is {max_level:,}", ctx.channel)
             output = ""
             for key, name in names.items():
-                output += f"\n`{name:<16} -> {convert_xp(level_history[key][level - 1]):>11,} XP`"
+                output += f"\n`{name:<16} -> {int(level_history[key][level - 1]):>11,} XP`"
             return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
         else:
             xp_ = self.bot.db.fetchrow("SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
@@ -160,22 +131,12 @@ class Leveling(commands.Cog):
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
-        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         xp_disabled = False
-        if _settings:
-            __settings = json.loads(_settings['data'])
-            try:
-                if not __settings['leveling']['enabled']:
-                    xp_disabled = True
-                ic = __settings['leveling']['ignored_channels']
-                if ctx.channel.id in ic:
-                    xp_disabled = True
-                    # return
-            except KeyError:
-                pass
-        else:
-            __settings = settings.template.copy()
+        if ctx.guild.id not in [568148147457490954, 738425418637639775]:  # Leveling only available in Senko Lair and Regaus'tar Koankadu
             xp_disabled = True
+        if ctx.channel.id in [610482988123422750]:  # SL hidden_commands
+            xp_disabled = True
+            # return
         data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if data:
             level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
@@ -197,13 +158,9 @@ class Leveling(commands.Cog):
         full = mult == 1
         dc = mult == 0  # didn't count
         x1, x2 = xp_amounts
-        try:
-            sm = float(__settings['leveling']['xp_multiplier'])
-        except KeyError:
-            sm = 1
         c = 0.67 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
         c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069] else c
-        new = int(random.uniform(x1, x2) * sm * mult * c)
+        new = int(random.uniform(x1, x2) * mult * c)
         if ctx.author.id == 592345932062916619:
             new = 0
         if not xp_disabled:
@@ -235,78 +192,19 @@ class Leveling(commands.Cog):
                     level -= 1
                     ld = True
             if lu:
-                try:
-                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
-                except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
-                try:
-                    ac = __settings['leveling']['announce_channel']
-                    if ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
-                    else:
-                        ch = ctx.channel
-                except KeyError:
-                    ch = ctx.channel
+                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri! {emotes.ForsenDiscoSnake}"
+                ch = self.bot.get_channel(784891283495321670 if ctx.guild.id == 568148147457490954 else 784891523526295563)
                 try:
                     await general.send(send, ch, u=[ctx.author])
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                try:
-                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
-                except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.UmmOK}"
-                try:
-                    ac = __settings['leveling']['announce_channel']
-                    if ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
-                    else:
-                        ch = ctx.channel
-                except KeyError:
-                    ch = ctx.channel
+                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri! {emotes.UmmOK}"
+                ch = self.bot.get_channel(784891283495321670 if ctx.guild.id == 568148147457490954 else 784891523526295563)
                 try:
                     await general.send(send, ch, u=[ctx.author])
                 except discord.Forbidden:
                     pass
-            reason = f"Level Rewards - Level {level}"
-            try:
-                rewards = __settings['leveling']['rewards']
-                if rewards:  # Don't bother if they're empty
-                    l1, l2 = [], []
-                    rewards.sort(key=lambda x: x['level'])
-                    for i in range(len(rewards)):
-                        l1.append(rewards[i]['level'])
-                        l2.append(rewards[i]['role'])
-                    roles = [r.id for r in ctx.author.roles]
-                    for i in range(len(rewards)):
-                        role = discord.Object(id=l2[i])
-                        has_role = l2[i] in roles
-                        if level >= l1[i]:
-                            if i < len(rewards) - 1:
-                                if level < l1[i + 1]:
-                                    if not has_role:
-                                        await ctx.author.add_roles(role, reason=reason)
-                                else:
-                                    if has_role:
-                                        await ctx.author.remove_roles(role, reason=reason)
-                            else:
-                                if not has_role:
-                                    await ctx.author.add_roles(role, reason=reason)
-                        else:
-                            if has_role:
-                                await ctx.author.remove_roles(role, reason=reason)
-            except KeyError:
-                pass  # If no level rewards, don't even bother
-            except discord.Forbidden:
-                await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.", ctx.channel)
-            except Exception as e:
-                print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
         # _last = last if dc else now
         last_send = last if dc else now
         minute = now if full else ls
@@ -316,31 +214,6 @@ class Leveling(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
-
-    @commands.command(name="rewards")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
-    async def rewards(self, ctx: commands.Context):
-        """ Rewards """
-        locale = langs.gl(ctx)
-        _settings = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if not _settings:
-            return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
-        else:
-            data = json.loads(_settings['data'])
-        try:
-            rewards = data['leveling']['rewards']
-            rewards.sort(key=lambda x: x['level'])
-            embed = discord.Embed(colour=general.random_colour())
-            embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.title = langs.gls("leveling_rewards_title", locale, ctx.guild.name)
-            d = ''
-            for role in rewards:
-                d += langs.gls("leveling_rewards_role", locale, langs.gns(role["level"], locale), role["role"])
-            embed.description = d
-            return await general.send(None, ctx.channel, embed=embed)
-        except KeyError:
-            return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
 
     async def level(self, ctx: commands.Context, who: discord.Member or None, locale: str):
         async with ctx.typing():
@@ -386,7 +259,7 @@ class Leveling(commands.Cog):
                     req = 0
                 else:
                     req = int(-levels[(-level) - 2])
-                r2 = langs.gns(int(req / 100), locale)
+                r2 = langs.gns(int(req), locale)
             except IndexError:
                 req = float("inf")
                 r2 = langs.gls("generic_max", locale)
@@ -407,17 +280,17 @@ class Leveling(commands.Cog):
                     break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
-                _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
+                _level = langs.gls("leveling_rank_level_cobble", locale, langs.gns(level, locale))
                 dr.text((text_x, 130), f"{place} | {_level}", font=font_small, fill=font_colour)
-                r1 = langs.gns(int(xp / 100), locale)
+                r1 = langs.gns(int(xp), locale)
                 r3 = langs.gfs(progress, locale, 2, True)
-                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp) / 100, locale)) if level < max_level else ""
+                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns(req - xp, locale)) if level < max_level else ""
                 dr.text((text_x, (298 if r4 else 362)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
                 progress = 0.5
                 place = langs.gls("leaderboards_place", locale, langs.gns(1, locale))
                 _rank = langs.gls("leveling_rank_rank", locale, place)
-                _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
+                _level = langs.gls("leveling_rank_level_cobble", locale, langs.gns(69420, locale))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
                 dr.text((text_x, 426), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
             full = width
@@ -479,8 +352,7 @@ class Leveling(commands.Cog):
                 level += 1
             else:
                 break
-        __xp = int(_xp / 100)
-        return await general.send(langs.gls("leveling_rank_global", locale, user, langs.gns(__xp, locale), place, langs.gns(level, locale)), ctx.channel)
+        return await general.send(langs.gls("leveling_rank_global", locale, user, langs.gns(int(_xp), locale), place, langs.gns(level, locale)), ctx.channel)
 
     @commands.group(name="crank", aliases=["customrank"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -561,7 +433,7 @@ class Leveling(commands.Cog):
                 dm = __settings['leveling']['xp_multiplier']
             except KeyError:
                 dm = 1
-        base = langs.gls("leveling_xplevel_main", locale, langs.gns(int(r / 100), locale), langs.gns(level, locale))
+        base = langs.gls("leveling_xplevel_main", locale, langs.gns(int(r), locale), langs.gns(level, locale))
         extra = ""
         if xp < r:
             x1, x2 = [val * dm for val in xp_amounts]
@@ -571,7 +443,7 @@ class Leveling(commands.Cog):
             except (OverflowError, OSError):
                 error = "Never"
                 t1, t2 = [error, error]
-            extra = langs.gls("leveling_xplevel_extra", locale, langs.gns(int((r - xp) / 100), locale), t1, t2)
+            extra = langs.gls("leveling_xplevel_extra", locale, langs.gns(int(r - xp), locale), t1, t2)
         return await general.send(f"{base}{extra}", ctx.channel)
 
     @commands.command(name="nextlevel", aliases=["nl"])
@@ -595,7 +467,7 @@ class Leveling(commands.Cog):
         level, xp = [data['level'], data['xp']]
         if level == max_level:
             return await general.send(langs.gls("leveling_next_level_max", locale, ctx.author.name), ctx.channel)
-        r1 = langs.gns(int(xp / 100), locale)
+        r1 = langs.gns(int(xp), locale)
         try:
             if level >= 0:
                 r = int(levels[level])  # Requirement to next level
@@ -616,7 +488,7 @@ class Leveling(commands.Cog):
             p = 0
         req = r - xp
         pr = (xp - p) / (r - p)
-        r2, r3, r4 = langs.gns(r / 100, locale), langs.gns(req / 100, locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
+        r2, r3, r4 = langs.gns(r, locale), langs.gns(req, locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
         r5 = langs.gns(level + 1, locale)
         normal = 1
         x1, x2 = [val * normal * dm for val in xp_amounts]
