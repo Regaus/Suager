@@ -1,4 +1,3 @@
-import json
 import random
 from io import BytesIO
 
@@ -424,19 +423,10 @@ class Leveling(commands.Cog):
             xp = float("inf")
         else:
             xp = data['xp']
-        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if not _settings:
-            dm = 1
-        else:
-            __settings = json.loads(_settings['data'])
-            try:
-                dm = __settings['leveling']['xp_multiplier']
-            except KeyError:
-                dm = 1
         base = langs.gls("leveling_xplevel_main", locale, langs.gns(int(r), locale), langs.gns(level, locale))
         extra = ""
         if xp < r:
-            x1, x2 = [val * dm for val in xp_amounts]
+            x1, x2 = xp_amounts
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
             try:
                 t1, t2 = [langs.td_int(x * 60, locale) for x in [a1, a2]]
@@ -455,15 +445,6 @@ class Leveling(commands.Cog):
         data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await general.send(langs.gls("leveling_next_level_none", locale), ctx.channel)
-        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if not _settings:
-            dm = 1
-        else:
-            __settings = json.loads(_settings['data'])
-            try:
-                dm = __settings['leveling']['xp_multiplier']
-            except KeyError:
-                dm = 1
         level, xp = [data['level'], data['xp']]
         if level == max_level:
             return await general.send(langs.gls("leveling_next_level_max", locale, ctx.author.name), ctx.channel)
@@ -490,8 +471,7 @@ class Leveling(commands.Cog):
         pr = (xp - p) / (r - p)
         r2, r3, r4 = langs.gns(r, locale), langs.gns(req, locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
         r5 = langs.gns(level + 1, locale)
-        normal = 1
-        x1, x2 = [val * normal * dm for val in xp_amounts]
+        x1, x2 = xp_amounts
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         try:
             t1, t2 = [langs.td_int(x * 60, locale) for x in [a1, a2]]
