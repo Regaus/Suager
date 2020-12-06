@@ -192,14 +192,14 @@ class Leveling(commands.Cog):
                     level -= 1
                     ld = True
             if lu:
-                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri! {emotes.ForsenDiscoSnake}"
+                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri**! {emotes.ForsenDiscoSnake}"
                 ch = self.bot.get_channel(784891283495321670 if ctx.guild.id == 568148147457490954 else 784891523526295563)
                 try:
                     await general.send(send, ch, u=[ctx.author])
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri! {emotes.UmmOK}"
+                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri**! {emotes.UmmOK}"
                 ch = self.bot.get_channel(784891283495321670 if ctx.guild.id == 568148147457490954 else 784891523526295563)
                 try:
                     await general.send(send, ch, u=[ctx.author])
