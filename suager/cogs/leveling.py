@@ -115,13 +115,13 @@ class Leveling(commands.Cog):
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
         # __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
-        __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200]
+        __levels = [1, 2, 3, 5, 10, 20, 35, 50, 60, 75, 85, 100, 125, 150, 200]
         outputs = []
         for level in __levels:
             _level = level - 1
             lv1 = int(levels[_level] / 100)
             diff = lv1 - int(levels[_level - 1] / 100) if level > 1 else lv1
-            outputs.append(f"Level {level:>3} | Req {lv1:>10,} | Diff {diff:>7,}")
+            outputs.append(f"Level {level:>3} | Req {lv1:>9,} | Diff {diff:>6,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
 
