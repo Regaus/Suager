@@ -53,15 +53,15 @@ def _levels():
 
 
 def _level_history():
-    keys = ["v1"]
+    keys = ["v0.1"]
     req = {}
     xp = {}
     for key in keys:
         req[key] = 0
         xp[key] = []
     for x in range(max_level):
-        v1 = 1.25 * x ** 2 + x * 80 + 250
-        req["v1"] += v1
+        v01 = 1.25 * x ** 2 + x * 80 + 250
+        req["v0.1"] += v01
         if x not in bad:
             for key in keys:
                 xp[key].append(req[key])
@@ -101,7 +101,7 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def old_levels(self, ctx: commands.Context, level: int = None):
         """ See previous Suager leveling systems """
-        names = {"v1": "Kaival Raivahtu v1"}
+        names = {"v0.1": "Kaival Raivahtu v0.1"}
         if level is not None:
             if level > max_level:
                 return await general.send(f"The max level is {max_level:,}", ctx.channel)
@@ -121,7 +121,7 @@ class Leveling(commands.Cog):
                     else:
                         break
                 output += f"\n`{name:<16} -> Level {level:>3}`"
-            return await general.send(f"{ctx.author.name}, you have **{xp // 100:,} XP** in this server. Here are the levels you could have been on "
+            return await general.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you could have been on "
                                       f"in the old leveling system:{output}", ctx.channel)
 
     @commands.Cog.listener()

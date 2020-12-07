@@ -550,6 +550,15 @@ class Admin(commands.Cog):
         except ValueError:
             return await general.send(f"User {user.id} was not found in the Blacklist", ctx.channel)
 
+    @commands.command(name="usage", aliases=["usages"])
+    @commands.check(permissions.is_owner)
+    async def usages(self, ctx: commands.Context):
+        """ See command usage counters """
+        data = sorted([f"`{name}`: {usage}" for name, usage in self.bot.usages.items()])
+        send = [data[i:i + 80] for i in range(0, len(data), 80)]
+        for result in send:
+            await general.send(" | ".join(result), ctx.channel)
+
 
 async def status(ctx: commands.Context, _type: int):
     try:

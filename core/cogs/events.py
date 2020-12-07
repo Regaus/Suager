@@ -67,7 +67,7 @@ class Events(commands.Cog):
         return await events.on_guild_remove(self, guild)
 
     @commands.Cog.listener()
-    async def on_command(self, ctx):
+    async def on_command_completion(self, ctx):
         return await events.on_command(self, ctx)
 
     @commands.Cog.listener()

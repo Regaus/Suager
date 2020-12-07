@@ -74,6 +74,9 @@ for i in range(len(config["bots"])):
             if name not in local_config["exclude_core_cogs"]:
                 bot.load_extension(f"core.cogs.{name}")
     bot.load_extension("jishaku")
+    bot.usages = {}
+    for command in bot.commands:
+        bot.usages[str(command)] = 0
     if "token" in local_config and local_config["token"]:
         tasks.append(loop.create_task(bot.start(local_config["token"])))
 
