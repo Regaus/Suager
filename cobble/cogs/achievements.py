@@ -35,7 +35,7 @@ class Achievements(commands.Cog):
             font_small = ImageFont.truetype(font_dir, size=32)
         except ImportError:
             await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
-            font, font_small = None, None
+            font, font_med, font_small = None, None, None
         w, _ = dr.textsize(f"{user}", font=font)
         dr.text(((width - w) / 2, -15), f"{user}", font=font, fill=(255, 0, 87))
         max_description = "Highest achievement tier reached!"
