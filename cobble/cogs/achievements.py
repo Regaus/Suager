@@ -46,7 +46,7 @@ class Achievements(commands.Cog):
             except IndexError:
                 return achievement_colours[-1]
 
-        def generate_box(index: int, level: int, name: str, details: str, current: int, requirement: int):
+        def generate_box(index: int, level: int, name: str, details: str, current: int, requirement: int, previous: int):
             y = large_size + index * 256
             colour = get_colour(level)
             i1 = Image.new("RGB", (width - 32, 224), color=colour)
@@ -57,8 +57,11 @@ class Achievements(commands.Cog):
             img.paste(i2, box2)
             text_x = 48
             dr.text((text_x, y + 28), name, font=font_med, fill=colour)
-            progress = current / requirement
-            progress = 1 if progress > 1 else progress
+            try:
+                progress = (current - previous) / (requirement - previous)
+                progress = 1 if progress > 1 else progress
+            except ZeroDivisionError:
+                progress = 1
             dr.text((text_x, y + 96), f"Current Tier: {level}", font=font_small, fill=colour)
             desc = f"Tier {level + 1} Goal: {details} ({current:,}/{requirement:,})" if requirement > current else max_description
             dr.text((text_x, y + 128), desc, font=font_small, fill=colour)
@@ -77,21 +80,23 @@ class Achievements(commands.Cog):
             max_level = user_xp[0]["level"]
         except IndexError:
             max_level = 0
-        lvl, tier = 0, 0
+        lvl, prev, tier = 0, 0, 0
         for lvl in achievement_levels:
             if max_level >= lvl:
                 tier += 1
+                prev = lvl
             else:
                 break
-        generate_box(0, tier, "XP Levels", f"Reach Cobble XP Level {lvl} in a server", max_level, lvl)
+        generate_box(0, tier, "XP Levels", f"Reach Cobble XP Level {lvl} in a server", max_level, lvl, prev)
         total_xp = sum(part["xp"] for part in user_xp)
-        req, tier = 0, 0
+        req, prev, tier = 0, 0, 0
         for req in achievement_xp:
             if total_xp >= req:
                 tier += 1
+                prev = lvl
             else:
                 break
-        generate_box(1, tier, "Experience", f"Collect {req:,} XP in total", total_xp, req)
+        generate_box(1, tier, "Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
