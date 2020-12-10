@@ -80,20 +80,20 @@ class Achievements(commands.Cog):
             max_level = user_xp[0]["level"]
         except IndexError:
             max_level = 0
-        lvl, prev, tier = 0, 0, 0
-        for lvl in achievement_levels:
-            if max_level >= lvl:
+        req, prev, tier = 0, 0, 0
+        for req in achievement_levels:
+            if max_level >= req:
                 tier += 1
-                prev = lvl
+                prev = req
             else:
                 break
-        generate_box(0, tier, "XP Levels", f"Reach Cobble XP Level {lvl} in a server", max_level, lvl, prev)
+        generate_box(0, tier, "XP Levels", f"Reach Cobble XP Level {req} in a server", max_level, req, prev)
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
         for req in achievement_xp:
             if total_xp >= req:
                 tier += 1
-                prev = lvl
+                prev = req
             else:
                 break
         generate_box(1, tier, "Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
