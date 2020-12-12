@@ -327,7 +327,7 @@ class Admin(commands.Cog):
             self.bot.unload_extension(f"{name1}.cogs.{name2}")
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
-        reloaded = f"Loaded extension **{name1}/cogs/{name2}.py**"
+        reloaded = f"Unloaded extension **{name1}/cogs/{name2}.py**"
         await general.send(reloaded, ctx.channel)
         if self.bot.local_config["logs"]:
             logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
