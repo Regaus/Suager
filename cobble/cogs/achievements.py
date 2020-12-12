@@ -87,7 +87,7 @@ class Achievements(commands.Cog):
                 prev = req
             else:
                 break
-        generate_box(0, tier, "XP Levels", f"Reach Cobble XP Level {req} in a server", max_level, req, prev)
+        generate_box(0, tier, "XP Levels", f"Reach XP Level {req} in a server", max_level, req, prev)
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
         for req in achievement_xp:

@@ -8,3 +8,10 @@
 
 ## v0.2.1 - 8 December
 - Achievements now show progress from last tier instead of from zero
+
+## v0.3-pre1 - 12 December
+- Slightly updated language for levels and achievements
+- Renamed SS23 to GA78
+- Updated GA78 commands to mostly no longer being hidden (as most people can't access them anyways)
+- RSL-1 documentation command
+- Removed RSL numbers as separate command

@@ -191,14 +191,14 @@ class Leveling(commands.Cog):
                     level -= 1
                     ld = True
             if lu:
-                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri**! {emotes.ForsenDiscoSnake}"
+                send = f"{ctx.author.name} nat esaa **{level:,}. kaival-kouri**! {emotes.ForsenDiscoSnake}"
                 ch = self.bot.get_channel(784891283495321670 if ctx.guild.id == 568148147457490954 else 784891523526295563)
                 try:
                     await general.send(send, ch, u=[ctx.author])
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             if ld:
-                send = f"{ctx.author.name} nan esaa **{level:,}. kaival-kouri**! {emotes.UmmOK}"
+                send = f"{ctx.author.name} nat esaa **{level:,}. kaival-kouri**! {emotes.UmmOK}"
                 ch = self.bot.get_channel(784891283495321670 if ctx.guild.id == 568148147457490954 else 784891523526295563)
                 try:
                     await general.send(send, ch, u=[ctx.author])
@@ -289,7 +289,7 @@ class Leveling(commands.Cog):
                 progress = 0.5
                 place = langs.gls("leaderboards_place", locale, langs.gns(1, locale))
                 _rank = langs.gls("leveling_rank_rank", locale, place)
-                _level = langs.gls("leveling_rank_level_cobble", locale, langs.gns(69420, locale))
+                _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
                 dr.text((text_x, 426), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
             full = width

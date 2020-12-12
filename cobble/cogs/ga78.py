@@ -5,11 +5,58 @@ import discord
 import pyttsx3
 from discord.ext import commands
 
-from core.utils import bases, emotes, general, time
 from cobble.utils import ss23, ss24
+from core.utils import emotes, general, time
 
 
-class SS23(commands.Cog):
+def rsl_number(value: int):
+    """ Convert number to RSL-1 """
+    limit = int("9" * 36)
+    if value > limit:
+        return f"Highest allowed number is {limit:,} (1e36 - 1)"
+    if value < 0:
+        return f"Negative values will not work"
+    if value == 0:
+        return "deneda"
+    one = {0: "", 1: "ukka", 2: "devi", 3: "tei", 4: "sei", 5: "paa", 6: "senki", 7: "ei", 8: "oni", 9: "zehi"}
+    teen = {11: "uveri", 12: "deveri", 13: "teveri", 14: "severi", 15: "paveri", 16: "seneri", 17: "eijeri", 18: "overi", 19: "zegheri"}
+    ten = {1: "verri", 2: "devveire", 3: "tevveire", 4: "sevveire", 5: "pavveire", 6: "senneire", 7: "evveire", 8: "onneire", 9: "zegheire"}
+    hundred = ["arraiki", "arraikädan"]
+    exp_1000 = ["kirraa", "kirraadan"]
+    exp = ["ugaristu", "devaristu", "tevaristu", "sekaristu", "pakkaristu", "sennaristu", "eijaristu", "onaristu", "zeharistu", "verraristu"]
+
+    def thousand(_val: int):
+        _999 = _val % 1000
+        _99 = _999 % 100
+        _99v = ""
+        if _99 < 10:
+            _99v = one[_99]
+        elif 11 <= _99 < 20:
+            _99v = teen[_99]
+        else:
+            _v, _u = divmod(_99, 10)
+            _99v = f"{one[_u]} u {ten[_v]}" if _u > 0 else ten[_v]
+        _100 = _999 // 100
+        _100v = "" if _100 == 0 else ((f"{one[1]} {hundred[0]}" if _100 == 1 else f"{one[_100]} {hundred[1]}") + (", " if _99 != 0 else ""))
+        return _100v + _99v
+    _1000 = value % 1000
+    outputs = [thousand(_1000)] if _1000 > 0 else []
+    large = []
+    _value = value
+    _range = len(exp)
+    for i in range(_range):
+        _value //= 1000
+        large.append(_value % 1000)
+    for i in range(_range):
+        val = large[i]
+        if val > 0:
+            n1, n2 = exp_1000 if i == 0 else ((_name := exp[i - 1]), _name[:-1] + "azan")
+            name = n1 if val % 100 == 1 else n2
+            outputs.append(f"{thousand(val)}{'r' if val == 1 and i > 0 else ''} {name}")
+    return ", ".join(outputs[::-1])
+
+
+class GA78(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         try:
@@ -18,7 +65,7 @@ class SS23(commands.Cog):
             del _
             self.tts = None
 
-    @commands.command(name="time23", aliases=["timek", "timez", "timess"], hidden=True)
+    @commands.command(name="time23")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def time23(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Compare times from Earth with SS23 """
@@ -39,8 +86,8 @@ class SS23(commands.Cog):
         tq = ss23.date_kaltaryna(dt)       # Time in Qevenerus/Kaltaryna RSL-1
         td = ss23.date_kargadia_5(dt)      # Time on Kargadia RSL-5
         td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5 DT
-        months_1 = ["Seldan Masailnar'an", "Nuannar'an", "Seimannar'an", "Veisanar'an", "Eilannar'an", "Havazdallarinnar'an",
-                    "Sanvaggannar'an", "Kailaggannar'an", "Semardannar'an", "Addanvar'an", "Halltuavar'an", "Masailnar'an"]
+        months_1 = ["Seldan Masailnaran", "Nuannaran", "Seimannaran", "Veisanaran", "Eilannaran", "Havazdallarinnaran",
+                    "Sanvaggannaran", "Kailaggannaran", "Semardannaran", "Addanvaran", "Halltuavaran", "Masailnaran"]
         months_5 = ["Chìlderaljanselaljan", "Anveraijanselaljan", "Síldarinselaljan", "Kûstanselaljan",
                     "Vullastenselaljan", "Khavastalgèrinselaljan", "Senkanselaljan", "Dhárelanselaljan",
                     "Silaljanselaljan", "Eijelovvanselaljan", "Haldúvaranselaljan", "Massalanselaljan"]
@@ -53,7 +100,7 @@ class SS23(commands.Cog):
                                   f"Time on 23.5 Kargadia (RSL-1_kg): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
                                   f"Time on 23.6 Qevenerus (RSL-1_ka): **{tq}**", ctx.channel)
 
-    @commands.command(name="time24", hidden=True)
+    @commands.command(name="time24")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def time24(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Compare times from Earth with SS24 """
@@ -75,7 +122,7 @@ class SS23(commands.Cog):
                                   f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**\n"
                                   f"Time on 24.11 Kuastall-11 (RSL-1_ku): **{t24_11_1}**", ctx.channel)
 
-    @commands.command(name="weather23", hidden=True)
+    @commands.command(name="weather23")
     @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def weather23(self, ctx: commands.Context, *, place: str):
@@ -114,9 +161,8 @@ class SS23(commands.Cog):
                 await general.send(general.traceback_maker(e), ctx.channel)
             return await general.send(f"An error occurred: `{type(e).__name__}: {e}`.\nThe place {place} may not exist.", ctx.channel)
 
-    @commands.command(name="nlc", hidden=True)
+    @commands.command(name="nlc")
     @commands.is_owner()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def ne_world_ll_calc(self, ctx: commands.Context, x: int, z: int, border: int = 100000):
         """ Calculate latitude, local offset of position - NEWorld """
         lat = -z / border * 90  # Latitude value
@@ -126,113 +172,26 @@ class SS23(commands.Cog):
         tzo = tz / tzl - long  # Local Offset
         return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLocal Offset: {tzo:.3f}", ctx.channel)
 
-    @commands.command(name="rsln", hidden=True)
-    @commands.is_owner()
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def rsl_numbers(self, ctx: commands.Context, language: str, number: int):
-        """ Translates number input into RSL """
-        if number < 0:
-            return await general.send("Negative numbers are not supported.", ctx.channel)
-        if language == "1":
-            max_number = int(str(10 ** 24), base=16) - 1
-            if number > max_number:
-                return await general.send(f"The value you entered is above the maximum value translate-able ({max_number:,})", ctx.channel)
-            numbers = {
-                "0": "des/deneda",
-                "1": ["ukka", "devi", "teri", "cegi", "paki", "senki", "ekki", "onni", "zunni", "dovi", "tori", "cogi", "bagi", "soni", "enni"],
-                "11": ["uveri", "devuverri", "teruverri", "ceguverri", "pakuverri", "senkuverri", "ekkuverri", "onnuverri",
-                       "zunuverri", "dovuverri", "toruverri", "coguverri", "baguverri", "sonuverri", "ennuverri"],
-                "10": ["verri", "deveri", "tereri", "ceveri", "paveri", "seneri", "ekeri", "oneri",
-                       "zuveri", "doveri", "toreri", "coveri", "baneri", "soneri", "eneri"],
-                "21": ["uk u", "dev u", "ter u", "ceg u", "pak u", "senk-u", "ekk-u", "onn-u", "zunn-u", "dov u", "tor u", "cog u", "bag u", "son u", "enn-u"],
-                "100": ["setti", "settin", "settar"],
-                "1000": ["kiari", "kiarin", "kiarar"],
-                "big": [["ugaristu", "ugaristun", "ugaristar"], ["devaristu", "devaristun", "devaristar"], ["teráristu", "teráristun", "teráristar"],
-                        ["cegaristu", "cegaristun", "cegaristar"], ["pakaristu", "pakaristun", "pakaristar"], ["senkaristu", "senkaristun", "senkaristar"]]
-            }
-            exp = 16
-        else:
-            return await general.send(f"RSL-{language} is currently not supported.\nRSL's available: 1.", ctx.channel)
-
-        def thousand(val: int):
-            def less_100(value: int):
-                if value == 0:
-                    return ""
-                elif 1 <= value < exp:
-                    return numbers["1"][value - 1]
-                elif value == exp:
-                    return numbers["10"][0]
-                elif exp < value < 2 * exp:
-                    return numbers["11"][value - 17]
-                elif 2 * exp <= value < exp * exp:
-                    div, mod = divmod(value, exp)
-                    base = numbers["21"][mod - 1] + " " if mod > 0 else ""
-                    tens = numbers["10"][div - 1]
-                    return f"{base}{tens}"
-                else:
-                    return "Error"
-
-            def hundreds(value: int, mod: int):
-                ind = 0 if value == 1 else 1 if 1 < value < 8 else 2
-                return "" if value < 1 else less_100(value) + f" {numbers['100'][ind]}{', ' if mod != 0 else ''}"
-
-            a, b = divmod(val, exp * exp)
-            return f"{hundreds(a, b)}{less_100(b)}"
-
-        def large():
-            # exponents = [int(str(10 ** val), base=16) for val in [3, 6, 9, 12, 15, 18, 21]]
-            values = []
-            value = number
-            for i in range(7):
-                value //= exp ** 3
-                values.append(value % (exp ** 3))
-            outputs = []
-            for i in range(7):
-                val = values[i]
-                if val > 0:
-                    n1, n2, n3 = numbers["1000"] if i == 0 else numbers["big"][i - 1]
-                    name = n3 if exp <= val % (exp ** 2) <= 2 * exp or val % exp >= 8 else n2 if val % exp != 1 else n1
-                    outputs.append(f"{thousand(val)} {name}, ")
-            return "".join(outputs[::-1])
-
-        _number = bases.to_base(number, exp, True)
-        # output = f"{hundreds(number // 256)}{less_100(number % 256)}"
-        output = f"{large()}{thousand(number % (exp ** 3))}"
-        if number == 0:
-            output = numbers["0"]
-        return await general.send(f"Base-10: {number:,}\nBase-{exp}: {_number}\nRSL-{language}: {output}", ctx.channel)
-
-    @commands.command("rslt", hidden=True)
+    @commands.command("rslt")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
-        if not (1 <= s <= 256):
-            return await general.send("De va edou dejal, no nu so maikal ir te edou kihtemal", ctx.channel)
-        encoding = {1: "ukka", 2: "devi", 3: "tei", 4: "seghi", 5: "paki", 6: "seni", 7: "ei", 8: "oni",
-                    9: "zegi", 10: "dove", 11: "tore", 12: "seghe", 13: "page", 14: "seine", 15: "eghe", 16: "veire",
-                    17: "uveire", 18: "deire", 19: "tevre", 20: "sevre", 21: "pakke", 22: "seire", 23: "eire", 24: "onre",
-                    25: "zeire", 26: "dojere", 27: "tovere", 28: "sejere", 29: "paghere", 30: "seinere", 31: "einere", 32: "devveire"}
-        u = ["ukka", "devi", "tei", "sei", "paki", "seni", "ei", "oni", "zegi", "dove", "tore", "see", "page", "seine", "ee"]
-        v = ["devveire", "tevveire", "seghveire", "pahveire", "senveire", "eiveire", "onveire",
-             "zeghveire", "dovveire", "torveire", "seiveire", "paiveire", "seineveire", "eghveire", "ukka aragi"]
+        if not (1 <= s <= 8700):
+            return await general.send("De dejava idou, no sa maikazo ir te edou kihtemal. ", ctx.channel)
         shift = s * 128
-        if 1 <= s <= 32:
-            code = encoding[s]
-        else:
-            w, x = divmod(s, 16)
-            if x == 0:
-                code = v[w - 2]
-            else:
-                code = f"{u[x - 1]} u {v[w - 2]}"
-        text = "".join([chr(ord(letter) + shift) for letter in t])
+        code = rsl_number(s)
+        try:
+            text = "".join([chr(ord(letter) + shift) for letter in t])
+        except ValueError:
+            return await general.send(f"Sil valse, alteknaar ka uvaar kuarhaavar qeraduar", ctx.channel)
         return await general.send(f"{code} {text}", ctx.channel)
 
-    @commands.command("rslf", hidden=True)
+    @commands.command("rslf")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
-        if not (1 <= s <= 256):
-            return await general.send("De va edou dejal, no nu so maikal ir te edou kihtemal", ctx.channel)
+        if not (1 <= s <= 8700):
+            return await general.send("De dejava idou, no sa maikazo ir te edou kihtemal", ctx.channel)
         shift = s * 128
         text = ""
         for letter in t:
@@ -243,7 +202,7 @@ class SS23(commands.Cog):
             text += a
         return await general.send(text, ctx.channel)
 
-    @commands.command("tts", hidden=True)
+    @commands.command("tts")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])
     async def tts_command(self, ctx: commands.Context, *, text: str):
         """ Text to Speech """
@@ -258,6 +217,67 @@ class SS23(commands.Cog):
         else:
             return await general.send("This command is not available at the moment", ctx.channel)
 
+    @commands.group(name="rsl1", aliases=["rsl"])
+    @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196]
+                    and ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064])  # me, Leitoxz, Steir
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def rsl1(self, ctx: commands.Context):
+        """ RSL-1 data """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @rsl1.command(name="numbers", aliases=["n"])
+    async def rsl1_numbers(self, ctx: commands.Context, number: int = None):
+        """ Translate a number to RSL-1 """
+        if number is None:
+            return await general.send(f"This command can translate a number to RSL-1. For example, `{ctx.prefix}rsl1 {ctx.invoked_with} 1` "
+                                      f"will translate the number 1 to RSL-1.", ctx.channel)
+        return await general.send(f"The RSL-1 for `{number:,}` is `{rsl_number(number)}`.", ctx.channel)
+
+    @rsl1.command(name="phrases", aliases=["p", "d", "words", "w"])
+    async def rsl1_words(self, ctx: commands.Context):
+        """ Some RSL-1 words and phrases """
+        stuff = [
+            ["thanks", "hallera"],
+            ["please", "kinnelli"],
+            ["hello", "liarustu"],
+            ["good morning", "hiaran rean"],
+            ["good afternoon", "hiaran sean"],
+            ["good evening", "hiaran vean"],
+            ["good night (greeting)", "hiaran tean"],
+            ["good night, sleep well", "hiaran sehlun"],
+            ["goodbye", "lankuvurru"],
+            ["good luck", "ivjar lettuman"],
+            ["idiot, cunt, and other synonyms", "arhaneda"],
+            ["I love you", "sa leivaa tu"],
+            ["I like you", "sa altikaa tu"],
+            ["I hate you", "sa delvaa tu"],
+            ["what do you want", "ne kaidas"],
+            ["you are cute", "te jas millar/te jas leitakar"],
+            ["you are beautiful/hot", "te jas leidannar"],
+            ["you are ugly", "te jas arkantar"],
+            ["I am 7 years old", "sa ivja 7 kaadazan si"],
+            ["yes", "to"],
+            ["no", "des"],
+            ["die in a fire", "senardar aigynnuri"],
+            ["I don't care", "e jat sav vuntevo"],
+            ["I couldn't care less", "e ar de maikat sav kuvuntevo vian"],
+            ["congrats", "nilkirriza"],
+            ["heaven, paradise", "Naivur"],
+            ["hell", "Eideru/Eilarru"],
+            ["school", "eitaru"],
+            ["happy birthday", "kovanan reidesean"],
+            ["Happy Halloween", "Kovanan Savainun"],
+            ["Happy New Year", "Kovanan Nuan Kaadun"],
+            ["Merry Christmas", "Kovanon Raivasten"],
+            ["son of a bitch", "seijanseunu"],
+            ["fuck off, fuck you", "heilarsa"]
+        ]
+        stuff.sort(key=lambda x: x[0].lower())
+        output = [f'{en} = {rsl}' for en, rsl in stuff]
+        return await general.send("An entire dictionary would be hard to make because the language changes over time, but here are some things you can "
+                                  "say in RSL-1:\n" + "\n".join(output), ctx.channel)
+
 
 def setup(bot):
-    bot.add_cog(SS23(bot))
+    bot.add_cog(GA78(bot))
