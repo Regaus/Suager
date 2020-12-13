@@ -22,18 +22,19 @@ class Spyware(commands.Cog):
         if n1 != n2:
             send = f"{to} > {n1} ({uid}) is now known as {n2}"
             logger.log(self.bot.name, log, send)
-        a1, a2 = [before.avatar, after.avatar]
-        al = self.bot.get_channel(745760639955370083)
-        if a1 != a2:
-            send = f"{to} > {n2} ({uid}) changed their avatar"
-            logger.log(self.bot.name, "user_avatars", send)
-            if uid not in self.self:
-                avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
-                ext = "gif" if after.is_avatar_animated() else "png"
-                if al is None:
-                    print("No avatar log channel found.")
-                else:
-                    await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
+        if self.bot.user.id == 609423646347231282:
+            a1, a2 = [before.avatar, after.avatar]
+            al = self.bot.get_channel(745760639955370083)
+            if a1 != a2:
+                send = f"{to} > {n2} ({uid}) changed their avatar"
+                logger.log(self.bot.name, "user_avatars", send)
+                if uid not in self.self:
+                    avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
+                    ext = "gif" if after.is_avatar_animated() else "png"
+                    if al is None:
+                        print("No avatar log channel found.")
+                    else:
+                        await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
             send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"

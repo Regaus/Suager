@@ -63,10 +63,10 @@ async def on_guild_remove(self, guild):
     print(send)
     if self.bot.name == "suager":
         self.db.execute("DELETE FROM leveling WHERE gid=?", (guild.id,))
-        self.db.execute("DELETE FROM economy WHERE gid=?", (guild.id,))
+        # self.db.execute("DELETE FROM economy WHERE gid=?", (guild.id,))
         self.db.execute("DELETE FROM tags WHERE gid=?", (guild.id,))
-        self.db.execute("DELETE FROM tbl_clan WHERE gid=?", (guild.id,))
-        self.db.execute("DELETE FROM dlram WHERE gid=?", (guild.id,))
+        # self.db.execute("DELETE FROM tbl_clan WHERE gid=?", (guild.id,))
+        # self.db.execute("DELETE FROM dlram WHERE gid=?", (guild.id,))
 
 
 async def on_command(self, ctx):
@@ -109,7 +109,7 @@ async def on_member_remove(self, member: discord.Member):
             survival = langs.td_dt(member.joined_at, "en_gb")
             await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))
         uid, gid = member.id, member.guild.id
-        self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
+        # self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
         sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
         if sel:
             if sel["xp"] < 0:
@@ -123,19 +123,21 @@ async def on_member_remove(self, member: discord.Member):
 async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {user} ({user.id}) just got banned from {guild.name}")
     message = f"{user} ({user.id}) has been **banned** from {guild.name}"
-    if guild.id == 568148147457490954:
-        await general.send(message, self.bot.get_channel(626028890451869707))
-    if guild.id == 738425418637639775:
-        await general.send(message, self.bot.get_channel(764469594303234078))
+    if self.bot.name == "suager":
+        if guild.id == 568148147457490954:
+            await general.send(message, self.bot.get_channel(626028890451869707))
+        if guild.id == 738425418637639775:
+            await general.send(message, self.bot.get_channel(764469594303234078))
 
 
 async def on_member_unban(self, guild: discord.Guild, user: discord.User):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {user} ({user.id}) just got unbanned from {guild.name}")
     message = f"{user} ({user.id}) has been **unbanned** from {guild.name}"
-    if guild.id == 568148147457490954:
-        await general.send(message, self.bot.get_channel(626028890451869707))
-    if guild.id == 738425418637639775:
-        await general.send(message, self.bot.get_channel(764469594303234078))
+    if self.bot.name == "suager":
+        if guild.id == 568148147457490954:
+            await general.send(message, self.bot.get_channel(626028890451869707))
+        if guild.id == 738425418637639775:
+            await general.send(message, self.bot.get_channel(764469594303234078))
 
 
 async def on_ready(self):
