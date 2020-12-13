@@ -324,8 +324,8 @@ class GA78(commands.Cog):
         year = planet["year"]
         years = year / 365.256
         local = year / days
-        output += f"Day length: {day:.2f} Earth hours ({days:.2f} Earth days)\n"
-        output += f"Year length: {year:.2f} Earth days ({years:.2f} Earth years) | {local:.2f} local solar days"
+        output += f"Day length: {day:,.2f} Earth hours ({days:,.2f} Earth days)\n"
+        output += f"Year length: {year:,.2f} Earth days ({years:,.2f} Earth years) | {local:,.2f} local solar days"
         return await general.send(f"Information on planet `87.78.{ss}.{p}`:", ctx.channel, embed=discord.Embed(colour=0xff0057, description=output))
 
 

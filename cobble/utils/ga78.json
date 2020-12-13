@@ -111,5 +111,134 @@
         "year": 328154.1158
       }
     }
+  },
+  "24": {
+    "name": "Derasennia",
+    "sun": {
+      "name": "Derasenno",
+      "mass": 0.71
+    },
+    "planets": {
+      "2": {
+        "name": "Sevartannia",
+        "local": null,
+        "distance": 0.172,
+        "temp": 383.95,
+        "day": 732.121,
+        "year": 26.03864216
+      },
+      "3": {
+        "name": "Vulkyrazzia",
+        "local": null,
+        "distance": 0.378,
+        "temp": 101.84,
+        "day": 71.735,
+        "year": 85.96740499
+      },
+      "4": {
+        "name": "Kuganmir",
+        "local": "Sinvimánia",
+        "distance": 0.617,
+        "temp": 4.46,
+        "day": 11.35289,
+        "year": 176.8209669
+      },
+      "5": {
+        "name": "Hosvalnerus",
+        "local": "Khasválnerakh",
+        "distance": 1.017,
+        "temp": -89.19,
+        "day": 23.7632,
+        "year": 374.7655634
+      },
+      "6": {
+        "name": "Tahvarsia",
+        "local": null,
+        "distance": 1.638,
+        "temp": -109.54,
+        "day": 37.199868,
+        "year": 765.5939477
+      },
+      "7": {
+        "name": "Ekainia",
+        "local": null,
+        "distance": 2.801,
+        "temp": -158.16,
+        "day": 27.7376,
+        "year": 1711.956231
+      },
+      "8": {
+        "name": "Hillavia",
+        "local": null,
+        "distance": 4.117,
+        "temp": -179.25,
+        "day": 721.821,
+        "year": 3051.185833
+      },
+      "9": {
+        "name": "Niili Sultah",
+        "local": null,
+        "distance": 7.081,
+        "temp": -195.7,
+        "day": 17.7721,
+        "year": 6882.739453
+      },
+      "10": {
+        "name": "Laanan-Killansis",
+        "local": null,
+        "distance": 10.055,
+        "temp": -231.06,
+        "day": 47.87654,
+        "year": 11646.45750
+      },
+      "11": {
+        "name": "Kuastall",
+        "local": "Kuastall",
+        "distance": 14.781,
+        "temp": -223.19,
+        "day": 25.700005,
+        "year": 20757.25154
+      },
+      "12": {
+        "name": "Devidar Kuastall",
+        "local": "Mennar Kuvastalaz",
+        "distance": 26.902,
+        "temp": -234.65,
+        "day": 27.1000389,
+        "year": 50965.57523
+      },
+      "13": {
+        "name": "Kulvijar Anaastah",
+        "local": null,
+        "distance": 42.236,
+        "temp": -243.83,
+        "day": 14.7211,
+        "year": 100259.7019
+      },
+      "14": {
+        "name": "Runastalnaria",
+        "local": null,
+        "distance": 68.845,
+        "temp": -250.19,
+        "day": 11.2673,
+        "year": 208644.9202
+      },
+      "15": {
+        "name": "Ohnulvar",
+        "local": null,
+        "distance": 124.61,
+        "temp": -256.08,
+        "day": 2472.48,
+        "year": 508072.4871
+      },
+      "16": {
+        "name": "Kaldar Azdal",
+        "local": null,
+        "distance": 181.93,
+        "temp": -259.02,
+        "day": 27.7,
+        "year": 896303.23
+      }
+    }
   }
 }

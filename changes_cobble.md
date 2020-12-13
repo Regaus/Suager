@@ -18,3 +18,6 @@
 
 ## v0.3-pre2 - 13 December
 - Added ga78 command, added data for SS-23
+
+## v0.3-pre3 - 13 December
+- SS-24 data
