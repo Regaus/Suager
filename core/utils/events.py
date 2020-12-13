@@ -79,7 +79,10 @@ async def on_command(self, ctx):
     if self.local_config["logs"]:
         logger.log(self.bot.name, "commands", send)
     print(send)
-    self.bot.usages[str(ctx.command)] += 1
+    try:
+        self.bot.usages[str(ctx.command)] += 1
+    except KeyError:
+        self.bot.usages[str(ctx.command)] = 1
 
 
 async def on_member_join(self, member: discord.Member):

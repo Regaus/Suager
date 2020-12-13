@@ -16,9 +16,10 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
-    if locale in ["rsl-1_kg", "rsl-1_ku"]:
+    if locale in ["rsl-1_kg", "rsl-1"]:
         value //= 2
-        names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"]
+        names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1_kg" else \
+            ["V", "KV", "UV", "DV", "TV", "SgV", "PV", "SnV", "EV", "OV", "ZV"]
         step = 4096
     if locale == "ru_ru":
         names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
@@ -51,7 +52,7 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
 
 def gl(ctx):
     if hasattr(ctx, "channel") and ctx.channel.id == 725835449502924901:
-        return "rsl-1_ku"
+        return "rsl-1"
     ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
     if ex and ctx.guild is not None:
         data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
@@ -88,7 +89,7 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
         name = name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1
     else:
         name_1, name_2 = get_data(what, locale)
-        cond = (v % 256) == 1 if locale == "rsl-1_ku" else v == 1
+        cond = (v % 100) == 1 if locale == "rsl-1" else v == 1
         name = name_1 if cond else name_2
     reverse = []
     return f"{name} {gns(v, locale)}" if locale in reverse else f"{gns(v, locale)} {name}"
