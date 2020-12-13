@@ -1,1 +1,115 @@
-{}
+{
+  "23": {
+    "name": "Ukkadar Viaru",
+    "sun": {
+      "name": "Senno",
+      "mass": 1.13
+    },
+    "planets": {
+      "2": {
+        "name": "Mirkida",
+        "local": null,
+        "distance": 0.468,
+        "temp": 145.1,
+        "day": 277.317,
+        "year": 116.940821
+      },
+      "3": {
+        "name": "Virkada",
+        "local": null,
+        "distance": 0.706,
+        "temp": 159.33,
+        "day": 169.386,
+        "year": 216.6728073
+      },
+      "4": {
+        "name": "Zeivela",
+        "local": null,
+        "distance": 1.214,
+        "temp": 18.1,
+        "day": 27.12176253,
+        "year": 488.5684168
+      },
+      "5": {
+        "name": "Kargadia",
+        "local": "Kargadia, Mennaughestaz",
+        "distance": 1.687,
+        "temp": -24.66,
+        "day": 37.49865756,
+        "year": 800.1666147
+      },
+      "6": {
+        "name": "Qevenerus",
+        "local": "Kaltarena, Djovenerys",
+        "distance": 2.811,
+        "temp": -43.15,
+        "day": 51.642812,
+        "year": 1721.427066
+      },
+      "7": {
+        "name": "Seibenerus",
+        "local": "Sebenerys",
+        "distance": 4.413,
+        "temp": -113.79,
+        "day": 11.89999,
+        "year": 3386.088072
+      },
+      "8": {
+        "name": "Urus",
+        "local": "Urus",
+        "distance": 6.752,
+        "temp": -162.13,
+        "day": 93.5277,
+        "year": 6408.356841
+      },
+      "9": {
+        "name": "Novedus",
+        "local": "Neryvedys",
+        "distance": 10.668,
+        "temp": -181.46,
+        "day": 112.516,
+        "year": 12726.87766
+      },
+      "10": {
+        "name": "Poledus",
+        "local": null,
+        "distance": 18.349,
+        "temp": -203.50,
+        "day": 351.2215,
+        "year": 28708.86081
+      },
+      "11": {
+        "name": "Reikemia",
+        "local": null,
+        "distance": 25.872,
+        "temp": -212.96,
+        "day": 149.60281,
+        "year": 48066.48482
+      },
+      "12": {
+        "name": "Ergynnia",
+        "local": null,
+        "distance": 35.714,
+        "temp": -225.27,
+        "day": 320.24231,
+        "year": 77956.99682
+      },
+      "13": {
+        "name": "Tarravia",
+        "local": null,
+        "distance": 63.773,
+        "temp": -237.32,
+        "day": 134.73822,
+        "year": 186016.9974
+      },
+      "14": {
+        "name": "Neicedia",
+        "local": null,
+        "distance": 93.108,
+        "temp": -243.5,
+        "day": 122.59628,
+        "year": 328154.1158
+      }
+    }
+  }
+}

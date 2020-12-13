@@ -15,3 +15,6 @@
 - Updated GA78 commands to mostly no longer being hidden (as most people can't access them anyways)
 - RSL-1 documentation command
 - Removed RSL numbers as separate command
+
+## v0.3-pre2 - 13 December
+- Added ga78 command, added data for SS-23

@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import datetime, timezone
 
@@ -43,7 +44,7 @@ def rsl_number(value: int):
     outputs = [thousand(_1000)] if _1000 > 0 else []
     large = []
     _value = value
-    _range = len(exp)
+    _range = len(exp) + 1
     for i in range(_range):
         _value //= 1000
         large.append(_value % 1000)
@@ -219,20 +220,20 @@ class GA78(commands.Cog):
 
     @commands.group(name="rsl1", aliases=["rsl"])
     @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196]
-                    and ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064])  # me, Leitoxz, Steir
+                    and ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rsl1(self, ctx: commands.Context):
         """ RSL-1 data """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
-    @rsl1.command(name="numbers", aliases=["n"])
+    @rsl1.command(name="numbers", aliases=["n", "number"])
     async def rsl1_numbers(self, ctx: commands.Context, number: int = None):
         """ Translate a number to RSL-1 """
         if number is None:
             return await general.send(f"This command can translate a number to RSL-1. For example, `{ctx.prefix}rsl1 {ctx.invoked_with} 1` "
                                       f"will translate the number 1 to RSL-1.", ctx.channel)
-        return await general.send(f"The RSL-1 for `{number:,}` is `{rsl_number(number)}`.", ctx.channel)
+        return await general.send(f"The RSL-1 for {number:,} is `{rsl_number(number)}`.", ctx.channel)
 
     @rsl1.command(name="phrases", aliases=["p", "d", "words", "w"])
     async def rsl1_words(self, ctx: commands.Context):
@@ -271,12 +272,61 @@ class GA78(commands.Cog):
             ["Happy New Year", "Kovanan Nuan Kaadun"],
             ["Merry Christmas", "Kovanon Raivasten"],
             ["son of a bitch", "seijanseunu"],
-            ["fuck off, fuck you", "heilarsa"]
+            ["fuck off/fuck you", "heilarsa"],
+            ["I'm on her", "naa an aan"]
         ]
         stuff.sort(key=lambda x: x[0].lower())
         output = [f'{en} = {rsl}' for en, rsl in stuff]
         return await general.send("An entire dictionary would be hard to make because the language changes over time, but here are some things you can "
                                   "say in RSL-1:\n" + "\n".join(output), ctx.channel)
+
+    @commands.command(name="ga78")
+    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])
+    async def ga78_info(self, ctx: commands.Context, ss: int = None, p: int = None):
+        """ Details on GA-78
+         ss = solar system """
+        data = json.loads(open("cobble/utils/ga78.json").read())
+        if ss is None:  # Solar system not specified
+            systems = []
+            for number, system in data.items():
+                systems.append(f"SS-{number}: {system['name']}")
+            return await general.send(f"Here is the list of all solar systems. For details on a specific one, enter `{ctx.prefix}{ctx.invoked_with} x` "
+                                      f"(replace x with system number)", ctx.channel, embed=discord.Embed(colour=0xff0057, description="\n".join(systems)))
+        try:
+            system = data[str(ss)]
+        except KeyError:
+            return await general.send(f"No data is available for SS-{ss}.", ctx.channel)
+        if p is None:
+            sun = system["sun"]
+            output = f"Sun:\nName in RSL-1: {sun['name']}\n"
+            mass = sun['mass']  # Mass
+            lum = mass ** 3.5   # Luminosity
+            d = mass ** 0.74    # Diameter
+            st = mass ** 0.505  # Surface temperature
+            lt = mass ** -2.5   # Lifetime
+            output += f"Mass: {mass:.2f} Solar\nLuminosity: {lum:.2f} Solar\nDiameter: {d:.2f} Solar\nSurface Temp.: {st:.2f} Solar\nLifetime: {lt:.2f} Solar" \
+                      f"\n\nPlanets:\n"
+            planets = []
+            for number, planet in system["planets"].items():
+                planets.append(f"{number}) {planet['name']}")
+            output += "\n".join(planets)
+            return await general.send(f"Here is the data on SS-{ss}. For details on a specific planet, use `{ctx.prefix}{ctx.invoked_with} {ss} x`\n"
+                                      f"__Note: Yes, planet numbers start from 2. That is because the star was counted as the number 1.__",
+                                      ctx.channel, embed=discord.Embed(colour=0xff0057, description=output))
+        try:
+            planet = system["planets"][str(p)]
+        except KeyError:
+            return await general.send(f"No data is available for planet {p} of SS-{ss}.", ctx.channel)
+        output = f"Name in RSL-1: {planet['name']}\nLocal name(s): {planet['local']}\n"
+        output += f"Distance from sun: {planet['distance']:.2f} AU\nAverage temperature: {planet['temp']:.2f}°C\n"
+        day = planet["day"]
+        days = day / 24
+        year = planet["year"]
+        years = year / 365.256
+        local = year / days
+        output += f"Day length: {day:.2f} Earth hours ({days:.2f} Earth days)\n"
+        output += f"Year length: {year:.2f} Earth days ({years:.2f} Earth years) | {local:.2f} local solar days"
+        return await general.send(f"Information on planet `87.78.{ss}.{p}`:", ctx.channel, embed=discord.Embed(colour=0xff0057, description=output))
 
 
 def setup(bot):
