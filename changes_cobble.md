@@ -21,3 +21,6 @@
 
 ## v0.3-pre3 - 13 December
 - SS-24 data
+
+## v0.3-pre4 - 14 December
+- Added achievement for achieving tiers on others

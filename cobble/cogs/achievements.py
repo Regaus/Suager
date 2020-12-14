@@ -21,9 +21,9 @@ class Achievements(commands.Cog):
         """ See what you or someone else has accomplished """
         # locale = langs.gl(ctx)
         user = who or ctx.author
-        achievement_levels = [10, 20, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200]
+        achievement_levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
         achievement_xp = [10000, 50000, 100000, 250000, 500000, 750000, 1000000, 1500000, 2000000, 2500000, 3000000, 4000000, 5000000, 7500000, 10000000]
-        achievements = 2
+        achievements = 3
         width = 1152
         large_size = 96
         img = Image.new("RGB", (width, 256 * achievements + large_size), color=(0, 0, 0))
@@ -88,6 +88,7 @@ class Achievements(commands.Cog):
             else:
                 break
         generate_box(0, tier, "XP Levels", f"Reach XP Level {req} in a server", max_level, req, prev)
+        min_tier = tier
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
         for req in achievement_xp:
@@ -96,11 +97,15 @@ class Achievements(commands.Cog):
                 prev = req
             else:
                 break
+        if tier < min_tier:
+            min_tier = tier
         generate_box(1, tier, "Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
+        req = min_tier + 1 if min_tier < 15 else 15
+        generate_box(achievements - 1, tier, "Achievements", f"Reach tier {req}", min_tier, req, min_tier)
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
-        return await general.send(f"**{ctx.author}**'s accomplishments", ctx.channel, file=discord.File(bio, filename="achievements.png"))
+        return await general.send(f"This is what **{user}** has accomplished so far.", ctx.channel, file=discord.File(bio, filename="achievements.png"))
 
 
 def setup(bot):
