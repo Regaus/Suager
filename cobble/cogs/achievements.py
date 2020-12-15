@@ -7,8 +7,24 @@ from PIL import Image, ImageDraw, ImageFont
 from core.utils import emotes, general
 
 # achievement_colours = ["808080", "ffffff", "ff0000", "ff4000", "ff8000", "ffff00", "80ff00", "32ff32", "00ff80", "00ffff", "ff00ff", "ff00a0", "ff0057"]
-achievement_colours = [(128, 128, 128), (255, 255, 255), (255, 0, 0), (255, 64, 0), (255, 128, 0), (255, 255, 0), (128, 255, 128), (50, 255, 50), (0, 255, 128),
-                       (0, 255, 255), (255, 0, 255), (255, 0, 160), (255, 0, 87)]
+achievement_colours = [
+    (96, 96, 96),     # Tier 0
+    (255, 255, 255),  # Tier 1
+    (255, 96, 96),    # Tier 2
+    (255, 0, 0),      # Tier 3
+    (255, 64, 0),     # Tier 4
+    (255, 170, 0),    # Tier 5
+    (255, 255, 0),    # Tier 6
+    (50, 255, 50),    # Tier 7
+    (0, 0, 255),      # Tier 8
+    (0, 255, 255),    # Tier 9
+    (0, 255, 128),    # Tier 10
+    (0, 128, 128),    # Tier 11
+    (128, 0, 255),    # Tier 12
+    (255, 0, 255),    # Tier 13
+    (255, 0, 160),    # Tier 14
+    (255, 0, 87)      # Tier 15
+]
 
 
 class Achievements(commands.Cog):
@@ -106,6 +122,24 @@ class Achievements(commands.Cog):
         img.save(bio, "PNG")
         bio.seek(0)
         return await general.send(f"This is what **{user}** has accomplished so far.", ctx.channel, file=discord.File(bio, filename="achievements.png"))
+
+    @commands.command(name="tiers")
+    @commands.is_owner()
+    async def tier_test(self, ctx: commands.Context):
+        """ Test tier colours """
+        from PIL import Image, ImageDraw, ImageFont
+        from io import BytesIO
+        img = Image.new("RGB", (2000, 200 * len(achievement_colours)), color=(0, 0, 0))
+        dr = ImageDraw.Draw(img)
+        font = ImageFont.truetype("assets/font.ttf", size=128)
+        for i in range(len(achievement_colours)):
+            paste = Image.new("RGB", (1500, 150), color=achievement_colours[i])
+            img.paste(paste, (500, 200 * i + 25))
+            dr.text((75, 200 * i + 12), f"Tier {i:>2d}", font=font, fill=(255, 255, 255))
+        bio = BytesIO()
+        img.save(bio, "PNG")
+        bio.seek(0)
+        return await general.send(None, ctx.channel, file=discord.File(bio, filename="test.png"))
 
 
 def setup(bot):
