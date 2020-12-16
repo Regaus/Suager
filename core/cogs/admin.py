@@ -157,7 +157,7 @@ class Admin(commands.Cog):
         """ Get logs """
         try:
             data = ""
-            for path, _, __ in os.walk(f"data/{self.bot.name}/logs"):
+            for path, _, __ in os.walk(f"data/logs/{self.bot.name}"):
                 if re.compile(r"(\d{4})-(\d{2})-(\d{2})").search(path):
                     filename = os.path.join(path, f"{log}.rsf")
                     # _path = path.replace("\\", "/")
@@ -209,7 +209,7 @@ class Admin(commands.Cog):
     async def log_date(self, ctx: commands.Context, date: str, log_file: str, *, search: str = None):
         """ Get logs """
         try:
-            filename = f"data/{self.bot.name}/logs/{date}/{log_file}.rsf"
+            filename = f"data/logs/{self.bot.name}/{date}/{log_file}.rsf"
             file = open(filename, "r", encoding="utf-8")
             if search is None:
                 result = file.read()
@@ -262,6 +262,33 @@ class Admin(commands.Cog):
         out = reload_extension(self.bot, "core", name)
         return await general.send(out, ctx.channel)
 
+    @commands.command(name="reloadshared", aliases=["rs"])
+    @commands.check(permissions.is_owner)
+    async def reload_shared(self, ctx: commands.Context, name: str = None):
+        """ Reload shared cogs """
+        shared = []
+        for _name, _cogs in self.bot.local_config["shared"].items():
+            for _cog in _cogs:
+                shared.append([_name, _cog])
+        if name is not None:
+            for base, cog in shared:
+                if name in cog:
+                    out = reload_extension(self.bot, base, cog)
+                    return await general.send(out, ctx.channel)
+            return await general.send(f"Looks like nothing was found for {name}...", ctx.channel)
+        else:
+            error_collection = []
+            for base, cog in shared:
+                try:
+                    self.bot.reload_extension(f"{base}.cogs.{cog}")
+                except Exception as e:
+                    error_collection.append([f"{base}/cogs/{cog}", f"{type(e).__name__}: {e}"])
+            if error_collection:
+                output = "\n".join([f"**{error[0]}** - `{error[1]}`" for error in error_collection])
+                logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Unsuccessfully reloaded all shared extensions")
+                return await general.send(f"Attempted to reload all shared extensions.\nThe following failed:\n\n{output}", ctx.channel)
+            return await general.send("Successfully reloaded all shared extensions", ctx.channel)
+
     @commands.command(name="reloadall", aliases=["rall", "ra"])
     @commands.check(permissions.is_owner)
     async def reload_all(self, ctx: commands.Context):
@@ -286,10 +313,11 @@ class Admin(commands.Cog):
                     except Exception as e:
                         error_collection.append([file, f"{type(e).__name__}: {e}"])
         if error_collection:
-            output = "\n".join([f"**{g[0]}** - `{g[1]}`" for g in error_collection])
+            output = "\n".join([f"**{error[0]}** - `{error[1]}`" for error in error_collection])
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Unsuccessfully reloaded all extensions")
             return await general.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}", ctx.channel)
-        await general.send("Successfully reloaded all extensions", ctx.channel)
         logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Successfully reloaded all extensions")
+        return await general.send("Successfully reloaded all extensions", ctx.channel)
 
     @commands.command(name="reloadutil", aliases=["ru"])
     @commands.check(permissions.is_owner)

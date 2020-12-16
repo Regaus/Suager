@@ -1,16 +1,16 @@
 import asyncio
-import json
 import random
 
 import aiohttp
 import discord
 from discord.ext import commands
 
-from core.utils import general, time, logger, http
+from core.utils import general, http, logger, time
 from languages import langs
 from suager.utils import lists
 
-changes = {"playing": 3601, "avatar": [25, -1], "ad": False}
+
+# changes = {"playing": 3601, "avatar": [25, -1], "ad": False}
 
 
 async def on_command_error(self, ctx, err):
@@ -142,22 +142,22 @@ async def on_member_unban(self, guild: discord.Guild, user: discord.User):
 
 async def on_ready(self):
     print(f"{time.time()} > {self.bot.local_config['name']} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
-    try:
-        times = json.loads(open(self.changes, 'r').read())
-    except Exception as e:
-        print(e)
-        times = changes.copy()
+    # try:
+    #     times = json.loads(open(self.changes, 'r').read())
+    # except Exception as e:
+    #     print(e)
+    #     times = changes.copy()
     # playing = f"{self.local_config['playing'][0]} | v{self.local_config['short_version']}"
     playing = f"Loading... | v{self.local_config['short_version']}"
     await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
     if self.local_config["logs"]:
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.local_config['name']} > Bot is online")
-    ad = times['ad']
-    if ad:
-        return
-    else:
-        times['ad'] = True
-        open(self.changes, 'w+').write(json.dumps(times))
+    # ad = times['ad']
+    # if ad:
+    #     return
+    # else:
+    #     times['ad'] = True
+    #     open(self.changes, 'w+').write(json.dumps(times))
 
 
 async def playing_changer(self):

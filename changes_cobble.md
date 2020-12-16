@@ -25,3 +25,7 @@
 ## v0.3-pre4 - 14 December
 - Added achievement for achieving tiers on others
 - Owner-only command to see the achievement tier colours
+
+## v1.0-pre1 - 16 December
+- Combined leveling and leaderboards with Suager
+- Shared database

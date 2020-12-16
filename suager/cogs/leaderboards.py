@@ -73,8 +73,18 @@ class Leaderboards(commands.Cog):
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's XP Leaderboard """
         locale = langs.gl(ctx)
-        return await leaderboard_calculator(self, ctx, "SELECT uid, name, disc, (xp/100)xp FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC",
+        return await leaderboard_calculator(self, ctx, "SELECT uid, name, disc, xp FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC",
                                             (ctx.guild.id,), top, "leaderboards_levels", locale, "xp", ctx.guild.name)
+
+    @commands.command(name="bank", aliases=["money"])
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.bot.name == "cobble")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def money_lb(self, ctx: commands.Context, top: str = ""):
+        """ Money Leaderboard """
+        locale = langs.gl(ctx)
+        return await leaderboard_calculator(
+            self, ctx, "SELECT * FROM economy WHERE money!=0 AND disc!=0 ORDER BY money DESC", (), top, "leaderboards_bank", locale, "money")
 
     @commands.command(name="glevels")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -94,7 +104,7 @@ class Leaderboards(commands.Cog):
         for thing in range(r):
             v = sl[thing][1]
             un.append(v[1])
-            x = langs.gns(int(v[0] / 100), locale)
+            x = langs.gns(int(v[0]), locale)
             xp.append(x)
             xpl.append(len(x))
         total = len(xp)

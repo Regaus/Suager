@@ -46,9 +46,12 @@ def _levels():
     req = 0
     xp = []
     for x in range(max_level):
-        power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
-        multiplier = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
-        base = x ** power + multiplier * x ** 2 + 7500 * x + 25000
+        if time.now(None) < time.dt(2021, 1, 1):
+            power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
+            multiplier = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
+            base = (x ** power + multiplier * x ** 2 + 7500 * x + 25000) / 100
+        else:
+            base = 1.25 * x ** 2 + x * 80 + 250
         req += int(base)
         if x not in bad:
             xp.append(int(req))
@@ -58,34 +61,36 @@ def _levels():
 
 
 def _level_history():
-    keys = ["v3", "v4", "v5", "v6_beta4", "v6_beta12", "v615", "v616"]
+    keys = ["v3", "v4", "v5", "v6_beta4", "v6_beta12", "v615", "v616", "v7"]
     req = {}
     xp = {}
     for key in keys:
         req[key] = 0
         xp[key] = []
-    req["v6_beta4"] = 15000
-    req["v6_beta12"] = 25000
+    req["v6_beta4"] = 150
+    req["v6_beta12"] = 250
     # 25000
     for x in range(max_level):
         v3 = x ** 2 + x * 75 + 200
-        req["v3"] += v3 * 100  # To scale them up to current leveling system
+        req["v3"] += v3
         v4 = 1.5 * x ** 2 + 125 * x + 200
-        req["v4"] += v4 * 100  # To scale them up to current leveling system
+        req["v4"] += v4
         v5 = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
-        req["v5"] += v5
+        req["v5"] += v5 / 100
         power_6b = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
         v6b = x ** power_6b + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
-        req["v6_beta4"] += v6b
+        req["v6_beta4"] += v6b / 100
         v6b12 = x ** power_6b + 200 * x ** 2 + 7500 * x + 25000
-        req["v6_beta12"] += v6b12
+        req["v6_beta12"] += v6b12 / 100
         power_61 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5
         v615 = x ** power_61 + 200 * x ** 2 + 7500 * x + 25000
-        req["v615"] += v615
+        req["v615"] += v615 / 100
         power_616 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
         multiplier_616 = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
         v616 = x ** power_616 + multiplier_616 * x ** 2 + 7500 * x + 25000
-        req["v616"] += v616
+        req["v616"] += v616 / 100
+        v7 = 1.25 * x ** 2 + x * 80 + 250
+        req["v7"] += v7
         if x not in bad:
             for key in keys:
                 xp[key].append(req[key])
@@ -95,15 +100,16 @@ def _level_history():
     return xp
 
 
-def convert_xp(xp: float):
-    return int(xp / 100)
+# def convert_xp(xp: float):
+#     return int(xp / 100)
 
 
 max_level = 200
 bad = [69, 420, 666, 1337]
 levels = _levels()
 level_history = _level_history()
-xp_amounts = [2250, 3000]
+# xp_amounts = [2250, 3000]
+xp_amounts = [20, 27]
 
 
 class Leveling(commands.Cog):
@@ -119,8 +125,8 @@ class Leveling(commands.Cog):
         outputs = []
         for level in __levels:
             _level = level - 1
-            lv1 = int(levels[_level] / 100)
-            diff = lv1 - int(levels[_level - 1] / 100) if level > 1 else lv1
+            lv1 = int(levels[_level])
+            diff = lv1 - int(levels[_level - 1]) if level > 1 else lv1
             outputs.append(f"Level {level:>3} | Req {lv1:>9,} | Diff {diff:>6,}")
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
@@ -131,13 +137,13 @@ class Leveling(commands.Cog):
     async def old_levels(self, ctx: commands.Context, level: int = None):
         """ See previous Suager leveling systems """
         names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6_beta4": "Suager v6-beta4", "v6_beta12": "Suager v6-beta12",
-                 "v615": "Suager v6.1.5", "v616": "Suager v6.1.6"}
+                 "v615": "Suager v6.1.5", "v616": "Suager v6.1.6", "v7": "Suager v7"}
         if level is not None:
             if level > max_level:
                 return await general.send(f"The max level is {max_level:,}", ctx.channel)
             output = ""
             for key, name in names.items():
-                output += f"\n`{name:<16} -> {convert_xp(level_history[key][level - 1]):>11,} XP`"
+                output += f"\n`{name:<16} -> {level_history[key][level - 1]:>11,} XP`"
             return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
         else:
             xp_ = self.bot.db.fetchrow("SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
@@ -151,171 +157,173 @@ class Leveling(commands.Cog):
                     else:
                         break
                 output += f"\n`{name:<16} -> Level {level:>3}`"
-            return await general.send(f"{ctx.author.name}, you have **{xp // 100:,} XP** in this server. Here are the levels you could have been on "
+            return await general.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you could have been on "
                                       f"in the old leveling system:{output}", ctx.channel)
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
-        if ctx.author.bot or ctx.guild is None:
-            return
-        if ctx.content == "" and ctx.type != discord.MessageType.default:
-            return
-        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        xp_disabled = False
-        if _settings:
-            __settings = json.loads(_settings['data'])
-            try:
-                if not __settings['leveling']['enabled']:
-                    xp_disabled = True
-                ic = __settings['leveling']['ignored_channels']
-                if ctx.channel.id in ic:
-                    xp_disabled = True
-                    # return
-            except KeyError:
-                pass
-        else:
-            __settings = settings.template.copy()
-            xp_disabled = True
-        data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-        if data:
-            level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
-        else:
-            level, xp, last, ls = [0, 0, 0, 0]
-        if ls is None:
-            ls = 0
-        now = time.now_ts()
-        td = now - last
-        _td = now - ls
-        if td < 5:
-            mult = 0
-        elif 5 <= td < 60:
-            mult = (td - 5) / 55
-        else:
-            mult = 1
-        if _td > 60:
-            mult = 1
-        full = mult == 1
-        dc = mult == 0  # didn't count
-        x1, x2 = xp_amounts
-        try:
-            sm = float(__settings['leveling']['xp_multiplier'])
-        except KeyError:
-            sm = 1
-        c = 0.67 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
-        c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069] else c
-        new = int(random.uniform(x1, x2) * sm * mult * c)
-        if ctx.author.id == 592345932062916619:
-            new = 0
-        if not xp_disabled:
-            xp += new
-        if not xp_disabled:
-            lu, ld = False, False
-            if level >= 0:
-                while level < max_level and xp >= levels[level]:
-                    level += 1
-                    lu = True
-                while level > 0 and xp < levels[level - 1]:
-                    level -= 1
-                    ld = True
-                if level == 0 and xp < 0:
-                    level = -1
-                    ld = True
-            elif level == -1:
-                if xp >= 0:
-                    level = 0
-                    lu = True
-                if xp < -levels[0]:
-                    level -= 1
-                    ld = True
-            else:
-                while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
-                    level += 1
-                    lu = True
-                while level >= -max_level and xp < -levels[(-level) - 1]:
-                    level -= 1
-                    ld = True
-            if lu:
+        if self.bot.name == "suager":
+            if ctx.author.bot or ctx.guild is None:
+                return
+            if ctx.content == "" and ctx.type != discord.MessageType.default:
+                return
+            _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+            xp_disabled = False
+            if _settings:
+                __settings = json.loads(_settings['data'])
                 try:
-                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
+                    if not __settings['leveling']['enabled']:
+                        xp_disabled = True
+                    ic = __settings['leveling']['ignored_channels']
+                    if ctx.channel.id in ic:
+                        xp_disabled = True
+                        # return
                 except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
-                try:
-                    ac = __settings['leveling']['announce_channel']
-                    if ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
-                    else:
-                        ch = ctx.channel
-                except KeyError:
-                    ch = ctx.channel
-                try:
-                    await general.send(send, ch, u=[ctx.author])
-                except discord.Forbidden:
-                    pass  # Well, if it can't send it there, too bad.
-            if ld:
-                try:
-                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
-                except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.UmmOK}"
-                try:
-                    ac = __settings['leveling']['announce_channel']
-                    if ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
-                    else:
-                        ch = ctx.channel
-                except KeyError:
-                    ch = ctx.channel
-                try:
-                    await general.send(send, ch, u=[ctx.author])
-                except discord.Forbidden:
                     pass
-            reason = f"Level Rewards - Level {level}"
+            else:
+                __settings = settings.template.copy()
+                xp_disabled = True
+            data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            if data:
+                level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
+            else:
+                level, xp, last, ls = [0, 0, 0, 0]
+            if ls is None:
+                ls = 0
+            now = time.now_ts()
+            td = now - last
+            _td = now - ls
+            if td < 5:
+                mult = 0
+            elif 5 <= td < 60:
+                mult = (td - 5) / 55
+            else:
+                mult = 1
+            if _td > 60:
+                mult = 1
+            full = mult == 1
+            dc = mult == 0  # didn't count
+            x1, x2 = xp_amounts
             try:
-                rewards = __settings['leveling']['rewards']
-                if rewards:  # Don't bother if they're empty
-                    l1, l2 = [], []
-                    rewards.sort(key=lambda x: x['level'])
-                    for i in range(len(rewards)):
-                        l1.append(rewards[i]['level'])
-                        l2.append(rewards[i]['role'])
-                    roles = [r.id for r in ctx.author.roles]
-                    for i in range(len(rewards)):
-                        role = discord.Object(id=l2[i])
-                        has_role = l2[i] in roles
-                        if level >= l1[i]:
-                            if i < len(rewards) - 1:
-                                if level < l1[i + 1]:
+                sm = float(__settings['leveling']['xp_multiplier'])
+            except KeyError:
+                sm = 1
+            c = 0.67 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
+            c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069] else c
+            new = int(random.uniform(x1, x2) * sm * mult * c)
+            if ctx.author.id == 592345932062916619:
+                new = 0
+            if not xp_disabled:
+                xp += new
+            if not xp_disabled:
+                lu, ld = False, False
+                if level >= 0:
+                    while level < max_level and xp >= levels[level]:
+                        level += 1
+                        lu = True
+                    while level > 0 and xp < levels[level - 1]:
+                        level -= 1
+                        ld = True
+                    if level == 0 and xp < 0:
+                        level = -1
+                        ld = True
+                elif level == -1:
+                    if xp >= 0:
+                        level = 0
+                        lu = True
+                    if xp < -levels[0]:
+                        level -= 1
+                        ld = True
+                else:
+                    while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
+                        level += 1
+                        lu = True
+                    while level >= -max_level and xp < -levels[(-level) - 1]:
+                        level -= 1
+                        ld = True
+                if lu:
+                    try:
+                        send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
+                            .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
+                    except KeyError:
+                        send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
+                    try:
+                        ac = __settings['leveling']['announce_channel']
+                        if ac != 0:
+                            ch = self.bot.get_channel(ac)
+                            if ch is None or ch.guild.id != ctx.guild.id:
+                                ch = ctx.channel
+                        else:
+                            ch = ctx.channel
+                    except KeyError:
+                        ch = ctx.channel
+                    try:
+                        await general.send(send, ch, u=[ctx.author])
+                    except discord.Forbidden:
+                        pass  # Well, if it can't send it there, too bad.
+                if ld:
+                    try:
+                        send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
+                            .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
+                    except KeyError:
+                        send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.UmmOK}"
+                    try:
+                        ac = __settings['leveling']['announce_channel']
+                        if ac != 0:
+                            ch = self.bot.get_channel(ac)
+                            if ch is None or ch.guild.id != ctx.guild.id:
+                                ch = ctx.channel
+                        else:
+                            ch = ctx.channel
+                    except KeyError:
+                        ch = ctx.channel
+                    try:
+                        await general.send(send, ch, u=[ctx.author])
+                    except discord.Forbidden:
+                        pass
+                reason = f"Level Rewards - Level {level}"
+                try:
+                    rewards = __settings['leveling']['rewards']
+                    if rewards:  # Don't bother if they're empty
+                        l1, l2 = [], []
+                        rewards.sort(key=lambda x: x['level'])
+                        for i in range(len(rewards)):
+                            l1.append(rewards[i]['level'])
+                            l2.append(rewards[i]['role'])
+                        roles = [r.id for r in ctx.author.roles]
+                        for i in range(len(rewards)):
+                            role = discord.Object(id=l2[i])
+                            has_role = l2[i] in roles
+                            if level >= l1[i]:
+                                if i < len(rewards) - 1:
+                                    if level < l1[i + 1]:
+                                        if not has_role:
+                                            await ctx.author.add_roles(role, reason=reason)
+                                    else:
+                                        if has_role:
+                                            await ctx.author.remove_roles(role, reason=reason)
+                                else:
                                     if not has_role:
                                         await ctx.author.add_roles(role, reason=reason)
-                                else:
-                                    if has_role:
-                                        await ctx.author.remove_roles(role, reason=reason)
                             else:
-                                if not has_role:
-                                    await ctx.author.add_roles(role, reason=reason)
-                        else:
-                            if has_role:
-                                await ctx.author.remove_roles(role, reason=reason)
-            except KeyError:
-                pass  # If no level rewards, don't even bother
-            except discord.Forbidden:
-                await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.", ctx.channel)
-            except Exception as e:
-                print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
-        # _last = last if dc else now
-        last_send = last if dc else now
-        minute = now if full else ls
-        if data:
-            self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
-                                (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
-        else:
-            self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
+                                if has_role:
+                                    await ctx.author.remove_roles(role, reason=reason)
+                except KeyError:
+                    pass  # If no level rewards, don't even bother
+                except discord.Forbidden:
+                    await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.",
+                                       ctx.channel)
+                except Exception as e:
+                    print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
+            # _last = last if dc else now
+            last_send = last if dc else now
+            minute = now if full else ls
+            if data:
+                self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
+                                    (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+            else:
+                self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
 
     @commands.command(name="rewards")
     @commands.guild_only()
@@ -386,7 +394,7 @@ class Leveling(commands.Cog):
                     req = 0
                 else:
                     req = int(-levels[(-level) - 2])
-                r2 = langs.gns(int(req / 100), locale)
+                r2 = langs.gns(int(req), locale)
             except IndexError:
                 req = float("inf")
                 r2 = langs.gls("generic_max", locale)
@@ -408,10 +416,16 @@ class Leveling(commands.Cog):
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
-                dr.text((text_x, 130), f"{place} | {_level}", font=font_small, fill=font_colour)
-                r1 = langs.gns(int(xp / 100), locale)
+                new_level = 0
+                for level_req in level_history["v7"]:
+                    if xp >= level_req:
+                        new_level += 1
+                    else:
+                        break
+                dr.text((text_x, 130), f"{place} | {_level} | New Level {new_level}", font=font_small, fill=font_colour)
+                r1 = langs.gns(int(xp), locale)
                 r3 = langs.gfs(progress, locale, 2, True)
-                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp) / 100, locale)) if level < max_level else ""
+                r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp), locale)) if level < max_level else ""
                 dr.text((text_x, (298 if r4 else 362)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
                 progress = 0.5
@@ -434,6 +448,8 @@ class Leveling(commands.Cog):
             img.save(bio, "PNG")
             bio.seek(0)
             r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
+            if time.now(None) < time.dt(2021, 1, 1):
+                r += "\n__Note: Levels will be updated on **1st January 2021**. You can see your level after the update as New Level.__"
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
     @commands.command(name="rank", aliases=["level"])
@@ -479,7 +495,7 @@ class Leveling(commands.Cog):
                 level += 1
             else:
                 break
-        __xp = int(_xp / 100)
+        __xp = int(_xp)
         return await general.send(langs.gls("leveling_rank_global", locale, user, langs.gns(__xp, locale), place, langs.gns(level, locale)), ctx.channel)
 
     @commands.group(name="crank", aliases=["customrank"])
@@ -561,7 +577,7 @@ class Leveling(commands.Cog):
                 dm = __settings['leveling']['xp_multiplier']
             except KeyError:
                 dm = 1
-        base = langs.gls("leveling_xplevel_main", locale, langs.gns(int(r / 100), locale), langs.gns(level, locale))
+        base = langs.gls("leveling_xplevel_main", locale, langs.gns(int(r), locale), langs.gns(level, locale))
         extra = ""
         if xp < r:
             x1, x2 = [val * dm for val in xp_amounts]
@@ -571,7 +587,7 @@ class Leveling(commands.Cog):
             except (OverflowError, OSError):
                 error = "Never"
                 t1, t2 = [error, error]
-            extra = langs.gls("leveling_xplevel_extra", locale, langs.gns(int((r - xp) / 100), locale), t1, t2)
+            extra = langs.gls("leveling_xplevel_extra", locale, langs.gns(int((r - xp)), locale), t1, t2)
         return await general.send(f"{base}{extra}", ctx.channel)
 
     @commands.command(name="nextlevel", aliases=["nl"])
@@ -595,7 +611,7 @@ class Leveling(commands.Cog):
         level, xp = [data['level'], data['xp']]
         if level == max_level:
             return await general.send(langs.gls("leveling_next_level_max", locale, ctx.author.name), ctx.channel)
-        r1 = langs.gns(int(xp / 100), locale)
+        r1 = langs.gns(int(xp), locale)
         try:
             if level >= 0:
                 r = int(levels[level])  # Requirement to next level
@@ -616,7 +632,7 @@ class Leveling(commands.Cog):
             p = 0
         req = r - xp
         pr = (xp - p) / (r - p)
-        r2, r3, r4 = langs.gns(r / 100, locale), langs.gns(req / 100, locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
+        r2, r3, r4 = langs.gns(r, locale), langs.gns(req, locale), langs.gfs(pr if pr < 1 else 1, locale, 1, True)
         r5 = langs.gns(level + 1, locale)
         normal = 1
         x1, x2 = [val * normal * dm for val in xp_amounts]

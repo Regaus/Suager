@@ -11,13 +11,14 @@
         "S/"
       ],
       "short_version": "6.4",
-      "version": "6.4.3",
-      "last_update": 1607464003,
+      "version": "7.0-pre1",
+      "last_update": 1608155080,
       "first_version": 1557781320,
       "major_release": 1597500778,
       "logs": true,
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],
+      "shared": {},
       "home_server_id": 738425418637639775,
       "home_invite": "",
       "error_channel": 738442483591151638,
@@ -34,13 +35,19 @@
         "C."
       ],
       "short_version": "0.3",
-      "version": "0.3-pre4",
-      "last_update": 1607989252,
+      "version": "7.0-pre1",
+      "last_update": 1608155080,
       "first_version": 1607190007,
       "major_release": 1,
       "logs": true,
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],
+      "shared": {
+        "suager": [
+          "leveling",
+          "leaderboards"
+        ]
+      },
       "home_server_id": 738425418637639775,
       "home_invite": "",
       "error_channel": 738442483591151638,

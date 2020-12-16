@@ -7,7 +7,7 @@ import aiohttp
 import discord
 
 from core.utils import bot_data, database, general, time
-from core.utils.events import changes
+from core.utils.general import print_error
 
 boot_time = time.now(None)
 print(f"{time.time()} > Initialisation Started")
@@ -41,14 +41,14 @@ async def get_prefix(_bot, ctx):
 for i in range(len(config["bots"])):
     local_config = config["bots"][i]
     _name = local_config["internal_name"]
-    fn = f"data/{_name}/changes.json"
-    try:
-        times = json.loads(open(fn, 'r').read())
-    except Exception as e:
-        print(e)
-        times = changes.copy()
-    times['ad'] = False
-    open(fn, 'w+').write(json.dumps(times))
+    # fn = f"data/{_name}/changes.json"
+    # try:
+    #      times = json.loads(open(fn, 'r').read())
+    # except Exception as e:
+    #     print(e)
+    #     times = changes.copy()
+    # times['ad'] = False
+    # open(fn, 'w+').write(json.dumps(times))
     blacklist = json.loads(open("blacklist.json", "r").read())
     bot = bot_data.Bot(blacklist, command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
@@ -58,7 +58,7 @@ for i in range(len(config["bots"])):
     bot.local_config = local_config
     bot.config = config
     bot.name = local_config["internal_name"]
-    bot.db = database.Database(bot.name)
+    bot.db = database.Database()
     if bot.name == "suager":
         bot.db.execute("UPDATE tbl_clan SET usage=0")
     try:
@@ -73,6 +73,12 @@ for i in range(len(config["bots"])):
             name = file[:-3]
             if name not in local_config["exclude_core_cogs"]:
                 bot.load_extension(f"core.cogs.{name}")
+    for bot_name, cogs in bot.local_config["shared"].items():
+        for cog in cogs:
+            try:
+                bot.load_extension(f"{bot_name}.cogs.{cog}")
+            except FileNotFoundError:
+                print_error(f"File {bot_name}/cogs/{cog}.py was not found...")
     bot.load_extension("jishaku")
     bot.usages = {}
     for command in bot.commands:

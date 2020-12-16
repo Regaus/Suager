@@ -12,7 +12,7 @@ class Events(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = self.bot.db
-        self.changes = f"data/{self.bot.name}/changes.json"
+        # self.changes = f"data/{self.bot.name}/changes.json"
         self.config = self.bot.config
         self.exists = False
         self.local_config = self.bot.local_config

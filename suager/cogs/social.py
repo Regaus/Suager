@@ -210,7 +210,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
