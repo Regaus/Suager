@@ -53,7 +53,6 @@ class Achievements(commands.Cog):
             await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
             font, font_med, font_small = None, None, None
         w, _ = dr.textsize(f"{user}", font=font)
-        dr.text(((width - w) / 2, -15), f"{user}", font=font, fill=(255, 0, 87))
         max_description = "Highest achievement tier reached!"
 
         def get_colour(level: int):
@@ -104,7 +103,7 @@ class Achievements(commands.Cog):
             else:
                 break
         generate_box(0, tier, "XP Levels", f"Reach XP Level {req} in a server", max_level, req, prev)
-        min_tier = tier
+        tiers = [tier]
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
         for req in achievement_xp:
@@ -113,11 +112,13 @@ class Achievements(commands.Cog):
                 prev = req
             else:
                 break
-        if tier < min_tier:
-            min_tier = tier
+        tiers.append(tier)
         generate_box(1, tier, "Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
+        min_tier = min(tiers)
+        max_tier = max(tiers)
         req = min_tier + 1 if min_tier < 15 else 15
         generate_box(achievements - 1, tier, "Achievements", f"Reach tier {req}", min_tier, req, min_tier)
+        dr.text(((width - w) / 2, -15), f"{user}", font=font, fill=achievement_colours[max_tier])
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
