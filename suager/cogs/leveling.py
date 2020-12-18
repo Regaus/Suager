@@ -51,7 +51,8 @@ def _levels():
             multiplier = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
             base = (x ** power + multiplier * x ** 2 + 7500 * x + 25000) / 100
         else:
-            base = 1.25 * x ** 2 + x * 80 + 250
+            # base = 1.25 * x ** 2 + x * 80 + 250
+            base = x ** 2 + 99 * x + 175
         req += int(base)
         if x not in bad:
             xp.append(int(req))
@@ -89,7 +90,7 @@ def _level_history():
         multiplier_616 = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
         v616 = x ** power_616 + multiplier_616 * x ** 2 + 7500 * x + 25000
         req["v616"] += v616 / 100
-        v7 = 1.25 * x ** 2 + x * 80 + 250
+        v7 = x ** 2 + 99 * x + 175
         req["v7"] += v7
         if x not in bad:
             for key in keys:
@@ -143,7 +144,7 @@ class Leveling(commands.Cog):
                 return await general.send(f"The max level is {max_level:,}", ctx.channel)
             output = ""
             for key, name in names.items():
-                output += f"\n`{name:<16} -> {level_history[key][level - 1]:>11,} XP`"
+                output += f"\n`{name:<16} -> {level_history[key][level - 1]:>10,.0f} XP`"
             return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
         else:
             xp_ = self.bot.db.fetchrow("SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
