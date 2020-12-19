@@ -559,3 +559,6 @@
 - Combined leveling and leaderboards with CobbleBot
 - Shared database
 - Removed changes.json since it's useless by now
+
+## v7.0-pre2 - 19 December
+- Updated RSL-1 locale

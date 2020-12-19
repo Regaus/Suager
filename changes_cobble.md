@@ -29,3 +29,6 @@
 ## v1.0-pre1 - 16 December
 - Combined leveling and leaderboards with Suager
 - Shared database
+
+## v1.0-pre2 - 19 December
+- Updated RSL-1 locale

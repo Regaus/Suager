@@ -11,8 +11,8 @@
         "S/"
       ],
       "short_version": "6.4",
-      "version": "7.0-pre1",
-      "last_update": 1608155080,
+      "version": "7.0-pre2",
+      "last_update": 1608394824,
       "first_version": 1557781320,
       "major_release": 1597500778,
       "logs": true,
@@ -35,8 +35,8 @@
         "C."
       ],
       "short_version": "0.3",
-      "version": "7.0-pre1",
-      "last_update": 1608155080,
+      "version": "1.0-pre2",
+      "last_update": 1608394828,
       "first_version": 1607190007,
       "major_release": 1,
       "logs": true,

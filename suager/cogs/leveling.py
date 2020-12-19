@@ -158,8 +158,8 @@ class Leveling(commands.Cog):
                     else:
                         break
                 output += f"\n`{name:<16} -> Level {level:>3}`"
-            return await general.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you could have been on "
-                                      f"in the old leveling system:{output}", ctx.channel)
+            return await general.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you would have been on "
+                                      f"in the older leveling systems:{output}", ctx.channel)
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):

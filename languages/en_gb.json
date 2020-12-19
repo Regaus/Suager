@@ -276,7 +276,7 @@
   "tags_list_uses": ["use", "uses"],
   "tags_rename_already": "There is already a tag named `{0}`.",
   "tags_rename_deny": "You can't rename a tag you don't own.",
-  "tags_rename_success": "Tag `{0}` is now renamed to {1}.",
+  "tags_rename_success": "Tag `{0}` is now renamed to `{1}`.",
   "tags_search": "Tags in {0} that contain the search substring, sorted by name\nPage {1} of {2}\n{3}```",
   "tags_search_none": "There are no tags in {0} that matched the search.",
   "tags_top": "Tags in {0} - Sorted by usage\nPage {1} of {2}\n{3}```",
