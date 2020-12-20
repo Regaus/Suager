@@ -46,13 +46,14 @@ class Events(commands.Cog):
                     if word in ctx.content.lower():
                         await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.blocked_logs)
                         break
-        if ctx.channel.id == 742886280911913010:
-            for channel in self.updates:
-                try:
-                    if channel is not None:
-                        await general.send(f"{ctx.author} | #{ctx.channel.name} ({ctx.guild.name}) | {time.time()}\n{ctx.content}", channel)
-                except Exception as e:
-                    await general.send(f"on_message > Update announcement > {channel} > {type(e).__name__}: {e}", ctx.channel)
+        if self.bot.name == "suager":
+            if ctx.channel.id == 742886280911913010:
+                for channel in self.updates:
+                    try:
+                        if channel is not None:
+                            await general.send(f"{ctx.author} | #{ctx.channel.name} ({ctx.guild.name}) | {time.time()}\n{ctx.content}", channel)
+                    except Exception as e:
+                        await general.send(f"on_message > Update announcement > {channel} > {type(e).__name__}: {e}", ctx.channel)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):

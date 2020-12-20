@@ -35,3 +35,6 @@
 
 ## v1.0-pre3 - 20 December
 - Removed shop and buy commands
+
+## v1.0.0 - 20 December
+- Generate colour on the bot instead of using the AlexFlipnote API

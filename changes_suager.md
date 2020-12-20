@@ -555,7 +555,7 @@
 - Merged Discord into Utility and moved dm, atell, tell, say into Utility
 
 ## v7.0-pre1 - 16 December
-- Added new leveling system that should come into effect on 1st January 2020
+- Added new leveling system that should come into effect on 1st January 2021
 - Combined leveling and leaderboards with CobbleBot
 - Shared database
 - Removed changes.json since it's useless by now
@@ -566,3 +566,6 @@
 ## v7.0-pre3 - 20 December
 - Replaced shop with roles
 - Fixed beer reason
+
+## v7.0.0 - 20 December
+- Generate colour on the bot instead of using the AlexFlipnote API

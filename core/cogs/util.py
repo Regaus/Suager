@@ -6,6 +6,7 @@ from io import BytesIO
 import discord
 import pytz
 from discord.ext import commands
+from PIL import Image, ImageDraw, ImageFont
 
 from core.utils import arg_parser, bases, emotes, general, http, permissions, time
 from languages import langs
@@ -211,45 +212,135 @@ class Utility(commands.Cog):
         return await general.send(f"Data for {_place}:\n{status}\n{trams}", ctx.channel)
 
     @commands.command(name="colour", aliases=["color"])
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def colour(self, ctx: commands.Context, colour: str):
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    async def colour(self, ctx: commands.Context, colour: str = "random"):
         """ Information on a colour """
         locale = langs.gl(ctx)
         # async with ctx.typing():
         # c = str(ctx.invoked_with)
         if colour.lower() == "random":
-            _colour = hex(random.randint(0, 0xffffff))[2:]
-            a = 6
+            # _colour = hex(random.randint(0, 0xffffff))[2:] + "ff"
+            _colour = f"{random.randint(0, 0xffffff):06x}ff"
+            # a = 6
         else:
             try:
-                _colour = hex(int(colour, base=16))[2:]
+                if colour[0] == "#":
+                    colour = colour[1:]
+                # _colour = hex(int(colour, base=16))[2:]
                 a = len(colour)
-                if a != 3 and a != 6:
+                if a == 3:
+                    d, e, f = colour
+                    colour = f"{d}{d}{e}{e}{f}{f}"  # Quality code, yes
+                    a = 6
+                if a == 6:
+                    colour += "ff"
+                    a = 8
+                if a != 8:
                     return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
+                _colour = f"{int(colour, 16):08x}"
             except Exception as e:
                 return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
-        message = await general.send(f"{emotes.Loading} Getting data about colour #{colour}...", ctx.channel)
+        # message = await general.send(f"{emotes.Loading} Getting data about colour #{colour}...", ctx.channel)
+        # try:
+        #     _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read",
+        #                            headers={"Authorization": self.bot.config["alex_api_token"]})
+        #     data = json.loads(_data)
+        # except json.JSONDecodeError:
+        #     return await general.send("An error occurred with the API. Try again later.", ctx.channel)
+        # if a == 3:
+        #     d, e, f = colour
+        #     g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
+        #     embed = discord.Embed(colour=g)
+        # else:
+        hex_6 = _colour[:6]
+        hex_8 = _colour
+        int_6 = int(_colour[:6], 16)
+        int_8 = int(_colour, 16)
+        embed = discord.Embed(colour=int_6, base=16)
+        rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16), int(_colour[6:8], 16))
+        rgba_1 = tuple(f"{value / 255:.4f}" for value in rgba_255)
+        rgba_1_6 = f"({', '.join(rgba_1[:3])})"
+        rgba_1_8 = f"({', '.join(rgba_1)})"
+        brightness = sum(rgba_255[:3]) // 3
+        red, green, blue, alpha = rgba_255
+        # embed.title = langs.gls("images_colour_name", locale, data['name'])
+        embed.add_field(name=langs.gls("images_colour_hex", locale), value=f'RGB = #{hex_6}\nRGBA = #{hex_8}', inline=False)
+        embed.add_field(name=langs.gls("images_colour_int", locale), value=f'RGB = {int_6}\nRGBA = {int_8}', inline=False)
+        embed.add_field(name=langs.gls("images_colour_rgb", locale) + " (0-255)", value=f"RGB = {rgba_255[:3]}\nRGBA = {rgba_255}", inline=False)
+        embed.add_field(name=langs.gls("images_colour_rgb", locale) + " (0-1)", value=f"RGB = {rgba_1_6}\nRGBA = {rgba_1_8}", inline=False)
+        embed.add_field(name=langs.gls("images_colour_brightness", locale), value=str(brightness), inline=False)
+        embed.add_field(name=langs.gls("images_colour_font", locale), inline=False,
+                        value="#000000" if (brightness >= 128 and alpha >= 128) or green == 255 else "#ffffff")
+        image1 = Image.new(mode="RGBA", size=(512, 512), color=rgba_255)
+        bio1 = BytesIO()
+        image1.save(bio1, "PNG")
+        bio1.seek(0)
+        embed.set_thumbnail(url="attachment://colour.png")
+        # rows = 3 if alpha in [0, 255] else 4
+        rows = 4
+        font_size = 48
+        size = 256
         try:
-            _data = await http.get(f"https://api.alexflipnote.dev/colour/{_colour}", res_method="read",
-                                   headers={"Authorization": self.bot.config["alex_api_token"]})
-            data = json.loads(_data)
-        except json.JSONDecodeError:
-            return await general.send("An error occurred with the API. Try again later.", ctx.channel)
-        if a == 3:
-            d, e, f = colour
-            g = int(f"{d}{d}{e}{e}{f}{f}", base=16)
-            embed = discord.Embed(colour=g)
-        else:
-            embed = discord.Embed(colour=int(_colour, base=16))
-        embed.title = langs.gls("images_colour_name", locale, data['name'])
-        embed.add_field(name=langs.gls("images_colour_hex", locale), value=data["hex"], inline=True)
-        embed.add_field(name=langs.gls("images_colour_rgb", locale), value=data["rgb"][4:-1], inline=True)
-        embed.add_field(name=langs.gls("images_colour_int", locale), value=data["int"], inline=True)
-        embed.add_field(name=langs.gls("images_colour_brightness", locale), value=langs.gns(data["brightness"], locale), inline=True)
-        embed.add_field(name=langs.gls("images_colour_font", locale), value=data["blackorwhite_text"], inline=True)
-        embed.set_thumbnail(url=data["image"])
-        embed.set_image(url=data["image_gradient"])
-        return await message.edit(content=None, embed=embed)
+            font = ImageFont.truetype("assets/font.ttf", size=font_size)
+        except ImportError:
+            await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
+            font = None
+        image2 = Image.new(mode="RGBA", size=(size * 11, size * rows), color=(0, 0, 0, 1))
+        up_red, up_green, up_blue = (255 - red) / 10, (255 - green) / 10, (255 - blue) / 10
+        down_red, down_green, down_blue = red / 10, green / 10, blue / 10
+        alpha_up = (255 - alpha) / 10
+        alpha_down = alpha / 10
+
+        def _hex(value: int):
+            return f"{value:02X}"
+        for i in range(11):
+            start2a = (size * i, 0)
+            start2b = (size * i, size)
+            start2c = (size * i, size * 2)
+            start2d = (size * i, size * 3)
+            red2a, green2a, blue2a = int(red + up_red * i), int(green + up_green * i), int(blue + up_blue * i)
+            red2b, green2b, blue2b = int(red - down_red * i), int(green - down_green * i), int(blue - down_blue * i)
+            alpha2c = int(alpha + alpha_up * i)
+            alpha2d = int(alpha - alpha_down * i)
+            image2a = Image.new(mode="RGBA", size=(size, size), color=(red2a, green2a, blue2a, 255))
+            image2b = Image.new(mode="RGBA", size=(size, size), color=(red2b, green2b, blue2b, 255))
+            image2c = Image.new(mode="RGBA", size=(size, size), color=(red, green, blue, alpha2c))
+            image2d = Image.new(mode="RGBA", size=(size, size), color=(red, green, blue, alpha2d))
+            draw2a = ImageDraw.Draw(image2a)
+            draw2b = ImageDraw.Draw(image2b)
+            draw2c = ImageDraw.Draw(image2c)
+            draw2d = ImageDraw.Draw(image2d)
+            hex2a = "#" + _hex(red2a) + _hex(green2a) + _hex(blue2a)
+            hex2b = "#" + _hex(red2b) + _hex(green2b) + _hex(blue2b)
+            hex2c = f"a={alpha2c}"
+            hex2d = f"a={alpha2d}"
+            width2a, height2a = draw2a.textsize(hex2a, font)
+            width2b, height2b = draw2b.textsize(hex2b, font)
+            width2c, height2c = draw2c.textsize(hex2c, font)
+            width2d, height2d = draw2d.textsize(hex2d, font)
+            sum2a = (red2a + green2a + blue2a) // 3
+            sum2b = (red2b + green2b + blue2b) // 3
+            fill2a = (0, 0, 0, 255) if sum2a >= 128 or green2a == 255 else (255, 255, 255, 255)
+            fill2b = (0, 0, 0, 255) if sum2b >= 128 or green2b == 255 else (255, 255, 255, 255)
+            fill2c = (0, 0, 0, 255) if (brightness >= 128 and alpha2c >= 128) or green == 255 else (255, 255, 255, 255)
+            fill2d = (0, 0, 0, 255) if (brightness >= 128 and alpha2d >= 128) or green == 255 else (255, 255, 255, 255)
+            draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
+            draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
+            draw2c.text(((size - width2c) // 2, size - height2c - 5), hex2c, fill=fill2c, font=font)
+            draw2d.text(((size - width2d) // 2, size - height2d - 5), hex2d, fill=fill2d, font=font)
+            image2.paste(image2a, start2a)
+            image2.paste(image2b, start2b)
+            image2.paste(image2c, start2c)
+            image2.paste(image2d, start2d)
+        bio2 = BytesIO()
+        image2.save(bio2, "PNG")
+        bio2.seek(0)
+        embed.set_image(url="attachment://gradient.png")
+        embed.set_footer(text="Gradients go to: 1. white, 2. black, 3. alpha=255, 4. alpha=0")
+        # embed.set_thumbnail(url=data["image"])
+        # embed.set_image(url=data["image_gradient"])
+        return await general.send(None, ctx.channel, embed=embed, files=[discord.File(bio1, "colour.png"), discord.File(bio2, "gradient.png")])
+        # return await message.edit(content=None, embed=embed)
         # return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="roll")
