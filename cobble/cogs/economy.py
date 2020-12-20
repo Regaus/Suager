@@ -1,5 +1,3 @@
-import asyncio
-import json
 import random
 from textwrap import wrap
 
@@ -125,77 +123,6 @@ class Economy(commands.Cog):
             if not data:
                 return await general.send(langs.gls("economy_balance_none", locale, user.name), ctx.channel)
             return await general.send(langs.gls("economy_balance_data", locale, user.name, langs.gns(data["money"], locale), currency), ctx.channel)
-
-    @commands.command(name="buy")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    @commands.max_concurrency(1, per=commands.BucketType.user)
-    async def buy_something(self, ctx: commands.Context, *, role: discord.Role):
-        """ Buy a role from the shop """
-        locale = langs.gl(ctx)
-        settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if not settings:
-            return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
-        data = json.loads(settings["data"])
-        user = self.bot.db.fetchrow("SELECT * FROM economy WHERE uid=?", (ctx.author.id,))
-        if not user:
-            return await general.send(langs.gls("economy_buy_no_money", locale), ctx.channel)
-        try:
-            rewards = data['shop_items']
-            roles = [r["role"] for r in rewards]
-            if role.id not in roles:
-                return await general.send(langs.gls("economy_buy_unavailable", locale, role.name), ctx.channel)
-            _role = [r for r in rewards if r["role"] == role.id][0]
-            if role in ctx.author.roles:
-                return await general.send(langs.gls("economy_buy_already", locale, role.name), ctx.channel)
-            cost = langs.gns(_role["cost"], locale)
-            if user["money"] < _role["cost"]:
-                return await general.send(langs.gls("economy_buy_not_enough", locale, role.name, langs.gns(user["money"], locale), cost, currency), ctx.channel)
-
-            def check_confirm(m):
-                if m.author == ctx.author and m.channel == ctx.channel:
-                    if m.content.startswith("yes"):
-                        return True
-                return False
-            confirm_msg = await general.send(langs.gls("economy_buy_confirm", locale, ctx.author.name, role.name, cost, currency), ctx.channel)
-            try:
-                await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
-            except asyncio.TimeoutError:
-                return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
-            await ctx.author.add_roles(role, reason="Bought role")
-            user["money"] -= _role["cost"]
-            self.bot.db.execute("UPDATE economy SET money=? WHERE uid=?", (user["money"], ctx.author.id,))
-            return await general.send(langs.gls("economy_buy", locale, ctx.author.name, role.name, cost, currency), ctx.channel)
-        except KeyError:
-            return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
-        except discord.Forbidden:
-            return await general.send(langs.gls("economy_buy_forbidden", locale), ctx.channel)
-
-    @commands.command(name="shop")
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def item_shop(self, ctx: commands.Context):
-        """ Item shop """
-        locale = langs.gl(ctx)
-        settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        if not settings:
-            return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
-        data = json.loads(settings["data"])
-        try:
-            rewards = data['shop_items']
-            rewards.sort(key=lambda x: x['cost'])
-            embed = discord.Embed(colour=general.random_colour())
-            embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.title = langs.gls("economy_shop_server", locale, ctx.guild.name)
-            d = ''
-            for role in rewards:
-                d += f"<@&{role['role']}>: {langs.gns(role['cost'])}{currency}\n"
-            embed.description = d
-            if not embed.description:
-                embed.description = langs.gls("economy_shop_empty", locale)
-            return await general.send(None, ctx.channel, embed=embed)
-        except KeyError:
-            return await general.send(langs.gls("economy_shop_empty", locale), ctx.channel)
 
 
 def setup(bot):

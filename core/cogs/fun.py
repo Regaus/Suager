@@ -25,10 +25,9 @@ class Entertainment(commands.Cog):
             return await general.send(langs.gls("fun_beer_me", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("fun_beer_bot", locale), ctx.channel)
-        reason = langs.gls("fun_beer_reason", locale, reason)
         beer_offer = langs.gls("fun_beer_offer", locale, user.name, ctx.author.name)
         if reason:
-            beer_offer += reason
+            beer_offer += langs.gls("fun_beer_reason", locale, reason)
         msg = await general.send(beer_offer, ctx.channel)
         try:
             def reaction_check(m):

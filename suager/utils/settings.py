@@ -12,6 +12,7 @@ template = {
         'rewards': []
     },
     "currency": "€",
-    "shop_items": [],
+    # "shop_items": [],
+    "roles": [],
     "mute_role": 0
 }

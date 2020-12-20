@@ -32,3 +32,6 @@
 
 ## v1.0-pre2 - 19 December
 - Updated RSL-1 locale
+
+## v1.0-pre3 - 20 December
+- Removed shop and buy commands

@@ -360,37 +360,34 @@ class Settings(commands.Cog):
         else:
             return await general.send(f"The role {role.name} was not removed from the level rewards list.", ctx.channel)
 
-    @settings.group(name="shop")
+    @settings.group(name="roles")
     async def set_shop(self, ctx: commands.Context):
-        """ Let members buy roles """
+        """ Let people get free roles """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
     @set_shop.command(name="add")
-    async def shop_add(self, ctx: commands.Context, role: discord.Role, cost: int):
+    async def shop_add(self, ctx: commands.Context, role: discord.Role):
         """ Add a shop item """
-        if cost < 0:
-            return await general.send("The cost cannot be negative", ctx.channel)
         data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:
             _settings = json.loads(data["data"])
         else:
             _settings = settings.template.copy()
         try:
-            rr = _settings["shop_items"]
+            roles = _settings["roles"]
         except KeyError:
-            rr = []
-        roles = [i["role"] for i in rr]
+            roles = []
         if role.id in roles:
-            return await general.send("This role is already being sold", ctx.channel)
-        rr.append({"cost": cost, "role": role.id})
-        _settings["shop_items"] = rr
+            return await general.send("This role is already available", ctx.channel)
+        roles.append(role.id)
+        _settings["roles"] = roles
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
         else:
             self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-        return await general.send(f"The role {role.name} is now sold for {cost:,} currency.", ctx.channel)
+        return await general.send(f"The role {role.name} is now available for available roles.", ctx.channel)
 
     @set_shop.command(name="remove")
     async def shop_remove(self, ctx: commands.Context, role: discord.Role):
@@ -401,25 +398,25 @@ class Settings(commands.Cog):
         else:
             _settings = settings.template.copy()
         try:
-            rr = _settings["shop_items"]
+            rr = _settings["roles"]
         except KeyError:
-            return await general.send("There are already no role sold", ctx.channel)
+            return await general.send("There are already no roles", ctx.channel)
         r = False
         for _role in rr:
-            if _role["role"] == role.id:
+            if _role == role.id:
                 rr.remove(_role)
                 r = True
                 break
         if r:
-            _settings["shop_items"] = rr
+            _settings["roles"] = rr
             stuff = json.dumps(_settings)
             if data:
                 self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
             else:
                 self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-            return await general.send(f"The role {role.name} has been removed from the shop", ctx.channel)
+            return await general.send(f"The role {role.name} has been removed from the available roles", ctx.channel)
         else:
-            return await general.send(f"The role {role.name} was not removed from the shop", ctx.channel)
+            return await general.send(f"The role {role.name} was not removed from the available roles", ctx.channel)
 
     @settings.command(name="muterole")
     async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
@@ -459,6 +456,44 @@ class Settings(commands.Cog):
         if cp is not None and cp != []:
             embed.add_field(name="Custom", value='\n'.join(cp), inline=True)
         return await general.send(None, ctx.channel, embed=embed)
+
+    @commands.command(name="addrole", aliases=["getrole", "giverole", "joinrole"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def give_role(self, ctx: commands.Context, role: discord.Role):
+        """ Add a role """
+        _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        data = {}
+        if not _data or "roles" not in (data := json.loads(_data['data'])):
+            return await general.send("There are no roles available for you.", ctx.channel)
+        roles = data["roles"]
+        if role.id in roles:
+            try:
+                await ctx.author.add_roles(role, reason="Free roles")
+                return await general.send(f"Successfully gave {ctx.author.name} the role {role}", ctx.channel)
+            except Exception as e:
+                return await general.send(f"Unable to give you the role:\n`{type(e).__name__}: {e}`", ctx.channel)
+        else:
+            return await general.send("You can't have that role.", ctx.channel)
+
+    @commands.command(name="removerole", aliases=["takerole", "leaverole"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def leave_role(self, ctx: commands.Context, role: discord.Role):
+        """ Remove a role """
+        _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        data = {}
+        if not _data or "roles" not in (data := json.loads(_data['data'])):
+            return await general.send("There are no roles available in these commands in this server.", ctx.channel)
+        roles = data["roles"]
+        if role.id in roles:
+            try:
+                await ctx.author.remove_roles(role, reason="Free roles")
+                return await general.send(f"Successfully removed {role} from {ctx.author.name}", ctx.channel)
+            except Exception as e:
+                return await general.send(f"Unable to remove the role from you:\n`{type(e).__name__}: {e}`", ctx.channel)
+        else:
+            return await general.send("You can't remove that role.", ctx.channel)
 
 
 def setup(bot):

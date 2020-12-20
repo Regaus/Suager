@@ -562,3 +562,7 @@
 
 ## v7.0-pre2 - 19 December
 - Updated RSL-1 locale
+
+## v7.0-pre3 - 20 December
+- Replaced shop with roles
+- Fixed beer reason
