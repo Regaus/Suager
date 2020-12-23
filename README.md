@@ -8,8 +8,8 @@ A bot by Regaus
 
 ## Setup
 1. [Create a bot here](https://discord.com/developers/applications)
-2. Copy config_v6_ex.json and name it config_v6.json
-3. Copy your bot's token to config_v6.json
+2. Copy config_ex.json and name it config.json
+3. Copy your bot's token to config.json
 4. For the weather command, get a key [here](https://home.openweathermap.org/api_keys)
 5. Configure user prefixes and owner-only prefixes, playing statuses, etc.<br>
 Note: Statuses have been moved to core.utils.events.playing_changer

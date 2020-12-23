@@ -388,7 +388,7 @@ class Admin(commands.Cog):
         config = general.get_config()
         self.bot.config = config
         self.bot.local_config = config["bots"][self.bot.index]
-        reloaded = "Reloaded config_v6.json"
+        reloaded = "Reloaded config.json"
         if self.bot.local_config["logs"]:
             logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
         return reloaded

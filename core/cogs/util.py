@@ -27,7 +27,7 @@ class Utility(commands.Cog):
         """ Current time """
         locale = langs.gl(ctx)
         send = ""
-        if locale == "rsl-1_kg":
+        if locale == "rsl-1d":
             data = ss23.time_kargadia(time.now(None))
             a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
@@ -104,7 +104,7 @@ class Utility(commands.Cog):
     async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Time difference """
         locale = langs.gl(ctx)
-        if locale in ["rsl-1_kg", "rsl-5"]:
+        if locale in ["rsl-1d", "rsl-5"]:
             if year is not None and year < 277:
                 return await general.send(f"In RSL-1 and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
         try:
@@ -149,7 +149,7 @@ class Utility(commands.Cog):
                 except KeyError:
                     country = ""
                     tz = 0
-                _time_locale = locale if locale not in ["rsl-1_kg", "rsl-5"] else "en_gb"
+                _time_locale = locale if locale not in ["rsl-1d", "rsl-5"] else "en_gb"
                 local_time = langs.gts(time.now(None) + timedelta(seconds=tz), _time_locale)
                 if country:
                     country_name = langs.gls(f"z_data_country_{country}", locale)

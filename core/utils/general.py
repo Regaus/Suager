@@ -11,14 +11,15 @@ from core.utils import time
 
 
 def get_config() -> dict:
-    return json.loads(open("config_v6.json", "r", encoding="utf-8").read())
+    return json.loads(open("config.json", "r", encoding="utf-8").read())
 
 
 def create_dirs():
+    make_dir("data/logs")
     config = get_config()
     for bot in config["bots"]:
-        make_dir(f"data/{bot['internal_name']}")
-        make_dir(f"data/{bot['internal_name']}/logs")
+        # make_dir(f"data/{bot['internal_name']}")
+        make_dir(f"data/logs/{bot['internal_name']}")
 
 
 def make_dir(dir_name):
@@ -44,7 +45,7 @@ def traceback_maker(err, text: str = None, guild=None, author=None):
     n = "\n"
     g = f'Guild: {guild.name}\n' if guild is not None else ''
     a = f'User: {author.name}\n' if author is not None else ''
-    error = f'{g}{a}```py\n{f"{text}{n}" if text is not None else ""}{_traceback}{type(err).__name__}: {err}\n```'
+    error = f'{g}{a}{f"Command: {text}{n}" if text is not None else ""}```py\n{_traceback}{type(err).__name__}: {err}\n```'
     return error
 
 
@@ -63,7 +64,7 @@ def reason(who, why=None):
     return f"{r} {why}"
 
 
-async def pretty_results(ctx, filename: str = "Results", result: str = "Here's the results:", loop=None):
+async def pretty_results(ctx, filename: str = "Results", result: str = "Here are the results:", loop=None):
     if not loop:
         return await ctx.send("The result was empty...")
     pretty = "\r\n".join([f"[{str(num).zfill(2)}] {data}" for num, data in enumerate(loop, start=1)])

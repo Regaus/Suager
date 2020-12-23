@@ -28,7 +28,7 @@ share/python-wheels/
 .idea/
 MANIFEST
 data/
-config_v6.json
+config.json
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

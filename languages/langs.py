@@ -16,7 +16,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
-    if locale in ["rsl-1_kg", "rsl-1"]:
+    if locale in ["rsl-1d", "rsl-1"]:
         value //= 2
         names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1_kg" else \
             ["V", "KV", "UV", "DV", "TV", "SgV", "PV", "SnV", "EV", "OV", "ZV"]
@@ -80,7 +80,7 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    if locale in ["rsl-1_kg", "ru_ru"]:
+    if locale in ["rsl-1d", "ru_ru"]:
         name_1, name_2, name_pl = get_data(what, locale)
         pl = get_data("_pl", locale)
         p1, p2, p3 = pl
@@ -152,12 +152,12 @@ def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool 
 def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
-    if locale in ["rsl-1_kg", "rsl-5"]:
+    if locale in ["rsl-1d", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if date:
-        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1_kg", "rsl-5"]):
+        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1d", "rsl-5"]):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
@@ -180,7 +180,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
 
 
 def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
-    if locale in ["rsl-1_kg", "rsl-5"]:
+    if locale in ["rsl-1d", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
