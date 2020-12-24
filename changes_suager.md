@@ -571,3 +571,6 @@
 
 ## v7.0.0.1 - 23 December 2020
 - Renamed RSL-1_kg to RSL-1d
+
+## v7.0.1 - 24 December 2020
+- Added hot chocolate command

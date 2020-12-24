@@ -42,7 +42,7 @@ class Achievements(commands.Cog):
         achievements = 3
         width = 1152
         large_size = 96
-        img = Image.new("RGBA", (width, 256 * achievements + large_size), color=(0, 0, 0, 0))
+        img = Image.new("RGBA", (width, 256 * achievements + large_size), color=(0, 0, 0, 64))
         dr = ImageDraw.Draw(img)
         font_dir = "assets/font.ttf"
         try:
@@ -65,7 +65,7 @@ class Achievements(commands.Cog):
             y = large_size + index * 256
             colour = get_colour(level)
             i1 = Image.new("RGBA", (width - 32, 224), color=colour)
-            i2 = Image.new("RGBA", (width - 64, 192), color=(0, 0, 0, 96))
+            i2 = Image.new("RGBA", (width - 64, 192), color=(0, 0, 0, 64))
             box1 = (16, y + 16, width - 16, y + 240)
             box2 = (32, y + 32, width - 32, y + 224)
             img.paste(i1, box1)
@@ -83,7 +83,7 @@ class Achievements(commands.Cog):
             fill = width - 172
             done = int(fill * progress)
             i3 = Image.new("RGBA", (done, 32), color=colour)
-            i4 = Image.new("RGBA", (fill + 4, 36), color=(30, 30, 30, 96))
+            i4 = Image.new("RGBA", (fill + 4, 36), color=(30, 30, 30, 64))
             box3 = (text_x + 2, y + 176, text_x + done + 2, y + 208)
             box4 = (text_x, y + 174, text_x + fill + 4, y + 210)
             img.paste(i4, box4)
@@ -130,13 +130,13 @@ class Achievements(commands.Cog):
         """ Test tier colours """
         from PIL import Image, ImageDraw, ImageFont
         from io import BytesIO
-        img = Image.new("RGB", (2000, 200 * len(achievement_colours)), color=(0, 0, 0))
+        img = Image.new("RGBA", (2000, 200 * len(achievement_colours)), color=(0, 0, 0, 0))
         dr = ImageDraw.Draw(img)
         font = ImageFont.truetype("assets/font.ttf", size=128)
         for i in range(len(achievement_colours)):
-            paste = Image.new("RGB", (1500, 150), color=achievement_colours[i])
+            paste = Image.new("RGBA", (1500, 150), color=achievement_colours[i])
             img.paste(paste, (500, 200 * i + 25))
-            dr.text((75, 200 * i + 12), f"Tier {i:>2d}", font=font, fill=(255, 255, 255))
+            dr.text((75, 200 * i + 12), f"Tier {i:>2d}", font=font, fill=(255, 255, 255, 255))
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)

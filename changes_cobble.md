@@ -43,3 +43,6 @@
 - Transparent background in achievements
 - Updated XP achievements
 - Renamed RSL-1_kg to RSL-1d
+
+## v1.0.2 - 24 December 2020
+- Added hot chocolate command
