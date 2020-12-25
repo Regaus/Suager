@@ -574,3 +574,7 @@
 
 ## v7.0.1 - 24 December 2020
 - Added hot chocolate command
+
+## v7.0.2 - 25 December 2020
+- Improved time command outputs for RSL-1 languages
+- Added RSL-1f locale

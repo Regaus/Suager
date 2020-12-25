@@ -32,20 +32,38 @@ class Utility(commands.Cog):
             a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
             send += langs.gls("util_time_sl", locale, b, a)
-        if locale == "rsl-1":
+        elif locale == "rsl-1":
             data = ss23.time_kargadia(time.now(None))
             a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
+            d = langs.gts(time.now_sl(), locale, True, False, False, True, False)
             z = time.kargadia_convert(time.now(None))
             m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
             c = f"{z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
-            send += langs.gls("util_time_sl", locale, c, a, b)
+            send += f"Zymlä (UTC/GMT): **{b}**\n" \
+                    f"Senkadar Laikadu (AD): **{d}**\n" \
+                    f"Senkadar Laikadu (NE): **{c}**\n" \
+                    f"Kargadia: **{a}**"
+            # send += langs.gls("util_time_sl", locale, c, a, b)
+        elif locale == "rsl-1f":
+            a = langs.gts(time.now(None), locale, True, False, False, True, False)
+            b = langs.gts(time.now_sl(), locale, True, False, False, True, False)
+            c = langs.gts(time.now_k(), locale, True, False, False, True, False)
+            data = ss23.time_kargadia(time.now(None))
+            d = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            send += f"Zymlä (UTC/GMT): **{a}**\n" \
+                    f"Senkadar Laikadu (AD): **{b}**\n" \
+                    f"Senkadar Laikadu (NE): **{c}**\n" \
+                    f"Kargadia: **{d}**\n" \
+                    f"Kaivaltaavia: **Placeholder**"
         else:
             if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                data = ss23.time_kargadia(time.now(None))
-                a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d} ST"
-                b = langs.gts(time.now_k(), locale, True, False, False, True, True)
-                send += langs.gls("util_time_sl", locale, b, a)
+                # data = ss23.time_kargadia(time.now(None))
+                # a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d} ST"
+                # b = langs.gts(time.now_k(), locale, True, False, False, True, True)
+                # send += langs.gls("util_time_sl", locale, b, a)
+                send += f"Senko Lair (AD): **{langs.gts(time.now_sl(), locale, True, False, False, True, True)}**\n"
+                send += f"Senko Lair (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, True)}**\n"
             send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, False, True, True))
             send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, False, True, True)}**"
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))

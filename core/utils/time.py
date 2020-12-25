@@ -21,6 +21,13 @@ def set_tz(dt: datetime, tz: str):
     return dt.astimezone(tz=pytz.timezone(tz))
 
 
+def senko_lair_time(when: datetime):
+    return when.astimezone(timezone(td(hours=1, minutes=30), "KST"))
+
+def now_sl():
+    return senko_lair_time(now(None))
+
+
 def kargadia_convert(when: datetime):
     return when.astimezone(timezone(td(hours=1, minutes=30), "KST")) + relativedelta(years=-276, days=5)
 
