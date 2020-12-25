@@ -24,6 +24,7 @@ def set_tz(dt: datetime, tz: str):
 def senko_lair_time(when: datetime):
     return when.astimezone(timezone(td(hours=1, minutes=30), "KST"))
 
+
 def now_sl():
     return senko_lair_time(now(None))
 

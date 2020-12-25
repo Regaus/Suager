@@ -310,7 +310,7 @@
   "time_h": "c",
   "time_m": "k",
   "time_s": "a",
-  "time_month_names": ["December", "Leitarön", "Rygarrön", "March", "Havaston", "Suvarön", "Senkarön", "Shiröön", "August", "September", "October", "November"],
+  "time_month_names": ["December", "Leitarön", "Rygarrön", "March", "Havaston", "Suvarön", "Senkarön", "Shiröön", "August", "Sevarton", "October", "November"],
   "time_weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
   "util_time_bot": "Local time: **{0}**\n",
   "util_time_sl": "Senko Lair (Earth): **{0}**\nSenko Lair (Kargadia): **{1}**\n",
