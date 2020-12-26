@@ -36,6 +36,7 @@ class Entertainment(commands.Cog):
                 return False
             await msg.add_reaction("🍻")
             await self.bot.wait_for('raw_reaction_add', timeout=30.0, check=reaction_check)
+            await msg.delete()
             return await general.send(langs.gls("fun_beer_success", locale, user.name, ctx.author.name, "🍻"), ctx.channel)
         except asyncio.TimeoutError:
             await msg.delete()
@@ -70,6 +71,7 @@ class Entertainment(commands.Cog):
                 return False
             await msg.add_reaction("☕")
             await self.bot.wait_for('raw_reaction_add', timeout=30.0, check=reaction_check)
+            await msg.delete()
             return await general.send(langs.gls("fun_hc_success", locale, user.name, ctx.author.name, "☕🍫"), ctx.channel)
         except asyncio.TimeoutError:
             await msg.delete()

@@ -46,3 +46,6 @@
 
 ## v1.0.2 - 24 December 2020
 - Added hot chocolate command
+
+## v1.0.3 - 26 December
+- RSL-1 noun declensions

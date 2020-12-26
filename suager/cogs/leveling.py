@@ -417,13 +417,16 @@ class Leveling(commands.Cog):
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
-                new_level = 0
-                for level_req in level_history["v7"]:
-                    if xp >= level_req:
-                        new_level += 1
-                    else:
-                        break
-                dr.text((text_x, 130), f"{place} | {_level} | New Level {new_level}", font=font_small, fill=font_colour)
+                if time.now(None) < time.dt(2021, 1, 1):
+                    new_level = 0
+                    for level_req in level_history["v7"]:
+                        if xp >= level_req:
+                            new_level += 1
+                        else:
+                            break
+                    dr.text((text_x, 130), f"{place} | {_level} | New Level {new_level}", font=font_small, fill=font_colour)
+                else:
+                    dr.text((text_x, 130), f"{place} | {_level} ", font=font_small, fill=font_colour)
                 r1 = langs.gns(int(xp), locale)
                 r3 = langs.gfs(progress, locale, 2, True)
                 r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp), locale)) if level < max_level else ""

@@ -66,5 +66,5 @@ def file_ts(name: str, ext: str = "txt") -> str:
     return f"{name}_{int(now_ts())}.{ext}"
 
 
-def dt(year: int, month: int, day: int, hour: int = 0, minute: int = 0, second: int = 0):
+def dt(year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
     return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)

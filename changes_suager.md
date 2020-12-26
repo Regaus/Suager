@@ -578,3 +578,6 @@
 ## v7.0.2 - 25 December 2020
 - Improved time command outputs for RSL-1 languages
 - Added RSL-1f locale
+
+## v7.0.3 - 26 December 2020
+- beer and hot chocolate now delete their message on success
