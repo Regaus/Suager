@@ -460,21 +460,26 @@ class Settings(commands.Cog):
     @commands.command(name="addrole", aliases=["getrole", "giverole", "joinrole"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def give_role(self, ctx: commands.Context, role: discord.Role):
+    async def give_role(self, ctx: commands.Context, role: discord.Role = None):
         """ Add a role """
         _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         data = {}
         if not _data or "roles" not in (data := json.loads(_data['data'])):
-            return await general.send("There are no roles available for you.", ctx.channel)
+            return await general.send("There are no roles available like that.", ctx.channel)
         roles = data["roles"]
-        if role.id in roles:
-            try:
-                await ctx.author.add_roles(role, reason="Free roles")
-                return await general.send(f"Successfully gave {ctx.author.name} the role {role}", ctx.channel)
-            except Exception as e:
-                return await general.send(f"Unable to give you the role:\n`{type(e).__name__}: {e}`", ctx.channel)
+        if role is not None:
+            if role.id in roles:
+                try:
+                    await ctx.author.add_roles(role, reason="Free roles")
+                    return await general.send(f"Successfully gave {ctx.author.name} the role {role}", ctx.channel)
+                except Exception as e:
+                    return await general.send(f"Unable to give you the role:\n`{type(e).__name__}: {e}`", ctx.channel)
+            else:
+                return await general.send("You can't have that role.", ctx.channel)
         else:
-            return await general.send("You can't have that role.", ctx.channel)
+            embed = discord.Embed(description="\n".join(f"<@&{r}>" for r in roles), colour=general.random_colour())
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            return await general.send(f"Roles available in {ctx.guild}", ctx.channel, embed=embed)
 
     @commands.command(name="removerole", aliases=["takerole", "leaverole"])
     @commands.guild_only()

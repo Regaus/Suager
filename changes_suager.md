@@ -581,3 +581,6 @@
 
 ## v7.0.3 - 26 December 2020
 - beer and hot chocolate now delete their message on success
+
+## v7.0.4 - 27 December 2020
+- addrole now shows what roles you can get in an embed
