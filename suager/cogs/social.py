@@ -160,6 +160,10 @@ class Social(commands.Cog):
         locale = langs.gl(ctx)
         if is_fucked(self.kiss):
             self.kiss = await lists.get_images(self.bot, 'k')
+        if ctx.channel.id == 725835449502924901:
+            choice = lists.kl
+        else:
+            choice = self.kiss
         if ctx.author == user:
             return await general.send(langs.gls("social_alone", locale), ctx.channel)
         if user.id == self.bot.user.id:
@@ -171,7 +175,7 @@ class Social(commands.Cog):
         title, footer = get_data(ctx.author, user, "kiss", locale, given, received)
         embed.title = title
         embed.set_footer(text=footer)
-        embed.set_image(url=random.choice(self.kiss))
+        embed.set_image(url=random.choice(choice))
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="bite")

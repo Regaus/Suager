@@ -16,6 +16,16 @@ image_channels = {'p': 671891617723973652, 'h': 671895023503278080, 'k': 6720972
                   'i': 696485411869950003, 'P': 702280684907003986, 'B': 702280732755624469, 'L': 777697466287259679,
                   't': 746167543290527764}
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"
+kl = [
+    "https://cdn.discordapp.com/attachments/672097261710475294/672098089233940490/HJce2pdv-.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/672098116232544256/Bkk_hpdv-.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/672098207224037406/S1y-4l5Jf.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/672098272214646805/Byh57gqkz.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/672098278887784486/ry9uXAFKb.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/672098365798088704/ryFdQRtF-.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/673187538424561714/B1NwJg9Jz.gif",
+    "https://cdn.discordapp.com/attachments/672097261710475294/675781175687643189/rkde2aODb.gif"
+]
 
 
 async def get_images(bot, what: str):
