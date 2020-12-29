@@ -97,7 +97,7 @@ async def on_member_join(self, member: discord.Member):
             await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
     if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
         if member.name[0] < "A":
-            await member.edit(reason="De-hoist", nick=f"z{member.name}")
+            await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
 
 
 async def on_member_remove(self, member: discord.Member):
