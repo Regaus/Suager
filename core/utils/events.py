@@ -89,7 +89,8 @@ async def on_member_join(self, member: discord.Member):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just joined {member.guild.name}")
     if self.bot.name == "suager":
         if member.guild.id == 568148147457490954:
-            await general.send(f"Welcome {member.name} to Senko Lair!", self.bot.get_channel(610836120321785869))
+            members = len(member.guild.members)
+            await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
         if member.guild.id == 738425418637639775:
             join = langs.gts(member.joined_at, "en_gb", seconds=True)
             age = langs.td_dt(member.created_at, "en_gb")
@@ -104,7 +105,9 @@ async def on_member_remove(self, member: discord.Member):
     if self.bot.name == "suager":
         if member.guild.id == 568148147457490954:
             survival = langs.td_dt(member.joined_at, "en_gb")
-            await general.send(f"{member.name} just abandoned Senko Lair after surviving for {survival}...", self.bot.get_channel(610836120321785869))
+            remaining = len(member.guild.members)
+            await general.send(f"**{member.name}** just **abandoned** Senko Lair...\nThey had survived for {survival}...\n"
+                               f"**{remaining}** Senkoists remaining.", self.bot.get_channel(610836120321785869))
         if member.guild.id == 738425418637639775:
             survival = langs.td_dt(member.joined_at, "en_gb")
             await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))

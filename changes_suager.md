@@ -584,3 +584,7 @@
 
 ## v7.0.4 - 27 December 2020
 - addrole now shows what roles you can get in an embed
+
+## v7.0.5 - 29 December 2020
+- Improved message on join and leave of Senko Lair
+- Changed leveling command output levels

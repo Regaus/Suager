@@ -122,7 +122,8 @@ class Leveling(commands.Cog):
     async def leveling_data(self, ctx: commands.Context):
         """ Levels data """
         # __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
-        __levels = [1, 2, 3, 5, 10, 20, 35, 50, 60, 75, 85, 100, 125, 150, 200]
+        # [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
+        __levels = [1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 60, 69, 80, 90, 100, 120, 140, 160, 180, 200]
         outputs = []
         for level in __levels:
             _level = level - 1
