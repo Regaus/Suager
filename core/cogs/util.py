@@ -13,8 +13,8 @@ from languages import langs
 from cobble.utils import ss23
 
 
-def is_senko_lair(ctx):
-    return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775]
+def custom_role_enabled(ctx):
+    return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473]
 
 
 class Utility(commands.Cog):
@@ -687,7 +687,7 @@ class Utility(commands.Cog):
 
     @commands.command(name="customrole", aliases=["cr"])
     @commands.guild_only()
-    @commands.check(is_senko_lair)
+    @commands.check(custom_role_enabled)
     @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
     async def custom_role(self, ctx: commands.Context, *, stuff: str):
         """ Custom Role (only in Senko Lair)
@@ -731,14 +731,19 @@ class Utility(commands.Cog):
 
     @commands.command(name="grantrole")
     @commands.guild_only()
-    @commands.is_owner()
+    @commands.check(custom_role_enabled)
+    # @commands.is_owner()
+    @permissions.has_permissions(administator=True)
     async def grant_custom_role(self, ctx: commands.Context, user: discord.Member, role: discord.Role):
         """ Grant custom role """
         already = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not already:
             result = self.bot.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
-            await user.add_roles(role, reason="Custom Role grant")
-            return await general.send(f"Granted {role.name} to {user.name}: {result}", ctx.channel)
+            try:
+                await user.add_roles(role, reason="Custom Role grant")
+                return await general.send(f"Granted {role.name} to {user.name}: {result}", ctx.channel)
+            except discord.Forbidden:
+                return await general.send(f"{role.name} could not be granted to {user.name}. It has, however, been saved to the database.", ctx.channel)
         else:
             result = self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
             return await general.send(f"Updated custom role of {user.name} to {role.name}: {result}", ctx.channel)

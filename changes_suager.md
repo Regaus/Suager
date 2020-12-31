@@ -588,3 +588,6 @@
 ## v7.0.5 - 29 December 2020
 - Improved message on join and leave of Senko Lair
 - Changed leveling command output levels
+
+## v7.0.6 - 31 December 2020
+- Added custom roles to Chill Crew server
