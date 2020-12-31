@@ -591,3 +591,6 @@
 
 ## v7.0.6 - 31 December 2020
 - Added custom roles to Chill Crew server
+
+## v7.0.7 - 31 December 2020
+- Added monke command (to give someone a monkey)

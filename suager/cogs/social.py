@@ -625,6 +625,19 @@ class Social(commands.Cog):
         output = give(ctx.author.name, user.name, random.choice(list("🍏🍎🍐🍊🍌🍉🍇🍓🍒🍍")), locale)
         return await general.send(output, ctx.channel)
 
+    @commands.command(name="monke", aliases=["monkey"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def monkey(self, ctx: commands.Context, user: discord.Member):
+        """ Give someone a monke """
+        locale = langs.gl(ctx)
+        if user == ctx.author:
+            return await general.send(emotes.AlexPat, ctx.channel)
+        if user.bot:
+            return await general.send(langs.gls("social_food_bot", locale), ctx.channel)
+        output = give(ctx.author.name, user.name, "🐒", locale)
+        return await general.send(output, ctx.channel)
+
     @commands.command(name="reloadimages", aliases=["ri"])
     @commands.is_owner()
     async def reload_images(self, ctx: commands.Context):
