@@ -161,6 +161,35 @@ async def on_ready(self):
     # else:
     #     times['ad'] = True
     #     open(self.changes, 'w+').write(json.dumps(times))
+    while True:
+        if self.bot.name == "suager":
+            # print(time.time())
+            left = [239, 179, 119, 89, 59, 44, 29, 19, 14, 9, 4]
+            now = time.now(None)
+            ny = time.dt(2021)
+            remains = int((ny - now).total_seconds() / 60)
+            send = self.bot.get_channel(572857995852251169)
+            # send = self.bot.get_channel(742885168997466196)
+            if send is not None:
+                if now < ny and remains in left and now.minute != self.last_announce:
+                    if remains == 89:
+                        await general.send("1.5 hours remaining", send)
+                    else:
+                        hours = (remains + 1) // 60
+                        mins = f"{hours} hour{'s' if hours > 1 else ''}" if remains >= 59 else f"{remains + 1} minutes"
+                        await general.send(f"{mins} remaining", send)
+                    self.last_announce = now.minute
+                if now > ny and not self.new_year:
+                    await general.send("Merry New Year 2021, fellow members of Senko Lair! Hopefully this new year will not be as bad as 2020, but we'll see."
+                                       "\nI wish you all a happy new year and good luck.\n- Regaus", send)
+                    self.new_year = True
+                await asyncio.sleep(1)
+            else:
+                print("Channel not found, exiting loop.")
+                break
+        else:
+            print("Not Suager, exiting loop.")
+            break
 
 
 async def playing_changer(self):

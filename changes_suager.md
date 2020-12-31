@@ -594,3 +594,6 @@
 
 ## v7.0.7 - 31 December 2020
 - Added monke command (to give someone a monkey)
+
+## v7.0.7.1 - 31 December 2020
+- New year's countdown script
