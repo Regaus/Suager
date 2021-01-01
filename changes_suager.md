@@ -597,3 +597,6 @@
 
 ## v7.0.7.1 - 31 December 2020
 - New year's countdown script
+
+## v7.0.7.2 - 1 January 2021
+- Remove the new year script
