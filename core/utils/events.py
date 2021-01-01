@@ -91,6 +91,11 @@ async def on_member_join(self, member: discord.Member):
         if member.guild.id == 568148147457490954:
             members = len(member.guild.members)
             await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
+            if time.now() < time.dt(2022):
+                role = member.guild.get_role(794699877325471776)
+                await member.add_roles(role, reason="Joining Senko Lair during 2021.")
+            else:
+                await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
         if member.guild.id == 738425418637639775:
             join = langs.gts(member.joined_at, "en_gb", seconds=True)
             age = langs.td_dt(member.created_at, "en_gb")

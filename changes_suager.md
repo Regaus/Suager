@@ -600,3 +600,6 @@
 
 ## v7.0.7.2 - 1 January 2021
 - Remove the new year script
+
+## v7.0.8 - 1 January 2021
+- You now get a role for joining Senko Lair during 2021
