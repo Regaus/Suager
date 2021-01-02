@@ -104,6 +104,16 @@ tables = [
         Column("name", 2, True),
         Column("disc", 0, True)
     ]),
+    Table("leveling2", [
+        Column("uid", 0, True),
+        Column("gid", 0, True),
+        Column("level", 0, True),
+        Column("xp", 0, True),
+        Column("last", 1, True),
+        Column("last_sent", 1, False),
+        Column("name", 2, True),
+        Column("disc", 0, True)
+    ]),
     Table("economy", [  # New Economy
         Column("uid", 0, True),
         # Column("gid", 0, True),

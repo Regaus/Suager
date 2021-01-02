@@ -49,3 +49,6 @@
 
 ## v1.0.3 - 26 December
 - RSL-1 noun declensions
+
+## v1.0.4 - 2 January 2021
+- CobbleBot now uses separate leveling

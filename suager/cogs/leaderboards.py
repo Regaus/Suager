@@ -66,6 +66,7 @@ async def leaderboard_calculator(self, ctx: commands.Context, query: str, statem
 class Leaderboards(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.lvl = "leveling" if bot.name == "suager" else "leveling2"
 
     @commands.command(name="levels", aliases=["ranks"])
     @commands.guild_only()
@@ -73,7 +74,7 @@ class Leaderboards(commands.Cog):
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's XP Leaderboard """
         locale = langs.gl(ctx)
-        return await leaderboard_calculator(self, ctx, "SELECT uid, name, disc, xp FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC",
+        return await leaderboard_calculator(self, ctx, f"SELECT uid, name, disc, xp FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC",
                                             (ctx.guild.id,), top, "leaderboards_levels", locale, "xp", ctx.guild.name)
 
     @commands.command(name="bank", aliases=["money"])
@@ -91,7 +92,7 @@ class Leaderboards(commands.Cog):
     async def global_levels(self, ctx: commands.Context, top: str = ""):
         """ Global XP Leaderboard """
         locale = langs.gl(ctx)
-        data = self.bot.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0", ())
+        data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE xp!=0 AND disc!=0", ())
         coll = {}
         for i in data:
             if i['uid'] not in coll:

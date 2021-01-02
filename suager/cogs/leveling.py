@@ -46,13 +46,8 @@ def _levels():
     req = 0
     xp = []
     for x in range(max_level):
-        if time.now(None) < time.dt(2021, 1, 1):
-            power = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
-            multiplier = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
-            base = (x ** power + multiplier * x ** 2 + 7500 * x + 25000) / 100
-        else:
-            # base = 1.25 * x ** 2 + x * 80 + 250
-            base = x ** 2 + 99 * x + 175
+        # base = 1.25 * x ** 2 + x * 80 + 250
+        base = x ** 2 + 99 * x + 175
         req += int(base)
         if x not in bad:
             xp.append(int(req))
@@ -116,6 +111,7 @@ xp_amounts = [20, 27]
 class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.lvl = "leveling" if bot.name == "suager" else "leveling2"
 
     @commands.command(name="leveling")
     @commands.is_owner()
@@ -148,7 +144,7 @@ class Leveling(commands.Cog):
                 output += f"\n`{name:<16} -> {level_history[key][level - 1]:>10,.0f} XP`"
             return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
         else:
-            xp_ = self.bot.db.fetchrow("SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            xp_ = self.bot.db.fetchrow(f"SELECT xp FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             xp = xp_["xp"] if xp_ else 0
             output = ""
             for key, name in names.items():
@@ -164,85 +160,87 @@ class Leveling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
-        if self.bot.name == "suager":
-            if ctx.author.bot or ctx.guild is None:
-                return
-            if ctx.content == "" and ctx.type != discord.MessageType.default:
-                return
-            _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-            xp_disabled = False
-            if _settings:
-                __settings = json.loads(_settings['data'])
-                try:
-                    if not __settings['leveling']['enabled']:
-                        xp_disabled = True
-                    ic = __settings['leveling']['ignored_channels']
-                    if ctx.channel.id in ic:
-                        xp_disabled = True
-                        # return
-                except KeyError:
-                    pass
-            else:
-                __settings = settings.template.copy()
-                xp_disabled = True
-            data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
-            if data:
-                level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
-            else:
-                level, xp, last, ls = [0, 0, 0, 0]
-            if ls is None:
-                ls = 0
-            now = time.now_ts()
-            td = now - last
-            _td = now - ls
-            if td < 5:
-                mult = 0
-            elif 5 <= td < 60:
-                mult = (td - 5) / 55
-            else:
-                mult = 1
-            if _td > 60:
-                mult = 1
-            full = mult == 1
-            dc = mult == 0  # didn't count
-            x1, x2 = xp_amounts
+        if self.bot.name == "cobble" and time.now(None) < time.dt(2021, 1, 2):
+            return
+        if ctx.author.bot or ctx.guild is None:
+            return
+        if ctx.content == "" and ctx.type != discord.MessageType.default:
+            return
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        xp_disabled = False
+        if _settings:
+            __settings = json.loads(_settings['data'])
             try:
-                sm = float(__settings['leveling']['xp_multiplier'])
+                if not __settings['leveling']['enabled']:
+                    xp_disabled = True
+                ic = __settings['leveling']['ignored_channels']
+                if ctx.channel.id in ic:
+                    xp_disabled = True
+                    # return
             except KeyError:
-                sm = 1
-            c = 0.67 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
-            c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069] else c
-            new = int(random.uniform(x1, x2) * sm * mult * c)
-            if ctx.author.id == 592345932062916619:
-                new = 0
-            if not xp_disabled:
-                xp += new
-            if not xp_disabled:
-                lu, ld = False, False
-                if level >= 0:
-                    while level < max_level and xp >= levels[level]:
-                        level += 1
-                        lu = True
-                    while level > 0 and xp < levels[level - 1]:
-                        level -= 1
-                        ld = True
-                    if level == 0 and xp < 0:
-                        level = -1
-                        ld = True
-                elif level == -1:
-                    if xp >= 0:
-                        level = 0
-                        lu = True
-                    if xp < -levels[0]:
-                        level -= 1
-                        ld = True
-                else:
-                    while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
-                        level += 1
-                        lu = True
-                    while level >= -max_level and xp < -levels[(-level) - 1]:
-                        level -= 1
-                        ld = True
+                pass
+        else:
+            __settings = settings.template.copy()
+            xp_disabled = True
+        data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        if data:
+            level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
+        else:
+            level, xp, last, ls = [0, 0, 0, 0]
+        if ls is None:
+            ls = 0
+        now = time.now_ts()
+        td = now - last
+        _td = now - ls
+        if td < 5:
+            mult = 0
+        elif 5 <= td < 60:
+            mult = (td - 5) / 55
+        else:
+            mult = 1
+        if _td > 60:
+            mult = 1
+        full = mult == 1
+        dc = mult == 0  # didn't count
+        x1, x2 = xp_amounts
+        try:
+            sm = float(__settings['leveling']['xp_multiplier'])
+        except KeyError:
+            sm = 1
+        c = 0.67 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
+        c = 0.85 if ctx.author.id in [742929135713910815, 579369168797958163, 740262813049684069] else c
+        new = int(random.uniform(x1, x2) * sm * mult * c)
+        if ctx.author.id == 592345932062916619:
+            new = 0
+        if not xp_disabled:
+            xp += new
+        if not xp_disabled:
+            lu, ld = False, False
+            if level >= 0:
+                while level < max_level and xp >= levels[level]:
+                    level += 1
+                    lu = True
+                while level > 0 and xp < levels[level - 1]:
+                    level -= 1
+                    ld = True
+                if level == 0 and xp < 0:
+                    level = -1
+                    ld = True
+            elif level == -1:
+                if xp >= 0:
+                    level = 0
+                    lu = True
+                if xp < -levels[0]:
+                    level -= 1
+                    ld = True
+            else:
+                while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
+                    level += 1
+                    lu = True
+                while level >= -max_level and xp < -levels[(-level) - 1]:
+                    level -= 1
+                    ld = True
+            if self.bot.name == "suager":
                 if lu:
                     try:
                         send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
@@ -317,15 +315,15 @@ class Leveling(commands.Cog):
                                        ctx.channel)
                 except Exception as e:
                     print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
-            # _last = last if dc else now
-            last_send = last if dc else now
-            minute = now if full else ls
-            if data:
-                self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
-                                    (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
-            else:
-                self.bot.db.execute("INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
+        # _last = last if dc else now
+        last_send = last if dc else now
+        minute = now if full else ls
+        if data:
+            self.bot.db.execute(f"UPDATE {self.lvl} SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
+                                (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
+        else:
+            self.bot.db.execute(f"INSERT INTO {self.lvl} VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
 
     @commands.command(name="rewards")
     @commands.guild_only()
@@ -358,7 +356,7 @@ class Leveling(commands.Cog):
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
                 return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-            data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
                 font_colour, progress_colour, background_colour = \
@@ -409,7 +407,7 @@ class Leveling(commands.Cog):
                     prev = -int(levels[(-level) - 1])
             except IndexError:
                 prev = 0
-            _data = self.bot.db.fetch("SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+            _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
@@ -418,16 +416,7 @@ class Leveling(commands.Cog):
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
-                if time.now(None) < time.dt(2021, 1, 1):
-                    new_level = 0
-                    for level_req in level_history["v7"]:
-                        if xp >= level_req:
-                            new_level += 1
-                        else:
-                            break
-                    dr.text((text_x, 130), f"{place} | {_level} | New Level {new_level}", font=font_small, fill=font_colour)
-                else:
-                    dr.text((text_x, 130), f"{place} | {_level} ", font=font_small, fill=font_colour)
+                dr.text((text_x, 130), f"{place} | {_level} ", font=font_small, fill=font_colour)
                 r1 = langs.gns(int(xp), locale)
                 r3 = langs.gfs(progress, locale, 2, True)
                 r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp), locale)) if level < max_level else ""
@@ -453,8 +442,8 @@ class Leveling(commands.Cog):
             img.save(bio, "PNG")
             bio.seek(0)
             r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
-            if time.now(None) < time.dt(2021, 1, 1):
-                r += "\n__Note: Levels will be updated on **1st January 2021**. You can see your level after the update as New Level.__"
+            if self.bot.name == "cobble":
+                r += "\nCobbleBot XP is counted since 2 January 2020 AD."
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
     @commands.command(name="rank", aliases=["level"])
@@ -475,7 +464,7 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-        _data = self.bot.db.fetch("SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
+        _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE xp!=0 AND disc!=0")
         coll = {}
         for i in _data:
             if i['uid'] not in coll:
@@ -566,7 +555,7 @@ class Leveling(commands.Cog):
         except IndexError:
             return await general.send(langs.gls("leveling_xplevel_max", locale, langs.gns(max_level, locale)), ctx.channel)
         if ctx.guild is not None:
-            data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         else:
             data = None
         if not data:
@@ -601,7 +590,7 @@ class Leveling(commands.Cog):
     async def next_level(self, ctx: commands.Context):
         """ XP required for next level """
         locale = langs.gl(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await general.send(langs.gls("leveling_next_level_none", locale), ctx.channel)
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
