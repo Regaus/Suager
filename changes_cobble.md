@@ -47,8 +47,11 @@
 ## v1.0.2 - 24 December 2020
 - Added hot chocolate command
 
-## v1.0.3 - 26 December
+## v1.0.3 - 26 December 2020
 - RSL-1 noun declensions
 
 ## v1.0.4 - 2 January 2021
 - CobbleBot now uses separate leveling
+
+## v1.0.4.1 - 4 January 2021
+- Fixed data_io not updating config example anymore

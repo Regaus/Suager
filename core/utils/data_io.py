@@ -22,10 +22,10 @@ def change_version(value: str, new: str, index: int):
         data["bots"][index]["last_update"] = int(time.now_ts())
     open("config.json", "w", encoding="utf-8").write(json.dumps(data, indent=2))
     try:
-        data = json.loads(open("config_v6_ex.json", "r", encoding="utf-8").read())
+        data = json.loads(open("config_ex.json", "r", encoding="utf-8").read())
         data["bots"][index][value] = new
         if value == "version":
             data["bots"][index]["last_update"] = int(time.now_ts())
-        open("config_v6_ex.json", "w", encoding="utf-8").write(json.dumps(data, indent=2))
+        open("config_ex.json", "w", encoding="utf-8").write(json.dumps(data, indent=2))
     except FileNotFoundError:
         pass

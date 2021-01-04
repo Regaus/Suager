@@ -135,10 +135,11 @@ class Events(commands.Cog):
             embed = message.embeds[0] if message.embeds else None
             await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
 
-        if message.guild.id in [568148147457490954, 738425418637639775]:
-            if message.channel.id not in self.message_ignore:
-                if not message.author.bot:
-                    await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
+        if self.bot.name == "suager":
+            if message.guild.id in [568148147457490954, 738425418637639775]:
+                if message.channel.id not in self.message_ignore:
+                    if not message.author.bot:
+                        await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, messages: List[discord.Message]):
@@ -155,25 +156,27 @@ class Events(commands.Cog):
                 files.append(discord.File(file, filename=attachment.filename))
             embed = message.embeds[0] if message.embeds else None
             await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
-        for message in messages:
-            if message.guild.id in [568148147457490954, 738425418637639775]:
-                if message.channel.id not in self.message_ignore:
-                    if not message.author.bot:
-                        await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
+        if self.bot.name == "suager":
+            for message in messages:
+                if message.guild.id in [568148147457490954, 738425418637639775]:
+                    if message.channel.id not in self.message_ignore:
+                        if not message.author.bot:
+                            await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         async def process_msg(cid: int):
             embed = discord.Embed(description=f"Message was edited in {after.channel.mention} ({after.channel.id})\n"
-                                              f"Author: {after.author}\nMessage sent: {after.created_at}")
+                                              f"Author: {after.author}\nMessage sent: {after.created_at}\nMessage edited: {after.edited_at}")
             embed.add_field(name="Content Before", value=before.content, inline=False)
             embed.add_field(name="Content After", value=after.content, inline=False)
             await general.send(None, self.bot.get_channel(cid), embed=embed)
 
-        if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
-            if after.channel.id not in self.message_ignore:
-                if not after.author.bot:
-                    await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
+        if self.bot.name == "suager":
+            if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
+                if after.channel.id not in self.message_ignore:
+                    if not after.author.bot:
+                        await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
 
 
 def setup(bot):

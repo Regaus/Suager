@@ -603,3 +603,8 @@
 
 ## v7.0.8 - 1 January 2021
 - You now get a role for joining Senko Lair during 2021
+
+## v7.0.9 - 4 January 2021
+- Improved message logger
+- Updated heretic list for leveling XP reduction
+- Fixed data_io not updating config example anymore
