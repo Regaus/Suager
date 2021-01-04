@@ -3,13 +3,13 @@ import os
 from core.utils import time
 
 
-def log(name: str, log_type: str, data: str):
+def log(bot_name: str, log_type: str, data: str):
     date = time.now(None).strftime("%Y-%m-%d")
     try:
-        os.makedirs(f"data/logs/{name}/{date}")
+        os.makedirs(f"data/logs/{bot_name}/{date}")
     except FileExistsError:
         pass
-    stuff = open(f"data/logs/{name}/{date}/{log_type}.rsf", "a+", encoding="utf-8")
+    stuff = open(f"data/logs/{bot_name}/{date}/{log_type}.rsf", "a+", encoding="utf-8")
     try:
         stuff.write(f"{data}\n")
         stuff.close()

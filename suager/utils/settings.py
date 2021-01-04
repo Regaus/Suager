@@ -14,5 +14,10 @@ template = {
     "currency": "€",
     # "shop_items": [],
     "roles": [],
-    "mute_role": 0
+    "mute_role": 0,
+    "starboard": {
+        "enabled": False,
+        "minimum": 3,
+        "channel": 0,
+    }
 }

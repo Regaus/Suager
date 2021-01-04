@@ -1,0 +1,149 @@
+import json
+from typing import Union
+
+import discord
+from discord.ext import commands
+
+from core.utils import general, logger, time
+
+
+class Starboard(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def starboard_update(self, payload: Union[discord.RawReactionActionEvent, discord.RawReactionClearEvent, discord.RawReactionClearEmojiEvent,
+                                                    discord.RawMessageDeleteEvent]):
+        """ Handle updating the data on the message. """
+        _type = {
+            discord.RawReactionActionEvent: 1,
+            discord.RawReactionClearEvent: 2,
+            discord.RawReactionClearEmojiEvent: 3,
+            discord.RawMessageDeleteEvent: 4
+        }.get(type(payload))
+        increase = (1 if payload.event_type == "REACTION_ADD" else -1 if payload.event_type == "REACTION_REMOVE" else 0) if _type == 1 else 0
+        # print(f"DEBUG: {_type=}, {increase=}")
+        if _type in [1, 3]:
+            emoji = payload.emoji
+            if emoji.name != "⭐":
+                return  # Not a star, ignore.
+        server = payload.guild_id
+        if server is None:
+            return
+        guild = self.bot.get_guild(server)
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (server,))
+        if _settings:
+            __settings = json.loads(_settings['data'])
+            try:
+                if not __settings['starboard']['enabled']:
+                    return
+            except KeyError:
+                return
+        else:
+            return
+        # ^ Checks that the server has starboard enabled
+        channel = payload.channel_id
+        _channel: discord.TextChannel = self.bot.get_channel(channel)
+        if "channel" not in __settings["starboard"] or not __settings["starboard"]["channel"]:
+            return await general.send("Starboard will not be able to function there is no channel set up.", _channel)
+        else:
+            starboard_channel: discord.TextChannel = self.bot.get_channel(__settings["starboard"]["channel"])
+            if not starboard_channel:
+                return await general.send("Starboard channel could not be accessed. Starboard will not be able to function.", _channel)
+        message = payload.message_id
+        # adder = payload.user_id
+        data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=?", (message,))
+        new = not data
+        stars = (1 if new else data["stars"] + increase) if _type == 1 else 0
+        star_message = f"⭐ {stars} - in <#{channel}> - Message ID {message}"
+        if "minimum" not in __settings["starboard"] or not __settings["starboard"]["minimum"]:
+            minimum = 3
+        else:
+            minimum = __settings["starboard"]["minimum"]
+        if new:
+            self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?)", (message, channel, server, stars, None))
+        elif _type == 4:
+            self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))  # The message has been deleted, so also remove it from the database.
+            logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {message} has been deleted.")
+        else:
+            if _type == 1:
+                self.bot.db.execute("UPDATE starboard SET stars=stars+? WHERE message=?", (increase, message))
+            else:
+                self.bot.db.execute("UPDATE starboard SET stars=0 WHERE message=?", (increase, message))
+        if _type != 4:
+            logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {message} in #{_channel.name} ({guild.name}) now has {stars} stars.")
+
+        async def send_starboard_message():
+            try:
+                _message: discord.Message = await _channel.fetch_message(message)
+            except (discord.NotFound, discord.Forbidden):
+                return  # Since what's the point of starring a message you don't even know
+            embed = discord.Embed(colour=0xffff00)
+            author = _message.author
+            author_name = author.name
+            author_url = author.avatar_url_as(size=64, format="png")
+            embed.set_author(name=author_name, icon_url=author_url)
+            embed.description = _message.content
+            if _message.attachments:
+                att = _message.attachments[0]
+                embed.set_image(url=att.url)
+            embed.add_field(name="Jump to message", value=f"[Click here]({_message.jump_url})", inline=False)
+            embed.timestamp = _message.created_at
+            _starboard_message = await general.send(star_message, starboard_channel, embed=embed)
+            self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=?", (_starboard_message.id, message))
+
+        if stars >= minimum:  # If there are enough stars
+            if not data or not data["star_message"]:
+                await send_starboard_message()
+            else:
+                try:
+                    starboard_message: discord.Message = await starboard_channel.fetch_message(data["star_message"])
+                except discord.NotFound:
+                    logger.log(self.bot.name, "starboard", f"{time.time()} - Resending starboard message for Message ID {message}")
+                    # await general.send(f"Starboard for message {message} could not be found - Resending message.",
+                    #                    self.bot.get_channel(channel))
+                    await send_starboard_message()
+                except discord.Forbidden:
+                    await general.send(f"Starboard update failed for message {message} - Not allowed to fetch messages from starboard channel.\n"
+                                       f"Star amount was still updated on database.",
+                                       self.bot.get_channel(channel))
+                else:
+                    await starboard_message.edit(content=star_message)
+        else:
+            if not data or not data["star_message"]:
+                pass
+            else:
+                try:
+                    starboard_message: discord.Message = await starboard_channel.fetch_message(data["star_message"])
+                    await starboard_message.delete()
+                    logger.log(self.bot.name, "starboard", f"{time.time()} - Deleted starboard message for Message ID {message}, no longer enough stars.")
+                except (discord.NotFound, discord.Forbidden):
+                    pass  # If there is no message or I can't fetch it and delete it, ignore
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        """ Reaction was added to a message """
+        return await self.starboard_update(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        """ Reaction was removed from a message """
+        return await self.starboard_update(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_clear(self, payload: discord.RawReactionClearEvent):
+        """ All reactions were cleared from a message """
+        return await self.starboard_update(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent):
+        """ An emote has been cleared from a message """
+        return await self.starboard_update(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        """ Message was deleted """
+        return await self.starboard_update(payload)
+
+
+def setup(bot):
+    bot.add_cog(Starboard(bot))

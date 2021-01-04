@@ -169,5 +169,12 @@ tables = [
     Table("locales", [
         Column("gid", 0, True),
         Column("locale", 2, True)
+    ]),
+    Table("starboard", [
+        Column("message", 0, True),       # Original message ID
+        Column("channel", 0, True),
+        Column("guild", 0, True),
+        Column("stars", 0, True),
+        Column("star_message", 0, False)  # Starboard message ID
     ])
 ]

@@ -434,6 +434,69 @@ class Settings(commands.Cog):
             self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
         return await general.send(f"The muted role has been set to {role.name}", ctx.channel)
 
+    @settings.group(name="starboard")
+    async def set_starboard(self, ctx: commands.Context):
+        """ Starboard settings """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @set_starboard.command(name="toggle")
+    async def starboard_toggle(self, ctx: commands.Context):
+        """ Toggle starboard on or off """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = settings.template.copy()
+        if "starboard" not in _settings:
+            _settings["starboard"] = settings.template["starboard"].copy()
+        _settings["starboard"]["enabled"] ^= True
+        is_or_not = "enabled" if _settings["starboard"]["enabled"] else "disabled"
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await general.send(f"Starboard is now {is_or_not} in this server.", ctx.channel)
+
+    @set_starboard.command(name="channel")
+    async def starboard_channel(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Set the channel for starboard messages """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = settings.template.copy()
+        if "starboard" not in _settings:
+            _settings["starboard"] = settings.template["starboard"].copy()
+        _settings["starboard"]["channel"] = channel.id
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await general.send(f"Starboard messages will now be sent to {channel.mention}.", ctx.channel)
+
+    @set_starboard.command(name="minimum", aliases=["requirement"])
+    async def starboard_requirement(self, ctx: commands.Context, requirement: int):
+        """ Set the minimum amount of stars before the message is sent to the starboard """
+        if requirement < 1:
+            return await general.send("The requirement has to be 1 or above.", ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = settings.template.copy()
+        if "starboard" not in _settings:
+            _settings["starboard"] = settings.template["starboard"].copy()
+        _settings["starboard"]["minimum"] = requirement
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await general.send(f"The minimum amount of stars to appear on the starboard is now {requirement}.", ctx.channel)
+
     @commands.command(name="prefix")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

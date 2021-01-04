@@ -608,3 +608,6 @@
 - Improved message logger
 - Updated heretic list for leveling XP reduction
 - Fixed data_io not updating config example anymore
+
+## v7.1.0 - 4 January 2021
+- Added starboard
