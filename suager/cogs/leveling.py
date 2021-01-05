@@ -106,6 +106,7 @@ levels = _levels()
 level_history = _level_history()
 # xp_amounts = [2250, 3000]
 xp_amounts = [20, 27]
+custom_rank_blacklist = [746173049174229142]
 
 
 class Leveling(commands.Cog):
@@ -358,7 +359,12 @@ class Leveling(commands.Cog):
             if user.bot and not is_self:
                 return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
             data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-            custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
+            r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
+            if user.id in custom_rank_blacklist:
+                custom = None
+                r += "\nCongrats on setting yourself to a rank card that makes the text invisible. Now enjoy the consequences of your actions. :^)"
+            else:
+                custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
                 font_colour, progress_colour, background_colour = \
                     get_colour(custom["font"]), get_colour(custom["progress"]), get_colour(custom["background"])
@@ -442,7 +448,6 @@ class Leveling(commands.Cog):
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
-            r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
             if self.bot.name == "cobble":
                 r += "\nCobbleBot XP is counted since 2 January 2020 AD."
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
@@ -494,6 +499,7 @@ class Leveling(commands.Cog):
         return await general.send(langs.gls("leveling_rank_global", locale, user, langs.gns(__xp, locale), place, langs.gns(level, locale)), ctx.channel)
 
     @commands.group(name="crank", aliases=["customrank"])
+    @commands.check(lambda ctx: ctx.author.id not in custom_rank_blacklist)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
         """ Customise your rank """

@@ -611,3 +611,6 @@
 
 ## v7.1.0 - 4 January 2021
 - Added starboard
+
+## v7.1.0.1 - 5 January 2021
+- Imagine starboard breaking

@@ -88,8 +88,11 @@ class Starboard(commands.Cog):
                 embed.set_image(url=att.url)
             embed.add_field(name="Jump to message", value=f"[Click here]({_message.jump_url})", inline=False)
             embed.timestamp = _message.created_at
-            _starboard_message = await general.send(star_message, starboard_channel, embed=embed)
-            self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=?", (_starboard_message.id, message))
+            try:
+                _starboard_message = await general.send(star_message, starboard_channel, embed=embed)
+                self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=?", (_starboard_message.id, message))
+            except discord.Forbidden:
+                await general.send("Imagine not being able to send messages to the starboard channel", _channel)
 
         if stars >= minimum:  # If there are enough stars
             if not data or not data["star_message"]:
