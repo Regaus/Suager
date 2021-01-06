@@ -614,3 +614,6 @@
 
 ## v7.1.0.1 - 5 January 2021
 - Imagine starboard breaking
+
+## v7.1.0.2 - 6 January 2021
+- You can no longer star your own messages

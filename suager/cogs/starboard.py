@@ -50,11 +50,20 @@ class Starboard(commands.Cog):
             if not starboard_channel:
                 return await general.send("Starboard channel could not be accessed. Starboard will not be able to function.", _channel)
         message = payload.message_id
+        try:
+            _message: discord.Message = await _channel.fetch_message(message)
+        except (discord.NotFound, discord.Forbidden):
+            return  # Since what's the point of starring a message you don't even know
+        if _type == 1:
+            user = payload.user_id
+            _author = _message.author.id
+            if user == _author:
+                return  # You shouldn't star your own messages
         # adder = payload.user_id
         data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=?", (message,))
         new = not data
         stars = (1 if new else data["stars"] + increase) if _type == 1 else 0
-        star_message = f"⭐ {stars} - in <#{channel}> - Message ID {message}"
+        star_message = f"⭐ {stars} - in <#{channel}>"
         if "minimum" not in __settings["starboard"] or not __settings["starboard"]["minimum"]:
             minimum = 3
         else:
@@ -73,10 +82,6 @@ class Starboard(commands.Cog):
             logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {message} in #{_channel.name} ({guild.name}) now has {stars} stars.")
 
         async def send_starboard_message():
-            try:
-                _message: discord.Message = await _channel.fetch_message(message)
-            except (discord.NotFound, discord.Forbidden):
-                return  # Since what's the point of starring a message you don't even know
             embed = discord.Embed(colour=0xffff00)
             author = _message.author
             author_name = author.name
@@ -87,6 +92,7 @@ class Starboard(commands.Cog):
                 att = _message.attachments[0]
                 embed.set_image(url=att.url)
             embed.add_field(name="Jump to message", value=f"[Click here]({_message.jump_url})", inline=False)
+            embed.set_footer(text=f"Message ID {message}")
             embed.timestamp = _message.created_at
             try:
                 _starboard_message = await general.send(star_message, starboard_channel, embed=embed)
