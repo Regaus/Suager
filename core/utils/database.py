@@ -176,5 +176,14 @@ tables = [
         Column("guild", 0, True),
         Column("stars", 0, True),
         Column("star_message", 0, False)  # Starboard message ID
+    ]),
+    Table("temporary", [
+        Column("uid", 0, True),       # User ID
+        Column("type", 2, True),      # "mute" or "reminder"
+        Column("expiry", 4, True),    # When the action is due
+        Column("gid", 0, False),      # Guild ID if it's a mute
+        Column("message", 2, False),  # Message if it's a reminder
+        Column("entry_id", 0, True),  # Random ID to later find this entry in the database
+        Column("handled", 3, True),   # Whether the entry has been handled upon expiry
     ])
 ]

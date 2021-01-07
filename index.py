@@ -6,7 +6,7 @@ from sqlite3 import OperationalError
 import aiohttp
 import discord
 
-from core.utils import bot_data, database, general, time
+from core.utils import bot_data, database, general, temporaries, time
 from core.utils.general import print_error
 
 boot_time = time.now(None)
@@ -50,17 +50,15 @@ for i in range(len(config["bots"])):
     # times['ad'] = False
     # open(fn, 'w+').write(json.dumps(times))
     blacklist = json.loads(open("blacklist.json", "r").read())
-    bot = bot_data.Bot(blacklist, command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
+    name = local_config["internal_name"]
+    db = database.Database()
+    bot = bot_data.Bot(blacklist, i, local_config, config, name, db, {},
+                       command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
                        connector=aiohttp.TCPConnector(ssl=False),
                        intents=discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True))
-    bot.index = i
-    bot.local_config = local_config
-    bot.config = config
-    bot.name = local_config["internal_name"]
-    bot.db = database.Database()
-    if bot.name == "suager":
-        bot.db.execute("UPDATE tbl_clan SET usage=0")
+    # if bot.name == "suager":
+    #     bot.db.execute("UPDATE tbl_clan SET usage=0")
     try:
         for file in os.listdir(os.path.join(_name, "cogs")):
             if file.endswith(".py"):
@@ -80,11 +78,12 @@ for i in range(len(config["bots"])):
             except FileNotFoundError:
                 print_error(f"File {bot_name}/cogs/{cog}.py was not found...")
     bot.load_extension("jishaku")
-    bot.usages = {}
     for command in bot.commands:
         bot.usages[str(command)] = 0
     if "token" in local_config and local_config["token"]:
         tasks.append(loop.create_task(bot.start(local_config["token"])))
+    if bot.name == "suager":
+        tasks.append(loop.create_task(temporaries.temporaries(bot)))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

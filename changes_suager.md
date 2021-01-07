@@ -617,3 +617,9 @@
 
 ## v7.1.0.2 - 6 January 2021
 - You can no longer star your own messages
+
+## v7.2.0-pre1 - 7 January 2021
+- Added reminders
+- timein and timeago commands
+- Improved the way the bot handles the extra parameters I use
+- Added a new channel to the Suager updates list and improved the message

@@ -362,7 +362,7 @@ class Leveling(commands.Cog):
             r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
             if user.id in custom_rank_blacklist:
                 custom = None
-                r += "\nCongrats on setting yourself to a rank card that makes the text invisible. Now enjoy the consequences of your actions. :^)"
+                # r += "\nCongrats on setting yourself to a rank card that makes the text invisible. Now enjoy the consequences of your actions. :^)"
             else:
                 custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:

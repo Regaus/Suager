@@ -80,7 +80,9 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    if locale in ["rsl-1d", "ru_ru"]:
+    if locale in ["rsl-1f"]:
+        name = get_data(what, locale)[0]
+    elif locale in ["rsl-1d", "ru_ru"]:
         name_1, name_2, name_pl = get_data(what, locale)
         pl = get_data("_pl", locale)
         p1, p2, p3 = pl
@@ -147,6 +149,13 @@ def td_int(seconds: int, locale: str = "en_gb", accuracy: int = 3, is_future: bo
 
 def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool = True, suffix: bool = False) -> str:
     return td_dt(time.from_ts(timestamp, None), locale, accuracy=accuracy, brief=brief, suffix=suffix)
+
+
+def td_rd(delta: relativedelta, locale: str = "en_gb", accuracy: int = 3, brief: bool = False, suffix: bool = True) -> str:
+    now = time.now(None)
+    if time.rd_negative(delta):
+        delta.seconds -= 1
+    return td_dt(now + delta, locale, accuracy=accuracy, brief=brief, suffix=suffix, source=now)
 
 
 def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:

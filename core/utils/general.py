@@ -6,6 +6,7 @@ import traceback
 from io import BytesIO
 
 import discord
+from discord.ext import commands
 
 from core.utils import time
 
@@ -87,5 +88,5 @@ def round_value(value):
         return e
 
 
-def is_suager(ctx):
-    return ctx.bot.name == "suager"
+def random_id(ctx: commands.Context):
+    return ctx.author.id + random.randint(0, 0xfffffffffffffff)

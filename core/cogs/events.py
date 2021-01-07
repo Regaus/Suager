@@ -21,7 +21,7 @@ class Events(commands.Cog):
             self.avatar.start()
         self.blocked = [667187968145883146]
         self.bad = ["re", "rag", "<@302851022790066185>", "<@!302851022790066185>"]
-        self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340]]
+        self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340, 786008719657664532]]
         self.blocked_logs = self.bot.get_channel(739183533792297164)
         self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
                                571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
@@ -51,7 +51,7 @@ class Events(commands.Cog):
                 for channel in self.updates:
                     try:
                         if channel is not None:
-                            await general.send(f"{ctx.author} | #{ctx.channel.name} ({ctx.guild.name}) | {time.time()}\n{ctx.content}", channel)
+                            await general.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}", channel)
                     except Exception as e:
                         await general.send(f"on_message > Update announcement > {channel} > {type(e).__name__}: {e}", ctx.channel)
 

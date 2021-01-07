@@ -3,12 +3,19 @@ from discord.ext.commands import AutoShardedBot, MinimalHelpCommand
 from jishaku.paginators import PaginatorEmbedInterface
 
 from core.utils import permissions
+from core.utils.database import Database
 
 
 class Bot(AutoShardedBot):
-    def __init__(self, blacklist: list, *args, **kwargs):
+    def __init__(self, blacklist: list, index: int, lc: dict, config: dict, name: str, db: Database, usages: dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.blacklist = blacklist
+        self.index = index
+        self.local_config = lc
+        self.config = config
+        self.name = name
+        self.db = db
+        self.usages = usages
 
     async def on_message(self, msg):
         if not self.is_ready() or msg.author.bot or not permissions.can_send(msg) or msg.author.id in self.blacklist:

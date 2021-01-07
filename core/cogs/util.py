@@ -17,6 +17,18 @@ def custom_role_enabled(ctx):
     return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473]
 
 
+async def time_diff(ctx: commands.Context, string: str, multiplier: int):
+    locale = langs.gl(ctx)
+    delta = time.interpret_time(string) * multiplier
+    then, errors = time.add_time(delta)
+    if errors:
+        return await general.send(f"Error converting time difference: {then}", ctx.channel)
+    difference = langs.td_rd(delta, locale, accuracy=7, brief=False, suffix=True)
+    time_now = langs.gts(time.now(None), locale, True, False, False, True, False)
+    time_then = langs.gts(then, locale, True, False, False, True, False)
+    return await general.send(f"Current time: **{time_now}**\nDifference: **{difference}**\nOutput time: **{time_then}**", ctx.channel)
+
+
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -145,6 +157,18 @@ class Utility(commands.Cog):
             return await general.send(langs.gls("util_timesince", locale, current_time, specified_time, difference), ctx.channel)
         except Exception as e:
             return await general.send(langs.gls("util_timesince_error", locale, type(e).__name__, str(e)), ctx.channel)
+
+    @commands.command(name="timein", aliases=["timeadd"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def time_in(self, ctx: commands.Context, time_period: str):
+        """ Check what time it'll be in a specified period """
+        return await time_diff(ctx, time_period, 1)
+
+    @commands.command(name="timeago", aliases=["timeremove"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def time_ago(self, ctx: commands.Context, time_period: str):
+        """ Check what time it was a specified period ago """
+        return await time_diff(ctx, time_period, -1)
 
     @commands.command(name="weather")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -747,6 +771,20 @@ class Utility(commands.Cog):
         else:
             result = self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
             return await general.send(f"Updated custom role of {user.name} to {role.name}: {result}", ctx.channel)
+
+    @commands.command(name="remind", aliases=["remindme"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def remind_me(self, ctx: commands.Context, duration: str, *, reminder: str):
+        """ Set yourself a reminder. """
+        delta = time.interpret_time(duration)
+        expiry, error = time.add_time(delta)
+        if error:
+            return await general.send(f"Failed to convert duration: {error}", ctx.channel)
+        diff = langs.td_rd(delta, "en_gb", accuracy=7, brief=False, suffix=True)
+        when = langs.gts(expiry, "en_gb", True, True, False, True, False)
+        random_id = general.random_id(ctx)
+        self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False))
+        return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when})", ctx.channel)
 
 
 def setup(bot):

@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta as td, timezone
 
 import pytz
@@ -68,3 +69,36 @@ def file_ts(name: str, ext: str = "txt") -> str:
 
 def dt(year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
     return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+
+
+def interpret_time(period: str) -> None or td:
+    matches = re.findall(r"(\d+(y|mo|w|d|h|m|s))", period)
+    if not matches:
+        return None
+    else:
+        _td = {}
+        keys = {"y": "years", "mo": "months", "w": "weeks", "d": "days", "h": "hours", "m": "minutes", "s": "seconds"}
+        for match, _period in matches:
+            _length = match.replace(_period, "")
+            key = keys.get(_period)
+            length = int(_length)
+            if key in _td:
+                _td[key] += length
+            else:
+                _td[key] = length
+        return relativedelta(**_td)
+
+
+def add_time(delta: relativedelta):
+    try:
+        return datetime.utcnow() + delta, False
+    except Exception as e:
+        return f"{type(e).__name__}: {str(e)}", True
+
+
+def rd_negative(delta: relativedelta):
+    try:
+        datetime.min + delta
+        return False
+    except (ValueError, OverflowError):
+        return True
