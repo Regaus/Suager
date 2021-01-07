@@ -12,7 +12,7 @@ class Tags(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="tag", aliases=["tags", "t"], invoke_without_command=True)
+    @commands.group(name="tag", aliases=["tags", "t"], invoke_without_command=True, case_insensitive=True)
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tags(self, ctx: commands.Context, *, tag_name: str):
@@ -21,12 +21,52 @@ class Tags(commands.Cog):
             tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
             if tag:
                 self.bot.db.execute("UPDATE tags SET usage=usage+1 WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
-                return await general.send(tag["content"], ctx.channel)
+                locale = langs.gl(ctx)
+                content = tag["content"]\
+                    .replace("[USERNAME]", ctx.author.name)\
+                    .replace("[USER]", str(ctx.author))\
+                    .replace("[USER_ID]", str(ctx.author.id))\
+                    .replace("[AVATAR]", str(ctx.author.avatar_url_as(static_format="png", size=1024)))\
+                    .replace("[JOINED]", langs.gts(ctx.author.joined_at, locale, True, True, False, True, False))\
+                    .replace("[USER_CREATED]", langs.gts(ctx.author.created_at, locale, True, True, False, True, False))\
+                    .replace("[SERVER_CREATED]", langs.gts(ctx.guild.created_at, locale, True, True, False, True, False))\
+                    .replace("[CHANNEL]", ctx.channel.mention)\
+                    .replace("[CHANNEL_NAME]", ctx.channel.name)\
+                    .replace("[SERVER]", ctx.guild.name)\
+                    .replace("[SERVER_ID]", str(ctx.guild.id))\
+                    .replace("[MEMBERS]", str(len(ctx.guild.members)))\
+                    .replace("[OWNER]", str(ctx.guild.owner))\
+                    .replace("[SERVER_ICON]", str(ctx.guild.icon_url_as(static_format="png", size=1024)))\
+                    .replace("[USAGE]", str(tag["usage"] + 1))
+                return await general.send(content, ctx.channel)
             else:
                 locale = langs.gl(ctx)
                 return await general.send(langs.gls("tags_not_found", locale, tag_name.lower()), ctx.channel)
 
-    @tags.command(name="create")
+    @tags.command(name="variables", aliases=["arguments", "args", "vars"])
+    async def tag_variables(self, ctx: commands.Context):
+        """ Lists all available tag variables """
+        variables = {
+            "USERNAME": f"Your username (e.g. {ctx.author.name})",
+            "USER": f"Your name and tag (e.g. {ctx.author})",
+            "USER_ID": "Your user ID",
+            "AVATAR": "URL to your avatar/profile picture",
+            "JOINED": "When you joined this server",
+            "USER_CREATED": "When you created your account",
+            "SERVER_CREATED": "When the server was created",
+            "CHANNEL": "Mentions the channel the tag was used in",
+            "CHANNEL_NAME": "The name of the channel",
+            "SERVER": "The name of this server",
+            "SERVER_ID": "This server's ID",
+            "MEMBERS": "How many members there are in the server",
+            "OWNER": "The server owner",
+            "SERVER_ICON": "URL to the server icon",
+            "USAGE": "How many times the tag has been used"
+        }
+        output = "\n".join(sorted([f"[{key}] - {value}" for key, value in variables.items()]))
+        return await general.send(f"Here are the currently available tag variables:\n{output}", ctx.channel)
+
+    @tags.command(name="create", aliases=["add"])
     async def create_tag(self, ctx: commands.Context, tag_name: str, *, content: str):
         """ Create a new tag """
         locale = langs.gl(ctx)

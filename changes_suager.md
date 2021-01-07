@@ -630,3 +630,10 @@
 - Command to check currently active reminders
 - Tags delete and birthday set now delete their confirmation message on success
 - Temporaries handled value is now an integer
+
+## v7.2.0-pre3 - 7 January 2021
+- Temporary mutes
+- //mutes - shows currently active temp mutes
+
+## v7.2.0 - 7 January 2021
+- Tag variables

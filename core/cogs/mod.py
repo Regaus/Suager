@@ -1,10 +1,12 @@
 import json
 import re
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
-from core.utils import general, permissions, emotes
+from core.utils import general, permissions, emotes, time
+from languages import langs
 
 
 async def do_removal(ctx, limit, predicate, *, before=None, after=None, message=True):
@@ -182,7 +184,51 @@ class Moderation(commands.Cog):
             await member.add_roles(mute_role, reason=_reason)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
-        return await general.send(f"{emotes.Allow} Successfully muted **{member}** for **{reason}**", ctx.channel)
+        out = f"{emotes.Allow} Successfully muted **{member}** for **{reason}**"
+        if reason is not None:
+            _duration = reason.split(" ")[0]
+            delta = time.interpret_time(_duration)
+            if time.rd_is_above_5y(delta):
+                await general.send("You can't specify a time range above 5 years. Making mute permanent...", ctx.channel)
+            expiry, error = time.add_time(delta)
+            if error:
+                pass  # Quietly ignore any errors, since it's probably someone fucking around
+                # await general.send(f"Failed to convert duration: {expiry} | Making mute permanent...", ctx.channel)
+            else:
+                random_id = general.random_id(ctx)
+                self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (member.id, "mute", expiry, ctx.guild.id, None, random_id, 0))
+                duration = langs.td_rd(delta, "en_gb", accuracy=7, brief=False, suffix=False)
+                reason = " ".join(reason.split(" ")[1:])
+                out = f"{emotes.Allow} Successfully muted **{member}** for **{duration}** for **{reason}**"
+        return await general.send(out, ctx.channel)
+
+    @commands.command(name="mutes", aliases=["punishments"])
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.guild_only()
+    @permissions.has_permissions(manage_roles=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    async def temp_mutes(self, ctx: commands.Context):
+        """ See a list of your currently active temporary mutes """
+        reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE gid=? AND type='mute' ORDER BY expiry", (ctx.guild.id,))
+        if not reminders:
+            return await general.send(f"No one is temporarily muted at the moment in {ctx.guild.name}.", ctx.channel)
+        output = f"List of currently active temporary mutes in **{ctx.guild.name}**"
+        outputs = []
+        _reminder = 0
+        for reminder in reminders:
+            _reminder += 1
+            expiry = reminder["expiry"]
+            expires_on = langs.gts(expiry, "en_gb", True, True, False, True, False)
+            expires_in = langs.td_dt(expiry, "en_gb", accuracy=3, brief=False, suffix=True)
+            who = self.bot.get_user(reminder["uid"])
+            outputs.append(f"**{_reminder})** {who}\nMuted until {expires_on}\nExpires {expires_in}")
+        output2 = "\n\n".join(outputs)
+        if len(output2) > 1900:
+            _data = BytesIO(str(output2).encode('utf-8'))
+            return await general.send(output, ctx.channel, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+        else:
+            return await general.send(f"{output}\n{output2}", ctx.channel)
 
     @commands.command(name="unmute")
     @commands.guild_only()
@@ -192,7 +238,7 @@ class Moderation(commands.Cog):
     async def unmute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Unmute a user """
         if member == ctx.author:
-            return await general.send(f"Ah yes, unmuting yourself {emotes.BlobCatPolice}", ctx.channel)
+            return await general.send(f"Imagine trying to unmute yourself {emotes.BlobCatPolice}", ctx.channel)
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
@@ -209,6 +255,7 @@ class Moderation(commands.Cog):
             await member.remove_roles(mute_role, reason=_reason)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        self.bot.db.execute("DELETE FROM temporary WHERE uid=? AND type='mute' AND gid=?", (member.id, ctx.guild.id))
         return await general.send(f"{emotes.Allow} Successfully unmuted **{member}** for **{reason}**", ctx.channel)
 
     @commands.group()
