@@ -623,3 +623,10 @@
 - timein and timeago commands
 - Improved the way the bot handles the extra parameters I use
 - Added a new channel to the Suager updates list and improved the message
+
+## v7.2.0-pre2 - 7 January 2021
+- Reminders are now capped at 5 years
+- The bot now tells you off for trying to break the time script
+- Command to check currently active reminders
+- Tags delete and birthday set now delete their confirmation message on success
+- Temporaries handled value is now an integer

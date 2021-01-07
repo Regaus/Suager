@@ -184,6 +184,6 @@ tables = [
         Column("gid", 0, False),      # Guild ID if it's a mute
         Column("message", 2, False),  # Message if it's a reminder
         Column("entry_id", 0, True),  # Random ID to later find this entry in the database
-        Column("handled", 3, True),   # Whether the entry has been handled upon expiry
+        Column("handled", 0, True),   # Whether the entry has been handled upon expiry
     ])
 ]

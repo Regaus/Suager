@@ -115,6 +115,7 @@ class Birthdays(commands.Cog):
         except asyncio.TimeoutError:
             return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
         self.bot.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (ctx.author.id, timestamp, False))
+        await confirm_msg.delete()
         return await general.send(langs.gls("birthdays_set_set", locale, ctx.author.name, date), ctx.channel)
 
     @birthday.command(name="forceset", aliases=["force"])

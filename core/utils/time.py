@@ -18,8 +18,8 @@ def now(tz: str = None):
     return datetime.now(tz=pytz.timezone(tz))
 
 
-def set_tz(dt: datetime, tz: str):
-    return dt.astimezone(tz=pytz.timezone(tz))
+def set_tz(when: datetime, tz: str):
+    return when.astimezone(tz=pytz.timezone(tz))
 
 
 def senko_lair_time(when: datetime):
@@ -71,34 +71,59 @@ def dt(year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, 
     return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
 
 
-def interpret_time(period: str) -> None or td:
+def interpret_time(period: str) -> relativedelta:
     matches = re.findall(r"(\d+(y|mo|w|d|h|m|s))", period)
     if not matches:
-        return None
+        return relativedelta(seconds=0)  # Because fuck you
     else:
-        _td = {}
-        keys = {"y": "years", "mo": "months", "w": "weeks", "d": "days", "h": "hours", "m": "minutes", "s": "seconds"}
-        for match, _period in matches:
-            _length = match.replace(_period, "")
-            key = keys.get(_period)
-            length = int(_length)
-            if key in _td:
-                _td[key] += length
-            else:
-                _td[key] = length
-        return relativedelta(**_td)
+        try:
+            _td = {}
+            keys = {"y": "years", "mo": "months", "w": "weeks", "d": "days", "h": "hours", "m": "minutes", "s": "seconds"}
+            for match, _period in matches:
+                _length = match.replace(_period, "")
+                key = keys.get(_period)
+                length = int(_length)
+                if key in _td:
+                    _td[key] += length
+                else:
+                    _td[key] = length
+            return relativedelta(**_td)
+        except Exception as e:
+            type(e)  # ignore haha yes
+            return relativedelta(seconds=0)
 
 
 def add_time(delta: relativedelta):
+    if rd_is_zero(delta):
+        return "You either set the time to zero or broke the script. Either way, congrats, but no thank you.", True
     try:
         return datetime.utcnow() + delta, False
     except Exception as e:
         return f"{type(e).__name__}: {str(e)}", True
 
 
-def rd_negative(delta: relativedelta):
+def rd_negative(delta: relativedelta) -> bool:
     try:
         datetime.min + delta
         return False
     except (ValueError, OverflowError):
         return True
+
+
+def rd_is_zero(delta: relativedelta) -> bool:
+    try:
+        return datetime.min + delta == datetime.min
+    except (ValueError, OverflowError):
+        return False
+
+
+def rd_is_above_5y(delta: relativedelta) -> bool:
+    delta2 = relativedelta(now(None) + delta, now(None))
+    no = False
+    if delta2.years > 5:
+        no = True
+    elif delta2.years == 5:
+        delta2.years -= 5
+        if not rd_is_zero(delta2):
+            no = True
+    return no

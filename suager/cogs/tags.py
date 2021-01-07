@@ -85,6 +85,7 @@ class Tags(commands.Cog):
             except asyncio.TimeoutError:
                 return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
             self.bot.db.execute("DELETE FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag['name']))
+            await confirm_msg.delete()
             return await general.send(langs.gls("tags_delete_success", locale, tag["name"]), ctx.channel)
         else:
             return await general.send(langs.gls("tags_delete_deny", locale), ctx.channel)

@@ -39,7 +39,7 @@ class Achievements(commands.Cog):
         user = who or ctx.author
         achievement_levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
         achievement_xp = [10000, 50000, 100000, 250000, 500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2500000, 3000000, 4000000, 5000000]
-        achievements = 5
+        achievements = 3
         width = 1152
         large_size = 96
         img = Image.new("RGBA", (width, 256 * achievements + large_size), color=(0, 0, 0, 64))
@@ -91,33 +91,30 @@ class Achievements(commands.Cog):
             dr.text((text_x + fill + 10, y + 170), f"{progress:.0%}", font=font_small, fill=colour)
 
         tiers = []
-        for i in range(2):
-            system = ["leveling", "leveling2"][i]
-            name = ["Suager", "CobbleBot"][i]
-            user_xp = self.bot.db.fetch(f"SELECT * FROM {system} WHERE uid=? ORDER BY xp DESC", (user.id,))
-            try:
-                max_level = user_xp[0]["level"]
-            except IndexError:
-                max_level = 0
-            req, prev, tier = 0, 0, 0
-            for req in achievement_levels:
-                if max_level >= req:
-                    tier += 1
-                    prev = req
-                else:
-                    break
-            tiers.append(tier)
-            generate_box(2 * i, tier, f"{name} XP Levels", f"Reach {name} XP Level {req} in a server", max_level, req, prev)
-            total_xp = sum(part["xp"] for part in user_xp)
-            req, prev, tier = 0, 0, 0
-            for req in achievement_xp:
-                if total_xp >= req:
-                    tier += 1
-                    prev = req
-                else:
-                    break
-            tiers.append(tier)
-            generate_box(1 + 2 * i, tier, f"{name} Experience", f"Collect {req:,} {name} XP in total", total_xp, req, prev)
+        user_xp = self.bot.db.fetch(f"SELECT * FROM leveling2 WHERE uid=? ORDER BY xp DESC", (user.id,))
+        try:
+            max_level = user_xp[0]["level"]
+        except IndexError:
+            max_level = 0
+        req, prev, tier = 0, 0, 0
+        for req in achievement_levels:
+            if max_level >= req:
+                tier += 1
+                prev = req
+            else:
+                break
+        tiers.append(tier)
+        generate_box(0, tier, f"XP Levels", f"Reach XP Level {req} in a server", max_level, req, prev)
+        total_xp = sum(part["xp"] for part in user_xp)
+        req, prev, tier = 0, 0, 0
+        for req in achievement_xp:
+            if total_xp >= req:
+                tier += 1
+                prev = req
+            else:
+                break
+        tiers.append(tier)
+        generate_box(1, tier, f"Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
         min_tier = min(tiers)
         max_tier = max(tiers)
         req = min_tier + 1 if min_tier < 15 else 15

@@ -774,17 +774,47 @@ class Utility(commands.Cog):
 
     @commands.command(name="remind", aliases=["remindme"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def remind_me(self, ctx: commands.Context, duration: str, *, reminder: str):
         """ Set yourself a reminder. """
         delta = time.interpret_time(duration)
+        if time.rd_is_above_5y(delta):
+            return await general.send("You can't specify a time range above 5 years.", ctx.channel)
         expiry, error = time.add_time(delta)
         if error:
-            return await general.send(f"Failed to convert duration: {error}", ctx.channel)
+            return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
         diff = langs.td_rd(delta, "en_gb", accuracy=7, brief=False, suffix=True)
         when = langs.gts(expiry, "en_gb", True, True, False, True, False)
         random_id = general.random_id(ctx)
         self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False))
         return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when})", ctx.channel)
+
+    @commands.command(name="reminders")
+    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    async def reminders(self, ctx: commands.Context):
+        """ See a list of your currently active reminders """
+        reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' ORDER BY expiry", (ctx.author.id,))
+        if not reminders:
+            return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
+        output = f"**{ctx.author}**, here is the list of your currently active reminders"
+        outputs = []
+        _reminder = 0
+        for reminder in reminders:
+            _reminder += 1
+            expiry = reminder["expiry"]
+            expires_on = langs.gts(expiry, "en_gb", True, True, False, True, False)
+            expires_in = langs.td_dt(expiry, "en_gb", accuracy=3, brief=False, suffix=True)
+            outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
+        output2 = "\n\n".join(outputs)
+        try:
+            if len(output2) > 1900:
+                _data = BytesIO(str(output2).encode('utf-8'))
+                return await ctx.author.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+            else:
+                return await ctx.author.send(f"{output}\n{output2}")
+        except discord.Forbidden:
+            return await general.send("You need to have your DMs open for me to be able to send you the list of your reminders.", ctx.channel)
 
 
 def setup(bot):

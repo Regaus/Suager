@@ -59,3 +59,6 @@
 ## v1.0.5 - 7 January 2021
 - timein and timeago
 - Improved the way the bot handles the extra parameters I use
+
+## v1.0.6 - 7 January 2021
+- Removed Suager XP achievements
