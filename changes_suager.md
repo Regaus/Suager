@@ -637,3 +637,7 @@
 
 ## v7.2.0 - 7 January 2021
 - Tag variables
+
+## v7.2.1 - 8 January 2021
+- Command to change own nickname
+- You can't mute someone above yourself

@@ -157,6 +157,24 @@ class Moderation(commands.Cog):
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
+    @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
+    @commands.guild_only()
+    @permissions.has_permissions(change_nicknames=True)
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nickname_self(self, ctx: commands.Context, *, name: str = None):
+        """ Change your own nickname """
+        try:
+            if ctx.author.id == ctx.guild.owner.id:
+                return await general.send("I can't change the server owner's nickname.", ctx.channel)
+            await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
+            if name is None:
+                message = f"Reset your nickname"
+            else:
+                message = f"Changed your nickname to **{name}**"
+            return await general.send(message, ctx.channel)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
     @commands.command(name="mute")
     @commands.guild_only()
     @permissions.has_permissions(manage_roles=True)
@@ -168,6 +186,8 @@ class Moderation(commands.Cog):
             return await general.send("Why did you bring me to this server... just to mute me?", ctx.channel)
         if member == ctx.author:
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
+        if member.top_role.position > ctx.author.top_role.position and ctx.guild.id not in [784357864482537473]:
+            return await general.send("You aren't supposed to mute people above you.", ctx.channel)
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
@@ -192,7 +212,7 @@ class Moderation(commands.Cog):
                 await general.send("You can't specify a time range above 5 years. Making mute permanent...", ctx.channel)
             expiry, error = time.add_time(delta)
             if error:
-                pass  # Quietly ignore any errors, since it's probably someone fucking around
+                pass  # Quietly ignore any errors, since it's probably someone fucking around, or it's not a duration to begin with
                 # await general.send(f"Failed to convert duration: {expiry} | Making mute permanent...", ctx.channel)
             else:
                 random_id = general.random_id(ctx)
