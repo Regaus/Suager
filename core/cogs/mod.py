@@ -206,7 +206,6 @@ class Moderation(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
     @permissions.has_permissions(manage_roles=True)
-    @commands.bot_has_permissions(manage_roles=True)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def temp_mutes(self, ctx: commands.Context):
         """ See a list of your currently active temporary mutes """
