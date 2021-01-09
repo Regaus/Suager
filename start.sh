@@ -1,1 +1,1 @@
-python3.9 index.py &>data/log.out
+nohup python3.9 index.py &>data/log.out &
