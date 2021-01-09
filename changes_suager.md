@@ -644,3 +644,6 @@
 
 ## v7.2.2 - 9 January 2021
 - mute now requires kick members rather than manage roles
+
+## v7.2.3 - 9 January 2021
+- Moved version to a separate file

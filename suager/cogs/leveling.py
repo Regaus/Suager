@@ -208,8 +208,7 @@ class Leveling(commands.Cog):
             sm = float(__settings['leveling']['xp_multiplier'])
         except KeyError:
             sm = 1
-        c = 0.87 if ctx.author.id in [667187968145883146, 742929135713910815, 579369168797958163, 740262813049684069, 402250088673574913,
-                                      746173049174229142] else 1
+        c = 0.87 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
         new = int(random.uniform(x1, x2) * sm * mult * c)
         if ctx.author.id == 592345932062916619:
             new = 0

@@ -10,11 +10,6 @@
         "s/",
         "S/"
       ],
-      "short_version": "7.2",
-      "version": "7.2.2",
-      "last_update": 1610217811,
-      "first_version": 1557781320,
-      "major_release": 1608495933,
       "logs": true,
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],
@@ -34,11 +29,6 @@
         "c.",
         "C."
       ],
-      "short_version": "1.0",
-      "version": "1.0.6",
-      "last_update": 1610040920,
-      "first_version": 1607190007,
-      "major_release": 1608495933,
       "logs": true,
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],

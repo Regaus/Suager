@@ -15,6 +15,10 @@ def get_config() -> dict:
     return json.loads(open("config.json", "r", encoding="utf-8").read())
 
 
+def get_version() -> dict:
+    return json.loads(open("version.json", "r", encoding="utf-8").read())
+
+
 def create_dirs():
     make_dir("data/logs")
     config = get_config()

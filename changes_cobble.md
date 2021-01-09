@@ -65,3 +65,6 @@
 
 ## v1.0.7 - 9 January 2021
 - Removed tts command
+
+## v1.0.8 - 9 January 2021
+- Moved version to a separate file

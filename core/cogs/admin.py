@@ -473,8 +473,9 @@ class Admin(commands.Cog):
     async def change_full_version(self, ctx: commands.Context, new_version: str):
         """ Change version (full) """
         try:
-            old_version = self.bot.local_config["version"]
-            data_io.change_version("version", new_version, self.bot.index)
+            # old_version = self.bot.local_config["version"]
+            old_version = general.get_version()[self.bot.name]["version"]
+            data_io.change_version("version", new_version, self.bot.name)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
         self.reload_config()
@@ -488,8 +489,9 @@ class Admin(commands.Cog):
     async def change_short_version(self, ctx: commands.Context, new_version: str):
         """ Change version (short) """
         try:
-            old_version = self.bot.local_config["short_version"]
-            data_io.change_version("short_version", new_version, self.bot.index)
+            # old_version = self.bot.local_config["short_version"]
+            old_version = general.get_version()[self.bot.name]["short_version"]
+            data_io.change_version("short_version", new_version, self.bot.name)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
         self.reload_config()

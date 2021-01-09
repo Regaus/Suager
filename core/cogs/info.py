@@ -25,9 +25,9 @@ class BotInformation(commands.Cog):
         """ Bot stats"""
         locale = langs.gl(ctx)
         config = self.bot.config
-        local_config = self.bot.local_config
+        version_data = general.get_version()[self.bot.name]
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = langs.gls("info_stats_about", locale, self.bot.user, local_config["version"])
+        embed.title = langs.gls("info_stats_about", locale, self.bot.user, version_data["version"])
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=langs.gls("info_stats_developers", locale),  value=f"**{owners}**", inline=True)
@@ -50,9 +50,9 @@ class BotInformation(commands.Cog):
         _version = sys.version_info
         version = f"{_version.major}.{_version.minor}.{_version.micro}"
         embed.add_field(name=langs.gls("info_stats_used", locale), inline=True, value=f"**discord.py v{discord.__version__}\nPython v{version}**")
-        mv = local_config["version"].split(".")[0]
-        fv, mr, lu = langs.gts(time.from_ts(local_config["first_version"], None), locale), \
-            langs.gts(time.from_ts(local_config["major_release"], None), locale), langs.gts(time.from_ts(local_config["last_update"], None), locale)
+        mv = version_data["version"].split(".")[0]
+        fv, mr, lu = langs.gts(time.from_ts(version_data["first_version"], None), locale), \
+            langs.gts(time.from_ts(version_data["major_release"], None), locale), langs.gts(time.from_ts(version_data["last_update"], None), locale)
         embed.add_field(name=langs.gls("info_stats_dates", locale), value=langs.gls("info_stats_dates_data", locale, fv, mr, lu, mv), inline=True)
         return await general.send(None, ctx.channel, embed=embed)
 

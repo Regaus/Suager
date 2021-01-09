@@ -156,7 +156,7 @@ async def on_ready(self):
     #     print(e)
     #     times = changes.copy()
     # playing = f"{self.local_config['playing'][0]} | v{self.local_config['short_version']}"
-    playing = f"Loading... | v{self.local_config['short_version']}"
+    playing = f"Loading... | v{general.get_version()[self.bot.name]['short_version']}"
     await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
     if self.local_config["logs"]:
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.local_config['name']} > Bot is online")
@@ -173,7 +173,8 @@ async def playing_changer(self):
         try:
             log = self.local_config["logs"]
             # plays = self.local_config["playing"]
-            fv, sv = f"v{self.local_config['version']}", f"v{self.local_config['short_version']}"
+            version = general.get_version()[self.bot.name]
+            fv, sv = f"v{version['version']}", f"v{version['short_version']}"
             plays = {
                 "cobble": [
                     {"type": 0, "name": fv},
@@ -192,7 +193,7 @@ async def playing_changer(self):
                 "suager": [
                     {"type": 0, "name": fv},
                     {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 1, "name": "Nothing", "url": "https://www.twitch.tv/nosmdjf"},
+                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                     {"type": 2, "name": "Music"},
                     {"type": 5, "name": "a competition"},
                     {"type": 0, "name": "with Regaus"},
@@ -208,15 +209,16 @@ async def playing_changer(self):
                     {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
                     {"type": 3, "name": "you"},
                     {"type": 0, "name": "None"},
-                    {"type": 0, "name": "KeyError: 'name'"},
-                    {"type": 0, "name": "IndexError: list index out of range"},
-                    {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
-                    {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
+                    # {"type": 0, "name": "KeyError: 'name'"},
+                    # {"type": 0, "name": "IndexError: list index out of range"},
+                    # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
+                    # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
                     {"type": 2, "name": "a song"},
                     {"type": 2, "name": "10 Hours of Nothing ft. Nobody (Non-Existent Remix by Negative Zero)"},
                     {"type": 3, "name": "the Void"},
                     {"type": 5, "name": "Minecraft"},
                     {"type": 0, "name": "Minecraft"},
+                    {"type": 0, "name": "Minceraft"},
                     {"type": 1, "name": "Minecraft", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
                 ]
             }
