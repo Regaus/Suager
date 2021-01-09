@@ -1,10 +1,8 @@
 import json
-import os
 from datetime import datetime, timezone
 from io import BytesIO
 
 import discord
-import pyttsx3
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
@@ -62,11 +60,6 @@ def rsl_number(value: int):
 class GA78(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        try:
-            self.tts = pyttsx3.init()
-        except Exception as _:
-            del _
-            self.tts = None
 
     @commands.command(name="time23")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -204,21 +197,6 @@ class GA78(commands.Cog):
                 a = chr(0)
             text += a
         return await general.send(text, ctx.channel)
-
-    @commands.command("tts")
-    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])
-    async def tts_command(self, ctx: commands.Context, *, text: str):
-        """ Text to Speech """
-        if self.tts is not None:
-            self.tts.save_to_file(text, "tts.mp3")
-            self.tts.runAndWait()
-            try:
-                await general.send(None, ctx.channel, file=discord.File("tts.mp3"))
-            except discord.HTTPException:
-                await general.send("The file generated was too large to send...", ctx.channel)
-            os.remove("tts.mp3")
-        else:
-            return await general.send("This command is not available at the moment", ctx.channel)
 
     @commands.group(name="rsl1", aliases=["rsl-1", "rsl"])
     @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196]

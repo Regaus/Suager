@@ -9,4 +9,3 @@ pytz
 jishaku
 luas.py
 requests
-pyttsx3

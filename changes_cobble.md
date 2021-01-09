@@ -62,3 +62,6 @@
 
 ## v1.0.6 - 7 January 2021
 - Removed Suager XP achievements
+
+## v1.0.7 - 9 January 2021
+- Removed tts command
