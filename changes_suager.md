@@ -641,3 +641,6 @@
 ## v7.2.1 - 8 January 2021
 - Command to change own nickname
 - You can't mute someone above yourself
+
+## v7.2.2 - 9 January 2021
+- mute now requires kick members rather than manage roles

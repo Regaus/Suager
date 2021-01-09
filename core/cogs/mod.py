@@ -159,7 +159,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
-    @permissions.has_permissions(change_nicknames=True)
+    @permissions.has_permissions(change_nickname=True)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_self(self, ctx: commands.Context, *, name: str = None):
         """ Change your own nickname """
@@ -177,7 +177,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="mute")
     @commands.guild_only()
-    @permissions.has_permissions(manage_roles=True)
+    @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def mute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
@@ -186,7 +186,7 @@ class Moderation(commands.Cog):
             return await general.send("Why did you bring me to this server... just to mute me?", ctx.channel)
         if member == ctx.author:
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
-        if member.top_role.position > ctx.author.top_role.position and ctx.guild.id not in [784357864482537473]:
+        if member.top_role.position >= ctx.author.top_role.position:  # and ctx.guild.id not in [784357864482537473]:
             return await general.send("You aren't supposed to mute people above you.", ctx.channel)
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
@@ -225,7 +225,7 @@ class Moderation(commands.Cog):
     @commands.command(name="mutes", aliases=["punishments"])
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
-    @permissions.has_permissions(manage_roles=True)
+    @permissions.has_permissions(kick_members=True)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def temp_mutes(self, ctx: commands.Context):
         """ See a list of your currently active temporary mutes """
@@ -251,7 +251,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="unmute")
     @commands.guild_only()
-    @permissions.has_permissions(manage_roles=True)
+    @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def unmute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):

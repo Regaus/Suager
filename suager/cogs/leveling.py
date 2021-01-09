@@ -215,7 +215,6 @@ class Leveling(commands.Cog):
             new = 0
         if not xp_disabled:
             xp += new
-        if not xp_disabled:
             lu, ld = False, False
             if level >= 0:
                 while level < max_level and xp >= levels[level]:
@@ -241,8 +240,11 @@ class Leveling(commands.Cog):
                 while level >= -max_level and xp < -levels[(-level) - 1]:
                     level -= 1
                     ld = True
+            if ctx.author.id == 430891116318031872 and level >= 5:
+                lu, ld = False, False
+                level = 5
             if self.bot.name == "suager":
-                if lu:
+                if lu or ld:
                     try:
                         send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
                             .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
@@ -262,26 +264,6 @@ class Leveling(commands.Cog):
                         await general.send(send, ch, u=[ctx.author])
                     except discord.Forbidden:
                         pass  # Well, if it can't send it there, too bad.
-                if ld:
-                    try:
-                        send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                            .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
-                    except KeyError:
-                        send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.UmmOK}"
-                    try:
-                        ac = __settings['leveling']['announce_channel']
-                        if ac != 0:
-                            ch = self.bot.get_channel(ac)
-                            if ch is None or ch.guild.id != ctx.guild.id:
-                                ch = ctx.channel
-                        else:
-                            ch = ctx.channel
-                    except KeyError:
-                        ch = ctx.channel
-                    try:
-                        await general.send(send, ch, u=[ctx.author])
-                    except discord.Forbidden:
-                        pass
                 reason = f"Level Rewards - Level {level}"
                 try:
                     rewards = __settings['leveling']['rewards']
