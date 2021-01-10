@@ -8,7 +8,7 @@ class HTTPSession(aiohttp.ClientSession):
     """ Abstract class for aiohttp. """
 
     def __init__(self, loop=None):
-        super().__init__(loop=loop or asyncio.get_event_loop(), connector=aiohttp.TCPConnector(ssl=False))
+        super().__init__(loop=loop or asyncio.get_event_loop())  # , connector=aiohttp.TCPConnector(ssl=False))
 
     def __del__(self, _warnings=None):
         if not self.closed:

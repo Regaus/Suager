@@ -3,7 +3,6 @@ import json
 import os
 from sqlite3 import OperationalError
 
-import aiohttp
 import discord
 
 from core.utils import bot_data, database, general, temporaries, time
@@ -55,7 +54,7 @@ for i in range(len(config["bots"])):
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db, {},
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
-                       connector=aiohttp.TCPConnector(ssl=False),
+                       # connector=aiohttp.TCPConnector(ssl=False),
                        intents=discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True))
     # if bot.name == "suager":
     #     bot.db.execute("UPDATE tbl_clan SET usage=0")
