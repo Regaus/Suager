@@ -214,7 +214,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+        if user.id == 302851022790066185:  # and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -284,7 +284,7 @@ class Social(commands.Cog):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+        if user.id == 302851022790066185:  # and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_poke_suager", locale, ctx.author.name), ctx.channel)
@@ -359,7 +359,7 @@ class Social(commands.Cog):
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185:
-            return await general.send(langs.gls("social_kill_regaus", locale), ctx.channel)
+            return await general.send(langs.gls("social_kill_regaus", locale, ctx.author.id), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "punch", 16)

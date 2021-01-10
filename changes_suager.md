@@ -647,3 +647,7 @@
 
 ## v7.2.3 - 9 January 2021
 - Moved version to a separate file
+
+## v7.2.4 - 10 January 2021
+- Fighting against the feminists on chill crew
+- Locked more social commands for me again

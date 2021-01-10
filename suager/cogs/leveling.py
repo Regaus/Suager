@@ -209,6 +209,7 @@ class Leveling(commands.Cog):
         except KeyError:
             sm = 1
         c = 0.87 if ctx.author.id in [667187968145883146, 402250088673574913, 746173049174229142] else 1
+        c *= 0.85 if 796009343539347496 in [role.id for role in ctx.author.roles] else 1  # "Feminist" role on chill crew
         new = int(random.uniform(x1, x2) * sm * mult * c)
         if ctx.author.id == 592345932062916619:
             new = 0
