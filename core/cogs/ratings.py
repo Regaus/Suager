@@ -119,7 +119,12 @@ class Ratings(commands.Cog):
         locale = langs.gl(ctx)
         user = who or ctx.author
         random.seed(user.id + 1)
-        ri = langs.gfs((random.uniform(50, 150) if user.id not in [302851022790066185, self.bot.user.id] else 150.01), locale, 2)
+        iq = random.uniform(50, 150)
+        if user.id in [302851022790066185, self.bot.user.id]:
+            iq = 150.01
+        elif user.id in 533680271057354762:
+            iq = -2147483647.0
+        ri = langs.gfs(iq, locale, 2)
         return await general.send(langs.gls("ratings_iq", locale, user.name, ri), ctx.channel)
 
 
