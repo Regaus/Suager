@@ -57,7 +57,7 @@ class Moderation(commands.Cog):
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
         elif member.id == ctx.guild.owner.id:
             return await general.send("Imagine trying to kick the server's owner, lol", ctx.channel)
-        elif member.top_role.position >= ctx.author.top_role.position:
+        elif (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
             return await general.send("You can't kick a member whose top role is equal to or is above yours.", ctx.channel)
         # elif member.id in self.admins:
         #     return await general.send("I can't kick my owners or admins...", ctx.channel)
@@ -80,7 +80,7 @@ class Moderation(commands.Cog):
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
         elif member == ctx.guild.owner.id:
             return await general.send("Imagine trying to ban the server's owner, lol", ctx.channel)
-        elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position):
+        elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
             return await general.send("You can't ban a member whose top role is equal to or is above yours.", ctx.channel)
         # elif member in self.admins:
         #     return await general.send("I can't ban my owners or admins...", ctx.channel)
@@ -109,7 +109,8 @@ class Moderation(commands.Cog):
                     return await general.send(f"We are not friends anymore, {ctx.author.name}.", ctx.channel)
                 if member == ctx.guild.owner.id:
                     return await general.send("Imagine trying to ban the server's owner, lol", ctx.channel)
-                elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position):
+                elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position) \
+                        and ctx.author != ctx.guild.owner:
                     return await general.send("You can't ban a member whose top role is equal to or is above yours.", ctx.channel)
         banned = 0
         failed = 0
@@ -146,7 +147,7 @@ class Moderation(commands.Cog):
         try:
             if member.id == ctx.guild.owner.id:
                 return await general.send("The server owner's nickname can't be edited.", ctx.channel)
-            if member.top_role.position >= ctx.author.top_role.position and member != ctx.author:
+            if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
                 return await general.send("You can't change the nickname of a member whose top role is equal to or is above yours.", ctx.channel)
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             if name is None:
@@ -186,7 +187,7 @@ class Moderation(commands.Cog):
             return await general.send("Why did you bring me to this server... just to mute me?", ctx.channel)
         if member == ctx.author:
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
-        if member.top_role.position >= ctx.author.top_role.position:  # and ctx.guild.id not in [784357864482537473]:
+        if (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:  # and ctx.guild.id not in [784357864482537473]:
             return await general.send("You aren't supposed to mute people above you.", ctx.channel)
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
