@@ -68,7 +68,7 @@ class Leaderboards(commands.Cog):
         self.bot = bot
         self.lvl = "leveling" if bot.name == "suager" else "leveling2"
 
-    @commands.command(name="levels", aliases=["ranks"])
+    @commands.command(name="levels", aliases=["ranks", "lb"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
