@@ -21,7 +21,8 @@ class Ratings(commands.Cog):
         _result = random.uniform(10, 30)
         custom = {
             self.bot.user.id: 42.0,
-            302851022790066185: 29.9
+            302851022790066185: 29.9,
+            746173049174229142: 0.0
         }
         result = custom.get(user.id, _result)
         return await general.send(langs.gls("ratings_pickle", locale, user.name, langs.gfs(result, locale), langs.gfs(result / 2.54, locale)), ctx.channel)
