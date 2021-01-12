@@ -173,8 +173,11 @@ class Starboard(commands.Cog):
             # Top Starred Posts
             for i, _message in enumerate(top):
                 # [<stars> by <author>](link)
-                message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
-                embed.description += f"\n{i + 1}) [⭐ {_message['stars']} by {message.author}]({message.jump_url})"
+                try:
+                    message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
+                    embed.description += f"\n{i + 1}) [⭐ {_message['stars']} by {message.author}]({message.jump_url})"
+                except discord.NotFound:
+                    embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
             # embed.add_field(name="Top starred messages", value="\n".join(outputs), inline=False)
             return await general.send(None, ctx.channel, embed=embed)
 
