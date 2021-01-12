@@ -208,8 +208,9 @@ class Leveling(commands.Cog):
             sm = float(__settings['leveling']['xp_multiplier'])
         except KeyError:
             sm = 1
-        c = 0.77 if ctx.author.id in [746173049174229142] else 0.87 if ctx.author.id in [667187968145883146, 402250088673574913] else 1
-        # c *= 0.9 if 796009343539347496 in [role.id for role in ctx.author.roles] else 1  # "Feminist" role on chill crew
+        c = 0.82 if ctx.author.id in [746173049174229142] else 0.87 if ctx.author.id in [667187968145883146, 402250088673574913] else 1
+        # c *= 0.9 if 796009343539347496 in [role.id for role in ctx.author.roles] and ctx.author.id != 593736085327314954 else 1
+        # "Feminist" role on chill crew
         new = int(random.uniform(x1, x2) * sm * mult * c)
         if ctx.author.id == 592345932062916619:
             new = 0
@@ -297,7 +298,7 @@ class Leveling(commands.Cog):
                     await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.",
                                        ctx.channel)
                 except Exception as e:
-                    print(f"{time.time()} > Levels on_message > {type(e).__name__}: {e}")
+                    print(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
         # _last = last if dc else now
         last_send = last if dc else now
         minute = now if full else ls
@@ -443,6 +444,88 @@ class Leveling(commands.Cog):
         """ Check your or someone's rank """
         locale = langs.gl(ctx)
         return await self.level(ctx, who, locale)
+
+    @commands.command(name="rank2", aliases=["ranke"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def rank_embed(self, ctx: commands.Context, *, who: discord.Member = None):
+        """ Check your or someone's rank - embed """
+        locale = langs.gl(ctx)
+        user = who or ctx.author
+        is_self = user.id == self.bot.user.id
+        if user.bot and not is_self:
+            return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
+        data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
+        if data:
+            level, xp = [data['level'], data['xp']]
+        else:
+            level, xp = [0, 0]
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if _settings:
+            __settings = json.loads(_settings['data'])
+            try:
+                sm = __settings['leveling']['multiplier']
+            except KeyError:
+                sm = 1
+        else:
+            sm = 1
+        embed = discord.Embed(colour=general.random_colour(), title=r)
+        embed.set_thumbnail(url=user.avatar_url_as(size=512, format="png"))
+        # dr.text((text_x, -10), f"{user}", font=font, fill=font_colour)
+        try:
+            if level >= 0:
+                req = int(levels[level])  # Requirement to next level
+            elif level == -1:
+                req = 0
+            else:
+                req = int(-levels[(-level) - 2])
+            r2 = langs.gns(int(req), locale)
+        except IndexError:
+            req = float("inf")
+            r2 = langs.gls("generic_max", locale)
+        try:
+            if level > 0:
+                prev = int(levels[level - 1])
+            elif level == 0:
+                prev = 0
+            else:
+                prev = -int(levels[(-level) - 1])
+        except IndexError:
+            prev = 0
+        _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+        place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
+        if user.id == 430891116318031872:  # Alex Five is always fifth
+            place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(5, locale)}**"))
+        else:
+            for x in range(len(_data)):
+                if _data[x]['uid'] == user.id:
+                    place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(x + 1, locale)}**"))
+                    break
+        if not is_self:
+            progress = (xp - prev) / (req - prev)
+            _level = langs.gls("leveling_rank_level", locale, f"**{langs.gns(level, locale)}**")
+            # dr.text((text_x, 130), f"{place} | {_level} ", font=font_small, fill=font_colour)
+            r1 = langs.gns(int(xp), locale)
+            r3 = langs.gfs(progress, locale, 2, True)
+            r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp), locale)) if level < max_level else ""
+            # dr.text((text_x, (298 if r4 else 362)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
+            embed.add_field(name="Experience", value=f"**{r1}** / {r2}", inline=False)
+            embed.add_field(name="Level", value=_level, inline=False)
+            embed.add_field(name="Rank", value=place, inline=False)
+            embed.add_field(name="Progress", value=f"**{r3}**{r4}", inline=False)
+        else:
+            place = langs.gls("leaderboards_place", locale, langs.gns(1, locale))
+            _rank = langs.gls("leveling_rank_rank", locale, place)
+            _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
+            # dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
+            # dr.text((text_x, 426), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
+        x1, x2 = [val * sm for val in xp_amounts]
+        o1, o2 = int(x1), int(x2)
+        embed.add_field(name="XP per minute", value=f"{o1}-{o2}", inline=False)
+        if self.bot.name == "cobble":
+            embed.description += "\nCobbleBot XP is counted since 2 January 2020 AD."
+        return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="rankg", aliases=["grank"])
     @commands.guild_only()

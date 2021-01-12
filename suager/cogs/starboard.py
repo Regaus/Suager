@@ -153,6 +153,31 @@ class Starboard(commands.Cog):
         """ Message was deleted """
         return await self.starboard_update(payload)
 
+    @commands.command(name="stars", aliases=["starboard"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def star_data(self, ctx: commands.Context):
+        """ Starboard stats for the server """
+        async with ctx.typing():
+            embed = discord.Embed(colour=general.random_colour())
+            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? ORDER BY stars DESC", (ctx.guild.id,))
+            stars = 0
+            top = []
+            for i, message in enumerate(data):
+                # message = data[i]
+                if i < 10:
+                    top.append(message)
+                stars += message["stars"]
+            embed.title = f"Starboard stats for {ctx.guild.name}"
+            embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
+            # Top Starred Posts
+            for i, _message in enumerate(top):
+                # [<stars> by <author>](link)
+                message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
+                embed.description += f"\n{i + 1}) [⭐ {_message['stars']} by {message.author}]({message.jump_url})"
+            # embed.add_field(name="Top starred messages", value="\n".join(outputs), inline=False)
+            return await general.send(None, ctx.channel, embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Starboard(bot))

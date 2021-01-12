@@ -651,3 +651,8 @@
 ## v7.2.4 - 10 January 2021
 - Fighting against the feminists on chill crew
 - Locked more social commands for me again
+
+## v7.2.5 - 12 January 2021
+- Rank embed command
+- Starboard stats command 
+- Levels should have better error message when it breaks
