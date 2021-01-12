@@ -55,6 +55,7 @@ class Ratings(commands.Cog):
             302851022790066185: r2,  # Me
             self.bot.user.id: r2,    # Suager
             291665491221807104: r2,  # Leitoxz
+            746173049174229142: 0    # racc
         }
         result = custom.get(who.id, r)
         return await general.send(langs.gls("ratings_rate_user", locale, who.name, langs.gns(result, locale), langs.gns(_max, locale)), ctx.channel)
@@ -108,6 +109,7 @@ class Ratings(commands.Cog):
             302851022790066185: 1,       # Regaus
             self.bot.user.id: 1,         # Suager
             291665491221807104: 1,       # Leitoxz
+            746173049174229142: 0        # racc
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin
@@ -123,6 +125,8 @@ class Ratings(commands.Cog):
         iq = random.uniform(50, 150)
         if user.id in [302851022790066185, self.bot.user.id]:
             iq = 150.01
+        elif user.id == 746173049174229142:
+            iq = 0.0
         # elif user.id == 533680271057354762:
         #     iq = -2147483647.0
         ri = langs.gfs(iq, locale, 2)
