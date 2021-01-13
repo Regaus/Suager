@@ -33,7 +33,7 @@ class Social(commands.Cog):
             self.poke, self.boop, self.tickle, self.laugh = [lists.error] * 17
         self.insert = f"INSERT INTO counters VALUES ({'?, ' * 19}?)"
         self.empty = [0] * 20
-        self.locked = [667187968145883146]
+        self.locked = [667187968145883146, 746173049174229142]
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
         """ Update database - interactions """
