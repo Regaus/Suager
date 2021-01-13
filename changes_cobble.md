@@ -73,3 +73,6 @@
 - Added Chuck and Potato to RSL-1 command
 - Added RSL-1 warning
 - Created declensions subcommand
+
+## v1.0.10 - 13 January 2021
+- Added dictionaries placeholders

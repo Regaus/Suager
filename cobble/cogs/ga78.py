@@ -227,8 +227,8 @@ class GA78(commands.Cog):
             await general.send("This command will show you how the RSL-1 words change in different places", ctx.channel)
             return await ctx.send_help(str(ctx.command))
 
-    @rsl1_decline.command(name="nous", aliases=["declensions", "decline", "d"])
-    async def rsl1_nouns(self, ctx: commands.Context, word: str = None):
+    @rsl1_decline.command(name="nous", aliases=["declensions", "decline"])
+    async def rsl1_decl_nouns(self, ctx: commands.Context, word: str = None):
         """ RSL-1 noun declensions """
         font = ImageFont.truetype("assets/mono.ttf", size=64)
         if not word:
@@ -372,22 +372,51 @@ class GA78(commands.Cog):
             return await general.send(f'Declension for word "{word}"', ctx.channel, file=discord.File(bio, "declension.png"))
 
     @rsl1_decline.command(name="adjectives", aliases=["a", "adj"])
-    async def rsl1_adjectives(self, ctx: commands.Context, word: str = None):
+    async def rsl1_decl_adjectives(self, ctx: commands.Context, word: str = None):
         """ How RSL-1 adjectives work """
         return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i", ctx.channel)
 
     @rsl1_decline.command(name="verbs", aliases=["v", "conjugations", "c"])
-    async def rsl1_verbs(self, ctx: commands.Context, word: str = None):
+    async def rsl1_decl_verbs(self, ctx: commands.Context, word: str = None):
         """ How RSL-1 verb conjugations work """
         return await general.send("Coming later.", ctx.channel)
 
-    @rsl1.command(name="pronouns")
+    @rsl1.group(name="words", aliases=["w", "dictionary", "dict", "d"])
+    @commands.is_owner()
+    async def rsl1_dict(self, ctx: commands.Context):
+        """ RSL-1 word changing thingies """
+        if ctx.invoked_subcommand is None:
+            await general.send("This command is the list of words of RSL-1.\nOrder: 0 = A-Z by English translation, 1 = A-Z by RSL-1 word", ctx.channel)
+            return await ctx.send_help(str(ctx.command))
+
+    @rsl1_dict.command(name="nouns", aliases=["n"])
+    # turn them into arguments: --order, --search, --page
+    async def rsl1_nouns(self, ctx: commands.Context, order: int = 0, search: str = ""):
+        """ RSL-1 nouns dictionary """
+
+    @rsl1_dict.command(nname="adjectives", aliases=["a", "adj"])
+    async def rsl1_adjectives(self, ctx: commands.Context, order: int = 0, search: str = ""):
+        """ RSL-1 adjectives dictionary """
+
+    @rsl1_dict.command(nname="adverbs", aliases=["adv"])
+    async def rsl1_adverbs(self, ctx: commands.Context, order: int = 0, search: str = ""):
+        """ RSL-1 adverb dictionary """
+
+    @rsl1_dict.command(nname="verbs", aliases=["v"])
+    async def rsl1_verbs(self, ctx: commands.Context, order: int = 0, search: str = ""):
+        """ RSL-1 verbs dictionary """
+
+    @rsl1_dict.command(nname="small", aliases=["s"])
+    async def rsl1_small_words(self, ctx: commands.Context, order: int = 0, search: str = ""):
+        """ RSL-1 small words (e.g. prepositions and stuff) dictionary """
+
+    @rsl1_dict.command(name="pronouns", aliases=["p"])
     async def rsl1_pronouns(self, ctx: commands.Context):
         """ RSL-1 pronouns """
         return await general.send("Wonders of RSL-1, there are two ways to say I. Coming later.", ctx.channel)
 
     @rsl1.command(name="phrases", aliases=["p", "words", "w"])
-    async def rsl1_words(self, ctx: commands.Context):
+    async def rsl1_phrases(self, ctx: commands.Context):
         """ Some RSL-1 words and phrases """
         stuff = [
             ["thanks", "hallera"],
