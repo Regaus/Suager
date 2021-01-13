@@ -61,6 +61,7 @@ class BotInformation(commands.Cog):
     async def servers(self, ctx: commands.Context):
         """ The servers the bot is in """
         _servers = list(self.bot.guilds)
+        _servers.sort(key=lambda _guild: _guild.name.lower())
         message = ""
         for guild in _servers:
             message += f"{guild.id} | {guild.name}\n"

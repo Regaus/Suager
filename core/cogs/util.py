@@ -537,11 +537,12 @@ class Utility(commands.Cog):
     @role.command(name="members")
     async def role_members(self, ctx: commands.Context, *, role: discord.Role):
         """ List of members who have a certain role """
-        bots = [a for a in ctx.guild.members if role in a.roles]
+        members = [a for a in ctx.guild.members if role in a.roles]
+        members.sort(key=lambda a: a.name.lower())
         locale = langs.gl(ctx)
         m = ''
-        for i in range(len(bots)):
-            m += f"[{langs.gns(i + 1, locale, 2, False)}] {bots[i]}\n"
+        for i in range(len(members)):
+            m += f"[{langs.gns(i + 1, locale, 2, False)}] {members[i]}\n"
         rl = len(m)
         send = langs.gls("discord_role_members", locale, ctx.guild.name)
         if rl > 1900:

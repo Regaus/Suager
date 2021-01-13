@@ -656,3 +656,6 @@
 - Rank embed command
 - Starboard stats command 
 - Levels should have better error message when it breaks
+
+## v7.2.6 - 13 January 2021
+- Role members now sorts alphabetically
