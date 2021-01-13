@@ -415,7 +415,7 @@ class GA78(commands.Cog):
         """ RSL-1 pronouns """
         return await general.send("Wonders of RSL-1, there are two ways to say I. Coming later.", ctx.channel)
 
-    @rsl1.command(name="phrases", aliases=["p", "words", "w"])
+    @rsl1.command(name="phrases", aliases=["p"])
     async def rsl1_phrases(self, ctx: commands.Context):
         """ Some RSL-1 words and phrases """
         stuff = [
