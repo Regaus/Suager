@@ -220,7 +220,7 @@ class GA78(commands.Cog):
         return await general.send(f"{number:,} = {rsl_number(number)}", ctx.channel)
 
     @commands.is_owner()
-    @rsl1.group(name="declensions", aliases=["decline", "d", "conjugations", "conjugate", "c"])
+    @rsl1.group(name="declensions", aliases=["decline", "conjugations", "conjugate", "c"])
     async def rsl1_decline(self, ctx: commands.Context):
         """ RSL-1 word changing thingies """
         if ctx.invoked_subcommand is None:
