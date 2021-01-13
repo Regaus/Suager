@@ -80,7 +80,7 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
 
 def plural(v: int, what: str, locale: str = "en_gb") -> str:
     """ Get plural form of words """
-    if locale in ["rsl-1f"]:
+    if locale in ["rsl-1f", "rsl-1g"]:
         name = get_data(what, locale)[0]
     elif locale in ["rsl-1d", "ru_ru"]:
         name_1, name_2, name_pl = get_data(what, locale)

@@ -127,6 +127,8 @@ class Ratings(commands.Cog):
             iq = 150.01
         elif user.id == 746173049174229142:
             iq = 0.0
+        elif user.id == 533680271057354762:
+            iq = -2147483647.0
         # elif user.id == 533680271057354762:
         #     iq = -2147483647.0
         ri = langs.gfs(iq, locale, 2)
