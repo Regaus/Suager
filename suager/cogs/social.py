@@ -129,7 +129,8 @@ class Social(commands.Cog):
 
     @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.author.id not in [746173049174229142])
+    # @commands.check(lambda ctx: ctx.author.id not in [746173049174229142, 564244589897187349])
+    @commands.check(lambda ctx: ctx.guild.id not in [784357864482537473])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """ Lick someone """
