@@ -68,3 +68,8 @@
 
 ## v1.0.8 - 9 January 2021
 - Moved version to a separate file
+
+## v1.0.9 - 13 January 2021
+- Added Chuck and Potato to RSL-1 command
+- Added RSL-1 warning
+- Created declensions subcommand

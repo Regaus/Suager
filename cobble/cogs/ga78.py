@@ -199,12 +199,16 @@ class GA78(commands.Cog):
         return await general.send(text, ctx.channel)
 
     @commands.group(name="rsl1", aliases=["rsl-1", "rsl"])
-    @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196]
-                    and ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359])
+    @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196] and
+                    ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
+                                      593736085327314954])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rsl1(self, ctx: commands.Context):
         """ RSL-1 data """
         if ctx.invoked_subcommand is None:
+            await general.send("This is the command that can try to explain how RSL-1 works and what is going on here.\n\n"
+                               "**Warning: While I don't mind if you speak the language, do __not__ be sending the translations outside of this channel "
+                               "or in DMs (other than between me or other people here)**", ctx.channel)
             return await ctx.send_help(str(ctx.command))
 
     @rsl1.command(name="numbers", aliases=["n", "number"])
@@ -213,10 +217,18 @@ class GA78(commands.Cog):
         if number is None:
             return await general.send(f"This command can translate a number to RSL-1. For example, `{ctx.prefix}rsl1 {ctx.invoked_with} 1` "
                                       f"will translate the number 1 to RSL-1.", ctx.channel)
-        return await general.send(f"{number:,} = `{rsl_number(number)}`.", ctx.channel)
+        return await general.send(f"{number:,} = {rsl_number(number)}", ctx.channel)
 
-    @rsl1.command(name="nouns", aliases=["declensions", "decline", "d"])
-    async def rsl1_declensions(self, ctx: commands.Context, word: str = None):
+    @commands.is_owner()
+    @rsl1.group(name="declensions", aliases=["decline", "d", "conjugations", "conjugate", "c"])
+    async def rsl1_decline(self, ctx: commands.Context):
+        """ RSL-1 word changing thingies """
+        if ctx.invoked_subcommand is None:
+            await general.send("This command will show you how the RSL-1 words change in different places", ctx.channel)
+            return await ctx.send_help(str(ctx.command))
+
+    @rsl1_decline.command(name="nous", aliases=["declensions", "decline", "d"])
+    async def rsl1_nouns(self, ctx: commands.Context, word: str = None):
         """ RSL-1 noun declensions """
         font = ImageFont.truetype("assets/mono.ttf", size=64)
         if not word:
@@ -359,18 +371,18 @@ class GA78(commands.Cog):
             bio.seek(0)
             return await general.send(f'Declension for word "{word}"', ctx.channel, file=discord.File(bio, "declension.png"))
 
-    @rsl1.command(name="adjectives", aliases=["a", "adj"])
+    @rsl1_decline.command(name="adjectives", aliases=["a", "adj"])
     async def rsl1_adjectives(self, ctx: commands.Context, word: str = None):
         """ How RSL-1 adjectives work """
         return await general.send("Coming later.", ctx.channel)
 
-    @rsl1.command(name="verbs", aliases=["v", "conjugations", "c"])
+    @rsl1_decline.command(name="verbs", aliases=["v", "conjugations", "c"])
     async def rsl1_verbs(self, ctx: commands.Context, word: str = None):
         """ How RSL-1 verb conjugations work """
         return await general.send("Coming later.", ctx.channel)
 
     @rsl1.command(name="pronouns")
-    async def rsl1_pronouns(self, ctx: commands.Context, word: str = None):
+    async def rsl1_pronouns(self, ctx: commands.Context):
         """ RSL-1 pronouns """
         return await general.send("Wonders of RSL-1, there are two ways to say I. Coming later.", ctx.channel)
 
