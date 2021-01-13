@@ -199,7 +199,7 @@ class GA78(commands.Cog):
         return await general.send(text, ctx.channel)
 
     @commands.group(name="rsl1", aliases=["rsl-1", "rsl"])
-    @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196] and
+    @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536] and
                     ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
                                       593736085327314954])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -374,7 +374,7 @@ class GA78(commands.Cog):
     @rsl1_decline.command(name="adjectives", aliases=["a", "adj"])
     async def rsl1_adjectives(self, ctx: commands.Context, word: str = None):
         """ How RSL-1 adjectives work """
-        return await general.send("Coming later.", ctx.channel)
+        return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i", ctx.channel)
 
     @rsl1_decline.command(name="verbs", aliases=["v", "conjugations", "c"])
     async def rsl1_verbs(self, ctx: commands.Context, word: str = None):
@@ -430,8 +430,8 @@ class GA78(commands.Cog):
         ]
         stuff.sort(key=lambda x: x[0].lower())
         output = [f'{en} = {rsl}' for en, rsl in stuff]
-        return await general.send("An entire dictionary would be hard to make because the language changes over time, but here are some things you can "
-                                  "say in RSL-1:\n" + "\n".join(output) + "\nNote on wonders of RSL-1 - there are 2 words for 'I', yes.", ctx.channel)
+        return await general.send("A dictionary-like thing is coming soon, but here are some things you can say in RSL-1:\n" + "\n".join(output) +
+                                  "\nNote on wonders of RSL-1 - there are 2 words for 'I', yes.", ctx.channel)
 
     @commands.command(name="ga78")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])
