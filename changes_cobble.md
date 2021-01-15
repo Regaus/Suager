@@ -81,3 +81,6 @@
 - Dictionary commands should now be functional
 - A command that shows how RSL-1 was intended to be pronounced
 - A command that explains RSL-1 grammar
+
+## v1.0.12 - 15 January 2021
+- More grammar

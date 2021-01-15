@@ -275,7 +275,7 @@ async def avatars(bot: bot_data.Bot):
             # avatars = lists.avatars
             avatar = random.choice(lists.avatars)
             e = False
-            s1, s2 = [f"{time.time()} > {bot.name} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
+            s1, s2 = [f"{time.time()} > {bot.local_config['name']} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
             try:
                 bio = await http.get(avatar, res_method="read")
                 await bot.user.edit(avatar=bio)

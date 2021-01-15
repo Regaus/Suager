@@ -13,12 +13,12 @@ from core.utils import arg_parser, emotes, general, time
 
 def is_rsl1_eligible(ctx):
     if ctx.author.id not in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
-                             593736085327314954]:
+                             593736085327314954, 581206591051923466]:
         return False
     if ctx.guild is None:
         return True
     else:
-        return ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536]
+        return ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536, 672535025698209821]
 
 
 def rsl_number(value: int):
@@ -122,7 +122,7 @@ D - [d] - d
 E - [ɛ] or [e] - 'eh', the 'e' in 'bed'
 F - [f] - f
 G - [g] - g
-H - [x] or [h] - 'h' in words like 'hello'
+H - [x] or [h] - 'h' in words like 'hello', 'ch' in 'loch'
 I - [i] or [ɪ] - 'ee' in 'free'
 J - [j] - 'y' in 'yeah'
 K - [k] - k
@@ -140,9 +140,14 @@ V - [v] - v
 X - [ɕ] or [ç] - Russian 'щ', 'ch' in German 'ich', 'nicht'
 Y\\* - [e] - 'eh', but 'softens' previous consonant
 Z - [z] - z
-Ä\\* - [æ] - the 'a' in 'at'
-Ö\\* - [ø] - like German 'ö'
+Ä\\* - [æ] - the 'a' in 'at', Finnish 'ä'
+Ö\\* - [ø] - like German and Finnish 'ö'
 Ü\\* - [y] - English 'ew', German 'ü', Finnish 'y'
+
+Letter combinations:
+sh - [ʃ] or [ʂ] - sh
+ch - [tʃ] or [tɕ] - ch (does not occur in any RSL-1e words as of right now, but was present in earlier versions)
+gh - [ɣ] - not present in English | a sound similar to 'g', and the voiced version of [x] (the Russian h)
 
 \\*Note: after ä, ö, ü and y, the preceding consonants is supposed to become a 'soft consonant' - something you don't have in English.
 It's like the 'n' in Russian 'niet'
@@ -150,8 +155,8 @@ It's like the 'n' in Russian 'niet'
 The stress in the word is usually on the first syllable, sometimes the second. In compound words, all of the parts are stressed:
 seijantaikka - [ˌsɛj:an'tajk:a] (compound word from 'seija' and 'taikka')
 
-A couple of words are pronounced differently than they're spelled, most notably:
-ke (who) - pronounced [kʲe] (as if it was 'ky')"""
+There are some of the exceptions to the spelling system:
+`ke` and `ge` and pronounced as if they were `ky` and `gy` ([kʲe] and [gʲe]) - but some words are still written with ky, gy"""
 
 
 rsl1_grammar = ["""RSL-1 Grammar and Structure - Part 1: Nouns and adjectives
@@ -162,15 +167,16 @@ RSL-1 nouns have 3 genders:
 The noun's gender affects the adjective ending and the 3rd person pronoun form
 
 Nouns and adjectives have 9 cases:
-Nominative - the subject of a sentence (I, he, we)
-Accusative - the object of a sentence (me, him, us)
-Dative - the indirect object of a sentence ("I give something **to you**")
-Genitive - English preposition 'of'
-Instrumental - 'with the aid of...', 'using...', 'by...'
-Comitative - '(together) with'
-Locative - in, inside something
-Lative - 'towards'
-Ablative - 'away from'
+Nominative (NOM) - the subject of a sentence (I, he, we)
+Accusative (ACC) - the object of a sentence (me, him, us)
+Dative (DAT) - the indirect object of a sentence ("I give something **to you**")
+Genitive (GEN) - English preposition 'of'
+Instrumental (INS) - 'with the aid of...', 'using...', 'by...'
+Comitative (COM) - '(together) with'
+Locative (LOC) - in, inside something
+Lative (LAT) - 'towards'
+Ablative (ABL) - 'away from'
+These case abbreviations will be used so I don't have to write the full name of the case while writing literal translations
 
 Nouns and pronouns also have a possessive form (like English `'s`): Regaus'ta vahtaa = vahtaa Regaus'un = Regaus' life.
 Adjectives can be turned into adverbs by replacing the ending with `-i`: zeranvar = fast, quick -> zeranvi = quickly
@@ -232,17 +238,38 @@ Nai naat on zeide? = Why is he here?
 
 To negate a sentence, you can use the negative particle `de` (= "not"):
 Mu de zaiva idou = I don't know what
-For the verbs "to be", just the word is enough
+For the verbs "to be", just the word is enough:
 On de Regaus = He's not Regaus (lit. he not Regaus)
 
 There is no verb form or construction for impersonal commands (such as "Let's go") at the moment, however you can use other verbs of similar meaning:
 Me taitan zeidead ittean = We should go away from here""",
                 """RSL-1 Grammar and Structure - Part 5: Compound and complex sentences
 Compound sentences are formed similar to English and Russian:
-An naat heide, no mu de haida idou - She is here, but I don't want that
-Mu ivja ei kaadazan si u haida Arhanedaa murannan - I am 7 years old and want to kill Arhaneda
+An naat zeide, no mu de haida aan zeide veitean - She is here, but I don't want to see her here
+lit. She is here, but I not want her here see
 
-More stuff coming later, yes."""]
+Mu ivja ei kaadazan si u haida kedaa murannan - I am 7 years old and want to kill someone
+lit. I have seven years in-self and want someone-acc kill
+
+Var mu kaina Senkadari Laikaduri, mu kivideak vu - While I was in Senko Lair, I met you (plural)
+lit. While I was Senko's-loc Lair-loc, I met you-pl.
+
+Te saikarna zaivasva, ken mu delvaa - You will soon know, whom I hate
+lit. You soon will-know, who-acc I hate
+
+Nai haidas te zaivan, ne mu kiara? - Why do you want to know what I say?
+lit. Why want you know, what-acc I say
+
+Dar gar, nei mu vahtaa, naat kai Senkagar invamar - The city I live in is called Senkotown
+lit. The city, what-loc I live, is as/like Senko-town called (pres. passive)""",
+                """RSL-1 Grammar and Structure - Part 6: Minor stuff
+Numerals are followed similar to German:
+6 = senki
+10 = verri
+16 = seneri
+60 = senneire
+66 = senki u senneire (lit. six and sixty)
+1234 = ukka kirraa, devi arraikädan, sei u tevveire (lit. one thousand, two hundreds, four and thirty)"""]
 
 
 class GA78(commands.Cog):
@@ -418,158 +445,87 @@ class GA78(commands.Cog):
             return await ctx.send_help(str(ctx.command))
 
     @rsl1_decline.command(name="nouns", aliases=["declensions", "decline", "n"])
-    async def rsl1_decl_nouns(self, ctx: commands.Context, word: str = None):
+    async def rsl1_decl_nouns(self, ctx: commands.Context, word: str):
         """ RSL-1 noun declensions """
         font = ImageFont.truetype("assets/mono.ttf", size=64)
-        if not word:
-            await general.send("Here are noun declensions in RSL-1. Note, that RSL-1 also has noun genders, which then affect adjective endings.\n"
-                               "Also note: Nouns ending with `-s` (e.g. -as, -os, -us, **but not something like -ks, -ts**) drop the s when not in the "
-                               "nominative case, and use the declension of the preceding vowel (very few exceptions). They, however, still say masculine."
-                               "For example: (nominative) riadus -> (genitive) riadu**n**", ctx.channel)
-            image = Image.new("RGB", (2000, 2000), (0, 0, 0))
-            text1 = "Masculine nouns - end in either a consonant or -u.\n" \
-                    "Noun Case    | Singular (cons.) | Singular (-u) | Plural\n" \
-                    "Nominative   |        consonant |            -u |    -as\n" \
-                    "Genitive     |              -un |           -un |  -azan\n" \
-                    "Dative       |              -uv |           -uv |  -azav\n" \
-                    "Accusative   |           -u/-uu |           -uu |   -azu\n" \
-                    "Instrumental |              -ur |           -ur |  -azur\n" \
-                    "Comitative   |             -uar |          -uar |  -azir\n" \
-                    "Locative     |               -i |          -uri |   -azi\n" \
-                    "Lative       |              -ut |           -ut |  -azat\n" \
-                    "Ablative     |              -ad |          -uad |  -azid\n" \
-                    "Possessive*  |        -tar/-dar |         -udar | -azdar\n"
-            text2 = "Feminine nouns - end in either -a or -i.\n" \
-                    "Noun Case    | Singular (-a) | Singular (-i) | Plural\n" \
-                    "Nominative   |            -a |            -i |    -at\n" \
-                    "Genitive     |           -an |           -in |  -adan\n" \
-                    "Dative       |           -av |           -iv |  -adav\n" \
-                    "Accusative   |           -aa |           -ia |   -ada\n" \
-                    "Instrumental |           -ar |           -ir |  -adar\n" \
-                    "Comitative   |          -air |          -air |  -adir\n" \
-                    "Locative     |           -ai |           -ii |   -adi\n" \
-                    "Lative       |          -ait |           -it |  -adat\n" \
-                    "Ablative     |          -aad |          -iad |  -adid\n" \
-                    "Possessive*  |         -adar |         -inar | -addar\n"
-            text3 = "Neuter nouns - end in either -e or -o.\n" \
-                    "Noun Case    | Singular (-e) | Singular (-o) | Plural\n" \
-                    "Nominative   |            -e |            -o |    -on\n" \
-                    "Genitive     |           -en |           -on |  -onan\n" \
-                    "Dative       |           -ev |           -ov |  -onav\n" \
-                    "Accusative   |           -ee |           -ou |   -onu\n" \
-                    "Instrumental |           -er |           -or |  -onor\n" \
-                    "Comitative   |          -our |          -our |  -onir\n" \
-                    "Locative     |           -ei |           -oi |   -oni\n" \
-                    "Lative       |           -et |           -ot |  -onat\n" \
-                    "Ablative     |          -ead |          -oad |  -onid\n" \
-                    "Possessive*  |         -enar |         -odar | -onnar\n"
-            draw = ImageDraw.Draw(image)
-            width1, height1 = draw.textsize(text1, font=font)
-            width2, height2 = draw.textsize(text2, font=font)
-            width3, height3 = draw.textsize(text3, font=font)
-            image1 = image.resize((width1 + 20, height1 - 30))
-            image2 = image.resize((width2 + 20, height2 - 30))
-            image3 = image.resize((width3 + 20, height3 - 30))
-            draw1 = ImageDraw.Draw(image1)
-            draw2 = ImageDraw.Draw(image2)
-            draw3 = ImageDraw.Draw(image3)
-            draw1.text((10, 10), text1, font=font, fill=(255, 255, 255))
-            draw2.text((10, 10), text2, font=font, fill=(255, 255, 255))
-            draw3.text((10, 10), text3, font=font, fill=(255, 255, 255))
-            bio1, bio2, bio3 = BytesIO(), BytesIO(), BytesIO()
-            image1.save(bio1, "PNG")
-            image2.save(bio2, "PNG")
-            image3.save(bio3, "PNG")
-            bio1.seek(0)
-            bio2.seek(0)
-            bio3.seek(0)
-            await general.send(None, ctx.channel,
-                               files=[discord.File(bio1, "masculine.png"), discord.File(bio2, "feminine.png"), discord.File(bio3, "neuter.png")])
-            # await general.send(text1, ctx.channel)
-            return await general.send("\\*Possession is showed either using the possessive form of the noun, of putting the word to the genitive case: "
-                                      "Regaus'ta vahtaa = vahtaa Regausun = Regaus' life\nIf you want to see the declension of a specific noun, "
-                                      "you can enter a word after this command to make the bot ~~suffer~~ show you the declension of the word. "
-                                      "Especially since not all weirdnesses of RSL-1 can be shown here easily.\n"
-                                      f"For adjectives, use `{ctx.prefix}rsl1 adjectives`.", ctx.channel)
+        word = word.lower()
+        is_s = word[-1] == "s"
+        li = -2 if is_s else -1  # last letter's index
+        ll = word[li]  # Last letter of the word
+        if word == "regaus":
+            declension = 7
+            li = 0
+        elif ll == "a":
+            declension = 1
+        elif ll == "ä":
+            declension = 2
+        elif ll == "i":
+            declension = 3
+        elif ll == "e":
+            declension = 4
+        elif ll == "o":
+            declension = 5
+        elif ll == "u":
+            declension = 6
         else:
-            word = word.lower()
-            is_s = word[-1] == "s"
-            li = -2 if is_s else -1  # last letter's index
-            ll = word[li]  # Last letter of the word
-            if word == "regaus":
-                declension = 7
-                li = 0
-            elif ll == "a":
-                declension = 1
-            elif ll == "ä":
-                declension = 2
-            elif ll == "i":
-                declension = 3
-            elif ll == "e":
-                declension = 4
-            elif ll == "o":
-                declension = 5
-            elif ll == "u":
-                declension = 6
-            else:
-                declension = 7
-                li = 0
-            declined = word[:li] if li < 0 else word
-            cases = ["Case", "Nominative", "Genitive", "Dative", "Accusative", "Instrumental", "Comitative", "Locative", "Lative", "Ablative", "Possessive"]
-            singular = ["Singular", word] + [declined] * (len(cases) - 2)
-            plural = ["Plural"] + [declined] * (len(cases) - 1)
-            endings = {
-                1: [["", "an", "av", "aa", "ar", "air", "ai", "ait", "aad", "adar"],
-                    ["at", "adan", "adav", "ada", "adar", "adir", "adi", "adat", "adid", "addar"]],
-                2: [["", "än", "äv", "äa", "är", "äir", "äi", "äit", "äad", "ädar"],
-                    ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
-                3: [["", "in", "iv", "ia", "ir", "air", "ii", "it", "iad", "inar"],
-                    ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
-                4: [["", "en", "ev", "ee", "er", "our", "ei", "et", "ead", "enar"],
-                    ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
-                5: [["", "on", "ov", "ou", "or", "our", "oi", "ot", "oad", "odar"],
-                    ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
-                6: [["", "un", "uv", "uu", "ur", "uar", "uri", "ut", "uad", "udar"],
-                    ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
-                7: [["", "un", "uv", "u", "ur", "uar", "i", "ut", "ad", "tar"],
-                    ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
-            }
-            _s, _p = endings[declension]  # Singular and Plural endings
-            if word == "riadus":
-                _p = endings[1][1]
-            for i in range(1, len(cases)):
-                singular[i] += _s[i - 1]
-                plural[i] += _p[i - 1]
-                singular[i] = singular[i].replace("aaa", "aata").replace("iii", "iiti").replace("eee", "eete").replace("iia", "iita").replace("auu", "ausu") \
-                                         .replace("euu", "eusu").replace("iuu", "iusu").replace("uuu", "uusu")
-            # if word == "regaus":
-            #    singular[10] = "regaustar"
-            case_len, sin_len, plu_len = [len(i) for i in cases], [len(i) for i in singular], [len(i) for i in plural]
-            case_fill, sin_fill, plu_fill = max(case_len), max(sin_len), max(plu_len)
-            outputs = []
-            for i in range(len(cases)):
-                case, sin, plu = cases[i], singular[i], plural[i]
-                outputs.append(f"{case:<{case_fill}} | {sin:<{sin_fill}} | {plu:<{plu_fill}}")
-            output = "\n".join(outputs)
-            image = Image.new("RGB", (2000, 2000), (0, 0, 0))
-            width, height = ImageDraw.Draw(image).textsize(output, font=font)
-            image = image.resize((width + 10, height + 15))
-            draw = ImageDraw.Draw(image)
-            draw.text((10, 0), output, fill=(255, 255, 255), font=font)
-            bio = BytesIO()
-            image.save(bio, "PNG")
-            bio.seek(0)
-            return await general.send(f'Declension for word "{word}"', ctx.channel, file=discord.File(bio, "declension.png"))
+            declension = 7
+            li = 0
+        declined = word[:li] if li < 0 else word
+        cases = ["Case", "Nominative", "Genitive", "Dative", "Accusative", "Instrumental", "Comitative", "Locative", "Lative", "Ablative", "Possessive"]
+        singular = ["Singular", word] + [declined] * (len(cases) - 2)
+        plural = ["Plural"] + [declined] * (len(cases) - 1)
+        endings = {
+            1: [["", "an", "av", "aa", "ar", "air", "ai", "ait", "aad", "adar"],
+                ["at", "adan", "adav", "ada", "adar", "adir", "adi", "adat", "adid", "addar"]],
+            2: [["", "än", "äv", "äa", "är", "äir", "äi", "äit", "äad", "ädar"],
+                ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
+            3: [["", "in", "iv", "ia", "ir", "air", "ii", "it", "iad", "inar"],
+                ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
+            4: [["", "en", "ev", "ee", "er", "our", "ei", "et", "ead", "enar"],
+                ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
+            5: [["", "on", "ov", "ou", "or", "our", "oi", "ot", "oad", "odar"],
+                ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
+            6: [["", "un", "uv", "uu", "ur", "uar", "uri", "ut", "uad", "udar"],
+                ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
+            7: [["", "un", "uv", "u", "ur", "uar", "i", "ut", "ad", "tar"],
+                ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
+        }
+        _s, _p = endings[declension]  # Singular and Plural endings
+        if word == "riadus":
+            _p = endings[1][1]
+        for i in range(1, len(cases)):
+            singular[i] += _s[i - 1]
+            plural[i] += _p[i - 1]
+            singular[i] = singular[i].replace("aaa", "aata").replace("iii", "iiti").replace("eee", "eete").replace("iia", "iita").replace("auu", "ausu") \
+                                     .replace("euu", "eusu").replace("iuu", "iusu").replace("uuu", "uusu")
+        # if word == "regaus":
+        #    singular[10] = "regaustar"
+        case_len, sin_len, plu_len = [len(i) for i in cases], [len(i) for i in singular], [len(i) for i in plural]
+        case_fill, sin_fill, plu_fill = max(case_len), max(sin_len), max(plu_len)
+        outputs = []
+        for i in range(len(cases)):
+            case, sin, plu = cases[i], singular[i], plural[i]
+            outputs.append(f"{case:<{case_fill}} | {sin:<{sin_fill}} | {plu:<{plu_fill}}")
+        output = "\n".join(outputs)
+        image = Image.new("RGB", (2000, 2000), (0, 0, 0))
+        width, height = ImageDraw.Draw(image).textsize(output, font=font)
+        image = image.resize((width + 10, height + 15))
+        draw = ImageDraw.Draw(image)
+        draw.text((10, 0), output, fill=(255, 255, 255), font=font)
+        bio = BytesIO()
+        image.save(bio, "PNG")
+        bio.seek(0)
+        return await general.send(f'Declension for word "{word}"', ctx.channel, file=discord.File(bio, "declension.png"))
 
     @rsl1_decline.command(name="adjectives", aliases=["a", "adj"])
-    async def rsl1_decl_adjectives(self, ctx: commands.Context, word: str = None):
+    async def rsl1_decl_adjectives(self, ctx: commands.Context, word: str):
         """ How RSL-1 adjectives work """
-        return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i", ctx.channel)
+        return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i" + word, ctx.channel)
 
     @rsl1_decline.command(name="verbs", aliases=["v", "conjugations", "c"])
-    async def rsl1_decl_verbs(self, ctx: commands.Context, word: str = None):
+    async def rsl1_decl_verbs(self, ctx: commands.Context, word: str):
         """ How RSL-1 verb conjugations work """
-        return await general.send("Coming later.", ctx.channel)
+        return await general.send("Coming later." + word, ctx.channel)
 
     @rsl1.group(name="words", aliases=["w", "dictionary", "dict", "d"])
     # @commands.is_owner()
@@ -635,12 +591,15 @@ class GA78(commands.Cog):
         return await general.send(rsl1_pronunciation, ctx.channel)
 
     @rsl1.command(name="grammar")
-    async def rsl1_grammar(self, ctx: commands.Context, page: int = 1):
-        """ RSL-1 Grammar and structure (split into several parts) """
-        try:
+    async def rsl1_grammar(self, ctx: commands.Context, page: int = 0):
+        """ RSL-1 grammar and structure (split into several parts) """
+        pages = len(rsl1_grammar)
+        if 1 <= page <= pages:
             return await general.send(rsl1_grammar[page - 1], ctx.channel)
-        except IndexError:
-            return await general.send(f"There are only {len(rsl1_grammar)} parts.", ctx.channel)
+        else:
+            parts = [part.splitlines()[0].replace("RSL-1 Grammar and Structure - ", "") for part in rsl1_grammar]
+            return await general.send(f"There are currently {pages} parts/pages of information about RSL-1 grammar and structure:\n" +
+                                      "\n".join(parts), ctx.channel)
 
     @commands.command(name="ga78")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])

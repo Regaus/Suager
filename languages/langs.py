@@ -51,7 +51,7 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
 
 
 def gl(ctx):
-    if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472]:
+    if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469]:
         return "rsl-1"
     ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
     if ex and ctx.guild is not None:
