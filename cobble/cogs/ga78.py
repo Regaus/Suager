@@ -31,7 +31,7 @@ def rsl_number(value: int):
         return f"Negative values will not work"
     if value == 0:
         return "deneda"
-    one = {0: "", 1: "ukka", 2: "devi", 3: "tei", 4: "sei", 5: "paa", 6: "senki", 7: "ei", 8: "oni", 9: "zehi"}
+    one = {0: "", 1: "ukka", 2: "devi", 3: "tei", 4: "sei", 5: "paa/paki", 6: "senki", 7: "ei", 8: "oni", 9: "zehi"}
     teen = {11: "uveri", 12: "deveri", 13: "teveri", 14: "severi", 15: "paveri", 16: "seneri", 17: "eijeri", 18: "overi", 19: "zegheri"}
     ten = {1: "verri", 2: "devveire", 3: "tevveire", 4: "sevveire", 5: "pavveire", 6: "senneire", 7: "evveire", 8: "onneire", 9: "zegheire"}
     hundred = ["arraiki", "arraikädan"]
@@ -438,8 +438,9 @@ class GA78(commands.Cog):
         """ RSL-1 data
 
         This is the command that can try to explain how RSL-1 works and what is going on here.
-        **Warning: While I don't mind if you speak the language, do __not__ be sending the translations outside of this channel
-        or in DMs (other than between me or other people here)** """
+        **Warning: While I don't mind if you speak the language, or even have your custom status in it,
+        I do __not__ want the RSL-1 translations to be shared outside of this channel or DMs (with me or others in this channel) without my permission**
+        (Basically: do whatever you want with RSL-1, just don't share the translations with people not here) """
         if ctx.invoked_subcommand is None:
             # await general.send("", ctx.channel)
             return await ctx.send_help(str(ctx.command))
