@@ -235,7 +235,7 @@ Mu de zaiva idou = I don't know what
 For the verbs "to be", just the word is enough
 On de Regaus = He's not Regaus (lit. he not Regaus)
 
-There is no verb form or construction for impersonal commands (such as "Let's go"), however you can use other verbs of similar meaning:
+There is no verb form or construction for impersonal commands (such as "Let's go") at the moment, however you can use other verbs of similar meaning:
 Me taitan zeidead ittean = We should go away from here""",
                 """RSL-1 Grammar and Structure - Part 5: Compound and complex sentences
 Compound sentences are formed similar to English and Russian:
