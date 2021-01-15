@@ -18,7 +18,8 @@ def is_rsl1_eligible(ctx):
     if ctx.guild is None:
         return True
     else:
-        return ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536, 672535025698209821]
+        return ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536, 672535025698209821,
+                                  799714065256808469]
 
 
 def rsl_number(value: int):
@@ -262,14 +263,31 @@ lit. Why want you know, what-acc I say
 
 Dar gar, nei mu vahtaa, naat kai Senkagar invamar - The city I live in is called Senkotown
 lit. The city, what-loc I live, is as/like Senko-town called (pres. passive)""",
-                """RSL-1 Grammar and Structure - Part 6: Minor stuff
+                """RSL-1 Grammar and Structure - Part 6: Numbers and Time
 Numerals are followed similar to German:
 6 = senki
 10 = verri
 16 = seneri
 60 = senneire
 66 = senki u senneire (lit. six and sixty)
-1234 = ukka kirraa, devi arraikädan, sei u tevveire (lit. one thousand, two hundreds, four and thirty)"""]
+1234 = ukka kirraa, devi arraikädan, sei u tevveire (lit. one thousand, two hundreds, four and thirty)
+
+ukka neda = one thing - the noun is in nominative case singular when you are talking about one thing
+devi nedadan = two things - the noun is in genitive case plural when you are talking about more (or less) than one thing
+
+Mu deja devia nedadan = I am doing two things
+The number takes the accusative case (as the two things are the object of the sentence), while the things themselves stay in the genitive plural
+
+However, if you are talking about one thing, both the number and the thing will take the accusative case:
+Mu deja ukkaa nedaa = I am doing one thing
+
+This is how to tell time:
+Esea naat na devveirede Navattun na 1745'dan kaadun, ukka u devveire saadan u tei u sevveire arhasaadan.
+Today is the 20th of January of the 1745th year, 21 hours and 43 minutes. (20/01/1745 21:43)
+
+devveiredei Navattun na 1745'dan kaadun, ij ukka u devveirei saadan u tei u sevveirei arhasaadan
+on the 20th of January 1745, at 21:43
+lit. 20th-loc January the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen"""]
 
 
 class GA78(commands.Cog):
