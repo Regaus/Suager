@@ -76,3 +76,8 @@
 
 ## v1.0.10 - 13 January 2021
 - Added dictionaries placeholders
+
+## v1.0.11 - 14 January 2021
+- Dictionary commands should now be functional
+- A command that shows how RSL-1 was intended to be pronounced
+- A command that explains RSL-1 grammar

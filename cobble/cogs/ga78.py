@@ -1,13 +1,24 @@
 import json
 from datetime import datetime, timezone
 from io import BytesIO
+from math import ceil
 
 import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
 from cobble.utils import ss23, ss24
-from core.utils import emotes, general, time
+from core.utils import arg_parser, emotes, general, time
+
+
+def is_rsl1_eligible(ctx):
+    if ctx.author.id not in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
+                             593736085327314954]:
+        return False
+    if ctx.guild is None:
+        return True
+    else:
+        return ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536]
 
 
 def rsl_number(value: int):
@@ -55,6 +66,183 @@ def rsl_number(value: int):
             name = n1 if val % 100 == 1 else n2
             outputs.append(f"{thousand(val)}{'r' if val == 1 and i > 0 else ''} {name}")
     return ", ".join(outputs[::-1])
+
+
+def load_rsl1(key: str, order: int) -> list:
+    _data = json.loads(open("cobble/utils/rsl-1.json", "r").read())
+    data = _data[key]
+    data.sort(key=lambda entry: entry[order].lower())
+    return data
+
+
+def rsl1_args(text: str):
+    """ Interpret RSL-1 args """
+    parser = arg_parser.Arguments()
+    parser.add_argument('-s', '--search', nargs="+", default="")
+    parser.add_argument('-o', '--order', nargs=1, default=0)
+    parser.add_argument('-p', '--page', nargs=1, default=1)
+    args, valid = parser.parse_args(text)
+    if valid and type(args.search) == list:
+        args.search = " ".join(args.search)
+    return args, valid
+
+
+async def rsl1_args_handler(ctx: commands.Context, args: str, key: str):
+    args, valid = rsl1_args(args)
+    if not valid:
+        return await general.send(args, ctx.channel)
+    stuff = load_rsl1(key, args.order)
+    # return stuff, args.search, args.page, True
+    if args.page < 1:
+        return await general.send("Page must be a number above 1.", ctx.channel)
+    if args.order not in [0, 1]:
+        return await general.send("Order must be either 0 or 1.", ctx.channel)
+    _min = (args.page - 1) * 20
+    _max = args.page * 20
+    _stuff = []
+    for rsl1, en in stuff[_min:_max]:
+        if args.search:
+            if args.search in rsl1 or args.search in en:
+                _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
+        else:
+            _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
+    _len = ceil(len(stuff) / 20)
+    _search = f"Search `{args.search}`" if args.search else "No search term"
+    output = f"RSL-1 {key.replace('_', ' ').title()} - {_search} - Page {args.page} of {_len}\n"
+    output += "\n".join(_stuff)
+    return await general.send(output, ctx.channel)
+
+
+rsl1_pronunciation = """This is how RSL-1 was intended to sound.
+Format: Letter - IPA - English Approximation
+A - [a] or [ɑ] - ah
+B - [b] - b
+C - [ts] - Japanese "tsunami", Russian "tsar"
+D - [d] - d
+E - [ɛ] or [e] - 'eh', the 'e' in 'bed'
+F - [f] - f
+G - [g] - g
+H - [x] or [h] - 'h' in words like 'hello'
+I - [i] or [ɪ] - 'ee' in 'free'
+J - [j] - 'y' in 'yeah'
+K - [k] - k
+L - [l] - l
+M - [m] - m
+N - [n] - n
+O - [o] or [ɔ] - 'o' in 'not'
+P - [p] - p
+Q - [ʒ] or [ʐ] - zh, 's' in 'vision'
+R - [r] or [ɾ] or [ɹ] - however you pronounce the letter 'r'
+S - [s] - s
+T - [t] - t
+U - [u] - 'oo' in words like 'book', 'boot'
+V - [v] - v
+X - [ɕ] or [ç] - Russian 'щ', 'ch' in German 'ich', 'nicht'
+Y\\* - [e] - 'eh', but 'softens' previous consonant
+Z - [z] - z
+Ä\\* - [æ] - the 'a' in 'at'
+Ö\\* - [ø] - like German 'ö'
+Ü\\* - [y] - English 'ew', German 'ü', Finnish 'y'
+
+\\*Note: after ä, ö, ü and y, the preceding consonants is supposed to become a 'soft consonant' - something you don't have in English.
+It's like the 'n' in Russian 'niet'
+
+The stress in the word is usually on the first syllable, sometimes the second. In compound words, all of the parts are stressed:
+seijantaikka - [ˌsɛj:an'tajk:a] (compound word from 'seija' and 'taikka')
+
+A couple of words are pronounced differently than they're spelled, most notably:
+ke (who) - pronounced [kʲe] (as if it was 'ky')"""
+
+
+rsl1_grammar = ["""RSL-1 Grammar and Structure - Part 1: Nouns and adjectives
+RSL-1 nouns have 3 genders:
+1. Masculine - words ending with `-u` or a consonant
+2. Feminine - words ending with `-a` or `-i`
+3. Neuter - words ending with `-o` or -`e`
+The noun's gender affects the adjective ending and the 3rd person pronoun form
+
+Nouns and adjectives have 9 cases:
+Nominative - the subject of a sentence (I, he, we)
+Accusative - the object of a sentence (me, him, us)
+Dative - the indirect object of a sentence ("I give something **to you**")
+Genitive - English preposition 'of'
+Instrumental - 'with the aid of...', 'using...', 'by...'
+Comitative - '(together) with'
+Locative - in, inside something
+Lative - 'towards'
+Ablative - 'away from'
+
+Nouns and pronouns also have a possessive form (like English `'s`): Regaus'ta vahtaa = vahtaa Regaus'un = Regaus' life.
+Adjectives can be turned into adverbs by replacing the ending with `-i`: zeranvar = fast, quick -> zeranvi = quickly
+Further data will be available on `..rsl1 changes nouns` and `..rsl1 changes adjectives`""",
+                """RSL-1 Grammar and Structure - Part 2: Verbs
+RSL-1 verbs change for person and tense.
+They have separate endings, depending on who does the action. (Like German, Russian, Finnish and many other languages)
+They are then followed by a suffix for tense.
+RSL-1 distinguishes 4 tenses:
+Present - Something happens or is happening
+Past - Something happened or was happening
+Future - Something will happen
+Conditional - Something would happen
+
+In the past tense, the verb also has a prefix if the action is complete. The incomplete form usually corresponds to the English "was ...-ing" form of the verb.
+paikaillan = to happen -> paikallak = was happening -> kipaikallak = happened
+
+They also have an imperative form (e.g. "Do this!")
+dejan = to do -> dejar = do
+
+For reflexive verbs (doing something to oneself), most of the time they have a `-sa` suffix. 
+kiltastan = to prepare (something) -> kiltastansa = to prepare (oneself)
+
+If you want to form a yes/no question from the verb, you can do so with a `-ta`/`-da` suffix.
+hideran = to create -> mu hiderava = I will create -> hideravada mu? = will I create?
+ittean = to go -> te itteas = you go/you are going -> itteasta? - are you going?
+
+Some verbs have separable prefixes like German.
+Further data will be available on `..rsl1 changes verbs`""",
+                """RSL-1 Grammar and Structure - Part 3: Participles and Converbs
+RSL-1 also has participles and converbs. Participles are used for passive constructions.
+As participles also act like adjectives, you can drop "the one who is..." part of the sentence. (This works like in Russian.)
+From dejan - to do, you can form:
+Active participles:
+dejannar = doing (делающий)
+dejadar = (the one who) was doing (делавший)
+kidejadar = (the one who) has/had done (сделавший)
+
+Passive participles:
+dejamar = doable, or (something that) is done (делаемый)
+dejattar = (something that) was being done (деланный)
+kydejattar = (something that) was/has been done (сделанный)
+
+Converbs:
+dejavi - while doing (делая)
+deijad - having done (сделав)""",
+                """RSL-1 Grammar and Structure - Part 4: Syntax and sentence structure
+The basic word order is SVO, similar to English, German, or Russian:
+Mu saiqanara = I exist
+Mu deja nedaa = I do something
+Mu kihittak tev uu aivallou = I gave you an apple
+It is, however, flexible if you want to emphasise a specific part of the sentence:
+An daa saidalluu naat ua liarta = There is a book on the table (lit. On the table is a book)
+
+For questions, the word order is also similar to English and Russian:
+Dejada mu edou? = Am I doing this?
+Ne kaidas (te)? = What do you want?
+Nai naat on zeide? = Why is he here?
+
+To negate a sentence, you can use the negative particle `de` (= "not"):
+Mu de zaiva idou = I don't know what
+For the verbs "to be", just the word is enough
+On de Regaus = He's not Regaus (lit. he not Regaus)
+
+There is no verb form or construction for impersonal commands (such as "Let's go"), however you can use other verbs of similar meaning:
+Me taitan zeidead ittean = We should go away from here""",
+                """RSL-1 Grammar and Structure - Part 5: Compound and complex sentences
+Compound sentences are formed similar to English and Russian:
+An naat heide, no mu de haida idou - She is here, but I don't want that
+Mu ivja ei kaadazan si u haida Arhanedaa murannan - I am 7 years old and want to kill Arhaneda
+
+More stuff coming later, yes."""]
 
 
 class GA78(commands.Cog):
@@ -199,16 +387,16 @@ class GA78(commands.Cog):
         return await general.send(text, ctx.channel)
 
     @commands.group(name="rsl1", aliases=["rsl-1", "rsl"])
-    @commands.check(lambda ctx: ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536] and
-                    ctx.author.id in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
-                                      593736085327314954])
+    @commands.check(is_rsl1_eligible)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rsl1(self, ctx: commands.Context):
-        """ RSL-1 data """
+        """ RSL-1 data
+
+        This is the command that can try to explain how RSL-1 works and what is going on here.
+        **Warning: While I don't mind if you speak the language, do __not__ be sending the translations outside of this channel
+        or in DMs (other than between me or other people here)** """
         if ctx.invoked_subcommand is None:
-            await general.send("This is the command that can try to explain how RSL-1 works and what is going on here.\n\n"
-                               "**Warning: While I don't mind if you speak the language, do __not__ be sending the translations outside of this channel "
-                               "or in DMs (other than between me or other people here)**", ctx.channel)
+            # await general.send("", ctx.channel)
             return await ctx.send_help(str(ctx.command))
 
     @rsl1.command(name="numbers", aliases=["n", "number"])
@@ -220,14 +408,16 @@ class GA78(commands.Cog):
         return await general.send(f"{number:,} = {rsl_number(number)}", ctx.channel)
 
     @commands.is_owner()
-    @rsl1.group(name="declensions", aliases=["decline", "conjugations", "conjugate", "c"])
+    @rsl1.group(name="changes", aliases=["declensions", "decline", "conjugations", "conjugate", "c"])
     async def rsl1_decline(self, ctx: commands.Context):
-        """ RSL-1 word changing thingies """
+        """ RSL-1 word changing thingies (WIP)
+
+        Shows how the RSL-1 words change in different places and contexts """
         if ctx.invoked_subcommand is None:
-            await general.send("This command will show you how the RSL-1 words change in different places", ctx.channel)
+            # await general.send("This command will show you how the RSL-1 words change in different places", ctx.channel)
             return await ctx.send_help(str(ctx.command))
 
-    @rsl1_decline.command(name="nous", aliases=["declensions", "decline"])
+    @rsl1_decline.command(name="nouns", aliases=["declensions", "decline", "n"])
     async def rsl1_decl_nouns(self, ctx: commands.Context, word: str = None):
         """ RSL-1 noun declensions """
         font = ImageFont.truetype("assets/mono.ttf", size=64)
@@ -297,7 +487,7 @@ class GA78(commands.Cog):
                                files=[discord.File(bio1, "masculine.png"), discord.File(bio2, "feminine.png"), discord.File(bio3, "neuter.png")])
             # await general.send(text1, ctx.channel)
             return await general.send("\\*Possession is showed either using the possessive form of the noun, of putting the word to the genitive case: "
-                                      "Regaus'ta vahtaa = vahtaa Regaun = Regaus' life\nIf you want to see the declension of a specific noun, "
+                                      "Regaus'ta vahtaa = vahtaa Regausun = Regaus' life\nIf you want to see the declension of a specific noun, "
                                       "you can enter a word after this command to make the bot ~~suffer~~ show you the declension of the word. "
                                       "Especially since not all weirdnesses of RSL-1 can be shown here easily.\n"
                                       f"For adjectives, use `{ctx.prefix}rsl1 adjectives`.", ctx.channel)
@@ -359,7 +549,7 @@ class GA78(commands.Cog):
             outputs = []
             for i in range(len(cases)):
                 case, sin, plu = cases[i], singular[i], plural[i]
-                outputs.append(f"{case:<{case_fill}} | {sin:>{sin_fill}} | {plu:>{plu_fill}}")
+                outputs.append(f"{case:<{case_fill}} | {sin:<{sin_fill}} | {plu:<{plu_fill}}")
             output = "\n".join(outputs)
             image = Image.new("RGB", (2000, 2000), (0, 0, 0))
             width, height = ImageDraw.Draw(image).textsize(output, font=font)
@@ -382,85 +572,75 @@ class GA78(commands.Cog):
         return await general.send("Coming later.", ctx.channel)
 
     @rsl1.group(name="words", aliases=["w", "dictionary", "dict", "d"])
-    @commands.is_owner()
+    # @commands.is_owner()
     async def rsl1_dict(self, ctx: commands.Context):
-        """ RSL-1 word changing thingies """
+        """ Lists RSL-1 words
+
+        Commands' arguments:
+            `--search`, `-s`: Search for words containing the search string
+            `--order`, `-o`: 0 = A-Z by English translation, 1 = A-Z by RSL-1 word
+            `--page`, `-p`: The page of the output """
         if ctx.invoked_subcommand is None:
-            await general.send("This command is the list of words of RSL-1.\nOrder: 0 = A-Z by English translation, 1 = A-Z by RSL-1 word", ctx.channel)
+            # await general.send("", ctx.channel)
             return await ctx.send_help(str(ctx.command))
 
     @rsl1_dict.command(name="nouns", aliases=["n"])
     # turn them into arguments: --order, --search, --page
-    async def rsl1_nouns(self, ctx: commands.Context, order: int = 0, search: str = ""):
+    async def rsl1_nouns(self, ctx: commands.Context, *, args: str = ""):
         """ RSL-1 nouns dictionary """
+        # return await general.send(rsl1_args(args), ctx.channel)
+        # stuff = load_rsl1()["nouns"]
+        return await rsl1_args_handler(ctx, args, "nouns")
 
-    @rsl1_dict.command(nname="adjectives", aliases=["a", "adj"])
-    async def rsl1_adjectives(self, ctx: commands.Context, order: int = 0, search: str = ""):
+    @rsl1_dict.command(name="adjectives", aliases=["a", "adj"])
+    async def rsl1_adjectives(self, ctx: commands.Context, *, args: str = ""):
         """ RSL-1 adjectives dictionary """
+        # stuff = load_rsl1()["adjectives"]
+        return await rsl1_args_handler(ctx, args, "adjectives")
 
-    @rsl1_dict.command(nname="adverbs", aliases=["adv"])
-    async def rsl1_adverbs(self, ctx: commands.Context, order: int = 0, search: str = ""):
+    @rsl1_dict.command(name="adverbs", aliases=["adv"])
+    async def rsl1_adverbs(self, ctx: commands.Context, *, args: str = ""):
         """ RSL-1 adverb dictionary """
+        # stuff = load_rsl1()["adverbs"]
+        return await rsl1_args_handler(ctx, args, "adverbs")
 
-    @rsl1_dict.command(nname="verbs", aliases=["v"])
-    async def rsl1_verbs(self, ctx: commands.Context, order: int = 0, search: str = ""):
+    @rsl1_dict.command(name="verbs", aliases=["v"])
+    async def rsl1_verbs(self, ctx: commands.Context, *, args: str = ""):
         """ RSL-1 verbs dictionary """
+        # stuff = load_rsl1()["verbs"]
+        return await rsl1_args_handler(ctx, args, "verbs")
 
-    @rsl1_dict.command(nname="small", aliases=["s"])
-    async def rsl1_small_words(self, ctx: commands.Context, order: int = 0, search: str = ""):
+    @rsl1_dict.command(name="small", aliases=["s", "smallwords"])
+    async def rsl1_small_words(self, ctx: commands.Context, *, args: str = ""):
         """ RSL-1 small words (e.g. prepositions and stuff) dictionary """
+        # stuff = load_rsl1()["small_words"]
+        return await rsl1_args_handler(ctx, args, "small_words")
 
     @rsl1_dict.command(name="pronouns", aliases=["p"])
     async def rsl1_pronouns(self, ctx: commands.Context):
         """ RSL-1 pronouns """
-        return await general.send("Wonders of RSL-1, there are two ways to say I. Coming later.", ctx.channel)
+        return await general.send("Coming later.", ctx.channel)
 
     @rsl1.command(name="phrases", aliases=["p"])
     async def rsl1_phrases(self, ctx: commands.Context):
         """ Some RSL-1 words and phrases """
-        stuff = [
-            ["thanks", "hallera"],
-            ["please", "kinnelli"],
-            ["hello", "liarustu"],
-            ["good morning", "hiaran rean"],
-            ["good afternoon", "hiaran sean"],
-            ["good evening", "hiaran vean"],
-            ["good night (greeting)", "hiaran tean"],
-            ["good night, sleep well", "hiaran sehlun"],
-            ["goodbye", "lankuvurru"],
-            ["good luck", "ivjar lettuman"],
-            ["idiot, cunt, and other synonyms", "arhaneda"],
-            ["worst person ever or something", "igvalarhaneda"],
-            ["I love you", "sa/mu leivaa tu"],
-            ["I like you", "sa/mu altikaa tu"],
-            ["I hate you", "sa/mu delvaa tu"],
-            ["what do you want", "ne kaidas"],
-            ["you are cute", "te jas millar/leitakar"],
-            ["you are beautiful/hot", "te jas leidannar"],
-            ["you are ugly", "te jas arkantar"],
-            ["I am 7 years old", "sa/muv ivja 7 kaadazan si"],
-            ["yes", "to"],
-            ["no", "des"],
-            ["die in a fire", "senardar aigynnuri"],
-            ["I don't care", "e jat sav/muv vuntevo"],
-            ["I couldn't care less", "e ar de maikat sav/muv kuvuntevo vian"],
-            ["congrats", "nilkirriza"],
-            ["heaven, paradise", "Naivur"],
-            ["hell", "Eideru/Eilarru"],
-            ["school", "eitaru"],
-            ["happy birthday", "kovanan reidesean"],
-            ["Happy Halloween", "Kovanan Savainun"],
-            ["Happy New Year", "Kovanan Nuan Kaadun"],
-            ["Merry Christmas", "Kovanon Raivasten"],
-            ["son of a bitch", "seijanseunu"],
-            ["fuck off/fuck you", "heilarsa"],
-            ["I'm on her", "naa an aan"],
-            ["Senko Lair", "Senkadar Laikadu"]
-        ]
-        stuff.sort(key=lambda x: x[0].lower())
+        stuff = load_rsl1("phrases", 0)
+        # stuff.sort(key=lambda x: x[0].lower())
         output = [f'{en} = {rsl}' for en, rsl in stuff]
-        return await general.send("A dictionary-like thing is coming soon, but here are some things you can say in RSL-1:\n" + "\n".join(output) +
-                                  "\nNote on wonders of RSL-1 - there are 2 words for 'I', yes.", ctx.channel)
+        return await general.send("A dictionary-like thing is coming soon, but here are some things you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
+
+    @rsl1.command(name="pronunciation")
+    async def rsl1_pronunciations(self, ctx: commands.Context):
+        """ How RSL-1 is intended to sound """
+        return await general.send(rsl1_pronunciation, ctx.channel)
+
+    @rsl1.command(name="grammar")
+    async def rsl1_grammar(self, ctx: commands.Context, page: int = 1):
+        """ RSL-1 Grammar and structure (split into several parts) """
+        try:
+            return await general.send(rsl1_grammar[page - 1], ctx.channel)
+        except IndexError:
+            return await general.send(f"There are only {len(rsl1_grammar)} parts.", ctx.channel)
 
     @commands.command(name="ga78")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])

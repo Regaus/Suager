@@ -81,8 +81,11 @@ for i in range(len(config["bots"])):
         bot.usages[str(command)] = 0
     if "token" in local_config and local_config["token"]:
         tasks.append(loop.create_task(bot.start(local_config["token"])))
-    if bot.name == "suager":
-        tasks.append(loop.create_task(temporaries.temporaries(bot)))
+        tasks.append(loop.create_task(temporaries.playing(bot)))
+        if bot.name == "suager":
+            tasks.append(loop.create_task(temporaries.temporaries(bot)))
+            tasks.append(loop.create_task(temporaries.birthdays(bot)))
+            tasks.append(loop.create_task(temporaries.avatars(bot)))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

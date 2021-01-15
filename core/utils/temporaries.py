@@ -1,13 +1,18 @@
 import asyncio
 import json
+import random
 
+import aiohttp
 import discord
 
-from core.utils import bot_data, general, logger, time
+from core.utils import bot_data, general, http, logger, time
 from languages import langs
+from suager.cogs.birthdays import Ctx
+from suager.utils import lists
 
 
 async def temporaries(bot: bot_data.Bot):
+    """ Handle reminders and mutes """
     await bot.wait_until_ready()
     print(f"{time.time()} > Initialised Temporaries handler")
     while True:
@@ -88,6 +93,7 @@ async def temporaries(bot: bot_data.Bot):
 
 
 async def try_error_temps(bot: bot_data.Bot):
+    """ Try to handle temporaries that had an error, else delete them """
     errors = bot.db.fetch("SELECT * FROM temporary WHERE handled=2", ())
     if errors:
         for entry in errors:
@@ -102,11 +108,186 @@ async def try_error_temps(bot: bot_data.Bot):
                                                             f"reminder for {expiry} ({entry_id}) (previously was an error)")
                     else:
                         general.print_error(f"{time.time()} > User ID {user} not found! Skipping...")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Could not find user for reminder for {expiry} with Entry ID {entry_id}! "
-                                                            f"Skipping reminder...")
+                        logger.log(bot.name, "temporaries", f"{time.time()} > Still could not find user for reminder for {expiry} with Entry ID {entry_id}! "
+                                                            f"Deleting reminder...")
                 except Exception as e:
-                    general.print_error(f"{time.time()} > Reminder {entry_id} error: {e} | Skipping...")
-                    logger.log(bot.name, "temporaries", f"{time.time()} > Reminder {entry_id} error: {e} | Skipping...")
+                    general.print_error(f"{time.time()} > Reminder {entry_id} error: {e} | Deleting...")
+                    logger.log(bot.name, "temporaries", f"{time.time()} > Reminder {entry_id} error: {e} | Deleting...")
             bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
             if entry["type"] == "mute":
                 pass
+
+
+bd_config = {
+    568148147457490954: [568148147457490958, 663661621448802304],
+    706574018928443442: [715620849167761458, 720780796293677109],
+    738425418637639775: [738425419325243424, 748647340423905420]
+}
+
+
+async def birthdays(bot: bot_data.Bot):
+    """ Handle birthdays """
+    await bot.wait_until_ready()
+    print(f"{time.time()} > Initialised Birthdays handler")
+    _guilds, _channels, _roles = [], [], []
+    for guild, data in bd_config.items():
+        _guilds.append(guild)
+        _channels.append(data[0])
+        _roles.append(data[1])
+    guilds = [bot.get_guild(guild) for guild in _guilds]
+    channels = [bot.get_channel(cid) for cid in _channels]
+    roles = [discord.Object(id=rid) for rid in _roles]
+    while True:
+        birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
+        if birthday_today:
+            for person in birthday_today:
+                dm = True
+                for i in range(len(guilds)):
+                    try:
+                        guild = guilds[i]
+                        if guild is not None:
+                            user = guild.get_member(person["uid"])
+                            if user is not None:
+                                dm = False
+                                await general.send(langs.gls("birthdays_message", langs.gl(Ctx(guild, bot)), user.mention), channels[i], u=True)
+                                await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
+                                print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
+                    except Exception as e:
+                        print(f"{time.time()} > Birthdays Handler > {e}")
+                if dm:
+                    try:
+                        user = bot.get_user(person["uid"])
+                        if user is not None:
+                            await user.send(langs.gls("birthdays_message", "en_gb", user.mention))
+                    except Exception as e:
+                        print(f"{time.time()} > Birthdays Handler > {e}")
+                bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
+        birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
+        for person in birthday_over:
+            bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=?", (person["uid"],))
+            for i in range(len(guilds)):
+                try:
+                    guild = guilds[i]
+                    if guild is not None:
+                        user = guild.get_member(person["uid"])
+                        if user is not None:
+                            await user.remove_roles(roles[i], reason=f"It is no longer {user}'s birthday...")
+                            print(f"{time.time()} > {guild.name} > Removed birthday role from {user.name}")
+                except Exception as e:
+                    print(f"{time.time()} > Birthdays Handler > {e}")
+        await asyncio.sleep(5)
+
+
+async def playing(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+    print(f"{time.time()} > Initialised Playing changer ({bot.local_config['name']})")
+    while True:
+        try:
+            log = bot.local_config["logs"]
+            # plays = self.local_config["playing"]
+            version = general.get_version()[bot.name]
+            fv, sv = f"v{version['version']}", f"v{version['short_version']}"
+            plays = {
+                "cobble": [
+                    {"type": 0, "name": fv},
+                    {"type": 1, "name": "Nothing", "url": "https://www.twitch.tv/nosmdjf"},
+                    {"type": 0, "name": "with Regaus"},
+                    {"type": 0, "name": "without you"},
+                    {"type": 0, "name": "with nobody"},
+                    {"type": 0, "name": "with your feelings"},
+                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 5, "name": "uselessness"},
+                    {"type": 0, "name": "Nothing"},
+                    {"type": 3, "name": "you"},
+                    {"type": 2, "name": "a song"},
+                    {"type": 3, "name": "the Void"},
+                ],
+                "suager": [
+                    {"type": 0, "name": fv},
+                    {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                    {"type": 2, "name": "Music"},
+                    {"type": 5, "name": "a competition"},
+                    {"type": 0, "name": "with Regaus"},
+                    {"type": 0, "name": "without you"},
+                    {"type": 0, "name": "with nobody"},
+                    {"type": 0, "name": "with your feelings"},
+                    {"type": 0, "name": "Custom Status"},
+                    {"type": 5, "name": "Discord"},
+                    {"type": 3, "name": "Senko"},
+                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 5, "name": "uselessness"},
+                    {"type": 0, "name": "Nothing"},
+                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
+                    {"type": 3, "name": "you"},
+                    {"type": 0, "name": "None"},
+                    # {"type": 0, "name": "KeyError: 'name'"},
+                    # {"type": 0, "name": "IndexError: list index out of range"},
+                    # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
+                    # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
+                    {"type": 2, "name": "a song"},
+                    {"type": 2, "name": "10 Hours of Nothing ft. Nobody (Non-Existent Remix by Negative Zero)"},
+                    {"type": 3, "name": "the Void"},
+                    {"type": 5, "name": "Minecraft"},
+                    {"type": 0, "name": "Minecraft"},
+                    {"type": 0, "name": "Minceraft"},
+                    {"type": 1, "name": "Minecraft", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
+                ]
+            }
+            _activity = random.choice(plays.get(bot.name))
+            # playing = f"{play} | v{self.local_config['short_version']}"
+            if _activity["type"] == 0:  # Game
+                activity = discord.Game(name=_activity["name"])
+            elif _activity["type"] == 1:  # Streaming
+                name = _activity["name"]
+                activity = discord.Streaming(name=name, details=name, url=_activity["url"])
+            else:
+                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                # activity = discord.Activity(type=activity, name=playing)
+            await bot.change_presence(activity=activity, status=discord.Status.dnd)
+            if log:
+                name = _activity["name"]
+                status = {
+                    0: "Playing",
+                    1: "Streaming",
+                    2: "Listening to",
+                    3: "Watching",
+                    5: "Competing in"
+                }.get(_activity["type"], "Undefined")
+                logger.log(bot.name, "playing", f"{time.time()} > {bot.local_config['name']} > Updated activity to {status} {name}")
+        except PermissionError:
+            general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > Failed to save changes.")
+        except aiohttp.ClientConnectorError:
+            general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > The bot tried to do something while disconnected.")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > {type(e).__name__}: {e}")
+        await asyncio.sleep(60)
+
+
+async def avatars(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+    print(f"{time.time()} > Initialised Avatar changer")
+    while True:
+        try:
+            bot.config = general.get_config()
+            bot.local_config = bot.config["bots"][bot.index]
+            log = bot.local_config["logs"]
+            # avatars = lists.avatars
+            avatar = random.choice(lists.avatars)
+            e = False
+            s1, s2 = [f"{time.time()} > {bot.name} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
+            try:
+                bio = await http.get(avatar, res_method="read")
+                await bot.user.edit(avatar=bio)
+            except discord.errors.HTTPException:
+                e = True
+            send = s2 if e else s1
+            if log:
+                logger.log(bot.name, "avatar", send)
+        except PermissionError:
+            general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > Failed to save changes.")
+        except aiohttp.ClientConnectorError:
+            general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > The bot tried to do something while disconnected.")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > {type(e).__name__}: {e}")
+        await asyncio.sleep(3600)

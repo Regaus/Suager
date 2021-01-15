@@ -3,7 +3,6 @@ from typing import List
 
 import discord
 from discord.ext import commands
-from discord.ext.tasks import loop
 
 from core.utils import events, general, time
 
@@ -16,9 +15,9 @@ class Events(commands.Cog):
         self.config = self.bot.config
         self.exists = False
         self.local_config = self.bot.local_config
-        self.playing.start()
-        if self.bot.name == "suager":
-            self.avatar.start()
+        # self.playing.start()
+        # if self.bot.name == "suager":
+        #     self.avatar.start()
         self.blocked = [667187968145883146]
         self.bad = ["re", "rag", "<@302851022790066185>", "<@!302851022790066185>"]
         # self.updates = [self.bot.get_channel(x) for x in [796755072427360256]]
@@ -26,12 +25,12 @@ class Events(commands.Cog):
         self.blocked_logs = self.bot.get_channel(739183533792297164)
         self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
                                571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
-                               571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196]
+                               571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196, 798513492697153536]
 
-    def con_unload(self):
-        self.playing.cancel()
-        if self.bot.name == "suager":
-            self.avatar.cancel()
+    # def con_unload(self):
+    #     self.playing.cancel()
+    #     if self.bot.name == "suager":
+    #         self.avatar.cancel()
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -103,24 +102,24 @@ class Events(commands.Cog):
         self.blocked_logs = self.bot.get_channel(739183533792297164)
         return await events.on_ready(self)
 
-    @loop(minutes=1)
-    async def playing(self):
-        self.config = general.get_config()
-        self.local_config = self.config["bots"][self.bot.index]
-        await events.playing_changer(self)
+    # @loop(minutes=1)
+    # async def playing(self):
+    #     self.config = general.get_config()
+    #     self.local_config = self.config["bots"][self.bot.index]
+    #     await events.playing_changer(self)
 
-    @playing.before_loop
-    async def playing_before(self):
-        await self.bot.wait_until_ready()
+    # @playing.before_loop
+    # async def playing_before(self):
+    #     await self.bot.wait_until_ready()
 
-    @loop(hours=1)
-    async def avatar(self):
-        if self.bot.name == "suager":
-            await events.avatar_changer(self)
+    # @loop(hours=1)
+    # async def avatar(self):
+    #     if self.bot.name == "suager":
+    #         await events.avatar_changer(self)
 
-    @avatar.before_loop
-    async def avatar_before(self):
-        await self.bot.wait_until_ready()
+    # @avatar.before_loop
+    # async def avatar_before(self):
+    #     await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):

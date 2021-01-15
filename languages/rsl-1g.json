@@ -11,7 +11,7 @@
   "generic_times": ["time", "times"],
   "generic_unknown": "Unknown",
   "generic_yes": "To",
-  "birthdays_message": "Happy birthday {0}, have a nice birthday and enjoy your role today \uD83C\uDF82\uD83C\uDF89",
+  "birthdays_message": "Happy birthday {0}, have a nice one! \uD83C\uDF82\uD83C\uDF89",
   "birthdays_birthday_suager": "My birthday is on **13th May**, thanks for asking. {emotes.AlexHeart}",
   "birthdays_birthday_not_saved": "{0} does not have their birthday saved.",
   "birthdays_birthday_your": "**Your** birthday is on **{0}**",

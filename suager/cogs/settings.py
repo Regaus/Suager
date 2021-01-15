@@ -504,14 +504,13 @@ class Settings(commands.Cog):
         """ Server prefixes """
         _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
-            dp = self.bot.local_config["prefixes"]
+            dp = self.bot.local_config["prefixes"].copy()
             cp = None
-            dp.append(self.bot.user.mention)
         else:
             data = json.loads(_data['data'])
-            dp = self.bot.local_config["prefixes"] if data['use_default'] else []
+            dp = self.bot.local_config["prefixes"].copy() if data['use_default'] else []
             cp = data['prefixes']
-            dp.append(self.bot.user.mention)
+        dp.append(self.bot.user.mention)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
         embed.set_thumbnail(url=ctx.guild.icon_url)

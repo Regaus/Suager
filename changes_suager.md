@@ -659,3 +659,9 @@
 
 ## v7.2.6 - 13 January 2021
 - Role members now sorts alphabetically
+
+## v7.2.7 - 14 January 2021
+- Fixed Suager mention prefix endlessly adding itself on the //prefix command
+- Birthdays will attempt to DM the user if it finds no servers the user shares
+- Ignore deletes in Secret Room 10
+- Moved Birthdays, Playing Changer and Avatar Changer to temporaries
