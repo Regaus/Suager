@@ -665,3 +665,6 @@
 - Birthdays will attempt to DM the user if it finds no servers the user shares
 - Ignore deletes in Secret Room 10
 - Moved Birthdays, Playing Changer and Avatar Changer to temporaries
+
+## v7.2.8 - 16 January 2021
+- Friends calculator command

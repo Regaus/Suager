@@ -69,7 +69,7 @@ class Utility(commands.Cog):
                     f"Kargadia: **{d}**\n" \
                     f"Kaivaltaavia: **Placeholder**"
         else:
-            if ctx.guild.id in [568148147457490954, 738425418637639775]:
+            if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
                 # data = ss23.time_kargadia(time.now(None))
                 # a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d} ST"
                 # b = langs.gts(time.now_k(), locale, True, False, False, True, True)

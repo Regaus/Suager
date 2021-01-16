@@ -93,9 +93,53 @@ class Ratings(commands.Cog):
         seed = user1.id - user2.id
         random.seed(seed)
         rate = langs.gfs(random.random(), locale, 2, True)
-        if (user1.id == 291665491221807104 and user2.id == 302851022790066185) or (user2.id == 291665491221807104 and user1.id == 302851022790066185):
-            rate = langs.gfs(1.0, locale, 2, True)
+        # if (user1.id == 291665491221807104 and user2.id == 302851022790066185) or (user2.id == 291665491221807104 and user1.id == 302851022790066185):
+        #     rate = langs.gfs(1.0, locale, 2, True)
         return await general.send(langs.gls("ratings_love_calc", locale, user1.name, user2.name, rate), ctx.channel)
+
+    @commands.command(name="friends", aliases=["friendship"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def friend_calc(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
+        """ Calculate how friendly 2 users are """
+        locale = langs.gl(ctx)
+        if user1 == user2:
+            return await general.send(langs.gls("ratings_friend_self", locale), ctx.channel)
+        if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
+            return await general.send(langs.gls("ratings_friend_suager", locale), ctx.channel)
+        if user1.bot ^ user2.bot:
+            return await general.send(langs.gls("ratings_friend_bots", locale), ctx.channel)
+        seed = user1.id - user2.id - 1
+        random.seed(seed)
+        rate = langs.gfs(random.random(), locale, 2, True)
+        if user1.id == 302851022790066185 or user2.id == 302851022790066185:
+            check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author  # shouldn't be else-ing anyways
+            # Checks whose ID I'll need to determine our friendship with me.
+            friendships = {
+                291665491221807104: 1.00,  # Leitoxz
+                609423646347231282: 1.00,  # Suager
+                593736085327314954: 0.87,  # Chuck
+                374853432168808448: 0.85,  # Potato
+                597373963571691520: 0.82,  # Nuriki
+                430891116318031872: 0.82,  # Alex Five
+                533680271057354762: 0.82,  # Spoopy
+                418151634087182359: 0.77,  # HatKid
+                230313032956248064: 0.75,  # Steir
+                499038637631995906: 0.72,  # Ash,
+                417390734690484224: 0.70,  # Kyomi
+                659879737509937152: 0.70,  # LostCandle
+                581206591051923466: 0.70,  # Midnight
+                236884090651934721: 0.66,  # Shawn
+                739806142560993380: 0.57,  # Fekuri
+                746173049174229142: 0.00,  # racc
+                667187968145883146: -1.0,  # chocolatt
+            }
+            if check.id in friendships:
+                rate = langs.gfs(friendships.get(check.id), locale, 2, True)
+            else:
+                rate = "undefined%"
+            # Get the result
+        return await general.send(langs.gls("ratings_friend", locale, user1.name, user2.name, rate), ctx.channel)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -109,7 +153,7 @@ class Ratings(commands.Cog):
             302851022790066185: 1,       # Regaus
             self.bot.user.id: 1,         # Suager
             291665491221807104: 1,       # Leitoxz
-            746173049174229142: 0        # racc
+            # 746173049174229142: 0        # racc
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin
@@ -126,7 +170,7 @@ class Ratings(commands.Cog):
         if user.id in [302851022790066185, self.bot.user.id]:
             iq = 150.01
         elif user.id == 746173049174229142:
-            iq = 0.0
+            iq *= 0.5
         # elif user.id == 533680271057354762:
         #     iq = -2147483647.0
         ri = langs.gfs(iq, locale, 2)
