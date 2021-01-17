@@ -123,7 +123,7 @@ D - [d] - d
 E - [ɛ] or [e] - 'eh', the 'e' in 'bed'
 F - [f] - f
 G - [g] - g
-H - [x] or [h] - 'h' in words like 'hello', 'ch' in 'loch'
+H - [x] or [h] - 'h' in words like 'hello', 'ch' in 'loch', often written as 'kh'
 I - [i] or [ɪ] - 'ee' in 'free'
 J - [j] - 'y' in 'yeah'
 K - [k] - k
@@ -176,6 +176,7 @@ Dative (DAT) - the indirect object of a sentence ("I give something **to you**")
 Genitive (GEN) - English preposition 'of'
 Instrumental (INS) - 'with the aid of...', 'using...', 'by...'
 Comitative (COM) - '(together) with'
+Abessive (ABE) - 'without', '-less'
 Locative (LOC) - in, inside something
 Lative (LAT) - 'towards'
 Ablative (ABL) - 'away from'
@@ -293,21 +294,19 @@ on the 20th of January 1745, at 21:43
 lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen"""]
 
 
-rsl1_pronouns = """Pronouns      | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self
-English       | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self
-Nominative    | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se
-Accusative    | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa
-Dative        | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev
-Genitive      | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa
-Instrumental  | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser
-Comitative    | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir
-Locative      | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei
-Lative        | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set
-Ablative      | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | ijad  | sead
-Possessive m  | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar
-Possessive f  | munna   | tara  | onna  | anna  | enna  | menna  | manna  | vara  | inna  | sara
-Possessive n  | munno   | taro  | onno  | anno  | enno  | menno  | manno  | varo  | inno  | saro
-Possessive pl | munnan  | taran | onnan | annan | ennan | mennan | mannan | varan | innan | saran"""
+rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self
+English            | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self
+Nominative         | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se
+Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa
+Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev
+Genitive           | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa
+Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser
+Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir
+Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah
+Locative           | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei
+Lative             | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set
+Ablative           | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | íad   | sead
+Possessive         | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar"""
 
 
 class GA78(commands.Cog):
@@ -624,7 +623,8 @@ class GA78(commands.Cog):
         image.save(bio, "PNG")
         bio.seek(0)
         return await general.send(f"RSL-1 Pronouns\n\\*Inclusive 'we' is when you are talking about 'me', 'you' (and possibly someone else) - so, 1st, 2nd "
-                                  f"(and 3rd) persons\nExclusive 'we' is when you're talking about 'me' and someone else - so, only 1st and 3rd persons",
+                                  f"(and 3rd) persons\nExclusive 'we' is when you're talking about 'me' and someone else - so, only 1st and 3rd persons\n\n"
+                                  f"For the declension of the possessive forms, see `..rsl1 changes adjectives`",
                                   ctx.channel, file=discord.File(bio, "pronouns.png"))
         # return await general.send("Coming later.", ctx.channel)
 
@@ -634,7 +634,7 @@ class GA78(commands.Cog):
         stuff = load_rsl1("phrases", 0)
         # stuff.sort(key=lambda x: x[0].lower())
         output = [f'{en} = {rsl}' for en, rsl in stuff]
-        return await general.send("A dictionary-like thing is coming soon, but here are some things you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
+        return await general.send("Certain phrases you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
 
     @rsl1.command(name="pronunciation")
     async def rsl1_pronunciations(self, ctx: commands.Context):
