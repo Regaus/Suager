@@ -156,6 +156,8 @@ It's like the 'n' in Russian 'niet'
 The stress in the word is usually on the first syllable, sometimes the second. In compound words, all of the parts are stressed:
 seijantaikka - [ˌsɛj:an'tajk:a] (compound word from 'seija' and 'taikka')
 
+`´` (á, é, í, ó, ú) simply denote the stressed syllable(s) in a word and is entirely optional for use.
+
 There are some of the exceptions to the spelling system:
 `ke` and `ge` and pronounced as if they were `ky` and `gy` ([kʲe] and [gʲe]) - but some words are still written with ky, gy"""
 
@@ -282,12 +284,30 @@ However, if you are talking about one thing, both the number and the thing will 
 Mu deja ukkaa nedaa = I am doing one thing
 
 This is how to tell time:
-Esea naat na devveirede Navattun na 1745'dan kaadun, ukka u devveire saadan u tei u sevveire arhasaadan.
-Today is the 20th of January of the 1745th year, 21 hours and 43 minutes. (20/01/1745 21:43)
+Esea naat na devveirede Navattun na 1745'dan kaadun, esaa naat ukka u devveire saadan u tei u sevveire arhasaadan
+Today is the 20th of January 1745, right now it's 21:43
+lit. Today is the 20th-nom January-gen the 1745th-gen year-gen, now is 1 and 20-nom hours-gen and 3 and 40-nom minutes-gen 
 
 devveiredei Navattun na 1745'dan kaadun, ij ukka u devveirei saadan u tei u sevveirei arhasaadan
 on the 20th of January 1745, at 21:43
-lit. 20th-loc January the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen"""]
+lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen"""]
+
+
+rsl1_pronouns = """Pronouns      | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self
+English       | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self
+Nominative    | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se
+Accusative    | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa
+Dative        | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev
+Genitive      | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa
+Instrumental  | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser
+Comitative    | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir
+Locative      | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei
+Lative        | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set
+Ablative      | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | ijad  | sead
+Possessive m  | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar
+Possessive f  | munna   | tara  | onna  | anna  | enna  | menna  | manna  | vara  | inna  | sara
+Possessive n  | munno   | taro  | onno  | anno  | enno  | menno  | manno  | varo  | inno  | saro
+Possessive pl | munnan  | taran | onnan | annan | ennan | mennan | mannan | varan | innan | saran"""
 
 
 class GA78(commands.Cog):
@@ -594,7 +614,19 @@ class GA78(commands.Cog):
     @rsl1_dict.command(name="pronouns", aliases=["p"])
     async def rsl1_pronouns(self, ctx: commands.Context):
         """ RSL-1 pronouns """
-        return await general.send("Coming later.", ctx.channel)
+        font = ImageFont.truetype("assets/mono.ttf", size=64)
+        image = Image.new("RGB", (2000, 2000), (0, 0, 0))
+        width, height = ImageDraw.Draw(image).textsize(rsl1_pronouns, font=font)
+        image = image.resize((width + 10, height + 15))
+        draw = ImageDraw.Draw(image)
+        draw.text((10, 0), rsl1_pronouns, fill=(255, 255, 255), font=font)
+        bio = BytesIO()
+        image.save(bio, "PNG")
+        bio.seek(0)
+        return await general.send(f"RSL-1 Pronouns\n\\*Inclusive 'we' is when you are talking about 'me', 'you' (and possibly someone else) - so, 1st, 2nd "
+                                  f"(and 3rd) persons\nExclusive 'we' is when you're talking about 'me' and someone else - so, only 1st and 3rd persons",
+                                  ctx.channel, file=discord.File(bio, "pronouns.png"))
+        # return await general.send("Coming later.", ctx.channel)
 
     @rsl1.command(name="phrases", aliases=["p"])
     async def rsl1_phrases(self, ctx: commands.Context):

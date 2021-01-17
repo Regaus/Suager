@@ -84,3 +84,6 @@
 
 ## v1.0.12 - 15 January 2021
 - More grammar
+
+## v1.0.13 - 17 January 2021
+- RSL-1 pronouns
