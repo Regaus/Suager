@@ -92,9 +92,19 @@ class Ratings(commands.Cog):
             return await general.send(langs.gls("ratings_love_calc_bots", locale), ctx.channel)
         seed = user1.id - user2.id
         random.seed(seed)
-        rate = langs.gfs(random.random(), locale, 2, True)
+        _rate = random.random()
+        # if (user1.id == 402238370249441281 and user2.id == 302851022790066185) or (user2.id == 402238370249441281 and user1.id == 302851022790066185):
+        #     _rate = 0.0
+        if user1.id == 302851022790066185 or user2.id == 302851022790066185:
+            check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author
+            _rate *= {
+                593736085327314954: 27,
+                291665491221807104: 1.07,
+                402238370249441281: 0
+            }.get(check.id, 1.00)
         # if (user1.id == 291665491221807104 and user2.id == 302851022790066185) or (user2.id == 291665491221807104 and user1.id == 302851022790066185):
         #     rate = langs.gfs(1.0, locale, 2, True)
+        rate = langs.gfs(_rate, locale, 2, True)
         return await general.send(langs.gls("ratings_love_calc", locale, user1.name, user2.name, rate), ctx.channel)
 
     @commands.command(name="friends", aliases=["friendship"])
@@ -106,9 +116,10 @@ class Ratings(commands.Cog):
         if user1 == user2:
             return await general.send(langs.gls("ratings_friend_self", locale), ctx.channel)
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
-            return await general.send(langs.gls("ratings_friend_suager", locale), ctx.channel)
-        if user1.bot ^ user2.bot:
-            return await general.send(langs.gls("ratings_friend_bots", locale), ctx.channel)
+            if not (user1.id == 302851022790066185 or user2.id == 302851022790066185):
+                return await general.send(langs.gls("ratings_friend_suager", locale), ctx.channel)
+        # if user1.bot ^ user2.bot:
+        #     return await general.send(langs.gls("ratings_friend_bots", locale), ctx.channel)
         seed = user1.id - user2.id - 1
         random.seed(seed)
         rate = langs.gfs(random.random(), locale, 2, True)
@@ -116,28 +127,34 @@ class Ratings(commands.Cog):
             check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author  # shouldn't be else-ing anyways
             # Checks whose ID I'll need to determine our friendship with me.
             friendships = {
-                291665491221807104: 1.00,  # Leitoxz
-                609423646347231282: 1.00,  # Suager
-                593736085327314954: 0.87,  # Chuck
-                374853432168808448: 0.85,  # Potato
-                597373963571691520: 0.82,  # Nuriki
-                430891116318031872: 0.82,  # Alex Five
-                533680271057354762: 0.82,  # Spoopy
-                418151634087182359: 0.77,  # HatKid
-                230313032956248064: 0.75,  # Steir
-                499038637631995906: 0.72,  # Ash,
-                417390734690484224: 0.70,  # Kyomi
-                659879737509937152: 0.70,  # LostCandle
-                581206591051923466: 0.70,  # Midnight
-                236884090651934721: 0.66,  # Shawn
-                739806142560993380: 0.57,  # Fekuri
-                746173049174229142: 0.00,  # racc
-                667187968145883146: -1.0,  # chocolatt
+                291665491221807104: 1.0000,  # Leitoxz
+                609423646347231282: 1.0000,  # Suager
+                374853432168808448: 0.8827,  # Potato
+                593736085327314954: 0.8827,  # Chuck
+                597373963571691520: 0.8351,  # Nuriki
+                430891116318031872: 0.8212,  # Alex Five
+                533680271057354762: 0.8197,  # Spoopy
+                418151634087182359: 0.7743,  # HatKid
+                230313032956248064: 0.7587,  # Steir
+                499038637631995906: 0.7213,  # Ash
+                417390734690484224: 0.7015,  # Kyomi
+                659879737509937152: 0.7027,  # LostCandle
+                581206591051923466: 0.7041,  # Midnight
+                236884090651934721: 0.6678,  # Shawn
+                739806142560993380: 0.5711,  # Fekuri
+                443363116504580117: 0.2173,  # Dragon
+                746173049174229142: 0.0000,  # racc
+                402238370249441281: -0.112,  # fake
+                667187968145883146: -1.000,  # chocolatt
             }
             if check.id in friendships:
                 rate = langs.gfs(friendships.get(check.id), locale, 2, True)
+                author = check == ctx.author
+                return await general.send(f"{'**You** are' if author else f'**{check.name}** is'} **{rate}** friends with **Regaus**.", ctx.channel)
             else:
-                rate = "undefined%"
+                # rate = "undefined%"
+                author = check == ctx.author
+                return await general.send(f"The level of friendship between **{'you' if author else check.name}** and **Regaus** is **undefined**", ctx.channel)
             # Get the result
         return await general.send(langs.gls("ratings_friend", locale, user1.name, user2.name, rate), ctx.channel)
 

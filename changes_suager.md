@@ -668,3 +668,6 @@
 
 ## v7.2.8 - 16 January 2021
 - Friends calculator command
+
+## v7.2.8.1 - 17 January 2021
+- Better friendship levels for me
