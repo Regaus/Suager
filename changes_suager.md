@@ -674,3 +674,6 @@
 
 ## v7.2.8.2 - 18 January 2021
 - Updated the seed algorithm for love and friendship
+
+## v7.2.8.3 - 18 January 2021
+- help command should no longer crash in DMs
