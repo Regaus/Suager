@@ -671,3 +671,6 @@
 
 ## v7.2.8.1 - 17 January 2021
 - Better friendship levels for me
+
+## v7.2.8.2 - 18 January 2021
+- Updated the seed algorithm for love and friendship

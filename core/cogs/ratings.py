@@ -90,7 +90,7 @@ class Ratings(commands.Cog):
             return await general.send(langs.gls("ratings_love_calc_suager", locale), ctx.channel)
         if user1.bot ^ user2.bot:
             return await general.send(langs.gls("ratings_love_calc_bots", locale), ctx.channel)
-        seed = user1.id - user2.id
+        seed = user1.id + user2.id + 1
         random.seed(seed)
         _rate = random.random()
         # if (user1.id == 402238370249441281 and user2.id == 302851022790066185) or (user2.id == 402238370249441281 and user1.id == 302851022790066185):
@@ -120,7 +120,7 @@ class Ratings(commands.Cog):
                 return await general.send(langs.gls("ratings_friend_suager", locale), ctx.channel)
         # if user1.bot ^ user2.bot:
         #     return await general.send(langs.gls("ratings_friend_bots", locale), ctx.channel)
-        seed = user1.id - user2.id - 1
+        seed = user1.id + user2.id - 1
         random.seed(seed)
         rate = langs.gfs(random.random(), locale, 2, True)
         if user1.id == 302851022790066185 or user2.id == 302851022790066185:
@@ -142,7 +142,9 @@ class Ratings(commands.Cog):
                 581206591051923466: 0.7041,  # Midnight
                 236884090651934721: 0.6678,  # Shawn
                 739806142560993380: 0.5711,  # Fekuri
+                781907210182590514: 0.2214,  # Jellybonk
                 443363116504580117: 0.2173,  # Dragon
+                690328607205491101: 0.0721,  # Yerin
                 746173049174229142: 0.0000,  # racc
                 402238370249441281: -0.112,  # fake
                 667187968145883146: -1.000,  # chocolatt
