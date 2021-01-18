@@ -294,19 +294,19 @@ on the 20th of January 1745, at 21:43
 lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen"""]
 
 
-rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self
-English            | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self
-Nominative         | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se
-Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa
-Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev
-Genitive           | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa
-Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser
-Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir
-Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah
-Locative           | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei
-Lative             | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set
-Ablative           | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | íad   | sead
-Possessive         | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar"""
+rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self   | what   | who
+English            | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self   | what   | who
+Nominative         | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se     | ne     | ke
+Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa  | ne/nea | kea/ken/ku
+Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev    | nev    | kev
+Genitive           | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa     | nen    | ken
+Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser    | ner    | ker
+Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir   | near   | kear
+Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah    | neh    | kah
+Locative           | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei | nei    | kei
+Lative             | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set    | net    | ket
+Ablative           | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | íad   | sead   | nead   | kead
+Possessive         | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar    | nennar | kennar"""
 
 
 class GA78(commands.Cog):

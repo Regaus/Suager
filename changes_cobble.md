@@ -87,3 +87,6 @@
 
 ## v1.0.13 - 17 January 2021
 - RSL-1 pronouns
+
+## v1.0.14 - 18 January 2021
+- added what and who to pronouns
