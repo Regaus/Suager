@@ -101,7 +101,7 @@ async def rsl1_args_handler(ctx: commands.Context, args: str, key: str):
     _min = (args.page - 1) * 20
     _max = args.page * 20
     _stuff = []
-    for rsl1, en in stuff[_min:_max]:
+    for en, rsl1 in stuff[_min:_max]:
         if args.search:
             if args.search in rsl1 or args.search in en:
                 _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
@@ -184,7 +184,9 @@ The case name abbreviations will be used so I don't have to write the full name 
 
 Nouns and pronouns also have a possessive form (like English `'s`): Regaus'ta vahtaa = vahtaa Regaus'un = Regaus' life.
 Adjectives can be turned into adverbs by replacing the ending with `-i`: zeranvar = fast, quick -> zeranvi = quickly
-To decline a certain noun or adjective, use `..rsl1 changes nouns` and `..rsl1 changes adjectives`""",
+To decline a certain noun or adjective, use `..rsl1 changes nouns` and `..rsl1 changes adjectives`
+
+For adjectives, you can add `ku-` to mean `-er`, `iga-` for `-est`""",
                 """RSL-1 Grammar and Structure - Part 2: Verbs
 RSL-1 verbs change for person and tense.
 They have separate endings, depending on who does the action. (Like German, Russian, Finnish and many other languages)
@@ -292,7 +294,15 @@ lit. Today is the 20th-nom January-gen the 1745th-gen year-gen, now is 1 and 20-
 
 devveiredei Navattun na 1745'dan kaadun, ij ukka u devveirei saadan u tei u sevveirei arhasaadan
 on the 20th of January 1745, at 21:43
-lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen"""]
+lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen
+
+little/few = virse
+less = kuvirse
+least = ivvirse
+
+many/much = valse
+more = kuvalse
+most = ivvalse"""]
 
 
 rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self   | what   | who

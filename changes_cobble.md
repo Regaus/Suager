@@ -93,3 +93,7 @@
 
 ## v1.1-pre1 - 19 January 2021
 - Added RSL-1 declensions command
+
+## v1.1-pre2 - 19 January 2021
+- Adverbs and small are now in the dictionary
+- Fixed the output for RSL-1 dictionary
