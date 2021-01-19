@@ -677,3 +677,6 @@
 
 ## v7.2.8.3 - 18 January 2021
 - help command should no longer crash in DMs
+
+## v7.2.9 - 19 January 2021
+- Updated RSL-1 locale to updated grammar

@@ -535,7 +535,7 @@ class GA78(commands.Cog):
             singular[i] += _s[i - 1]
             plural[i] += _p[i - 1]
             singular[i] = singular[i].replace("aaa", "aata").replace("iii", "iiti").replace("eee", "eete").replace("iia", "iita").replace("auu", "ausu") \
-                                     .replace("euu", "eusu").replace("iuu", "iusu").replace("uuu", "uusu")
+                                     .replace("euu", "eusu").replace("iuu", "iusu").replace("uuu", "uusu").replace("eaa", "eata")
         # if word == "regaus":
         #    singular[10] = "regaustar"
         case_len, sin_len, plu_len = [len(i) for i in cases], [len(i) for i in singular], [len(i) for i in plural]

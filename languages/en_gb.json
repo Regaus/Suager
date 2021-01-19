@@ -207,7 +207,7 @@
   "ratings_iq": "**{0}**'s IQ is **{1}**.",
   "ratings_love_calc": "Love level between **{0}** and **{1}** is **{2}**.",
   "ratings_love_calc_bots": "Bots can't feel love to normal users.",
-  "ratings_love_calc_suager": "I'm not programmed to feel love.",
+  "ratings_love_calc_suager": "I was never programmed to feel love...",
   "ratings_pickle": "**{0}**'s pickle size is **{1}cm** ({2}in)",
   "ratings_rate": "I think \"{0}\" is **{1}/{2}**",
   "ratings_rate_user": "I rate {0} as **{1}/{2}**",
