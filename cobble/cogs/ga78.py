@@ -13,7 +13,7 @@ from core.utils import arg_parser, emotes, general, time
 
 def is_rsl1_eligible(ctx):
     if ctx.author.id not in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
-                             593736085327314954, 581206591051923466]:
+                             593736085327314954, 581206591051923466, 533680271057354762]:
         return False
     if ctx.guild is None:
         return True
