@@ -90,3 +90,6 @@
 
 ## v1.0.14 - 18 January 2021
 - added what and who to pronouns
+
+## v1.1-pre1 - 19 January 2021
+- Added RSL-1 declensions command

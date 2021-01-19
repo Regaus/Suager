@@ -169,47 +169,46 @@ RSL-1 nouns have 3 genders:
 3. Neuter - words ending with `-o` or -`e`
 The noun's gender affects the adjective ending and the 3rd person pronoun form
 
-Nouns and adjectives have 9 cases:
+Nouns and adjectives have 10 cases:
 Nominative (NOM) - the subject of a sentence (I, he, we)
-Accusative (ACC) - the object of a sentence (me, him, us)
-Dative (DAT) - the indirect object of a sentence ("I give something **to you**")
 Genitive (GEN) - English preposition 'of'
+Dative (DAT) - the indirect object of a sentence ("I give something **to you**")
+Accusative (ACC) - the object of a sentence (me, him, us)
 Instrumental (INS) - 'with the aid of...', 'using...', 'by...'
 Comitative (COM) - '(together) with'
 Abessive (ABE) - 'without', '-less'
 Locative (LOC) - in, inside something
 Lative (LAT) - 'towards'
 Ablative (ABL) - 'away from'
-These case abbreviations will be used so I don't have to write the full name of the case while writing literal translations
+The case name abbreviations will be used so I don't have to write the full name of the case in the sentence structure
 
 Nouns and pronouns also have a possessive form (like English `'s`): Regaus'ta vahtaa = vahtaa Regaus'un = Regaus' life.
 Adjectives can be turned into adverbs by replacing the ending with `-i`: zeranvar = fast, quick -> zeranvi = quickly
-Further data will be available on `..rsl1 changes nouns` and `..rsl1 changes adjectives`""",
+To decline a certain noun or adjective, use `..rsl1 changes nouns` and `..rsl1 changes adjectives`""",
                 """RSL-1 Grammar and Structure - Part 2: Verbs
 RSL-1 verbs change for person and tense.
 They have separate endings, depending on who does the action. (Like German, Russian, Finnish and many other languages)
 They are then followed by a suffix for tense.
-RSL-1 distinguishes 4 tenses:
+RSL-1 distinguishes 4 tense forms:
 Present - Something happens or is happening
 Past - Something happened or was happening
 Future - Something will happen
 Conditional - Something would happen
 
-In the past tense, the verb also has a prefix if the action is complete. The incomplete form usually corresponds to the English "was ...-ing" form of the verb.
+In the past tense, the verb gets a prefix if the action is complete. The incomplete form usually corresponds to the English "was ...-ing" form of the verb.
 paikaillan = to happen -> paikallak = was happening -> kipaikallak = happened
 
 They also have an imperative form (e.g. "Do this!")
-dejan = to do -> dejar = do
+dejan = to do -> dejar = do (to one person), dejart = do (to multiple people)
 
 For reflexive verbs (doing something to oneself), most of the time they have a `-sa` suffix. 
 kiltastan = to prepare (something) -> kiltastansa = to prepare (oneself)
 
 If you want to form a yes/no question from the verb, you can do so with a `-ta`/`-da` suffix.
 hideran = to create -> mu hiderava = I will create -> hideravada mu? = will I create?
-ittean = to go -> te itteas = you go/you are going -> itteasta? - are you going?
+ittean = to go -> te itteas = you go/are going -> itteasta? - are you going?
 
-Some verbs have separable prefixes like German.
-Further data will be available on `..rsl1 changes verbs`""",
+To conjugate a certain verb, use `..rsl1 changes verbs`""",
                 """RSL-1 Grammar and Structure - Part 3: Participles and Converbs
 RSL-1 also has participles and converbs. Participles are used for passive constructions.
 As participles also act like adjectives, you can drop "the one who is..." part of the sentence. (This works like in Russian.)
@@ -220,7 +219,7 @@ dejadar = (the one who) was doing (делавший)
 kidejadar = (the one who) has/had done (сделавший)
 
 Passive participles:
-dejamar = doable, or (something that) is done (делаемый)
+dejamar = doable, or (something that) is being done (делаемый)
 dejattar = (something that) was being done (деланный)
 kydejattar = (something that) was/has been done (сделанный)
 
@@ -232,23 +231,25 @@ The basic word order is SVO, similar to English, German, or Russian:
 Mu saiqanara = I exist
 Mu deja nedaa = I do something
 Mu kihittak tev uu aivallou = I gave you an apple
-It is, however, flexible if you want to emphasise a specific part of the sentence:
+The word order in the above sentences matches the English.
+
+The order is, however, somewhat flexible if you want to emphasise a specific part of the sentence:
 An daa saidalluu naat ua liarta = There is a book on the table (lit. On the table is a book)
 
-For questions, the word order is also similar to English and Russian:
+For questions, the word order is also similar to English:
 Dejada mu edou? = Am I doing this?
 Ne kaidas (te)? = What do you want?
 Nai naat on zeide? = Why is he here?
 
 To negate a sentence, you can use the negative particle `de` (= "not"):
-Mu de zaiva idou = I don't know what
+Mu de zaiva idou = I don't know what (lit. I know not that)
 For the verbs "to be", just the word is enough:
 On de Regaus = He's not Regaus (lit. he not Regaus)
 
 There is no verb form or construction for impersonal commands (such as "Let's go") at the moment, however you can use other verbs of similar meaning:
-Me taitan zeidead ittean = We should go away from here""",
+Me taitan zeidead ittean = We should go away from here (lit. We should-1pl here-abl go-inf)""",
                 """RSL-1 Grammar and Structure - Part 5: Compound and complex sentences
-Compound sentences are formed similar to English and Russian:
+Compound sentences are formed not too differently from European languages:
 An naat zeide, no mu de haida aan zeide veitean - She is here, but I don't want to see her here
 lit. She is here, but I not want her here see
 
@@ -297,9 +298,9 @@ lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and
 rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self   | what   | who
 English            | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self   | what   | who
 Nominative         | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se     | ne     | ke
-Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa  | ne/nea | kea/ken/ku
-Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev    | nev    | kev
 Genitive           | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa     | nen    | ken
+Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev    | nev    | kev
+Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa  | ne/nea | kea/ken/ku
 Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser    | ner    | ker
 Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir   | near   | kear
 Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah    | neh    | kah
@@ -472,10 +473,10 @@ class GA78(commands.Cog):
                                       f"will translate the number 1 to RSL-1.", ctx.channel)
         return await general.send(f"{number:,} = {rsl_number(number)}", ctx.channel)
 
-    @commands.is_owner()
+    # @commands.is_owner()
     @rsl1.group(name="changes", aliases=["declensions", "decline", "conjugations", "conjugate", "c"])
     async def rsl1_decline(self, ctx: commands.Context):
-        """ RSL-1 word changing thingies (WIP)
+        """ RSL-1 word changing thingies
 
         Shows how the RSL-1 words change in different places and contexts """
         if ctx.invoked_subcommand is None:
@@ -484,7 +485,7 @@ class GA78(commands.Cog):
 
     @rsl1_decline.command(name="nouns", aliases=["declensions", "decline", "n"])
     async def rsl1_decl_nouns(self, ctx: commands.Context, word: str):
-        """ RSL-1 noun declensions """
+        """ Decline an RSL-1 noun """
         font = ImageFont.truetype("assets/mono.ttf", size=64)
         word = word.lower()
         is_s = word[-1] == "s"
@@ -509,24 +510,41 @@ class GA78(commands.Cog):
             declension = 7
             li = 0
         declined = word[:li] if li < 0 else word
-        cases = ["Case", "Nominative", "Genitive", "Dative", "Accusative", "Instrumental", "Comitative", "Locative", "Lative", "Ablative", "Possessive"]
+        cases = ["Case", "Nominative", "Genitive", "Dative", "Accusative", "Instrumental", "Comitative",
+                 "Abessive", "Locative", "Lative", "Ablative", "Possessive"]
         singular = ["Singular", word] + [declined] * (len(cases) - 2)
         plural = ["Plural"] + [declined] * (len(cases) - 1)
+        # endings = {
+        #     1: [["", "an", "av", "aa", "ar", "air", "ai", "ait", "aad", "adar"],
+        #         ["at", "adan", "adav", "ada", "adar", "adir", "adi", "adat", "adid", "addar"]],
+        #     2: [["", "än", "äv", "äa", "är", "äir", "äi", "äit", "äad", "ädar"],
+        #         ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
+        #     3: [["", "in", "iv", "ia", "ir", "air", "ii", "it", "iad", "inar"],
+        #         ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
+        #     4: [["", "en", "ev", "ee", "er", "our", "ei", "et", "ead", "enar"],
+        #         ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
+        #     5: [["", "on", "ov", "ou", "or", "our", "oi", "ot", "oad", "odar"],
+        #         ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
+        #     6: [["", "un", "uv", "uu", "ur", "uar", "uri", "ut", "uad", "udar"],
+        #         ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
+        #     7: [["", "un", "uv", "u", "ur", "uar", "i", "ut", "ad", "tar"],
+        #        ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
+        # }
         endings = {
-            1: [["", "an", "av", "aa", "ar", "air", "ai", "ait", "aad", "adar"],
-                ["at", "adan", "adav", "ada", "adar", "adir", "adi", "adat", "adid", "addar"]],
-            2: [["", "än", "äv", "äa", "är", "äir", "äi", "äit", "äad", "ädar"],
-                ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
-            3: [["", "in", "iv", "ia", "ir", "air", "ii", "it", "iad", "inar"],
-                ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
-            4: [["", "en", "ev", "ee", "er", "our", "ei", "et", "ead", "enar"],
-                ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
-            5: [["", "on", "ov", "ou", "or", "our", "oi", "ot", "oad", "odar"],
-                ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
-            6: [["", "un", "uv", "uu", "ur", "uar", "uri", "ut", "uad", "udar"],
-                ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
-            7: [["", "un", "uv", "u", "ur", "uar", "i", "ut", "ad", "tar"],
-                ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
+            1: [["", "an", "av", "aa", "ar", "air", "ah", "i", "ait", "aad", "adar"],
+                ["at", "adan", "adav", "ada", "adar", "adir", "adah", "adi", "adat", "adid", "addar"]],
+            2: [["", "än", "äv", "ää", "är", "äir", "äh", "i", "äit", "ääd", "ädar"],
+                ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädah", "ädi", "ädat", "ädid", "äddar"]],
+            3: [["", "in", "iv", "ia", "ir", "air", "ih", "ii", "it", "iad", "idar"],
+                ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädah", "ädi", "ädat", "ädid", "äddar"]],
+            4: [["", "en", "ev", "ea", "er", "our", "eh", "ei", "et", "ead", "edar"],
+                ["at", "adan", "adav", "ada", "adar", "adir", "adah", "adi", "adat", "adid", "addar"]],
+            5: [["", "on", "ov", "ou", "or", "our", "oh", "oi", "ot", "oad", "odar"],
+                ["at", "adan", "adav", "ada", "adar", "adir", "adah", "adi", "adat", "adid", "addar"]],
+            6: [["", "un", "uv", "uu", "ur", "uar", "uh", "uri", "ut", "uad", "udar"],
+                ["at", "adan", "adav", "ada", "adar", "adir", "adah", "adi", "adat", "adid", "addar"]],
+            7: [["", "an", "u", "a", "ur", "ar", "ah", "i", "ut", "id", "udar"],
+                ["at", "adan", "adav", "ada", "adar", "adir", "adah", "adi", "adat", "adid", "addar"]],
         }
         _s, _p = endings[declension]  # Singular and Plural endings
         if word == "riadus":
@@ -557,13 +575,168 @@ class GA78(commands.Cog):
 
     @rsl1_decline.command(name="adjectives", aliases=["a", "adj"])
     async def rsl1_decl_adjectives(self, ctx: commands.Context, word: str):
-        """ How RSL-1 adjectives work """
-        return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i" + word, ctx.channel)
+        """ Forms of RSL-1 adjectives """
+        font = ImageFont.truetype("assets/mono.ttf", size=64)
+        word = word.lower()
+        if word[-2:] != "ar" and word not in ["dar", "der", "ur"]:
+            return await general.send("All RSL-1 adjectives end in -ar.", ctx.channel)
+        li = -2
+        # ll = word[li]  # Last letter of the word
+        declined = word[:li] if word not in ["dar", "der", "ur"] else ""
+        if word in ["tar", "var", "sar"]:
+            declined += "ar"
+        cases = ["Case", "Nominative", "Genitive", "Dative", "Accusative", "Instrumental", "Comitative", "Abessive", "Locative", "Lative", "Ablative"]
+        singular = ["Masculine"] + [declined] * (len(cases) - 1)
+        singular2 = ["Feminine"] + [declined] * (len(cases) - 1)
+        singular3 = ["Neuter"] + [declined] * (len(cases) - 1)
+        plural = ["Plural"] + [declined] * (len(cases) - 1)
+        if word in ["tar", "var", "sar"]:
+            singular[1] = word[:li]
+        endings = [
+            ["ar", "an", "av", "aa", "aar", "aur", "ah", "ari", "art", "arad"],
+            ["a", "an", "av", "aa", "aar", "air", "ah", "ai", "at", "aad"],
+            ["o", "on", "ov", "ou", "or", "our", "oh", "oi", "ot", "oud"],
+            ["an", "anan", "anav", "ana", "anar", "anir", "anah", "ani", "anat", "anid"]
+        ]
+        dar = [
+            ["dar", "dan", "dav", "daa", "daar", "daur", "dah", "dari", "dart", "daad"],
+            ["da", "dan", "dav", "dan", "daar", "dair", "dah", "dai", "dat", "daad"],
+            ["do", "don", "dov", "dou", "dor", "dour", "doh", "doi", "dot", "doad"],
+            ["dan", "danan", "danav", "dana", "danor", "danir", "danah", "dani", "danat", "danid"]
+        ]
+        der = [
+            ["der", "den", "dev", "dea", "dear", "deur", "deh", "deri", "dert", "dead"],
+            ["dea", "den", "dev", "dea", "dear", "deir", "deh", "dei", "det", "dead"],
+            ["deo", "den", "dev", "deu", "deor", "deur", "deh", "dei", "det", "dead"],
+            ["den", "denan", "denav", "dena", "denor", "denir", "denah", "deni", "denat", "denid"]
+        ]
+        ur = [
+            ["ur", "un", "uv", "uu", "uar", "uur", "uh", "ui", "ut", "uad"],
+            ["ua", "un", "uv", "uu", "uar", "uir", "uh", "ui", "ut", "uad"],
+            ["uo", "un", "uv", "uu", "uar", "uur", "uh", "ui", "ut", "uad"],
+            ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-"]
+        ]
+        _s, _f, _n, _p = dar if word == "dar" else der if word == "der" else ur if word == "ur" else endings
+        # if word == "riadus":
+        #     _p = endings[1][1]
+        for i in range(1, len(cases)):
+            singular[i] += _s[i - 1]
+            singular2[i] += _f[i - 1]
+            singular3[i] += _n[i - 1]
+            plural[i] += _p[i - 1]
+            # singular[i] = singular[i].replace("aaa", "aata").replace("iii", "iiti").replace("eee", "eete").replace("iia", "iita").replace("auu", "ausu") \
+            #                          .replace("euu", "eusu").replace("iuu", "iusu").replace("uuu", "uusu").replace("eaa", "eata")
+        # if word == "regaus":
+        #    singular[10] = "regaustar"
+        case_len, sin_len, fem_len, neu_len, plu_len = [len(i) for i in cases], [len(i) for i in singular], [len(i) for i in singular2], \
+                                                       [len(i) for i in singular3], [len(i) for i in plural]
+        case_fill, sin_fill, fem_fill, neu_fill, plu_fill = max(case_len), max(sin_len), max(fem_len), max(neu_len), max(plu_len)
+        outputs = []
+        for i in range(len(cases)):
+            case, sin, fem, neu, plu = cases[i], singular[i], singular2[i], singular3[i], plural[i]
+            outputs.append(f"{case:<{case_fill}} | {sin:<{sin_fill}} | {fem:<{fem_fill}} | {neu:<{neu_fill}} | {plu:<{plu_fill}}")
+        output = "\n".join(outputs)
+        image = Image.new("RGB", (2000, 2000), (0, 0, 0))
+        width, height = ImageDraw.Draw(image).textsize(output, font=font)
+        image = image.resize((width + 10, height + 15))
+        draw = ImageDraw.Draw(image)
+        draw.text((10, 0), output, fill=(255, 255, 255), font=font)
+        bio = BytesIO()
+        image.save(bio, "PNG")
+        bio.seek(0)
+        a = "\nAdverb form: {word[:-2]}i (Note: does not work for some words)" if word not in \
+            ["dar", "der", "ur", "munnar", "tar", "onnar", "annar", "ennar", "mennar", "mannar", "var", "innar", "sar", "nennar", "kennar"] else ''
+        return await general.send(f'Forms of the adjective "{word}"{a}', ctx.channel, file=discord.File(bio, "declension.png"))
+        # return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i" + word, ctx.channel)
 
     @rsl1_decline.command(name="verbs", aliases=["v", "conjugations", "c"])
     async def rsl1_decl_verbs(self, ctx: commands.Context, word: str):
-        """ How RSL-1 verb conjugations work """
-        return await general.send("Coming later." + word, ctx.channel)
+        """ RSL-1 verb conjugations """
+        font = ImageFont.truetype("assets/mono.ttf", size=64)
+        word = word.lower()
+        if word[-2:] not in ["an", "sa"]:
+            return await general.send("All RSL-1 verbs end in -an or -ansa.", ctx.channel)
+        sa = word[-2:] == "sa"
+        li = -4 if sa else -2
+        declined = word[:li] if word not in ["naan", "vian"] else ""
+        conj = ["Person", "1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "Past Incomp.", "Past Complete", "Future", "Conditional", "Imperative sg", "Imperative pl"]
+        normal = ["Present"] + [declined] * (len(conj) - 1)
+        interrogative = ["Yes/no"] + [declined] * (len(conj) - 1)
+        endings = [
+            ["a", "as", "at", "an", "az", "in", "ak", "ak", "av", "al", "ar", "art"],
+            ["ada", "asta", "atta", "anta", "azda", "inta", "akta", "akta", "afta", "alda", "-", "-"]
+        ]
+        naan = [
+            ["naa", "naas", "naat", "naam", "naaz", "nain/niin", "kaina", "-", "vaina", "saina", "naar", "naart"],
+            ["naada", "nasta", "natta", "nanta", "nazda", "nainta", "kainada", "-", "vainada", "sainada", "-", "-"]
+        ]
+        vian = [
+            ["ja", "jas", "jat/vön", "vim", "viz", "viin", "kaina", "-", "vaina", "saina", "viar/vär", "viart/värt"],
+            ["jada", "jasta", "jatta", "vinta", "vista", "vinda", "kainada", "-", "vainada", "sainada", "-", "-"]
+        ]
+        _n, _i = naan if word == "naan" else vian if word == "vian" else endings
+        # _s, _f, _n, _p = dar if word == "dar" else der if word == "der" else ur if word == "ur" else endings
+        # if word == "riadus":
+        #     _p = endings[1][1]
+        for i in range(1, len(conj)):
+            normal[i] += _n[i - 1]
+            interrogative[i] += _i[i - 1]
+            if i == 8 and word not in ["naan", "vian"]:
+                # normal[i] = "ki" + normal[i]
+                # interrogative[i] = "ki" + interrogative[i]
+                normal[i] = {
+                    "sillardelittan": "sillarkidelittak",
+                    "saizannavadan": "saizankinavadak",
+                    "taivittan": "takiivittak",
+                    "iadsulvidan": "iadkisulvidak",
+                    "sennandejan": "sennankidejak",
+                    "anveisean": "ankiveiseak",
+                    "saizankainedan": "saizankikainedak",
+                    "takalteran": "takikalterak",
+                    "taittean": "takiitteak",
+                    "iadvirkannan": "iadkivirkannak",
+                    "sethittan": "setkihittak",
+                    "seadhittan": "seadkihittak",
+                    "angidan": "ankigidak",
+                    "kuttutildavan": "kuttutkiildavak",
+                    "takalvaan": "takikalvaak",
+                    "zeilaitleikyan": "zeilaitkileikyak",
+                    "ankillan": "ankikillak",
+                    "iadkulastan": "iadkikulastak",
+                    "ankiastan": "ankikiastak",
+                    "iadivittan": "iadkiivittak",
+                    "naivaitleikyan": "naivaitkileikyak",
+                    "iadkalteran": "iadkikalterak",
+                    "kuttutvakkaan": "kuttutkivakkaak"
+                }.get(word if not sa else word[:-2], "ki" + normal[i])
+                interrogative[i] = normal[i] + "ta"
+            if sa:
+                normal[i] += "sa"
+                interrogative[i] += "sa"
+            if i in [11, 12]:
+                interrogative[i] = "-"
+        conj_len, normal_len, int_len = [[len(i) for i in conj], [len(i) for i in normal], [len(i) for i in interrogative]]
+        conj_fill, normal_fill, int_fill = max(conj_len), max(normal_len), max(int_len)
+        outputs = []
+        for i in range(len(conj)):
+            co, no, inter = conj[i], normal[i], interrogative[i]
+            outputs.append(f"{co:<{conj_fill}} | {no:<{normal_fill}} | {inter:<{int_fill}}")
+        output = "\n".join(outputs)
+        image = Image.new("RGB", (2000, 2000), (0, 0, 0))
+        width, height = ImageDraw.Draw(image).textsize(output, font=font)
+        image = image.resize((width + 10, height + 15))
+        draw = ImageDraw.Draw(image)
+        draw.text((10, 0), output, fill=(255, 255, 255), font=font)
+        bio = BytesIO()
+        image.save(bio, "PNG")
+        bio.seek(0)
+        a = ""
+        if word not in ["naan", "vian"]:
+            a += f"\nActive Participles:\n- Past (Complete) -> ki{declined}adar\n- Past (Incomplete) -> {declined}adar\n- Present -> {declined}annar\n\n" \
+                 f"Passive Participles:\n- Past (Complete) -> ky{declined}attar\n- Past (Incomplete) -> {declined}attar\n- Present -> {declined}amar\n\n" \
+                 f"Converbs:\n- Past -> {declined}{'ij' if word[-3] != 'j' else ''}ad\n- Present -> {declined}avi"
+        return await general.send(f'Verb conjugation for "{word}"{a}', ctx.channel, file=discord.File(bio, "conjugation.png"))
+        # return await general.send("Coming later." + word, ctx.channel)
 
     @rsl1.group(name="words", aliases=["w", "dictionary", "dict", "d"])
     # @commands.is_owner()
