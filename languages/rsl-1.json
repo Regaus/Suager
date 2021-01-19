@@ -8,7 +8,7 @@
   "generic_max": "Ivvalse",
   "generic_members": "Saideras",
   "generic_timed_out": "~~{0}~~\nKalvanta setkihittak deu debiruu.",
-  "generic_times": ["irkuu", "irkazan"],
+  "generic_times": ["irkuu", "irkadan"],
   "generic_unknown": "Dezaivamar",
   "generic_yes": "To",
   "birthdays_message": "Kovanan reidesean, {0}, ilterivar, var an astallat esea \uD83C\uDF82\uD83C\uDF89",
