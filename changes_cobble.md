@@ -97,3 +97,6 @@
 ## v1.1-pre2 - 19 January 2021
 - Adverbs and small are now in the dictionary
 - Fixed the output for RSL-1 dictionary
+
+## v1.1-pre3 - 20 January 2021
+- Searchable RSL-1 phrases

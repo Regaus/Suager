@@ -103,7 +103,7 @@ async def rsl1_args_handler(ctx: commands.Context, args: str, key: str):
     _stuff = []
     for en, rsl1 in stuff[_min:_max]:
         if args.search:
-            if args.search in rsl1 or args.search in en:
+            if args.search.lower() in rsl1.lower() or args.search.lower() in en.lower():
                 _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
         else:
             _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
@@ -147,7 +147,7 @@ Z - [z] - z
 
 Letter combinations:
 sh - [ʃ] or [ʂ] - sh
-ch - [tʃ] or [tɕ] - ch (does not occur in any RSL-1e words as of right now, but was present in earlier versions)
+ch - [tʃ] or [tɕ] - ch
 gh - [ɣ] - not present in English | a sound similar to 'g', and the voiced version of [x] (the Russian h)
 
 \\*Note: after ä, ö, ü and y, the preceding consonants is supposed to become a 'soft consonant' - something you don't have in English.
@@ -812,10 +812,11 @@ class GA78(commands.Cog):
         # return await general.send("Coming later.", ctx.channel)
 
     @rsl1.command(name="phrases", aliases=["p"])
-    async def rsl1_phrases(self, ctx: commands.Context):
+    async def rsl1_phrases(self, ctx: commands.Context, *, search: str = None):
         """ Some RSL-1 words and phrases """
         stuff = load_rsl1("phrases", 0)
         # stuff.sort(key=lambda x: x[0].lower())
+        stuff = [[en, rsl] for en, rsl in stuff if search.lower() in en.lower() or search.lower() in rsl.lower()]
         output = [f'{en} = {rsl}' for en, rsl in stuff]
         return await general.send("Certain phrases you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
 
