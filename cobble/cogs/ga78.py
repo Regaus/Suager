@@ -816,7 +816,8 @@ class GA78(commands.Cog):
         """ Some RSL-1 words and phrases """
         stuff = load_rsl1("phrases", 0)
         # stuff.sort(key=lambda x: x[0].lower())
-        stuff = [[en, rsl] for en, rsl in stuff if search.lower() in en.lower() or search.lower() in rsl.lower()]
+        if search:
+            stuff = [[en, rsl] for en, rsl in stuff if (search.lower() in en.lower() or search.lower() in rsl.lower())]
         output = [f'{en} = {rsl}' for en, rsl in stuff]
         return await general.send("Certain phrases you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
 

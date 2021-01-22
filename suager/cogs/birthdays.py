@@ -67,7 +67,10 @@ class Birthdays(commands.Cog):
                     return True
             return False
         if re.compile(self.re_timestamp).search(date):
-            timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
+            try:
+                timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
+            except ValueError:
+                return await general.send(langs.gls("birthdays_set_invalid", locale), ctx.channel)
         else:
             return await general.send(langs.gls("birthdays_set_invalid", locale), ctx.channel)
         date = langs.gts_date(timestamp, locale, False, False)
