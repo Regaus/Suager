@@ -680,3 +680,6 @@
 
 ## v7.2.9 - 19 January 2021
 - Updated RSL-1 locale to updated grammar
+
+## v7.2.10 - 22 January 2021
+- More playing statuses for Suager
