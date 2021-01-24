@@ -312,7 +312,7 @@ Genitive           | mun     | ta    | óan   | aan   | en    | men    | man    
 Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev    | nev    | kev
 Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa  | ne/nea | kea/ken/ku
 Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser    | ner    | ker
-Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iin   | seir   | near   | kear
+Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iir   | seir   | near   | kear
 Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah    | neh    | kah
 Locative           | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei | nei    | kei
 Lative             | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set    | net    | ket

@@ -8,22 +8,22 @@ from core.utils import emotes, general
 
 # achievement_colours = ["808080", "ffffff", "ff0000", "ff4000", "ff8000", "ffff00", "80ff00", "32ff32", "00ff80", "00ffff", "ff00ff", "ff00a0", "ff0057"]
 achievement_colours = [
-    (96, 96, 96),     # Tier 0
+    (96, 96, 96),     # Tier -0
     (255, 255, 255),  # Tier 1
-    (255, 96, 96),    # Tier 2
-    (255, 0, 0),      # Tier 3
-    (255, 64, 0),     # Tier 4
-    (255, 170, 0),    # Tier 5
-    (255, 255, 0),    # Tier 6
-    (50, 255, 50),    # Tier 7
-    (0, 0, 255),      # Tier 8
-    (0, 255, 255),    # Tier 9
-    (0, 255, 128),    # Tier 10
-    (0, 128, 128),    # Tier 11
-    (128, 0, 255),    # Tier 12
-    (255, 0, 255),    # Tier 13
-    (255, 0, 160),    # Tier 14
-    (255, 0, 87)      # Tier 15
+    # (255, 96, 96),    # Tier 2
+    (255, 0, 0),      # Tier 2/3
+    (255, 64, 0),     # Tier 3/4
+    (255, 170, 0),    # Tier 4/5
+    (255, 255, 0),    # Tier 5/6
+    (50, 255, 50),    # Tier 6/7
+    (0, 0, 255),      # Tier 7/8
+    (0, 255, 255),    # Tier 8/9
+    (0, 255, 128),    # Tier 9/10
+    # (0, 128, 128),    # Tier 11
+    (128, 0, 255),    # Tier 10/12
+    # (255, 0, 255),    # Tier 13
+    (255, 0, 160),    # Tier 11/14
+    (255, 0, 87)      # Tier 12/15
 ]
 
 
@@ -37,8 +37,10 @@ class Achievements(commands.Cog):
         """ See what you or someone else has accomplished """
         # locale = langs.gl(ctx)
         user = who or ctx.author
-        achievement_levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
-        achievement_xp = [10000, 50000, 100000, 250000, 500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2500000, 3000000, 4000000, 5000000]
+        # achievement_levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
+        achievement_levels = [10, 20, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200]
+        # achievement_xp = [10000, 50000, 100000, 250000, 500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2500000, 3000000, 4000000, 5000000]
+        achievement_xp = [10000, 25000, 50000, 100000, 200000, 500000, 750000, 1000000, 1750000, 2500000, 3750000, 5000000]
         achievements = 3
         width = 1152
         large_size = 96
@@ -118,7 +120,7 @@ class Achievements(commands.Cog):
         min_tier = min(tiers)
         max_tier = max(tiers)
         req = min_tier + 1 if min_tier < 15 else 15
-        generate_box(achievements - 1, min_tier, "Achievements", f"Reach tier {req}", min_tier, req, min_tier)
+        generate_box(achievements - 1, min_tier, "Achievements", f"Reach tier {req} on all achievements", min_tier, req, min_tier)
         dr.text(((width - w) / 2, -15), str(user), font=font, fill=achievement_colours[max_tier])
         bio = BytesIO()
         img.save(bio, "PNG")

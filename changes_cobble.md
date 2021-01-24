@@ -100,3 +100,6 @@
 
 ## v1.1-pre3 - 20 January 2021
 - Searchable RSL-1 phrases
+
+## v1.1-pre4 - 24 January 2021
+- Reduced available achievement tiers to 12 (from 15)
