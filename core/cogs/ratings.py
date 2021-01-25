@@ -146,13 +146,18 @@ class Ratings(commands.Cog):
                 739806142560993380: 0.5711,  # Fekuri
                 781907210182590514: 0.2214,  # Jellybonk
                 443363116504580117: 0.2173,  # Dragon
-                690328607205491101: 0.0721,  # Yerin
+                690328607205491101: 0.0072,  # Yerin
                 746173049174229142: 0.0000,  # racc
+                377467233401831424: -0.001,  # mags
                 402238370249441281: -0.112,  # fake
                 667187968145883146: -1.000,  # chocolatt
             }
             if check.id in friendships:
-                rate = langs.gfs(friendships.get(check.id), locale, 2, True)
+                if check.id not in [291665491221807104, 609423646347231282, 402238370249441281, 667187968145883146]:
+                    _rate = 0.00  # fuck off
+                else:
+                    _rate = friendships.get(check.id)
+                rate = langs.gfs(_rate, locale, 2, True)
                 author = check == ctx.author
                 return await general.send(f"{'**You** are' if author else f'**{check.name}** is'} **{rate}** friends with **Regaus**.", ctx.channel)
             else:
