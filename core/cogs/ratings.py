@@ -131,11 +131,11 @@ class Ratings(commands.Cog):
             friendships = {
                 291665491221807104: 1.0000,  # Leitoxz
                 609423646347231282: 1.0000,  # Suager
-                593736085327314954: 0.9021,  # Chuck
-                374853432168808448: 0.8972,  # Potato
+                374853432168808448: 0.9042,  # Potato
+                593736085327314954: 0.8991,  # Chuck
                 597373963571691520: 0.8351,  # Nuriki
-                430891116318031872: 0.8271,  # Alex Five
-                533680271057354762: 0.8199,  # Spoopy
+                430891116318031872: 0.8317,  # Alex Five
+                533680271057354762: 0.8201,  # Spoopy
                 499038637631995906: 0.7829,  # Ash
                 418151634087182359: 0.7743,  # HatKid
                 230313032956248064: 0.7587,  # Steir
@@ -153,10 +153,10 @@ class Ratings(commands.Cog):
                 667187968145883146: -1.000,  # chocolatt
             }
             if check.id in friendships:
-                if check.id not in [291665491221807104, 609423646347231282, 402238370249441281, 667187968145883146]:
-                    _rate = 0.00  # fuck off
-                else:
-                    _rate = friendships.get(check.id)
+                # if check.id not in [291665491221807104, 609423646347231282, 402238370249441281, 667187968145883146]:
+                #     _rate = 0.00  # fuck off
+                # else:
+                _rate = friendships.get(check.id)
                 rate = langs.gfs(_rate, locale, 2, True)
                 author = check == ctx.author
                 return await general.send(f"{'**You** are' if author else f'**{check.name}** is'} **{rate}** friends with **Regaus**.", ctx.channel)
