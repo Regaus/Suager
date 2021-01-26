@@ -683,3 +683,6 @@
 
 ## v7.2.10 - 22 January 2021
 - More playing statuses for Suager
+
+## v7.2.10.1 - 26 January 2021
+- Updated friends tier list
