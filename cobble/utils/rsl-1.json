@@ -151,9 +151,11 @@
     ["fuck off", "heilarsa"],
     ["fuck you", "heilarsa"],
     ["Senko Lair", "Senkadar Laikadu"],
-    ["kai x invamar naan", "be called x, be known as x"],
+    ["be called x, be known as x", "kai x invamar naan"],
     ["it's okay, everything will be okay", "veise vai' hiari"],
-    ["ne eideri", "what the hell"],
-    ["ne arhanedair", "what the fuck"]
+    ["what the hell", "ne eideri"],
+    ["what the fuck", "ne arhanedair"],
+    ["enjoy your stay", "altikaar en zeide"],
+    ["leave me alone", "linkyrar mut ukkahan"]
   ]
 }

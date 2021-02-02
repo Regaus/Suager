@@ -276,7 +276,7 @@ async def playing(bot: bot_data.Bot):
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > {type(e).__name__}: {e}")
-        await asyncio.sleep(60)
+        await asyncio.sleep(300)
 
 
 async def avatars(bot: bot_data.Bot):
