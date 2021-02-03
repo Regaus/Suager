@@ -686,3 +686,6 @@
 
 ## v7.2.10.1 - 26 January 2021
 - Updated friends tier list
+
+## v7.2.11 - 3 February 2021
+- Command to see DMs with the bot

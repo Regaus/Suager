@@ -123,7 +123,7 @@ D - [d] - d
 E - [ɛ] or [e] - 'eh', the 'e' in 'bed'
 F - [f] - f
 G - [g] - g
-H - [x] or [h] - 'h' in words like 'hello', 'ch' in 'loch', often written as 'kh'
+H - [x] or [h] - 'h' in words like 'hello', more closely 'ch' in 'loch', Russian `х`, often written as 'kh'
 I - [i] or [ɪ] - 'ee' in 'free'
 J - [j] - 'y' in 'yeah'
 K - [k] - k
@@ -149,6 +149,7 @@ Letter combinations:
 sh - [ʃ] or [ʂ] - sh
 ch - [tʃ] or [tɕ] - ch
 gh - [ɣ] - not present in English | a sound similar to 'g', and the voiced version of [x] (the Russian h)
+kh - [x] - same as `h`
 
 \\*Note: after ä, ö, ü and y, the preceding consonants is supposed to become a 'soft consonant' - something you don't have in English.
 It's like the 'n' in Russian 'niet'
@@ -789,9 +790,14 @@ class GA78(commands.Cog):
 
     @rsl1_dict.command(name="small", aliases=["s", "smallwords"])
     async def rsl1_small_words(self, ctx: commands.Context, *, args: str = ""):
-        """ RSL-1 small words (e.g. prepositions and stuff) dictionary """
+        """ RSL-1 small words (e.g. prepositions and stuff) """
         # stuff = load_rsl1()["small_words"]
         return await rsl1_args_handler(ctx, args, "small_words")
+
+    @rsl1_dict.command(name="bad", aliases=["b", "badwords"])
+    async def rsl1_small_words(self, ctx: commands.Context, *, args: str = ""):
+        """ RSL-1 bad words """
+        return await rsl1_args_handler(ctx, args, "bad")
 
     @rsl1_dict.command(name="pronouns", aliases=["p"])
     async def rsl1_pronouns(self, ctx: commands.Context):

@@ -103,3 +103,6 @@
 
 ## v1.1-pre4 - 24 January 2021
 - Reduced available achievement tiers to 12 (from 15)
+
+## v1.1-pre5 - 3 February 2021
+- RSL-1g vocabulary
