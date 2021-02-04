@@ -1,11 +1,12 @@
 import asyncio
 import json
 import random
+from datetime import datetime
 
 import aiohttp
 import discord
 
-from core.utils import bot_data, general, http, logger, time
+from core.utils import bot_data, emotes, general, http, logger, time
 from languages import langs
 from suager.cogs.birthdays import Ctx
 from suager.utils import lists
@@ -306,3 +307,17 @@ async def avatars(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(3600)
+
+
+async def text_spoopy(bot: bot_data.Bot):
+    """ Text spoopy and chuck at 4:20 am """
+    await bot.wait_until_ready()
+    while True:
+        if time.now(None) < datetime(2021, 2, 5, 4, 20):
+            await asyncio.sleep(1)
+        else:
+            for uid in [593736085327314954, 533680271057354762]:  # Chuck, spoopy
+                user = bot.get_user(uid)
+                await user.send(f"Good morning {emotes.EyesSquint}")
+            await asyncio.sleep(100000)  # just in case it doesn't exit out of the loop itself
+            break
