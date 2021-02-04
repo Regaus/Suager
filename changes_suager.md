@@ -690,5 +690,6 @@
 ## v7.2.11 - 3 February 2021
 - Command to see DMs with the bot
 
-## v7.2.11.1 - 4 February 2021
+## v7.2.11.1-.2 - 4 February 2021
 - Fixed seedm for less than 2,000 chars
+- Limit the amount of messages to be shown on seedm

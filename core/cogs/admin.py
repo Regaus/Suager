@@ -591,11 +591,11 @@ class Admin(commands.Cog):
 
     @commands.command(name="seedm")
     @commands.check(permissions.is_owner)
-    async def see_dm(self, ctx: commands.Context, user: discord.User):
+    async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = -0):
         """ Check someone's DMs with Suager """
         try:
-            data = "\n\n".join([f"{message.author} - {langs.gts(message.created_at, 'en_gb', seconds=True)}\n{message.content}" for message in await
-                                (await user.create_dm()).history(limit=None, oldest_first=True).flatten()])
+            data = "\n\n".join([f"{message.author} - {langs.gts(message.created_at, 'en_gb', seconds=True)}\n{message.content}" for message in (await
+                                (await user.create_dm()).history(limit=None, oldest_first=True).flatten())[-limit:]])
             if ctx.guild is None:
                 limit = 8000000
             else:
@@ -604,12 +604,12 @@ class Admin(commands.Cog):
             if rl == 0 or not data:
                 return await general.send("Nothing was found...", ctx.channel)
             elif 0 < rl <= 1900:
-                return await general.send(f"DMs with {user} - {rl:,} chars\n\n{data}", ctx.channel)
+                return await general.send(f"DMs with {user} - {rl:,} chars (Last {limit} messages)\n\n{data}", ctx.channel)
             elif 1900 < rl <= limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
-                    return await general.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars", ctx.channel,
+                    return await general.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars (last {limit} message)", ctx.channel,
                                               file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():
