@@ -603,7 +603,9 @@ class Admin(commands.Cog):
             rl = len(str(data))
             if rl == 0 or not data:
                 return await general.send("Nothing was found...", ctx.channel)
-            elif 2000 < rl <= limit:
+            elif 0 < rl <= 1900:
+                return await general.send(f"DMs with {user} - {rl:,} chars\n\n{data}", ctx.channel)
+            elif 1900 < rl <= limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
