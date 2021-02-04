@@ -1,7 +1,7 @@
 import asyncio
 import json
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 
 import aiohttp
 import discord
@@ -312,8 +312,9 @@ async def avatars(bot: bot_data.Bot):
 async def text_spoopy(bot: bot_data.Bot):
     """ Text spoopy and chuck at 4:20 am """
     await bot.wait_until_ready()
+    print("Hello")
     while True:
-        if time.now(None) < datetime(2021, 2, 5, 4, 20):
+        if time.now(None) < datetime(2021, 2, 5, 4, 20, tzinfo=timezone.utc):
             await asyncio.sleep(1)
         else:
             for uid in [593736085327314954, 533680271057354762]:  # Chuck, spoopy
