@@ -26,6 +26,7 @@ class Events(commands.Cog):
         self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
                                571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
                                571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196, 798513492697153536, 799714065256808469]
+        self.dm_logger = 806884278037643264
 
     # def con_unload(self):
     #     self.playing.cancel()
@@ -34,6 +35,9 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
+        if ctx.guild is None:  # it's a DM
+            if ctx.author.id != self.bot.user.id:  # isn't Suager himself
+                await general.send(f"{ctx.author} ({ctx.author.id}) | {time.time()}\n{ctx.content}", self.bot.get_channel(self.dm_logger))
         if ctx.guild is not None:
             if (ctx.guild.id == 568148147457490954 and ctx.channel.id == 568148147457490958) and "<a:SM_rape:568254043030421536>" in ctx.content:
                 try:
@@ -44,7 +48,9 @@ class Events(commands.Cog):
             if ctx.author.id in self.blocked:
                 for word in self.bad:
                     if word in ctx.content.lower():
-                        await general.send(f"{ctx.author} | {ctx.channel.mention} | {time.time()}\n{ctx.content}", self.blocked_logs)
+                        gid = ctx.guild.id if ctx.guild is not None else "not a guild"
+                        await general.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - "
+                                           f"{ctx.channel.id}) | {time.time()}\n{ctx.content}", self.blocked_logs)
                         break
         if self.bot.name == "suager":
             if ctx.channel.id == 742886280911913010:

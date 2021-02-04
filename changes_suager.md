@@ -693,3 +693,6 @@
 ## v7.2.11.1-.2 - 4 February 2021
 - Fixed seedm for less than 2,000 chars
 - Limit the amount of messages to be shown on seedm
+
+## v7.2.12 - 4 February
+- Suager can now log the DMs it receives
