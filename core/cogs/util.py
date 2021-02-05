@@ -84,7 +84,7 @@ class Utility(commands.Cog):
                 # _tzl = len(_tzn)
                 # tzn = _tzn.upper() if _tzl <= 3 else _tzn.title()
                 # send += f"\n{tzn}: **{time.time_output(time.set_tz(time.now(None), data['tz']), tz=True, seconds=True)}**"
-                send += f"Your time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, False, True, True)}"
+                send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, False, True, True)}**"
         return await general.send(send, ctx.channel)
 
     @commands.command(name="base", aliases=["bases", "bc"])
