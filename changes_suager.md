@@ -696,3 +696,6 @@
 
 ## v7.2.12 - 4 February
 - Suager can now log the DMs it receives
+
+## v7.2.13 - 5 February
+- Made timezone output slightly less retarded
