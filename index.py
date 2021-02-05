@@ -86,7 +86,6 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.temporaries(bot)))
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.avatars(bot)))
-            tasks.append(loop.create_task(temporaries.text_spoopy(bot)))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))
