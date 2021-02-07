@@ -83,8 +83,14 @@ def rsl1_args(text: str):
     parser.add_argument('-o', '--order', nargs=1, default=0)
     parser.add_argument('-p', '--page', nargs=1, default=1)
     args, valid = parser.parse_args(text)
-    if valid and type(args.search) == list:
-        args.search = " ".join(args.search)
+    if valid:
+        if type(args.search) == list:
+            args.search = " ".join(args.search)
+        if type(args.page) != int:
+            args.page = int(args.page[0])
+        if type(args.order) != int:
+            args.order = int(args.order[0])
+        # print(args.search, args.page, args.order)
     return args, valid
 
 
@@ -101,13 +107,15 @@ async def rsl1_args_handler(ctx: commands.Context, args: str, key: str):
     _min = (args.page - 1) * 20
     _max = args.page * 20
     _stuff = []
-    for en, rsl1 in stuff[_min:_max]:
+    # for en, rsl1 in stuff[_min:_max]:
+    for en, rsl1 in stuff:
         if args.search:
             if args.search.lower() in rsl1.lower() or args.search.lower() in en.lower():
                 _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
         else:
             _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
     _len = ceil(len(_stuff) / 20)
+    _stuff = _stuff[_min:_max]  # cut it to only 20 words
     _search = f"Search `{args.search}`" if args.search else "No search term"
     output = f"RSL-1 {key.replace('_', ' ').title()} - {_search} - Page {args.page} of {_len}\n"
     output += "\n".join(_stuff)
