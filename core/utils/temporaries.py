@@ -247,6 +247,7 @@ async def playing(bot: bot_data.Bot):
                     {"type": 3, "name": "something"},
                     {"type": 3, "name": "Nothing"},
                     {"type": 0, "name": "something"},
+                    {"type": 0, "name": "sentience"}
                 ]
             }
             _activity = random.choice(plays.get(bot.name))
