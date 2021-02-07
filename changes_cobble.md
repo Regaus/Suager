@@ -106,3 +106,6 @@
 
 ## v1.1-pre5 - 3 February 2021
 - RSL-1g vocabulary
+
+## v1.1-pre6 - 7 February 2021
+- Slightly updated the grammar stuff

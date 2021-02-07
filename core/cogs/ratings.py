@@ -22,7 +22,7 @@ class Ratings(commands.Cog):
         custom = {
             self.bot.user.id: 42.0,
             302851022790066185: 29.9,
-            746173049174229142: 0.0
+            # 746173049174229142: 0.0
         }
         result = custom.get(user.id, _result)
         return await general.send(langs.gls("ratings_pickle", locale, user.name, langs.gfs(result, locale), langs.gfs(result / 2.54, locale)), ctx.channel)
@@ -55,7 +55,7 @@ class Ratings(commands.Cog):
             302851022790066185: r2,  # Me
             self.bot.user.id: r2,    # Suager
             291665491221807104: r2,  # Leitoxz
-            746173049174229142: 0    # racc
+            # 746173049174229142: 0    # racc
         }
         result = custom.get(who.id, r)
         return await general.send(langs.gls("ratings_rate_user", locale, who.name, langs.gns(result, locale), langs.gns(_max, locale)), ctx.channel)
@@ -147,7 +147,8 @@ class Ratings(commands.Cog):
                 739806142560993380: 0.6825,  # Fekuri
                 236884090651934721: 0.6678,  # Shawn
                 377467233401831424: 0.3702,  # mags
-                443363116504580117: 0.2173,  # Dragon
+                679398844701605940: 0.3519,  # Potatsu
+                443363116504580117: 0.2173,  # dragon
                 746173049174229142: 0.0861,  # racc
                 781907210182590514: 0.0747,  # jelly
                 561164743562493952: 0.0143,  # zilla

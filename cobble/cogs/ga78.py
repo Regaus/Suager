@@ -13,7 +13,7 @@ from core.utils import arg_parser, emotes, general, time
 
 def is_rsl1_eligible(ctx):
     if ctx.author.id not in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
-                             593736085327314954, 581206591051923466, 533680271057354762]:
+                             593736085327314954, 581206591051923466, 533680271057354762, 679398844701605940]:
         return False
     if ctx.guild is None:
         return True
@@ -187,7 +187,7 @@ Nouns and pronouns also have a possessive form (like English `'s`): Regaus'ta va
 Adjectives can be turned into adverbs by replacing the ending with `-i`: zeranvar = fast, quick -> zeranvi = quickly
 To decline a certain noun or adjective, use `..rsl1 changes nouns` and `..rsl1 changes adjectives`
 
-For adjectives, you can add `ku-` to mean `-er`, `iga-` for `-est`""",
+For adjectives, you can add `ku-` for the `-er` form (e.g. cute -> cuter), `iga-` for `-est`""",
                 """RSL-1 Grammar and Structure - Part 2: Verbs
 RSL-1 verbs change for person and tense.
 They have separate endings, depending on who does the action. (Like German, Russian, Finnish and many other languages)
@@ -211,7 +211,7 @@ If you want to form a yes/no question from the verb, you can do so with a `-ta`/
 hideran = to create -> mu hiderava = I will create -> hideravada mu? = will I create?
 ittean = to go -> te itteas = you go/are going -> itteasta? - are you going?
 
-To conjugate a certain verb, use `..rsl1 changes verbs`""",
+To conjugate a certain verb, ~~just ask Regaus, that shit is a fucking mess~~ use `..rsl1 changes verbs`""",
                 """RSL-1 Grammar and Structure - Part 3: Participles and Converbs
 RSL-1 also has participles and converbs. Participles are used for passive constructions.
 As participles also act like adjectives, you can drop "the one who is..." part of the sentence. (This works like in Russian.)
@@ -246,8 +246,9 @@ Nai naat on zeide? = Why is he here?
 
 To negate a sentence, you can use the negative particle `de` (= "not"):
 Mu de zaiva idou = I don't know what (lit. I know not that)
-For the verbs "to be", just the word is enough:
+For the verbs "to be", you may drop it in the present tense:
 On de Regaus = He's not Regaus (lit. he not Regaus)
+On de kaina Regaus = He wasn't Regaus (lit. he not was Regaus)
 
 There is no verb form or construction for impersonal commands (such as "Let's go") at the moment, however you can use other verbs of similar meaning:
 Me taitan zeidead ittean = We should go away from here (lit. We should-1pl here-abl go-inf)""",
@@ -834,7 +835,7 @@ class GA78(commands.Cog):
 
     @rsl1.command(name="grammar")
     async def rsl1_grammar(self, ctx: commands.Context, page: int = 0):
-        """ RSL-1 grammar and structure (split into several parts) """
+        """ RSL-1 grammar and structure stuff """
         pages = len(rsl1_grammar)
         if 1 <= page <= pages:
             return await general.send(rsl1_grammar[page - 1], ctx.channel)
