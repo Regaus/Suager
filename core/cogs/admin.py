@@ -597,23 +597,23 @@ class Admin(commands.Cog):
             data = "\n\n".join([f"{message.author} - {langs.gts(message.created_at, 'en_gb', seconds=True)}\n{message.content}" for message in (await
                                 (await user.create_dm()).history(limit=None, oldest_first=True).flatten())[-limit:]])
             if ctx.guild is None:
-                limit = 8000000
+                _limit = 8000000
             else:
-                limit = int(ctx.guild.filesize_limit / 1.05)
+                _limit = int(ctx.guild.filesize_limit / 1.05)
             rl = len(str(data))
             if rl == 0 or not data:
                 return await general.send("Nothing was found...", ctx.channel)
             elif 0 < rl <= 1900:
                 return await general.send(f"DMs with {user} - {rl:,} chars (Last {limit} messages)\n\n{data}", ctx.channel)
-            elif 1900 < rl <= limit:
+            elif 1900 < rl <= _limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
                     return await general.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars (last {limit} message)", ctx.channel,
                                               file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
-            elif rl > limit:
+            elif rl > _limit:
                 async with ctx.typing():
-                    _data = BytesIO(str(data)[-limit:].encode('utf-8'))
+                    _data = BytesIO(str(data)[-_limit:].encode('utf-8'))
                     return await general.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", ctx.channel,
                                               file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
         except Exception as e:

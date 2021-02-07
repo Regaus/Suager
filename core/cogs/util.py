@@ -810,6 +810,11 @@ class Utility(commands.Cog):
             outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
         output2 = "\n\n".join(outputs)
         try:
+            try:  # Try to tell the user to check DMs
+                if permissions.can_react(ctx):
+                    await ctx.message.add_reaction(chr(0x2709))
+            except discord.Forbidden:
+                pass
             if len(output2) > 1900:
                 _data = BytesIO(str(output2).encode('utf-8'))
                 return await ctx.author.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))

@@ -107,10 +107,12 @@ async def rsl1_args_handler(ctx: commands.Context, args: str, key: str):
                 _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
         else:
             _stuff.append(f"{en} = {rsl1}" if args.order == 0 else f"{rsl1} = {en}")
-    _len = ceil(len(stuff) / 20)
+    _len = ceil(len(_stuff) / 20)
     _search = f"Search `{args.search}`" if args.search else "No search term"
     output = f"RSL-1 {key.replace('_', ' ').title()} - {_search} - Page {args.page} of {_len}\n"
     output += "\n".join(_stuff)
+    if _len == 0:
+        output += "\nIt seems that nothing was found. The word might not exist. Try searching similar words or ask Regaus."
     return await general.send(output, ctx.channel)
 
 

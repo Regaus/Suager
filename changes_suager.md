@@ -694,8 +694,11 @@
 - Fixed seedm for less than 2,000 chars
 - Limit the amount of messages to be shown on seedm
 
-## v7.2.12 - 4 February
+## v7.2.12 - 4 February 2021
 - Suager can now log the DMs it receives
 
-## v7.2.13 - 5 February
+## v7.2.13 - 5 February 2021
 - Made timezone output slightly less retarded
+
+## v7.2.13.1 - 7 February 2021
+- Reminders command will now try show a reaction to signify it worked
