@@ -806,7 +806,7 @@ class GA78(commands.Cog):
         return await rsl1_args_handler(ctx, args, "small_words")
 
     @rsl1_dict.command(name="bad", aliases=["b", "badwords"])
-    async def rsl1_small_words(self, ctx: commands.Context, *, args: str = ""):
+    async def rsl1_bad_words(self, ctx: commands.Context, *, args: str = ""):
         """ RSL-1 bad words """
         return await rsl1_args_handler(ctx, args, "bad")
 
