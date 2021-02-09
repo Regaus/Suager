@@ -57,6 +57,9 @@ class Spyware(commands.Cog):
         # if after.guild.id == 784357864482537473 and uid == 302851022790066185:
         #     if after.nick != "Regaboy Prime":
         #         await after.edit(nick="Regaboy Prime", reason="I told you I'll do it")
+        if after.guild.id == 784357864482537473 and uid == 517012611573743621:
+            if after.nick is not None:
+                await after.edit(nick=None, reason="Don't you dare")
         n1, n2 = before.nick, after.nick
         if n1 != n2:
             logger.log(self.bot.name, "names", f"{to} > {guild} > {n}'s ({uid}) nickname is now {n2} (from {n1})")
