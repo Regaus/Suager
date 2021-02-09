@@ -400,13 +400,13 @@ class Leveling(commands.Cog):
                 prev = 0
             _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
-            if user.id == 430891116318031872:  # Alex Five is always fifth
-                place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(5, locale)))
-            else:
-                for x in range(len(_data)):
-                    if _data[x]['uid'] == user.id:
-                        place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale)))
-                        break
+            # if user.id == 430891116318031872:  # Alex Five is always fifth
+            #     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(5, locale)))
+            # else:
+            for x in range(len(_data)):
+                if _data[x]['uid'] == user.id:
+                    place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale)))
+                    break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(level, locale))
@@ -497,13 +497,13 @@ class Leveling(commands.Cog):
             prev = 0
         _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
         place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
-        if user.id == 430891116318031872:  # Alex Five is always fifth
-            place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(5, locale)}**"))
-        else:
-            for x in range(len(_data)):
-                if _data[x]['uid'] == user.id:
-                    place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(x + 1, locale)}**"))
-                    break
+        # if user.id == 430891116318031872:  # Alex Five is always fifth
+        #     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(5, locale)}**"))
+        # else:
+        for x in range(len(_data)):
+            if _data[x]['uid'] == user.id:
+                place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(x + 1, locale)}**"))
+                break
         if not is_self:
             progress = (xp - prev) / (req - prev)
             _level = langs.gls("leveling_rank_level", locale, f"**{langs.gns(level, locale)}**")
