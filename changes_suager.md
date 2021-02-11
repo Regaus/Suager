@@ -702,3 +702,6 @@
 
 ## v7.2.13.1 - 7 February 2021
 - Reminders command will now try show a reaction to signify it worked
+
+## v7.2.13.2 - 11 February 2021
+- Better customisation for ratings

@@ -54,7 +54,10 @@ class Ratings(commands.Cog):
         custom = {
             302851022790066185: r2,  # Me
             self.bot.user.id: r2,    # Suager
+            517012611573743621: r2,  # Suager Sentient
             291665491221807104: r2,  # Leitoxz
+            561164743562493952: 25,  # zilla
+            402238370249441281: 0,   # fake
             # 746173049174229142: 0    # racc
         }
         result = custom.get(who.id, r)
@@ -93,19 +96,18 @@ class Ratings(commands.Cog):
         seed = user1.id + user2.id + 1
         random.seed(seed)
         _rate = random.random()
-        # if (user1.id == 402238370249441281 and user2.id == 302851022790066185) or (user2.id == 402238370249441281 and user1.id == 302851022790066185):
-        #     _rate = 0.0
-        if user1.id == 302851022790066185 or user2.id == 302851022790066185:
+        if (user1.id == 402238370249441281 and user2.id == 593736085327314954) or (user2.id == 402238370249441281 and user1.id == 593736085327314954):
             _rate = 0.00
-
+        if user1.id == 302851022790066185 or user2.id == 302851022790066185:
+            # _rate = 0.00
             check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author
-            _rate *= {
-                593736085327314954: 2.00,
-                291665491221807104: 1.07,
-                402238370249441281: 0.00,
+            _rate = {
+                291665491221807104: 1.00,
+                517012611573743621: 0.50,
                 746173049174229142: 0.00,
-                667187968145883146: 0.00
-            }.get(check.id, 1.00)
+                667187968145883146: -1.00,
+                402238370249441281: -1.00,
+            }.get(check.id, 0.00)
         # if (user1.id == 291665491221807104 and user2.id == 302851022790066185) or (user2.id == 291665491221807104 and user1.id == 302851022790066185):
         #     rate = langs.gfs(1.0, locale, 2, True)
         rate = langs.gfs(_rate, locale, 2, True)
@@ -133,12 +135,14 @@ class Ratings(commands.Cog):
             friendships = {
                 291665491221807104: 1.0000,  # Leitoxz
                 609423646347231282: 1.0000,  # Suager
-                593736085327314954: 0.9100,  # Chuck
+                517012611573743621: 1.0000,  # Suager Sentient
+                577608850316853251: 0.9750,  # CobbleBot
                 499038637631995906: 0.9073,  # Ash
-                374853432168808448: 0.9037,  # Potato
+                593736085327314954: 0.9072,  # Chuck
+                374853432168808448: 0.9071,  # Potato
                 430891116318031872: 0.8872,  # Alex Five
                 597373963571691520: 0.8351,  # Nuriki
-                533680271057354762: 0.8184,  # Spoopy
+                533680271057354762: 0.8201,  # Spoopy
                 418151634087182359: 0.7743,  # HatKid
                 230313032956248064: 0.7702,  # Steir
                 581206591051923466: 0.7441,  # Midnight
@@ -149,9 +153,9 @@ class Ratings(commands.Cog):
                 377467233401831424: 0.3702,  # mags
                 679398844701605940: 0.3519,  # Potatsu
                 443363116504580117: 0.2173,  # dragon
-                746173049174229142: 0.0861,  # racc
+                746173049174229142: 0.1027,  # racc
                 781907210182590514: 0.0747,  # jelly
-                561164743562493952: 0.0143,  # zilla
+                561164743562493952: -.0143,  # zilla
                 690328607205491101: -.0164,  # yerin
                 402238370249441281: -.1274,  # fake
                 667187968145883146: -1.000,  # chocolatt
@@ -180,9 +184,12 @@ class Ratings(commands.Cog):
         random.seed(user.id - 1)
         step1 = random.random()
         custom = {
-            302851022790066185: 1,       # Regaus
-            self.bot.user.id: 1,         # Suager
-            291665491221807104: 1,       # Leitoxz
+            302851022790066185: 1.00,    # Regaus
+            self.bot.user.id: 1.00,      # Suager
+            517012611573743621: 1.00,    # Suager Sentient
+            291665491221807104: 1.00,    # Leitoxz
+            561164743562493952: 0.00,    # zilla
+            402238370249441281: -1.00,   # fake
             # 746173049174229142: 0        # racc
         }
         rate = custom.get(user.id, step1)
@@ -201,6 +208,8 @@ class Ratings(commands.Cog):
             iq = 150.01
         elif user.id == 746173049174229142:
             iq *= 0.5
+        elif user.id == 402238370249441281:
+            iq *= 0.33
         # elif user.id == 533680271057354762:
         #     iq = -2147483647.0
         ri = langs.gfs(iq, locale, 2)
