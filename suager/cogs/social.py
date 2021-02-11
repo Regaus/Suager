@@ -378,7 +378,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_self", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id not in [593736085327314954]:
+        if user.id == 302851022790066185:  # and ctx.author.id not in [593736085327314954]:
             return await general.send(langs.gls("social_kill_regaus", locale, ctx.author.name), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
