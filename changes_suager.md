@@ -705,3 +705,7 @@
 
 ## v7.2.13.2 - 11 February 2021
 - Better customisation for ratings
+
+## v7.2.14 - 12 February 2021
+- See current settings in JSON and upload new settings in JSON
+- Muting above 5 years should now actually be prevented

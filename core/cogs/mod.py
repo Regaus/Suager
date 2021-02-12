@@ -209,9 +209,10 @@ class Moderation(commands.Cog):
         if reason is not None:
             _duration = reason.split(" ")[0]
             delta = time.interpret_time(_duration)
+            expiry, error = time.add_time(delta)
             if time.rd_is_above_5y(delta):
                 await general.send("You can't specify a time range above 5 years. Making mute permanent...", ctx.channel)
-            expiry, error = time.add_time(delta)
+                error = True
             if error:
                 pass  # Quietly ignore any errors, since it's probably someone fucking around, or it's not a duration to begin with
                 # await general.send(f"Failed to convert duration: {expiry} | Making mute permanent...", ctx.channel)

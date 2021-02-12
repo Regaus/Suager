@@ -1,9 +1,10 @@
 import json
+from io import BytesIO
 
 import discord
 from discord.ext import commands
 
-from core.utils import general, permissions
+from core.utils import general, permissions, time
 from languages import langs
 from suager.cogs.leveling import max_level
 from suager.utils import settings
@@ -40,6 +41,52 @@ class Settings(commands.Cog):
         """ Server settings """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
+
+    @settings.command(name="current")
+    @permissions.has_permissions(administrator=True)
+    async def settings_current(self, ctx: commands.Context):
+        """ Current settings (in JSON) """
+        data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not data:
+            return await general.send(f"Settings for {ctx.guild.name} not found.", ctx.channel)
+        stuff = json.dumps(json.loads(data["data"]), indent=2)
+        bio = BytesIO(stuff.encode("utf-8"))
+        return await general.send(f"Current settings for {ctx.guild.name}", ctx.channel, file=discord.File(bio, time.file_ts("settings", "json")))
+
+    @settings.command(name="template")
+    @commands.is_owner()
+    async def settings_template(self, ctx: commands.Context):
+        """ Settings template (in JSON) """
+        stuff = json.dumps(settings.template.copy(), indent=2)
+        bio = BytesIO(stuff.encode("utf-8"))
+        return await general.send("Settings template", ctx.channel, file=discord.File(bio, "template.json"))
+
+    @settings.command(name="upload")
+    @permissions.has_permissions(administrator=True)
+    async def settings_upload(self, ctx: commands.Context):
+        """ Upload settings using a JSON file """
+        data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        ma = ctx.message.attachments
+        if len(ma) == 1:
+            name = ma[0].filename
+            if not name.endswith('.json'):
+                return await ctx.send("This must be a JSON file.")
+            try:
+                stuff = await ma[0].read()
+            except discord.HTTPException or discord.NotFound:
+                return await ctx.send("There was an error getting the file.")
+        else:
+            return await ctx.send("There must be exactly one JSON file.")
+        try:
+            json.loads(stuff)
+        except Exception as e:
+            return await ctx.send(f"Error loading file:\n{type(e).__name__}: {e}")
+        stuff = json.dumps(json.loads(stuff), indent=0)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+        return await general.send(f"Settings for {ctx.guild.name} have been updated.", ctx.channel)
 
     @settings.command(name="locale", aliases=["language"])
     async def set_locale(self, ctx: commands.Context, new_locale: str):

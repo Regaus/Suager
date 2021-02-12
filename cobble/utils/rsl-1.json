@@ -77,7 +77,7 @@
     ["nation", "kahtava"],
     ["nose", "virra"],
     ["nostril", "virrantinha"],
-    ["outcast", "aldakavun"],
+    ["outcast, outlier", "aldakavun"],
     ["owner", "villyr"],
     ["pen", "valha"],
     ["pencil", "kaltaru"],
@@ -321,7 +321,8 @@
     ["chocolatt³", "igvalarhaneda"],
     ["dick-sucking height", "vuruashankoiranna"],
     ["dick", "vur"],
-    ["nonce", "riadaleivannar"]
+    ["nonce", "riadaleivannar"],
+    ["what the fuck", "ne arhanedair"]
   ],
   "phrases": [
     ["you are cute", "te jas millar, te jas leitakar"],
@@ -357,7 +358,6 @@
     ["be called x, be known as x", "kai x invamar naan"],
     ["it's okay, everything will be okay", "veise vai' hiari"],
     ["what the hell", "ne eideri"],
-    ["what the fuck", "ne arhanedair"],
     ["enjoy your stay", "altikaar en zeide"],
     ["leave me alone", "linkyrar mut ukkahan"]
   ]
