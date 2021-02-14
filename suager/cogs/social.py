@@ -34,6 +34,7 @@ class Social(commands.Cog):
         self.insert = f"INSERT INTO counters VALUES ({'?, ' * 19}?)"
         self.empty = [0] * 20
         self.locked = [667187968145883146, 746173049174229142]
+        self.unlocked = [291665491221807104]
 
     def data_update(self, uid_give: int, uid_receive: int, key: str, ind: int):
         """ Update database - interactions """
@@ -192,7 +193,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_self", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -216,7 +217,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
-        if user.id == 302851022790066185:  # and ctx.author.id in self.locked:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -240,7 +241,7 @@ class Social(commands.Cog):
             self.smell = await lists.get_images(self.bot, 'n')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_sniff_suager", locale), ctx.channel)
@@ -286,7 +287,7 @@ class Social(commands.Cog):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
             return await general.send(langs.gls("social_poke_self", locale), ctx.channel)
-        if user.id == 302851022790066185:  # and ctx.author.id in self.locked:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id in self.locked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_poke_suager", locale, ctx.author.name), ctx.channel)
@@ -360,7 +361,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(langs.gls("social_kill_regaus", locale, ctx.author.id), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -378,7 +379,7 @@ class Social(commands.Cog):
             return await general.send(langs.gls("social_slap_self", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185:  # and ctx.author.id not in [593736085327314954]:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id not in [593736085327314954]:
             return await general.send(langs.gls("social_kill_regaus", locale, ctx.author.name), ctx.channel)
         if user.bot:
             return await general.send(langs.gls("social_slap_bot", locale), ctx.channel)
@@ -566,11 +567,11 @@ class Social(commands.Cog):
         locale = langs.gl(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
-        if user.id == 302851022790066185:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(langs.gls("social_forbidden", locale), ctx.channel)
-        if user.id == ctx.guild.owner.id and ctx.author.id != 302851022790066185:
+        if user.id == ctx.guild.owner.id:  # and ctx.author.id != 302851022790066185:
             return await general.send(langs.gls("social_bean_owner", locale), ctx.channel)
         bean = langs.gls("social_bean", locale, user.name, ctx.guild.name)
         return await general.send(bean, ctx.channel)

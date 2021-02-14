@@ -177,7 +177,9 @@
     ["take off", "adlarhavan"],
     ["talk (to sb.)", "kairan/kiaran + lat."],
     ["use", "novvan, nottenvan"],
-    ["want", "haitan, haidan, kaidan"]
+    ["want", "haitan, haidan, kaidan"],
+    ["scare", "starkan"],
+    ["be scared", "starkahan"]
   ],
   "adverbs": [
     ["again", "anneat"],
@@ -305,6 +307,7 @@
     ["fucking", "hillamar"],
     ["fuck (блять)", "veilead"],
     ["go fuck yourself", "eidear sen hillan"],
+    ["fuck off", "ittear munnanid vazeduradid dallanait"],
     ["get fucked", "hillahar sen"],
     ["masturbate", "mallavan"],
     ["jerk sb. off", "mallavagan"],
@@ -359,6 +362,9 @@
     ["it's okay, everything will be okay", "veise vai' hiari"],
     ["what the hell", "ne eideri"],
     ["enjoy your stay", "altikaar en zeide"],
-    ["leave me alone", "linkyrar mut ukkahan"]
+    ["leave me alone", "linkyrar mut ukkahan"],
+    ["let me in", "lirrunar mut ta"],
+    ["cry me a river", "paivarrar zenteran"],
+    ["how dare you", "kai kinninas te"]
   ]
 }
