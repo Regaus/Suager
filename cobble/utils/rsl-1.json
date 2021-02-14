@@ -121,15 +121,15 @@
     ["New Year's Day, new year", "Nuar Kaadu, Nuar Kad"],
     ["3 January", "Leitasea"],
     ["27 January", "Rygasea"],
-    ["St Valentine's, 14 February", "Fuusea"],
-    ["St Patrick's Day, 17 March", "Sea Sivardan Patrikkun, Sea Sivan Patrikan"],
+    ["14 February, Ew Day", "Fuusea"],
+    ["17 March, St Patrick's Day", "Sea Sivardan Patrikkun, Sea Sivan Patrikan"],
     ["17 April", "Senkalaisea"],
     ["13 May", "Suvasea"],
     ["27 September", "Uhdalvaasea"],
     ["3 October", "Devdalvaasea"],
-    ["Halloween", "Halauvin, Savain, Savanu"],
+    ["31 October, Halloween", "Halauvin, Savain, Savanu"],
     ["5 December", "Kaivalsea"],
-    ["Christmas", "Raivaste"]
+    ["25 December, Christmas", "Raivaste"]
   ],
   "adjectives": [
     ["dangerous", "varhar"],
