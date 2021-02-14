@@ -815,7 +815,7 @@ class GA78(commands.Cog):
         """ RSL-1 phrases """
         return await rsl1_args_handler(ctx, args, "phrases")
 
-    @rsl1_dict.command(name="pronouns", aliases=["p"])
+    @rsl1_dict.command(name="pronouns")
     async def rsl1_pronouns(self, ctx: commands.Context):
         """ RSL-1 pronouns """
         font = ImageFont.truetype("assets/mono.ttf", size=64)
