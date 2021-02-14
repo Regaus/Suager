@@ -148,7 +148,7 @@ S - [s] - s
 T - [t] - t
 U - [u] - 'oo' in words like 'book', 'boot'
 V - [v] - v
-X - [ɕ] or [ç] - Russian 'щ', 'ch' in German 'ich', 'nicht'
+X - [ɕ] or [ç] - Russian 'щ', 'ch' in some pronunciations of German 'ich', 'nicht'
 Y\\* - [e] - 'eh', but 'softens' previous consonant
 Z - [z] - z
 Ä\\* - [æ] - the 'a' in 'at', Finnish 'ä'
@@ -320,15 +320,15 @@ most = ivvalse"""]
 rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self   | what   | who
 English            | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self   | what   | who
 Nominative         | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se     | ne     | ke
-Genitive           | mun     | ta    | óan   | aan   | en    | men    | man    | va    | ían   | sa     | nen    | ken
+Genitive           | mun     | ta    | oan   | aan   | en    | men    | man    | va    | ian   | sa     | nen    | ken
 Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev    | nev    | kev
 Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa  | ne/nea | kea/ken/ku
-Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | íur   | ser    | ner    | ker
+Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | iur   | ser    | ner    | ker
 Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iir   | seir   | near   | kear
 Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah    | neh    | kah
 Locative           | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei | nei    | kei
 Lative             | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set    | net    | ket
-Ablative           | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | íad   | sead   | nead   | kead
+Ablative           | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | iad   | sead   | nead   | kead
 Possessive         | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar    | nennar | kennar"""
 
 
@@ -760,7 +760,7 @@ class GA78(commands.Cog):
         return await general.send(f'Verb conjugation for "{word}"{a}', ctx.channel, file=discord.File(bio, "conjugation.png"))
         # return await general.send("Coming later." + word, ctx.channel)
 
-    @rsl1.group(name="words", aliases=["w", "dictionary", "dict", "d"])
+    @rsl1.group(name="dictionary", aliases=["words", "w", "dict", "d"])
     # @commands.is_owner()
     async def rsl1_dict(self, ctx: commands.Context):
         """ Lists RSL-1 words
@@ -810,6 +810,11 @@ class GA78(commands.Cog):
         """ RSL-1 bad words """
         return await rsl1_args_handler(ctx, args, "bad")
 
+    @rsl1_dict.command(name="phrases", aliases=["p"])
+    async def rsl1_phrases(self, ctx: commands.Context, *, args: str = ""):
+        """ RSL-1 phrases """
+        return await rsl1_args_handler(ctx, args, "phrases")
+
     @rsl1_dict.command(name="pronouns", aliases=["p"])
     async def rsl1_pronouns(self, ctx: commands.Context):
         """ RSL-1 pronouns """
@@ -828,15 +833,15 @@ class GA78(commands.Cog):
                                   ctx.channel, file=discord.File(bio, "pronouns.png"))
         # return await general.send("Coming later.", ctx.channel)
 
-    @rsl1.command(name="phrases", aliases=["p"])
-    async def rsl1_phrases(self, ctx: commands.Context, *, search: str = None):
-        """ Some RSL-1 words and phrases """
-        stuff = load_rsl1("phrases", 0)
-        # stuff.sort(key=lambda x: x[0].lower())
-        if search:
-            stuff = [[en, rsl] for en, rsl in stuff if (search.lower() in en.lower() or search.lower() in rsl.lower())]
-        output = [f'{en} = {rsl}' for en, rsl in stuff]
-        return await general.send("Certain phrases you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
+    # @rsl1.command(name="phrases", aliases=["p"])
+    # async def rsl1_phrases(self, ctx: commands.Context, *, search: str = None):
+    #     """ Some RSL-1 words and phrases """
+    #     stuff = load_rsl1("phrases", 0)
+    #     # stuff.sort(key=lambda x: x[0].lower())
+    #     if search:
+    #         stuff = [[en, rsl] for en, rsl in stuff if (search.lower() in en.lower() or search.lower() in rsl.lower())]
+    #     output = [f'{en} = {rsl}' for en, rsl in stuff]
+    #     return await general.send("Certain phrases you can say in RSL-1:\n" + "\n".join(output), ctx.channel)
 
     @rsl1.command(name="pronunciation")
     async def rsl1_pronunciations(self, ctx: commands.Context):

@@ -109,3 +109,7 @@
 
 ## v1.1-pre6 - 7 February 2021
 - Slightly updated the grammar stuff
+
+## v1.1-pre7 - 14 February 2021
+- RSL-1e verbs
+- Moved phrases into main dictionary
