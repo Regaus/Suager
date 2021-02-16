@@ -481,7 +481,7 @@ class Settings(commands.Cog):
             return await general.send("I don't think that worked... There might be no reward at the specified level.", ctx.channel)
 
     @lvl_rr.command(name="editlevel", aliases=["el"])
-    async def rr_edit_role(self, ctx: commands.Context, role: discord.Role, new_level: int):
+    async def rr_edit_level(self, ctx: commands.Context, role: discord.Role, new_level: int):
         """ Edit the level at which the role is awarded """
         data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:
