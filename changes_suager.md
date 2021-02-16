@@ -709,3 +709,8 @@
 ## v7.2.14 - 12 February 2021
 - See current settings in JSON and upload new settings in JSON
 - Muting above 5 years should now actually be prevented
+
+## v7.2.15 - 16 February 2021
+- Command to remove deleted roles from the level rewards system
+- Command to edit the role rewarded at a certain level
+- Command to edit the level at which a role is awarded

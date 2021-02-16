@@ -341,7 +341,7 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
-    @lvl_rr.command(name="add")
+    @lvl_rr.command(name="add", aliases=["a", "+"])
     async def rr_add(self, ctx: commands.Context, role: discord.Role, level: int):
         """ Add a level reward """
         if level > max_level or level <= -max_level:
@@ -375,7 +375,7 @@ class Settings(commands.Cog):
             self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
         return await general.send(f"The role {role.name} will now be rewarded at level {level:,}", ctx.channel)
 
-    @lvl_rr.command(name="remove")
+    @lvl_rr.command(name="remove", aliases=["r", "-"])
     async def rr_remove(self, ctx: commands.Context, role: discord.Role):
         """ Remove a role reward """
         data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
@@ -406,6 +406,116 @@ class Settings(commands.Cog):
             return await general.send(f"The role {role.name} will no longer be rewarded", ctx.channel)
         else:
             return await general.send(f"The role {role.name} was not removed from the level rewards list.", ctx.channel)
+
+    @lvl_rr.command(name="deleted", aliases=["del", "d"])
+    async def rr_deleted(self, ctx: commands.Context):
+        """ Remove roles that no longer exist from the role rewards """
+        data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = settings.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
+        try:
+            rr = _settings["leveling"]["rewards"]
+        except KeyError:
+            return await general.send("There are no level rewards right now anyway", ctx.channel)
+        removed = 0
+        roles = [role.id for role in await ctx.guild.fetch_roles()]  # Get IDs of all roles in a server
+        for _role in rr:
+            if _role["role"] not in roles:
+                rr.remove(_role)
+                removed += 1
+        if removed > 0:
+            _settings["leveling"]["rewards"] = rr
+            stuff = json.dumps(_settings)
+            if data:
+                self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+            else:
+                self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
+            return await general.send(f"Removed {removed} roles from the level rewards list.", ctx.channel)
+        else:
+            return await general.send("No deleted roles were found. Nothing has changed", ctx.channel)
+
+    @lvl_rr.command(name="editrole", aliases=["er"])
+    async def rr_edit_role(self, ctx: commands.Context, level: int, new_role: discord.Role):
+        """ Edit the role rewarded at a certain level """
+        if level > max_level or level <= -max_level:
+            return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
+        if new_role.is_default():
+            return await general.send("You can't award the default role", ctx.channel)
+        data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings = settings.template.copy()
+        if "leveling" not in _settings:
+            return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings["leveling"] = settings.template["leveling"].copy()
+            # _settings["leveling"]["rewards"] = []
+        try:
+            rr = _settings["leveling"]["rewards"]
+        except KeyError:
+            rr = []
+        roles = [i["role"] for i in rr]
+        if new_role.id in roles:
+            return await general.send("This role is already rewarded", ctx.channel)
+        u = False
+        for i, r in enumerate(rr):
+            if level == r["level"]:
+                rr[i] = {"level": level, "role": new_role.id}
+                u = True
+                break
+        # levels = [i["level"] for i in rr]
+        # if level in levels:
+        #     return await general.send("There is already a reward for this level", ctx.channel)
+        if u:
+            _settings["leveling"]["rewards"] = rr
+            stuff = json.dumps(_settings)
+            self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+            return await general.send(f"The role {new_role.name} will now be rewarded at level {level:,}", ctx.channel)
+        else:
+            return await general.send("I don't think that worked... There might be no reward at the specified level.", ctx.channel)
+
+    @lvl_rr.command(name="editlevel", aliases=["el"])
+    async def rr_edit_role(self, ctx: commands.Context, role: discord.Role, new_level: int):
+        """ Edit the level at which the role is awarded """
+        data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings = settings.template.copy()
+        if "leveling" not in _settings:
+            return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings["leveling"] = settings.template["leveling"].copy()
+            # _settings["leveling"]["rewards"] = []
+        try:
+            rr = _settings["leveling"]["rewards"]
+        except KeyError:
+            rr = []
+        levels = [i["level"] for i in rr]
+        if new_level in levels:
+            return await general.send("There is already a reward for this level", ctx.channel)
+        # roles = [i["role"] for i in rr]
+        # if new_role.id in roles:
+        #     return await general.send("This role is already rewarded", ctx.channel)
+        u = False
+        for i, r in enumerate(rr):
+            if role.id == r["role"]:
+                rr[i] = {"level": new_level, "role": role.id}
+                u = True
+                break
+        if u:
+            _settings["leveling"]["rewards"] = rr
+            stuff = json.dumps(_settings)
+            self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
+            return await general.send(f"The role {role.name} will now be rewarded at level {new_level:,}", ctx.channel)
+        else:
+            return await general.send("I don't think that worked... Maybe the role is not awarded at all.", ctx.channel)
 
     @settings.group(name="roles")
     async def set_shop(self, ctx: commands.Context):
