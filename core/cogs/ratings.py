@@ -24,7 +24,10 @@ class Ratings(commands.Cog):
             302851022790066185: 29.9,
             # 746173049174229142: 0.0
         }
-        result = custom.get(user.id, _result)
+        if ctx.channel.id != 764528556507922442:
+            result = custom.get(user.id, _result)
+        else:
+            result = _result
         return await general.send(langs.gls("ratings_pickle", locale, user.name, langs.gfs(result, locale), langs.gfs(result / 2.54, locale)), ctx.channel)
 
     @commands.command(name="rate")
