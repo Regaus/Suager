@@ -187,8 +187,8 @@ class Moderation(commands.Cog):
             return await general.send("Why did you bring me to this server... just to mute me?", ctx.channel)
         if member == ctx.author:
             return await general.send(f"Self harm bad {emotes.BlobCatPolice}", ctx.channel)
-        if (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:  # and ctx.guild.id not in [784357864482537473]:
-            return await general.send("You aren't supposed to mute people above you.", ctx.channel)
+        # if (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:  # and ctx.guild.id not in [784357864482537473]:
+        #     return await general.send("You aren't supposed to mute people above you.", ctx.channel)
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
@@ -317,37 +317,37 @@ class Moderation(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
-    @prune.command()
+    @prune.command(name="embeds")
     async def embeds(self, ctx: commands.Context, search=100):
         """Removes messages that have embeds in them."""
         await do_removal(ctx, search, lambda e: len(e.embeds))
 
-    @prune.command()
+    @prune.command(name="files")
     async def files(self, ctx: commands.Context, search=100):
         """Removes messages that have attachments in them."""
         await do_removal(ctx, search, lambda e: len(e.attachments))
 
-    @prune.command()
+    @prune.command(name="mentions")
     async def mentions(self, ctx: commands.Context, search=100):
         """Removes messages that have mentions in them."""
         await do_removal(ctx, search, lambda e: len(e.mentions) or len(e.role_mentions))
 
-    @prune.command()
+    @prune.command(name="images")
     async def images(self, ctx: commands.Context, search=100):
         """Removes messages that have embeds or attachments."""
         await do_removal(ctx, search, lambda e: len(e.embeds) or len(e.attachments))
 
-    @prune.command(name='all')
+    @prune.command(name="all")
     async def _remove_all(self, ctx: commands.Context, search=100):
         """Removes all messages."""
         await do_removal(ctx, search, lambda e: True)
 
-    @prune.command()
-    async def user(self, ctx: commands.Context, member: discord.Member, search=100):
+    @prune.command(name="user")
+    async def user(self, ctx: commands.Context, user: discord.User, search=100):
         """Removes all messages by the member."""
-        await do_removal(ctx, search, lambda e: e.author == member)
+        await do_removal(ctx, search, lambda e: e.author == user)
 
-    @prune.command()
+    @prune.command(name="contains")
     async def contains(self, ctx: commands.Context, *, substr: str):
         """Removes all messages containing a substring.
         The substring must be at least 3 characters long.
@@ -357,7 +357,7 @@ class Moderation(commands.Cog):
         else:
             await do_removal(ctx, 100, lambda e: substr in e.content)
 
-    @prune.command(name='bots')
+    @prune.command(name="bots")
     async def _bots(self, ctx: commands.Context, search=100, prefix=None):
         """Removes a bot user's messages and messages with their optional prefix."""
         get_prefix = prefix if prefix else self.bot.local_config["prefixes"]
@@ -366,14 +366,14 @@ class Moderation(commands.Cog):
             return (m.webhook_id is None and m.author.bot) or m.content.startswith(tuple(get_prefix))
         await do_removal(ctx, search, predicate)
 
-    @prune.command(name='users')
+    @prune.command(name="users")
     async def _users(self, ctx: commands.Context, search=100):
         """Removes only user messages. """
         def predicate(m):
             return m.author.bot is False
         await do_removal(ctx, search, predicate)
 
-    @prune.command(name='emojis', aliases=['emotes'])
+    @prune.command(name="emojis", aliases=["emotes"])
     async def _emoji(self, ctx: commands.Context, search=100):
         """Removes all messages containing custom emoji."""
         # custom_emoji = re.compile(r'<(?:a)?:(\w+):(\d+)>')
@@ -383,7 +383,7 @@ class Moderation(commands.Cog):
             return custom_emoji.search(m.content)
         await do_removal(ctx, search, predicate)
 
-    @prune.command(name='reactions')
+    @prune.command(name="reactions")
     async def _reactions(self, ctx: commands.Context, search=100):
         """Removes all reactions from messages that have them."""
         if search > 2000:
