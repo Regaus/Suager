@@ -58,11 +58,12 @@ class Events(commands.Cog):
                     channel = self.bot.get_channel(channel_id)
                     try:
                         if channel is not None:
+                            # print(f"Channel {channel_id} found")
                             await general.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}", channel)
                         else:
                             general.print_error(f"on_message > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
-                        general.print_error(f"on_message > Update announcement > {channel} > {type(e).__name__}: {e}")
+                        general.print_error(f"on_message > Update announcement > {channel_id} > {type(e).__name__}: {e}")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
@@ -105,7 +106,7 @@ class Events(commands.Cog):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(None)
         self.exists = True
-        self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340]]
+        # self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340]]
         self.blocked_logs = self.bot.get_channel(739183533792297164)
         return await events.on_ready(self)
 

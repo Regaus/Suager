@@ -723,3 +723,4 @@
 - Changed how the update script works to hopefully not randomly forget channels for some odd reason
 - Better conlang handling
 - Fixed starboard crashing when channels no longer existed
+- Suager updates should now finally send properly
