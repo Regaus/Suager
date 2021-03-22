@@ -39,6 +39,7 @@ class Kuastall(commands.Cog):
         self.bot = bot
 
     @commands.group(name="tbl")
+    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 517012611573743621])  # Temporarily lock TBL while it's not finished
     # @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tbl(self, ctx: commands.Context):
