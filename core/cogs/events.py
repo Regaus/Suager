@@ -60,7 +60,7 @@ class Events(commands.Cog):
                         if channel is not None:
                             await general.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}", channel)
                         else:
-                            general.print_error(f"on_message > Update announcement > One of the channels was not found")
+                            general.print_error(f"on_message > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
                         general.print_error(f"on_message > Update announcement > {channel} > {type(e).__name__}: {e}")
 
