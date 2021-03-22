@@ -7,7 +7,7 @@ from typing import Optional, Union
 import discord
 from discord.ext.commands import Context
 
-from cobble.utils import ss23
+from cobble.utils import ga78
 from core.utils import database, general, time
 from languages import langs
 
@@ -369,7 +369,8 @@ class Location:
 
     def get_activity(self):
         """ Get the location's activity multiplier """
-        now = ss23.time_kargadia(tz=2)
+        now = ga78.time_kargadia(tz=2)
+        # now = ss23.time_kargadia(tz=2)
         hour = now.hour + (now.minute / 60)
         al = len(activity_hour)
         part, mod = divmod(hour, 3)  # It's now 3 hours because 24 hours instead of 32
@@ -733,7 +734,8 @@ class Player:
                     level_length = langs.td_int(ll, locale, brief=True, suffix=False)
                     your_time = langs.td_int(you["time"], locale, brief=True, suffix=False)
                     r1 = langs.gts(time.now(), locale, True, False, False, True, False)
-                    r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
+                    r2 = ga78.time_kargadia(tz=2).str(dow=False, era=None, month=False)
+                    # r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
                     r3 = langs.gns(runs, locale)
                     r4, r5 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
                     out_1 = langs.gls("kuastall_tbl_game_1", locale, r1, r2, location_name, r3, r4, r5, level_length)
@@ -773,7 +775,8 @@ class Player:
             self.energy_time = time.now_ts()
             self.save()  # Save all data for player, clan and guild, and only then calculate all the outputs
             r1 = langs.gts(time.now(), locale, True, False, False, True, False)
-            r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
+            r2 = ga78.time_kargadia(tz=2).str(dow=False, era=None, month=False)
+            # r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
             r3 = langs.gns(runs, locale)
             r4, r5 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
             # When the energy will be full again

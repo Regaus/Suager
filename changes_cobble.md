@@ -123,3 +123,7 @@
 ## v1.1.1 - 22 March 2021
 - Weather78, better weather data for GA78 locations
 - Preparations to switch time78 algorithm
+
+## v1.1.2 - 22 March 2021
+- Time78 instead of time23 and time24
+- Removed ss23 and ss24

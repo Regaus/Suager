@@ -4,7 +4,7 @@ from math import ceil
 import discord
 from discord.ext import commands
 
-from cobble.utils import ss23, tbl
+from cobble.utils import ga78, tbl
 from core.utils import general
 from languages import langs
 
@@ -86,7 +86,8 @@ class Kuastall(commands.Cog):
     @tbl.command(name="time")
     async def tbl_time(self, ctx: commands.Context):
         """ TBL Time """
-        return await general.send(ss23.date_kargadia(tz=2, tzn="TBT"), ctx.channel)
+        return await general.send(ga78.time_kargadia(tz=2), ctx.channel)
+        # return await general.send(ss23.date_kargadia(tz=2, tzn="TBT"), ctx.channel)
 
     @tbl.command(name="stats", aliases=["s"])
     async def tbl_stats(self, ctx: commands.Context, who: discord.User = None):

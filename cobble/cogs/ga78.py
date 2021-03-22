@@ -7,8 +7,9 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import ga78, ss23, ss24
+from cobble.utils import ga78
 from core.utils import arg_parser, emotes, general, time
+from languages import langs
 
 
 def is_rsl1_eligible(ctx: commands.Context):
@@ -351,62 +352,58 @@ class GA78(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="time23")
+    @commands.command(name="time78", aliases=["t78"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time23(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
-        """ Compare times from Earth with SS23 """
-        if year is None:
+    async def time78(self, ctx: commands.Context, ss: int, _date: str = None, _time: str = None):
+        """ Times for GA-78
+        Date format: YYYY-MM-DD
+        Time format: hh:mm or hh:mm:ss (24-hour)"""
+        if ss < 1 or ss > 100:
+            return await general.send("The SS number must be between 1 and 100.", ctx.channel)
+        if _date is None:
             dt = time.now(None)
         else:
-            if year < 1687:
-                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 1687 AD**.", ctx.channel)
-            if year >= 8200:
-                return await general.send(f"{emotes.Deny} This command does not work with dates after **31 December 8199 AD, 23:59:59 UTC**", ctx.channel)
             try:
-                dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
-            except ValueError as e:
-                return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
-        ti = dt.strftime("%A, %d %B %Y, %H:%M:%S %Z")  # Time IRL
-        tk = ss23.date_kargadia(dt)        # Time in Kargadia RSL-1
-        tz = ss23.date_zeivela(dt)         # Time on Zeivela RSL-2
-        tq = ss23.date_kaltaryna(dt)       # Time in Qevenerus/Kaltaryna RSL-1
-        td = ss23.date_kargadia_5(dt)      # Time on Kargadia RSL-5
-        td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5 DT
-        months_1 = ["Seldamasailnaran", "Nuannaran", "Seimannaran", "Veisanaran", "Eilannaran", "Havazdallarinnaran",
-                    "Sanvaggannaran", "Kailaggannaran", "Semardannaran", "Addanvaran", "Halltuavaran", "Masailnaran"]
-        months_5 = ["Chìlderaljanselaljan", "Anveraijanselaljan", "Síldarinselaljan", "Kûstanselaljan",
-                    "Vullastenselaljan", "Khavastalgèrinselaljan", "Senkanselaljan", "Dhárelanselaljan",
-                    "Silaljanselaljan", "Eijelovvanselaljan", "Haldúvaranselaljan", "Massalanselaljan"]
-        tn = time.kargadia_convert(dt)
-        tn1 = tn.strftime(f"%A, %d {months_1[tn.month % 12]} %Y, %H:%M:%S %Z")
-        tn5 = tn.strftime(f"%A, %d {months_5[tn.month % 12]} %Y, %H:%M:%S %Z")
-        return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-1d): **{tn1}**\n"
-                                  f"Time on this Earth (RSL-5 NE): **{tn5}**\nTime on this Earth (RSL-5 DT): **{td2}**\n"
-                                  f"Time on 23.4 Zeivela (Local): **{tz}**\n"
-                                  f"Time on 23.5 Kargadia (RSL-1d): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
-                                  f"Time on 23.6 Qevenerus (RSL-1h): **{tq}**", ctx.channel)
-
-    @commands.command(name="time24")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time24(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
-        """ Compare times from Earth with SS24 """
-        if year is None:
-            dt = time.now(None)
-        else:
-            if year < 1743:
-                return await general.send(f"{emotes.Deny} This command does not work with dates before **1 January 1743 AD**.", ctx.channel)
-            try:
-                dt = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
-            except ValueError as e:
-                return await general.send(f"{emotes.Deny} {type(e).__name__}: {e}", ctx.channel)
-        ti = dt.strftime("%A, %d %B %Y, %H:%M:%S %Z")  # Time IRL
-        t24_4_local = ss24.time_sinvimania(dt).str()   # 24.4 Sinvimania Local
-        t24_5_local = ss24.time_hosvalnerus(dt).str()  # 24.5 Hosvalnerus local
-        t24_11_1 = ss24.time_kuastall_11(dt).str()
-        return await general.send(f"Time on this Earth (English): **{ti}**\n"
-                                  f"Time on 24.4 Sinvimania (Local Solar): **{t24_4_local}**\n"
-                                  f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**\n"
-                                  f"Time on 24.11 Kuastall-11 (RSL-1e): **{t24_11_1}**", ctx.channel)
+                if not _time:
+                    _time = "00:00:00"
+                else:
+                    _time = _time.replace(".", ":")
+                    c = _time.count(":")
+                    if c == 1:
+                        _time = f"{_time}:00"
+                dt = time.from_ts(time.get_ts(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")), None)
+            except ValueError:
+                return await general.send("Failed to convert date. Make sure it is in the format YYYY-MM-DD (hh:mm(:ss))", ctx.channel)
+        time_earth = langs.gts(dt, "en_gb", True, False, True, True, False)
+        output = f"Time on this Earth (English): **{time_earth}**"
+        if ss == 23:
+            if dt < datetime(1686, 11, 22, tzinfo=timezone.utc):
+                return await general.send(f"{emotes.Deny} SS-23 times are not available for dates earlier than **22 November 1686 AD**", ctx.channel)
+            time_earth1d = langs.gts(dt, "rsl-1d", True, False, True, True, False)
+            time_23_4 = ga78.time_zeivela(dt, 0).str()    # 23.4 Zeivela Local
+            time_23_5d = ga78.time_kargadia(dt, 0).str()  # 23.5 Kargadia RSL-1d
+            time_23_6 = ga78.time_kaltaryna(dt, 0).str()  # 23.6 Qevenerus RSL-1h
+            output += f"\nTime on this Earth (RSL-1d): **{time_earth1d}**" \
+                      f"\nTime on 23.4 Zeivela (Local): **{time_23_4}**" \
+                      f"\nTime on 23.5 Kargadia (RSL-1d): **{time_23_5d}**" \
+                      f"\nTime on 23.6 Qevenerus (RSL-1h): **{time_23_6}**"
+        elif ss == 24:
+            if dt < datetime(1742, 1, 28, tzinfo=timezone.utc):
+                return await general.send(f"{emotes.Deny} SS-24 times are not available for dates earlier than **28 January 1742 AD**", ctx.channel)
+            z = time.kargadia_convert(time.now(None))
+            w = ["Senarsea", "Sillava Sea", "Sertansea", "Ahtarunsea", "Vastansea", "Hauvinsea", "Sehlunsea"]
+            m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
+            time_earth1e = f"{w[z.weekday()]}, {z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
+            time_earth1g = langs.gts(z, "rsl-1g", True, False, True, True, False)
+            time_24_4_10 = ga78.time_sinvimania(dt, 0).str()  # 24.4 Sinvimania RLC-10
+            time_24_5l = ga78.time_hosvalnerus(dt, 0).str()   # 24.5 Hosvalnerus Local
+            time_24_11e = ga78.time_kuastall_11(dt).str()     # 24.11 Kuastall-11 RSL-1e
+            output += f"\nTime on this Earth (RSL-1e): **{time_earth1e}**" \
+                      f"\nTime on this Earth (RSL-1g): **{time_earth1g}**" \
+                      f"\nTime on 24.4 Sinvimania (RLC-10): **{time_24_4_10}**" \
+                      f"\nTime on 24.5 Hosvalnerus (Local): **{time_24_5l}**" \
+                      f"\nTime on 24.11 Kuastall (RSL-1e/g): **{time_24_11e}**"
+        return await general.send(output, ctx.channel)
 
     @commands.command(name="weather78", aliases=["w78"])
     # @commands.is_owner()
@@ -436,7 +433,7 @@ class GA78(commands.Cog):
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
         if not (1 <= s <= 8700):
-            return await general.send("De dejava idou, no sa maikazo ir te edou kihtemal. ", ctx.channel)
+            return await general.send("De dejava idou, no mu maikal ir te edoa kihtemal. ", ctx.channel)
         shift = s * 128
         code = rsl_number(s)
         try:
@@ -450,7 +447,7 @@ class GA78(commands.Cog):
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
         if not (1 <= s <= 8700):
-            return await general.send("De dejava idou, no sa maikazo ir te edou kihtemal", ctx.channel)
+            return await general.send("De dejava idou, no mu maikal ir te edoa kihtemal", ctx.channel)
         shift = s * 128
         text = ""
         for letter in t:
@@ -790,7 +787,7 @@ class GA78(commands.Cog):
                                       "\n".join(parts), ctx.channel)
 
     @commands.command(name="ga78")
-    @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 291665491221807104])
+    @commands.is_owner()
     async def ga78_info(self, ctx: commands.Context, ss: int = None, p: int = None):
         """ Details on GA-78
          ss = solar system """

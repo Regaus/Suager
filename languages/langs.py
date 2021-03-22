@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Union
 
 from dateutil.relativedelta import relativedelta
@@ -159,14 +159,14 @@ def td_rd(delta: relativedelta, locale: str = "en_gb", accuracy: int = 3, brief:
     return td_dt(now + delta, locale, accuracy=accuracy, brief=brief, suffix=suffix, source=now)
 
 
-def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
+def gts(when: datetime = None, locale: str = "en_gb", day: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
     if locale in ["rsl-1d", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     base = ""
-    if date:
+    if day:
         if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1d", "rsl-5"]):
             weekdays = get_data("time_weekdays", locale)
             weekday = weekdays[when.weekday()]
@@ -189,7 +189,7 @@ def gts(when: datetime = None, locale: str = "en_gb", date: bool = True, short: 
     return base
 
 
-def gts_date(when: datetime, locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
+def gts_date(when: Union[datetime, date], locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
     if locale in ["rsl-1d", "rsl-5"]:
         when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
