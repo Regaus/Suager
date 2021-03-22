@@ -1,6 +1,6 @@
 {
   "_name": "Simplified English",
-  "_conlang": true,
+  "_conlang": false,
   "discord_role_colour": "Role Color",
   "images_colour_font": "Font color",
   "images_colour_name": "Color name: {0}",

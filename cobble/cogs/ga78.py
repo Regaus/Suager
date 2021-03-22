@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import ss23, ss24
+from cobble.utils import ga78, ss23, ss24
 from core.utils import arg_parser, emotes, general, time
 
 
@@ -408,44 +408,17 @@ class GA78(commands.Cog):
                                   f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**\n"
                                   f"Time on 24.11 Kuastall-11 (RSL-1e): **{t24_11_1}**", ctx.channel)
 
-    @commands.command(name="weather23")
-    @commands.is_owner()
+    @commands.command(name="weather78", aliases=["w78"])
+    # @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def weather23(self, ctx: commands.Context, *, place: str):
-        """ Weather in a place in SS23 """
+    async def weather78(self, ctx: commands.Context, *, where: str):
+        """ Weather for a place in GA78 """
         try:
-            weather = ss23.Weather(place.title())
-            embed = discord.Embed(colour=general.random_colour())
-            embed.title = f"Weather in **{weather.city}, {weather.planet}**"
-            embed.description = f"Local Time: **{weather.time_out}**"
-            temp_c = round(weather.temperature, 1)
-            embed.add_field(name="Temperature", value=f"{temp_c}°C | **placeholder**", inline=False)
-            speed_kmh = round(weather.wind_speed, 1)
-            if weather.planet == "Kargadia":
-                kp_base = 0.8192
-                kp_hour = 37.49865756 / 32
-                m_name = "ks/h (kp/c)"
-            elif weather.planet == "Kaltaryna":
-                kp_base = 0.8192
-                kp_hour = 51.642812 / 64
-                m_name = "ks/h (kp/c)"
-            else:
-                kp_base = 1
-                kp_hour = 1
-                m_name = "unknown"
-            speed_kpc = round(weather.wind_speed / kp_base * kp_hour, 1)
-            embed.add_field(name="Wind Speed", value=f"{speed_kmh} km/h | **{speed_kpc} {m_name}**", inline=False)
-            if weather.is_raining:
-                rain = "It's raining" if temp_c > 0 else "It's snowing"
-            else:
-                rain = "It's dry so far"
-            embed.add_field(name="Precipitation", value=rain, inline=False)
-            embed.timestamp = time.now(None)
-            return await general.send(None, ctx.channel, embed=embed)
-        except Exception as e:
-            if ctx.channel.id == 610482988123422750:
-                await general.send(general.traceback_maker(e), ctx.channel)
-            return await general.send(f"An error occurred: `{type(e).__name__}: {e}`.\nThe place {place} may not exist.", ctx.channel)
+            place = ga78.Place(where)
+        except ga78.PlaceDoesNotExist:
+            return await general.send(f"Location {where!r} not found.", ctx.channel)
+        embed = place.status()
+        return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="nlc")
     @commands.is_owner()

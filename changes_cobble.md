@@ -119,3 +119,7 @@
 - TBL-related achievements
 - Updated ss23 and ss24 times to be in 24:60:60 format
 - Removed CobbleBot XP notice
+
+## v1.1.1 - 22 March 2021
+- Weather78, better weather data for GA78 locations
+- Preparations to switch time78 algorithm

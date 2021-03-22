@@ -99,3 +99,8 @@ def random_id(ctx: commands.Context) -> int:
 
 def bold(string: str) -> str:
     return f"**{string}**"
+
+
+class RegausError(Exception):
+    def __init__(self, text):
+        super().__init__(self, text)

@@ -46,45 +46,26 @@ class Utility(commands.Cog):
             send += langs.gls("util_time_sl", locale, b, a)
         elif locale == "rsl-1e":
             data = ss23.time_kargadia(time.now(None))
-            a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            b = langs.gts(time.now(None), locale, True, False, False, True, False)
-            d = langs.gts(time.now_sl(), locale, True, False, False, True, False)
+            a = f"{data.day_name}, {data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            b = langs.gts(time.now(None), locale, True, False, True, True, False)
+            d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
             z = time.kargadia_convert(time.now(None))
             m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
             c = f"{z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
             send += f"Zymlä (UTC/GMT): **{b}**\n" \
-                    f"Senkadar Laikadu (AD): **{d}**\n" \
-                    f"Senkadar Laikadu (NE): **{c}**\n" \
-                    f"Kargadia: **{a}**"
+                    f"Zymlä (SL-Taida AD'i): **{d}**\n" \
+                    f"Zymlä (SL-Taida NE'i): **{c}**\n" \
+                    f"Kargadia (Sentagar): **{a}**"
             # send += langs.gls("util_time_sl", locale, c, a, b)
-        elif locale == "rsl-1f":
-            a = langs.gts(time.now(None), locale, True, False, False, True, False)
-            b = langs.gts(time.now_sl(), locale, True, False, False, True, False)
-            c = langs.gts(time.now_k(), locale, True, False, False, True, False)
-            data = ss23.time_kargadia(time.now(None))
-            d = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            send += f"Zymlä (UTC/GMT): **{a}**\n" \
-                    f"Senkadar Laikadu (AD): **{b}**\n" \
-                    f"Senkadar Laikadu (NE): **{c}**\n" \
-                    f"Kargadia: **{d}**\n" \
-                    f"Kaivaltaavia: **Placeholder**"
         else:
-            if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
-                # data = ss23.time_kargadia(time.now(None))
-                # a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d} ST"
-                # b = langs.gts(time.now_k(), locale, True, False, False, True, True)
-                # send += langs.gls("util_time_sl", locale, b, a)
-                send += f"Kargadia (AD): **{langs.gts(time.now_sl(), locale, True, False, False, True, True)}**\n"
-                send += f"Kargadia (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, True)}**\n"
-            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, False, True, True))
-            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, False, True, True)}**"
+            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, True, True, True))
+            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, True, True, True)}**"
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             if data:
-                # _tzn = data["tz"]
-                # _tzl = len(_tzn)
-                # tzn = _tzn.upper() if _tzl <= 3 else _tzn.title()
-                # send += f"\n{tzn}: **{time.time_output(time.set_tz(time.now(None), data['tz']), tz=True, seconds=True)}**"
-                send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, False, True, True)}**"
+                send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, True)}**"
+            if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
+                send += f"\nSL Earth Time (AD): **{langs.gts(time.now_sl(), locale, True, False, True, True, True)}**\n" \
+                        f"SL Earth Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, True)}**"
         return await general.send(send, ctx.channel)
 
     @commands.command(name="base", aliases=["bases", "bc"])
@@ -263,7 +244,7 @@ class Utility(commands.Cog):
         # c = str(ctx.invoked_with)
         if colour.lower() == "random":
             # _colour = hex(random.randint(0, 0xffffff))[2:] + "ff"
-            _colour = f"{random.randint(0, 0xffffff):06x}ff"
+            _colour = f"{random.randint(0, 0xffffff):06x}"
             # a = 6
         else:
             try:
@@ -275,12 +256,12 @@ class Utility(commands.Cog):
                     d, e, f = colour
                     colour = f"{d}{d}{e}{e}{f}{f}"  # Quality code, yes
                     a = 6
-                if a == 6:
-                    colour += "ff"
-                    a = 8
-                if a != 8:
+                # if a == 6:
+                #     colour += "ff"
+                #     a = 8
+                if a != 6:
                     return await general.send(langs.gls("images_colour_invalid_value", locale), ctx.channel)
-                _colour = f"{int(colour, 16):08x}"
+                _colour = f"{int(colour, 16):06x}"
             except Exception as e:
                 return await general.send(langs.gls("images_colour_invalid", locale, type(e).__name__, str(e)), ctx.channel)
         # message = await general.send(f"{emotes.Loading} Getting data about colour #{colour}...", ctx.channel)
@@ -296,31 +277,32 @@ class Utility(commands.Cog):
         #     embed = discord.Embed(colour=g)
         # else:
         hex_6 = _colour[:6]
-        hex_8 = _colour
+        # hex_8 = _colour
         int_6 = int(_colour[:6], 16)
-        int_8 = int(_colour, 16)
+        # int_8 = int(_colour, 16)
         embed = discord.Embed(colour=int_6, base=16)
-        rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16), int(_colour[6:8], 16))
+        rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16))  # , int(_colour[6:8], 16))
+        # rgba_1 = tuple(round(value / 255, 4) for value in rgba_255)
         rgba_1 = tuple(f"{value / 255:.4f}" for value in rgba_255)
-        rgba_1_6 = f"({', '.join(rgba_1[:3])})"
-        rgba_1_8 = f"({', '.join(rgba_1)})"
-        brightness = sum(rgba_255[:3]) // 3
-        red, green, blue, alpha = rgba_255
+        # rgba_1_6 = f"({', '.join(rgba_1[:3])})"
+        # rgba_1_8 = f"({', '.join(rgba_1)})"
+        brightness = sum(rgba_255) // 3
+        # red, green, blue, alpha = rgba_255
+        red, green, blue = rgba_255
         # embed.title = langs.gls("images_colour_name", locale, data['name'])
-        embed.add_field(name=langs.gls("images_colour_hex", locale), value=f'RGB = #{hex_6}\nRGBA = #{hex_8}', inline=False)
-        embed.add_field(name=langs.gls("images_colour_int", locale), value=f'RGB = {int_6}\nRGBA = {int_8}', inline=False)
-        embed.add_field(name=langs.gls("images_colour_rgb", locale) + " (0-255)", value=f"RGB = {rgba_255[:3]}\nRGBA = {rgba_255}", inline=False)
-        embed.add_field(name=langs.gls("images_colour_rgb", locale) + " (0-1)", value=f"RGB = {rgba_1_6}\nRGBA = {rgba_1_8}", inline=False)
+        embed.add_field(name=langs.gls("images_colour_hex", locale), value=f'#{hex_6}', inline=False)
+        embed.add_field(name=langs.gls("images_colour_int", locale), value=str(int_6), inline=False)
+        embed.add_field(name=langs.gls("images_colour_rgb", locale) + " (0-255)", value=str(rgba_255), inline=False)
+        embed.add_field(name=langs.gls("images_colour_rgb", locale) + " (0-1)", value=str(rgba_1).replace("'", ""), inline=False)
         embed.add_field(name=langs.gls("images_colour_brightness", locale), value=str(brightness), inline=False)
-        embed.add_field(name=langs.gls("images_colour_font", locale), inline=False,
-                        value="#000000" if (brightness >= 128 and alpha >= 128) or green == 255 else "#ffffff")
+        embed.add_field(name=langs.gls("images_colour_font", locale), inline=False, value="#000000" if brightness >= 128 or green == 255 else "#ffffff")
         image1 = Image.new(mode="RGBA", size=(512, 512), color=rgba_255)
         bio1 = BytesIO()
         image1.save(bio1, "PNG")
         bio1.seek(0)
         embed.set_thumbnail(url="attachment://colour.png")
         # rows = 3 if alpha in [0, 255] else 4
-        rows = 4
+        rows = 2  # 4
         font_size = 48
         size = 256
         try:
@@ -331,55 +313,55 @@ class Utility(commands.Cog):
         image2 = Image.new(mode="RGBA", size=(size * 11, size * rows), color=(0, 0, 0, 1))
         up_red, up_green, up_blue = (255 - red) / 10, (255 - green) / 10, (255 - blue) / 10
         down_red, down_green, down_blue = red / 10, green / 10, blue / 10
-        alpha_up = (255 - alpha) / 10
-        alpha_down = alpha / 10
+        # alpha_up = (255 - alpha) / 10
+        # alpha_down = alpha / 10
 
         def _hex(value: int):
             return f"{value:02X}"
         for i in range(11):
             start2a = (size * i, 0)
             start2b = (size * i, size)
-            start2c = (size * i, size * 2)
-            start2d = (size * i, size * 3)
+            # start2c = (size * i, size * 2)
+            # start2d = (size * i, size * 3)
             red2a, green2a, blue2a = int(red + up_red * i), int(green + up_green * i), int(blue + up_blue * i)
             red2b, green2b, blue2b = int(red - down_red * i), int(green - down_green * i), int(blue - down_blue * i)
-            alpha2c = int(alpha + alpha_up * i)
-            alpha2d = int(alpha - alpha_down * i)
+            # alpha2c = int(alpha + alpha_up * i)
+            # alpha2d = int(alpha - alpha_down * i)
             image2a = Image.new(mode="RGBA", size=(size, size), color=(red2a, green2a, blue2a, 255))
             image2b = Image.new(mode="RGBA", size=(size, size), color=(red2b, green2b, blue2b, 255))
-            image2c = Image.new(mode="RGBA", size=(size, size), color=(red, green, blue, alpha2c))
-            image2d = Image.new(mode="RGBA", size=(size, size), color=(red, green, blue, alpha2d))
+            # image2c = Image.new(mode="RGBA", size=(size, size), color=(red, green, blue, alpha2c))
+            # image2d = Image.new(mode="RGBA", size=(size, size), color=(red, green, blue, alpha2d))
             draw2a = ImageDraw.Draw(image2a)
             draw2b = ImageDraw.Draw(image2b)
-            draw2c = ImageDraw.Draw(image2c)
-            draw2d = ImageDraw.Draw(image2d)
+            # draw2c = ImageDraw.Draw(image2c)
+            # draw2d = ImageDraw.Draw(image2d)
             hex2a = "#" + _hex(red2a) + _hex(green2a) + _hex(blue2a)
             hex2b = "#" + _hex(red2b) + _hex(green2b) + _hex(blue2b)
-            hex2c = f"a={alpha2c}"
-            hex2d = f"a={alpha2d}"
+            # hex2c = f"a={alpha2c}"
+            # hex2d = f"a={alpha2d}"
             width2a, height2a = draw2a.textsize(hex2a, font)
             width2b, height2b = draw2b.textsize(hex2b, font)
-            width2c, height2c = draw2c.textsize(hex2c, font)
-            width2d, height2d = draw2d.textsize(hex2d, font)
+            # width2c, height2c = draw2c.textsize(hex2c, font)
+            # width2d, height2d = draw2d.textsize(hex2d, font)
             sum2a = (red2a + green2a + blue2a) // 3
             sum2b = (red2b + green2b + blue2b) // 3
             fill2a = (0, 0, 0, 255) if sum2a >= 128 or green2a == 255 else (255, 255, 255, 255)
             fill2b = (0, 0, 0, 255) if sum2b >= 128 or green2b == 255 else (255, 255, 255, 255)
-            fill2c = (0, 0, 0, 255) if (brightness >= 128 and alpha2c >= 128) or green == 255 else (255, 255, 255, 255)
-            fill2d = (0, 0, 0, 255) if (brightness >= 128 and alpha2d >= 128) or green == 255 else (255, 255, 255, 255)
+            # fill2c = (0, 0, 0, 255) if (brightness >= 128 and alpha2c >= 128) or green == 255 else (255, 255, 255, 255)
+            # fill2d = (0, 0, 0, 255) if (brightness >= 128 and alpha2d >= 128) or green == 255 else (255, 255, 255, 255)
             draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
             draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
-            draw2c.text(((size - width2c) // 2, size - height2c - 5), hex2c, fill=fill2c, font=font)
-            draw2d.text(((size - width2d) // 2, size - height2d - 5), hex2d, fill=fill2d, font=font)
+            # draw2c.text(((size - width2c) // 2, size - height2c - 5), hex2c, fill=fill2c, font=font)
+            # draw2d.text(((size - width2d) // 2, size - height2d - 5), hex2d, fill=fill2d, font=font)
             image2.paste(image2a, start2a)
             image2.paste(image2b, start2b)
-            image2.paste(image2c, start2c)
-            image2.paste(image2d, start2d)
+            # image2.paste(image2c, start2c)
+            # image2.paste(image2d, start2d)
         bio2 = BytesIO()
         image2.save(bio2, "PNG")
         bio2.seek(0)
         embed.set_image(url="attachment://gradient.png")
-        embed.set_footer(text="Gradients go to: 1. white, 2. black, 3. alpha=255, 4. alpha=0")
+        # embed.set_footer(text="Gradients go to: 1. white, 2. black, 3. alpha=255, 4. alpha=0")
         # embed.set_thumbnail(url=data["image"])
         # embed.set_image(url=data["image_gradient"])
         return await general.send(None, ctx.channel, embed=embed, files=[discord.File(bio1, "colour.png"), discord.File(bio2, "gradient.png")])
