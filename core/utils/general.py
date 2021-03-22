@@ -4,6 +4,7 @@ import random
 import sys
 import traceback
 from io import BytesIO
+from typing import Union
 
 import discord
 from discord.ext import commands
@@ -34,8 +35,8 @@ def make_dir(dir_name):
         pass
 
 
-async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None, files: list = None,
-               delete_after: float = None, e: bool = False, u: bool or list = False, r: bool or list = False):
+async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None, files: list[discord.File] = None,
+               delete_after: float = None, e: bool = False, u: Union[bool, list] = False, r: Union[bool, list] = False):
     try:
         return await channel.send(content=text, embed=embed, file=file, files=files, delete_after=delete_after,
                                   allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
@@ -58,11 +59,11 @@ def print_error(text: str):
     return sys.stderr.write(f"{text}\n")
 
 
-def random_colour():
+def random_colour() -> int:
     return random.randint(0, 0xffffff)
 
 
-def reason(who, why=None):
+def reason(who, why=None) -> str:
     r = f"[ {who} ]"
     if why is None:
         return f"{r} No reason specified"
@@ -92,5 +93,9 @@ def round_value(value):
         return e
 
 
-def random_id(ctx: commands.Context):
+def random_id(ctx: commands.Context) -> int:
     return ctx.author.id + random.randint(0, 0xfffffffffffffff)
+
+
+def bold(string: str) -> str:
+    return f"**{string}**"

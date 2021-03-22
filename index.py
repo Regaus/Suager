@@ -48,7 +48,10 @@ for i in range(len(config["bots"])):
     #     times = changes.copy()
     # times['ad'] = False
     # open(fn, 'w+').write(json.dumps(times))
-    blacklist = json.loads(open("blacklist.json", "r").read())
+    try:
+        blacklist = json.loads(open("blacklist.json", "r").read())
+    except FileNotFoundError:
+        blacklist = []
     name = local_config["internal_name"]
     db = database.Database()
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db, {},
@@ -86,6 +89,8 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.temporaries(bot)))
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.avatars(bot)))
+        if bot.name == "cobble":
+            tasks.append(loop.create_task(temporaries.tbl_seasons(bot)))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

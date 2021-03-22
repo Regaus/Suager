@@ -5,6 +5,7 @@ import random
 import aiohttp
 import discord
 
+from cobble.utils import tbl
 from core.utils import bot_data, general, http, logger, time
 from languages import langs
 from suager.cogs.birthdays import Ctx
@@ -14,7 +15,7 @@ from suager.utils import lists
 async def temporaries(bot: bot_data.Bot):
     """ Handle reminders and mutes """
     await bot.wait_until_ready()
-    print(f"{time.time()} > Initialised Temporaries handler")
+    # print(f"{time.time()} > Initialised Temporaries handler")
     while True:
         expired = bot.db.fetch("SELECT * FROM temporary WHERE DATETIME(expiry) < DATETIME('now') AND handled=0", ())
         bot.db.execute("DELETE FROM temporary WHERE handled=1", ())
@@ -118,7 +119,7 @@ async def try_error_temps(bot: bot_data.Bot):
                 pass
 
 
-bd_config = {
+bd_config = {  # Birthday data: {Guild: [BirthdayChannel, BirthdayRole]}
     568148147457490954: [568148147457490958, 663661621448802304],
     706574018928443442: [715620849167761458, 720780796293677109],
     738425418637639775: [738425419325243424, 748647340423905420]
@@ -128,7 +129,7 @@ bd_config = {
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
     await bot.wait_until_ready()
-    print(f"{time.time()} > Initialised Birthdays handler")
+    # print(f"{time.time()} > Initialised Birthdays handler")
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
         _guilds.append(guild)
@@ -180,7 +181,7 @@ async def birthdays(bot: bot_data.Bot):
 
 async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    print(f"{time.time()} > Initialised Playing changer ({bot.local_config['name']})")
+    # print(f"{time.time()} > Initialised Playing changer ({bot.local_config['name']})")
     while True:
         try:
             log = bot.local_config["logs"]
@@ -190,23 +191,23 @@ async def playing(bot: bot_data.Bot):
             plays = {
                 "cobble": [
                     {"type": 0, "name": fv},
-                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                    {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                     {"type": 0, "name": "with Regaus"},
                     {"type": 0, "name": "without you"},
                     {"type": 0, "name": "with nobody"},
                     {"type": 0, "name": "with your feelings"},
                     {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 5, "name": "uselessness"},
-                    {"type": 0, "name": "Nothing"},
+                    {"type": 0, "name": "nothing"},
                     {"type": 3, "name": "you"},
                     {"type": 2, "name": "a song"},
-                    {"type": 3, "name": "the Void"},
+                    {"type": 3, "name": "the void"},
                 ],
                 "suager": [
                     {"type": 0, "name": fv},
                     {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 2, "name": "Music"},
+                    {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                    {"type": 2, "name": "music"},
                     {"type": 5, "name": "a competition"},
                     {"type": 0, "name": "with Regaus"},
                     {"type": 0, "name": "without you"},
@@ -217,8 +218,8 @@ async def playing(bot: bot_data.Bot):
                     {"type": 3, "name": "Senko"},
                     {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 5, "name": "uselessness"},
-                    {"type": 0, "name": "Nothing"},
-                    {"type": 1, "name": "Nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
+                    {"type": 0, "name": "nothing"},
+                    {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
                     {"type": 3, "name": "you"},
                     # {"type": 0, "name": "None"},
                     # {"type": 0, "name": "KeyError: 'name'"},
@@ -229,12 +230,12 @@ async def playing(bot: bot_data.Bot):
                     # {"type": 2, "name": "10 Hours of Nothing ft. Nobody (Non-Existent Remix by Negative Zero)"},
                     {"type": 3, "name": "the Void"},
                     # {"type": 5, "name": "Minecraft"},
-                    {"type": 0, "name": "Minecraft"},
+                    # {"type": 0, "name": "Minecraft"},
                     # {"type": 0, "name": "Minceraft"},
-                    {"type": 1, "name": "Minecraft", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
-                    {"type": 0, "name": "Terraria"},
-                    {"type": 1, "name": "Terraria", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
-                    {"type": 0, "name": "Grand Theft Auto V"},
+                    # {"type": 1, "name": "Minecraft", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
+                    # {"type": 0, "name": "Terraria"},
+                    # {"type": 1, "name": "Terraria", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
+                    # {"type": 0, "name": "Grand Theft Auto V"},
                     {"type": 0, "name": "PyCharm"},
                     {"type": 0, "name": "a game"},
                     {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
@@ -245,7 +246,7 @@ async def playing(bot: bot_data.Bot):
                     {"type": 3, "name": "arson"},
                     {"type": 2, "name": "your screams for help"},
                     {"type": 3, "name": "something"},
-                    {"type": 3, "name": "Nothing"},
+                    {"type": 3, "name": "nothing"},
                     {"type": 0, "name": "something"},
                     {"type": 0, "name": "sentience"}
                 ]
@@ -282,7 +283,7 @@ async def playing(bot: bot_data.Bot):
 
 async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    print(f"{time.time()} > Initialised Avatar changer")
+    # print(f"{time.time()} > Initialised Avatar changer")
     while True:
         try:
             bot.config = general.get_config()
@@ -307,3 +308,33 @@ async def avatars(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(3600)
+
+
+async def tbl_seasons(bot: bot_data.Bot):
+    _season = tbl.get_season()
+    await bot.wait_until_ready()
+    # print(f"{time.time()} > Initialised TBL Seasons Updater")
+    while True:
+        season = tbl.get_season()
+        if season != _season:
+            channel = bot.get_channel(819223338844946522)
+            all_players = bot.db.fetch("SELECT * FROM tbl_player")
+            old_points = []
+            for player in all_players:
+                old_points.append({"name": f"{player['name']}#{player['disc']:04d}", "points": player["league_points"], 'id': player['uid']})
+            old_points.sort(key=lambda x: x["points"], reverse=True)
+            top_5 = ""
+            emotes = ["🥇", "🥈", "🥉", "🏆", "🏆", "🏆", "🏆", "🏆", "🏆", "🏆"]
+            prize = [250, 225, 200, 175, 150, 125, 100, 75, 50, 25]
+            prizes = [f"{i} Coins" for i in prize]
+            # prizes = [langs.plural(i, "tbl_coins") for i in prize]
+            for place, user in enumerate(old_points[:10], start=1):
+                emote = emotes[place - 1]
+                top_5 += f"\n{emote} **#{place}: {user['name']}** at **{user['points']:,} League Points** - Prize: **{prizes[place - 1]}**"
+                bot.db.execute("UPDATE tbl_player SET coins=coins+? WHERE uid=?", (prize[place - 1], user["id"]))
+            bot.db.execute("UPDATE tbl_player SET araksat=araksat+(league_points/5), league_points=league_points/10, coins=coins+50")
+            await general.send(f"Season {_season} has now ended! Here are the Top 5 people of the past season:{top_5}", channel)
+            # 1/10 of everyone's League Points will carry over to the next season, and some will be converted to extra Araksat.
+            # Everyone gets 50 coins. The top 10 will also receive some extra coins.
+            _season = season
+        await asyncio.sleep(1800)

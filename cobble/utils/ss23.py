@@ -10,20 +10,24 @@ from core.utils import time
 def time_kargadia(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     irl = when or time.now(None)
     # start = datetime(1970, 1, 1, 6, 30, tzinfo=timezone.utc)
-    start = datetime(276, 12, 26, 22, 30, tzinfo=timezone.utc)
+    # datetime(276, 12, 26, 22, 30)
+    start = datetime(276, 12, 27, 4, 30, tzinfo=timezone.utc)  # RSL-1 days begin at our 6:00 am
     total = (irl - start).total_seconds()
     ml = 32  # month length
     # year = 1060
     year = 1
     day_length = 37.49865756 * 3600
     days = total / day_length
-    days += tz / 32
+    days += tz / 24  # 32
     secs = (days % 1) * day_length
-    kdl = 32 ** 3  # Kargadia's day length
+    # kdl = 32 ** 3  # Kargadia's day length
+    kdl = 86400  # Match Earth's 24:60:60 format
     ksl = day_length / kdl  # Second length compared to real time
     ks = int(secs / ksl)
-    h, ms = divmod(ks, 32 * 32)
-    m, s = divmod(ms, 32)
+    h, ms = divmod(ks, 3600)
+    m, s = divmod(ms, 60)
+    # h, ms = divmod(ks, 32 * 32)
+    # m, s = divmod(ms, 32)
     dl = int(days)
     _ds = dl
     while True:
@@ -53,13 +57,16 @@ def time_zeivela(when: datetime = None, tz: float = 0, tzn: str = "ZST"):
     year = 1
     day_length = 27.12176253 * 3600
     days = total / day_length
-    days += tz / 36
+    days += tz / 24  # 36
     secs = (days % 1) * day_length
-    kdl = 36 ** 3  # Local day length
+    kdl = 86400
+    # kdl = 36 ** 3  # Local day length
     ksl = day_length / kdl  # Second length compared to real time
     ks = int(secs / ksl)
-    h, ms = divmod(ks, 36 * 36)
-    m, s = divmod(ms, 36)
+    h, ms = divmod(ks, 3600)
+    m, s = divmod(ms, 60)
+    # h, ms = divmod(ks, 36 * 36)
+    # m, s = divmod(ms, 36)
     dl = int(days)
     _ds = dl
     while True:
@@ -88,13 +95,16 @@ def time_kaltaryna(when: datetime = None, tz: float = 0, tzn: str = "KST"):
     year = 1
     day_length = 51.642812 * 3600
     days = total / day_length
-    days += tz / 64
+    days += tz / 24  # 64
     secs = (days % 1) * day_length
-    kdl = 64 ** 3  # Local day length
+    kdl = 86400
+    # kdl = 64 ** 3  # Local day length
     ksl = day_length / kdl  # Second length compared to real time
     ks = int(secs / ksl)
-    h, ms = divmod(ks, 64 * 64)
-    m, s = divmod(ms, 64)
+    h, ms = divmod(ks, 3600)
+    m, s = divmod(ms, 60)
+    # h, ms = divmod(ks, 64 * 64)
+    # m, s = divmod(ms, 64)
     dl = int(days)
     _ds = dl
     while True:
@@ -138,13 +148,16 @@ def time_kargadia_5(when: datetime = None, tz: float = 0, tzn: str = "ST"):
     year = 1
     day_length = 37.49865756 * 3600
     days = total / day_length
-    days += tz / 40
+    days += tz / 24  # 40
     secs = (days % 1) * day_length
-    kdl = 40 ** 3  # Kargadia's day length
+    kdl = 86400
+    # kdl = 40 ** 3  # Kargadia's day length
     ksl = day_length / kdl  # Second length compared to real time
     ks = int(secs / ksl)
-    h, ms = divmod(ks, 40 * 40)
-    m, s = divmod(ms, 40)
+    h, ms = divmod(ks, 3600)
+    m, s = divmod(ms, 60)
+    # h, ms = divmod(ks, 40 * 40)
+    # m, s = divmod(ms, 40)
     dl = int(days)
     _ds = dl
     while True:
@@ -184,7 +197,7 @@ def time_earth_5(when: datetime = None, time23: bool = False):
     day_length = 86400
     days = total / day_length
     secs = (days % 1) * day_length
-    kdl = 24 * 60 * 60
+    kdl = 86400
     ksl = day_length / kdl
     ks = int(secs / ksl)
     h, ms = divmod(ks, 3600)
@@ -251,13 +264,14 @@ class SS23Time:
         if name == "Kargadia":
             weekdays = ["Senka", "Navai", "Sanva", "Havlei", "Teine", "Kannai", "Sua", "Shira"]
             parts = ["tea", "rea", "sea", "vea"]
-            part = self.hour // 8
+            part = self.hour // 6  # 8
             self.day_name = f"{weekdays[dow]}{parts[part]}"
             self.months = ["Senkannaran", "Shirannaran", "Kanvamaran", "Arhanmaran", "Nurinnaran", "Aijamaran", "Kionnaran", "Gairannaran",
                            "Bassemaran", "Finkannaran", "Suvannaran", "Kittannaran", "Semarmaran", "Haltannaran", "Kaivynnaran", "Kärasmaran"]
         if name == "Kaltaryna":
             weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
-            day_part = "Sea" if self.hour in range(12, 52) else "Tea"
+            # day_part = "Sea" if self.hour in range(12, 52) else "Tea"
+            day_part = "Sea" if self.hour in range(6, 18) else "Tea"
             self.day_name = f"{day_part} ida {weekdays[dow]}"
             months = ["Senka", "Shira", "Kanvarus", "Arkaneda", "Nurus", "Ai", "Kiona", "Gairnar",
                       "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
@@ -279,7 +293,8 @@ class Weather:
         self.city = city_name
         self.planet = self.get_planet()
         self.lat, self.long, self.tz_name = self.get_location()
-        self.tz = round(round(self.long / (180 / 32)) / 2, 1)
+        # self.tz = round(round(self.long / (180 / 32)) / 2, 1)
+        self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         self.time = self.get_time()
         self.time_out = self.time.str(False, None, True)
         self.weather_patterns = self.get_patterns()

@@ -17,20 +17,35 @@ class Settings(commands.Cog):
     @commands.command(name="languages")
     async def languages(self, ctx: commands.Context):
         """ List of all supported languages """
-        languages = [f"`{key}`: {langs.gls('_name', key)}" for key in langs.languages.keys()]
-        real, con, = [], []
-        for language in languages:
-            if language.startswith("`rsl-"):
-                con.append(language)
+        # languages = [f"`{key}`: {langs.gls('_name', key)}" for key in sorted(list(langs.languages.keys()))]
+        # real, con, = [], []
+        # for language in languages:
+        #     if language.startswith("`rsl-"):
+        #         con.append(language)
+        #     else:
+        #         real.append(language)
+        nat, con, rsl = [], [], []
+        for language in list(langs.languages.keys()):
+            out = f"`{language}`: {langs.gls('_name', language)}"
+            conlang = langs.get_data("_conlang", language)
+            if conlang is None:
+                rsl.append(out)
+            elif conlang:
+                con.append(out)
             else:
-                real.append(language)
+                nat.append(out)
         trusted = [302851022790066185, 577637595392245770, 651179888988127270, 430891116318031872, 291665491221807104]
         trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
-        if ctx.author.id in trusted and ctx.guild.id in trusted_servers:
-            out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
-        else:
-            out = "Here are supported languages:\n" + "\n".join(real)
-        return await general.send(out, ctx.channel)
+        output = "List of supported languages:\n" + "\n".join(nat)
+        if ctx.guild is not None and ctx.guild.id in trusted_servers:
+            output += "\n__Conlangs supported:__\n" + "\n".join(con)
+            if ctx.author.id in trusted:
+                output += "\n__RSL-1 varieties supported:__\n" + "\n".join(rsl)
+        # if ctx.author.id in trusted and ctx.guild.id in trusted_servers:
+        #     out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
+        # else:
+        #     out = "Here are supported languages:\n" + "\n".join(real)
+        return await general.send(output, ctx.channel)
         # return await general.send("Here is a list of supported languages:\n" + "\n".join(languages), ctx.channel)
 
     @commands.group(name="settings", aliases=["set"])

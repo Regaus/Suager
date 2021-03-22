@@ -21,7 +21,7 @@ class Events(commands.Cog):
         self.blocked = [667187968145883146]
         self.bad = ["re", "rag", "<@302851022790066185>", "<@!302851022790066185>"]
         # self.updates = [self.bot.get_channel(x) for x in [796755072427360256]]
-        self.updates = [self.bot.get_channel(x) for x in [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256]]
+        self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256]
         self.blocked_logs = self.bot.get_channel(739183533792297164)
         self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
                                571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
@@ -54,7 +54,8 @@ class Events(commands.Cog):
                         break
         if self.bot.name == "suager":
             if ctx.channel.id == 742886280911913010:
-                for channel in self.updates:
+                for channel_id in self.updates:
+                    channel = self.bot.get_channel(channel_id)
                     try:
                         if channel is not None:
                             await general.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}", channel)
@@ -176,8 +177,8 @@ class Events(commands.Cog):
         async def process_msg(cid: int):
             embed = discord.Embed(description=f"Message was edited in {after.channel.mention} ({after.channel.id})\n"
                                               f"Author: {after.author}\nMessage sent: {after.created_at}\nMessage edited: {after.edited_at}")
-            embed.add_field(name="Content Before", value=before.content, inline=False)
-            embed.add_field(name="Content After", value=after.content, inline=False)
+            embed.add_field(name="Content Before", value=before.content[:1024], inline=False)
+            embed.add_field(name="Content After", value=after.content[:1024], inline=False)
             await general.send(None, self.bot.get_channel(cid), embed=embed)
 
         if self.bot.name == "suager":

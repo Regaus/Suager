@@ -561,7 +561,10 @@ class Admin(commands.Cog):
     @commands.check(permissions.is_owner)
     async def blacklist_add(self, ctx: commands.Context, user: discord.User):
         """ Blacklist a user from using the bot """
-        blacklist = json.loads(open("blacklist.json", "r").read())
+        try:
+            blacklist = json.loads(open("blacklist.json", "r").read())
+        except FileNotFoundError:
+            blacklist = []
         blacklist.append(user.id)
         self.bot.blacklist = blacklist
         open("blacklist.json", "w+").write(json.dumps(blacklist))
@@ -571,7 +574,10 @@ class Admin(commands.Cog):
     @commands.check(permissions.is_owner)
     async def blacklist_remove(self, ctx: commands.Context, user: discord.User):
         """ Remove a user from the blacklist """
-        blacklist = json.loads(open("blacklist.json", "r").read())
+        try:
+            blacklist = json.loads(open("blacklist.json", "r").read())
+        except FileNotFoundError:
+            blacklist = []
         try:
             blacklist.remove(user.id)
             self.bot.blacklist = blacklist

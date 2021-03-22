@@ -11,8 +11,8 @@ command = []
 
 for i, log in enumerate(dirs):
     latest = f"{year}-01-01"
-    path = f"/mnt/d/Regaus/OneDrive/2020/Bot data/{year}/{log}"
-    path1 = path.replace("Bot data", "Bot\\ data")
+    path = f"/mnt/d/Regaus/OneDrive/2020/Bot_data/{year}/{log}"
+    # path1 = path.replace("Bot data", "Bot\\ data")
     path2 = f"@vm:~/Suager/data/logs/{logs[i]}"
     for thing in sorted(os.listdir(path)):
         # if j == 0:
@@ -28,7 +28,8 @@ for i, log in enumerate(dirs):
     while last < today:
         # print(f"{log} > Logs for {last.isoformat()} are not yet found")
         _date = last.isoformat()
-        command.append(f"scp -r {path2}/{_date}/ {path1}/{_date}/")
+        command.append(f"scp -r {path2}/{_date}/ {path}/")
         last += timedelta(days=1)
 
-print("; ".join(command))
+cmd = "\n".join(command)
+open("idiot.sh", mode="w+").write(cmd)

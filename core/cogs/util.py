@@ -44,7 +44,7 @@ class Utility(commands.Cog):
             a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
             send += langs.gls("util_time_sl", locale, b, a)
-        elif locale == "rsl-1":
+        elif locale == "rsl-1e":
             data = ss23.time_kargadia(time.now(None))
             a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
@@ -74,8 +74,8 @@ class Utility(commands.Cog):
                 # a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d} ST"
                 # b = langs.gts(time.now_k(), locale, True, False, False, True, True)
                 # send += langs.gls("util_time_sl", locale, b, a)
-                send += f"Senko Lair (AD): **{langs.gts(time.now_sl(), locale, True, False, False, True, True)}**\n"
-                send += f"Senko Lair (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, True)}**\n"
+                send += f"Kargadia (AD): **{langs.gts(time.now_sl(), locale, True, False, False, True, True)}**\n"
+                send += f"Kargadia (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, True)}**\n"
             send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, False, True, True))
             send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, False, True, True)}**"
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
@@ -137,7 +137,7 @@ class Utility(commands.Cog):
         locale = langs.gl(ctx)
         if locale in ["rsl-1d", "rsl-5"]:
             if year is not None and year < 277:
-                return await general.send(f"In RSL-1 and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
+                return await general.send(f"In RSL-1d and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
         try:
             now = time.now(None)
             date = datetime(now.year, 1, 1)

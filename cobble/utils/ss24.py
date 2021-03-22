@@ -90,7 +90,8 @@ def time_sinvimania(when: datetime = None):
     month_lengths = [31, 31, 31, 31, 31, 32, 31, 31, 31, 31, 31, 32]
     weekdays = ["Placeholder 1", "Placeholder 2", "Placeholder 3", "Placeholder 4", "Placeholder 5", "Placeholder 6"]
     months = ["Month 1", "Month 2", "Month 3", "Month 4", "Month 5", "Month 6", "Month 7", "Month 8", "Month 9", "Month 10", "Month 11", "Month 12"]
-    year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 24, 24, 24, 374, 373, 5, month_lengths, 12, 0)
+    year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 24, 60, 60, 374, 373, 5, month_lengths, 12, 0)
+    # year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 24, 24, 24, 374, 373, 5, month_lengths, 12, 0)
     return SS24Time(year, month, day, h, m, s, weekdays, months, 6, ds, None)
 
 
@@ -102,7 +103,8 @@ def time_hosvalnerus(when: datetime = None):
     weekdays = ["Placeholder 1", "Placeholder 2", "Placeholder 3", "Placeholder 4", "Placeholder 5"]
     months = ["Month 1", "Month 2", "Month 3", "Month 4", "Month 5", "Month 6", "Month 7", "Month 8", "Month 9", "Month 10",
               "Month 11", "Month 12", "Month 13", "Month 14", "Month 15", "Month 16", "Month 17", "Month 18", "Month 19", "Month 20"]
-    year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 20, 20, 20, 378, 379, 2, month_lengths, 20, 0)
+    year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 24, 60, 60, 378, 379, 2, month_lengths, 20, 0)
+    # year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 20, 20, 20, 378, 379, 2, month_lengths, 20, 0)
     return SS24Time(year, month, day, h, m, s, weekdays, months, 5, ds, None)
 
 
@@ -114,7 +116,8 @@ def time_kuastall_11(when: datetime = None):
     weeks2 = ([19] * 7 + [18]) * 2
     weekdays = ["Navadensea", "Sea Kuadan", "Rujazda Sea", "Senkata Sea", "Shirata Sea", "Leitakisea", "Arhanesea", "Nüriisea", "Rudvaldatsea", "Kionansea",
                 "Kuarunsea", "Suvakyrda Sea", "Kittansea", "Valkyruda Sea", "Vahkandansea", "Sea Kuastallun", "Sea Koazan", "Sea Seldalkuvit", "Sea Kudaganan"]
-    year, month, week, day, h, m, s = solar_longer(irl, start, day_length, 24, 32, 32, 19384, 19385, 5, 64, weeks, weeks2, 64, 8, 0)
+    year, month, week, day, h, m, s = solar_longer(irl, start, day_length, 24, 60, 60, 19384, 19385, 5, 64, weeks, weeks2, 64, 8, 0)
+    # year, month, week, day, h, m, s = solar_longer(irl, start, day_length, 24, 32, 32, 19384, 19385, 5, 64, weeks, weeks2, 64, 8, 0)
     return LongYearTime(year, month, week, day, h, m, s, weekdays, None)
 
 

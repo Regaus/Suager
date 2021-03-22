@@ -400,7 +400,7 @@
 
 ## v6.1.12.1 - 29 September 2020
 - Renamed 23.6 to planet name instead of place name in time23
-- Connectors have been set to ssl=False to work on my old laptop that I'm trying to host the bot on now
+- Connectors have been set to ssl=False to work on my old laptop that I'm trying to host the bot on for now
 
 ## v6.2.0 - 3 October 2020
 - Removed RSL-3 and RSL-5 locales
@@ -714,3 +714,12 @@
 - Command to remove deleted roles from the level rewards system
 - Command to edit the role rewarded at a certain level
 - Command to edit the level at which a role is awarded
+
+## v7.2.16 - 22 March 2021
+- //commands as an alias to //help
+- Mute no longer checks role position
+- You can purge a user instead of member
+- Friendship with me now checks using discord messages instead of a dict
+- Changed how the update script works to hopefully not randomly forget channels for some odd reason
+- Better conlang handling
+- Fixed starboard crashing when channels no longer existed

@@ -120,7 +120,7 @@ class Leveling(commands.Cog):
         """ Levels data """
         # __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
         # [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
-        __levels = [1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 60, 69, 80, 90, 100, 120, 140, 160, 180, 200]
+        __levels = [1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
         outputs = []
         for level in __levels:
             _level = level - 1
@@ -331,7 +331,10 @@ class Leveling(commands.Cog):
             d = ''
             for role in rewards:
                 d += langs.gls("leveling_rewards_role", locale, langs.gns(role["level"], locale), role["role"])
-            embed.description = d
+            if d:
+                embed.description = d
+            else:
+                embed.description = langs.gls("leveling_rewards_none", locale)
             return await general.send(None, ctx.channel, embed=embed)
         except KeyError:
             return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
@@ -435,8 +438,8 @@ class Leveling(commands.Cog):
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
-            if self.bot.name == "cobble":
-                r += "\nCobbleBot XP is counted since 2 January 2020 AD."
+            # if self.bot.name == "cobble":
+            #     r += "\nCobbleBot XP is counted since 2 January 2021 AD."
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
     @commands.command(name="rank", aliases=["level"])
@@ -525,8 +528,8 @@ class Leveling(commands.Cog):
         x1, x2 = [val * sm for val in xp_amounts]
         o1, o2 = int(x1), int(x2)
         embed.add_field(name="XP per minute", value=f"{o1}-{o2}", inline=False)
-        if self.bot.name == "cobble":
-            embed.description += "\nCobbleBot XP is counted since 2 January 2020 AD."
+        # if self.bot.name == "cobble":
+        #     embed.description += "\nCobbleBot XP is counted since 2 January 2021 AD."
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="rankg", aliases=["grank"])

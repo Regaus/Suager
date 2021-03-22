@@ -9,3 +9,4 @@ pytz
 jishaku
 luas.py
 requests
+psutil

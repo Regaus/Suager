@@ -134,48 +134,30 @@ class Ratings(commands.Cog):
         rate = langs.gfs(random.random(), locale, 2, True)
         if user1.id == 302851022790066185 or user2.id == 302851022790066185:
             check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author  # shouldn't be else-ing anyways
+            output = await general.send(f"{emotes.Loading} Checking friendship levels...", ctx.channel)
             # Checks whose ID I'll need to determine our friendship with me.
-            friendships = {
-                291665491221807104: 1.0000,  # Leitoxz
-                609423646347231282: 1.0000,  # Suager
-                517012611573743621: 1.0000,  # Suager Sentient
-                577608850316853251: 0.9750,  # CobbleBot
-                499038637631995906: 0.9073,  # Ash
-                593736085327314954: 0.9072,  # Chuck
-                374853432168808448: 0.9071,  # Potato
-                430891116318031872: 0.8872,  # Alex Five
-                597373963571691520: 0.8351,  # Nuriki
-                533680271057354762: 0.8201,  # Spoopy
-                418151634087182359: 0.7743,  # HatKid
-                230313032956248064: 0.7702,  # Steir
-                581206591051923466: 0.7441,  # Midnight
-                659879737509937152: 0.7427,  # LostCandle
-                417390734690484224: 0.7015,  # Kyomi
-                739806142560993380: 0.6825,  # Fekuri
-                236884090651934721: 0.6678,  # Shawn
-                377467233401831424: 0.3702,  # mags
-                679398844701605940: 0.3519,  # Potatsu
-                443363116504580117: 0.2173,  # dragon
-                746173049174229142: 0.1027,  # racc
-                781907210182590514: 0.0747,  # jelly
-                561164743562493952: -.0143,  # zilla
-                690328607205491101: -.0164,  # yerin
-                402238370249441281: -.1274,  # fake
-                667187968145883146: -1.000,  # chocolatt
-            }
+            friendships = {}
+            channel: discord.TextChannel = self.bot.get_channel(817733445156732939)  # Load the friendships channel
+            async for message in channel.history(limit=None, oldest_first=True):  # Fetch all messages, just in case it's split
+                content: str = message.content
+                lines = content.splitlines()
+                for line in lines:
+                    try:
+                        line.replace(",", "")  # Shouldn't be any commas to begin with
+                        data = line.split("  #", 1)[0]  # Removes the "comment" from the data
+                        user_id, value = data.split(": ")  # Gets the user and value from the format
+                        friendships[int(user_id)] = float(value)
+                    except ValueError:
+                        continue  # Ignore the line with an error
             if check.id in friendships:
-                # if check.id not in [291665491221807104, 609423646347231282, 402238370249441281, 667187968145883146]:
-                #     _rate = 0.00  # fuck off
-                # else:
                 _rate = friendships.get(check.id)
                 rate = langs.gfs(_rate, locale, 2, True)
                 author = check == ctx.author
-                return await general.send(f"{'**You** are' if author else f'**{check.name}** is'} **{rate}** friends with **Regaus**.", ctx.channel)
+                return await output.edit(content=f"{'**You** are' if author else f'**{check.name}** is'} **{rate}** friends with **Regaus**.")
             else:
                 # rate = "undefined%"
                 author = check == ctx.author
-                return await general.send(f"The level of friendship between **{'you' if author else check.name}** and **Regaus** is **undefined**", ctx.channel)
-            # Get the result
+                return await output.edit(content=f"The level of friendship between **{'you' if author else check.name}** and **Regaus** is **undefined**")
         return await general.send(langs.gls("ratings_friend", locale, user1.name, user2.name, rate), ctx.channel)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])

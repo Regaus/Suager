@@ -160,6 +160,7 @@ class Starboard(commands.Cog):
         """ Starboard stats for the server """
         async with ctx.typing():
             embed = discord.Embed(colour=general.random_colour())
+            self.bot.db.execute("DELETE FROM starboard WHERE stars=0")
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? ORDER BY stars DESC", (ctx.guild.id,))
             stars = 0
             top = []
@@ -176,7 +177,7 @@ class Starboard(commands.Cog):
                 try:
                     message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
                     embed.description += f"\n{i + 1}) [⭐ {_message['stars']} by {message.author}]({message.jump_url})"
-                except discord.NotFound:
+                except (discord.NotFound, AttributeError):
                     embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
             # embed.add_field(name="Top starred messages", value="\n".join(outputs), inline=False)
             return await general.send(None, ctx.channel, embed=embed)

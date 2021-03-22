@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, timedelta, timezone
+from typing import Any, Union
 
 from dateutil.relativedelta import relativedelta
 
@@ -16,10 +17,10 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
-    if locale in ["rsl-1d", "rsl-1"]:
+    if locale in ["rsl-1d", "rsl-1e"]:
         value //= 2
-        names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1_kg" else \
-            ["V", "KV", "UV", "DV", "TV", "SgV", "PV", "SnV", "EV", "OV", "ZV"]
+        names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1d" else \
+            ["V", "KV", "UV", "DV", "TV", "SeV", "PV", "SnV", "EV", "OV", "ZV"]
         step = 4096
     if locale == "ru_ru":
         names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
@@ -32,7 +33,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
             return f"{number} {names[i]}"
 
 
-def gns(value: int or float, locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
+def gns(value: Union[int, float], locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
     """ Get a string from an integer """
     try:
         value = int(value)
@@ -52,7 +53,7 @@ def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) ->
 
 def gl(ctx):
     if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469]:
-        return "rsl-1"
+        return "rsl-1e"
     ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
     if ex and ctx.guild is not None:
         data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
@@ -70,7 +71,7 @@ def gls(string: str, locale: str = "en_gb", *values, **kw_values) -> str:
         return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
 
 
-def get_data(key: str, locale: str = "en_gb") -> list:  # Get multiple
+def get_data(key: str, locale: str = "en_gb") -> Any:  # Get multiple
     return (languages.get(locale, languages["en_gb"])).get(key, languages["en_gb"].get(key))
 
 

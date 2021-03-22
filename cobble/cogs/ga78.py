@@ -11,9 +11,9 @@ from cobble.utils import ss23, ss24
 from core.utils import arg_parser, emotes, general, time
 
 
-def is_rsl1_eligible(ctx):
-    if ctx.author.id not in [302851022790066185, 291665491221807104, 230313032956248064, 430891116318031872, 418151634087182359, 374853432168808448,
-                             593736085327314954, 581206591051923466, 533680271057354762, 679398844701605940, 499038637631995906]:
+def is_rsl1_eligible(ctx: commands.Context):
+    if ctx.author.id not in [302851022790066185, 291665491221807104, 430891116318031872, 418151634087182359, 374853432168808448,
+                             593736085327314954, 581206591051923466, 499038637631995906, 679819572278198272, 236884090651934721]:
         return False
     if ctx.guild is None:
         return True
@@ -28,12 +28,13 @@ def rsl_number(value: int):
     if value > limit:
         return f"Highest allowed number is {limit:,} (1e36 - 1)"
     if value < 0:
-        return f"Negative values will not work"
+        return "Negative values will not work"
     if value == 0:
         return "deneda"
-    one = {0: "", 1: "ukka", 2: "devi", 3: "tei", 4: "sei", 5: "paa/paki", 6: "senki", 7: "ei", 8: "oni", 9: "zehi"}
+    one = {0: "", 1: "ukka", 2: "devi", 3: "tei", 4: "sei", 5: "paa/paki", 6: "senki", 7: "ei", 8: "oo/oni", 9: "zee/zehi"}
     teen = {11: "uveri", 12: "deveri", 13: "teveri", 14: "severi", 15: "paveri", 16: "seneri", 17: "eijeri", 18: "overi", 19: "zegheri"}
     ten = {1: "verri", 2: "devveire", 3: "tevveire", 4: "sevveire", 5: "pavveire", 6: "senneire", 7: "evveire", 8: "onneire", 9: "zegheire"}
+    _21 = {0: "", 1: "ukku", 2: "deu", 3: "teiju", 4: "seiju", 5: "pau", 6: "senku", 7: "eiju", 8: "ou", 9: "zeu"}
     hundred = ["arraiki", "arraikädan"]
     exp_1000 = ["kirraa", "kirraadan"]
     exp = ["ugaristu", "devaristu", "tevaristu", "sekaristu", "pakkaristu", "sennaristu", "eijaristu", "onaristu", "zeharistu", "verraristu"]
@@ -48,7 +49,8 @@ def rsl_number(value: int):
             _99v = teen[_99]
         else:
             _v, _u = divmod(_99, 10)
-            _99v = f"{one[_u]} u {ten[_v]}" if _u > 0 else ten[_v]
+            _99v = f"{_21[_u]}{ten[_v]}" if _u > 0 else ten[_v]
+            # _99v = f"{one[_u]} u {ten[_v]}" if _u > 0 else ten[_v]
         _100 = _999 // 100
         _100v = "" if _100 == 0 else ((f"{one[1]} {hundred[0]}" if _100 == 1 else f"{one[_100]} {hundred[1]}") + (", " if _99 != 0 else ""))
         return _100v + _99v
@@ -63,7 +65,7 @@ def rsl_number(value: int):
     for i in range(_range):
         val = large[i]
         if val > 0:
-            n1, n2 = exp_1000 if i == 0 else ((_name := exp[i - 1]), _name[:-1] + "azan")
+            n1, n2 = exp_1000 if i == 0 else ((_name := exp[i - 1]), _name[:-1] + "adan")
             name = n1 if val % 100 == 1 else n2
             outputs.append(f"{thousand(val)}{'r' if val == 1 and i > 0 else ''} {name}")
     return ", ".join(outputs[::-1])
@@ -128,7 +130,7 @@ rsl1_pronunciation = """This is how RSL-1 was intended to sound.
 Format: Letter - IPA - English Approximation
 A - [a] or [ɑ] - ah
 B - [b] - b
-C - [ts] - Japanese "tsunami", Russian "tsar"
+C - [ts] - 'ts' in Japanese "tsunami" or 'ц' in Russian "царь/tsar"
 D - [d] - d
 E - [ɛ] or [e] - 'eh', the 'e' in 'bed'
 F - [f] - f
@@ -167,10 +169,7 @@ It's like the 'n' in Russian 'niet'
 The stress in the word is usually on the first syllable, sometimes the second. In compound words, all of the parts are stressed:
 seijantaikka - [ˌsɛj:an'tajk:a] (compound word from 'seija' and 'taikka')
 
-`´` (á, é, í, ó, ú) simply denote the stressed syllable(s) in a word and is entirely optional for use.
-
-There are some of the exceptions to the spelling system:
-`ke` and `ge` and pronounced as if they were `ky` and `gy` ([kʲe] and [gʲe]) - but some words are still written with ky, gy"""
+`´` (á, é, í, ó, ú) simply denote the stressed syllable(s) in a word and is entirely optional for use."""
 
 
 rsl1_grammar = ["""RSL-1 Grammar and Structure - Part 1: Nouns and adjectives
@@ -182,26 +181,25 @@ The noun's gender affects the adjective ending and the 3rd person pronoun form
 
 Nouns and adjectives have 10 cases:
 Nominative (NOM) - the subject of a sentence (I, he, we)
-Genitive (GEN) - English preposition 'of'
+Genitive (GEN) - basically, 'of'
 Dative (DAT) - the indirect object of a sentence ("I give something **to you**")
 Accusative (ACC) - the object of a sentence (me, him, us)
 Instrumental (INS) - 'with the aid of...', 'using...', 'by...'
 Comitative (COM) - '(together) with'
 Abessive (ABE) - 'without', '-less'
-Locative (LOC) - in, inside something
+Locative (LOC) - 'in', inside something
 Lative (LAT) - 'towards'
 Ablative (ABL) - 'away from'
 The case name abbreviations will be used so I don't have to write the full name of the case in the sentence structure
 
-Nouns and pronouns also have a possessive form (like English `'s`): Regaus'ta vahtaa = vahtaa Regaus'un = Regaus' life.
+Nouns and pronouns also have a possessive form (like English `'s`), like this: Regaus'ta vahtaa = vahtaa Regaus'an = Regaus' life.
 Adjectives can be turned into adverbs by replacing the ending with `-i`: zeranvar = fast, quick -> zeranvi = quickly
 To decline a certain noun or adjective, use `..rsl1 changes nouns` and `..rsl1 changes adjectives`
 
-For adjectives, you can add `ku-` for the `-er` form (e.g. cute -> cuter), `iga-` for `-est`""",
+For adjectives, you can add `ku-` for the `-er` form (e.g. millar = cute -> kumillar = cuter), `iga-` for `-est` (igamillar = cutest)""",
                 """RSL-1 Grammar and Structure - Part 2: Verbs
-RSL-1 verbs change for person and tense.
-They have separate endings, depending on who does the action. (Like German, Russian, Finnish and many other languages)
-They are then followed by a suffix for tense.
+RSL-1 verbs change for person and tense. The person is usually only marked in the present tense.
+
 RSL-1 distinguishes 4 tense forms:
 Present - Something happens or is happening
 Past - Something happened or was happening
@@ -209,9 +207,9 @@ Future - Something will happen
 Conditional - Something would happen
 
 In the past tense, the verb gets a prefix if the action is complete. The incomplete form usually corresponds to the English "was ...-ing" form of the verb.
-paikaillan = to happen -> paikallak = was happening -> kipaikallak = happened
+paikallan = to happen -> paikallah = was happening -> paikallak = happened
 
-They also have an imperative form (e.g. "Do this!")
+They also have an imperative form (commands, for example "Do this!")
 dejan = to do -> dejar = do (to one person), dejart = do (to multiple people)
 
 For reflexive verbs (doing something to oneself), most of the time they have a `-sa` suffix. 
@@ -224,53 +222,56 @@ ittean = to go -> te itteas = you go/are going -> itteasta? - are you going?
 To conjugate a certain verb, ~~just ask Regaus, that shit is a fucking mess~~ use `..rsl1 changes verbs`""",
                 """RSL-1 Grammar and Structure - Part 3: Participles and Converbs
 RSL-1 also has participles and converbs. Participles are used for passive constructions.
-As participles also act like adjectives, you can drop "the one who is..." part of the sentence. (This works like in Russian.)
+As participles also act like adjectives, you can drop "the one who is..." part of the sentence. (This works kinda like in Russian.)
 From dejan - to do, you can form:
 Active participles:
 dejannar = doing (делающий)
-dejadar = (the one who) was doing (делавший)
-kidejadar = (the one who) has/had done (сделавший)
+dejattar = (the one who) was doing (делавший)
+dejadar = (the one who) has/had done (сделавший)
 
 Passive participles:
 dejamar = doable, or (something that) is being done (делаемый)
-dejattar = (something that) was being done (деланный)
-kydejattar = (something that) was/has been done (сделанный)
+dejaghar = (something that) was being done (деланный)
+dejakar = (something that) was/has been done (сделанный)
 
 Converbs:
 dejavi - while doing (делая)
 deijad - having done (сделав)""",
-                """RSL-1 Grammar and Structure - Part 4: Syntax and sentence structure
-The basic word order is SVO, similar to English, German, or Russian:
+                """RSL-1 Grammar and Structure - Part 4: Basic syntax and sentence structure
+The basic word order is SVO (Subject-Verb-Object):
 Mu saiqanara = I exist
 Mu deja nedaa = I do something
-Mu kihittak tev uu aivallou = I gave you an apple
+Mu hittak tev uu aivallou = I gave you an apple
 The word order in the above sentences matches the English.
 
-The order is, however, somewhat flexible if you want to emphasise a specific part of the sentence:
-An daa saidalluu naat ua liarta = There is a book on the table (lit. On the table is a book)
+The order is, however, somewhat flexible if you want to emphasise or focus on a specific part of the sentence:
+An na saidalluu naat ua liarta = There is a book on the table (lit. On the table is a book)
+Ua liarta naat an na saidalluu = There is a book on the table (lit. A book is on the table)
+In the first sentence the focus is on the table, while the second one focuses on the book.
 
 For questions, the word order is also similar to English:
 Dejada mu edou? = Am I doing this?
-Ne kaidas (te)? = What do you want?
+Ne haidas (te)? = What do you want?
 Nai naat on zeide? = Why is he here?
 
-To negate a sentence, you can use the negative particle `de` (= "not"):
+To negate a sentence, you can use the negative particle `de` (= "not"), which is put *before* the verb:
 Mu de zaiva idou = I don't know what (lit. I know not that)
+
 For the verbs "to be", you may drop it in the present tense:
-On de Regaus = He's not Regaus (lit. he not Regaus)
+On de Regaus = He's not Regaus (lit. he not Regaus) (however "on de naat Regaus" makes sense too)
 On de kaina Regaus = He wasn't Regaus (lit. he not was Regaus)
 
-There is no verb form or construction for impersonal commands (such as "Let's go") at the moment, however you can use other verbs of similar meaning:
-Me taitan zeidead ittean = We should go away from here (lit. We should-1pl here-abl go-inf)""",
+To form impersonal commands like "Let's go", you can use the (singular) imperative form together with the pronoun:
+Ittear me = Let's go (lit. "Go-imp we")""",
                 """RSL-1 Grammar and Structure - Part 5: Compound and complex sentences
 Compound sentences are formed not too differently from European languages:
 An naat zeide, no mu de haida aan zeide veitean - She is here, but I don't want to see her here
 lit. She is here, but I not want her here see
 
-Mu ivja ei kaadazan si u haida kedaa murannan - I am 7 years old and want to kill someone
+Mu ivja ei kaadadan si u haida kedaa murannan - I am 7 years old and want to kill someone
 lit. I have seven years in-self and want someone-acc kill
 
-Var mu kaina Senkadari Laikaduri, mu kivideak vu - While I was in Senko Lair, I met you (plural)
+Var mu kaina Senkadari Laikaduri, mu videak vu - While I was in Senko Lair, I met you (plural)
 lit. While I was Senko's-loc Lair-loc, I met you-pl.
 
 Te saikarna zaivasva, ken mu delvaa - You will soon know, whom I hate
@@ -279,34 +280,35 @@ lit. You soon will-know, who-acc I hate
 Nai haidas te zaivan, ne mu kiara? - Why do you want to know what I say?
 lit. Why want you know, what-acc I say
 
-Dar gar, nei mu vahtaa, naat kai Senkagar invamar - The city I live in is called Senkotown
-lit. The city, what-loc I live, is as/like Senko-town called (pres. passive)""",
-                """RSL-1 Grammar and Structure - Part 6: Numbers and Time
-Numerals are followed similar to German:
+Dar gar, nei mu vahtaa, naat kai Senkagar invamar - The city I live in is called Senkagar (Senkotown/Senko City)
+lit. The city, what-loc I live, is as/like Senko-town called-pres.""",
+                """RSL-1 Grammar and Structure - Part 6: Numbers
+Numerals are formed similar to German:
 6 = senki
 10 = verri
 16 = seneri
 60 = senneire
-66 = senki u senneire (lit. six and sixty)
-1234 = ukka kirraa, devi arraikädan, sei u tevveire (lit. one thousand, two hundreds, four and thirty)
+66 = senkusenneire (six-and-sixty)
+1234 = ukka kirraa, devi arraikädan, seijutevveire (lit. one thousand, two hundreds, four-and-thirty)
+To translate a specific number to RSL-1, use `..rsl1 number <number>`
 
-ukka neda = one thing - the noun is in nominative case singular when you are talking about one thing
-devi nedadan = two things - the noun is in genitive case plural when you are talking about more (or less) than one thing
+The noun is in nominative case singular when you are talking about one thing:
+ukka neda = one thing
 
+The noun is in the genitive case singular when you are talking about a fraction of a thing (more than zero, but less than one):
+ua alva nedan = a half of (a) thing
+
+The noun is in genitive case plural when you are talking about any other number of things:
+ukka u ua alva nedadan = one and a half things
+devi nedadan = two things
+
+The number takes the case-marking in these forms, while the things themselves don't get changed:
 Mu deja devia nedadan = I am doing two things
-The number takes the accusative case (as the two things are the object of the sentence), while the things themselves stay in the genitive plural
+Mu kiara av devin nedadan = I am talking about two things
 
-However, if you are talking about one thing, both the number and the thing will take the accusative case:
+However, when talking about one thing, both the number one and the thing will take the case:
 Mu deja ukkaa nedaa = I am doing one thing
-
-This is how to tell time:
-Esea naat na devveirede Navattun na 1745'dan kaadun, esaa naat ukka u devveire saadan u tei u sevveire arhasaadan
-Today is the 20th of January 1745, right now it's 21:43
-lit. Today is the 20th-nom January-gen the 1745th-gen year-gen, now is 1 and 20-nom hours-gen and 3 and 40-nom minutes-gen 
-
-devveiredei Navattun na 1745'dan kaadun, ij ukka u devveirei saadan u tei u sevveirei arhasaadan
-on the 20th of January 1745, at 21:43
-lit. 20th-loc January-gen the 1745th-gen year-gen, at 1 and 20-loc hours-gen and 3 and 40-loc minutes-gen
+Mu kaira av ukkan nedan = I am talking about one thing
 
 little/few = virse
 less = kuvirse
@@ -314,22 +316,35 @@ least = ivvirse
 
 many/much = valse
 more = kuvalse
-most = ivvalse"""]
+most = ivvalse""",
+                """RSL-1 Grammar and Structure - Part 7: Weird Time Things
+Telling time can be a bit weird compared to English:
+Esea naat na 20'de Navattun 1745 - Full: Esea naat na devveirede Navattun (na) 1745'dan (kaadun)
+Today is the 20th of January 1745
+lit. Today is the 20th-nom January-gen (the) 1745th-gen (year-gen)
+
+Esaa naat 21:43 - Full: Esaa naat ukkudevveire saadan teijusevveire
+It's 21:43 (right now)
+lit. Now is 21-nom hours-gen 43-nom
+
+20'i Navattun 1745 ij 21:43 - Full: Devveiredei Navattun (na) 1745'dan (kaadun), ij ukkudevveirei saadan sevveirei
+on the 20th of January 1745, at 21:43
+lit. 20th-loc January-gen (the) 1745th-gen (year-gen), at 21-loc hours-gen 43-loc"""]
 
 
-rsl1_pronouns = """Pronouns           | 1sg     | 2sg   | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl   | 3pl   | self   | what   | who
-English            | I       | you   | he    | she   | it    | we*    | we*    | you   | they  | self   | what   | who
-Nominative         | mu      | te    | on    | an    | e/en  | me     | ma     | ve    | in    | se     | ne     | ke
-Genitive           | mun     | ta    | oan   | aan   | en    | men    | man    | va    | ian   | sa     | nen    | ken
-Dative             | muv     | tev   | ov    | aav   | ev    | mev    | mav    | vev   | iv    | sev    | nev    | kev
-Accusative         | mut/mun | tu    | ou    | aan   | ev/en | men    | man    | vu    | if    | su/sa  | ne/nea | kea/ken/ku
-Instrumental       | mur     | ter   | or    | ar    | er    | mer    | mar    | ver   | iur   | ser    | ner    | ker
-Comitative         | muar    | tear  | oor   | aar   | ear   | meir   | mair   | veir  | iir   | seir   | near   | kear
-Abessive           | muh     | tah   | oh    | ah    | eh    | meh    | mah    | vah   | ih    | sah    | neh    | kah
-Locative           | mi      | ti    | oi    | ai    | ei    | mei    | mai    | vi    | ii    | si/sei | nei    | kei
-Lative             | mut     | tet   | ot    | at    | et    | met    | mat    | vet   | it    | set    | net    | ket
-Ablative           | muad    | tead  | oad   | aad   | ead   | mead   | maad   | vead  | iad   | sead   | nead   | kead
-Possessive         | munnar  | tar   | onnar | annar | ennar | mennar | mannar | var   | innar | sar    | nennar | kennar"""
+rsl1_pronouns = """Pronouns           | 1sg     | 2sg      | 3sg m | 3sg f | 3sg n | 1pl i  | 1pl e  | 2pl      | 3pl   | self   | what   | who
+English            | I       | you      | he    | she   | it    | we*    | we*    | you      | they  | self   | what   | who
+Nominative         | mu      | te       | on    | an    | e/en  | me     | ma     | ve       | in    | se     | ne     | ke
+Genitive           | mun     | ta       | oan   | aan   | en    | men    | man    | va       | ian   | sa     | nen    | ken
+Dative             | muv     | tev      | ov    | aav   | ev    | mev    | mav    | vev      | iv    | sev    | nev    | kev
+Accusative         | mut/mun | tu       | ou    | aan   | ev/en | men    | man    | vu       | if    | su/sa  | ne/nea | kea/ken/ku
+Instrumental       | mur     | ter      | or    | ar    | er    | mer    | mar    | ver      | iur   | ser    | ner    | ker
+Comitative         | muar    | tear     | oor   | aar   | ear   | meir   | mair   | veir     | iir   | seir   | near   | kear
+Abessive           | muh     | tah      | oh    | ah    | eh    | meh    | mah    | vah      | ih    | sah    | neh    | kah
+Locative           | mi      | ti       | oi    | ai    | ei    | mei    | mai    | vi       | ii    | si/sei | nei    | kei
+Lative             | mut     | tet      | ot    | at    | et    | met    | mat    | vet      | it    | set    | net    | ket
+Ablative           | muad    | tead/tad | oad   | aad   | ead   | mead   | maad   | vead/vad | iad   | sead   | nead   | kead
+Possessive         | munnar  | tar      | onnar | annar | ennar | mennar | mannar | var      | innar | sar    | nennar | kennar"""
 
 
 class GA78(commands.Cog):
@@ -357,7 +372,7 @@ class GA78(commands.Cog):
         tq = ss23.date_kaltaryna(dt)       # Time in Qevenerus/Kaltaryna RSL-1
         td = ss23.date_kargadia_5(dt)      # Time on Kargadia RSL-5
         td2 = ss23.time_earth_5(dt, True)  # Time on Earth RSL-5 DT
-        months_1 = ["Seldan Masailnaran", "Nuannaran", "Seimannaran", "Veisanaran", "Eilannaran", "Havazdallarinnaran",
+        months_1 = ["Seldamasailnaran", "Nuannaran", "Seimannaran", "Veisanaran", "Eilannaran", "Havazdallarinnaran",
                     "Sanvaggannaran", "Kailaggannaran", "Semardannaran", "Addanvaran", "Halltuavaran", "Masailnaran"]
         months_5 = ["Chìlderaljanselaljan", "Anveraijanselaljan", "Síldarinselaljan", "Kûstanselaljan",
                     "Vullastenselaljan", "Khavastalgèrinselaljan", "Senkanselaljan", "Dhárelanselaljan",
@@ -365,11 +380,11 @@ class GA78(commands.Cog):
         tn = time.kargadia_convert(dt)
         tn1 = tn.strftime(f"%A, %d {months_1[tn.month % 12]} %Y, %H:%M:%S %Z")
         tn5 = tn.strftime(f"%A, %d {months_5[tn.month % 12]} %Y, %H:%M:%S %Z")
-        return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-1_kg): **{tn1}**\n"
+        return await general.send(f"Time on this Earth (English): **{ti}**\nTime on this Earth (RSL-1d): **{tn1}**\n"
                                   f"Time on this Earth (RSL-5 NE): **{tn5}**\nTime on this Earth (RSL-5 DT): **{td2}**\n"
                                   f"Time on 23.4 Zeivela (Local): **{tz}**\n"
-                                  f"Time on 23.5 Kargadia (RSL-1_kg): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
-                                  f"Time on 23.6 Qevenerus (RSL-1_ka): **{tq}**", ctx.channel)
+                                  f"Time on 23.5 Kargadia (RSL-1d): **{tk}**\nTime on 23.5 Kargadia (RSL-5): **{td}**\n"
+                                  f"Time on 23.6 Qevenerus (RSL-1h): **{tq}**", ctx.channel)
 
     @commands.command(name="time24")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -391,7 +406,7 @@ class GA78(commands.Cog):
         return await general.send(f"Time on this Earth (English): **{ti}**\n"
                                   f"Time on 24.4 Sinvimania (Local Solar): **{t24_4_local}**\n"
                                   f"Time on 24.5 Hosvalnerus (Local): **{t24_5_local}**\n"
-                                  f"Time on 24.11 Kuastall-11 (RSL-1_ku): **{t24_11_1}**", ctx.channel)
+                                  f"Time on 24.11 Kuastall-11 (RSL-1e): **{t24_11_1}**", ctx.channel)
 
     @commands.command(name="weather23")
     @commands.is_owner()
@@ -536,22 +551,6 @@ class GA78(commands.Cog):
                  "Abessive", "Locative", "Lative", "Ablative", "Possessive"]
         singular = ["Singular", word] + [declined] * (len(cases) - 2)
         plural = ["Plural"] + [declined] * (len(cases) - 1)
-        # endings = {
-        #     1: [["", "an", "av", "aa", "ar", "air", "ai", "ait", "aad", "adar"],
-        #         ["at", "adan", "adav", "ada", "adar", "adir", "adi", "adat", "adid", "addar"]],
-        #     2: [["", "än", "äv", "äa", "är", "äir", "äi", "äit", "äad", "ädar"],
-        #         ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
-        #     3: [["", "in", "iv", "ia", "ir", "air", "ii", "it", "iad", "inar"],
-        #         ["ät", "ädan", "ädav", "äda", "ädar", "ädir", "ädi", "ädat", "ädid", "äddar"]],
-        #     4: [["", "en", "ev", "ee", "er", "our", "ei", "et", "ead", "enar"],
-        #         ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
-        #     5: [["", "on", "ov", "ou", "or", "our", "oi", "ot", "oad", "odar"],
-        #         ["on", "onan", "onav", "onu", "onor", "onir", "oni", "onat", "onid", "onnar"]],
-        #     6: [["", "un", "uv", "uu", "ur", "uar", "uri", "ut", "uad", "udar"],
-        #         ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
-        #     7: [["", "un", "uv", "u", "ur", "uar", "i", "ut", "ad", "tar"],
-        #        ["as", "azan", "azav", "azu", "azur", "azir", "azi", "azat", "azid", "azdar"]],
-        # }
         endings = {
             1: [["", "an", "av", "aa", "ar", "air", "ah", "i", "ait", "aad", "adar"],
                 ["at", "adan", "adav", "ada", "adar", "adir", "adah", "adi", "adat", "adid", "addar"]],
@@ -623,13 +622,13 @@ class GA78(commands.Cog):
         dar = [
             ["dar", "dan", "dav", "daa", "daar", "daur", "dah", "dari", "dart", "daad"],
             ["da", "dan", "dav", "dan", "daar", "dair", "dah", "dai", "dat", "daad"],
-            ["do", "don", "dov", "dou", "dor", "dour", "doh", "doi", "dot", "doad"],
+            ["da", "dan", "dav", "dau", "dor", "dour", "dah", "dai", "dat", "daad"],
             ["dan", "danan", "danav", "dana", "danor", "danir", "danah", "dani", "danat", "danid"]
         ]
         der = [
             ["der", "den", "dev", "dea", "dear", "deur", "deh", "deri", "dert", "dead"],
-            ["dea", "den", "dev", "dea", "dear", "deir", "deh", "dei", "det", "dead"],
-            ["deo", "den", "dev", "deu", "deor", "deur", "deh", "dei", "det", "dead"],
+            ["de", "den", "dev", "dea", "dear", "deir", "deh", "dei", "det", "dead"],
+            ["de", "den", "dev", "deu", "deor", "deur", "deh", "dei", "det", "dead"],
             ["den", "denan", "denav", "dena", "denor", "denir", "denah", "deni", "denat", "denid"]
         ]
         ur = [
@@ -666,7 +665,7 @@ class GA78(commands.Cog):
         bio = BytesIO()
         image.save(bio, "PNG")
         bio.seek(0)
-        a = "\nAdverb form: {word[:-2]}i (Note: does not work for some words)" if word not in \
+        a = f"\nAdverb form: {word[:-2]}i (Note: does not work for some words)" if word not in \
             ["dar", "der", "ur", "munnar", "tar", "onnar", "annar", "ennar", "mennar", "mannar", "var", "innar", "sar", "nennar", "kennar"] else ''
         return await general.send(f'Forms of the adjective "{word}"{a}', ctx.channel, file=discord.File(bio, "declension.png"))
         # return await general.send("Coming later. Insert that you can convert adjectives to adverbs by replacing -ar with -i" + word, ctx.channel)
@@ -681,68 +680,26 @@ class GA78(commands.Cog):
         sa = word[-2:] == "sa"
         li = -4 if sa else -2
         declined = word[:li] if word not in ["naan", "vian"] else ""
-        conj = ["Person", "1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "Past Incomp.", "Past Complete", "Future", "Conditional", "Imperative sg", "Imperative pl"]
-        normal = ["Present"] + [declined] * (len(conj) - 1)
-        interrogative = ["Yes/no"] + [declined] * (len(conj) - 1)
-        endings = [
-            ["a", "as", "at", "an", "az", "in", "ak", "ak", "av", "al", "ar", "art"],
-            ["ada", "asta", "atta", "anta", "azda", "inta", "akta", "akta", "afta", "alda", "-", "-"]
-        ]
-        naan = [
-            ["naa", "naas", "naat", "naam", "naaz", "nain/niin", "kaina", "-", "vaina", "saina", "naar", "naart"],
-            ["naada", "nasta", "natta", "nanta", "nazda", "nainta", "kainada", "-", "vainada", "sainada", "-", "-"]
-        ]
-        vian = [
-            ["ja", "jas", "jat/vön", "vim", "viz", "viin", "kaina", "-", "vaina", "saina", "viar/vär", "viart/värt"],
-            ["jada", "jasta", "jatta", "vinta", "vista", "vinda", "kainada", "-", "vainada", "sainada", "-", "-"]
-        ]
-        _n, _i = naan if word == "naan" else vian if word == "vian" else endings
+        conj = ["Form", "1sg", "2sg", "3sg", "1pl", "2pl", "3pl", "Past Imperf.", "Past Perfective", "Future", "Conditional", "Imperative sg", "Imperative pl"]
+        normal = ["Conjugation"] + [declined] * (len(conj) - 1)
+        endings = ["a", "as", "at", "an", "az", "an", "ah", "ak", "av", "al", "ar", "art"]
+        naan = ["naa", "naas", "naat", "naam", "naaz", "nain/niin", "kaina", "-", "vaina", "saina", "naar", "naart"]
+        vian = ["ja", "jas", "jat/vön", "vim", "viz", "viin", "kaina", "-", "vaina", "saina", "viar/vär", "viart/värt"]
+        _n = naan if word == "naan" else vian if word == "vian" else endings
         # _s, _f, _n, _p = dar if word == "dar" else der if word == "der" else ur if word == "ur" else endings
         # if word == "riadus":
         #     _p = endings[1][1]
         for i in range(1, len(conj)):
             normal[i] += _n[i - 1]
-            interrogative[i] += _i[i - 1]
-            if i == 8 and word not in ["naan", "vian"]:
-                # normal[i] = "ki" + normal[i]
-                # interrogative[i] = "ki" + interrogative[i]
-                normal[i] = {
-                    "sillardelittan": "sillarkidelittak",
-                    "saizannavadan": "saizankinavadak",
-                    "taivittan": "takiivittak",
-                    "iadsulvidan": "iadkisulvidak",
-                    "sennandejan": "sennankidejak",
-                    "anveisean": "ankiveiseak",
-                    "saizankainedan": "saizankikainedak",
-                    "takalteran": "takikalterak",
-                    "taittean": "takiitteak",
-                    "iadvirkannan": "iadkivirkannak",
-                    "sethittan": "setkihittak",
-                    "seadhittan": "seadkihittak",
-                    "angidan": "ankigidak",
-                    "kuttutildavan": "kuttutkiildavak",
-                    "takalvaan": "takikalvaak",
-                    "zeilaitleikyan": "zeilaitkileikyak",
-                    "ankillan": "ankikillak",
-                    "iadkulastan": "iadkikulastak",
-                    "ankiastan": "ankikiastak",
-                    "iadivittan": "iadkiivittak",
-                    "naivaitleikyan": "naivaitkileikyak",
-                    "iadkalteran": "iadkikalterak",
-                    "kuttutvakkaan": "kuttutkivakkaak"
-                }.get(word if not sa else word[:-2], "ki" + normal[i])
-                interrogative[i] = normal[i] + "ta"
+            # interrogative[i] += _i[i - 1]
             if sa:
                 normal[i] += "sa"
-                interrogative[i] += "sa"
-            if i in [11, 12]:
-                interrogative[i] = "-"
-        conj_len, normal_len, int_len = [[len(i) for i in conj], [len(i) for i in normal], [len(i) for i in interrogative]]
-        conj_fill, normal_fill, int_fill = max(conj_len), max(normal_len), max(int_len)
+        conj_len, normal_len = [len(i) for i in conj], [len(i) for i in normal]
+        conj_fill, normal_fill = max(conj_len), max(normal_len)
         outputs = []
         for i in range(len(conj)):
-            co, no, inter = conj[i], normal[i], interrogative[i]
-            outputs.append(f"{co:<{conj_fill}} | {no:<{normal_fill}} | {inter:<{int_fill}}")
+            co, no = conj[i], normal[i]
+            outputs.append(f"{co:<{conj_fill}} | {no:<{normal_fill}}")
         output = "\n".join(outputs)
         image = Image.new("RGB", (2000, 2000), (0, 0, 0))
         width, height = ImageDraw.Draw(image).textsize(output, font=font)
@@ -754,9 +711,9 @@ class GA78(commands.Cog):
         bio.seek(0)
         a = ""
         if word not in ["naan", "vian"]:
-            a += f"\nActive Participles:\n- Past (Complete) -> ki{declined}adar\n- Past (Incomplete) -> {declined}adar\n- Present -> {declined}annar\n\n" \
-                 f"Passive Participles:\n- Past (Complete) -> ky{declined}attar\n- Past (Incomplete) -> {declined}attar\n- Present -> {declined}amar\n\n" \
-                 f"Converbs:\n- Past -> {declined}{'ij' if word[-3] != 'j' else ''}ad\n- Present -> {declined}avi"
+            a += f"\nActive Participles:\nPast (Complete) -> {declined}adar\nPast (Incomplete) -> {declined}attar\nPresent -> {declined}annar\n\n" \
+                 f"Passive Participles:\nPast (Complete) -> {declined}akar\nPast (Incomplete) -> {declined}aghar\nPresent -> {declined}amar\n\n" \
+                 f"Converbs:\nPast -> {declined}{'ij' if word[-3] != 'j' else ''}ad\nPresent -> {declined}avi"
         return await general.send(f'Verb conjugation for "{word}"{a}', ctx.channel, file=discord.File(bio, "conjugation.png"))
         # return await general.send("Coming later." + word, ctx.channel)
 
