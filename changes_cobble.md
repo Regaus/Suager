@@ -127,3 +127,9 @@
 ## v1.1.2 - 22 March 2021
 - Time78 instead of time23 and time24
 - Removed ss23 and ss24
+
+## v1.1.2.1 - 24 March 2021
+- Fixed weather78 offsets
+- Fixed Kargadia and Qevenerus weekday outputs
+- Updated tbl time output
+- Added #secretive-commands-2 to also allow RSL-1 command

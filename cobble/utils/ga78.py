@@ -75,7 +75,7 @@ def time_kargadia(when: datetime = None, tz: float = 0):
         output.day_of_week -= 1
     parts = ["tea", "rea", "sea", "vea"]
     part = h // 6
-    output.day_name += parts[part]
+    output.day_name = weekdays[output.day_of_week] + parts[part]
     return output
 
 
@@ -93,7 +93,7 @@ def time_kaltaryna(when: datetime = None, tz: float = 0):
         output.day_of_week -= 1
     parts = ["Tea", "Rea", "Sea", "Vea"]
     part = h // 6
-    output.day_name = f"{parts[part]} ida {output.day_name}"
+    output.day_name = f"{parts[part]} ida {weekdays[output.day_of_week]}"
     output.month_name = f"ida Sakku ida {output.month_name}"
     return output
 
@@ -231,7 +231,7 @@ places = {
     "Peaskar": ["Kargadia", 218, 336]
 }
 offsets = {
-    "Kargadia": -343
+    "Kargadia": -343,
 }
 times = {
     "Zeivela": time_zeivela,
@@ -295,7 +295,7 @@ patterns = {
 
 class PlaceDoesNotExist(general.RegausError):
     def __init__(self, place):
-        super().__init__(f"Place not found: {place}")
+        super().__init__(text=f"Place not found: {place}")
 
 
 class Place:
@@ -313,8 +313,8 @@ class Place:
         self.weathers = patterns[self.place]
 
     def get_location(self):
-        offset = 0
         planet, x, y = places[self.place]
+        offset = offsets[planet]
         x += offset
         long = x / 5
         if long > 180:

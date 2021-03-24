@@ -7,11 +7,11 @@
     "last_update": 1616428568
   },
   "cobble": {
-    "short_version": "1.0",
-    "version": "1.1.2",
+    "short_version": "1.1",
+    "version": "1.1.2.1",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1616451894
+    "last_update": 1616626269
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

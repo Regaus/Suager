@@ -339,7 +339,7 @@
     ["party", "histevajan"],
     ["pass, pass by, go through", "ittesaijan"],
     ["pat", "valtaan"],
-    ["pay attention", "allardan"],
+    ["pay attention, notice", "allardan"],
     ["pay respects", "iadkulastan"],
     ["ping (on discord)", "pingan"],
     ["poke", "takraan"],
@@ -557,7 +557,8 @@
     ["until", "ida + lat."],
     ["while", "var"],
     ["with", "instrumental/comitative case"],
-    ["within", "ka i + gen."]
+    ["within", "ka i + gen."],
+    ["nor", "nu"]
   ],
   "bad": [
     ["cum (verb)", "kalvian"],

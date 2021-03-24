@@ -11,7 +11,9 @@ from languages import langs
 
 def tbl_locale(ctx: commands.Context):
     locale = langs.gl(ctx)
-    if not locale.startswith("rsl") and ctx.channel.id not in [725835449502924901, 742885168997466196, 610482988123422750]:  # SR8 and my command channels
+    # if not locale.startswith("rsl") and ctx.channel.id not in [725835449502924901, 742885168997466196, 610482988123422750]:  # SR8 and my command channels
+    if langs.get_data("_conlang", locale) is False and ctx.channel.id not in [725835449502924901, 742885168997466196, 610482988123422750]:
+        # SR8 and my command channels
         locale = "rsl-1e"  # if locale is not an RSL, force it to be RSL-1
     return locale
 
@@ -86,7 +88,7 @@ class Kuastall(commands.Cog):
     @tbl.command(name="time")
     async def tbl_time(self, ctx: commands.Context):
         """ TBL Time """
-        return await general.send(ga78.time_kargadia(tz=2), ctx.channel)
+        return await general.send(ga78.time_kargadia(tz=2).str(dow=True, era=None, month=False), ctx.channel)
         # return await general.send(ss23.date_kargadia(tz=2, tzn="TBT"), ctx.channel)
 
     @tbl.command(name="stats", aliases=["s"])

@@ -20,7 +20,7 @@ def is_rsl1_eligible(ctx: commands.Context):
         return True
     else:
         return ctx.channel.id in [610482988123422750, 787340111963881472, 725835449502924901, 742885168997466196, 798513492697153536, 672535025698209821,
-                                  799714065256808469]
+                                  799714065256808469, 753000962297299005]
 
 
 def rsl_number(value: int):
