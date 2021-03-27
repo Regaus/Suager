@@ -133,3 +133,7 @@
 - Fixed Kargadia and Qevenerus weekday outputs
 - Updated tbl time output
 - Added #secretive-commands-2 to also allow RSL-1 command
+
+## v1.1.2.2 - 26 March 2021
+- Fix TBL locations not updating their activity properly
+- Improve time78

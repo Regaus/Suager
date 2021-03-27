@@ -373,7 +373,7 @@ class GA78(commands.Cog):
                         _time = f"{_time}:00"
                 dt = time.from_ts(time.get_ts(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")), None)
             except ValueError:
-                return await general.send("Failed to convert date. Make sure it is in the format YYYY-MM-DD (hh:mm(:ss))", ctx.channel)
+                return await general.send("Failed to convert date. Make sure it is in the format YYYY-MM-DD hh:mm:ss (time part optional)", ctx.channel)
         time_earth = langs.gts(dt, "en_gb", True, False, True, True, False)
         output = f"Time on this Earth (English): **{time_earth}**"
         if ss == 23:
@@ -403,6 +403,8 @@ class GA78(commands.Cog):
                       f"\nTime on 24.4 Sinvimania (RLC-10): **{time_24_4_10}**" \
                       f"\nTime on 24.5 Hosvalnerus (Local): **{time_24_5l}**" \
                       f"\nTime on 24.11 Kuastall (RSL-1e/g): **{time_24_11e}**"
+        else:
+            output += f"\nNo times are available for SS-{ss}."
         return await general.send(output, ctx.channel)
 
     @commands.command(name="weather78", aliases=["w78"])

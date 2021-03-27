@@ -386,6 +386,7 @@ class Location:
             activity = 3
         if clan.member_count == 2:
             activity = 2
+        self.base_activity = self.get_activity()  # Update the activity level up to current time
         activity *= self.base_activity
         if activity < 2:
             activity = 2
@@ -399,10 +400,11 @@ class Location:
 
     def normal(self) -> int:
         """ Get the location's normal activity """
+        self.base_activity = self.get_activity()  # Update the activity level up to current time
         return int(players_base * self.base_activity)
 
     def death_rate_level(self, xp_level: int):
-        return self.death / (1 if xp_level <= 50 else 1 + (xp_level - 51) / 100)  # At level 250: x2.99
+        return self.death / (1 if xp_level <= 50 else 1 + (xp_level - 50) / 100)  # At level 250: x3.00
 
     def status(self, locale: str, level: int) -> discord.Embed:
         """ Returns an embed of the location's status """
