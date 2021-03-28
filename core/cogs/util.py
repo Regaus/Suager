@@ -40,15 +40,17 @@ class Utility(commands.Cog):
         locale = langs.gl(ctx)
         send = ""
         if locale == "rsl-1d":
-            data = ga78.time_kargadia(time.now(None))
+            # data = ga78.time_kargadia(time.now(None))
             # data = ss23.time_kargadia(time.now(None))
-            a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            # a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, False, True, False)
             send += langs.gls("util_time_sl", locale, b, a)
         elif locale == "rsl-1e":
-            data = ga78.time_kargadia(time.now(None))
+            # data =
             # data = ss23.time_kargadia(time.now(None))
-            a = f"{data.day_name}, {data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
+            a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+            # a = f"{data.day_name}, {data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
             z = time.kargadia_convert(time.now(None))
