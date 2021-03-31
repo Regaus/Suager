@@ -685,7 +685,7 @@ class Settings(commands.Cog):
         dp.append(self.bot.user.mention)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
-        embed.set_thumbnail(url=ctx.guild.icon_url)
+        embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
         embed.add_field(name="Default", value='\n'.join(dp), inline=True)
         if cp is not None and cp != []:
             embed.add_field(name="Custom", value='\n'.join(cp), inline=True)
@@ -712,7 +712,7 @@ class Settings(commands.Cog):
                 return await general.send("You can't have that role.", ctx.channel)
         else:
             embed = discord.Embed(description="\n".join(f"<@&{r}>" for r in roles), colour=general.random_colour())
-            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             return await general.send(f"Roles available in {ctx.guild}", ctx.channel, embed=embed)
 
     @commands.command(name="removerole", aliases=["takerole", "leaverole"])

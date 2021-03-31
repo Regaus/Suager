@@ -97,7 +97,7 @@ class Kuastall(commands.Cog):
         locale = tbl_locale(ctx)
         user = who or ctx.author
         player = tbl.Player.from_db(user, ctx.guild)
-        embed = player.status(locale, user.avatar_url)
+        embed = player.status(locale, user.avatar_url_as(size=1024))
         return await general.send(None, ctx.channel, embed=embed)
 
     @tbl.group(name="invites", aliases=["invite", "i"])
@@ -333,12 +333,19 @@ class Kuastall(commands.Cog):
     @tbl_clan.command(name="join")
     async def tbl_clan_join(self, ctx: commands.Context, clan_id: int):
         """ Join a clan """
-        return await general.send("Placeholder", ctx.channel)
-
-    @tbl_clan.command(name="search")
-    async def tbl_clan_search(self, ctx: commands.Context, *, name: str):
-        """ Search for a clan with a specific name """
-        return await general.send("Placeholder", ctx.channel)
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if player.level < 7:
+            return await general.send(langs.gls("kuastall_tbl_clan_player_lvl", locale), ctx.channel)
+        if player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_already", locale), ctx.channel)
+        clan = tbl.Clan.from_db(clan_id)
+        if not clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none2", locale, clan_id), ctx.channel)
+        if clan.type == 0:
+            player.clan = clan
+            player.save()
+            return await general.send(langs.gls("kuastall_tbl_clan_join_success", locale, clan.name), ctx.channel)
 
     @tbl.group(name="guild", aliases=["g", "server"])
     async def tbl_guild(self, ctx: commands.Context):
@@ -354,7 +361,7 @@ class Kuastall(commands.Cog):
         if not server:
             return await general.send("Guild not found", ctx.channel)
         guild = tbl.Guild.from_db(server)
-        embed = guild.status(locale, server.icon_url)
+        embed = guild.status(locale, server.icon_url_as(size=1024))
         return await general.send(None, ctx.channel, embed=embed)
 
     @tbl.command(name="locations", aliases=["location", "loc", "l"])

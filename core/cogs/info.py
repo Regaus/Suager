@@ -28,7 +28,7 @@ class BotInformation(commands.Cog):
         version_data = general.get_version()[self.bot.name]
         embed = discord.Embed(colour=general.random_colour())
         embed.title = langs.gls("info_stats_about", locale, self.bot.user, version_data["version"])
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
+        embed.set_thumbnail(url=self.bot.user.avatar_url_as(size=1024))
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=langs.gls("info_stats_developers", locale),  value=f"**{owners}**", inline=True)
         uptime = langs.td_dt(self.bot.uptime, locale, brief=True, suffix=False)

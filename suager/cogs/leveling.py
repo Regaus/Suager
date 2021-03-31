@@ -326,7 +326,7 @@ class Leveling(commands.Cog):
             rewards = data['leveling']['rewards']
             rewards.sort(key=lambda x: x['level'])
             embed = discord.Embed(colour=general.random_colour())
-            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             embed.title = langs.gls("leveling_rewards_title", locale, ctx.guild.name)
             d = ''
             for role in rewards:

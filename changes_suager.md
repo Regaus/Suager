@@ -724,3 +724,7 @@
 - Better conlang handling
 - Fixed starboard crashing when channels no longer existed
 - Suager updates should now finally send properly
+
+## v7.2.17 - 1 April 2021
+- Changed Suager's avatar to Regaus
+- Changed avatar and icon links to size=1024 in most places
