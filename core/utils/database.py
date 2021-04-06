@@ -228,9 +228,9 @@ tables = [
         Column("level", 0, True),
         Column("xp", 1, True),
         Column("coins", 1, True),             # Guild Coins
-        Column("araksat_boost", 1, True),     # How much members' Araksat gain is increased (1% per boost, max 300%) // 300 UP
-        Column("xp_boost", 1, True),          # How much members' XP gain is increased (1% per boost, max 300%)      // 300 UP
-        Column("energy_reduction", 1, True),  # How much less energy members need per round (-0.1 per boost, max -5) // 500 UP
+        Column("araksat_boost", 1, True),     # How much members' Araksat gain is increased (1% per boost, max 300%) // 300 GC
+        Column("xp_boost", 1, True),          # How much members' XP gain is increased (1% per boost, max 300%)      // 300 GC
+        Column("energy_reduction", 1, True),  # How much less energy members need per round (-0.1 per boost, max -5) // 500 GC
     ]),
     Table("tbl_invite", [
         Column("user", 0, True),

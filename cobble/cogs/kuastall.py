@@ -41,6 +41,7 @@ class Kuastall(commands.Cog):
         self.bot = bot
 
     @commands.group(name="tbl")
+    @commands.guild_only()
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 517012611573743621])  # Temporarily lock TBL while it's not finished
     # @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -103,19 +104,20 @@ class Kuastall(commands.Cog):
     @tbl.group(name="invites", aliases=["invite", "i"])
     async def tbl_invites(self, ctx: commands.Context):
         """ Check your invites """
-        locale = tbl_locale(ctx)
-        invites = tbl.Invite.from_db_user(ctx.author.id)
-        if not invites:
-            return await general.send(langs.gls("kuastall_tbl_invites_none", locale, ctx.author.name), ctx.channel)
-        output = []
-        types = langs.get_data("kuastall_tbl_invite_type", locale)
-        for invite in invites:
-            user = self.bot.get_user(invite.user_id)
-            clan = tbl.Clan.from_db(invite.clan_id)
-            name = clan.name if clan is not None else "Clan not found"
-            inv_type = types[invite.type]
-            output.append(langs.gls("kuastall_tbl_invite", locale, user, name, inv_type, invite.id))
-        return await general.send(langs.gls("kuastall_tbl_invites", locale, ctx.author, "\n\n".join(output)), ctx.channel)
+        if ctx.invoked_subcommand is None:
+            locale = tbl_locale(ctx)
+            invites = tbl.Invite.from_db_user(ctx.author.id)
+            if not invites:
+                return await general.send(langs.gls("kuastall_tbl_invites_none", locale, ctx.author.name), ctx.channel)
+            output = []
+            types = langs.get_data("kuastall_tbl_invite_type", locale)
+            for invite in invites:
+                user = self.bot.get_user(invite.user_id)
+                clan = tbl.Clan.from_db(invite.clan_id)
+                name = clan.name if clan is not None else "Clan not found"
+                inv_type = types[invite.type]
+                output.append(langs.gls("kuastall_tbl_invite", locale, user, name, inv_type, invite.id))
+            return await general.send(langs.gls("kuastall_tbl_invites", locale, ctx.author, "\n\n".join(output)), ctx.channel)
 
     @tbl_invites.command(name="accept", aliases=["a"])
     async def tbl_pi_accept(self, ctx: commands.Context, invite_id: int):
@@ -346,6 +348,114 @@ class Kuastall(commands.Cog):
             player.clan = clan
             player.save()
             return await general.send(langs.gls("kuastall_tbl_clan_join_success", locale, clan.name), ctx.channel)
+        if clan.type == 1:
+            invite = tbl.Invite.from_db(ctx.author.id, clan.id)
+            if invite:
+                if invite.type == 1:
+                    work = invite.accept()
+                    if work:
+                        return await general.send(langs.gls("kuastall_tbl_clan_join_success", locale, clan.name), ctx.channel)
+                    else:
+                        return await general.send(langs.gls("kuastall_tbl_clan_join_failure", locale, clan.name), ctx.channel)
+            invite = tbl.Invite.new(ctx.author.id, clan.id, 0)
+            invite.save()
+            owner = self.bot.get_user(clan.owner)
+            try:
+                await owner.send(f"[TBL] {ctx.author} has asked to join your clan {clan.name}\n"
+                                 f"To accept: `..tbl invite accept {invite.id}`\nTo reject: `..tbl invite reject {invite.id}`")
+                return await general.send(langs.gls("kuastall_tbl_clan_join_invite", locale, clan.name), ctx.channel)
+            except discord.Forbidden:
+                return await general.send(langs.gls("kuastall_tbl_clan_join_invite2", locale, clan.name), ctx.channel)
+        if clan.type == 2:
+            return await general.send(langs.gls("kuastall_tbl_clan_join_forbidden", locale, clan.name), ctx.channel)
+
+    @tbl_clan.command(name="leave")
+    async def tbl_clan_leave(self, ctx: commands.Context):
+        """ Leave your clan """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner == ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_clan_leave_forbidden", locale), ctx.channel)
+        player.clan = None
+        player.save()
+        return await general.send(langs.gls("kuastall_tbl_clan_leave", locale), ctx.channel)
+
+    @tbl_clan.command(name="delete")
+    @commands.check(is_clan_owner)
+    async def tbl_clan_delete(self, ctx: commands.Context):
+        """ Delete the clan """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_clan_delete_forbidden", locale), ctx.channel)
+        message = await general.send(langs.gls("kuastall_tbl_clan_delete_confirm", locale, player.clan.name), ctx.channel)
+
+        def check_confirm(m):
+            if m.author == ctx.author and m.channel == ctx.channel:
+                if m.content == "yes":
+                    return True
+            return False
+        try:
+            await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
+        except asyncio.TimeoutError:
+            return await message.edit(content=langs.gls("generic_timed_out", locale, message.clean_content))
+
+        invites = tbl.Invite.from_db_clan(player.clan.id)
+        for invite in invites:
+            invite.delete()
+        self.bot.db.execute("UPDATE tbl_player SET clan=? WHERE clan=?", (None, player.clan.id))
+        self.bot.db.execute("DELETE FROM tbl_clan WHERE clan_id=?", (player.clan.id,))
+        return await general.send(langs.gls("kuastall_tbl_clan_delete", locale, player.clan.name), ctx.channel)
+
+    @tbl_clan.command(name="transfer")
+    @commands.check(is_clan_owner)
+    async def tbl_clan_transfer(self, ctx: commands.Context, user: discord.User):
+        """ Transfer the ownership of your clan to someone else """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_clan_transfer_forbidden", locale), ctx.channel)
+        player2 = tbl.Player.from_db(user, ctx.guild)
+        if not player2.clan or player.clan.id != player2.clan.id:
+            return await general.send(langs.gls("kuastall_tbl_clan_transfer_same", locale, user), ctx.channel)
+        message = await general.send(langs.gls("kuastall_tbl_clan_transfer_confirm", locale, player.clan.name, user), ctx.channel)
+
+        def check_confirm(m):
+            if m.author == ctx.author and m.channel == ctx.channel:
+                if m.content == "yes":
+                    return True
+            return False
+        try:
+            await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
+        except asyncio.TimeoutError:
+            return await message.edit(content=langs.gls("generic_timed_out", locale, message.clean_content))
+
+        player.clan.owner = user.id
+        player.clan.save()
+        return await general.send(langs.gls("kuastall_tbl_clan_transfer", locale, user, player.clan.name), ctx.channel)
+
+    @tbl_clan.command(name="donate", aliases=["contribute"])
+    async def tbl_clan_donate(self, ctx: commands.Context, coins: int):
+        """ Donate some of your Coins to the clan (for extra Upgrade Points) """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if coins < 1:
+            return await general.send(langs.gls("kuastall_tbl_donate_negative", locale), ctx.channel)
+        if player.coins < coins:
+            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
+        player.coins -= coins
+        player.clan.points += coins / 5
+        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 5, locale, 1)
+        player.save()
+        return await general.send(langs.gls("kuastall_tbl_donate", locale, r1, r2, player.clan.name), ctx.channel)
 
     @tbl.group(name="guild", aliases=["g", "server"])
     async def tbl_guild(self, ctx: commands.Context):
@@ -364,6 +474,21 @@ class Kuastall(commands.Cog):
         embed = guild.status(locale, server.icon_url_as(size=1024))
         return await general.send(None, ctx.channel, embed=embed)
 
+    @tbl_guild.command(name="donate", aliases=["contribute"])
+    async def tbl_guild_donate(self, ctx: commands.Context, coins: int):
+        """ Donate some of your Coins to the guild (for extra Upgrade Points) """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if coins < 1:
+            return await general.send(langs.gls("kuastall_tbl_donate_negative", locale), ctx.channel)
+        if player.coins < coins:
+            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
+        player.coins -= coins
+        player.guild.coins += coins / 10
+        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 10, locale, 1)
+        player.save()
+        return await general.send(langs.gls("kuastall_tbl_donate2", locale, r1, r2, player.guild.name), ctx.channel)
+
     @tbl.command(name="locations", aliases=["location", "loc", "l"])
     async def tbl_locations(self, ctx: commands.Context, location_id: int = None):
         """ TBL Locations """
@@ -379,9 +504,6 @@ class Kuastall(commands.Cog):
         embed = location.status(locale, player.level)
         return await general.send(None, ctx.channel, embed=embed)
 
-    # TODO: clan join/leave
-    # TODO: clan search
-    # TODO: donate coins to clan/guild
     # TODO: clan locations and playing on them
     # TODO: use shaman feathers
     # TODO: use clan upgrade points

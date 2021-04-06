@@ -619,7 +619,8 @@ class Player:
         l1, l3 = get_league(self.league_points, locale)
         l2 = langs.gns(self.league_points, locale)
         embed.add_field(name=langs.gls("kuastall_tbl_stats_leagues", locale), value=langs.gls("kuastall_tbl_stats_league", locale, l1, l2, l3), inline=False)
-        e1, e2, e3 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1), langs.gfs(self.energy_regen, locale, 1)
+        e1, e2 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
+        e3 = langs.plural(self.energy_regen, "time_second", locale, 1)  # langs.gfs(self.energy_regen, locale, 1)
         if self.energy >= self.energy_limit:
             e4 = langs.gls("kuastall_tbl_stats_energy_full", locale)
         else:
@@ -815,7 +816,7 @@ class Invite:
         return cls({"user": user_id, "clan": clan_id, "type": invite_type, "id": random.randint(10000, 99999)}, True)
 
     @classmethod
-    def from_db_id(cls, invite_id):
+    def from_db_id(cls, invite_id: int):
         """ Load an invite by invite ID """
         data = db.fetchrow("SELECT * FROM tbl_invite WHERE id=?", (invite_id,))
         if not data:
@@ -823,7 +824,7 @@ class Invite:
         return cls(data, False)
 
     @classmethod
-    def from_db_clan(cls, clan_id):
+    def from_db_clan(cls, clan_id: int):
         """ Load all invites belonging to a clan """
         data = db.fetch("SELECT * FROM tbl_invite WHERE clan=?", (clan_id,))
         out = []
@@ -832,7 +833,7 @@ class Invite:
         return out
 
     @classmethod
-    def from_db_user(cls, user_id):
+    def from_db_user(cls, user_id: int):
         """ Load all invites belonging to a user/player """
         data = db.fetch("SELECT * FROM tbl_invite WHERE user=?", (user_id,))
         out = []
@@ -841,7 +842,7 @@ class Invite:
         return out
 
     @classmethod
-    def from_db(cls, user_id, clan_id):
+    def from_db(cls, user_id: int, clan_id: int):
         """ Load an invite by user ID and clan ID """
         data = db.fetchrow("SELECT * FROM tbl_invite WHERE user=? AND clan=?", (user_id, clan_id))
         if not data:

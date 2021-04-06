@@ -531,6 +531,7 @@
     ["between", "ittar + loc."],
     ["but", "no"],
     ["by (made by)", "ad"],
+    ["even though", "allhada"],
     ["for (price)", "hat + acc."],
     ["for (time)", "sa + acc."],
     ["for", "dative case"],
@@ -550,7 +551,7 @@
     ["than", "nev"],
     ["that (что)", "ed"],
     ["then", "daan, dann"],
-    ["though", "illhada"],
+    ["though", "had, illhada"],
     ["through", "sera + acc."],
     ["into, to, towards", "lative case"],
     ["too (e.g. too much)", "se, sil, sii"],
@@ -590,7 +591,8 @@
     ["what the fuck", "ne arhanedair"],
     ["rape", "seivihillan"],
     ["suck", "sudean"],
-    ["suck my dick", "sudear munnaa vura"]
+    ["suck my dick", "sudear munnaa vura"],
+    ["god damn it, for fuck's sake", "Rujat sun arhaskat"]
   ],
   "phrases": [
     ["you are cute", "te jas millar, te jas leitakar"],
@@ -612,10 +614,10 @@
     ["I hate you", "mu delvaa tu"],
     ["I admire you", "mu laigha tu"],
     ["I have a crush on you", "mu laiva tu"],
-    ["what do you want", "ne kaidas"],
+    ["what do you want", "ne kaidas, ne haidas"],
     ["I am 7 years old", "mu ivja 7 kaadazan si"],
     ["die in a fire", "sevardar aigynnuri"],
-    ["I don't care", "e jat muv vuntevo, mu delgydan"],
+    ["I don't care", "e jat muv vuntevo, mu delgyda"],
     ["I couldn't care less", "e ar de maikat muv kuvuntevo vian"],
     ["congratulations", "nilkirriza"],
     ["happy birthday", "kovanan reidesean"],
@@ -631,6 +633,8 @@
     ["let me in", "lirrunar mut ta"],
     ["keep crying, cry me a river", "paivarrar zenteran"],
     ["cry more", "zenterar kuvalse"],
-    ["how dare you", "kai kinninas te"]
+    ["cry about it", "zenterar av en"],
+    ["how dare you", "kai kinninas te"],
+    ["sun vahtanviari", "in real life"]
   ]
 }

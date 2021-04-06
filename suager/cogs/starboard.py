@@ -44,7 +44,7 @@ class Starboard(commands.Cog):
         channel = payload.channel_id
         _channel: discord.TextChannel = self.bot.get_channel(channel)
         if "channel" not in __settings["starboard"] or not __settings["starboard"]["channel"]:
-            return await general.send("Starboard will not be able to function there is no channel set up.", _channel)
+            return await general.send("Starboard will not be able to function - there is no channel set up.", _channel)
         else:
             starboard_channel: discord.TextChannel = self.bot.get_channel(__settings["starboard"]["channel"])
             if not starboard_channel:

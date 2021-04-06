@@ -137,3 +137,8 @@
 ## v1.1.2.2 - 26 March 2021
 - Fix TBL locations not updating their activity properly
 - Improve time78
+
+## v1.1.3 - 6 April 2021
+- Ability to join, leave, delete, and transfer ownership of TBL clans
+- Ability to donate player coins to Clans and Guilds
+- Made TBL unable to function in DMs (as it crashes)

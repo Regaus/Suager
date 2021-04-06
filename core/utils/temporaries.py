@@ -1,6 +1,7 @@
 import asyncio
 import json
 import random
+from datetime import date, datetime, timedelta, timezone
 
 import aiohttp
 import discord
@@ -80,7 +81,7 @@ async def temporaries(bot: bot_data.Bot):
                                         handled = 2
                                     else:
                                         try:
-                                            await member.remove_roles(mute_role, reason=f"[Suager Temporaries Handler] Punishment expired")
+                                            await member.remove_roles(mute_role, reason=f"[Suager Temporary Mutes Handler] Punishment expired")
                                             logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
                                                                                 f"guild {guild} ({entry_id})")
                                             handled = 1
@@ -114,9 +115,46 @@ async def try_error_temps(bot: bot_data.Bot):
                 except Exception as e:
                     general.print_error(f"{time.time()} > Reminder {entry_id} error: {e} | Deleting...")
                     logger.log(bot.name, "temporaries", f"{time.time()} > Reminder {entry_id} error: {e} | Deleting...")
-            bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
             if entry["type"] == "mute":
-                pass
+                guild: discord.Guild = bot.get_guild(entry["gid"])
+                if guild is None:
+                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Putting mute to error list...")
+                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Putting mute to error list...")
+                else:
+                    _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
+                    if not _data:
+                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Putting mute to error list...")
+                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! "
+                                                            f"Putting mute to error list...")
+                    else:
+                        data = json.loads(_data["data"])
+                        try:
+                            mute_role_id = data["mute_role"]
+                        except KeyError:
+                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Putting mute to error list...")
+                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! "
+                                                                f"Putting mute to error list...")
+                        else:
+                            mute_role = guild.get_role(mute_role_id)
+                            if not mute_role:
+                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Putting mute to error list...")
+                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! "
+                                                                    f"Putting mute to error list...")
+                            else:
+                                member: discord.Member = guild.get_member(entry["uid"])
+                                if not member:
+                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found! Putting mute to error list...")
+                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found! "
+                                                                        f"Putting mute to error list...")
+                                else:
+                                    try:
+                                        await member.remove_roles(mute_role, reason=f"[Suager Temporary Mutes Handler] Punishment expired")
+                                        logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
+                                                                            f"guild {guild} ({entry_id})")
+                                    except Exception as e:
+                                        general.print_error(f"{time.time()} > Mute {entry_id} error: {e}")
+                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute {entry_id} error: {e}")
+            bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
 
 
 bd_config = {  # Birthday data: {Guild: [BirthdayChannel, BirthdayRole]}
@@ -338,3 +376,67 @@ async def tbl_seasons(bot: bot_data.Bot):
             # Everyone gets 50 coins. The top 10 will also receive some extra coins.
             _season = season
         await asyncio.sleep(1800)
+
+
+year = time.now(None).year
+
+
+def dt(month: int, day: int, ny: bool = False):
+    return date(year + int(ny), month, day)
+
+
+def date_converter(when: date) -> datetime:
+    """ Apparently converting date to datetime is too boring for there to exist an easy way to do it """
+    return datetime(*when.timetuple()[:3], tzinfo=timezone.utc)
+
+
+def tomorrow(when: datetime):
+    """ Return when tomorrow will start """
+    return date_converter(when.date() + timedelta(days=1)) - when
+
+
+holidays = {
+    dt(1, 1): ["Happy New Year", None],
+    dt(1, 3): ["Happy Leitoxz Day", "Kovanan Leitasean"],
+    dt(1, 27): ["Happy Regaus Day", "Kovanan Regasean"],
+    dt(2, 14): ["Happy Ew Day", "Kovanan Fuusean"],
+    # dt(3, 8): ["Happy Dishwasher Day", "Kovanan Tenvihsissean"],
+    dt(3, 17): ["Happy St Patrick's Day", "Kovanan Patrissean"],
+    dt(4, 11): ["Happy Shota Day", "Kovanan Daldaksean"],
+    dt(4, 17): ["Happy Senko Lair Day", "Kovanan Senkalaisean"],
+    dt(5, 13): ["Happy Suager Day", "Kovanan Suvasean"],
+    dt(6, 20): ["Happy Father's Day", "Kovanan Vaiharsean"],
+    dt(6, 25): ["Happy Homies Day", "Kovanan Hauvänsean"],
+    dt(7, 27): ["Happy Loneliness Day", "Kovanan Ukkahartsean"],
+    dt(9, 27): ["Happy 1st Lolis Day", "Kovanan Ukkadalvaansean"],
+    dt(10, 3): ["Happy 2nd Lolis Day", "Kovanan Devidalvaansean"],
+    dt(10, 22): ["Happy Singles Day", "Kovanan Ukhannansean"],
+    dt(10, 30): ["Happy Halloween", None],
+    dt(11, 19): ["Happy Men's Day", "Kovanan Valdaksean"],
+    dt(12, 5): ["Happy Cobble Day", "Kovanan Kaivalsean"],
+    dt(12, 27): [None, "Kovanan Nuan Kaadun"]
+}
+
+
+async def holiday_teller(bot: bot_data.Bot):
+    """ Поздравляет с праздниками """
+    await bot.wait_until_ready()
+    channel: discord.TextChannel = bot.get_channel(568148147457490958)
+    if not channel:
+        general.print_error("Holiday channel not found")
+        return
+    # waiting = tomorrow(datetime(2021, 4, 4, 23, 59, 59, tzinfo=timezone.utc)).total_seconds()
+    waiting = tomorrow(time.now(None)).total_seconds()
+    await asyncio.sleep(waiting)
+    while True:
+        today = date.today()
+        try:
+            holiday = holidays[today]
+            outputs = []
+            for output in holiday:
+                if output:
+                    outputs.append(output)
+            await general.send("\n".join(outputs), channel)
+        except KeyError:
+            pass  # Not a holiday today
+        await asyncio.sleep(86400)

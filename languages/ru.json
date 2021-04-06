@@ -1,7 +1,7 @@
 {
   "_name": "Русский",
   "_conlang": false,
-  "_pl": ["5", "10", "100"],
+  "_pl": [5, 10, 100],
   "generic_and": "и",
   "generic_created_at": "Время создания",
   "generic_no": "Нет",

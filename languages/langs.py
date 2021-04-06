@@ -22,7 +22,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
         names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1d" else \
             ["V", "KV", "UV", "DV", "TV", "SeV", "PV", "SnV", "EV", "OV", "ZV"]
         step = 4096
-    if locale == "ru_ru":
+    if locale == "ru":
         names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
     range_val = len(names)
     for i in range(range_val):
@@ -39,23 +39,28 @@ def gns(value: Union[int, float], locale: str = "en_gb", fill: int = 0, commas: 
         value = int(value)
     except OverflowError:
         return "Infinity"
-    if locale == "ru_ru":
+    if locale == "ru":
         return f"{value:0{fill}{',' if commas else ''}d}".replace(",", " ")
     return f"{value:0{fill}{',' if commas else ''}d}"
 
 
-def gfs(value: float, locale: str = "en_gb", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
+def gfs(value: Union[int, float], locale: str = "en_gb", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
     """ Get a string from a float """
-    if locale == "ru_ru":
-        return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
-    return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
+    if type(value) == int:
+        return gns(value, locale, 0, True)
+    try:
+        if locale == "ru":
+            return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
+        return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
+    except OverflowError:
+        return "Infinity"
 
 
 def gl(ctx):
-    if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469]:
+    if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469, 7985134926971535361]:
         return "rsl-1e"
-    ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
-    if ex and ctx.guild is not None:
+    # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
+    if ctx.guild is not None:
         data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
         if data:
             return data["locale"]
@@ -79,11 +84,11 @@ def yes(condition: bool, locale: str = "en_gb") -> str:
     return gls("generic_yes", locale) if condition else gls("generic_no", locale)
 
 
-def plural(v: int, what: str, locale: str = "en_gb") -> str:
+def plural(v: Union[int, float], what: str, locale: str = "en_gb", float_pre: int = 2) -> str:
     """ Get plural form of words """
     if locale in ["rsl-1f", "rsl-1g"]:
         name = get_data(what, locale)[0]
-    elif locale in ["rsl-1d", "ru_ru"]:
+    elif locale in ["rsl-1d", "ru"]:
         name_1, name_2, name_pl = get_data(what, locale)
         pl = get_data("_pl", locale)
         p1, p2, p3 = pl
@@ -92,10 +97,10 @@ def plural(v: int, what: str, locale: str = "en_gb") -> str:
         name = name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1
     else:
         name_1, name_2 = get_data(what, locale)
-        cond = (v % 100) == 1 if locale == "rsl-1" else v == 1
+        cond = (v % 100) == 1 if locale == "rsl-1e" else v == 1
         name = name_1 if cond else name_2
     reverse = []
-    return f"{name} {gns(v, locale)}" if locale in reverse else f"{gns(v, locale)} {name}"
+    return f"{name} {gfs(v, locale, float_pre)}" if locale in reverse else f"{gfs(v, locale, float_pre)} {name}"
 
 
 def join(seq, joiner: str = ', ', final: str = 'and'):
