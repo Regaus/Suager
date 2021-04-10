@@ -275,6 +275,7 @@ class Clan:
         embed.title = langs.gls("kuastall_tbl_clan_stats", locale, self.name)
         embed.description = self.description
         embed.set_footer(text=f"Clan ID: {self.id}")
+        embed.timestamp = time.now(None)
         r1, r2, r3 = langs.gns(self.level, locale), langs.gfs(self.xp, locale, 1), get_next("clan", self.level, locale)
         types = langs.get_data("kuastall_tbl_clan_types", locale)
         owner = ctx.bot.get_user(self.owner)
@@ -291,7 +292,7 @@ class Clan:
         embed.add_field(name=langs.gls("kuastall_tbl_clan_erb", locale), value=erb, inline=True)
         clan_locations = []
         names = langs.get_data("kuastall_tbl_locations", locale)
-        for location in self.locations:
+        for location in sorted(self.locations, key=lambda x: x["id"]):
             loc = locations[location["id"] - 1]
             name = names[loc.id - 1]
             expiry = langs.td_ts(location["expiry"], locale, 3, True, True)
@@ -343,6 +344,7 @@ class Guild:
         embed.title = langs.gls("kuastall_tbl_guild_stats", locale, self.name)
         embed.set_thumbnail(url=icon_url)
         embed.set_footer(text=f"Guild ID: {self.id}")
+        embed.timestamp = time.now(None)
         r1, r2, r3 = langs.gns(self.level, locale), langs.gfs(self.xp, locale, pre=0), get_next("guild", self.level, locale)
         embed.add_field(name=langs.gls("kuastall_tbl_guild_level", locale), value=langs.gls("kuastall_tbl_guild_xp", locale, r1, r2, r3), inline=False)
         embed.add_field(name=langs.gls("kuastall_tbl_guild_coins", locale), value=general.bold(langs.gfs(self.coins, locale, pre=1)), inline=False)
@@ -415,7 +417,7 @@ class Location:
         embed.title = langs.gls("kuastall_tbl_location_stats", locale, location_name)
         embed.description = location_desc[self.id - 1]
         embed.set_footer(text=f"Location ID: {self.id}")
-        embed.timestamp = time.now()
+        embed.timestamp = time.now(None)
         a1, a2 = self.araksat
         x1, x2 = self.xp
         l1, l2 = self.points
@@ -615,7 +617,7 @@ class Player:
         r0 = langs.gfs(self.shaman_save_boost, pre=0, per=True)
         embed.add_field(name=langs.gls("kuastall_tbl_stats_shaman", locale), inline=False,
                         value=langs.gls("kuastall_tbl_stats_sh", locale, r4, r5, r6, r7, r8, r9, r0))
-        embed.timestamp = time.now()
+        embed.timestamp = time.now(None)
         l1, l3 = get_league(self.league_points, locale)
         l2 = langs.gns(self.league_points, locale)
         embed.add_field(name=langs.gls("kuastall_tbl_stats_leagues", locale), value=langs.gls("kuastall_tbl_stats_league", locale, l1, l2, l3), inline=False)

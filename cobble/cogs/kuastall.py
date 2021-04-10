@@ -5,16 +5,14 @@ import discord
 from discord.ext import commands
 
 from cobble.utils import ga78, tbl
-from core.utils import general
+from core.utils import general, time
 from languages import langs
 
 
 def tbl_locale(ctx: commands.Context):
     locale = langs.gl(ctx)
-    # if not locale.startswith("rsl") and ctx.channel.id not in [725835449502924901, 742885168997466196, 610482988123422750]:  # SR8 and my command channels
     if langs.get_data("_conlang", locale) is False and ctx.channel.id not in [725835449502924901, 742885168997466196, 610482988123422750]:
-        # SR8 and my command channels
-        locale = "rsl-1e"  # if locale is not an RSL, force it to be RSL-1
+        locale = "rsl-1e"
     return locale
 
 
@@ -44,7 +42,7 @@ class Kuastall(commands.Cog):
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 517012611573743621])  # Temporarily lock TBL while it's not finished
     # @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tbl(self, ctx: commands.Context):
         """ Teampall na Bylkan'de Liidenvirkallde """
         # RSL-1e: Tenval na Bylkan'dar Laikännvurkalu
@@ -55,6 +53,7 @@ class Kuastall(commands.Cog):
 
     @tbl.command(name="run", aliases=["play", "p", "r"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
     async def tbl_run(self, ctx: commands.Context):
         """ Koar TBL'a """
         locale = tbl_locale(ctx)
@@ -457,6 +456,95 @@ class Kuastall(commands.Cog):
         player.save()
         return await general.send(langs.gls("kuastall_tbl_donate", locale, r1, r2, player.clan.name), ctx.channel)
 
+    @tbl_clan.group(name="locations")
+    async def tbl_clan_locations(self, ctx: commands.Context):
+        """ Clan Locations """
+        if ctx.invoked_subcommand is None:
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_help", tbl_locale(ctx)), ctx.channel)
+
+    @tbl_clan_locations.command(name="buy")
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
+    async def tbl_clan_loc_buy(self, ctx: commands.Context, location_id: int):
+        """ Buy a Clan Location """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if location_id < 1 or location_id > len(tbl.locations):
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_id", locale), ctx.channel)
+        location = tbl.locations[location_id - 1]
+        if location.level_req > player.level:
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_level", locale, langs.gns(location.level_req, locale)), ctx.channel)
+        location_name = langs.get_data("kuastall_tbl_locations", locale)[location_id - 1]
+        locations_active = [location for location in player.clan.locations if location["expiry"] > time.now_ts()]
+        lids = [location["id"] for location in locations_active]
+        index = -1
+        if location_id in lids:
+            index = lids.index(location_id)
+            cost = 1000 * (2 ** index)
+            current = True
+        else:
+            active = len(locations_active)
+            cost = 1000 * (2 ** active)
+            current = False
+        if ctx.author.id == player.clan.owner:
+            if player.clan.araksat > cost:
+                cost_clan, cost_player = cost, 0
+                confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm", locale, location_name, langs.gns(cost_clan, locale))
+            else:
+                cost_clan = int(player.clan.araksat)
+                cost_player = cost - cost_clan
+                r1, r2 = langs.gns(cost_clan, locale), langs.gns(cost_player, locale)
+                confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm2", locale, location_name, r1, r2)
+        else:
+            cost_clan, cost_player = 0, cost
+            confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm3", locale, location_name, langs.gns(cost_player, locale))
+        if player.araksat < cost_player:
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_player", locale), ctx.channel)
+        message = await general.send(confirmation, ctx.channel)
+
+        def check_confirm(m):
+            if m.author == ctx.author and m.channel == ctx.channel:
+                if m.content == "yes":
+                    return True
+            return False
+        try:
+            await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
+        except asyncio.TimeoutError:
+            return await message.edit(content=langs.gls("generic_timed_out", locale, message.clean_content))
+
+        expiry = locations_active[index]["expiry"] + 86400 if current else time.now_ts() + 86400
+        expires = langs.gts(time.from_ts(expiry, None), locale, seconds=True)
+        if current:
+            locations_active[index]["expiry"] = expiry
+        else:
+            locations_active.append({"id": location_id, "expiry": expiry})
+        player.araksat -= cost_player
+        player.clan.araksat -= cost_clan
+        player.clan.locations = locations_active
+        player.save()
+        return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_success", locale, location_name, expires), ctx.channel)
+
+    @tbl_clan_locations.command(name="play", aliases=["p"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
+    async def tbl_clan_loc_play(self, ctx: commands.Context, location_id: int):
+        """ Play TBL on a Clan Location """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if location_id < 1 or location_id > len(tbl.locations):
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_id", locale), ctx.channel)
+        exists = False
+        for location in player.clan.locations:
+            if location["id"] == location_id:
+                if location["expiry"] > time.now_ts():
+                    exists = True
+        if not exists:
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_unavailable", locale), ctx.channel)
+        return await player.play(ctx, locale, tbl.locations[location_id - 1])
+
     @tbl.group(name="guild", aliases=["g", "server"])
     async def tbl_guild(self, ctx: commands.Context):
         """ TBL Guild related commands """
@@ -504,7 +592,6 @@ class Kuastall(commands.Cog):
         embed = location.status(locale, player.level)
         return await general.send(None, ctx.channel, embed=embed)
 
-    # TODO: clan locations and playing on them
     # TODO: use shaman feathers
     # TODO: use clan upgrade points
     # TODO: use guild coins

@@ -208,8 +208,8 @@ class Leveling(commands.Cog):
             sm = float(__settings['leveling']['xp_multiplier'])
         except KeyError:
             sm = 1
-        c = 1
-        # c = 0.93 if ctx.author.id in [746173049174229142] else 1
+        # c = 1
+        c = 0.87 if ctx.author.id in [561164743562493952] else 1
         # c = 0.91 if ctx.author.id in [377467233401831424] else c
         # c *= 0.9 if 796009343539347496 in [role.id for role in ctx.author.roles] and ctx.author.id != 593736085327314954 else 1
         # "Feminist" role on chill crew
@@ -300,7 +300,7 @@ class Leveling(commands.Cog):
                     await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.",
                                        ctx.channel)
                 except Exception as e:
-                    print(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
+                    general.print_error(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
         # _last = last if dc else now
         last_send = last if dc else now
         minute = now if full else ls

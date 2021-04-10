@@ -142,3 +142,6 @@
 - Ability to join, leave, delete, and transfer ownership of TBL clans
 - Ability to donate player coins to Clans and Guilds
 - Made TBL unable to function in DMs (as it crashes)
+
+## v1.1.4 - 11 April 2021
+- Buying and playing on Clan Locations

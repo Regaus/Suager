@@ -729,5 +729,5 @@
 - Changed Suager's avatar to Regaus // 2 April 2021 - Removed
 - Changed avatar and icon links to size=1024 in most places
 
-## v7.2.18 - 6 April 2021
-- Suager will now write about holidays in Senko Lair
+## ~~v7.2.18 - 6 April 2021~~ - Removed 11 April 2021 
+- ~~Suager will now write about holidays in Senko Lair~~
