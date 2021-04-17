@@ -726,8 +726,9 @@
 - Suager updates should now finally send properly
 
 ## v7.2.17 - 1 April 2021
-- Changed Suager's avatar to Regaus // 2 April 2021 - Removed
+- ~~Changed Suager's avatar to Regaus~~ // Removed - 2 April 2021
 - Changed avatar and icon links to size=1024 in most places
 
-## ~~v7.2.18 - 6 April 2021~~ - Removed 11 April 2021 
-- ~~Suager will now write about holidays in Senko Lair~~
+## v7.2.18 - 18 April 2021
+- ~~Suager will now write about holidays in Senko Lair~~ - Added 6 April 2021, Removed 11 April 2021
+- Updated what social commands can be used on me
