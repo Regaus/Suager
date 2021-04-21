@@ -55,12 +55,13 @@ class Ratings(commands.Cog):
         r1, r2 = _max // 2, _max
         r = random.randint(r1, r2)
         custom = {
-            302851022790066185: r2,  # Me
-            self.bot.user.id: r2,    # Suager
-            517012611573743621: r2,  # Suager Sentient
-            291665491221807104: r2,  # Leitoxz
+            302851022790066185: 100,  # Me
+            self.bot.user.id: 100,    # Suager
+            517012611573743621: 100,  # Suager Sentient
+            291665491221807104: 100,  # Leitoxz
             561164743562493952: 25,  # zilla
             402238370249441281: 0,   # fake
+            667187968145883146: 0,   # chocolatt
             # 746173049174229142: 0    # racc
         }
         result = custom.get(who.id, r)
@@ -78,10 +79,13 @@ class Ratings(commands.Cog):
             return await general.send(langs.gls("ratings_baby_rate_suager", locale), ctx.channel)
         if user1.bot or user2.bot:
             return await general.send(langs.gls("ratings_baby_rate_bot", locale), ctx.channel)
-        seed = user1.id + user2.id
-        random.seed(seed)
+        # seed = user1.id + user2.id
+        # random.seed(seed)
         # rate = random.uniform(0, 100)
-        rate = langs.gfs(random.random(), locale, 2, True)
+        _rate = random.random()
+        if user1.id == 302851022790066185 or user2.id == 302851022790066185:
+            _rate = 0.00
+        rate = langs.gfs(_rate, locale, 2, True)
         return await general.send(langs.gls("ratings_baby_rate", locale, user1.name, user2.name, rate), ctx.channel)
 
     @commands.command(name="love", aliases=["lovecalc"])
@@ -96,8 +100,8 @@ class Ratings(commands.Cog):
             return await general.send(langs.gls("ratings_love_calc_suager", locale), ctx.channel)
         if user1.bot ^ user2.bot:
             return await general.send(langs.gls("ratings_love_calc_bots", locale), ctx.channel)
-        seed = user1.id + user2.id + 1
-        random.seed(seed)
+        # seed = user1.id + user2.id + 1
+        # random.seed(seed)
         _rate = random.random()
         if (user1.id == 402238370249441281 and user2.id == 593736085327314954) or (user2.id == 402238370249441281 and user1.id == 593736085327314954):
             _rate = 0.00
@@ -106,8 +110,8 @@ class Ratings(commands.Cog):
             check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author
             _rate = {
                 291665491221807104: 1.00,
+                609423646347231282: 0.50,
                 517012611573743621: 0.50,
-                746173049174229142: 0.00,
                 667187968145883146: -1.00,
                 402238370249441281: -1.00,
             }.get(check.id, 0.00)
@@ -129,8 +133,8 @@ class Ratings(commands.Cog):
                 return await general.send(langs.gls("ratings_friend_suager", locale), ctx.channel)
         # if user1.bot ^ user2.bot:
         #     return await general.send(langs.gls("ratings_friend_bots", locale), ctx.channel)
-        seed = user1.id + user2.id - 1
-        random.seed(seed)
+        # seed = user1.id + user2.id - 1
+        # random.seed(seed)
         rate = langs.gfs(random.random(), locale, 2, True)
         if user1.id == 302851022790066185 or user2.id == 302851022790066185:
             check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author  # shouldn't be else-ing anyways
@@ -170,12 +174,12 @@ class Ratings(commands.Cog):
         step1 = random.random()
         custom = {
             302851022790066185: 1.00,    # Regaus
-            self.bot.user.id: 1.00,      # Suager
+            self.bot.user.id:   1.00,    # Suager
             517012611573743621: 1.00,    # Suager Sentient
             291665491221807104: 1.00,    # Leitoxz
             561164743562493952: 0.00,    # zilla
-            402238370249441281: -1.00,   # fake
-            # 746173049174229142: 0        # racc
+            402238370249441281: 0.00,    # fake
+            667187968145883146: 0.00,    # chocolatt
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin

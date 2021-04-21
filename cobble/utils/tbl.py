@@ -258,7 +258,7 @@ class Clan:
 
     def save(self):
         """ Save the clan data to database """
-        location_data = json.dumps(self.locations, indent=0)
+        location_data = json.dumps(self.locations)
         if self.is_new:
             db.execute("INSERT INTO tbl_clan VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
                 self.id, self.name, self.type, self.level, self.xp, self.points, self.owner, location_data, self.araksat, self.tax_gain, self.reward_boost,

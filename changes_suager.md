@@ -732,3 +732,8 @@
 ## v7.2.18 - 18 April 2021
 - ~~Suager will now write about holidays in Senko Lair~~ - Added 6 April 2021, Removed 11 April 2021
 - Updated what social commands can be used on me
+
+## v7.2.19 - 21 April 2021
+- //lovecalc, //friendship, //babyrate no longer use random.seed()
+- Auto-unmute now shows "[Suager Auto-Unmute]" as reason
+- //babyrate now always returns 0% when used on me

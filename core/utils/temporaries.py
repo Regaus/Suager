@@ -80,7 +80,7 @@ async def temporaries(bot: bot_data.Bot):
                                         handled = 2
                                     else:
                                         try:
-                                            await member.remove_roles(mute_role, reason=f"[Suager Temporary Mutes Handler] Punishment expired")
+                                            await member.remove_roles(mute_role, reason=f"[Suager Auto-Unmute] Punishment expired")
                                             logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
                                                                                 f"guild {guild} ({entry_id})")
                                             handled = 1
@@ -147,7 +147,7 @@ async def try_error_temps(bot: bot_data.Bot):
                                                                         f"Putting mute to error list...")
                                 else:
                                     try:
-                                        await member.remove_roles(mute_role, reason=f"[Suager Temporary Mutes Handler] Punishment expired")
+                                        await member.remove_roles(mute_role, reason=f"[Suager Temporary Mutes] Punishment expired")
                                         logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
                                                                             f"guild {guild} ({entry_id})")
                                     except Exception as e:

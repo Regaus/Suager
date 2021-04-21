@@ -145,3 +145,7 @@
 
 ## v1.1.4 - 11 April 2021
 - Buying and playing on Clan Locations
+
+## v1.1.5 - 21 April 2021
+- Ability to refund Clan Locations
+- Removed economy

@@ -545,6 +545,55 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_clan_locations_unavailable", locale), ctx.channel)
         return await player.play(ctx, locale, tbl.locations[location_id - 1])
 
+    @tbl_clan_locations.command(name="refund", aliases=["r", "return", "remove"])
+    @commands.check(is_clan_owner)
+    @commands.max_concurrency(1, per=commands.BucketType.guild, wait=True)
+    async def tbl_clan_loc_refund(self, ctx: commands.Context, location_id: int):
+        """ Refund a Clan Location """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if location_id < 1 or location_id > len(tbl.locations):
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_id", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_refund_forbidden", locale), ctx.channel)
+        exists = False
+        index = -1
+        locations = []
+        for location in player.clan.locations:
+            if location["expiry"] > time.now_ts():
+                locations.append(location)
+                if location["id"] == location_id:
+                    exists = True
+                    index = locations.index(location)
+        if not exists:
+            return await general.send(langs.gls("kuastall_tbl_clan_locations_unavailable", locale), ctx.channel)
+
+        location_name = langs.get_data("kuastall_tbl_locations", locale)[location_id - 1]
+        expiry = locations[index]["expiry"] - time.now_ts()
+        days = expiry / 86400  # How many days the location had left
+        cost = 850 * (2 ** index) * days  # Refunded cost (15% lost)
+        r1 = langs.td_int(int(expiry), locale, 3, True, True, False)
+        r2 = langs.gns(cost, locale)
+        message = await general.send(langs.gls("kuastall_tbl_clan_locations_refund_confirm", locale, location_name, r1, r2), ctx.channel)
+
+        def check_confirm(m):
+            if m.author == ctx.author and m.channel == ctx.channel:
+                if m.content == "yes":
+                    return True
+            return False
+        try:
+            await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
+        except asyncio.TimeoutError:
+            return await message.edit(content=langs.gls("generic_timed_out", locale, message.clean_content))
+
+        locations.pop(index)
+        player.clan.araksat += cost
+        player.clan.locations = locations
+        player.save()
+        return await general.send(langs.gls("kuastall_tbl_clan_locations_refund_success", locale, location_name, r2), ctx.channel)
+
     @tbl.group(name="guild", aliases=["g", "server"])
     async def tbl_guild(self, ctx: commands.Context):
         """ TBL Guild related commands """
@@ -592,6 +641,7 @@ class Kuastall(commands.Cog):
         embed = location.status(locale, player.level)
         return await general.send(None, ctx.channel, embed=embed)
 
+    # TODO: Convert Shaman, Clan and Guild boosts into Levels (`int`), and then during gameplay and status calculation show the value boosts
     # TODO: use shaman feathers
     # TODO: use clan upgrade points
     # TODO: use guild coins
