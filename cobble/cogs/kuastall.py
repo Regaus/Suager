@@ -100,6 +100,90 @@ class Kuastall(commands.Cog):
         embed = player.status(locale, user.avatar_url_as(size=1024))
         return await general.send(None, ctx.channel, embed=embed)
 
+    @tbl.group(name="shaman", aliases=["sh"])
+    async def tbl_shaman(self, ctx: commands.Context):
+        """ Interact with your Shaman skills """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @tbl_shaman.command(name="convert", aliases=["c"])
+    async def tbl_sh_convert(self, ctx: commands.Context, coins: int):
+        """ Convert your Player Coins into Shaman Feathers (1 Coin -> 2 Feathers) """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if coins < 1:
+            return await general.send(langs.gls("kuastall_tbl_donate_negative", locale), ctx.channel)
+        if player.coins < coins:
+            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
+        player.coins -= coins
+        player.shaman_feathers += coins * 2
+        player.save()
+        r1, r2 = langs.gns(coins, locale), langs.gfs(coins * 2, locale, 1)
+        return await general.send(langs.gls("kuastall_tbl_donate3", locale, r1, r2), ctx.channel)
+
+    @tbl_shaman.command(name="probability", aliases=["p"])
+    async def tbl_sh_probability(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade your Shaman Probability """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.shaman_feathers < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_shaman", locale, langs.gns(player.shaman_feathers, locale)), ctx.channel)
+        max_level = 64
+        reached = False
+        if player.shaman_probability_level + levels > max_level:
+            levels = max_level - player.shaman_probability_level
+            reached = True
+        player.shaman_feathers -= levels
+        player.shaman_probability_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.shaman_probability_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_shaman_probability", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_shaman.command(name="xp")
+    async def tbl_sh_xp_boost(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade your Shaman XP Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.shaman_feathers < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_shaman", locale, langs.gns(player.shaman_feathers, locale)), ctx.channel)
+        max_level = 75
+        reached = False
+        if player.shaman_xp_boost_level + levels > max_level:
+            levels = max_level - player.shaman_xp_boost_level
+            reached = True
+        player.shaman_feathers -= levels
+        player.shaman_xp_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.shaman_xp_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_shaman_xp", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_shaman.command(name="saves")
+    async def tbl_sh_saves(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade your Shaman Saves Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.shaman_feathers < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_shaman", locale, langs.gns(player.shaman_feathers, locale)), ctx.channel)
+        max_level = 100
+        reached = False
+        if player.shaman_save_boost_level + levels > max_level:
+            levels = max_level - player.shaman_save_boost_level
+            reached = True
+        player.shaman_feathers -= levels
+        player.shaman_save_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.shaman_save_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_shaman_saves", locale, r1, r2, r3, r4), ctx.channel)
+
     @tbl.group(name="invites", aliases=["invite", "i"])
     async def tbl_invites(self, ctx: commands.Context):
         """ Check your invites """
@@ -149,7 +233,7 @@ class Kuastall(commands.Cog):
 
     @tbl.group(name="clan", aliases=["c"])
     async def tbl_clan(self, ctx: commands.Context):
-        """ TBL Clan related commands """
+        """ Interact with TBL Clans """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
@@ -441,7 +525,7 @@ class Kuastall(commands.Cog):
 
     @tbl_clan.command(name="donate", aliases=["contribute"])
     async def tbl_clan_donate(self, ctx: commands.Context, coins: int):
-        """ Donate some of your Coins to the clan (for extra Upgrade Points) """
+        """ Donate some of your Coins to the clan (5 Player Coins -> 1 Upgrade Point) """
         locale = tbl_locale(ctx)
         player = tbl.Player.from_db(ctx.author, ctx.guild)
         if not player.clan:
@@ -452,8 +536,8 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
         player.coins -= coins
         player.clan.points += coins / 5
-        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 5, locale, 1)
         player.save()
+        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 5, locale, 1)
         return await general.send(langs.gls("kuastall_tbl_donate", locale, r1, r2, player.clan.name), ctx.channel)
 
     @tbl_clan.group(name="locations")
@@ -596,7 +680,7 @@ class Kuastall(commands.Cog):
 
     @tbl.group(name="guild", aliases=["g", "server"])
     async def tbl_guild(self, ctx: commands.Context):
-        """ TBL Guild related commands """
+        """ Interact with TBL Guilds """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
@@ -613,7 +697,7 @@ class Kuastall(commands.Cog):
 
     @tbl_guild.command(name="donate", aliases=["contribute"])
     async def tbl_guild_donate(self, ctx: commands.Context, coins: int):
-        """ Donate some of your Coins to the guild (for extra Upgrade Points) """
+        """ Donate some of your Coins to the guild (10 Player Coins -> 1 Guild Coin) """
         locale = tbl_locale(ctx)
         player = tbl.Player.from_db(ctx.author, ctx.guild)
         if coins < 1:
@@ -622,8 +706,8 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
         player.coins -= coins
         player.guild.coins += coins / 10
-        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 10, locale, 1)
         player.save()
+        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 10, locale, 1)
         return await general.send(langs.gls("kuastall_tbl_donate2", locale, r1, r2, player.guild.name), ctx.channel)
 
     @tbl.command(name="locations", aliases=["location", "loc", "l"])
@@ -641,11 +725,8 @@ class Kuastall(commands.Cog):
         embed = location.status(locale, player.level)
         return await general.send(None, ctx.channel, embed=embed)
 
-    # TODO: Convert Shaman, Clan and Guild boosts into Levels (`int`), and then during gameplay and status calculation show the value boosts
-    # TODO: use shaman feathers
     # TODO: use clan upgrade points
     # TODO: use guild coins
-    # TODO: Challenge Renewal system
     # TODO: translations into Russian and RSL-1e ("kuastall_*")
 
 

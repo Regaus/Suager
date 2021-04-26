@@ -149,3 +149,10 @@
 ## v1.1.5 - 21 April 2021
 - Ability to refund Clan Locations
 - Removed economy
+
+## v1.1.6 - 26 April 2021
+- Made TBL activity hours more accurate (old way was 6 hours ahead of actual time)
+- Made TBL store Shaman, Clan and Guild boosts as levels, and only calculate the actual boosts while loading
+- Ability to convert Player Coins to Shaman Feathers
+- Ability to use Shaman Feathers to upgrade your Shaman stats
+- Made TBL player place at end of round more accurate

@@ -41,13 +41,10 @@ player_levels = level_gen(player_max, lambda x: 15 * x ** 2 + 185 * x)
 shaman_levels = level_gen(shaman_max, lambda x: 0.3 * x ** 3 + 7.5 * x ** 2 + 92.2 * x)
 guild_levels = level_gen(guild_max, lambda x: 0.15 * x ** 3 + 12.5 * x ** 2 + 487.35 * x)
 clan_levels = level_gen(clan_max, lambda x: 12.5 * x ** 2 + 237.5 * x)
-# Activity, based on TBL Time: 0-4 TBT, 4-8 TBT, etc. (32 hours) | 0:00 = dawn
-# IRL equivalent times: 6am, 9am, noon, 3pm, 6pm, 9pm, midnight, 3am
-activity_hour = [0.74, 1.00, 1.17, 1.07, 1.21, 1.13, 0.91, 0.37]
+# Activity based on TBL time: midnight, 3am, 6am, 9am, noon, 3pm, 6pm, 9pm
+activity_hour = [0.91, 0.37, 0.74, 1.00, 1.27, 1.21, 1.37, 1.13]
 # Monthly variation of activity
 activity_month = [1.12, 0.91, 0.83, 1.00, 1.07, 1.15, 1.21, 1.11, 1.09, 1.12, 1.08, 1.14, 1.31, 1.40, 1.56, 1.35]
-# Old Suager v6 month activity variation:
-# activity_month = [1.41, 0.91, 0.77, 1.01, 1.17, 1.41, 1.57, 1.37, 1.27, 1.16, 1.17, 1.37, 1.71, 2.17, 2.35, 1.95]
 players_base = 50  # Base amount of players per location
 energy_consumption = 10
 energy_regen = 120
@@ -228,10 +225,14 @@ class Clan:
         self.owner: int = data["owner"]
         self.locations: list = json.loads(data["locations"])
         self.araksat: float = data["araksat"]
-        self.tax_gain: float = data["tax_gain"]
-        self.reward_boost: float = data["reward_boost"]
-        self.energy_limit_boost: float = data["energy_limit_boost"]
-        self.energy_regen_boost: float = data["energy_regen_boost"]
+        self.tax_gain_level: int = data["tax_gain"]
+        self.tax_gain: float = start_tax_gain + 0.001 * self.tax_gain_level
+        self.reward_boost_level: int = data["reward_boost"]
+        self.reward_boost: float = 0.005 * self.reward_boost_level
+        self.energy_limit_boost_level: int = data["energy_limit_boost"]
+        self.energy_limit_boost: float = 1.0 * self.energy_limit_boost_level
+        self.energy_regen_boost_level: int = data["energy_regen_boost"]
+        self.energy_regen_boost: float = 0.4 * self.energy_regen_boost_level
         self.is_new: bool = new
         self.member_count: int = len(db.fetch("SELECT * FROM tbl_player WHERE clan=?", (self.id,))) if not self.is_new else 1
 
@@ -243,9 +244,8 @@ class Clan:
         while check_exists is not None:
             clan_id = random.randint(1000000, 9999999)
             check_exists = db.fetchrow("SELECT * FROM tbl_clan WHERE clan_id=?", (clan_id,))
-        return cls({"clan_id": clan_id, "name": name, "description": None, "type": invite_type, "level": 1, "xp": 0.0, "points": 0.0,
-                    "owner": owner, "locations": "[]", "araksat": 0.0, "tax_gain": start_tax_gain, "reward_boost": 0.0,
-                    "energy_limit_boost": 0.0, "energy_regen_boost": 0.0}, True)
+        return cls({"clan_id": clan_id, "name": name, "description": None, "type": invite_type, "level": 1, "xp": 0.0, "points": 0.0, "owner": owner,
+                    "locations": "[]", "araksat": 0.0, "tax_gain": 0, "reward_boost": 0, "energy_limit_boost": 0, "energy_regen_boost": 0}, True)
 
     @classmethod
     def from_db(cls, clan: int):
@@ -261,13 +261,13 @@ class Clan:
         location_data = json.dumps(self.locations)
         if self.is_new:
             db.execute("INSERT INTO tbl_clan VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
-                self.id, self.name, self.type, self.level, self.xp, self.points, self.owner, location_data, self.araksat, self.tax_gain, self.reward_boost,
-                self.energy_limit_boost, self.energy_regen_boost))
+                self.id, self.name, self.type, self.level, self.xp, self.points, self.owner, location_data, self.araksat, self.tax_gain_level, self.reward_boost_level,
+                self.energy_limit_boost_level, self.energy_regen_boost_level))
         else:
             db.execute("UPDATE tbl_clan SET name=?, description=?, type=?, level=?, xp=?, points=?, owner=?, locations=?, araksat=?, tax_gain=?, "
                        "reward_boost=?, energy_limit_boost=?, energy_regen_boost=? WHERE clan_id=?", (
-                        self.name, self.description, self.type, self.level, self.xp, self.points, self.owner, location_data, self.araksat, self.tax_gain,
-                        self.reward_boost, self.energy_limit_boost, self.energy_regen_boost, self.id))
+                           self.name, self.description, self.type, self.level, self.xp, self.points, self.owner, location_data, self.araksat, self.tax_gain_level,
+                           self.reward_boost_level, self.energy_limit_boost_level, self.energy_regen_boost_level, self.id))
 
     def status(self, ctx: Context, locale: str) -> discord.Embed:
         """ Returns an embed of the clan's status """
@@ -309,15 +309,18 @@ class Guild:
         self.level: int = data["level"]
         self.xp: float = data["xp"]
         self.coins: float = data["coins"]
-        self.araksat_boost: float = data["araksat_boost"]
-        self.xp_boost: float = data["xp_boost"]
-        self.energy_reduction: float = data["energy_reduction"]
+        self.araksat_boost_level: int = data["araksat_boost"]
+        self.araksat_boost: float = 0.01 * self.araksat_boost_level
+        self.xp_boost_level: int = data["xp_boost"]
+        self.xp_boost: float = 0.01 * self.xp_boost_level
+        self.energy_reduction_level: int = data["energy_reduction"]
+        self.energy_reduction: float = 0.1 * self.energy_reduction_level
         self.is_new: bool = new
 
     @classmethod
     def new(cls, gid: int, name: str):
         """ Add a new guild """
-        return cls({"gid": gid, "level": 1, "xp": 0.0, "coins": 0.0, "araksat_boost": 0.0, "xp_boost": 0.0, "energy_reduction": 0.0, "name": name}, True)
+        return cls({"gid": gid, "level": 1, "xp": 0.0, "coins": 0.0, "araksat_boost": 0, "xp_boost": 0, "energy_reduction": 0, "name": name}, True)
 
     @classmethod
     def from_db(cls, guild: discord.Guild):
@@ -333,10 +336,10 @@ class Guild:
         """ Save the guild data to database """
         if self.is_new:
             db.execute("INSERT INTO tbl_guild VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (
-                self.id, self.name, self.level, self.xp, self.coins, self.araksat_boost, self.xp_boost, self.energy_reduction))
+                self.id, self.name, self.level, self.xp, self.coins, self.araksat_boost_level, self.xp_boost_level, self.energy_reduction_level))
         else:
             db.execute("UPDATE tbl_guild SET name=?, level=?, xp=?, coins=?, araksat_boost=?, xp_boost=?, energy_reduction=? WHERE gid=?", (
-                self.name, self.level, self.xp, self.coins, self.araksat_boost, self.xp_boost, self.energy_reduction, self.id))
+                self.name, self.level, self.xp, self.coins, self.araksat_boost_level, self.xp_boost_level, self.energy_reduction_level, self.id))
 
     def status(self, locale: str, icon_url: str) -> discord.Embed:
         """ Returns an embed of the guild's status """
@@ -372,7 +375,6 @@ class Location:
     def get_activity(self):
         """ Get the location's activity multiplier """
         now = ga78.time_kargadia(tz=2)
-        # now = ss23.time_kargadia(tz=2)
         hour = now.hour + (now.minute / 60)
         al = len(activity_hour)
         part, mod = divmod(hour, 3)  # It's now 3 hours because 24 hours instead of 32
@@ -392,10 +394,6 @@ class Location:
         activity *= self.base_activity
         if activity < 2:
             activity = 2
-        # self.araksat = [v * 1.25 for v in self.araksat]
-        # self.xp = [v * 1.25 for v in self.xp]
-        # self.points = [0, 0]
-        # Do this during reward calculation, else this will fuck up the location afterwards
         if activity > clan.member_count:
             activity = clan.member_count
         return int(activity)
@@ -474,9 +472,12 @@ class Player:
         self.shaman_level: int = data["shaman_level"]
         self.shaman_xp: float = data["shaman_xp"]
         self.shaman_feathers: int = data["shaman_feathers"]
-        self.shaman_probability: float = data["shaman_probability"]
-        self.shaman_xp_boost: float = data["shaman_xp_boost"]
-        self.shaman_save_boost: float = data["shaman_save_boost"]
+        self.shaman_probability_level: int = data["shaman_probability"]
+        self.shaman_probability: float = start_shaman_probability + 0.005 * self.shaman_probability_level
+        self.shaman_xp_boost_level: int = data["shaman_xp_boost"]
+        self.shaman_xp_boost: float = 0.02 * self.shaman_xp_boost_level
+        self.shaman_save_boost_level: int = data["shaman_save_boost"]
+        self.shaman_save_boost: float = 0.01 * self.shaman_save_boost_level
         self.league_points: int = data["league_points"]
         self.energy: float = data["energy"]
         self.energy_time: float = data["energy_time"]
@@ -525,12 +526,12 @@ class Player:
         if self.is_new:
             db.execute("INSERT INTO tbl_player VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
                 self.id, self.name, self.disc, self.araksat, self.coins, self.level, self.xp, self.shaman_level, self.shaman_xp, self.shaman_feathers,
-                self.shaman_probability, self.shaman_xp_boost, self.shaman_save_boost, self.league_points, self.energy, self.energy_time, clan_id, 0))
+                self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time, clan_id, 0))
         else:
             db.execute("UPDATE tbl_player SET name=?, disc=?, araksat=?, coins=?, level=?, xp=?, shaman_level=?, shaman_xp=?, shaman_feathers=?, "
                        "shaman_probability=?, shaman_xp_boost=?, shaman_save_boost=?, league_points=?, energy=?, energy_time=?, clan=?, cr=? WHERE uid=?", (
                         self.name, self.disc, self.araksat, self.coins, self.level, self.xp, self.shaman_level, self.shaman_xp, self.shaman_feathers,
-                        self.shaman_probability, self.shaman_xp_boost, self.shaman_save_boost, self.league_points, self.energy, self.energy_time,
+                        self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time,
                         clan_id, self.renewal, self.id))
 
     def energy_limit_calc(self) -> float:
@@ -696,9 +697,10 @@ class Player:
                 if you["life"]:
                     if not shaman:
                         for player in results:
-                            place += 1
-                            if player["self"]:
-                                break
+                            if player["life"]:  # Only if the player survived
+                                place += 1
+                                if player["self"]:
+                                    break
                     self.guild.xp += 10
                     a1, a2 = location.araksat
                     reward_ar += random.randint(a1, a2)
