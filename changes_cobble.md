@@ -156,3 +156,4 @@
 - Ability to convert Player Coins to Shaman Feathers
 - Ability to use Shaman Feathers to upgrade your Shaman stats
 - Made TBL player place at end of round more accurate
+- Cancelled Challenge Renewal

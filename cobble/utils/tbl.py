@@ -481,7 +481,7 @@ class Player:
         self.league_points: int = data["league_points"]
         self.energy: float = data["energy"]
         self.energy_time: float = data["energy_time"]
-        self.renewal: int = data["cr"]
+        # self.renewal: int = data["cr"]
         self.clan: Optional[Clan] = clan  # Fetch clan data on loading
         self.guild: Guild = guild
         self.is_new: bool = new
@@ -496,7 +496,7 @@ class Player:
         """ Add a new player """
         return cls({"uid": uid, "name": name, "disc": int(disc), "araksat": start_araksat, "coins": start_coins, "level": 1, "xp": 0.0,
                     "shaman_level": 1, "shaman_xp": 0.0, "shaman_feathers": 0, "shaman_probability": start_shaman_probability,
-                    "shaman_xp_boost": 0.0, "shaman_save_boost": 0.0, "league_points": 0, "energy": start_energy, "energy_time": time.now_ts(), "cr": 0},
+                    "shaman_xp_boost": 0.0, "shaman_save_boost": 0.0, "league_points": 0, "energy": start_energy, "energy_time": time.now_ts()},
                    None, guild, True)
 
     @classmethod
@@ -524,15 +524,15 @@ class Player:
             clan_id = None
         self.guild.save()
         if self.is_new:
-            db.execute("INSERT INTO tbl_player VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            db.execute("INSERT INTO tbl_player VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
                 self.id, self.name, self.disc, self.araksat, self.coins, self.level, self.xp, self.shaman_level, self.shaman_xp, self.shaman_feathers,
-                self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time, clan_id, 0))
+                self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time, clan_id))
         else:
             db.execute("UPDATE tbl_player SET name=?, disc=?, araksat=?, coins=?, level=?, xp=?, shaman_level=?, shaman_xp=?, shaman_feathers=?, "
-                       "shaman_probability=?, shaman_xp_boost=?, shaman_save_boost=?, league_points=?, energy=?, energy_time=?, clan=?, cr=? WHERE uid=?", (
+                       "shaman_probability=?, shaman_xp_boost=?, shaman_save_boost=?, league_points=?, energy=?, energy_time=?, clan=? WHERE uid=?", (
                         self.name, self.disc, self.araksat, self.coins, self.level, self.xp, self.shaman_level, self.shaman_xp, self.shaman_feathers,
                         self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time,
-                        clan_id, self.renewal, self.id))
+                        clan_id, self.id))
 
     def energy_limit_calc(self) -> float:
         """ Determine the player's Energy limit """

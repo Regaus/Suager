@@ -194,7 +194,6 @@ tables = [
         Column("energy", 1, True),              # 15 - Current energy
         Column("energy_time", 1, True),         # 16 - When to start energy regen
         Column("clan", 0, False),               # 17 - Clan ID player's a part of
-        Column("cr", 0, True),                  # 18 - Challenge Renewal Level
     ]),
     Table("tbl_clan", [
         Column("clan_id", 0, True),
