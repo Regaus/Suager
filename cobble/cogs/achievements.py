@@ -79,7 +79,7 @@ class Achievements(commands.Cog):
         achievement_tbl_league = [500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
         achievement_tbl_araksat = [1000, 2500, 5000, 10000, 25000, 50000, 750000, 100000, 250000, 500000, 1000000, 2500000]
         rows = 6
-        shelves = 3
+        shelves = 1
         width = 1152
         large_size = 96
         img = Image.new("RGBA", ((width + 20) * shelves - 20, 256 * rows + large_size), color=(0, 0, 0, 64))

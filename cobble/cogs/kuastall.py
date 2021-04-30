@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 from cobble.utils import ga78, tbl
-from core.utils import general, time
+from core.utils import general, permissions, time
 from languages import langs
 
 
@@ -678,6 +678,110 @@ class Kuastall(commands.Cog):
         player.save()
         return await general.send(langs.gls("kuastall_tbl_clan_locations_refund_success", locale, location_name, r2), ctx.channel)
 
+    @tbl_clan.command(name="taxgain", aliases=["tax", "tg", "t"])
+    @commands.check(is_clan_owner)
+    async def tbl_clan_tax(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Clan's Tax Gain """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_forbidden", locale), ctx.channel)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.clan.points < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+        max_level = 225
+        reached = False
+        if player.clan.tax_gain_level + levels > max_level:
+            levels = max_level - player.clan.tax_gain_level
+            reached = True
+        player.clan.points -= levels
+        player.clan.tax_gain_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.tax_gain_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_clan_tax", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_clan.command(name="rewards", aliases=["reward", "rb"])
+    @commands.check(is_clan_owner)
+    async def tbl_clan_rewards(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Clan's Reward Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_forbidden", locale), ctx.channel)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.clan.points < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+        max_level = 400
+        reached = False
+        if player.clan.reward_boost_level + levels > max_level:
+            levels = max_level - player.clan.reward_boost_level
+            reached = True
+        player.clan.points -= levels
+        player.clan.reward_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.reward_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_clan_reward", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_clan.command(name="energylimit", aliases=["limit", "elb", "el"])
+    @commands.check(is_clan_owner)
+    async def tbl_clan_elb(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Clan's Energy Limit Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_forbidden", locale), ctx.channel)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.clan.points < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+        max_level = 250
+        reached = False
+        if player.clan.energy_limit_boost_level + levels > max_level:
+            levels = max_level - player.clan.energy_limit_boost_level
+            reached = True
+        player.clan.points -= levels
+        player.clan.energy_limit_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.energy_limit_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_clan_elb", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_clan.command(name="energyregen", aliases=["regen", "erb", "er"])
+    @commands.check(is_clan_owner)
+    async def tbl_clan_erb(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Clan's Energy Regen Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if not player.clan:
+            return await general.send(langs.gls("kuastall_tbl_clan_none3", locale), ctx.channel)
+        if player.clan.owner != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_forbidden", locale), ctx.channel)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.clan.points < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+        max_level = 150
+        reached = False
+        if player.clan.energy_regen_boost_level + levels > max_level:
+            levels = max_level - player.clan.energy_regen_boost_level
+            reached = True
+        player.clan.points -= levels
+        player.clan.energy_regen_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.energy_regen_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_clan_erb", locale, r1, r2, r3, r4), ctx.channel)
+
     @tbl.group(name="guild", aliases=["g", "server"])
     async def tbl_guild(self, ctx: commands.Context):
         """ Interact with TBL Guilds """
@@ -709,6 +813,72 @@ class Kuastall(commands.Cog):
         player.save()
         r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 10, locale, 1)
         return await general.send(langs.gls("kuastall_tbl_donate2", locale, r1, r2, player.guild.name), ctx.channel)
+
+    @tbl_guild.command(name="araksatboost", aliases=["araksat", "ab"])
+    @permissions.has_permissions(administrator=True)
+    async def tbl_guild_araksat(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Guild's Araksat Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.guild.coins < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
+        max_level = 300
+        reached = False
+        if player.guild.araksat_boost_level + levels > max_level:
+            levels = max_level - player.guild.araksat_boost_level
+            reached = True
+        player.guild.coins -= levels
+        player.guild.araksat_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.guild.araksat_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_guild_araksat", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_guild.command(name="xpboost", aliases=["xp"])
+    @permissions.has_permissions(administrator=True)
+    async def tbl_guild_xp(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Guild's XP Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.guild.coins < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
+        max_level = 300
+        reached = False
+        if player.guild.xp_boost_level + levels > max_level:
+            levels = max_level - player.guild.xp_boost_level
+            reached = True
+        player.guild.coins -= levels
+        player.guild.xp_boost_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.guild.xp_boost_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_guild_xp", locale, r1, r2, r3, r4), ctx.channel)
+
+    @tbl_guild.command(name="energy")
+    @permissions.has_permissions(administrator=True)
+    async def tbl_guild_energy(self, ctx: commands.Context, levels: int = 1):
+        """ Upgrade the Guild's Round Energy Cost Boost """
+        locale = tbl_locale(ctx)
+        player = tbl.Player.from_db(ctx.author, ctx.guild)
+        if levels < 1:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
+        if player.guild.coins < levels:
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
+        max_level = 50
+        reached = False
+        if player.guild.energy_reduction_level + levels > max_level:
+            levels = max_level - player.guild.energy_reduction_level
+            reached = True
+        player.guild.coins -= levels
+        player.guild.energy_reduction_level += levels
+        player.save()
+        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.guild.energy_reduction_level, locale), langs.gns(max_level, locale)
+        r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
+        return await general.send(langs.gls("kuastall_tbl_upgrade_guild_energy", locale, r1, r2, r3, r4), ctx.channel)
 
     @tbl.command(name="locations", aliases=["location", "loc", "l"])
     async def tbl_locations(self, ctx: commands.Context, location_id: int = None):

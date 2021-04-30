@@ -157,3 +157,7 @@
 - Ability to use Shaman Feathers to upgrade your Shaman stats
 - Made TBL player place at end of round more accurate
 - Cancelled Challenge Renewal
+
+## v1.1.7 - 1 May 2021
+- TBL Clan upgrades
+- TBL Guild upgrades
