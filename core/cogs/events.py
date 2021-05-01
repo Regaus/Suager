@@ -186,7 +186,8 @@ class Events(commands.Cog):
             if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
                 if after.channel.id not in self.message_ignore:
                     if not after.author.bot:
-                        await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
+                        if after.content != before.content:
+                            await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
 
 
 def setup(bot):

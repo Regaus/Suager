@@ -737,3 +737,6 @@
 - //lovecalc, //friendship, //babyrate no longer use random.seed()
 - Auto-unmute now shows "[Suager Auto-Unmute]" as reason
 - //babyrate now always returns 0% when used on me
+
+## v7.2.19.1 - 1 May 2021
+- Message edit logs will now only update when the message content is changed
