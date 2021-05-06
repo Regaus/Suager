@@ -219,7 +219,7 @@ class Moderation(commands.Cog):
             else:
                 random_id = general.random_id(ctx)
                 self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (member.id, "mute", expiry, ctx.guild.id, None, random_id, 0))
-                duration = langs.td_rd(delta, "en_gb", accuracy=7, brief=False, suffix=False)
+                duration = langs.td_rd(delta, "en", accuracy=7, brief=False, suffix=False)
                 reason = " ".join(reason.split(" ")[1:])
                 out = f"{emotes.Allow} Successfully muted **{member}** for **{duration}** for **{reason}**"
         return await general.send(out, ctx.channel)
@@ -240,8 +240,8 @@ class Moderation(commands.Cog):
         for reminder in reminders:
             _reminder += 1
             expiry = reminder["expiry"]
-            expires_on = langs.gts(expiry, "en_gb", True, True, False, True, False)
-            expires_in = langs.td_dt(expiry, "en_gb", accuracy=3, brief=False, suffix=True)
+            expires_on = langs.gts(expiry, "en", True, True, False, True, False)
+            expires_in = langs.td_dt(expiry, "en", accuracy=3, brief=False, suffix=True)
             who = self.bot.get_user(reminder["uid"])
             outputs.append(f"**{_reminder})** {who}\nMuted until {expires_on}\nExpires {expires_in}")
         output2 = "\n\n".join(outputs)

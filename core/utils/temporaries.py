@@ -25,7 +25,7 @@ async def temporaries(bot: bot_data.Bot):
                 entry_id = entry["entry_id"]
                 if entry["type"] == "reminder":
                     user: discord.User = bot.get_user(entry["uid"])
-                    expiry = langs.gts(entry["expiry"], "en_gb", True, True, False, True, False)
+                    expiry = langs.gts(entry["expiry"], "en", True, True, False, True, False)
                     try:
                         if user is not None:
                             await user.send(f"⏰ **Reminder** (for {expiry}):\n\n{entry['message']}")
@@ -101,7 +101,7 @@ async def try_error_temps(bot: bot_data.Bot):
             entry_id = entry["entry_id"]
             if entry["type"] == "reminder":
                 user: discord.User = bot.get_user(entry["uid"])
-                expiry = langs.gts(entry["expiry"], "en_gb", True, True, False, True, False)
+                expiry = langs.gts(entry["expiry"], "en", True, True, False, True, False)
                 try:
                     if user is not None:
                         await user.send(f"There was an error sending this reminder earlier.\n⏰ **Reminder** (for {expiry}):\n\n{entry['message']}")
@@ -196,7 +196,7 @@ async def birthdays(bot: bot_data.Bot):
                     try:
                         user = bot.get_user(person["uid"])
                         if user is not None:
-                            await user.send(langs.gls("birthdays_message", "en_gb", user.mention))
+                            await user.send(langs.gls("birthdays_message", "en", user.mention))
                     except Exception as e:
                         print(f"{time.time()} > Birthdays Handler > {e}")
                 bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))

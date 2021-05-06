@@ -40,17 +40,17 @@ class Utility(commands.Cog):
         locale = langs.gl(ctx)
         send = ""
         if locale == "rsl-1d":
-            # data = ga78.time_kargadia(time.now(None))
-            # data = ss23.time_kargadia(time.now(None))
-            # a = f"{data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
-            a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-            b = langs.gts(time.now(None), locale, True, False, False, True, False)
-            send += langs.gls("util_time_sl", locale, b, a)
+            # a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+            # b = langs.gts(time.now(None), locale, True, False, False, True, False)
+            # send += langs.gls("util_time_sl", locale, b, a)
+            a = langs.gts(time.now(None), locale, True, False, False, True, False)
+            b = langs.gts(time.kargadia_convert(time.now(None)), locale, True, False, False, True, False)
+            c = ga78.time_kargadia(time.now(None)).str(False, False, False)
+            send += f"Zymlä (UTC/GMT): **{a}**\n" \
+                    f"Senka'dar Laikadu: **{b}**\n" \
+                    f"Kargadia (Sentagar): **{c}**"
         elif locale == "rsl-1e":
-            # data =
-            # data = ss23.time_kargadia(time.now(None))
             a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-            # a = f"{data.day_name}, {data.day:02d} {data.months[data.month - 1]} {data.year}, {data.hour:02d}:{data.minute:02d}:{data.second:02d}"
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
             z = time.kargadia_convert(time.now(None))
@@ -60,7 +60,6 @@ class Utility(commands.Cog):
                     f"Zymlä (SL-Taida AD'i): **{d}**\n" \
                     f"Zymlä (SL-Taida NE'i): **{c}**\n" \
                     f"Kargadia (Sentagar): **{a}**"
-            # send += langs.gls("util_time_sl", locale, c, a, b)
         else:
             send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, True, True, True))
             send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, True, True, True)}**"
@@ -79,7 +78,7 @@ class Utility(commands.Cog):
 
         Use "to" to convert decimal (base-10) to a base
         Use "from" to convert from the base to decimal (base-10)
-        Caps is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to base 10."""
+        Caps argument is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to base 10."""
         if base > 36:
             return await general.send(f"{ctx.author.name}, Bases above 36 are not supported", ctx.channel)
         elif base < 2:
@@ -177,7 +176,7 @@ class Utility(commands.Cog):
                 except KeyError:
                     country = ""
                     tz = 0
-                _time_locale = locale if locale not in ["rsl-1d", "rsl-5"] else "en_gb"
+                _time_locale = locale if locale not in ["rsl-1d", "rsl-5"] else "en"
                 local_time = langs.gts(time.now(None) + timedelta(seconds=tz), _time_locale)
                 if country:
                     country_name = langs.gls(f"z_data_country_{country}", locale)
@@ -718,8 +717,8 @@ class Utility(commands.Cog):
         expiry, error = time.add_time(delta)
         if error:
             return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
-        diff = langs.td_rd(delta, "en_gb", accuracy=7, brief=False, suffix=True)
-        when = langs.gts(expiry, "en_gb", True, True, False, True, False)
+        diff = langs.td_rd(delta, "en", accuracy=7, brief=False, suffix=True)
+        when = langs.gts(expiry, "en", True, True, False, True, False)
         random_id = general.random_id(ctx)
         self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False))
         return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when})", ctx.channel)
@@ -738,8 +737,8 @@ class Utility(commands.Cog):
         for reminder in reminders:
             _reminder += 1
             expiry = reminder["expiry"]
-            expires_on = langs.gts(expiry, "en_gb", True, True, False, True, False)
-            expires_in = langs.td_dt(expiry, "en_gb", accuracy=3, brief=False, suffix=True)
+            expires_on = langs.gts(expiry, "en", True, True, False, True, False)
+            expires_in = langs.td_dt(expiry, "en", accuracy=3, brief=False, suffix=True)
             outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
         output2 = "\n\n".join(outputs)
         try:

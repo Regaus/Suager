@@ -92,8 +92,8 @@ async def on_member_join(self, member: discord.Member):
             else:
                 await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
         if member.guild.id == 738425418637639775:
-            join = langs.gts(member.joined_at, "en_gb", seconds=True)
-            age = langs.td_dt(member.created_at, "en_gb")
+            join = langs.gts(member.joined_at, "en", seconds=True)
+            age = langs.td_dt(member.created_at, "en")
             await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
     if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
         if member.name[0] < "A":
@@ -104,12 +104,12 @@ async def on_member_remove(self, member: discord.Member):
     logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just left {member.guild.name}")
     if self.bot.name == "suager":
         if member.guild.id == 568148147457490954:
-            survival = langs.td_dt(member.joined_at, "en_gb")
+            survival = langs.td_dt(member.joined_at, "en")
             remaining = len(member.guild.members)
             await general.send(f"**{member.name}** just **abandoned** Senko Lair...\nThey had survived for {survival}...\n"
                                f"**{remaining}** Senkoists remaining.", self.bot.get_channel(610836120321785869))
         if member.guild.id == 738425418637639775:
-            survival = langs.td_dt(member.joined_at, "en_gb")
+            survival = langs.td_dt(member.joined_at, "en")
             await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))
         uid, gid = member.id, member.guild.id
         # self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))

@@ -138,7 +138,7 @@ class Kuastall(commands.Cog):
         player.shaman_feathers -= levels
         player.shaman_probability_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.shaman_probability_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.shaman_probability_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_shaman_probability", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -159,7 +159,7 @@ class Kuastall(commands.Cog):
         player.shaman_feathers -= levels
         player.shaman_xp_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.shaman_xp_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.shaman_xp_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_shaman_xp", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -180,7 +180,7 @@ class Kuastall(commands.Cog):
         player.shaman_feathers -= levels
         player.shaman_save_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.shaman_save_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.shaman_save_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_shaman_saves", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -700,7 +700,7 @@ class Kuastall(commands.Cog):
         player.clan.points -= levels
         player.clan.tax_gain_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.tax_gain_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.clan.tax_gain_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_clan_tax", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -726,7 +726,7 @@ class Kuastall(commands.Cog):
         player.clan.points -= levels
         player.clan.reward_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.reward_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.clan.reward_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_clan_reward", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -752,7 +752,7 @@ class Kuastall(commands.Cog):
         player.clan.points -= levels
         player.clan.energy_limit_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.energy_limit_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.clan.energy_limit_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_clan_elb", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -778,7 +778,7 @@ class Kuastall(commands.Cog):
         player.clan.points -= levels
         player.clan.energy_regen_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.clan.energy_regen_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.clan.energy_regen_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_clan_erb", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -832,7 +832,7 @@ class Kuastall(commands.Cog):
         player.guild.coins -= levels
         player.guild.araksat_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.guild.araksat_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.guild.araksat_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_guild_araksat", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -854,7 +854,7 @@ class Kuastall(commands.Cog):
         player.guild.coins -= levels
         player.guild.xp_boost_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.guild.xp_boost_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.guild.xp_boost_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_guild_xp", locale, r1, r2, r3, r4), ctx.channel)
 
@@ -876,7 +876,7 @@ class Kuastall(commands.Cog):
         player.guild.coins -= levels
         player.guild.energy_reduction_level += levels
         player.save()
-        r1, r2, r3 = langs.gns(levels, locale), langs.gns(player.guild.energy_reduction_level, locale), langs.gns(max_level, locale)
+        r1, r2, r3 = langs.plural(levels, "generic_times", locale), langs.gns(player.guild.energy_reduction_level, locale), langs.gns(max_level, locale)
         r4 = langs.gls("kuastall_tbl_upgrade_max", locale) if reached else ""
         return await general.send(langs.gls("kuastall_tbl_upgrade_guild_energy", locale, r1, r2, r3, r4), ctx.channel)
 

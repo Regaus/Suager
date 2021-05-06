@@ -13,7 +13,7 @@ for file in os.listdir("languages"):
         languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
 
 
-def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get Byte String
+def gbs(value: int, locale: str = "en", precision: int = 2) -> str:  # Get Byte String
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
     step = 1024
@@ -33,7 +33,7 @@ def gbs(value: int, locale: str = "en_gb", precision: int = 2) -> str:  # Get By
             return f"{number} {names[i]}"
 
 
-def gns(value: Union[int, float], locale: str = "en_gb", fill: int = 0, commas: bool = True) -> str:  # Get number string
+def gns(value: Union[int, float], locale: str = "en", fill: int = 0, commas: bool = True) -> str:  # Get number string
     """ Get a string from an integer """
     try:
         value = int(value)
@@ -44,7 +44,7 @@ def gns(value: Union[int, float], locale: str = "en_gb", fill: int = 0, commas: 
     return f"{value:0{fill}{',' if commas else ''}d}"
 
 
-def gfs(value: Union[int, float], locale: str = "en_gb", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
+def gfs(value: Union[int, float], locale: str = "en", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
     """ Get a string from a float """
     if type(value) == int:
         return gns(value, locale, 0, True)
@@ -67,24 +67,24 @@ def gl(ctx):
     return ctx.bot.local_config["default_locale"]
 
 
-def gls(string: str, locale: str = "en_gb", *values, **kw_values) -> str:
+def gls(string: str, locale: str = "en", *values, **kw_values) -> str:
     """ Get language string """
-    output = str((languages.get(locale, languages["en_gb"])).get(string, languages["en_gb"].get(string, f"String not found: {string}")))
+    output = str((languages.get(locale, languages["en"])).get(string, languages["en"].get(string, f"String not found: {string}")))
     try:
         return output.format(*values, **kw_values, emotes=emotes)
     except IndexError:
         return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
 
 
-def get_data(key: str, locale: str = "en_gb") -> Any:  # Get multiple
-    return (languages.get(locale, languages["en_gb"])).get(key, languages["en_gb"].get(key))
+def get_data(key: str, locale: str = "en") -> Any:  # Get multiple
+    return (languages.get(locale, languages["en"])).get(key, languages["en"].get(key))
 
 
-def yes(condition: bool, locale: str = "en_gb") -> str:
+def yes(condition: bool, locale: str = "en") -> str:
     return gls("generic_yes", locale) if condition else gls("generic_no", locale)
 
 
-def plural(v: Union[int, float], what: str, locale: str = "en_gb", float_pre: int = 2) -> str:
+def plural(v: Union[int, float], what: str, locale: str = "en", float_pre: int = 2) -> str:
     """ Get plural form of words """
     if locale in ["rsl-1f", "rsl-1g"]:
         name = get_data(what, locale)[0]
@@ -108,7 +108,7 @@ def join(seq, joiner: str = ', ', final: str = 'and'):
     return '' if size == 0 else seq[0] if size == 1 else f"{seq[0]} {final} {seq[1]}" if size == 2 else joiner.join(seq[:-1]) + f" {final} {seq[-1]}"
 
 
-def td_dt(dt: datetime, locale: str = "en_gb", *, source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:
+def td_dt(dt: datetime, locale: str = "en", *, source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:
     """ Get a string from datetime differences """
     now = (source or time.now(None)).replace(microsecond=0)
     then = dt.astimezone(timezone.utc)
@@ -149,26 +149,24 @@ def td_dt(dt: datetime, locale: str = "en_gb", *, source: datetime = None, accur
 # Code based on R. Danny
 
 
-def td_int(seconds: int, locale: str = "en_gb", accuracy: int = 3, is_future: bool = False, brief: bool = True, suffix: bool = False) -> str:
+def td_int(seconds: int, locale: str = "en", accuracy: int = 3, is_future: bool = False, brief: bool = True, suffix: bool = False) -> str:
     return td_dt(time.now(None) + timedelta(seconds=seconds if is_future else -seconds - 1), locale, accuracy=accuracy, brief=brief, suffix=suffix)
 
 
-def td_ts(timestamp: int, locale: str = "en_gb", accuracy: int = 3, brief: bool = True, suffix: bool = False) -> str:
+def td_ts(timestamp: int, locale: str = "en", accuracy: int = 3, brief: bool = True, suffix: bool = False) -> str:
     return td_dt(time.from_ts(timestamp, None), locale, accuracy=accuracy, brief=brief, suffix=suffix)
 
 
-def td_rd(delta: relativedelta, locale: str = "en_gb", accuracy: int = 3, brief: bool = False, suffix: bool = True) -> str:
+def td_rd(delta: relativedelta, locale: str = "en", accuracy: int = 3, brief: bool = False, suffix: bool = True) -> str:
     now = time.now(None)
     if time.rd_negative(delta):
         delta.seconds -= 1
     return td_dt(now + delta, locale, accuracy=accuracy, brief=brief, suffix=suffix, source=now)
 
 
-def gts(when: datetime = None, locale: str = "en_gb", day: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
+def gts(when: datetime = None, locale: str = "en", day: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
     """ Get localised time string """
     when = when or time.now(None)
-    if locale in ["rsl-1d", "rsl-5"]:
-        when = time.kargadia_convert(when)
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if day:
@@ -194,9 +192,7 @@ def gts(when: datetime = None, locale: str = "en_gb", day: bool = True, short: b
     return base
 
 
-def gts_date(when: Union[datetime, date], locale: str = "en_gb", short: bool = False, year: bool = True) -> str:
-    if locale in ["rsl-1d", "rsl-5"]:
-        when = time.kargadia_convert(when)
+def gts_date(when: Union[datetime, date], locale: str = "en", short: bool = False, year: bool = True) -> str:
     month_names_l = get_data("time_month_names", locale)
     month_name = month_names_l[when.month % 12]
     month_name_s = month_name[:3]

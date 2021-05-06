@@ -740,3 +740,6 @@
 
 ## v7.2.19.1 - 1 May 2021
 - Message edit logs will now only update when the message content is changed
+
+## v7.2.20 - 3 May 2021
+- Deleted Simplified English and old RSL-1d locales

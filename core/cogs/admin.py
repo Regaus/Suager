@@ -553,9 +553,9 @@ class Admin(commands.Cog):
 
     @commands.command(name="gls")
     @commands.check(permissions.is_owner)
-    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en_gb"):
+    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en"):
         """ Test a string """
-        return await general.send(langs.languages.get(locale, langs.languages["en_gb"]).get(string, f"String not found: {string}"), ctx.channel)
+        return await general.send(langs.languages.get(locale, langs.languages["en"]).get(string, f"String not found: {string}"), ctx.channel)
 
     @commands.command(name="blacklist")
     @commands.check(permissions.is_owner)
@@ -600,7 +600,7 @@ class Admin(commands.Cog):
     async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = -0):
         """ Check someone's DMs with Suager """
         try:
-            data = "\n\n".join([f"{message.author} - {langs.gts(message.created_at, 'en_gb', seconds=True)}\n{message.content}" for message in (await
+            data = "\n\n".join([f"{message.author} - {langs.gts(message.created_at, 'en', seconds=True)}\n{message.content}" for message in (await
                                 (await user.create_dm()).history(limit=None, oldest_first=True).flatten())[-limit:]])
             if ctx.guild is None:
                 _limit = 8000000

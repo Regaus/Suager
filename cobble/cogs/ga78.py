@@ -374,7 +374,7 @@ class GA78(commands.Cog):
                 dt = time.from_ts(time.get_ts(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")), None)
             except ValueError:
                 return await general.send("Failed to convert date. Make sure it is in the format YYYY-MM-DD hh:mm:ss (time part optional)", ctx.channel)
-        time_earth = langs.gts(dt, "en_gb", True, False, True, True, False)
+        time_earth = langs.gts(dt, "en", True, False, True, True, False)
         output = f"Time on this Earth (English): **{time_earth}**"
         if ss == 23:
             if dt < datetime(1686, 11, 22, tzinfo=timezone.utc):
