@@ -697,7 +697,7 @@ class Settings(commands.Cog):
     async def give_role(self, ctx: commands.Context, role: discord.Role = None):
         """ Add a role """
         _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        data = {}
+        # data = {}
         if not _data or "roles" not in (data := json.loads(_data['data'])):
             return await general.send("There are no roles available like that.", ctx.channel)
         roles = data["roles"]
@@ -721,7 +721,7 @@ class Settings(commands.Cog):
     async def leave_role(self, ctx: commands.Context, role: discord.Role):
         """ Remove a role """
         _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-        data = {}
+        # data = {}
         if not _data or "roles" not in (data := json.loads(_data['data'])):
             return await general.send("There are no roles available in these commands in this server.", ctx.channel)
         roles = data["roles"]

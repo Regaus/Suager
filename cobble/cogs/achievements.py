@@ -56,6 +56,9 @@ tbl_league_ah = [
     "Reach the Silver League",
     "Reach the Gold League",
     "Reach the Platinum League",
+    "Reach the Ruby League",
+    "Reach the Emerald League",
+    "Reach the Sapphire League",
     "Reach the Diamond League"
 ]
 
@@ -75,8 +78,9 @@ class Achievements(commands.Cog):
         achievement_xp = [10000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2500000, 3000000, 4000000, 5000000]
         # achievement_xp = [10000, 25000, 50000, 100000, 200000, 500000, 750000, 1000000, 1750000, 2500000, 3750000, 5000000]
         achievement_tbl_levels = [7, 12, 20, 30, 40, 50, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250]
-        achievement_tbl_shaman = [5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100]
-        achievement_tbl_league = [500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
+        achievement_tbl_shaman = [5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175]
+        # achievement_tbl_league = [500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
+        achievement_tbl_league = tbl.leagues[1:]
         achievement_tbl_araksat = [1000, 2500, 5000, 10000, 25000, 50000, 750000, 100000, 250000, 500000, 1000000, 2500000]
         rows = 6
         shelves = 1
@@ -162,13 +166,13 @@ class Achievements(commands.Cog):
         player = tbl.Player.from_db(user, ctx.guild)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_league:
-            if player.league_points >= req:
+            if player.max_points >= req:
                 tier += 1
                 prev = req
             else:
                 break
-        tiers.append(round(tier * 1.2))  # Because it's 10 tiers instead of 12
-        generate_box(0, 2, tier, 10, f"TBL: Leagues", tbl_league_ah[tier], player.league_points, req, prev)
+        tiers.append(round(tier / 13 * 12))
+        generate_box(0, 2, tier, 13, f"TBL: Leagues", tbl_league_ah[tier], player.max_points, req, prev)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_levels:
             if player.level >= req:
@@ -194,8 +198,8 @@ class Achievements(commands.Cog):
                 prev = req
             else:
                 break
-        tiers.append(tier)
-        generate_box(0, 5, tier, 12, f"TBL: Shaman Skills", f"Reach Shaman Level {req:,}", player.shaman_level, req, prev)
+        tiers.append(tier / 15 * 12)
+        generate_box(0, 5, tier, 15, f"TBL: Shaman Levels", f"Reach Shaman Level {req:,}", player.shaman_level, req, prev)
         # CC2 - Depth - Shelf 2
         # CC2 - Cobble Levels - Shelf 2
         # CC2 - Cobble Mined - Shelf 2
@@ -206,7 +210,6 @@ class Achievements(commands.Cog):
         # req = min_tier + 1 if min_tier < 12 else 12
         # generate_box(2, 5, min_tier, 12, "Achievements", f"Reach tier {req} on all achievements", min_tier, req, min_tier)
         dr.text(((((width + 20) * shelves - 20) - w) / 2, -15), str(user), font=font, fill=achievement_colours[max_tier])
-        # "All Achievements" removed because tier differences
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)

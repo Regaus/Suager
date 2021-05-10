@@ -94,7 +94,7 @@ def plural(v: Union[int, float], what: str, locale: str = "en", float_pre: int =
         p1, p2, p3 = pl
         v2 = v % int(p3)
         v3 = v2 % int(p2)
-        name = name_pl if int(p2) <= v2 <= int(p2) * 2 or v3 >= int(p1) else name_2 if v3 != 1 else name_1
+        name = name_pl if int(p2) <= v2 <= int(p2) * 2 or (v3 >= int(p1) or v3 == 0) else name_2 if v3 != 1 else name_1
     else:
         name_1, name_2 = get_data(what, locale)
         cond = (v % 100) == 1 if locale == "rsl-1e" else v == 1

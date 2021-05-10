@@ -743,3 +743,7 @@
 
 ## v7.2.20 - 3 May 2021
 - Deleted Simplified English and old RSL-1d locales
+
+## v7.2.21 - 11 May 2021
+- Made Suager show how long is left until his birthday and until my birthday
+- Changed playing status update rate to 2 minutes 30 seconds

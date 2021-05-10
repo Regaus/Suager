@@ -194,6 +194,7 @@ tables = [
         Column("energy", 1, True),              # 15 - Current energy
         Column("energy_time", 1, True),         # 16 - When to start energy regen
         Column("clan", 0, False),               # 17 - Clan ID player's a part of
+        Column("max_points", 0, True),          # 18 - Highest ever league points
     ]),
     Table("tbl_clan", [
         Column("clan_id", 0, True),
@@ -207,9 +208,9 @@ tables = [
         Column("locations", 2, True),           # JSON of Clan Locations and how long they'll last
         Column("araksat", 1, True),             # Clan Araksat
         Column("tax_gain", 0, True),            # How much the clan gains from tax (Default: 0.025 (2.5%), 0.1% per boost, max 25%)      // 225 UP
-        Column("reward_boost", 0, True),        # How much more Araksat and XP all clan members gain (0.5% each per boost, max 200%)     // 400 UP
+        Column("reward_boost", 0, True),        # How much more Araksat and XP all clan members gain (0.5% each per boost, max 100%)     // 200 UP
         Column("energy_limit_boost", 0, True),  # How much bigger members' energy limit will be (1 per boost, max 250)                   // 250 UP
-        Column("energy_regen_boost", 0, True),  # Amount of seconds members' energy takes less time to regen (-0.4s per boost, max -60s) // 150 UP
+        Column("energy_regen_boost", 0, True),  # Amount of seconds members' energy takes less time to regen (-0.4s per boost, max -90s) // 225 UP
     ]),
     Table("tbl_guild", [
         Column("gid", 0, True),               # Guild ID
@@ -217,8 +218,8 @@ tables = [
         Column("level", 0, True),
         Column("xp", 1, True),
         Column("coins", 1, True),             # Guild Coins
-        Column("araksat_boost", 0, True),     # How much members' Araksat gain is increased (1% per boost, max 300%) // 300 GC
-        Column("xp_boost", 0, True),          # How much members' XP gain is increased (1% per boost, max 300%)      // 300 GC
+        Column("araksat_boost", 0, True),     # How much members' Araksat gain is increased (1% per boost, max 150%) // 150 GC
+        Column("xp_boost", 0, True),          # How much members' XP gain is increased (1% per boost, max 150%)      // 150 GC
         Column("energy_reduction", 0, True),  # How much less energy members need per round (-0.1 per boost, max -5) //  50 GC
     ]),
     Table("tbl_invite", [

@@ -1,17 +1,17 @@
 {
   "suager": {
     "short_version": "7.2",
-    "version": "7.2.19.1",
+    "version": "7.2.21",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1619891750
+    "last_update": 1620688996
   },
   "cobble": {
     "short_version": "1.1",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1619826706
+    "last_update": 1620688994
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

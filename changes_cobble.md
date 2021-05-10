@@ -161,3 +161,16 @@
 ## v1.1.7 - 1 May 2021
 - TBL Clan upgrades
 - TBL Guild upgrades
+
+## v1.1.8 - 8-11 May 2021
+- Removed TBL beginning
+- Split Shaman skills into separate embed field for TBL stats
+- Reduced the Clan and Guild reward boost limit, increased max energy regen speed boost
+- You now get extra coins for XP after level 250
+- Added more Leagues
+- TBL now stores the highest amount of League Points you've ever had
+- Improved TBL-related achievements to reflect the new changes
+- Changed how energy is regenerated while playing
+- Improved plurals for TBL
+- Made CobbleBot show how long is left until his birthday and until my birthday
+- Changed playing status update rate to 2 minutes 30 seconds

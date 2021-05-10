@@ -34,13 +34,15 @@ def dt(year: int, month: int, day: int, hour: int = 0, minute: int = 0) -> datet
 db = database.Database()
 bad = [69, 420, 666, 1337]
 player_max = 250
-shaman_max = 100
+shaman_max = 175
 guild_max = 200
 clan_max = 250
-player_levels = level_gen(player_max, lambda x: 15 * x ** 2 + 185 * x)
-shaman_levels = level_gen(shaman_max, lambda x: 0.3 * x ** 3 + 7.5 * x ** 2 + 92.2 * x)
-guild_levels = level_gen(guild_max, lambda x: 0.15 * x ** 3 + 12.5 * x ** 2 + 487.35 * x)
-clan_levels = level_gen(clan_max, lambda x: 12.5 * x ** 2 + 237.5 * x)
+player_levels = level_gen(player_max, lambda x: 4.4 * x ** 2.2 + 195.6 * x)
+for _ in range(25000 - player_max):
+    player_levels.append(player_levels[-1] + 2500000)
+shaman_levels = level_gen(shaman_max, lambda x: 0.27 * x ** 3 + 7.5 * x ** 2 + 92.23 * x)
+guild_levels = level_gen(guild_max, lambda x: 10 * x ** 1.8 + 490 * x)
+clan_levels = level_gen(clan_max, lambda x: 7.5 * x ** 2 + 242.5 * x)
 # Activity based on TBL time: midnight, 3am, 6am, 9am, noon, 3pm, 6pm, 9pm
 activity_hour = [0.91, 0.37, 0.74, 1.00, 1.27, 1.21, 1.37, 1.13]
 # Monthly variation of activity
@@ -56,8 +58,8 @@ start_tax_gain = 0.025
 clock = ['🕛', '🕒', '🕕', '🕘']
 
 
-# No League, Wood, Stone, Copper, Tin, Bronze, Iron, Silver, Gold, Platinum, Diamond
-leagues = [0, 500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
+# No League, Wood, Stone, Copper, Tin, Bronze, Iron, Silver, Gold, Platinum, Ruby, Emerald, Sapphire, Diamond
+leagues = [0, 500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000, 5000000, 20000000, 100000000]
 
 
 events = {  # Events before January 2021 removed because those already passed anyways
@@ -166,7 +168,8 @@ def get_league(points: int, locale: str) -> tuple[str, str]:
     for i, j in enumerate(leagues):
         if j <= points:
             league = i
-            next_league = langs.gls("generic_max", locale) if i == len(leagues) - 1 else langs.gns(leagues[i + 1])
+            next_league = langs.gls("generic_max", locale) if i == len(leagues) - 1 else langs.plural(leagues[i + 1], "kuastall_tbl_pl_league_points2", locale)
+            # langs.gns(leagues[i + 1], locale)
     return langs.get_data("kuastall_tbl_leagues", locale)[league], next_league
 
 
@@ -404,6 +407,8 @@ class Location:
         return int(players_base * self.base_activity)
 
     def death_rate_level(self, xp_level: int):
+        if xp_level > 250:
+            xp_level = 250
         return self.death / (1 if xp_level <= 50 else 1 + (xp_level - 50) / 100)  # At level 250: x3.00
 
     def status(self, locale: str, level: int) -> discord.Embed:
@@ -424,6 +429,8 @@ class Location:
         r8 = langs.gns(self.level_req, locale)
         r9 = langs.gns(self.normal(), locale)
         r10, r11 = langs.td_int(self.min, locale, brief=True, suffix=False), langs.td_int(self.max, locale, brief=True, suffix=False)
+        if level > 250:
+            level = 250
         r12 = langs.gls("kuastall_tbl_locations_death2", locale, langs.gfs(self.death_rate_level(level), locale, 1, True), langs.gns(level, locale))
         embed.add_field(name=langs.gls("kuastall_tbl_location_level", locale), value=general.bold(r8), inline=True)
         embed.add_field(name=langs.gls("kuastall_tbl_location_players", locale), value=general.bold(r9), inline=True)
@@ -455,7 +462,7 @@ locations = [
     Location(15, [70, 90], [500, 750], 70, [750, 1000], 175, 0.58, 125, 0.41, 240),       # 15 - The Sunken Ship / Kineiridada Vallaita / Потонувший Корабль
     Location(16, [80, 105], [600, 900], 85, [875, 1250], 200, 0.27, 130, 0.43, 250),      # 16 - Southern Ice / Seinankaran Teivadat / Южные Льды
     Location(17, [90, 125], [675, 950], 92, [950, 1375], 225, 1.08, 150, 0.50, 260),      # 17 - The Land of the Dead / Na Zeila na Sevarddann
-    Location(18, [100, 150], [750, 1000], 100, [1000, 1500], 250, 1.47, 120, 0.27, 270),  # 18 - The Ship of Salvation / Na Vallaita Ivankan / Корабль Спасения
+    Location(18, [100, 150], [750, 1000], 100, [1000, 1500], 250, 1.47, 180, 0.27, 270),  # 18 - The Ship of Salvation / Na Vallaita Ivankan / Корабль Спасения
 ]
 
 
@@ -479,6 +486,7 @@ class Player:
         self.shaman_save_boost_level: int = data["shaman_save_boost"]
         self.shaman_save_boost: float = 0.01 * self.shaman_save_boost_level
         self.league_points: int = data["league_points"]
+        self.max_points: int = data["max_points"]
         self.energy: float = data["energy"]
         self.energy_time: float = data["energy_time"]
         # self.renewal: int = data["cr"]
@@ -494,9 +502,9 @@ class Player:
     @classmethod
     def new(cls, uid: int, name: str, disc: int, guild: Guild):
         """ Add a new player """
-        return cls({"uid": uid, "name": name, "disc": int(disc), "araksat": start_araksat, "coins": start_coins, "level": 1, "xp": 0.0,
-                    "shaman_level": 1, "shaman_xp": 0.0, "shaman_feathers": 0, "shaman_probability": start_shaman_probability,
-                    "shaman_xp_boost": 0.0, "shaman_save_boost": 0.0, "league_points": 0, "energy": start_energy, "energy_time": time.now_ts()},
+        return cls({"uid": uid, "name": name, "disc": int(disc), "araksat": start_araksat, "coins": start_coins, "level": 1, "xp": 0.0, "shaman_level": 1,
+                    "shaman_xp": 0.0, "shaman_feathers": 0, "shaman_probability": start_shaman_probability, "shaman_xp_boost": 0.0, "shaman_save_boost": 0.0,
+                    "league_points": 0, "energy": start_energy, "energy_time": time.now_ts(), "max_points": 0},
                    None, guild, True)
 
     @classmethod
@@ -523,25 +531,29 @@ class Player:
         else:
             clan_id = None
         self.guild.save()
+        if self.league_points > self.max_points:
+            self.max_points = self.league_points
         if self.is_new:
-            db.execute("INSERT INTO tbl_player VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
+            db.execute("INSERT INTO tbl_player VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (
                 self.id, self.name, self.disc, self.araksat, self.coins, self.level, self.xp, self.shaman_level, self.shaman_xp, self.shaman_feathers,
-                self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time, clan_id))
+                self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time, clan_id,
+                self.max_points))
         else:
             db.execute("UPDATE tbl_player SET name=?, disc=?, araksat=?, coins=?, level=?, xp=?, shaman_level=?, shaman_xp=?, shaman_feathers=?, "
-                       "shaman_probability=?, shaman_xp_boost=?, shaman_save_boost=?, league_points=?, energy=?, energy_time=?, clan=? WHERE uid=?", (
+                       "shaman_probability=?, shaman_xp_boost=?, shaman_save_boost=?, league_points=?, energy=?, energy_time=?, clan=?, max_points=? WHERE uid=?", (
                         self.name, self.disc, self.araksat, self.coins, self.level, self.xp, self.shaman_level, self.shaman_xp, self.shaman_feathers,
                         self.shaman_probability_level, self.shaman_xp_boost_level, self.shaman_save_boost_level, self.league_points, self.energy, self.energy_time,
-                        clan_id, self.id))
+                        clan_id, self.max_points, self.id))
 
     def energy_limit_calc(self) -> float:
         """ Determine the player's Energy limit """
-        if 2 <= self.level < 200:
-            base = 120 + self.level
-        elif self.level == 200:
+        level = self.level if self.level <= 250 else 250
+        if 2 <= level < 200:
+            base = 120 + level
+        elif level == 200:
             base = 420
-        elif self.level > 200:
-            base = 420 + (self.level - 200) * 1.6
+        elif level > 200:
+            base = 420 + (level - 200) * 1.6
         else:
             base = 120
         limit = base
@@ -604,24 +616,27 @@ class Player:
         embed = discord.Embed(colour=general.random_colour())
         embed.title = langs.gls("kuastall_tbl_stats", locale, self.full_name)
         embed.set_thumbnail(url=avatar_url)
-        embed.add_field(name=langs.gls("kuastall_tbl_stats_araksat", locale), value=general.bold(langs.gns(self.araksat)), inline=False)
-        embed.add_field(name=langs.gls("kuastall_tbl_stats_coins", locale), value=general.bold(langs.gns(self.coins)), inline=False)
+        embed.add_field(name=langs.gls("kuastall_tbl_stats_araksat", locale), value=general.bold(langs.gns(self.araksat, locale)), inline=False)
+        embed.add_field(name=langs.gls("kuastall_tbl_stats_coins", locale), value=general.bold(langs.gns(self.coins, locale)), inline=False)
         # xp_req = player_levels[self.level]
-        r1, r2, r3 = langs.gns(self.level, locale), langs.gfs(self.xp, locale, pre=0), get_next("player", self.level, locale)
+        level = self.level if self.level <= 250 else 250
+        r1, r2, r3 = langs.gns(level, locale), langs.gfs(self.xp, locale, pre=0), get_next("player", self.level, locale)
         # langs.gns(xp_req, locale)
         embed.add_field(name=langs.gls("kuastall_tbl_stats_level", locale), value=langs.gls("kuastall_tbl_stats_xp", locale, r1, r2, r3), inline=False)
-        sh_req = shaman_levels[self.shaman_level]
-        r4, r5, r6 = langs.gns(self.shaman_level, locale), langs.gfs(self.shaman_xp, locale, pre=0), langs.gns(sh_req, locale)
+        r4, r5, r6 = langs.gns(self.shaman_level, locale), langs.gfs(self.shaman_xp, locale, pre=0), get_next("shaman", self.shaman_level, locale)
         r7 = langs.gns(self.shaman_feathers, locale)
-        r8 = langs.gfs(self.shaman_probability, pre=1, per=True)
-        r9 = langs.gfs(self.shaman_xp_boost, pre=0, per=True)
-        r0 = langs.gfs(self.shaman_save_boost, pre=0, per=True)
+        r8 = langs.gfs(self.shaman_probability, locale, 1, True)
+        r9 = langs.gfs(self.shaman_xp_boost, locale, 0, True)
+        r0 = langs.gfs(self.shaman_save_boost, locale, 0, True)
         embed.add_field(name=langs.gls("kuastall_tbl_stats_shaman", locale), inline=False,
-                        value=langs.gls("kuastall_tbl_stats_sh", locale, r4, r5, r6, r7, r8, r9, r0))
+                        value=langs.gls("kuastall_tbl_stats_sh", locale, r4, r5, r6, r7))
+        embed.add_field(name=langs.gls("kuastall_tbl_stats_shaman2", locale), inline=False,
+                        value=langs.gls("kuastall_tbl_stats_sh2", locale, r8, r9, r0))
         embed.timestamp = time.now(None)
         l1, l3 = get_league(self.league_points, locale)
         l2 = langs.gns(self.league_points, locale)
-        embed.add_field(name=langs.gls("kuastall_tbl_stats_leagues", locale), value=langs.gls("kuastall_tbl_stats_league", locale, l1, l2, l3), inline=False)
+        l4 = langs.plural(self.max_points, "kuastall_tbl_pl_league_points2", locale)
+        embed.add_field(name=langs.gls("kuastall_tbl_stats_leagues", locale), value=langs.gls("kuastall_tbl_stats_league", locale, l1, l2, l3, l4), inline=False)
         e1, e2 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
         e3 = langs.plural(self.energy_regen, "time_second", locale, 1)  # langs.gfs(self.energy_regen, locale, 1)
         if self.energy >= self.energy_limit:
@@ -665,7 +680,14 @@ class Player:
             ar_mult, ar_end = get_events("araksat")
             xp_mult, xp_end = get_events("xp")
             while self.energy >= self.round_cost and runs < 1000000:
-                rao = int(runs / 50) + 1  # Runs at once
+                if runs < 5000:
+                    rao = int(runs / 50) + 1  # Runs at once
+                elif 5000 <= runs < 10000:
+                    rao = 100
+                elif 10000 <= runs < 20000:
+                    rao = 250
+                else:
+                    rao = 1000
                 runs += 1
                 shaman = random.random() < self.shaman_probability
                 self.energy -= self.round_cost
@@ -701,7 +723,7 @@ class Player:
                                 place += 1
                                 if player["self"]:
                                     break
-                    self.guild.xp += 10
+                    self.guild.xp += 10 if self.level < 10 else self.level if self.level <= 250 else 250
                     a1, a2 = location.araksat
                     reward_ar += random.randint(a1, a2)
                     x1, x2 = location.xp
@@ -725,16 +747,25 @@ class Player:
                 self.shaman_xp += reward_sh
                 self.level, xld = player_level(self.level, self.xp)
                 self.coins += xld
+                self.shaman_level, sld = shaman_level(self.shaman_level, self.shaman_xp)
+                self.shaman_feathers += sld
                 if xld > 0:
                     self.energy_limit = self.energy_limit_calc()
                     if not is_clan:
                         location = self.get_location()
                         location_name = location_names[location.id - 1]
+                        players = location.normal()
                 if self.energy < self.energy_limit:
-                    if xld > 0:
+                    if xld > 0 and self.level <= 250:
                         self.energy = self.energy_limit
                     else:
-                        self.energy += ll / self.energy_regen
+                        if you["life"] and not shaman:
+                            self.energy += (ll - you["time"]) / self.energy_regen
+                        if shaman:
+                            bonus = saves / 10
+                            if bonus > self.round_cost:
+                                bonus = self.round_cost
+                            self.energy += bonus
                         if self.energy > self.energy_limit:
                             self.energy = self.energy_limit
                 if runs % rao == 0:  # If this specific round is worthy of giving output
@@ -762,8 +793,8 @@ class Player:
                     out_4 = ""
                     if shaman:
                         out_4 += langs.gls("kuastall_tbl_game_4", locale, saves)
-                    r1, r2 = langs.gns(reward_ar, locale), langs.gns(self.araksat)
-                    r3, r4, r6 = langs.gns(reward_xp, locale), langs.gns(self.xp), langs.gns(self.level)
+                    r1, r2 = langs.gns(reward_ar, locale), langs.gns(self.araksat, locale)
+                    r3, r4, r6 = langs.gns(reward_xp, locale), langs.gns(self.xp, locale), langs.gns(self.level if self.level <= 250 else 250, locale)
                     r5 = get_next("player", self.level, locale)
                     r7, r8 = langs.gns(reward_lp, locale), langs.gns(self.league_points, locale)
                     r9, r10 = get_league(self.league_points, locale)  # League name, next league requirement
@@ -772,8 +803,6 @@ class Player:
                     out_5 = langs.gls("kuastall_tbl_game_5", locale, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14)
                     await message.edit(content=out_1 + out_2 + out_3 + out_4 + out_5)
                     await asyncio.sleep(1)
-            self.shaman_level, sld = shaman_level(self.shaman_level, self.shaman_xp)
-            self.shaman_feathers += sld
             if self.clan:
                 self.clan.level, cld = clan_level(self.clan.level, self.clan.xp)
                 self.clan.points += cld
@@ -793,7 +822,7 @@ class Player:
                 full = self.energy_time + ((self.energy_limit - self.energy) * self.energy_regen)
                 r6 = langs.td_ts(int(full), locale, 3, False, True)
             r7 = langs.gns(self.araksat, locale)
-            r8, r9, r10 = langs.gns(self.xp, locale), get_next("player", self.level, locale), langs.gns(self.level, locale)
+            r8, r9, r10 = langs.gns(self.xp, locale), get_next("player", self.level, locale), langs.gns(self.level if self.level <= 250 else 250, locale)
             r11, r12, r13 = langs.gns(self.shaman_xp, locale), get_next("shaman", self.shaman_level, locale), langs.gns(self.shaman_level, locale)
             r14 = langs.gns(self.league_points, locale)
             r16, r15 = get_league(self.league_points, locale)  # League req before league name

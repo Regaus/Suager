@@ -1,6 +1,7 @@
 import asyncio
 import json
 import random
+from datetime import date
 
 import aiohttp
 import discord
@@ -225,23 +226,49 @@ async def playing(bot: bot_data.Bot):
             # plays = self.local_config["playing"]
             version = general.get_version()[bot.name]
             fv, sv = f"v{version['version']}", f"v{version['short_version']}"
+            today = date.today()
+            year = today.year
+            ny = year + 1
+            regaus = date(year, 1, 27)
+            if today > regaus:
+                regaus = date(ny, 1, 27)
+            suager = date(year, 5, 13)
+            if today > suager:
+                suager = date(ny, 5, 13)
+            cobble = date(year, 12, 5)
+            if today > cobble:
+                cobble = date(ny, 12, 5)
+            is_regaus, is_suager, is_cobble = today == regaus, today == suager, today == cobble
+
+            def until(when: date):
+                days = (when - today).days
+                s = "s" if days != 1 else ""
+                return f"{days} day{s}"
+
+            until_regaus, until_suager, until_cobble = until(regaus), until(suager), until(cobble)
+            status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until_regaus} until Regaus's birthday"
+            status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until_suager} until my birthday"
+            status_cobble = f"🎉 Today is my birthday!" if is_cobble else f"{until_cobble} until my birthday"
             plays = {
                 "cobble": [
                     {"type": 0, "name": fv},
+                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                     {"type": 0, "name": "with Regaus"},
                     {"type": 0, "name": "without you"},
                     {"type": 0, "name": "with nobody"},
                     {"type": 0, "name": "with your feelings"},
-                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 5, "name": "uselessness"},
                     {"type": 0, "name": "nothing"},
                     {"type": 3, "name": "you"},
                     {"type": 2, "name": "a song"},
                     {"type": 3, "name": "the void"},
+                    {"type": 0, "name": status_regaus},
+                    {"type": 0, "name": status_cobble},
                 ],
                 "suager": [
                     {"type": 0, "name": fv},
+                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                     {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                     {"type": 2, "name": "music"},
@@ -253,9 +280,8 @@ async def playing(bot: bot_data.Bot):
                     # {"type": 0, "name": "Custom Status"},
                     {"type": 0, "name": "Discord"},
                     {"type": 3, "name": "Senko"},
-                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 5, "name": "uselessness"},
-                    {"type": 0, "name": "nothing"},
+                    # {"type": 0, "name": "nothing"},
                     {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
                     {"type": 3, "name": "you"},
                     # {"type": 0, "name": "None"},
@@ -263,29 +289,23 @@ async def playing(bot: bot_data.Bot):
                     # {"type": 0, "name": "IndexError: list index out of range"},
                     # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
                     # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
-                    {"type": 2, "name": "a song"},
-                    # {"type": 2, "name": "10 Hours of Nothing ft. Nobody (Non-Existent Remix by Negative Zero)"},
                     {"type": 3, "name": "the Void"},
-                    # {"type": 5, "name": "Minecraft"},
-                    # {"type": 0, "name": "Minecraft"},
-                    # {"type": 0, "name": "Minceraft"},
-                    # {"type": 1, "name": "Minecraft", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
-                    # {"type": 0, "name": "Terraria"},
-                    # {"type": 1, "name": "Terraria", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
-                    # {"type": 0, "name": "Grand Theft Auto V"},
-                    {"type": 0, "name": "PyCharm"},
+                    # {"type": 0, "name": "PyCharm"},
                     {"type": 0, "name": "a game"},
                     {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
+                    {"type": 2, "name": "a song"},
                     {"type": 2, "name": "the void"},
                     {"type": 2, "name": "Terraria's soundtrack"},
                     {"type": 2, "name": "your conversations"},
                     {"type": 3, "name": "murder"},
                     {"type": 3, "name": "arson"},
                     {"type": 2, "name": "your screams for help"},
-                    {"type": 3, "name": "something"},
-                    {"type": 3, "name": "nothing"},
-                    {"type": 0, "name": "something"},
-                    {"type": 0, "name": "sentience"}
+                    # {"type": 3, "name": "something"},
+                    # {"type": 3, "name": "nothing"},
+                    # {"type": 0, "name": "something"},
+                    {"type": 0, "name": "sentience"},
+                    {"type": 0, "name": status_regaus},
+                    {"type": 0, "name": status_suager},
                 ]
             }
             _activity = random.choice(plays.get(bot.name))
@@ -315,7 +335,7 @@ async def playing(bot: bot_data.Bot):
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > {type(e).__name__}: {e}")
-        await asyncio.sleep(300)
+        await asyncio.sleep(150)
 
 
 async def avatars(bot: bot_data.Bot):

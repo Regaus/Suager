@@ -60,11 +60,11 @@ class Kuastall(commands.Cog):
         player = tbl.Player.from_db(ctx.author, ctx.guild)
         return await player.play(ctx, locale, None)
 
-    @tbl.command(name="beginning", aliases=["explanation", "define", "definition", "explain"])
-    async def tbl_beginning(self, ctx: commands.Context):
-        """ What TBL is """
-        locale = tbl_locale(ctx)
-        return await general.send(langs.gls("kuastall_tbl_beginning", locale), ctx.channel)
+    # @tbl.command(name="beginning", aliases=["explanation", "define", "definition", "explain"])
+    # async def tbl_beginning(self, ctx: commands.Context):
+    #     """ What TBL is """
+    #     locale = tbl_locale(ctx)
+    #     return await general.send(langs.gls("kuastall_tbl_beginning", locale), ctx.channel)
 
     @tbl.command(name="leveling")
     @commands.is_owner()
@@ -118,7 +118,8 @@ class Kuastall(commands.Cog):
         player.coins -= coins
         player.shaman_feathers += coins * 2
         player.save()
-        r1, r2 = langs.gns(coins, locale), langs.gfs(coins * 2, locale, 1)
+        # r1, r2 = langs.gns(coins, locale), langs.gfs(coins * 2, locale, 1)
+        r1, r2 = langs.plural(coins, "kuastall_tbl_pl_coins", locale), langs.plural(coins * 2, "kuastall_tbl_pl_shaman_feathers", locale)
         return await general.send(langs.gls("kuastall_tbl_donate3", locale, r1, r2), ctx.channel)
 
     @tbl_shaman.command(name="probability", aliases=["p"])
@@ -537,7 +538,8 @@ class Kuastall(commands.Cog):
         player.coins -= coins
         player.clan.points += coins / 5
         player.save()
-        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 5, locale, 1)
+        # r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 5, locale, 1)
+        r1, r2 = langs.plural(coins, "kuastall_tbl_pl_coins", locale), langs.plural(coins / 5, "kuastall_tbl_pl_upgrade_points", locale, 1)
         return await general.send(langs.gls("kuastall_tbl_donate", locale, r1, r2, player.clan.name), ctx.channel)
 
     @tbl_clan.group(name="locations")
@@ -574,15 +576,16 @@ class Kuastall(commands.Cog):
         if ctx.author.id == player.clan.owner:
             if player.clan.araksat > cost:
                 cost_clan, cost_player = cost, 0
-                confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm", locale, location_name, langs.gns(cost_clan, locale))
+                confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm", locale, location_name, langs.plural(cost_clan, "kuastall_tbl_pl_araksat_clan", locale))
             else:
                 cost_clan = int(player.clan.araksat)
                 cost_player = cost - cost_clan
-                r1, r2 = langs.gns(cost_clan, locale), langs.gns(cost_player, locale)
+                # r1, r2 = langs.gns(cost_clan, locale), langs.gns(cost_player, locale)
+                r1, r2 = langs.plural(cost_clan, "kuastall_tbl_pl_araksat_clan", locale), langs.plural(cost_player, "kuastall_tbl_pl_araksat_player", locale)
                 confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm2", locale, location_name, r1, r2)
         else:
             cost_clan, cost_player = 0, cost
-            confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm3", locale, location_name, langs.gns(cost_player, locale))
+            confirmation = langs.gls("kuastall_tbl_clan_locations_buy_confirm3", locale, location_name, langs.plural(cost_player, "kuastall_tbl_pl_araksat_player", locale))
         if player.araksat < cost_player:
             return await general.send(langs.gls("kuastall_tbl_clan_locations_buy_player", locale), ctx.channel)
         message = await general.send(confirmation, ctx.channel)
@@ -659,7 +662,8 @@ class Kuastall(commands.Cog):
         days = expiry / 86400  # How many days the location had left
         cost = 850 * (2 ** index) * days  # Refunded cost (15% lost)
         r1 = langs.td_int(int(expiry), locale, 3, True, True, False)
-        r2 = langs.gns(cost, locale)
+        # r2 = langs.gns(cost, locale)
+        r2 = langs.plural(cost, "kuastall_tbl_pl_araksat", locale)
         message = await general.send(langs.gls("kuastall_tbl_clan_locations_refund_confirm", locale, location_name, r1, r2), ctx.channel)
 
         def check_confirm(m):
@@ -718,7 +722,7 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
             return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
-        max_level = 400
+        max_level = 200
         reached = False
         if player.clan.reward_boost_level + levels > max_level:
             levels = max_level - player.clan.reward_boost_level
@@ -770,7 +774,7 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
             return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
-        max_level = 150
+        max_level = 225
         reached = False
         if player.clan.energy_regen_boost_level + levels > max_level:
             levels = max_level - player.clan.energy_regen_boost_level
@@ -811,7 +815,8 @@ class Kuastall(commands.Cog):
         player.coins -= coins
         player.guild.coins += coins / 10
         player.save()
-        r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 10, locale, 1)
+        # r1, r2 = langs.gns(coins, locale), langs.gfs(coins / 10, locale, 1)
+        r1, r2 = langs.plural(coins, "kuastall_tbl_pl_coins", locale), langs.plural(coins / 10, "kuastall_tbl_pl_guild_coins", locale, 1)
         return await general.send(langs.gls("kuastall_tbl_donate2", locale, r1, r2, player.guild.name), ctx.channel)
 
     @tbl_guild.command(name="araksatboost", aliases=["araksat", "ab"])
@@ -824,7 +829,7 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.guild.coins < levels:
             return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
-        max_level = 300
+        max_level = 150
         reached = False
         if player.guild.araksat_boost_level + levels > max_level:
             levels = max_level - player.guild.araksat_boost_level
@@ -846,7 +851,7 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.guild.coins < levels:
             return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
-        max_level = 300
+        max_level = 150
         reached = False
         if player.guild.xp_boost_level + levels > max_level:
             levels = max_level - player.guild.xp_boost_level
