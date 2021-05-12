@@ -95,6 +95,10 @@ async def on_member_join(self, member: discord.Member):
             join = langs.gts(member.joined_at, "en", seconds=True)
             age = langs.td_dt(member.created_at, "en")
             await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
+        if member.guild.id == 806811462345031690:
+            role = member.guild.get_role(841403040534888458)
+            await member.add_roles(role, reason="Welcome to /bin/games!")
+            await general.send(f"Welcome to {member.guild.name}, {member.name}!", self.bot.get_channel(841405544686551044))
     if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
         if member.name[0] < "A":
             await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")

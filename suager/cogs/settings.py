@@ -540,7 +540,7 @@ class Settings(commands.Cog):
 
     @set_shop.command(name="add")
     async def shop_add(self, ctx: commands.Context, role: discord.Role):
-        """ Add a shop item """
+        """ Add a role """
         data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:
             _settings = json.loads(data["data"])
@@ -563,7 +563,7 @@ class Settings(commands.Cog):
 
     @set_shop.command(name="remove")
     async def shop_remove(self, ctx: commands.Context, role: discord.Role):
-        """ Remove a shop item """
+        """ Remove a role """
         data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if data:
             _settings = json.loads(data["data"])
