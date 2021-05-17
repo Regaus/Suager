@@ -114,7 +114,7 @@ class Kuastall(commands.Cog):
         if coins < 1:
             return await general.send(langs.gls("kuastall_tbl_donate_negative", locale), ctx.channel)
         if player.coins < coins:
-            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.plural(player.coins, "kuastall_tbl_pl_coins", locale)), ctx.channel)
         player.coins -= coins
         player.shaman_feathers += coins * 2
         player.save()
@@ -130,7 +130,8 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.shaman_feathers < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_shaman", locale, langs.gns(player.shaman_feathers, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale,
+                                                langs.plural(player.shaman_feathers, "kuastall_tbl_pl_shaman_feathers", locale)), ctx.channel)
         max_level = 64
         reached = False
         if player.shaman_probability_level + levels > max_level:
@@ -151,7 +152,8 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.shaman_feathers < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_shaman", locale, langs.gns(player.shaman_feathers, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale,
+                                                langs.plural(player.shaman_feathers, "kuastall_tbl_pl_shaman_feathers", locale)), ctx.channel)
         max_level = 75
         reached = False
         if player.shaman_xp_boost_level + levels > max_level:
@@ -172,7 +174,8 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.shaman_feathers < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_shaman", locale, langs.gns(player.shaman_feathers, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale,
+                                                langs.plural(player.shaman_feathers, "kuastall_tbl_pl_shaman_feathers", locale)), ctx.channel)
         max_level = 100
         reached = False
         if player.shaman_save_boost_level + levels > max_level:
@@ -218,9 +221,12 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_invite_not_found", locale, invite_id), ctx.channel)
         if invite.type == 0:
             return await general.send(langs.gls("kuastall_tbl_invite_forbidden4", locale), ctx.channel)
+        if invite.user_id != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_invite_forbidden5", locale), ctx.channel)
         invite.accept()
-        user = self.bot.get_user(invite.user_id)
-        return await general.send(langs.gls("kuastall_tbl_invite_accepted", locale, user), ctx.channel)
+        # user = self.bot.get_user(invite.user_id)
+        clan = tbl.Clan.from_db(invite.clan_id).name
+        return await general.send(langs.gls("kuastall_tbl_clan_join_success", locale, clan), ctx.channel)
 
     @tbl_invites.command(name="reject", aliases=["r", "cancel", "c"])
     async def tbl_pi_reject(self, ctx: commands.Context, invite_id: int):
@@ -229,6 +235,8 @@ class Kuastall(commands.Cog):
         invite = tbl.Invite.from_db_id(invite_id)
         if not invite:
             return await general.send(langs.gls("kuastall_tbl_invite_not_found", locale, invite_id), ctx.channel)
+        if invite.user_id != ctx.author.id:
+            return await general.send(langs.gls("kuastall_tbl_invite_forbidden5", locale), ctx.channel)
         invite.delete()
         return await general.send(langs.gls("kuastall_tbl_invite_rejected", locale, invite_id), ctx.channel)
 
@@ -300,14 +308,14 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_invite_forbidden", locale), ctx.channel)
         invite = tbl.Invite.new(user.id, clan.id, 1)
         invite.save()
-        try:
-            await user.send(f"[TBL] You have been invited by {ctx.author} to join the clan {clan.name}\n"
-                            f"To accept: `..tbl invite accept {invite.id}`\nTo reject: `..tbl invite reject {invite.id}`")
-            sent = True
-        except discord.Forbidden:
-            sent = False
-        output = langs.gls("kuastall_tbl_invite_dm" if sent else "kuastall_tbl_invite_dm2", locale)
-        return await general.send(langs.gls("kuastall_tbl_invite_sent", locale, user, output), ctx.channel)
+        # try:
+        #     await user.send(f"[TBL] You have been invited by {ctx.author} to join the clan {clan.name}\n"
+        #                     f"To accept: `..tbl invite accept {invite.id}`\nTo reject: `..tbl invite reject {invite.id}`")
+        #     sent = True
+        # except discord.Forbidden:
+        #     sent = False
+        # output = langs.gls("kuastall_tbl_invite_dm" if sent else "kuastall_tbl_invite_dm2", locale)
+        return await general.send(langs.gls("kuastall_tbl_invite_sent", locale, user), ctx.channel)
 
     @tbl_clan_invites.command(name="accept", aliases=["a"])
     @commands.check(is_clan_owner)
@@ -345,6 +353,8 @@ class Kuastall(commands.Cog):
         invite = tbl.Invite.from_db_id(invite_id)
         if not invite:
             return await general.send(langs.gls("kuastall_tbl_invite_not_found", locale, invite_id), ctx.channel)
+        if invite.clan_id != clan.id:
+            return await general.send(langs.gls("kuastall_tbl_invite_forbidden5", locale), ctx.channel)
         invite.delete()
         return await general.send(langs.gls("kuastall_tbl_invite_rejected", locale, invite_id), ctx.channel)
 
@@ -443,13 +453,13 @@ class Kuastall(commands.Cog):
                         return await general.send(langs.gls("kuastall_tbl_clan_join_failure", locale, clan.name), ctx.channel)
             invite = tbl.Invite.new(ctx.author.id, clan.id, 0)
             invite.save()
-            owner = self.bot.get_user(clan.owner)
-            try:
-                await owner.send(f"[TBL] {ctx.author} has asked to join your clan {clan.name}\n"
-                                 f"To accept: `..tbl invite accept {invite.id}`\nTo reject: `..tbl invite reject {invite.id}`")
-                return await general.send(langs.gls("kuastall_tbl_clan_join_invite", locale, clan.name), ctx.channel)
-            except discord.Forbidden:
-                return await general.send(langs.gls("kuastall_tbl_clan_join_invite2", locale, clan.name), ctx.channel)
+            # owner = self.bot.get_user(clan.owner)
+            # try:
+            #     await owner.send(f"[TBL] {ctx.author} has asked to join your clan {clan.name}\n"
+            #                      f"To accept: `..tbl invite accept {invite.id}`\nTo reject: `..tbl invite reject {invite.id}`")
+            return await general.send(langs.gls("kuastall_tbl_clan_join_invite", locale, clan.name), ctx.channel)
+            # except discord.Forbidden:
+            #     return await general.send(langs.gls("kuastall_tbl_clan_join_invite2", locale, clan.name), ctx.channel)
         if clan.type == 2:
             return await general.send(langs.gls("kuastall_tbl_clan_join_forbidden", locale, clan.name), ctx.channel)
 
@@ -534,7 +544,7 @@ class Kuastall(commands.Cog):
         if coins < 1:
             return await general.send(langs.gls("kuastall_tbl_donate_negative", locale), ctx.channel)
         if player.coins < coins:
-            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.plural(player.coins, "kuastall_tbl_pl_coins", locale)), ctx.channel)
         player.coins -= coins
         player.clan.points += coins / 5
         player.save()
@@ -695,7 +705,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.clan.points, "kuastall_tbl_pl_upgrade_points", locale)), ctx.channel)
         max_level = 225
         reached = False
         if player.clan.tax_gain_level + levels > max_level:
@@ -721,7 +731,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.clan.points, "kuastall_tbl_pl_upgrade_points", locale)), ctx.channel)
         max_level = 200
         reached = False
         if player.clan.reward_boost_level + levels > max_level:
@@ -747,7 +757,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.clan.points, "kuastall_tbl_pl_upgrade_points", locale)), ctx.channel)
         max_level = 250
         reached = False
         if player.clan.energy_limit_boost_level + levels > max_level:
@@ -773,7 +783,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.clan.points, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.clan.points, "kuastall_tbl_pl_upgrade_points", locale)), ctx.channel)
         max_level = 225
         reached = False
         if player.clan.energy_regen_boost_level + levels > max_level:
@@ -811,7 +821,7 @@ class Kuastall(commands.Cog):
         if coins < 1:
             return await general.send(langs.gls("kuastall_tbl_donate_negative", locale), ctx.channel)
         if player.coins < coins:
-            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.gns(player.coins, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_donate_balance", locale, langs.plural(player.coins, "kuastall_tbl_pl_coins", locale)), ctx.channel)
         player.coins -= coins
         player.guild.coins += coins / 10
         player.save()
@@ -828,7 +838,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.guild.coins < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.guild.coins, "kuastall_tbl_pl_guild_coins", locale)), ctx.channel)
         max_level = 150
         reached = False
         if player.guild.araksat_boost_level + levels > max_level:
@@ -850,7 +860,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.guild.coins < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.guild.coins, "kuastall_tbl_pl_guild_coins", locale)), ctx.channel)
         max_level = 150
         reached = False
         if player.guild.xp_boost_level + levels > max_level:
@@ -872,7 +882,7 @@ class Kuastall(commands.Cog):
         if levels < 1:
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.guild.coins < levels:
-            return await general.send(langs.gls("kuastall_tbl_upgrade_balance_clan", locale, langs.gns(player.guild.coins, locale)), ctx.channel)
+            return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.guild.coins, "kuastall_tbl_pl_guild_coins", locale)), ctx.channel)
         max_level = 50
         reached = False
         if player.guild.energy_reduction_level + levels > max_level:

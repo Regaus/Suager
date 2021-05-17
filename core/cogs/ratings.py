@@ -28,6 +28,8 @@ class Ratings(commands.Cog):
             result = custom.get(user.id, _result)
         else:
             result = _result
+            if user.id == 622735873137573894:
+                result += 5 * 2.54
         return await general.send(langs.gls("ratings_pickle", locale, user.name, langs.gfs(result, locale), langs.gfs(result / 2.54, locale)), ctx.channel)
 
     @commands.command(name="rate")

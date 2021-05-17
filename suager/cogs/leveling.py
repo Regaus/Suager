@@ -208,8 +208,11 @@ class Leveling(commands.Cog):
             sm = float(__settings['leveling']['xp_multiplier'])
         except KeyError:
             sm = 1
-        # c = 1
-        c = 0.87 if ctx.author.id in [561164743562493952] else 1
+        c = 1
+        # c = 0.87 if ctx.author.id in [561164743562493952] else 1
+        if ctx.guild.id == 568148147457490954:
+            if 571034926107852801 in [role.id for role in ctx.author.roles]:
+                c *= 0.33
         # c = 0.91 if ctx.author.id in [377467233401831424] else c
         # c *= 0.9 if 796009343539347496 in [role.id for role in ctx.author.roles] and ctx.author.id != 593736085327314954 else 1
         # "Feminist" role on chill crew
@@ -425,16 +428,20 @@ class Leveling(commands.Cog):
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
                 dr.text((text_x, 426), langs.gls("leveling_rank_xp_self", locale), font=font_small, fill=font_colour)
-            full = width
+            full = width - 20
             done = int(progress * full)
             if done < 0:
                 done = 0
-            i1 = Image.new("RGB", (done, 90), color=progress_colour)
-            i2 = Image.new("RGB", (width, 90), color=(30, 30, 30))
-            box1 = (0, 522, done, 612)
-            box2 = (0, 522, full, 612)  # 2 px bigger
-            img.paste(i2, box2)
+            i1 = Image.new("RGB", (width, 100), color=progress_colour)
+            i2 = Image.new("RGB", (width - 10, 90), color=(30, 30, 30))
+            i3 = Image.new("RGB", (done, 80), color=progress_colour)
+            box1, box2, box3 = (0, 512), (5, 517), (10, 522)
+            # box1 = (0, 512, width, 612)
+            # box2 = (5, 517, width - 5, 607)  # 2 px bigger
+            # box3 = (10, 522, done, 602)
             img.paste(i1, box1)
+            img.paste(i2, box2)
+            img.paste(i3, box3)
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)

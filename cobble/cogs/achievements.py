@@ -82,7 +82,8 @@ class Achievements(commands.Cog):
         # achievement_tbl_league = [500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
         achievement_tbl_league = tbl.leagues[1:]
         achievement_tbl_araksat = [1000, 2500, 5000, 10000, 25000, 50000, 750000, 100000, 250000, 500000, 1000000, 2500000]
-        rows = 6
+        player = tbl.Player.from_db(user, ctx.guild)
+        rows = 6 if not player.is_new else 2
         shelves = 1
         width = 1152
         large_size = 96
@@ -128,15 +129,18 @@ class Achievements(commands.Cog):
             dr.text((x + text_x, y + 96), f"Current Tier: {level} of {tier_count}", font=font_small, fill=colour)
             desc = f"Tier {level + 1} Goal: {details} ({current:,}/{requirement:,})" if requirement > current else max_description
             dr.text((x + text_x, y + 128), desc, font=font_small, fill=colour)
-            fill = width - 172
+            fill = width - 192
             done = int(fill * progress)
-            i3 = Image.new("RGBA", (done, 32), color=colour)
-            i4 = Image.new("RGBA", (fill + 4, 36), color=(30, 30, 30, 64))
-            box3 = (x + text_x + 2, y + 176, x + text_x + done + 2, y + 208)
-            box4 = (x + text_x, y + 174, x + text_x + fill + 4, y + 210)
-            img.paste(i4, box4)
+            i3 = Image.new("RGBA", (fill + 20, 42), color=colour)
+            i4 = Image.new("RGBA", (fill + 10, 32), color=(30, 30, 30, 64))
+            i5 = Image.new("RGBA", (done, 22), color=colour)
+            # box4 = (x + text_x, y + 174, x + text_x + fill + 4, y + 210)
+            # box5 = (x + text_x + 2, y + 176, x + text_x + done + 2, y + 208)
+            box3, box4, box5 = (x + text_x, y + 174), (x + text_x + 5, y + 179), (x + text_x + 10, y + 184)
             img.paste(i3, box3)
-            dr.text((x + text_x + fill + 10, y + 170), f"{progress:.0%}", font=font_small, fill=colour)
+            img.paste(i4, box4)
+            img.paste(i5, box5)
+            dr.text((x + text_x + fill + 30, y + 170), f"{progress:.0%}", font=font_small, fill=colour)
 
         tiers = []
         user_xp = self.bot.db.fetch(f"SELECT * FROM leveling2 WHERE uid=? ORDER BY xp DESC", (user.id,))
@@ -163,7 +167,6 @@ class Achievements(commands.Cog):
                 break
         tiers.append(round(tier * 0.75))
         generate_box(0, 1, tier, 16, f"Leveling: Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
-        player = tbl.Player.from_db(user, ctx.guild)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_league:
             if player.max_points >= req:

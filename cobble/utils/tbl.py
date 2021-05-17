@@ -445,7 +445,7 @@ class Location:
 
 
 locations = [
-    Location(1, [4, 7], [15, 25], 4, [25, 60], 0, 1.00, 30, 0.07, 90),                    # 01 - Floating Islands / Leitannan Azdallat / Летающие Острова
+    Location(1, [4, 7], [15, 25], 4, [25, 60], 1, 1.00, 30, 0.07, 90),                    # 01 - Floating Islands / Leitannan Azdallat / Летающие Острова
     Location(2, [5, 8], [27, 50], 6, [35, 70], 7, 0.94, 45, 0.15, 105),                   # 02 - The Mountains of Snow / Na Kirtinat Kalvadan / Хребты Снега
     Location(3, [7, 9], [40, 60], 7, [50, 100], 12, 1.07, 50, 0.17, 120),                 # 03 - The Swamp / Taivead / Топи
     Location(4, [9, 11], [50, 75], 9, [75, 125], 20, 1.32, 60, 0.14, 130),                # 04 - Squirrels City / Bylkangar / Белкоград
@@ -674,7 +674,8 @@ class Player:
                 e1, e2 = langs.gfs(self.energy, locale, 1), langs.gfs(self.round_cost, locale, 1)
                 return await general.send(langs.gls("kuastall_tbl_game_energy", locale, e1, e2), ctx.channel)
             location_name = location_names[location.id - 1]
-            message = await general.send(f"{time.time()} > {ctx.author} > Hiarikiiteak na TBL't! Kaltera...", ctx.channel)
+            message = await general.send(f"{langs.gts(time.now(), locale, True, False, False, True, False)} > {ctx.author} > "  # time.time()
+                                         f"Hiarikiiteak na TBL't! Kaltera...", ctx.channel)
             await asyncio.sleep(2)
             runs = 0
             ar_mult, ar_end = get_events("araksat")

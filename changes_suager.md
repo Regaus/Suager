@@ -750,3 +750,7 @@
 
 ## v7.2.21.1 - 12 May 2021
 - Added welcome message to a server
+
+## v7.2.22 - 17 May 2021
+- Improved the rank card's progress bar
+- Added 1337xp's server to the update list

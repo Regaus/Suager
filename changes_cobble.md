@@ -174,3 +174,9 @@
 - Improved plurals for TBL
 - Made CobbleBot show how long is left until his birthday and until my birthday
 - Changed playing status update rate to 2 minutes 30 seconds
+
+## v1.1.9 - 17 May 2021
+- The Floating Islands are now unlocked at XP Level 1 (instead of 0)
+- Improved achievements progress bar
+- Finished Russian translation of TBL
+- Improved TBL locales
