@@ -242,8 +242,6 @@
   "kuastall_tbl_invite": "Пользователь: {0}\nКлан: {1}\nТип: {2}\nID приглашения: `{3}`",
   "kuastall_tbl_invite_accepted": "Пользователь {0} принят в клан.",
   "kuastall_tbl_invite_already": "Этот пользователь уже приглашён в этот клан.",
-  "kuastall_tbl_invite_dm": "Пользователь уведомлён.",
-  "kuastall_tbl_invite_dm2": "Пользователь не уведомлён.",
   "kuastall_tbl_invite_forbidden": "Тебе нельзя приглашать других в этот клан.",
   "kuastall_tbl_invite_forbidden2": "Только владелец клана может смотреть список действующих приглашений.",
   "kuastall_tbl_invite_forbidden3": "Тебе нельзя принимать или отклонять приглашения этого клана.",

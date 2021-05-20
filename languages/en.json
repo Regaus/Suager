@@ -254,8 +254,6 @@
   "kuastall_tbl_invite": "User: {0}\nClan: {1}\nType: {2}\nInvite ID: `{3}`",
   "kuastall_tbl_invite_accepted": "User {0} has been accepted to the clan.",
   "kuastall_tbl_invite_already": "This user has already been invited to the clan.",
-  "kuastall_tbl_invite_dm": "User has been notified by DM.",
-  "kuastall_tbl_invite_dm2": "Failed to notify user by DM.",
   "kuastall_tbl_invite_forbidden": "You are not allowed to invite others to this clan.",
   "kuastall_tbl_invite_forbidden2": "Only the clan owner can see the invites list.",
   "kuastall_tbl_invite_forbidden3": "You are not allowed to accept or reject this clan's invites.",

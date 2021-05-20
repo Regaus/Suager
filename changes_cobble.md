@@ -180,3 +180,6 @@
 - Improved achievements progress bar
 - Finished Russian translation of TBL
 - Improved TBL locales
+
+## v1.1.10 - 20 May 2021
+- Finished RSL-1e translation of TBL
