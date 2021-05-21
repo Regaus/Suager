@@ -183,3 +183,6 @@
 
 ## v1.1.10 - 20 May 2021
 - Finished RSL-1e translation of TBL
+
+## v1.1.11 - 21 May 2021
+- Achievements now uses Suager XP values

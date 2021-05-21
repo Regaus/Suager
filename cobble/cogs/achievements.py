@@ -143,7 +143,7 @@ class Achievements(commands.Cog):
             dr.text((x + text_x + fill + 30, y + 170), f"{progress:.0%}", font=font_small, fill=colour)
 
         tiers = []
-        user_xp = self.bot.db.fetch(f"SELECT * FROM leveling2 WHERE uid=? ORDER BY xp DESC", (user.id,))
+        user_xp = self.bot.db.fetch(f"SELECT * FROM leveling WHERE uid=? ORDER BY xp DESC", (user.id,))
         try:
             max_level = user_xp[0]["level"]
         except IndexError:

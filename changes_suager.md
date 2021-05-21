@@ -754,3 +754,6 @@
 ## v7.2.22 - 17 May 2021
 - Improved the rank card's progress bar
 - Added 1337xp's server to the update list
+
+## v7.2.23 - 21 May 2021
+- Introduced a better way to handle yearly XP

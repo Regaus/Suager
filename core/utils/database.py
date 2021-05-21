@@ -102,7 +102,9 @@ tables = [
         Column("last", 1, True),
         Column("last_sent", 1, False),
         Column("name", 2, True),
-        Column("disc", 0, True)
+        Column("disc", 0, True),
+        Column("2021", 0, True),  # XP gained in 2021 - Counted from 02/01/2021 for CobbleBot, 21/05/2021 elsewhere
+        Column("2022", 0, True),  # XP gained in 2022 - Counted from 01/01/2022
     ]),
     Table("leveling2", [
         Column("uid", 0, True),

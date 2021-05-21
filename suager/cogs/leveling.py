@@ -96,15 +96,10 @@ def _level_history():
     return xp
 
 
-# def convert_xp(xp: float):
-#     return int(xp / 100)
-
-
 max_level = 200
 bad = [69, 420, 666, 1337]
 levels = _levels()
 level_history = _level_history()
-# xp_amounts = [2250, 3000]
 xp_amounts = [20, 27]
 custom_rank_blacklist = [746173049174229142]
 
@@ -112,7 +107,7 @@ custom_rank_blacklist = [746173049174229142]
 class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.lvl = "leveling" if bot.name == "suager" else "leveling2"
+        # self.lvl = "leveling" if bot.name == "suager" else "leveling2"
 
     @commands.command(name="leveling")
     @commands.is_owner()
@@ -145,7 +140,7 @@ class Leveling(commands.Cog):
                 output += f"\n`{name:<16} -> {level_history[key][level - 1]:>10,.0f} XP`"
             return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
         else:
-            xp_ = self.bot.db.fetchrow(f"SELECT xp FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            xp_ = self.bot.db.fetchrow(f"SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             xp = xp_["xp"] if xp_ else 0
             output = ""
             for key, name in names.items():
@@ -161,12 +156,18 @@ class Leveling(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
-        if self.bot.name == "cobble" and time.now(None) < time.dt(2021, 1, 2):
+        if self.bot.name == "cobble":
             return
         if ctx.author.bot or ctx.guild is None:
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
+        if time.now(None) < time.dt(2021, 5, 21):
+            return
+        elif time.dt(2022) > time.now(None) > time.dt(2021, 5, 21):
+            year = "2021"
+        else:
+            year = "2022"
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         xp_disabled = False
         if _settings:
@@ -183,11 +184,11 @@ class Leveling(commands.Cog):
         else:
             __settings = settings.template.copy()
             xp_disabled = True
-        data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if data:
-            level, xp, last, ls = [data['level'], data['xp'], data['last'], data['last_sent']]
+            level, xp, last, ls, yearly = data['level'], data['xp'], data['last'], data['last_sent'], data[year]
         else:
-            level, xp, last, ls = [0, 0, 0, 0]
+            level, xp, last, ls, yearly = 0, 0, 0, 0, 0
         if ls is None:
             ls = 0
         now = time.now_ts()
@@ -221,6 +222,7 @@ class Leveling(commands.Cog):
             new = 0
         if not xp_disabled:
             xp += new
+            yearly += new
             lu, ld = False, False
             if level >= 0:
                 while level < max_level and xp >= levels[level]:
@@ -249,70 +251,73 @@ class Leveling(commands.Cog):
             if ctx.author.id == 430891116318031872 and level >= 5:
                 lu, ld = False, False
                 level = 5
-            if self.bot.name == "suager":
-                if lu or ld:
-                    try:
-                        send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                            .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
-                    except KeyError:
-                        send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
-                    try:
-                        ac = __settings['leveling']['announce_channel']
-                        if ac != 0:
-                            ch = self.bot.get_channel(ac)
-                            if ch is None or ch.guild.id != ctx.guild.id:
-                                ch = ctx.channel
-                        else:
-                            ch = ctx.channel
-                    except KeyError:
-                        ch = ctx.channel
-                    try:
-                        await general.send(send, ch, u=[ctx.author])
-                    except discord.Forbidden:
-                        pass  # Well, if it can't send it there, too bad.
-                reason = f"Level Rewards - Level {level}"
+            if lu or ld:
                 try:
-                    rewards = __settings['leveling']['rewards']
-                    if rewards:  # Don't bother if they're empty
-                        l1, l2 = [], []
-                        rewards.sort(key=lambda x: x['level'])
-                        for i in range(len(rewards)):
-                            l1.append(rewards[i]['level'])
-                            l2.append(rewards[i]['role'])
-                        roles = [r.id for r in ctx.author.roles]
-                        for i in range(len(rewards)):
-                            role = discord.Object(id=l2[i])
-                            has_role = l2[i] in roles
-                            if level >= l1[i]:
-                                if i < len(rewards) - 1:
-                                    if level < l1[i + 1]:
-                                        if not has_role:
-                                            await ctx.author.add_roles(role, reason=reason)
-                                    else:
-                                        if has_role:
-                                            await ctx.author.remove_roles(role, reason=reason)
-                                else:
+                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
+                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', langs.gns(level, langs.gl(Ctx(ctx.guild, self.bot))))
+                except KeyError:
+                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
+                try:
+                    ac = __settings['leveling']['announce_channel']
+                    if ac != 0:
+                        ch = self.bot.get_channel(ac)
+                        if ch is None or ch.guild.id != ctx.guild.id:
+                            ch = ctx.channel
+                    else:
+                        ch = ctx.channel
+                except KeyError:
+                    ch = ctx.channel
+                try:
+                    await general.send(send, ch, u=[ctx.author])
+                except discord.Forbidden:
+                    pass  # Well, if it can't send it there, too bad.
+            reason = f"Level Rewards - Level {level}"
+            try:
+                rewards = __settings['leveling']['rewards']
+                if rewards:  # Don't bother if they're empty
+                    l1, l2 = [], []
+                    rewards.sort(key=lambda x: x['level'])
+                    for i in range(len(rewards)):
+                        l1.append(rewards[i]['level'])
+                        l2.append(rewards[i]['role'])
+                    roles = [r.id for r in ctx.author.roles]
+                    for i in range(len(rewards)):
+                        role = discord.Object(id=l2[i])
+                        has_role = l2[i] in roles
+                        if level >= l1[i]:
+                            if i < len(rewards) - 1:
+                                if level < l1[i + 1]:
                                     if not has_role:
                                         await ctx.author.add_roles(role, reason=reason)
+                                else:
+                                    if has_role:
+                                        await ctx.author.remove_roles(role, reason=reason)
                             else:
-                                if has_role:
-                                    await ctx.author.remove_roles(role, reason=reason)
-                except KeyError:
-                    pass  # If no level rewards, don't even bother
-                except discord.Forbidden:
-                    await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.",
-                                       ctx.channel)
-                except Exception as e:
-                    general.print_error(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
-        # _last = last if dc else now
-        last_send = last if dc else now
-        minute = now if full else ls
-        if data:
-            self.bot.db.execute(f"UPDATE {self.lvl} SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=?",
-                                (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id))
-        else:
-            self.bot.db.execute(f"INSERT INTO {self.lvl} VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator))
+                                if not has_role:
+                                    await ctx.author.add_roles(role, reason=reason)
+                        else:
+                            if has_role:
+                                await ctx.author.remove_roles(role, reason=reason)
+            except KeyError:
+                pass  # If no level rewards, don't even bother
+            except discord.Forbidden:
+                await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.",
+                                   ctx.channel)
+            except Exception as e:
+                general.print_error(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
+            # _last = last if dc else now
+            last_send = last if dc else now
+            minute = now if full else ls
+            if data:
+                self.bot.db.execute(f"UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=?, {year!r}=? WHERE uid=? AND gid=?",
+                                    (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, yearly, ctx.author.id, ctx.guild.id))
+            else:
+                if xp != 0:
+                    _2021, _2022 = yearly if year == "2021" else 0, yearly if year == "2022" else 0
+                    self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                        (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator, _2021, _2022))
+                # No point in saving data if XP is zero anyways...
+            # No point in saving data if XP system is not enabled in the first place...
 
     @commands.command(name="rewards")
     @commands.guild_only()
@@ -342,14 +347,21 @@ class Leveling(commands.Cog):
         except KeyError:
             return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
 
-    async def level(self, ctx: commands.Context, who: discord.Member or None, locale: str):
+    async def level(self, ctx: commands.Context, who: discord.Member or None, locale: str, key: str = "xp"):
         async with ctx.typing():
             user = who or ctx.author
             is_self = user.id == self.bot.user.id
             if user.bot and not is_self:
                 return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-            data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
-            r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
+            data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+            if key.isnumeric():
+                r = langs.gls("leveling_rank_yearly", locale, user, ctx.guild.name, key)
+                if key == "2021":
+                    cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
+                    if ctx.guild.id not in cobble_servers:
+                        r += langs.gls("leveling_rank_yearly21", locale, ctx.guild.name)
+            else:
+                r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
             if user.id in custom_rank_blacklist:
                 custom = None
                 # r += "\nCongrats on setting yourself to a rank card that makes the text invisible. Now enjoy the consequences of your actions. :^)"
@@ -361,9 +373,21 @@ class Leveling(commands.Cog):
             else:
                 font_colour, progress_colour, background_colour = (50, 255, 50), (50, 255, 50), 0
             if data:
-                level, xp = [data['level'], data['xp']]
+                try:
+                    xp = data[key]
+                except KeyError:
+                    return await general.send(langs.gls("leveling_rank_yearly_no", locale, key), ctx.channel)
+                if key == "xp":
+                    level = data["level"]
+                else:
+                    level = 0
+                    for lvl in levels:
+                        if xp >= lvl:
+                            level += 1
+                        else:
+                            break
             else:
-                level, xp = [0, 0]
+                level, xp = 0, 0
             width = 2048
             img = Image.new("RGB", (width, 612), color=background_colour)
             dr = ImageDraw.Draw(img)
@@ -404,7 +428,9 @@ class Leveling(commands.Cog):
                     prev = -int(levels[(-level) - 1])
             except IndexError:
                 prev = 0
-            _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+            _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? AND disc!=0 ORDER BY \"{key}\" DESC", (ctx.guild.id,))
+            # print(key)
+            # print(_data)
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
             # if user.id == 430891116318031872:  # Alex Five is always fifth
             #     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(5, locale)))
@@ -455,7 +481,15 @@ class Leveling(commands.Cog):
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Check your or someone's rank """
         locale = langs.gl(ctx)
-        return await self.level(ctx, who, locale)
+        return await self.level(ctx, who, locale, "xp")
+
+    @commands.command(name="rank3", aliases=["ranky"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def rank_yearly(self, ctx: commands.Context, year: int = 2021, *, who: discord.Member = None):
+        """ Yearly ranks! """
+        locale = langs.gl(ctx)
+        return await self.level(ctx, who, locale, str(year))
 
     @commands.command(name="rank2", aliases=["ranke"])
     @commands.guild_only()
@@ -467,7 +501,7 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-        data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         r = langs.gls("leveling_rank", locale, user, ctx.guild.name)
         if data:
             level, xp = [data['level'], data['xp']]
@@ -505,7 +539,7 @@ class Leveling(commands.Cog):
                 prev = -int(levels[(-level) - 1])
         except IndexError:
             prev = 0
-        _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+        _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
         place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
         # if user.id == 430891116318031872:  # Alex Five is always fifth
         #     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(5, locale)}**"))
@@ -549,7 +583,7 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-        _data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE xp!=0 AND disc!=0")
+        _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
         coll = {}
         for i in _data:
             if i['uid'] not in coll:
@@ -641,7 +675,7 @@ class Leveling(commands.Cog):
         except IndexError:
             return await general.send(langs.gls("leveling_xplevel_max", locale, langs.gns(max_level, locale)), ctx.channel)
         if ctx.guild is not None:
-            data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+            data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         else:
             data = None
         if not data:
@@ -676,7 +710,7 @@ class Leveling(commands.Cog):
     async def next_level(self, ctx: commands.Context):
         """ XP required for next level """
         locale = langs.gl(ctx)
-        data = self.bot.db.fetchrow(f"SELECT * FROM {self.lvl} WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await general.send(langs.gls("leveling_next_level_none", locale), ctx.channel)
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))

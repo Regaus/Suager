@@ -34,13 +34,13 @@ class Settings(commands.Cog):
                 con.append(out)
             else:
                 nat.append(out)
-        trusted = [302851022790066185, 577637595392245770, 651179888988127270, 430891116318031872, 291665491221807104]
+        trusted = [302851022790066185, 577637595392245770, 651179888988127270, 430891116318031872, 291665491221807104, 679819572278198272]
         trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
         output = "List of supported languages:\n" + "\n".join(nat)
         if ctx.guild is not None and ctx.guild.id in trusted_servers:
-            output += "\n__Conlangs supported:__\n" + "\n".join(con)
+            output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
             if ctx.author.id in trusted:
-                output += "\n__RSL-1 varieties supported:__\n" + "\n".join(rsl)
+                output += "\n\n__RSL-1 varieties supported:__\n" + "\n".join(rsl)
         # if ctx.author.id in trusted and ctx.guild.id in trusted_servers:
         #     out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
         # else:
