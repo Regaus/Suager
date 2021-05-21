@@ -378,7 +378,7 @@
   "leveling_rank_xp_left": "\n{0} XP to next level",
   "leveling_rank_xp_self": "Infinite XP",
   "leveling_rank_yearly": "How active **{0}** has been in **{1}** in **{2}**",
-  "leveling_rank_yearly21": "Data for 2021 is only counted from 21st May.",
+  "leveling_rank_yearly21": "\nData for 2021 is only counted from 21st May.",
   "leveling_rank_yearly_no": "No data is available for the year {0}.",
   "leveling_rewards_none": "This server has no leveling rewards",
   "leveling_rewards_role": "Level {0}: <@&{1}>\n",

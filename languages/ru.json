@@ -357,7 +357,7 @@
   "leveling_rank_xp_left": "\n{0} опыта до следующего уровня",
   "leveling_rank_xp_self": "Бесконечно много опыта",
   "leveling_rank_yearly": "Сколько много времени **{0}** провёл в **{1}** в **{2}** году",
-  "leveling_rank_yearly21": "Данные за 2021-й год считаются только с 21 мая.",
+  "leveling_rank_yearly21": "\nДанные за 2021-й год считаются только с 21 мая.",
   "leveling_rank_yearly_no": "Нет данных за {0}-й год.",
   "leveling_rewards_none": "В этом сервере нет наград по уровню",
   "leveling_rewards_role": "Уровень {0}: <@&{1}>\n",
