@@ -20,7 +20,7 @@ async def af_image_gen(ctx: commands.Context, user: discord.User or discord.Memb
 
 async def af_img_creator(ctx: commands.Context, url, filename, content=None):
     token = ctx.bot.config["alex_api_token"]
-    lag = await general.send(f"{emotes.Loading} Getting response from AlexFlipnote API... This may sometimes take a while...", ctx.channel)
+    lag = await general.send(f"{emotes.Loading} Getting response from the API... This may sometimes take a while...", ctx.channel)
     req = await http.get(url, headers={"Authorization": token}, res_method="read")
     # req = await http.get(url)
     await lag.delete()
@@ -41,15 +41,6 @@ async def api_img_creator(ctx: commands.Context, url, filename, content=None):
     embed.set_image(url=url)
     embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
     return await general.send(content, ctx.channel, embed=embed)
-    # a = await general.send("There appears to be a network problem at the moment... This message will be deleted when response is received.", ctx.channel)
-    # async with ctx.channel.typing():
-    #     req = await http.get(url, res_method="read")
-    #     await a.delete()
-    #     if req is None:
-    #         return await general.send("An error occurred creating the image, try again later.", ctx.channel)
-    #     bio = BytesIO(req)
-    #     bio.seek(0)
-    #     return await general.send(content, ctx.channel, file=discord.File(bio, filename=filename))
 
 
 async def vac_api(ctx: commands.Context, link, filename=None, content=None):

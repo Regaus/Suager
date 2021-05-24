@@ -209,10 +209,10 @@ tables = [
         Column("owner", 0, True),               # Owner's user ID
         Column("locations", 2, True),           # JSON of Clan Locations and how long they'll last
         Column("araksat", 1, True),             # Clan Araksat
-        Column("tax_gain", 0, True),            # How much the clan gains from tax (Default: 0.025 (2.5%), 0.1% per boost, max 25%)      // 225 UP
-        Column("reward_boost", 0, True),        # How much more Araksat and XP all clan members gain (0.5% each per boost, max 100%)     // 200 UP
-        Column("energy_limit_boost", 0, True),  # How much bigger members' energy limit will be (1 per boost, max 250)                   // 250 UP
-        Column("energy_regen_boost", 0, True),  # Amount of seconds members' energy takes less time to regen (-0.4s per boost, max -90s) // 225 UP
+        Column("tax_gain", 0, True),            # How much the clan gains from tax (Default: 0.025 (2.5%), 0.1% per boost, max 25%)       // 225 UP
+        Column("reward_boost", 0, True),        # How much more Araksat and XP all clan members gain (0.5% each per boost, max 100%)      // 200 UP
+        Column("energy_limit_boost", 0, True),  # How much bigger members' energy limit will be (1 per boost, max 250)                    // 250 UP
+        Column("energy_regen_boost", 0, True),  # Amount of seconds members' energy takes less time to regen (-0.7s per boost, max -105s) // 150 UP
     ]),
     Table("tbl_guild", [
         Column("gid", 0, True),               # Guild ID

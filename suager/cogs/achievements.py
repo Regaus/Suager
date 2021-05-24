@@ -8,6 +8,8 @@ from cobble.utils import tbl
 from core.utils import emotes, general
 
 # achievement_colours = ["808080", "ffffff", "ff0000", "ff4000", "ff8000", "ffff00", "80ff00", "32ff32", "00ff80", "00ffff", "ff00ff", "ff00a0", "ff0057"]
+from languages import langs
+
 achievement_colours = [
     (96, 96, 96),     # Tier -0
     (255, 255, 255),  # Tier 1
@@ -71,7 +73,7 @@ class Achievements(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def achievements(self, ctx: commands.Context, who: discord.User = None):
         """ See what you or someone else has accomplished """
-        # locale = langs.gl(ctx)
+        locale = langs.gl(ctx)
         user = who or ctx.author
         # achievement_levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
         achievement_levels = [10, 20, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200]
@@ -82,9 +84,14 @@ class Achievements(commands.Cog):
         # achievement_tbl_league = [500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
         achievement_tbl_league = tbl.leagues[1:]
         achievement_tbl_araksat = [1000, 2500, 5000, 10000, 25000, 50000, 750000, 100000, 250000, 500000, 1000000, 2500000]
-        player = tbl.Player.from_db(user, ctx.guild)
-        rows = 6 if not player.is_new else 2
-        shelves = 1
+        # rows = 6 if not player.is_new else 2
+        # shelves = 1
+        if self.bot.name == "cobble" and langs.get_data("_conlang", locale) is None:
+            rows = 6
+            shelves = 1
+        else:
+            rows = 2
+            shelves = 1
         width = 1152
         large_size = 96
         img = Image.new("RGBA", ((width + 20) * shelves - 20, 256 * rows + large_size), color=(0, 0, 0, 64))
@@ -98,7 +105,8 @@ class Achievements(commands.Cog):
             await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
             font, font_med, font_small = None, None, None
         w, _ = dr.textsize(str(user), font=font)
-        max_description = "Highest achievement tier reached!"
+        max_description = langs.gls("achievements_highest", locale)
+        # max_description = "Highest achievement tier reached!"
 
         def get_colour(level: int):
             try:
@@ -126,11 +134,16 @@ class Achievements(commands.Cog):
                 progress = 1 if progress > 1 else progress
             except ZeroDivisionError:
                 progress = 1
-            dr.text((x + text_x, y + 96), f"Current Tier: {level} of {tier_count}", font=font_small, fill=colour)
-            desc = f"Tier {level + 1} Goal: {details} ({current:,}/{requirement:,})" if requirement > current else max_description
+            dr.text((x + text_x, y + 96), langs.gls("achievements_current", locale, langs.gns(level, locale), langs.gns(tier_count, locale)), font=font_small, fill=colour)
+            # dr.text((x + text_x, y + 96), f"Current Tier: {level} of {tier_count}", font=font_small, fill=colour)
+            r1, r3, r4 = langs.gns(level + 1, locale), langs.gns(current, locale), langs.gns(requirement, locale)
+            desc = langs.gls("achievements_goal", locale, r1, details, r3, r4) if requirement > current else max_description
+            # desc = f"Tier {level + 1} Goal: {details} ({current:,}/{requirement:,})" if requirement > current else max_description
             dr.text((x + text_x, y + 128), desc, font=font_small, fill=colour)
             fill = width - 192
             done = int(fill * progress)
+            if done < 0:
+                done = 0
             i3 = Image.new("RGBA", (fill + 20, 42), color=colour)
             i4 = Image.new("RGBA", (fill + 10, 32), color=(30, 30, 30, 64))
             i5 = Image.new("RGBA", (done, 22), color=colour)
@@ -156,7 +169,8 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(tier)
-        generate_box(0, 0, tier, 12, f"Leveling: XP Levels", f"Reach XP Level {req} in a server", max_level, req, prev)
+        generate_box(0, 0, tier, 12, langs.gls("achievements_leveling_levels", locale), langs.gls("achievements_leveling_levels_desc", locale, langs.gns(req, locale)),
+                     max_level, req, prev)
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
         for req in achievement_xp:
@@ -166,7 +180,9 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(round(tier * 0.75))
-        generate_box(0, 1, tier, 16, f"Leveling: Experience", f"Collect {req:,} XP in total", total_xp, req, prev)
+        generate_box(0, 1, tier, 16, langs.gls("achievements_leveling_xp", locale), langs.gls("achievements_leveling_xp_desc", locale, langs.gns(req, locale)),
+                     total_xp, req, prev)
+        player = tbl.Player.from_db(user, ctx.guild)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_league:
             if player.max_points >= req:
@@ -175,7 +191,8 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(round(tier / 13 * 12))
-        generate_box(0, 2, tier, 13, f"TBL: Leagues", tbl_league_ah[tier], player.max_points, req, prev)
+        generate_box(0, 2, tier, 13, langs.gls("achievements_tbl_leagues", locale), langs.get_data("achievements_tbl_leagues_desc", locale)[tier],
+                     player.max_points, req, prev)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_levels:
             if player.level >= req:
@@ -184,7 +201,7 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(round(tier / 17 * 12))
-        generate_box(0, 3, tier, 17, f"TBL: XP Levels", tbl_level_ah[tier], player.level, req, prev)
+        generate_box(0, 3, tier, 17, langs.gls("achievements_tbl_levels", locale), langs.get_data("achievements_tbl_levels_desc", locale)[tier], player.level, req, prev)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_araksat:
             if player.araksat >= req:
@@ -193,7 +210,8 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(tier)
-        generate_box(0, 4, tier, 12, f"TBL: Araksat Collection", f"Collect {req:,} Araksat", int(player.araksat), req, prev)
+        generate_box(0, 4, tier, 12, langs.gls("achievements_tbl_araksat", locale), langs.gls("achievements_tbl_araksat_desc", locale, langs.gns(req, locale)),
+                     int(player.araksat), req, prev)
         req, prev, tier = 0, 0, 0
         for req in achievement_tbl_shaman:
             if player.shaman_level >= req:
@@ -202,7 +220,8 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(tier / 15 * 12)
-        generate_box(0, 5, tier, 15, f"TBL: Shaman Levels", f"Reach Shaman Level {req:,}", player.shaman_level, req, prev)
+        generate_box(0, 5, tier, 15, langs.gls("achievements_tbl_shaman", locale), langs.gls("achievements_tbl_shaman_desc", locale, langs.gns(req, locale)),
+                     player.shaman_level, req, prev)
         # CC2 - Depth - Shelf 2
         # CC2 - Cobble Levels - Shelf 2
         # CC2 - Cobble Mined - Shelf 2
@@ -216,7 +235,8 @@ class Achievements(commands.Cog):
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
-        return await general.send(f"This is what **{user}** has accomplished so far.", ctx.channel, file=discord.File(bio, filename="achievements.png"))
+        # f"This is what **{user}** has accomplished so far."
+        return await general.send(langs.gls("achievements_achievements", locale, str(user)), ctx.channel, file=discord.File(bio, filename="achievements.png"))
 
     @commands.command(name="tiers")
     @commands.is_owner()

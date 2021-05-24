@@ -34,14 +34,15 @@
       "exclude_core_cogs": [],
       "shared": {
         "suager": [
-          "leveling",
-          "leaderboards"
+          "achievements",
+          "leaderboards",
+          "leveling"
         ]
       },
       "home_server_id": 738425418637639775,
       "home_invite": "",
       "error_channel": 738442483591151638,
-      "default_locale": "rsl-1e"
+      "default_locale": "rsl-1i"
     }
   ],
   "owner_prefixes": [

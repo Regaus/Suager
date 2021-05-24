@@ -757,3 +757,7 @@
 
 ## v7.2.23 - 21 May 2021
 - Introduced a better way to handle yearly XP
+
+## v7.2.24 - 24 May 2021
+- Moderation commands are now available in other languages
+- Achievements are now available on Suager

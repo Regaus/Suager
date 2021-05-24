@@ -21,7 +21,7 @@ class Ratings(commands.Cog):
         _result = random.uniform(10, 30)
         custom = {
             self.bot.user.id: 42.0,
-            302851022790066185: 29.9,
+            302851022790066185: 30.0,
             # 746173049174229142: 0.0
         }
         if ctx.channel.id != 764528556507922442:
@@ -30,7 +30,7 @@ class Ratings(commands.Cog):
             result = _result
             if user.id == 622735873137573894:
                 result += 5 * 2.54
-        return await general.send(langs.gls("ratings_pickle", locale, user.name, langs.gfs(result, locale), langs.gfs(result / 2.54, locale)), ctx.channel)
+        return await general.send(langs.gls("ratings_pickle", locale, user.name, langs.gfs(result, locale, 2), langs.gfs(result / 2.54, locale, 2)), ctx.channel)
 
     @commands.command(name="rate")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -60,10 +60,10 @@ class Ratings(commands.Cog):
             302851022790066185: 100,  # Me
             self.bot.user.id: 100,    # Suager
             517012611573743621: 100,  # Suager Sentient
-            291665491221807104: 100,  # Leitoxz
-            561164743562493952: 25,  # zilla
-            402238370249441281: 0,   # fake
-            667187968145883146: 0,   # chocolatt
+            # 291665491221807104: 100,  # Leitoxz
+            # 561164743562493952: 25,  # zilla
+            # 402238370249441281: 0,   # fake
+            # 667187968145883146: 0,   # chocolatt
             # 746173049174229142: 0    # racc
         }
         result = custom.get(who.id, r)
@@ -111,9 +111,9 @@ class Ratings(commands.Cog):
             # _rate = 0.00
             check = user2 if user1.id == 302851022790066185 else user1 if user2.id == 302851022790066185 else ctx.author
             _rate = {
-                291665491221807104: 1.00,
-                609423646347231282: 0.50,
-                517012611573743621: 0.50,
+                609423646347231282: 0.875,
+                517012611573743621: 0.875,
+                291665491221807104: 0.75,
                 667187968145883146: -1.00,
                 402238370249441281: -1.00,
             }.get(check.id, 0.00)

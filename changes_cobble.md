@@ -186,3 +186,10 @@
 
 ## v1.1.11 - 21 May 2021
 - Achievements now uses Suager XP values
+
+## v1.1.12 - 22 May 2021
+- Achievements can now be translated
+- Achievements now only show TBL in RSL locales (and only while used with CobbleBot), instead of depending on TBL player data
+- TBL Clan Energy Regen Boost changed to -0.7s/level, max -105s (Now only 150 levels)
+- TBL per-round energy generation rate capped to 60s
+- TBL Shaman energy boost per save maxed out at round cost - 2

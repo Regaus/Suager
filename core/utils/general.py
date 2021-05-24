@@ -72,10 +72,10 @@ def reason(who, why=None) -> str:
 
 async def pretty_results(ctx, filename: str = "Results", result: str = "Here are the results:", loop=None):
     if not loop:
-        return await ctx.send("The result was empty...")
+        return await send("The result was empty...", ctx.channel)
     pretty = "\r\n".join([f"[{str(num).zfill(2)}] {data}" for num, data in enumerate(loop, start=1)])
     if len(loop) < 15:
-        return await ctx.send(f"{result}```ini\n{pretty}```")
+        return await send(f"{result} ```ini\n{pretty}```", ctx.channel)
     data = BytesIO(pretty.encode('utf-8'))
     return await send(result, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
 

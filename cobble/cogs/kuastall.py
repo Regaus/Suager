@@ -784,7 +784,7 @@ class Kuastall(commands.Cog):
             return await general.send(langs.gls("kuastall_tbl_upgrade_negative", locale), ctx.channel)
         if player.clan.points < levels:
             return await general.send(langs.gls("kuastall_tbl_upgrade_balance", locale, langs.plural(player.clan.points, "kuastall_tbl_pl_upgrade_points", locale)), ctx.channel)
-        max_level = 225
+        max_level = 150
         reached = False
         if player.clan.energy_regen_boost_level + levels > max_level:
             levels = max_level - player.clan.energy_regen_boost_level

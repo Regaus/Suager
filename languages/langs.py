@@ -13,6 +13,22 @@ for file in os.listdir("languages"):
         languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
 
 
+def gl(ctx):
+    # if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469, 7985134926971535361]:
+    #     return "rsl-1e"
+    if hasattr(ctx, "channel"):
+        if ctx.channel.id in [725835449502924901]:
+            return "rsl-1i"
+        elif ctx.channel.id in [787340111963881472, 799714065256808469]:
+            return "rsl-1k"
+    # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
+    if ctx.guild is not None:
+        data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
+        if data:
+            return data["locale"]
+    return ctx.bot.local_config["default_locale"]
+
+
 def gbs(value: int, locale: str = "en", precision: int = 2) -> str:  # Get Byte String
     """ Gets Byte value name (for dlram) """
     names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
@@ -56,17 +72,6 @@ def gfs(value: Union[int, float], locale: str = "en", pre: int = 2, per: bool = 
         return "Infinity"
 
 
-def gl(ctx):
-    if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469, 7985134926971535361]:
-        return "rsl-1e"
-    # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
-    if ctx.guild is not None:
-        data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
-        if data:
-            return data["locale"]
-    return ctx.bot.local_config["default_locale"]
-
-
 def gls(string: str, locale: str = "en", *values, **kw_values) -> str:
     """ Get language string """
     output = str((languages.get(locale, languages["en"])).get(string, languages["en"].get(string, f"String not found: {string}")))
@@ -108,7 +113,7 @@ def join(seq, joiner: str = ', ', final: str = 'and'):
     return '' if size == 0 else seq[0] if size == 1 else f"{seq[0]} {final} {seq[1]}" if size == 2 else joiner.join(seq[:-1]) + f" {final} {seq[-1]}"
 
 
-def td_dt(dt: datetime, locale: str = "en", *, source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:
+def td_dt(dt: datetime, locale: str = "en", source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:
     """ Get a string from datetime differences """
     now = (source or time.now(None)).replace(microsecond=0)
     then = dt.astimezone(timezone.utc)

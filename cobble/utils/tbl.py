@@ -235,7 +235,7 @@ class Clan:
         self.energy_limit_boost_level: int = data["energy_limit_boost"]
         self.energy_limit_boost: float = 1.0 * self.energy_limit_boost_level
         self.energy_regen_boost_level: int = data["energy_regen_boost"]
-        self.energy_regen_boost: float = 0.4 * self.energy_regen_boost_level
+        self.energy_regen_boost: float = 0.7 * self.energy_regen_boost_level
         self.is_new: bool = new
         self.member_count: int = len(db.fetch("SELECT * FROM tbl_player WHERE clan=?", (self.id,))) if not self.is_new else 1
 
@@ -761,11 +761,12 @@ class Player:
                         self.energy = self.energy_limit
                     else:
                         if you["life"] and not shaman:
-                            self.energy += (ll - you["time"]) / self.energy_regen
+                            rate = self.energy_regen if self.energy_regen > 60 else 60  # Min energy regen speed 60
+                            self.energy += (ll - you["time"]) / rate
                         if shaman:
                             bonus = saves / 10
-                            if bonus > self.round_cost:
-                                bonus = self.round_cost
+                            if bonus > (self.round_cost - 2):
+                                bonus = self.round_cost - 2
                             self.energy += bonus
                         if self.energy > self.energy_limit:
                             self.energy = self.energy_limit
