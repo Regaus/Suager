@@ -600,6 +600,8 @@
   "time_weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
   "util_time_bot": "Local time: **{0}**\n",
   "util_time_sl": "Senko Lair (Earth): **{0}**\nSenko Lair (Kargadia): **{1}**\n",
+  "util_timediff": "Current time: **{0}**\nDifference: **{1}**\nSpecified time: **{2}**",
+  "util_timediff_error": "An error has occurred:\n`{0}`",
   "util_timesince": "Current time: **{0}**\nSpecified time: **{1}**\nDifference: **{2}**",
   "util_timesince_error": "An error has occurred:\n`{0}: {1}`",
   "util_weather_clouds": "Cloud cover",

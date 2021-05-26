@@ -760,4 +760,13 @@
 
 ## v7.2.24 - 24 May 2021
 - Moderation commands are now available in other languages
-- Achievements are now available on Suager
+- Achievements are now available on Suager, but without TBL
+- Image commands no longer specify they're using the AlexFlipnote API
+- //pickle now says 30.0 cm when done on me
+- Updated //love numbers for me
+- Changed Secret Rooms to RSL-1k and RSL-1i instead of RSL-1e
+
+## v7.2.25 - 24 May 2021
+- Added `rankembed` as alias to //rank2
+- Added `rankyear` and `rankyearly` as aliases to //rank3
+- Added void to custom role list

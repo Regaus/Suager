@@ -14,7 +14,7 @@ from languages import langs
 
 
 def custom_role_enabled(ctx):
-    return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473]
+    return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473, 759095477979054081]
 
 
 async def time_diff(ctx: commands.Context, string: str, multiplier: int):
@@ -22,11 +22,13 @@ async def time_diff(ctx: commands.Context, string: str, multiplier: int):
     delta = time.interpret_time(string) * multiplier
     then, errors = time.add_time(delta)
     if errors:
-        return await general.send(f"Error converting time difference: {then}", ctx.channel)
+        return await general.send(langs.gls("util_timediff_error", locale, then), ctx.channel)
+        # return await general.send(f"Error converting time difference: {then}", ctx.channel)
     difference = langs.td_rd(delta, locale, accuracy=7, brief=False, suffix=True)
     time_now = langs.gts(time.now(None), locale, True, False, False, True, False)
     time_then = langs.gts(then, locale, True, False, False, True, False)
-    return await general.send(f"Current time: **{time_now}**\nDifference: **{difference}**\nOutput time: **{time_then}**", ctx.channel)
+    return await general.send(langs.gls("util_timediff", locale, time_now, difference, time_then), ctx.channel)
+    # return await general.send(f"Current time: **{time_now}**\nDifference: **{difference}**\nOutput time: **{time_then}**", ctx.channel)
 
 
 class Utility(commands.Cog):
@@ -39,17 +41,17 @@ class Utility(commands.Cog):
         """ Current time """
         locale = langs.gl(ctx)
         send = ""
-        if locale == "rsl-1d":
-            # a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-            # b = langs.gts(time.now(None), locale, True, False, False, True, False)
-            # send += langs.gls("util_time_sl", locale, b, a)
-            a = langs.gts(time.now(None), locale, True, False, False, True, False)
-            b = langs.gts(time.kargadia_convert(time.now(None)), locale, True, False, False, True, False)
-            c = ga78.time_kargadia(time.now(None)).str(False, False, False)
-            send += f"Zymlä (UTC/GMT): **{a}**\n" \
-                    f"Senka'dar Laikadu: **{b}**\n" \
-                    f"Kargadia (Sentagar): **{c}**"
-        elif locale == "rsl-1e":
+        # if locale == "rsl-1d":
+        #     # a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+        #     # b = langs.gts(time.now(None), locale, True, False, False, True, False)
+        #     # send += langs.gls("util_time_sl", locale, b, a)
+        #     a = langs.gts(time.now(None), locale, True, False, False, True, False)
+        #     b = langs.gts(time.kargadia_convert(time.now(None)), locale, True, False, False, True, False)
+        #     c = ga78.time_kargadia(time.now(None)).str(False, False, False)
+        #     send += f"Zymlä (UTC/GMT): **{a}**\n" \
+        #             f"Senka'dar Laikadu: **{b}**\n" \
+        #             f"Kargadia (Sentagar): **{c}**"
+        if locale == "rsl-1e":
             a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
@@ -60,6 +62,13 @@ class Utility(commands.Cog):
                     f"Zymlä (SL-Taida AD'i): **{d}**\n" \
                     f"Zymlä (SL-Taida NE'i): **{c}**\n" \
                     f"Kargadia (Sentagar): **{a}**"
+        elif locale in ["rsl-1k", "rsl-1i"]:
+            a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+            b = langs.gts(time.now(None), locale, True, False, True, True, False)
+            d = langs.gts(time.kargadia_convert(time.now(None)), locale, True, False, True, True, False)
+            send += f"Zymlä: **{b}**\n" \
+                    f"Senkadar Laikadu: **{d}**\n" \
+                    f"Kargadia: **{a}**"
         else:
             send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, True, True, True))
             send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, True, True, True)}**"

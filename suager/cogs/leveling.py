@@ -102,6 +102,7 @@ levels = _levels()
 level_history = _level_history()
 xp_amounts = [20, 27]
 custom_rank_blacklist = [746173049174229142]
+_year = time.now(None).year
 
 
 class Leveling(commands.Cog):
@@ -162,12 +163,13 @@ class Leveling(commands.Cog):
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
-        if time.now(None) < time.dt(2021, 5, 21):
-            return
-        elif time.dt(2022) > time.now(None) > time.dt(2021, 5, 21):
-            year = "2021"
-        else:
-            year = "2022"
+        # if time.now(None) < time.dt(2021, 5, 21):
+        #     return
+        # elif time.dt(2022) > time.now(None) > time.dt(2021, 5, 21):
+        #     year = "2021"
+        # else:
+        #     year = "2022"
+        year = str(_year)
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         xp_disabled = False
         if _settings:
@@ -483,19 +485,19 @@ class Leveling(commands.Cog):
         locale = langs.gl(ctx)
         return await self.level(ctx, who, locale, "xp")
 
-    @commands.command(name="rank3", aliases=["ranky"])
+    @commands.command(name="rankyearly", aliases=["rank3", "ranky", "rankyear"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_yearly(self, ctx: commands.Context, year: int = 2021, *, who: discord.Member = None):
-        """ Yearly ranks! """
+    async def rank_yearly(self, ctx: commands.Context, year: int = _year, *, who: discord.Member = None):
+        """ Check someone's activity during a certain year """
         locale = langs.gl(ctx)
         return await self.level(ctx, who, locale, str(year))
 
-    @commands.command(name="rank2", aliases=["ranke"])
+    @commands.command(name="rankembed", aliases=["rank2", "ranke"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_embed(self, ctx: commands.Context, *, who: discord.Member = None):
-        """ Check your or someone's rank - embed """
+        """ Check your or someone's rank - as an embed """
         locale = langs.gl(ctx)
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
