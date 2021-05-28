@@ -81,32 +81,32 @@ class BotInformation(commands.Cog):
         link = f"\n<https://discordapp.com/oauth2/authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>"
         return await general.send(langs.gls("info_invite_bot", langs.gl(ctx), ctx.author.name) + link, ctx.channel)
 
-    @commands.command(name="botserver")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def my_server(self, ctx: commands.Context):
-        """ Get an invite to my server """
-        locale = langs.gl(ctx)
-        if isinstance(ctx.channel, discord.DMChannel) or ctx.guild.id != self.bot.local_config["home_server_id"]:
-            invite = self.bot.local_config["home_invite"]
-            if invite:
-                try:
-                    await ctx.author.send(langs.gls("info_server", locale, ctx.author.name))
-                    await ctx.author.send(invite)
-                    try:
-                        await ctx.message.add_reaction("✉")
-                    except discord.Forbidden:
-                        pass
-                except discord.Forbidden:
-                    return await general.send(langs.gls("info_server_failed", locale), ctx.channel)
-            else:
-                return await general.send(langs.gls("info_server_none", locale), ctx.channel)
-        else:
-            return await general.send(langs.gls("info_server_home", locale), ctx.channel)
+    # @commands.command(name="botserver")
+    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    # async def my_server(self, ctx: commands.Context):
+    #     """ Get an invite to my server """
+    #     locale = langs.gl(ctx)
+    #     if isinstance(ctx.channel, discord.DMChannel) or ctx.guild.id != self.bot.local_config["home_server_id"]:
+    #         invite = self.bot.local_config["home_invite"]
+    #         if invite:
+    #             try:
+    #                 await ctx.author.send(langs.gls("info_server", locale, ctx.author.name))
+    #                 await ctx.author.send(invite)
+    #                 try:
+    #                     await ctx.message.add_reaction("✉")
+    #                 except discord.Forbidden:
+    #                     pass
+    #             except discord.Forbidden:
+    #                 return await general.send(langs.gls("info_server_failed", locale), ctx.channel)
+    #         else:
+    #             return await general.send(langs.gls("info_server_none", locale), ctx.channel)
+    #     else:
+    #         return await general.send(langs.gls("info_server_home", locale), ctx.channel)
 
     @commands.command(name="ping")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def ping(self, ctx: commands.Context):
-        """ Ping Pong """
+        """ Check how slow Discord API is today """
         import time as _time
         # from datetime import datetime
         ws = int(self.bot.latency * 1000)

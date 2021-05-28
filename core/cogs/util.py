@@ -55,7 +55,7 @@ class Utility(commands.Cog):
             a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
-            z = time.kargadia_convert(time.now(None))
+            z = time.now_k()  # time.kargadia_convert(time.now(None))
             m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
             c = f"{z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
             send += f"Zymlä (UTC/GMT): **{b}**\n" \
@@ -65,29 +65,30 @@ class Utility(commands.Cog):
         elif locale in ["rsl-1k", "rsl-1i"]:
             a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
-            d = langs.gts(time.kargadia_convert(time.now(None)), locale, True, False, True, True, False)
+            d = langs.gts(time.now_k(), locale, True, False, True, True, False)
             send += f"Zymlä: **{b}**\n" \
                     f"Senkadar Laikadu: **{d}**\n" \
                     f"Kargadia: **{a}**"
         else:
-            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, True, True, True))
-            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, True, True, True)}**"
-            data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
-            if data:
-                send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, True)}**"
+            send += langs.gls("util_time_bot", locale, langs.gts(time.now(self.bot.local_config["timezone"]), locale, True, False, True, True, False))
+            send += f"UTC/GMT: **{langs.gts(time.now(None), locale, True, False, True, True, False)}**"
             if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
-                send += f"\nSL Earth Time (AD): **{langs.gts(time.now_sl(), locale, True, False, True, True, True)}**\n" \
-                        f"SL Earth Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, True)}**"
+                send += f"\nSenko Lair: **{langs.gts(time.now_sl(), locale, True, False, True, True, False)}**"  # \n" \
+                # f"Senko Lair Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, False)}**"
+        data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+        if data:
+            send += langs.gls("util_time_custom", locale, langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, False))
+            # send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, False)}**"
         return await general.send(send, ctx.channel)
 
     @commands.command(name="base", aliases=["bases", "bc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def base_conversions(self, ctx: commands.Context, conversion: str, base: int, number: str, caps: bool = False):
+    async def base_conversions(self, ctx: commands.Context, number: str, conversion: str, base: int, caps: bool = False):
         """ Convert numbers between bases
 
         Use "to" to convert decimal (base-10) to a base
         Use "from" to convert from the base to decimal (base-10)
-        Caps argument is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to base 10."""
+        Caps argument is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to decimal."""
         if base > 36:
             return await general.send(f"{ctx.author.name}, Bases above 36 are not supported", ctx.channel)
         elif base < 2:
@@ -109,8 +110,12 @@ class Utility(commands.Cog):
 
     @commands.command(name="settz")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def set_timezone(self, ctx: commands.Context, tz: str):
+    async def set_timezone(self, ctx: commands.Context, tz: str = None):
         """ Set your timezone """
+        locale = langs.gl(ctx)
+        if tz is None:
+            self.bot.db.execute("DELETE FROM timezones WHERE uid=?", (ctx.author.id,))
+            return await general.send(langs.gls("util_time_tz_reset", locale), ctx.channel)
         try:
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             _tz = pytz.timezone(tz)
@@ -118,19 +123,21 @@ class Utility(commands.Cog):
                 self.bot.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
             else:
                 self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
-            return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
+            return await general.send(langs.gls("util_time_tz", locale, _tz), ctx.channel)
+            # return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
         except pytz.exceptions.UnknownTimeZoneError:
             file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
-            return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
+            return await general.send(langs.gls("util_time_tz_error", locale, tz), ctx.channel, file=file)
+            # return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
 
     @commands.command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
         """ Time difference """
         locale = langs.gl(ctx)
-        if locale in ["rsl-1d", "rsl-5"]:
-            if year is not None and year < 277:
-                return await general.send(f"In RSL-1d and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
+        # if locale in ["rsl-1d", "rsl-5"]:
+        #     if year is not None and year < 277:
+        #         return await general.send(f"In RSL-1d and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
         try:
             now = time.now(None)
             date = datetime(now.year, 1, 1)
@@ -412,13 +419,6 @@ class Utility(commands.Cog):
         await general.send(f"**{ctx.author}:**\n{message}", ctx.channel)
         return await general.send(langs.gls("fun_say_success", locale), ctx.channel, delete_after=5)
 
-    @commands.command(name="flip", aliases=["coin"])
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def flip_a_coin(self, ctx: commands.Context):
-        """ Flip a coin """
-        locale = langs.gl(ctx)
-        return await general.send(langs.gls("fun_coin_main", locale, langs.gls(f"fun_coin_{random.choice(['heads', 'tails'])}", locale)), ctx.channel)
-
     @commands.command(name="vote", aliases=["petition"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def vote(self, ctx: commands.Context, *, question: str):
@@ -626,7 +626,7 @@ class Utility(commands.Cog):
         else:
             return await general.send(langs.gls("discord_server_banner_none", locale, ctx.guild.name), ctx.channel)
 
-    @server.command(name="invite", aliases=["splash"])
+    @server.command(name="invitebg", aliases=["invite", "splash"])
     async def server_invite(self, ctx: commands.Context):
         """ Get server invite splash """
         link = ctx.guild.splash_url_as(size=4096, format="png")
@@ -657,7 +657,7 @@ class Utility(commands.Cog):
     @commands.check(custom_role_enabled)
     @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
     async def custom_role(self, ctx: commands.Context, *, stuff: str):
-        """ Custom Role (only in Senko Lair)
+        """ Set up your custom role
         -c/--colour/--color: Set role colour
         -n/--name: Set role name """
         data = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
@@ -727,7 +727,7 @@ class Utility(commands.Cog):
         if error:
             return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
         diff = langs.td_rd(delta, "en", accuracy=7, brief=False, suffix=True)
-        when = langs.gts(expiry, "en", True, True, False, True, False)
+        when = langs.gts(expiry, "en", True, True, False, True, True)
         random_id = general.random_id(ctx)
         self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False))
         return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when})", ctx.channel)

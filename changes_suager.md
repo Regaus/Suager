@@ -770,3 +770,13 @@
 - Added `rankembed` as alias to //rank2
 - Added `rankyear` and `rankyearly` as aliases to //rank3
 - Added void to custom role list
+
+## v7.2.26 - 27 May 2021
+- Moved coinflip to Fun (from Utility)
+- Your timezone is now shown even in RSL-1
+- The timezone can now be reset
+- Language time conversion now supports RSL-1k/RSL-1i weekday formatting
+- Added a message notifying that a purge is in progress
+- Removed botserver command
+- Yearly leaderboards command
+- Made some leveling commands' default names more clear

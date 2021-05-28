@@ -43,10 +43,11 @@ def solar_normal(now: datetime, start: datetime, day_length: float, days_nl: int
     return year, month, day + 1, h, m, s, days_overall, days_left
 
 
-def time_zeivela(when: datetime = None, tz: float = 0):
+def time_zeivela(when: datetime = None, tz: float = 0):  # 23.4
     irl = when or time.now(None)
     start = datetime(60, 12, 5, 3, 40, tzinfo=timezone.utc)
-    day_length = 27.12176253 * 3600
+    day_length = 10.0445856 * 3600  # New reduced day lengths while preserving local year length - 28/05/2021
+    # day_length = 27.12176253 * 3600
     month_lengths = [36] * 12
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 432, 433, lambda y: y % 3 == 0, month_lengths, 1, tz)
     weekdays = ["Vantakku", "Vantallu", "Hennettu", "Kaiva", "Leiva", "Kahkatu"]
@@ -60,16 +61,27 @@ def time_zeivela(when: datetime = None, tz: float = 0):
     return output
 
 
-def time_kargadia(when: datetime = None, tz: float = 0):
+def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"):  # 23.5
     irl = when or time.now(None)
     start = datetime(276, 12, 26, 22, 30, tzinfo=timezone.utc)
-    day_length = 37.49865756 * 3600
+    day_length = 13.8876831 * 3600
+    # day_length = 37.49865756 * 3600
     month_lengths = [32] * 16
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 512, 513, lambda y: y % 8 == 0, month_lengths, 1, tz)
     # weekdays = [f"{wd}{parts[part]}" for wd in weekdays_sub]
-    weekdays = ["Senka", "Navai", "Sanva", "Havlei", "Teine", "Kannai", "Sua", "Shira"]
-    months = ["Senkannaran", "Shirannaran", "Kanvamaran", "Arhanmaran", "Nurinnaran", "Aijamaran", "Kionnaran", "Gairannaran",
-              "Bassemaran", "Finkannaran", "Suvannaran", "Kittannaran", "Semarmaran", "Haltannaran", "Kaivynnaran", "Kärasmaran"]
+    weekdays, months = [f"{language} not available"] * 8, [f"{language} not available"] * 16
+    if language == "rsl-1d":
+        weekdays = ["Senka", "Navai", "Sanva", "Havlei", "Teine", "Kannai", "Sua", "Shira"]
+        months = ["Senkannaran", "Shirannaran", "Kanvamaran", "Arhanmaran", "Nurinnaran", "Aijamaran", "Kionnaran", "Gairannaran",
+                  "Bassemaran", "Finkannaran", "Suvannaran", "Kittannaran", "Semarmaran", "Haltannaran", "Kaivynnaran", "Kärasmaran"]
+    elif language == "rsl-1k":
+        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
+        months = ["Senkavan", "Shiravan", "Nuuvan", "Kaivuan", "Antuvan", "Vainaran", "Kallüvan", "Hartuvan",
+                  "Raavan", "Nummavan", "Vitteran", "Vaikivan", "Kaivyan", "Kaaratan", "Kiitavan", "Suvakän"]
+    elif language == "rsl-1i":
+        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
+        months = ["Senkaan", "Shiraan", "Nuuan", "Kaivuan", "Antuan", "Vainaan", "Kaijuan", "Hartuan",
+                  "Raan", "Nummaan", "Vittean", "Vaikian", "Kaivyan", "Karratan", "Kiitaan", "Suvajan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
     if output.hour < 6:
         output.day_of_week -= 1
@@ -79,10 +91,11 @@ def time_kargadia(when: datetime = None, tz: float = 0):
     return output
 
 
-def time_kaltaryna(when: datetime = None, tz: float = 0):
+def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
     irl = when or time.now(None)
     start = datetime(1686, 11, 21, 11, 55, 21, tzinfo=timezone.utc)
-    day_length = 51.642812 * 3600
+    day_length = 19.126 * 3600
+    # day_length = 51.642812 * 3600
     month_lengths = [50] * 16
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, 800, lambda _: False, month_lengths, 1, tz)
     weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
@@ -98,7 +111,7 @@ def time_kaltaryna(when: datetime = None, tz: float = 0):
     return output
 
 
-def time_sinvimania(when: datetime = None, tz: float = 0):
+def time_sinvimania(when: datetime = None, tz: float = 0):  # 24.4
     irl = when or time.now(None)
     start = datetime(476, 1, 27, 12, tzinfo=timezone.utc)
     day_length = 11.35289 * 3600
@@ -109,7 +122,7 @@ def time_sinvimania(when: datetime = None, tz: float = 0):
     return TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 6, ds, yd)
 
 
-def time_hosvalnerus(when: datetime = None, tz: float = 0):
+def time_hosvalnerus(when: datetime = None, tz: float = 0):  # 24.5
     irl = when or time.now(None)
     start = datetime(171, 7, 1, 7, 30, tzinfo=timezone.utc)
     day_length = 23.7632 * 3600
@@ -191,7 +204,7 @@ def solar_longer(now: datetime, start: datetime, day_length: float, hours: int, 
     return year, month, week, day + 1, h, m, s, days_left
 
 
-def time_kuastall_11(when: datetime = None):
+def time_kuastall_11(when: datetime = None):  # 24.11
     irl = when or time.now(None)
     start = datetime(1742, 1, 27, 10, 4, tzinfo=timezone.utc)
     day_length = 25.700005 * 3600
@@ -242,12 +255,12 @@ times = {
     "Kuastall-11": time_kuastall_11,
 }
 lengths = {
-    "Zeivela": 432,
-    "Kargadia": 512,
+    "Zeivela": 432 + 1/3,
+    "Kargadia": 512 + 1/8,
     "Kaltaryna": 800,
-    "Sinvimania": 374,
-    "Hosvalnerus": 378,
-    "Kuastall-11": 19384,
+    "Sinvimania": 373.8,
+    "Hosvalnerus": 378.5,
+    "Kuastall-11": 19384.2,
 }
 patterns = {
     "Sentagar": {
@@ -389,7 +402,7 @@ class Sun:
         start = year_start.toordinal() - 693595  # To convert it to the calculator's date format
         _time = self.place.time
         year_day = _time.year_day
-        addition = round(year_day / lengths[self.place.planet] * 365)  # Try to fit the date into a 365-day Earth year
+        addition = round(year_day / lengths[self.place.planet] * 365.25)  # Try to fit the date into a 365-day Earth year
         day_part = (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400
         return start + addition + day_part
 

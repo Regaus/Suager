@@ -98,6 +98,13 @@ class Entertainment(commands.Cog):
         heart = random.choice(lists.hearts)
         return await general.send(langs.gls("fun_f_none" if text is None else "fun_f_text", locale, ctx.author.name, heart, text), ctx.channel)
 
+    @commands.command(name="coin", aliases=["flip", "coinflip"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def flip_a_coin(self, ctx: commands.Context):
+        """ Flip a coin """
+        locale = langs.gl(ctx)
+        return await general.send(langs.gls("fun_coin_main", locale, langs.gls(f"fun_coin_{random.choice(['heads', 'tails'])}", locale)), ctx.channel)
+
 
 def setup(bot):
     bot.add_cog(Entertainment(bot))

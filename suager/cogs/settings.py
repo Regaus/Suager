@@ -14,7 +14,7 @@ class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="languages")
+    @commands.command(name="languages", aliases=["locales", "lang"])
     async def languages(self, ctx: commands.Context):
         """ List of all supported languages """
         # languages = [f"`{key}`: {langs.gls('_name', key)}" for key in sorted(list(langs.languages.keys()))]
@@ -103,7 +103,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
         return await general.send(f"Settings for {ctx.guild.name} have been updated.", ctx.channel)
 
-    @settings.command(name="locale", aliases=["language"])
+    @settings.command(name="language", aliases=["lang", "locale"])
     async def set_locale(self, ctx: commands.Context, new_locale: str):
         """ Change the bot's language in this server """
         old_locale = langs.gl(ctx)

@@ -382,8 +382,9 @@ class Location:
         al = len(activity_hour)
         part, mod = divmod(hour, 3)  # It's now 3 hours because 24 hours instead of 32
         # I have no idea how this works, but that's what I had from Suager v6 TBL
-        month_mult = ((activity_month[now.month - 1] * (16 - now.day) + activity_month[now.month] * now.day) if now.day < 16 else activity_month[now.month] * 16
-                      if now.day == 16 else (activity_month[now.month] * (32 - now.day) + activity_month[(now.month + 1) % 16] * (now.day - 16))) / 16
+        # Actually, this is broken. I moved all months by -1, else it breaks.
+        month_mult = ((activity_month[now.month - 2] * (16 - now.day) + activity_month[now.month - 1] * now.day) if now.day < 16 else activity_month[now.month - 1] * 16
+                      if now.day == 16 else (activity_month[now.month - 1] * (32 - now.day) + activity_month[now.month % 16] * (now.day - 16))) / 16
         return self.popularity * (((activity_hour[int(part)] * mod + activity_hour[int(part + 1) % al] * (3 - mod)) / 3) * month_mult)
 
     def clan(self, clan: Clan) -> int:
@@ -774,7 +775,7 @@ class Player:
                     level_length = langs.td_int(ll, locale, brief=True, suffix=False)
                     your_time = langs.td_int(you["time"], locale, brief=True, suffix=False)
                     r1 = langs.gts(time.now(), locale, True, False, False, True, False)
-                    r2 = ga78.time_kargadia(tz=2).str(dow=False, era=None, month=False)
+                    r2 = ga78.time_kargadia(tz=2, language="rsl-1k" if locale == "rsl-1k" else "rsl-1i").str(dow=False, era=None, month=False)
                     # r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
                     r3 = langs.gns(runs, locale)
                     r4, r5 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
@@ -813,7 +814,7 @@ class Player:
             self.energy_time = time.now_ts()
             self.save()  # Save all data for player, clan and guild, and only then calculate all the outputs
             r1 = langs.gts(time.now(), locale, True, False, False, True, False)
-            r2 = ga78.time_kargadia(tz=2).str(dow=False, era=None, month=False)
+            r2 = ga78.time_kargadia(tz=2, language="rsl-1k" if locale == "rsl-1k" else "rsl-1i").str(dow=False, era=None, month=False)
             # r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
             r3 = langs.gns(runs, locale)
             r4, r5 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)

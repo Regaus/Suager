@@ -72,6 +72,13 @@ def gfs(value: Union[int, float], locale: str = "en", pre: int = 2, per: bool = 
         return "Infinity"
 
 
+def splits(value: str, step: int = 4, joiner: str = " ") -> str:
+    _split = value.split(".", 1)
+    _float = "" if len(_split) == 1 else f".{_split[1]}"
+    reverse = _split[0][::-1]
+    return (joiner.join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1] + _float
+
+
 def gls(string: str, locale: str = "en", *values, **kw_values) -> str:
     """ Get language string """
     output = str((languages.get(locale, languages["en"])).get(string, languages["en"].get(string, f"String not found: {string}")))
@@ -175,9 +182,16 @@ def gts(when: datetime = None, locale: str = "en", day: bool = True, short: bool
     month_names_l = get_data("time_month_names", locale)
     base = ""
     if day:
-        if dow and not (locale.startswith("rsl-3") or locale in ["rsl-1d", "rsl-5"]):
+        if dow and locale not in ["rsl-1d"]:
             weekdays = get_data("time_weekdays", locale)
-            weekday = weekdays[when.weekday()]
+            if locale in ["rsl-1k", "rsl-1i"]:
+                wd = when.weekday()
+                if when.hour < 6:
+                    wd -= 1
+                suffix = ["tea", "rea", "sea", "vea"]
+                weekday = weekdays[wd] + suffix[when.hour // 6]
+            else:
+                weekday = weekdays[when.weekday()]
             base += f"{weekday}, "
         if locale in ["en_us"]:
             base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "

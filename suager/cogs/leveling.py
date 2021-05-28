@@ -430,7 +430,7 @@ class Leveling(commands.Cog):
                     prev = -int(levels[(-level) - 1])
             except IndexError:
                 prev = 0
-            _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? AND disc!=0 ORDER BY \"{key}\" DESC", (ctx.guild.id,))
+            _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? ORDER BY \"{key}\" DESC", (ctx.guild.id,))
             # print(key)
             # print(_data)
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
@@ -541,7 +541,7 @@ class Leveling(commands.Cog):
                 prev = -int(levels[(-level) - 1])
         except IndexError:
             prev = 0
-        _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC", (ctx.guild.id,))
+        _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,))
         place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
         # if user.id == 430891116318031872:  # Alex Five is always fifth
         #     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, f"**{langs.gns(5, locale)}**"))
@@ -575,7 +575,7 @@ class Leveling(commands.Cog):
         #     embed.description += "\nCobbleBot XP is counted since 2 January 2021 AD."
         return await general.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="rankg", aliases=["grank"])
+    @commands.command(name="rankglobal", aliases=["rankg", "grank"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
@@ -585,7 +585,7 @@ class Leveling(commands.Cog):
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
             return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
-        _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE xp!=0 AND disc!=0")
+        _data = self.bot.db.fetch(f"SELECT * FROM leveling")
         coll = {}
         for i in _data:
             if i['uid'] not in coll:
@@ -613,7 +613,7 @@ class Leveling(commands.Cog):
         __xp = int(_xp)
         return await general.send(langs.gls("leveling_rank_global", locale, user, langs.gns(__xp, locale), place, langs.gns(level, locale)), ctx.channel)
 
-    @commands.group(name="crank", aliases=["customrank"])
+    @commands.group(name="customrank", aliases=["crank"])
     @commands.check(lambda ctx: ctx.author.id not in custom_rank_blacklist)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):

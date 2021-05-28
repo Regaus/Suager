@@ -29,7 +29,7 @@ async def temporaries(bot: bot_data.Bot):
                     expiry = langs.gts(entry["expiry"], "en", True, True, False, True, False)
                     try:
                         if user is not None:
-                            await user.send(f"⏰ **Reminder** (for {expiry}):\n\n{entry['message']}")
+                            await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")  # (for {expiry})
                             logger.log(bot.name, "temporaries", f"{time.time()} > Successfully sent the user {user} ({user.id}) the "
                                                                 f"reminder for {expiry} ({entry_id})")
                             bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))

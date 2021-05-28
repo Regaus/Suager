@@ -1,24 +1,32 @@
 from discord.ext import commands
 
-from core.utils import general
+from core.utils import general, time
 from languages import langs
+
+
+_year = time.now(None).year
 
 
 async def leaderboard_calculator(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, locale, key: str, guild: str = None):
     """ Generate Leaderboard """
     data = self.bot.db.fetch(query, statement)
     if not data:
+        if key.isnumeric():
+            return await general.send(langs.gls("leveling_rank_yearly_no", locale, key), ctx.channel)
         return await general.send(langs.gls("leaderboards_no_data", locale), ctx.channel)
     block = "```fix\n"
     un = []   # User names
     xp = []   # XP
     xpl = []  # XP string lengths
-    for user in data:
-        name = f"{user['name']}#{user['disc']:04d}"
-        un.append(name)
-        val = langs.gns(int(user[key]), locale)
-        xp.append(val)
-        xpl.append(len(val))
+    try:
+        for user in data:
+            name = f"{user['name']}#{user['disc']:04d}"
+            un.append(name)
+            val = langs.gns(int(user[key]), locale)
+            xp.append(val)
+            xpl.append(len(val))
+    except KeyError:
+        return await general.send(langs.gls("leveling_rank_yearly_no", locale, key), ctx.channel)
     total = len(xp)
     place = langs.gls("generic_unknown", locale)
     n = 0
@@ -60,7 +68,14 @@ async def leaderboard_calculator(self, ctx: commands.Context, query: str, statem
     s, e, t = langs.gns(start, locale), langs.gns(start + 9, locale), langs.gns(total, locale)
     args = [guild] if guild else []
     args += [place, s, e, t, block]
-    return await general.send(langs.gls(string, locale, *args), ctx.channel)
+    if key.isnumeric():
+        args.append(key)
+    output = langs.gls(string, locale, *args)
+    if key == 2021:
+        cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
+        if ctx.guild.id not in cobble_servers:
+            output += langs.gls("leveling_rank_yearly21", locale, ctx.guild.name)
+    return await general.send(output, ctx.channel)
 
 
 async def leaderboard_calc2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, locale, key: str, guild: str = None):
@@ -131,7 +146,7 @@ async def leaderboard_calc2(self, ctx: commands.Context, query: str, statement: 
 class Leaderboards(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.lvl = "leveling" if bot.name == "suager" else "leveling2"
+        # self.lvl = "leveling" if bot.name == "suager" else "leveling2"
 
     @commands.command(name="levels", aliases=["ranks", "lb"])
     @commands.guild_only()
@@ -139,25 +154,34 @@ class Leaderboards(commands.Cog):
     async def levels_lb(self, ctx: commands.Context, top: str = ""):
         """ Server's XP Leaderboard """
         locale = langs.gl(ctx)
-        return await leaderboard_calculator(self, ctx, f"SELECT uid, name, disc, xp FROM {self.lvl} WHERE gid=? AND xp!=0 AND disc!=0 ORDER BY xp DESC",
-                                            (ctx.guild.id,), top, "leaderboards_levels", locale, "xp", ctx.guild.name)
+        return await leaderboard_calculator(self, ctx, f"SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,),
+                                            top, "leaderboards_levels", locale, "xp", ctx.guild.name)
 
-    @commands.command(name="bank", aliases=["money"])
+    @commands.command(name="levelsyear", aliases=["ranksyear", "levelsy", "ylevels", "lby", "levels3"])
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.bot.name == "cobble")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def money_lb(self, ctx: commands.Context, top: str = ""):
-        """ Money Leaderboard """
+    async def levels_lb_yearly(self, ctx: commands.Context, year: int = _year, top: str = ""):
+        """ Server's Yearly XP Leaderboard """
         locale = langs.gl(ctx)
-        return await leaderboard_calculator(
-            self, ctx, "SELECT * FROM economy WHERE money!=0 AND disc!=0 ORDER BY money DESC", (), top, "leaderboards_bank", locale, "money")
+        return await leaderboard_calculator(self, ctx, f"SELECT * FROM leveling WHERE gid=? AND \"{year}\"!=0 ORDER BY \"{year}\" DESC", (ctx.guild.id,),
+                                            top, "leaderboards_levels_yearly", locale, str(year), ctx.guild.name)
 
-    @commands.command(name="glevels")
+    # @commands.command(name="bank", aliases=["money"])
+    # @commands.guild_only()
+    # @commands.check(lambda ctx: ctx.bot.name == "cobble")
+    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    # async def money_lb(self, ctx: commands.Context, top: str = ""):
+    #     """ Money Leaderboard """
+    #     locale = langs.gl(ctx)
+    #     return await leaderboard_calculator(
+    #         self, ctx, "SELECT * FROM economy WHERE money!=0 AND disc!=0 ORDER BY money DESC", (), top, "leaderboards_bank", locale, "money")
+
+    @commands.command(name="levelsglobal", aliases=["levelsg", "glevels"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def global_levels(self, ctx: commands.Context, top: str = ""):
         """ Global XP Leaderboard """
         locale = langs.gl(ctx)
-        return await leaderboard_calc2(self, ctx, f"SELECT * FROM {self.lvl} WHERE xp!=0 AND disc!=0", (), top, "leaderboards_levels_global", locale, "xp")
+        return await leaderboard_calc2(self, ctx, f"SELECT * FROM leveling", (), top, "leaderboards_levels_global", locale, "xp")
         # data = self.bot.db.fetch(f"SELECT * FROM {self.lvl} WHERE xp!=0 AND disc!=0", ())
 
 

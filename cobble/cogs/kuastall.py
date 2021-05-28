@@ -12,7 +12,7 @@ from languages import langs
 def tbl_locale(ctx: commands.Context):
     locale = langs.gl(ctx)
     if langs.get_data("_conlang", locale) is False and ctx.channel.id not in [725835449502924901, 742885168997466196, 610482988123422750]:
-        locale = "rsl-1e"
+        locale = "rsl-1i"
     return locale
 
 

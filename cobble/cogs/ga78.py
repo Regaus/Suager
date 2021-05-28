@@ -379,13 +379,21 @@ class GA78(commands.Cog):
         if ss == 23:
             if dt < datetime(1686, 11, 22, tzinfo=timezone.utc):
                 return await general.send(f"{emotes.Deny} SS-23 times are not available for dates earlier than **22 November 1686 AD**", ctx.channel)
-            time_earth1d = langs.gts(dt, "rsl-1d", True, False, True, True, False)
+            time_earth1k = langs.gts(dt, "rsl-1k", True, False, True, True, False)
+            time_earth1i = langs.gts(dt, "rsl-1i", True, False, True, True, False)
+            time_earth1h = langs.gts(dt, "rsl-1h", True, False, True, True, False)
             time_23_4 = ga78.time_zeivela(dt, 0).str()    # 23.4 Zeivela Local
-            time_23_5d = ga78.time_kargadia(dt, 0).str()  # 23.5 Kargadia RSL-1d
+            time_23_5d = ga78.time_kargadia(dt, 0, "rsl-1d").str()  # 23.5 Kargadia RSL-1d
+            time_23_5k = ga78.time_kargadia(dt, 0, "rsl-1k").str()  # 23.5 Kargadia RSL-1k
+            time_23_5i = ga78.time_kargadia(dt, 0, "rsl-1i").str()  # 23.5 Kargadia RSL-1i
             time_23_6 = ga78.time_kaltaryna(dt, 0).str()  # 23.6 Qevenerus RSL-1h
-            output += f"\nTime on this Earth (RSL-1d): **{time_earth1d}**" \
+            output += f"\nTime on this Earth (RSL-1k): **{time_earth1k}**" \
+                      f"\nTime on this Earth (RSL-1i): **{time_earth1i}**" \
+                      f"\nTime on this Earth (RSL-1h): **{time_earth1h}**" \
                       f"\nTime on 23.4 Zeivela (Local): **{time_23_4}**" \
                       f"\nTime on 23.5 Kargadia (RSL-1d): **{time_23_5d}**" \
+                      f"\nTime on 23.5 Kargadia (RSL-1k): **{time_23_5k}**" \
+                      f"\nTime on 23.5 Kargadia (RSL-1i): **{time_23_5i}**" \
                       f"\nTime on 23.6 Qevenerus (RSL-1h): **{time_23_6}**"
         elif ss == 24:
             if dt < datetime(1742, 1, 28, tzinfo=timezone.utc):
@@ -460,7 +468,8 @@ class GA78(commands.Cog):
             text += a
         return await general.send(text, ctx.channel)
 
-    @commands.group(name="rsl1", aliases=["rsl-1", "rsl"])
+    # @commands.group(name="rsl1", aliases=["rsl-1", "rsl"])
+    @commands.group(name="rsl1_old")
     @commands.check(is_rsl1_eligible)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rsl1(self, ctx: commands.Context):

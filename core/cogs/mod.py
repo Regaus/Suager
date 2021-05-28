@@ -20,6 +20,9 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         before = discord.Object(id=before)
     if after is not None:
         after = discord.Object(id=after)
+    _message = None  # if message = False
+    if message is True:
+        _message = await general.send(langs.gls("mod_purge_loading", locale), ctx.channel)
     try:
         deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
     except discord.Forbidden:
@@ -31,6 +34,7 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         # return await general.send(f"An error has occurred: `{type(e).__name__}: {e}`\nTry a smaller search?", ctx.channel)
     _deleted = len(deleted)
     if message is True:
+        await _message.delete()
         return await general.send(langs.gls("mod_purge", locale, langs.gns(_deleted, locale)), ctx.channel, delete_after=10)
         # await general.send(f"🚮 Successfully removed {_deleted:,} messages", ctx.channel, delete_after=10)
 
@@ -439,6 +443,11 @@ class Moderation(commands.Cog):
         def predicate(m):
             return m.author.bot is False
         await do_removal(ctx, search, predicate)
+
+    @prune.command(name="after")
+    async def prune_users(self, ctx: commands.Context, message_id: int):
+        """Removes all messages after a message ID (up to 2,000 messages in the past)."""
+        await do_removal(ctx, 2000, lambda e: True, after=message_id)
 
     @prune.command(name="emojis", aliases=["emotes"])
     async def prune_emoji(self, ctx: commands.Context, search: int = 100):
