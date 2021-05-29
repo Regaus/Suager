@@ -700,7 +700,7 @@ class Utility(commands.Cog):
     @commands.guild_only()
     @commands.check(custom_role_enabled)
     # @commands.is_owner()
-    @permissions.has_permissions(administator=True)
+    @permissions.has_permissions(administrator=True)
     async def grant_custom_role(self, ctx: commands.Context, user: discord.Member, role: discord.Role):
         """ Grant custom role """
         already = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
