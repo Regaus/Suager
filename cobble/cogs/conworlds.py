@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import ga78
+from cobble.utils import conworlds
 from core.utils import arg_parser, emotes, general, time
 from languages import langs
 
@@ -348,16 +348,22 @@ Ablative           | muad    | tead/tad | oad   | aad   | ead   | mead   | maad 
 Possessive         | munnar  | tar      | onnar | annar | ennar | mennar | mannar | var      | innar | sar    | nennar | kennar"""
 
 
-class GA78(commands.Cog):
+class Conworlds(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(name="time78", aliases=["t78"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time78(self, ctx: commands.Context, ss: int, _date: str = None, _time: str = None):
+    async def time78(self, ctx: commands.Context, ss: str, _date: str = None, _time: str = None):
         """ Times for GA-78
         Date format: YYYY-MM-DD
         Time format: hh:mm or hh:mm:ss (24-hour)"""
+        if not ss.isnumeric():
+            try:
+                return await general.send(conworlds.Place(ss).time_info(), ctx.channel)
+            except conworlds.PlaceDoesNotExist as e:
+                return await general.send(e, ctx.channel)
+        ss = int(ss)
         if ss < 1 or ss > 100:
             return await general.send("The SS number must be between 1 and 100.", ctx.channel)
         if _date is None:
@@ -382,11 +388,11 @@ class GA78(commands.Cog):
             time_earth1k = langs.gts(dt, "rsl-1k", True, False, True, True, False)
             time_earth1i = langs.gts(dt, "rsl-1i", True, False, True, True, False)
             time_earth1h = langs.gts(dt, "rsl-1h", True, False, True, True, False)
-            time_23_4 = ga78.time_zeivela(dt, 0).str()    # 23.4 Zeivela Local
-            time_23_5d = ga78.time_kargadia(dt, 0, "rsl-1d").str()  # 23.5 Kargadia RSL-1d
-            time_23_5k = ga78.time_kargadia(dt, 0, "rsl-1k").str()  # 23.5 Kargadia RSL-1k
-            time_23_5i = ga78.time_kargadia(dt, 0, "rsl-1i").str()  # 23.5 Kargadia RSL-1i
-            time_23_6 = ga78.time_kaltaryna(dt, 0).str()  # 23.6 Qevenerus RSL-1h
+            time_23_4 = conworlds.time_zeivela(dt, 0).str()    # 23.4 Zeivela Local
+            time_23_5d = conworlds.time_kargadia(dt, 0, "rsl-1d").str()  # 23.5 Kargadia RSL-1d
+            time_23_5k = conworlds.time_kargadia(dt, 0, "rsl-1k").str()  # 23.5 Kargadia RSL-1k
+            time_23_5i = conworlds.time_kargadia(dt, 0, "rsl-1i").str()  # 23.5 Kargadia RSL-1i
+            time_23_6 = conworlds.time_kaltaryna(dt, 0).str()  # 23.6 Qevenerus RSL-1h
             output += f"\nTime on this Earth (RSL-1k): **{time_earth1k}**" \
                       f"\nTime on this Earth (RSL-1i): **{time_earth1i}**" \
                       f"\nTime on this Earth (RSL-1h): **{time_earth1h}**" \
@@ -403,9 +409,9 @@ class GA78(commands.Cog):
             m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
             time_earth1e = f"{w[z.weekday()]}, {z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
             time_earth1g = langs.gts(z, "rsl-1g", True, False, True, True, False)
-            time_24_4_10 = ga78.time_sinvimania(dt, 0).str()  # 24.4 Sinvimania RLC-10
-            time_24_5l = ga78.time_hosvalnerus(dt, 0).str()   # 24.5 Hosvalnerus Local
-            time_24_11e = ga78.time_kuastall_11(dt).str()     # 24.11 Kuastall-11 RSL-1e
+            time_24_4_10 = conworlds.time_sinvimania(dt, 0).str()  # 24.4 Sinvimania RLC-10
+            time_24_5l = conworlds.time_hosvalnerus(dt, 0).str()   # 24.5 Hosvalnerus Local
+            time_24_11e = conworlds.time_kuastall_11(dt).str()     # 24.11 Kuastall-11 RSL-1e
             output += f"\nTime on this Earth (RSL-1e): **{time_earth1e}**" \
                       f"\nTime on this Earth (RSL-1g): **{time_earth1g}**" \
                       f"\nTime on 24.4 Sinvimania (RLC-10): **{time_24_4_10}**" \
@@ -421,8 +427,8 @@ class GA78(commands.Cog):
     async def weather78(self, ctx: commands.Context, *, where: str):
         """ Weather for a place in GA78 """
         try:
-            place = ga78.Place(where)
-        except ga78.PlaceDoesNotExist:
+            place = conworlds.Place(where)
+        except conworlds.PlaceDoesNotExist:
             return await general.send(f"Location {where!r} not found.", ctx.channel)
         embed = place.status()
         return await general.send(None, ctx.channel, embed=embed)
@@ -847,4 +853,4 @@ class GA78(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(GA78(bot))
+    bot.add_cog(Conworlds(bot))

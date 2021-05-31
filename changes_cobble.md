@@ -199,3 +199,9 @@
 - Made SS-23 days 2.7x shorter
 - Added RSL-1k and RSL-1i Kargadia date format
 - TBL now uses updated Kargadia date format
+
+## v1.1.14 - 31 May 2021
+- Better weather for SS-23
+- Ability to see local time in a specific place in GA78
+- Added Reggar to list of places
+- Renamed GA78 to Conworlds

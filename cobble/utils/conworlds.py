@@ -1,9 +1,11 @@
 import random
-from datetime import date, datetime, timezone, time as dt_time
+from datetime import date, datetime, time as dt_time, timezone
+from math import acos, asin, cos, degrees as deg, radians as rad, sin, tan
 from typing import Optional
-from math import cos, sin, acos, asin, tan, degrees as deg, radians as rad
 
 import discord
+from numpy import around
+from numpy.random import Generator, PCG64
 
 from core.utils import general, time
 
@@ -241,7 +243,8 @@ places = {
     "Sentatebaria": ["Kargadia", 495, 727],
     "Kitnagar": ["Kargadia", 1294, 573],
     "Murrangar": ["Kargadia", 371, 11],
-    "Peaskar": ["Kargadia", 218, 336]
+    "Peaskar": ["Kargadia", 218, 336],
+    "Reggar": ["Kargadia", 384, 248],
 }
 offsets = {
     "Kargadia": -343,
@@ -261,6 +264,13 @@ lengths = {
     "Sinvimania": 373.8,
     "Hosvalnerus": 378.5,
     "Kuastall-11": 19384.2,
+}
+month_counts = {
+    "Zeivela": 12,
+    "Kargadia": 16,
+    "Kaltaryna": 16,
+    "Sinvimania": 12,
+    "Hosvalnerus": 20,
 }
 patterns = {
     "Sentagar": {
@@ -304,6 +314,140 @@ patterns = {
         "winds_mult": 0.72
     },
 }
+weathers = {
+    "Sentagar": {
+        "temperature_day": {
+            "spring": [27, 1.5],
+            "summer": [31, 1.5],
+            "autumn": [28, 1.5],
+            "winter": [24, 1.5]
+        },
+        "temperature_night": {
+            "spring": [22, 1.5],
+            "summer": [25, 1.5],
+            "autumn": [23, 1.5],
+            "winter": [20, 1.5]
+        },
+        "rain_chance": [60, 67, 62, 51],
+        "cloudiness": [30, 45, 25, 21],
+        "overcast": [27, 44, 35, 23],  # Overcast chance if cloudy
+        "wind": [10, 3],
+        "wind_max": 27,
+        "wind_storms": 0.07
+    },
+    "Sentatebaria": {
+        "temperature_day": {
+            "spring": [15, 5],
+            "summer": [25, 4],
+            "autumn": [10, 7],
+            "winter": [-15, 5]
+        },
+        "temperature_night": {
+            "spring": [7, 5],
+            "summer": [17, 4],
+            "autumn": [0, 5],
+            "winter": [-20, 5]
+        },
+        "rain_chance": [14, 27, 37, 7],
+        "cloudiness": [37, 57, 61, 12],
+        "overcast": [41, 50, 56, 21],
+        "wind": [20, 5],
+        "wind_max": 50,
+        "wind_storms": 0.14
+    },
+    "Kitnagar": {
+        "temperature_day": {
+            "spring": [17, 4],
+            "summer": [31, 4],
+            "autumn": [21, 4],
+            "winter": [11, 4]
+        },
+        "temperature_night": {
+            "spring": [12, 4],
+            "summer": [23, 4],
+            "autumn": [11, 4],
+            "winter": [4, 4]
+        },
+        "rain_chance": [12, 17, 21, 9],
+        "cloudiness": [21, 33, 41, 17],
+        "overcast": [37, 41, 51, 27],
+        "wind": [17, 5],
+        "wind_max": 45,
+        "wind_storms": 0.16
+    },
+    "Murrangar": {
+        "temperature_day": {
+            "spring": [-27, 5],
+            "summer": [-17, 5],
+            "autumn": [-24, 5],
+            "winter": [-37, 5]
+        },
+        "temperature_night": {
+            "spring": [-31, 5],
+            "summer": [-19, 5],
+            "autumn": [-27, 5],
+            "winter": [-39, 5]
+        },
+        "rain_chance": [7, 8, 10, 7],
+        "cloudiness": [12, 13, 14, 13],
+        "overcast": [33, 33, 33, 33],
+        "wind": [35, 7],
+        "wind_max": 110,
+        "wind_storms": 0.21
+    },
+    "Peaskar": {
+        "temperature_day": {
+            "spring": [27, 5],
+            "summer": [40, 5],
+            "autumn": [24, 5],
+            "winter": [20, 5]
+        },
+        "temperature_night": {
+            "spring": [11, 5],
+            "summer": [20, 5],
+            "autumn": [5, 5],
+            "winter": [2, 5]
+        },
+        "rain_chance": [0.7, 0.4, 0.7, 1.5],
+        "cloudiness": [2, 2, 2, 2],
+        "overcast": [20, 20, 20, 20],
+        "wind": [17, 5],
+        "wind_max": 60,
+        "wind_storms": 0.09
+    },
+    "Reggar": {
+        "temperature_day": {
+            "spring": [15, 5],
+            "summer": [22, 5],
+            "autumn": [11, 5],
+            "winter": [-10, 5]
+        },
+        "temperature_night": {
+            "spring": [11, 5],
+            "summer": [17, 5],
+            "autumn": [5, 5],
+            "winter": [-15, 5]
+        },
+        "rain_chance": [17, 8, 47, 25],
+        "cloudiness": [26, 17, 75, 30],
+        "overcast": [40, 25, 60, 25],
+        "wind": [10, 3],
+        "wind_max": 25,
+        "wind_storms": 0.02
+    }
+}
+
+
+def random1(low: float = 0.0, high: float = 1.0, seed: int = 0) -> float:
+    # state = RandomState(seed)
+    state = Generator(PCG64(seed))
+    return float(around(state.uniform(low, high, None), 1))
+
+
+def random2(mean: float, sd: float, seed: int = 0) -> float:
+    # state = RandomState(seed)
+    state = Generator(PCG64(seed))
+    return float(around(state.normal(mean, sd, None), 1))
 
 
 class PlaceDoesNotExist(general.RegausError):
@@ -318,12 +462,19 @@ class Place:
             self.planet, self.lat, self.long = self.get_location()
         except KeyError:
             raise PlaceDoesNotExist(place)
-        self.tz = round(round(self.long / (180 / 24)) / 2, 1)
+        self.tz = round(self.long / (180 / 24))
+        # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
         self.time = time_function(tz=self.tz)
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun_data = Sun(self)
-        self.weathers = patterns[self.place]
+        self.weathers = weathers[self.place]
+        # self.weathers = patterns[self.place]
+
+    def time_info(self):
+        _time = f"{self.time.hour:02d}:{self.time.minute:02d}:{self.time.second:02d}"
+        _date = f"{self.time.day:02d}/{self.time.month:02d}/{self.time.year}"
+        return f"It is currently **{_time}** on **{_date}** in **{self.place}, {self.planet}**"
 
     def get_location(self):
         planet, x, y = places[self.place]
@@ -342,49 +493,140 @@ class Place:
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = f"Weather in **{self.place}, {self.planet}**"
-        embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**"
-        is_day = self.sun_data.sunrise < self.dt_time < self.sun_data.sunset
-        if is_day:
-            ranges = self.weathers["temperature_low_day"], self.weathers["temperature_high_day"]
-        else:
-            ranges = self.weathers["temperature_low_night"], self.weathers["temperature_high_night"]
+        lat, long = self.lat, self.long
+        n, e = "N" if lat > 0 else "S", "E" if long > 0 else "W"
+        if lat < 0:
+            lat *= -1
+        if long < 0:
+            long *= -1
+        embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**\nLocation: {lat}°{n}, {long}°{e}"
+        _months = month_counts[self.planet]
         month = self.time.month
-        _low, _high = ranges
-        low, high = _low[month - 1], _high[month - 1]
-        rain_chance = self.weathers["rain_chance"][month - 1]
-        wind_low, wind_high = [val * self.weathers["winds_mult"] for val in [3, 50]]
-        seed = (month * 100 + self.time.day) * 1440
-        random.seed(self.place + str(seed))
-        temp = random.uniform(low, high)
-        wind = random.uniform(wind_low, wind_high)
-        hour_part = self.time.hour + self.time.minute / 60
+        if self.lat < 0:
+            month += _months // 2
+            month %= _months
+        # spring 1-4, summer 5-8, autumn 9-12, winter 13-16
+        _q1, _q2, _q3 = _months // 4, _months // 2, _months // 4 * 3
+        if month <= _q1:
+            season, s = "spring", 0
+        elif _q1 < month <= _q2:
+            season, s = "summer", 1
+        elif _q2 < month <= _q3:
+            season, s = "autumn", 2
+        else:
+            season, s = "winter", 3
+        is_day = self.sun_data.sunrise < self.dt_time < self.sun_data.sunset
+        if self.sun_data.sunrise == self.sun_data.sunset == dt_time(0, 0, 0):
+            is_day = 1 < month <= _q2
+        # if is_day:
+        #     ranges = self.weathers["temperature_low_day"], self.weathers["temperature_high_day"]
+        # else:
+        #     ranges = self.weathers["temperature_low_night"], self.weathers["temperature_high_night"]
+        # month = self.time.month
+        # _low, _high = ranges
+        # low, high = _low[month - 1], _high[month - 1]
+        _mean, _sd = self.weathers["temperature_day" if is_day else "temperature_night"][season]
+        # wind_low, wind_high = [val * self.weathers["winds_mult"] for val in [3, 50]]
+        _seed0 = int(self.place[:8].lower(), base=36)
+        _seed1 = self.time.ds * 1440  # Seed the day from 1/1/0001, multiplied by 1440 minutes.
+        _seed2 = self.time.hour * 60
+        # _seed3 = self.time.minute
+        seed = _seed0 + _seed1
+        seed2 = seed + _seed2
+        # seed3 = seed + _seed3
+        # _seed2 = (self.time.month * 100 + self.time.day) * 1440
+        # seed = (month * 100 + self.time.day) * 1440
+        # random.seed(self.place + str(seed))
+
+        # temp = random.uniform(low, high)
+        temp = random2(_mean, _sd, seed)
+        # wind = random.uniform(wind_low, wind_high)
+        # hour_part = self.time.hour + self.time.minute / 60
         # Temperature modifiers for every hour
-        adds = [-2, -3, -3, -3, -2, -1, 0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 2, 2, 1, 1, 0, 0, -1, -1]
-        part = int(hour_part)
-        part_1 = hour_part % 1
-        part_2 = 1 - part_1
-        temp_add = adds[part] * part_1 + adds[(part + 1) % 24] * part_2
-        random.seed(self.place + str(int(seed + hour_part * 60)))
-        wind *= random.uniform(0.97, 1.03)
-        rain = random.randint(0, 100) <= rain_chance
-        temp_add *= random.uniform(0.95, 1.05)
+        # adds = [-2, -3, -3, -3, -2, -1, 0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 2, 2, 1, 1, 0, 0, -1, -1]
+        # part = int(hour_part)
+        # part_1 = hour_part % 1
+        # part_2 = 1 - part_1
+        # temp_add = 1 + (adds[part] * part_1 + adds[(part + 1) % 24] * part_2
+        # random.seed(self.place + str(int(seed + hour_part * 60)))
+        # wind *= random.uniform(0.97, 1.03)
+        # rain = random.randint(0, 100) <= rain_chance
+        # temp_add *= random.uniform(0.95, 1.05)
+        # temp *= temp_add
+        if self.dt_time < self.sun_data.sunrise:
+            temp -= 1.75
+        elif self.sun_data.sunrise <= self.dt_time < self.sun_data.solar_noon:
+            temp -= 0.35
+        elif self.sun_data.solar_noon <= self.dt_time < self.sun_data.sunset:
+            temp += 1.25
+        # No change between sunset and midnight
         temp_c = round(temp, 1)
         embed.add_field(name="Temperature", value=f"**{temp_c}°C**", inline=False)
-        speed_kmh = round(wind, 1)
-        speed_mps = round(wind / 3.6, 1)
+
+        wind_mean, wind_sd = self.weathers["wind"]
+        wind_max: int = self.weathers["wind_max"]
+        wind_storm = self.weathers["wind_storms"]
+        wind_base = random2(wind_mean, wind_sd, seed2)
+        wind_stormer = random1(0, 1, seed)
+        if wind_stormer > 0.9:  # 10% chance of low wind day
+            wind_base *= 0.2
+        if wind_stormer < wind_storm:
+            wind_stormer2 = random1(0, 1, seed - 1)
+            if wind_stormer2 < 0.07:
+                wind_base *= 4
+            elif 0.07 <= wind_stormer2 < 0.14:
+                wind_base *= 3
+            elif 0.14 <= wind_stormer2 < 0.70:  # 56%
+                wind_base *= 2
+            else:  # 30%
+                wind_base *= 1.5
+        if wind_base > wind_max:
+            wind_base = wind_max
+        speed_kmh = round(wind_base, 1)
+        speed_mps = round(wind_base / 3.6, 1)
         if self.planet in ["Kargadia", "Kaltaryna"]:
             kp_base = 0.8192
             # m_name = "ks/h (kp/c)"
-            speed_kpc = round(wind / kp_base, 1)
-            speed_custom = f" | {speed_kpc} kp/c"
+            speed_kpc = round(wind_base / kp_base, 1)
+            speed_custom = f" | {speed_kpc} kh/h"
         else:
             speed_custom = ""
         embed.add_field(name="Wind speed", value=f"**{speed_kmh} km/h** | {speed_mps} m/s{speed_custom}", inline=False)
+
+        rain_chance = self.weathers["rain_chance"][s]  # [month - 1]
+        rain = random1(0, 100, seed2) <= rain_chance
         if rain:
-            rain_out = "It's raining" if temp_c > 0 else "It's snowing"
+            if -5 > temp_c > 5:
+                rain_out = "Rain" if random.random() < 0.5 else "Snow"
+            else:
+                rain_out = "Rain" if temp_c > 0 else "Snow"
+                thunder_chance = 0
+                if 20 >= temp_c > 25:
+                    thunder_chance = 0.3  # 30% chance of thunder while raining at 20-25 degrees
+                elif 25 >= temp_c > 30:
+                    thunder_chance = 0.5  # 50% chance of thunder while raining at 25-30 degrees
+                elif temp_c >= 30:
+                    thunder_chance = 0.7  # 70% chance of thunder while raining at above 30 degrees
+                if self.place == "Reggar":
+                    thunder_chance *= 1.25  # My place is more likely to have thunder instead of normal, boring rain
+                if random1(0, 1, seed2) < thunder_chance:
+                    rain_out = "Thunder"
         else:
-            rain_out = "Nothing is falling from the sky"
-        embed.add_field(name="Precipitation", value=rain_out, inline=False)
+            rain_out = "Sunny"
+            cloud_chance = self.weathers["cloudiness"][s]
+            overcast = self.weathers["overcast"][s]
+            r = random1(0, 1, seed2)
+            if r < cloud_chance:
+                rain_out = "Slightly cloudy"
+                r2 = random1(0, 1, seed2 - 1)
+                r3 = random1(0, 1, seed2 - 2)
+                if r2 < overcast:
+                    rain_out = "Overcast"
+                elif r3 < 0.6:  # It's more likely to be cloudy than only slightly cloudy
+                    rain_out = "Cloudy"
+            # Account for clouds using the cloudiness set
+        embed.add_field(name="Sky's Mood", value=rain_out, inline=False)
+
         embed.add_field(name="Sunrise", value=self.sun_data.sunrise.isoformat(), inline=True)
         embed.add_field(name="Solar noon", value=self.sun_data.solar_noon.isoformat(), inline=True)
         embed.add_field(name="Sunset", value=self.sun_data.sunset.isoformat(), inline=True)

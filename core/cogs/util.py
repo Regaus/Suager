@@ -8,7 +8,7 @@ import pytz
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import ga78
+from cobble.utils import conworlds
 from core.utils import arg_parser, bases, emotes, general, http, permissions, time
 from languages import langs
 
@@ -52,7 +52,7 @@ class Utility(commands.Cog):
         #             f"Senka'dar Laikadu: **{b}**\n" \
         #             f"Kargadia (Sentagar): **{c}**"
         if locale == "rsl-1e":
-            a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+            a = conworlds.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
             z = time.now_k()  # time.kargadia_convert(time.now(None))
@@ -63,7 +63,7 @@ class Utility(commands.Cog):
                     f"Zymlä (SL-Taida NE'i): **{c}**\n" \
                     f"Kargadia (Sentagar): **{a}**"
         elif locale in ["rsl-1k", "rsl-1i"]:
-            a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+            a = conworlds.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_k(), locale, True, False, True, True, False)
             send += f"Zymlä: **{b}**\n" \
@@ -655,11 +655,13 @@ class Utility(commands.Cog):
     @commands.command(name="customrole", aliases=["cr"])
     @commands.guild_only()
     @commands.check(custom_role_enabled)
-    @commands.cooldown(rate=1, per=30, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
     async def custom_role(self, ctx: commands.Context, *, stuff: str):
         """ Set up your custom role
         -c/--colour/--color: Set role colour
-        -n/--name: Set role name """
+        -n/--name: Set role name
+
+        Example: //customrole --name Role Name --colour ff0057"""
         data = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
             return await general.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}", ctx.channel)
@@ -676,6 +678,9 @@ class Utility(commands.Cog):
             if c == "random":
                 col = general.random_colour()
             else:
+                if c.startswith("#"):
+                    c = c[1:]
+                    a = len(c)
                 if a == 6 or a == 3:
                     try:
                         col = int(c, base=16)
@@ -705,15 +710,15 @@ class Utility(commands.Cog):
         """ Grant custom role """
         already = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if not already:
-            result = self.bot.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
+            self.bot.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
             try:
                 await user.add_roles(role, reason="Custom Role grant")
-                return await general.send(f"Granted {role.name} to {user.name}: {result}", ctx.channel)
+                return await general.send(f"Granted {role.name} to {user.name}", ctx.channel)
             except discord.Forbidden:
                 return await general.send(f"{role.name} could not be granted to {user.name}. It has, however, been saved to the database.", ctx.channel)
         else:
-            result = self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
-            return await general.send(f"Updated custom role of {user.name} to {role.name}: {result}", ctx.channel)
+            self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
+            return await general.send(f"Updated custom role of {user.name} to {role.name}", ctx.channel)
 
     @commands.command(name="remind", aliases=["remindme"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

@@ -10,3 +10,4 @@ jishaku
 luas.py
 requests
 psutil
+numpy
