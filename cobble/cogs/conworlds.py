@@ -433,6 +433,30 @@ class Conworlds(commands.Cog):
         embed = place.status()
         return await general.send(None, ctx.channel, embed=embed)
 
+    @commands.command(name="locations", aliases=["location", "loc"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def location(self, ctx: commands.Context, *, where: str = None):
+        """ Locations of Places in GA-78 """
+        if where:
+            if where in ["Kargadia"]:
+                places = []
+                for city, data in conworlds.places.items():
+                    if data[0] == where:
+                        place = conworlds.Place(city)
+                        places.append(f"`{city:<13} - {place.location(True)}`")
+                return await general.send(f"Locations in {where}:\n\n" + "\n".join(places), ctx.channel)
+            else:
+                try:
+                    place = conworlds.Place(where)
+                    return await general.send(place.location(False), ctx.channel)
+                except conworlds.PlaceDoesNotExist:
+                    return await general.send(f"Location {where!r} not found.", ctx.channel)
+        planets = []
+        for data in conworlds.places.values():
+            if data[0] not in planets:
+                planets.append(data[0])
+        return await general.send("Planets with locations available:\n\n" + "\n".join(planets), ctx.channel)
+
     @commands.command(name="nlc")
     @commands.is_owner()
     async def ne_world_ll_calc(self, ctx: commands.Context, x: int, z: int, border: int = 100000):

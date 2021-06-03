@@ -780,3 +780,7 @@
 - Removed botserver command
 - Yearly leaderboards command
 - Made some leveling commands' default names more clear
+
+## v7.2.27 - 1 June 2021
+- Reminders and mutes now use a 7-digit ID
+- Reminders now indicate usage of UTC

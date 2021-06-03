@@ -7,7 +7,6 @@ from io import BytesIO
 from typing import Union
 
 import discord
-from discord.ext import commands
 
 from core.utils import time
 
@@ -93,8 +92,9 @@ def round_value(value):
         return e
 
 
-def random_id(ctx: commands.Context) -> int:
-    return ctx.author.id + random.randint(0, 0xfffffffffffffff)
+def random_id() -> int:
+    return random.randint(1, 9999999)
+    # return ctx.author.id + random.randint(0, 0xfffffffffffffff)
 
 
 def bold(string: str) -> str:

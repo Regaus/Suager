@@ -267,7 +267,9 @@ class Moderation(commands.Cog):
             # Quietly ignore any errors, since it's probably someone fucking around, or it's not a duration to begin with
             # await general.send(f"Failed to convert duration: {expiry} | Making mute permanent...", ctx.channel)
             if not error:
-                random_id = general.random_id(ctx)
+                random_id = general.random_id()
+                while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
+                    random_id = general.random_id()
                 self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (member.id, "mute", expiry, ctx.guild.id, None, random_id, 0))
                 duration = langs.td_rd(delta, "en", accuracy=7, brief=False, suffix=False)
                 reason = " ".join(reason.split(" ")[1:])

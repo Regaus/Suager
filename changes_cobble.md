@@ -205,3 +205,10 @@
 - Ability to see local time in a specific place in GA78
 - Added Reggar to list of places
 - Renamed GA78 to Conworlds
+
+## v1.1.15 - 1 June 2021
+- Fixed timezone scaling with weather78
+- Updated weathers and places to new Kargadia
+- Added command to see latitude and longitude location for places in Kargadia, also shows list of all places in Kargadia
+- Added many new cities to Kargadia
+- Temporarily removed the weather bit, will be added back soon with updated climates

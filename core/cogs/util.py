@@ -732,10 +732,12 @@ class Utility(commands.Cog):
         if error:
             return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
         diff = langs.td_rd(delta, "en", accuracy=7, brief=False, suffix=True)
-        when = langs.gts(expiry, "en", True, True, False, True, True)
-        random_id = general.random_id(ctx)
+        when = langs.gts(expiry, "en", True, True, False, True, False)
+        random_id = general.random_id()
+        while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
+            random_id = general.random_id()
         self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False))
-        return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when})", ctx.channel)
+        return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
     @commands.command(name="reminders")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
