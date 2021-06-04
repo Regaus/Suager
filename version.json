@@ -8,10 +8,10 @@
   },
   "cobble": {
     "short_version": "1.1",
-    "version": "1.1.15",
+    "version": "1.1.16",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1622683520
+    "last_update": 1622771529
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

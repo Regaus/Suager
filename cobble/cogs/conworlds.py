@@ -436,19 +436,22 @@ class Conworlds(commands.Cog):
     @commands.command(name="locations", aliases=["location", "loc"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def location(self, ctx: commands.Context, *, where: str = None):
-        """ Locations of Places in GA-78 """
+        """ Locations of Places in GA-78
+
+        Input a planet (e.g. Kargadia) to see list of all locations on the planet
+        Input a place to see where it is"""
         if where:
             if where in ["Kargadia"]:
                 places = []
                 for city, data in conworlds.places.items():
                     if data[0] == where:
                         place = conworlds.Place(city)
-                        places.append(f"`{city:<13} - {place.location(True)}`")
+                        places.append(f"`{city:<15} - {place.location(True)}`")
                 return await general.send(f"Locations in {where}:\n\n" + "\n".join(places), ctx.channel)
             else:
                 try:
                     place = conworlds.Place(where)
-                    return await general.send(place.location(False), ctx.channel)
+                    return await general.send(f"{where} - {place.planet} - {place.location(False)}", ctx.channel)
                 except conworlds.PlaceDoesNotExist:
                     return await general.send(f"Location {where!r} not found.", ctx.channel)
         planets = []

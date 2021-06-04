@@ -212,3 +212,6 @@
 - Added command to see latitude and longitude location for places in Kargadia, also shows list of all places in Kargadia
 - Added many new cities to Kargadia
 - Temporarily removed the weather bit, will be added back soon with updated climates
+
+## v1.1.16 - 4 June 2021
+- Improved description of the locations command, added some more cities to Kargadia

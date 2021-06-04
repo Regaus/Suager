@@ -239,13 +239,16 @@ class TimeSolarLong:
 
 places = {
     "Akkigar": ["Kargadia", 1282, 148],
+    "Bylkangar": ["Kargadia", 1184, 665],
     "Erellgar": ["Kargadia", 638, 467],
     "Irtangar": ["Kargadia", 1349, 93],
     "Kanerakainead": ["Kargadia", 367, 51],
     "Kanertebaria": ["Kargadia", 355, 759],
     "Kirtinangar": ["Kargadia", 477, 158],
     "Kitnagar": ["Kargadia", 1496, 620],
+    "Lakkeaina": ["Kargadia", 1337, 341],
     "Lersedigar": ["Kargadia", 707, 329],
+    "Muruvasaitari": ["Kargadia", 1306, 266],
     "Neikelaa": ["Kargadia", 972, 402],
     "Peaskar": ["Kargadia", 244, 324],
     "Regavall": ["Kargadia", 672, 132],
@@ -254,6 +257,8 @@ places = {
     "Sentatebaria": ["Kargadia", 298, 811],
     "Tebarimostus": ["Kargadia", 316, 759],
     "Tevivall": ["Kargadia", 490, 294],
+    "Vaidoks": ["Kargadia", 1366, 496],
+    "Viaransertangar": ["Kargadia", 893, 450],
 }
 offsets = {
     # "Kargadia": -343,
