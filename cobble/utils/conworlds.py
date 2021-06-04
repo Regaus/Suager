@@ -505,6 +505,8 @@ class Sun:
 
     def convert_time(self):
         year_start = date(2021, 1, 1)  # Assume it to always be 2021 to not deal with the year day differences shenanigans
+        if self.place.planet == "Kargadia":
+            year_start = date(2021, 3, 20)  # Kargadian years start in spring, so make it be the equinox
         start = year_start.toordinal() - 693595  # To convert it to the calculator's date format
         _time = self.place.time
         year_day = _time.year_day
