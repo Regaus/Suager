@@ -218,3 +218,7 @@
 
 ## v1.1.16.1 - 4 June 2021
 - Increased weather78 sun accuracy - Kargadian years start at the march equinox, not our new year
+
+## v1.1.17 - 5 June 2021
+- Updated TBL to follow the new -7:00 timezone of Sentatebaria
+- Improved accuracy of Kargadian locations

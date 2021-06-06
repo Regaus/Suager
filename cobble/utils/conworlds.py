@@ -77,12 +77,12 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
                   "Bassemaran", "Finkannaran", "Suvannaran", "Kittannaran", "Semarmaran", "Haltannaran", "Kaivynnaran", "Kärasmaran"]
     elif language == "rsl-1k":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
-        months = ["Senkavan", "Shiravan", "Nuuvan", "Kaivuan", "Antuvan", "Vainaran", "Kallüvan", "Hartuvan",
-                  "Raavan", "Nummavan", "Vitteran", "Vaikivan", "Kaivyan", "Kaaratan", "Kiitavan", "Suvakän"]
+        months = ["Senkavan", "Shiravan", "Nuuvan", "Kaivuan", "Antuvan", "Vainaran", "Kiitavan", "Hartuvan",
+                  "Raavan", "Nummavan", "Vitteran", "Vaikivan", "Kaivyan", "Kaaratan", "Kallüvan", "Suvakän"]
     elif language == "rsl-1i":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
-        months = ["Senkaan", "Shiraan", "Nuuan", "Kaivuan", "Antuan", "Vainaan", "Kaijuan", "Hartuan",
-                  "Raan", "Nummaan", "Vittean", "Vaikian", "Kaivyan", "Karratan", "Kiitaan", "Suvajan"]
+        months = ["Senkaan", "Shiraan", "Nuuan", "Kaivuan", "Antuan", "Vainaan", "Kiitaan", "Hartuan",
+                  "Raan", "Nummaan", "Vittean", "Vaikian", "Kaivyan", "Karratan", "Kaijuan", "Suvajan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
     if output.hour < 6:
         output.day_of_week -= 1
@@ -238,31 +238,33 @@ class TimeSolarLong:
 
 
 places = {
-    "Akkigar": ["Kargadia", 1282, 148],
-    "Bylkangar": ["Kargadia", 1184, 665],
-    "Erellgar": ["Kargadia", 638, 467],
-    "Irtangar": ["Kargadia", 1349, 93],
-    "Kanerakainead": ["Kargadia", 367, 51],
-    "Kanertebaria": ["Kargadia", 355, 759],
-    "Kirtinangar": ["Kargadia", 477, 158],
-    "Kitnagar": ["Kargadia", 1496, 620],
-    "Lakkeaina": ["Kargadia", 1337, 341],
-    "Lersedigar": ["Kargadia", 707, 329],
-    "Muruvasaitari": ["Kargadia", 1306, 266],
-    "Neikelaa": ["Kargadia", 972, 402],
-    "Peaskar": ["Kargadia", 244, 324],
-    "Regavall": ["Kargadia", 672, 132],
-    "Reggar": ["Kargadia", 591, 148],
-    "Sentagar": ["Kargadia", 848, 249],
-    "Sentatebaria": ["Kargadia", 298, 811],
-    "Tebarimostus": ["Kargadia", 316, 759],
-    "Tevivall": ["Kargadia", 490, 294],
-    "Vaidoks": ["Kargadia", 1366, 496],
-    "Viaransertangar": ["Kargadia", 893, 450],
+    "Akkigar":         ["Kargadia", 1282.3, 148.7],
+    "Bylkangar":       ["Kargadia", 1184.2, 665.8],
+    "Erellgar":        ["Kargadia",  637.1, 466.9],
+    "Irtangar":        ["Kargadia", 1349.8,  93.4],
+    "Kanerakainead":   ["Kargadia",  506.0,  50.5],
+    "Kanertebaria":    ["Kargadia",  333.5, 758.9],
+    "Kirtinangar":     ["Kargadia",  477.3, 158.1],
+    "Kitnagar":        ["Kargadia", 1494.9, 620.2],
+    "Lakkeaina":       ["Kargadia", 1337.0, 341.1],
+    "Lersedigar":      ["Kargadia",  707.6, 328.8],
+    "Muruvasaitari":   ["Kargadia", 1306.6, 264.6],
+    "Neikelaa":        ["Kargadia",  971.4, 403.5],
+    "Pakigar":         ["Kargadia",  100.0, 202.1],
+    "Peaskar":         ["Kargadia",  244.9, 324.4],
+    "Regavall":        ["Kargadia",  654.5, 111.7],  # Original: 672, 132
+    "Reggar":          ["Kargadia",  567.1, 147.5],  # Original: 591, 148
+    "Sentagar":        ["Kargadia",  843.7, 249.3],
+    "Sentatebaria":    ["Kargadia",  298.4, 811.4],
+    "Tebarimostus":    ["Kargadia",  315.4, 759.2],
+    "Tevivall":        ["Kargadia",  491.3, 294.6],
+    "Vaidoks":         ["Kargadia", 1366.5, 496.1],
+    "Viaransertangar": ["Kargadia",  893.8, 450.0],
+    "Vintelingar":     ["Kargadia",  743.2, 461.7],
 }
 offsets = {
     # "Kargadia": -343,
-    "Kargadia": -848,
+    "Kargadia": -843.7,
 }
 times = {
     "Zeivela": time_zeivela,
@@ -317,6 +319,9 @@ class Place:
         except KeyError:
             raise PlaceDoesNotExist(place)
         self.tz = round(self.long / (360 / 24))
+        self.tz += {
+            "Regavall": -1,
+        }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
         self.time = time_function(tz=self.tz)
@@ -340,7 +345,7 @@ class Place:
             lat *= -1
         if long < 0:
             long *= -1
-        return f"{lat:>4.1f}°{n}, {long:>5.1f}°{e}" if indent else f"{lat}°{n}, {long}°{e}"
+        return f"{lat:>4.1f}°{n}, {long:>5.1f}°{e}" if indent else f"{lat:.1f}°{n}, {long:.1f}°{e}"
 
     def get_location(self):
         planet, x, y = places[self.place]
@@ -509,9 +514,9 @@ class Sun:
             year_start = date(2021, 3, 20)  # Kargadian years start in spring, so make it be the equinox
         start = year_start.toordinal() - 693595  # To convert it to the calculator's date format
         _time = self.place.time
-        year_day = _time.year_day
+        year_day = _time.year_day  # Amount of days past since New Year
         addition = round(year_day / lengths[self.place.planet] * 365.25)  # Try to fit the date into a 365-day Earth year
-        day_part = (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400
+        day_part = (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400  # How much of the day passed (as a fraction)
         return start + addition + day_part
 
     @staticmethod
