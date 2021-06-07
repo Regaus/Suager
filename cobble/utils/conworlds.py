@@ -238,33 +238,45 @@ class TimeSolarLong:
 
 
 places = {
-    "Akkigar":         ["Kargadia", 1282.3, 148.7],
-    "Bylkangar":       ["Kargadia", 1184.2, 665.8],
-    "Erellgar":        ["Kargadia",  637.1, 466.9],
-    "Irtangar":        ["Kargadia", 1349.8,  93.4],
-    "Kanerakainead":   ["Kargadia",  506.0,  50.5],
-    "Kanertebaria":    ["Kargadia",  333.5, 758.9],
-    "Kirtinangar":     ["Kargadia",  477.3, 158.1],
-    "Kitnagar":        ["Kargadia", 1494.9, 620.2],
-    "Lakkeaina":       ["Kargadia", 1337.0, 341.1],
-    "Lersedigar":      ["Kargadia",  707.6, 328.8],
-    "Muruvasaitari":   ["Kargadia", 1306.6, 264.6],
-    "Neikelaa":        ["Kargadia",  971.4, 403.5],
-    "Pakigar":         ["Kargadia",  100.0, 202.1],
-    "Peaskar":         ["Kargadia",  244.9, 324.4],
-    "Regavall":        ["Kargadia",  654.5, 111.7],  # Original: 672, 132
-    "Reggar":          ["Kargadia",  567.1, 147.5],  # Original: 591, 148
-    "Sentagar":        ["Kargadia",  843.7, 249.3],
-    "Sentatebaria":    ["Kargadia",  298.4, 811.4],
-    "Tebarimostus":    ["Kargadia",  315.4, 759.2],
-    "Tevivall":        ["Kargadia",  491.3, 294.6],
-    "Vaidoks":         ["Kargadia", 1366.5, 496.1],
-    "Viaransertangar": ["Kargadia",  893.8, 450.0],
-    "Vintelingar":     ["Kargadia",  743.2, 461.7],
+    "Akkigar":             ["Kargadia", 1282.3, 148.7],
+    "Bylkangar":           ["Kargadia", 1184.2, 665.8],
+    "Bylkankaldanpeaskat": ["Kargadia", 1361.8, 835.2],
+    "Degan Ihat":          ["Kargadia", 1744.6, 788.6],
+    "Erellgar":            ["Kargadia",  637.1, 466.9],
+    "Iha na Sevarddain":   ["Kargadia", 1352.5, 879.2],
+    "Irtangar":            ["Kargadia", 1349.8,  93.4],
+    "Kaivus na Advuräin":  ["Kargadia", 1199.0, 730.0],
+    "Kanerakainead":       ["Kargadia",  506.0,  50.5],
+    "Kanertebaria":        ["Kargadia",  333.5, 758.9],
+    "Kirtinangar":         ["Kargadia",  477.3, 158.1],
+    "Kitnagar":            ["Kargadia", 1494.9, 620.2],
+    "Kunval na Shaivain":  ["Kargadia", 1224.3, 782.1],
+    "Lakkeaina":           ["Kargadia", 1337.0, 341.1],
+    "Leitagar":            ["Kargadia",   79.1, 169.3],
+    "Lersedigar":          ["Kargadia",  707.6, 328.8],
+    "Liidennan Koirantat": ["Kargadia",  147.7, 834.5],
+    "Lirrinta Teinain":    ["Kargadia",   24.0, 796.3],
+    "Muruvasaitari":       ["Kargadia", 1306.6, 264.6],
+    "Neikelaa":            ["Kargadia",  971.4, 403.5],
+    "Pakigar":             ["Kargadia",  100.0, 202.1],
+    "Peaskar":             ["Kargadia",  244.9, 324.4],
+    "Regavall":            ["Kargadia",  654.5, 111.7],  # Original: 672, 132
+    "Reggar":              ["Kargadia",  617.1, 147.5],  # Original: 591, 148
+    "Seivanlias":          ["Kargadia", 1623.5, 794.2],
+    "Sentagar":            ["Kargadia",  843.7, 249.3],
+    "Sentatebaria":        ["Kargadia",  298.4, 811.4],
+    "Sunovalliat":         ["Kargadia",   87.9, 737.5],
+    "Taivead":             ["Kargadia", 1606.7, 800.9],
+    "Tebarimostus":        ["Kargadia",  315.4, 759.2],
+    "Tentar Hintakadu":    ["Kargadia", 1428.7, 796.7],
+    "Tevivall":            ["Kargadia",  491.3, 294.6],
+    "Vaidoks":             ["Kargadia", 1366.5, 496.1],
+    "Vintelingar":         ["Kargadia",  743.2, 461.7],
+    "Virsetgar":           ["Kargadia",  893.8, 450.0],
 }
 offsets = {
     # "Kargadia": -343,
-    "Kargadia": -843.7,
+    "Kargadia": -893.8,  # -843.7,
 }
 times = {
     "Zeivela": time_zeivela,
@@ -320,6 +332,7 @@ class Place:
             raise PlaceDoesNotExist(place)
         self.tz = round(self.long / (360 / 24))
         self.tz += {
+            "Kanertebaria": -1,
             "Regavall": -1,
         }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
@@ -364,7 +377,9 @@ class Place:
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = f"Weather in **{self.place}, {self.planet}**"
-        embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**\nLocation: {self.location(False)}"
+        embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**\n" \
+                            f"Time zone: {self.tz}:00 (Real offset {self.long / (360 / 24):.2f} hours)\n" \
+                            f"Location: {self.location(False)}"
         _months = month_counts[self.planet]
         month = self.time.month
         if self.lat < 0:

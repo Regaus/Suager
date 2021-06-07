@@ -222,3 +222,7 @@
 ## v1.1.17 - 5 June 2021
 - Updated TBL to follow the new -7:00 timezone of Sentatebaria
 - Improved accuracy of Kargadian locations
+
+## v1.1.18 - 7 June 2021
+- Moved the centre of Kargadia to Sertangar
+- Added TBL locations to the map of Kargadia and made its locations available

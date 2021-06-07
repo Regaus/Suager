@@ -446,7 +446,7 @@ class Conworlds(commands.Cog):
                 for city, data in conworlds.places.items():
                     if data[0] == where:
                         place = conworlds.Place(city)
-                        places.append(f"`{city:<15} - {place.location(True)}`")
+                        places.append(f"`{city:<19} - {place.location(True)}`")
                 return await general.send(f"Locations in {where}:\n\n" + "\n".join(places), ctx.channel)
             else:
                 try:

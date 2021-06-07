@@ -377,7 +377,7 @@ class Location:
 
     def get_activity(self):
         """ Get the location's activity multiplier """
-        now = conworlds.time_kargadia(tz=-7)
+        now = conworlds.time_kargadia(tz=-8)
         hour = now.hour + (now.minute / 60)
         al = len(activity_hour)
         part, mod = divmod(hour, 3)  # It's now 3 hours because 24 hours instead of 32
@@ -775,7 +775,7 @@ class Player:
                     level_length = langs.td_int(ll, locale, brief=True, suffix=False)
                     your_time = langs.td_int(you["time"], locale, brief=True, suffix=False)
                     r1 = langs.gts(time.now(), locale, True, False, False, True, False)
-                    r2 = conworlds.time_kargadia(tz=-7, language="rsl-1k" if locale == "rsl-1k" else "rsl-1i").str(dow=False, era=None, month=False)
+                    r2 = conworlds.time_kargadia(tz=-8, language="rsl-1k" if locale == "rsl-1k" else "rsl-1i").str(dow=False, era=None, month=False)
                     # r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
                     r3 = langs.gns(runs, locale)
                     r4, r5 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
@@ -814,7 +814,7 @@ class Player:
             self.energy_time = time.now_ts()
             self.save()  # Save all data for player, clan and guild, and only then calculate all the outputs
             r1 = langs.gts(time.now(), locale, True, False, False, True, False)
-            r2 = conworlds.time_kargadia(tz=-7, language="rsl-1k" if locale == "rsl-1k" else "rsl-1i").str(dow=False, era=None, month=False)
+            r2 = conworlds.time_kargadia(tz=-8, language="rsl-1k" if locale == "rsl-1k" else "rsl-1i").str(dow=False, era=None, month=False)
             # r2 = ss23.time_kargadia(tz=2).str(dow=False, era=None, tz=False)
             r3 = langs.gns(runs, locale)
             r4, r5 = langs.gfs(self.energy, locale, 1), langs.gfs(self.energy_limit, locale, 1)
