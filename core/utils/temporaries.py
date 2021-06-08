@@ -24,73 +24,61 @@ async def temporaries(bot: bot_data.Bot):
             # print(expired)
             for entry in expired:
                 entry_id = entry["entry_id"]
+                handled = 2
                 if entry["type"] == "reminder":
                     user: discord.User = bot.get_user(entry["uid"])
                     expiry = langs.gts(entry["expiry"], "en", True, True, False, True, False)
                     try:
                         if user is not None:
                             await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")  # (for {expiry})
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Successfully sent the user {user} ({user.id}) the "
-                                                                f"reminder for {expiry} ({entry_id})")
-                            bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
+                            logger.log(bot.name, "temporaries", f"{time.time()} > Successfully sent the user {user} ({user.id}) the reminder for {expiry} ({entry_id})")
+                            handled = 1
                         else:
-                            general.print_error(f"{time.time()} > User ID {user} not found! Putting reminder {entry_id} to error list...")
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Could not find user for reminder for {expiry} with Entry ID {entry_id}!")
-                            bot.db.execute("UPDATE temporary SET handled=2 WHERE entry_id=?", (entry_id,))
+                            general.print_error(f"{time.time()} > Reminder ID {entry_id} - User ID {user} not found!")
+                            logger.log(bot.name, "temporaries", f"{time.time()} > Reminder ID {entry_id} - User not found!")
                     except Exception as e:
-                        general.print_error(f"{time.time()} > Reminder {entry_id} error: {e}")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Reminder {entry_id} error: {e}")
-                        bot.db.execute("UPDATE temporary SET handled=2 WHERE entry_id=?", (entry_id,))
-                if entry["type"] == "mute":
+                        general.print_error(f"{time.time()} > Reminder ID {entry_id} - Error: {e}")
+                        logger.log(bot.name, "temporaries", f"{time.time()} > Reminder ID {entry_id} - Error: {e}")
+                elif entry["type"] == "mute":
                     guild: discord.Guild = bot.get_guild(entry["gid"])
                     if guild is None:
-                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Putting mute to error list...")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Putting mute to error list...")
-                        handled = 2
+                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found!")
+                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found!")
                     else:
                         _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
                         if not _data:
-                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Putting mute to error list...")
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! "
-                                                                f"Putting mute to error list...")
-                            handled = 2
+                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found!")
+                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found!")
                         else:
                             data = json.loads(_data["data"])
                             try:
                                 mute_role_id = data["mute_role"]
                             except KeyError:
-                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Putting mute to error list...")
-                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! "
-                                                                    f"Putting mute to error list...")
-                                handled = 2
+                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set!")
+                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set!")
                                 # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
                             else:
                                 mute_role = guild.get_role(mute_role_id)
                                 if not mute_role:
-                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Putting mute to error list...")
-                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! "
-                                                                        f"Putting mute to error list...")
-                                    handled = 2
+                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found!")
+                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found!")
                                     # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
                                 else:
                                     member: discord.Member = guild.get_member(entry["uid"])
                                     if not member:
-                                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found! Putting mute to error list...")
-                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found! "
-                                                                            f"Putting mute to error list...")
-                                        handled = 2
+                                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found!")
+                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found!")
                                     else:
                                         try:
-                                            await member.remove_roles(mute_role, reason=f"[Suager Auto-Unmute] Punishment expired")
+                                            await member.remove_roles(mute_role, reason=f"[Auto-Unmute] Punishment expired")
                                             logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
                                                                                 f"guild {guild} ({entry_id})")
                                             handled = 1
                                         except Exception as e:
-                                            general.print_error(f"{time.time()} > Mute {entry_id} error: {e}")
-                                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute {entry_id} error: {e}")
-                                            handled = 2
+                                            general.print_error(f"{time.time()} > Mute ID {entry_id} - Error: {e}")
+                                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute ID {entry_id} - Error: {e}")
                                             # return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
-                    bot.db.execute("UPDATE temporary SET handled=? WHERE entry_id=?", (handled, entry_id,))
+                bot.db.execute("UPDATE temporary SET handled=? WHERE entry_id=?", (handled, entry_id,))
         await asyncio.sleep(1)
 
 
@@ -109,51 +97,47 @@ async def try_error_temps(bot: bot_data.Bot):
                         logger.log(bot.name, "temporaries", f"{time.time()} > Successfully sent the user {user} ({user.id}) the "
                                                             f"reminder for {expiry} ({entry_id}) (previously was an error)")
                     else:
-                        general.print_error(f"{time.time()} > User ID {user} not found! Skipping...")
+                        general.print_error(f"{time.time()} > Reminder ID {entry_id} - User ID {user} not found! Deleting...")
                         logger.log(bot.name, "temporaries", f"{time.time()} > Still could not find user for reminder for {expiry} with Entry ID {entry_id}! "
                                                             f"Deleting reminder...")
                 except Exception as e:
-                    general.print_error(f"{time.time()} > Reminder {entry_id} error: {e} | Deleting...")
-                    logger.log(bot.name, "temporaries", f"{time.time()} > Reminder {entry_id} error: {e} | Deleting...")
+                    general.print_error(f"{time.time()} > Reminder ID {entry_id} - Error: {e} | Deleting...")
+                    logger.log(bot.name, "temporaries", f"{time.time()} > Reminder ID {entry_id} - Error: {e} | Deleting reminder...")
             if entry["type"] == "mute":
                 guild: discord.Guild = bot.get_guild(entry["gid"])
                 if guild is None:
-                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Putting mute to error list...")
-                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Putting mute to error list...")
+                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Deleting...")
+                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Deleting...")
                 else:
                     _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
                     if not _data:
-                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Putting mute to error list...")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! "
-                                                            f"Putting mute to error list...")
+                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Deleting...")
+                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Deleting...")
                     else:
                         data = json.loads(_data["data"])
                         try:
                             mute_role_id = data["mute_role"]
                         except KeyError:
-                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Putting mute to error list...")
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! "
-                                                                f"Putting mute to error list...")
+                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Deleting...")
+                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Deleting...")
                         else:
                             mute_role = guild.get_role(mute_role_id)
                             if not mute_role:
-                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Putting mute to error list...")
-                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! "
-                                                                    f"Putting mute to error list...")
+                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Deleting...")
+                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Deleting...")
                             else:
                                 member: discord.Member = guild.get_member(entry["uid"])
                                 if not member:
-                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found! Putting mute to error list...")
-                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found! "
-                                                                        f"Putting mute to error list...")
+                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found! Deleting...")
+                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found! Deleting...")
                                 else:
                                     try:
-                                        await member.remove_roles(mute_role, reason=f"[Suager Temporary Mutes] Punishment expired")
+                                        await member.remove_roles(mute_role, reason=f"[Auto-Unmute] Punishment expired")
                                         logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
-                                                                            f"guild {guild} ({entry_id})")
+                                                                            f"guild {guild} ({entry_id}) (previously was an error)")
                                     except Exception as e:
-                                        general.print_error(f"{time.time()} > Mute {entry_id} error: {e}")
-                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute {entry_id} error: {e}")
+                                        general.print_error(f"{time.time()} > Mute ID {entry_id} - Error: {e}")
+                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute ID {entry_id} - Error: {e}")
             bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
 
 

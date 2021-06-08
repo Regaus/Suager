@@ -85,47 +85,6 @@ tables = [
         Column("birthday", 4, True),
         Column("has_role", 3, True)
     ]),
-    Table("custom_role", [
-        Column("uid", 0, True),
-        Column("rid", 0, True),
-        Column("gid", 0, True)
-    ]),
-    Table("settings", [
-        Column("gid", 0, True),
-        Column("data", 2, True)
-    ]),
-    Table("leveling", [
-        Column("uid", 0, True),
-        Column("gid", 0, True),
-        Column("level", 0, True),
-        Column("xp", 0, True),
-        Column("last", 1, True),
-        Column("last_sent", 1, False),
-        Column("name", 2, True),
-        Column("disc", 0, True),
-        Column("2021", 0, True),  # XP gained in 2021 - Counted from 02/01/2021 for CobbleBot, 21/05/2021 elsewhere
-        Column("2022", 0, True),  # XP gained in 2022 - Counted from 01/01/2022
-    ]),
-    Table("leveling2", [
-        Column("uid", 0, True),
-        Column("gid", 0, True),
-        Column("level", 0, True),
-        Column("xp", 0, True),
-        Column("last", 1, True),
-        Column("last_sent", 1, False),
-        Column("name", 2, True),
-        Column("disc", 0, True)
-    ]),
-    Table("custom_rank", [
-        Column("uid", 0, True),
-        Column("font", 0, True),
-        Column("progress", 0, True),
-        Column("background", 0, True)
-    ]),
-    Table("timezones", [
-        Column("uid", 0, True),
-        Column("tz", 2, True)
-    ]),
     Table("counters", [
         Column("uid1", 0, True),       # 00
         Column("uid2", 0, True),       # 01
@@ -148,6 +107,44 @@ tables = [
         Column("ff", 0, True),         # 18
         Column("r", 0, True),          # 19
     ]),
+    Table("custom_rank", [
+        Column("uid", 0, True),
+        Column("font", 0, True),
+        Column("progress", 0, True),
+        Column("background", 0, True)
+    ]),
+    Table("custom_role", [
+        Column("uid", 0, True),
+        Column("rid", 0, True),
+        Column("gid", 0, True)
+    ]),
+    Table("leveling", [
+        Column("uid", 0, True),
+        Column("gid", 0, True),
+        Column("level", 0, True),
+        Column("xp", 0, True),
+        Column("last", 1, True),
+        Column("last_sent", 1, False),
+        Column("name", 2, True),
+        Column("disc", 0, True),
+        Column("2021", 0, True),  # XP gained in 2021 - Counted from 02/01/2021 for CobbleBot, 21/05/2021 elsewhere
+        Column("2022", 0, True),  # XP gained in 2022 - Counted from 01/01/2022
+    ]),
+    Table("locales", [
+        Column("gid", 0, True),
+        Column("locale", 2, True)
+    ]),
+    Table("settings", [
+        Column("gid", 0, True),
+        Column("data", 2, True)
+    ]),
+    Table("starboard", [
+        Column("message", 0, True),       # Original message ID
+        Column("channel", 0, True),
+        Column("guild", 0, True),
+        Column("stars", 0, True),
+        Column("star_message", 0, False)  # Starboard message ID
+    ]),
     Table("tags", [
         Column("gid", 0, True),
         Column("creator", 0, True),
@@ -157,46 +154,6 @@ tables = [
         Column("created", 0, True),
         Column("edited", 0, True),
         Column("usage", 0, True)
-    ]),
-    Table("locales", [
-        Column("gid", 0, True),
-        Column("locale", 2, True)
-    ]),
-    Table("starboard", [
-        Column("message", 0, True),       # Original message ID
-        Column("channel", 0, True),
-        Column("guild", 0, True),
-        Column("stars", 0, True),
-        Column("star_message", 0, False)  # Starboard message ID
-    ]),
-    Table("temporary", [
-        Column("uid", 0, True),       # User ID
-        Column("type", 2, True),      # "mute" or "reminder"
-        Column("expiry", 4, True),    # When the action is due
-        Column("gid", 0, False),      # Guild ID if it's a mute
-        Column("message", 2, False),  # Message if it's a reminder
-        Column("entry_id", 0, True),  # Random ID to later find this entry in the database
-        Column("handled", 0, True),   # Whether the entry has been handled upon expiry
-    ]),
-    Table("tbl_player", [
-        Column("uid", 0, True),                 # 01 - User ID
-        Column("name", 2, True),                # 02 - Username
-        Column("disc", 0, True),                # 03 - Discriminator
-        Column("araksat", 1, True),             # 04 - Player's Araksat balance
-        Column("coins", 0, True),               # 05 - Player's Coins
-        Column("level", 0, True),               # 06 - Normal Level
-        Column("xp", 1, True),                  # 07
-        Column("shaman_level", 0, True),        # 08
-        Column("shaman_xp", 1, True),           # 09
-        Column("shaman_feathers", 0, True),     # 10 - Shaman Feathers for upgrading capabilities
-        Column("shaman_probability", 0, True),  # 11 - Probability of being Shaman (default: 0.08 (8%), 0.5% per boost, max 40%) //  64 SF
-        Column("shaman_xp_boost", 0, True),     # 12 - Shaman XP gain boost (2% per boost, max 150%)                             //  75 SF
-        Column("shaman_save_boost", 0, True),   # 13 - Shaman Saves boost (1% per boost, max 100%)                               // 100 SF
-        Column("league_points", 0, True),       # 14
-        Column("energy", 1, True),              # 15 - Current energy
-        Column("energy_time", 1, True),         # 16 - When to start energy regen
-        Column("clan", 0, False),               # 17 - Clan ID player's a part of
-        Column("max_points", 0, True),          # 18 - Highest ever league points
     ]),
     Table("tbl_clan", [
         Column("clan_id", 0, True),
@@ -229,5 +186,38 @@ tables = [
         Column("clan", 0, True),
         Column("type", 0, True),
         Column("id", 0, True)     # Invite ID
-    ])
+    ]),
+    Table("tbl_player", [
+        Column("uid", 0, True),                 # 01 - User ID
+        Column("name", 2, True),                # 02 - Username
+        Column("disc", 0, True),                # 03 - Discriminator
+        Column("araksat", 1, True),             # 04 - Player's Araksat balance
+        Column("coins", 0, True),               # 05 - Player's Coins
+        Column("level", 0, True),               # 06 - Normal Level
+        Column("xp", 1, True),                  # 07
+        Column("shaman_level", 0, True),        # 08
+        Column("shaman_xp", 1, True),           # 09
+        Column("shaman_feathers", 0, True),     # 10 - Shaman Feathers for upgrading capabilities
+        Column("shaman_probability", 0, True),  # 11 - Probability of being Shaman (default: 0.08 (8%), 0.5% per boost, max 40%) //  64 SF
+        Column("shaman_xp_boost", 0, True),     # 12 - Shaman XP gain boost (2% per boost, max 150%)                             //  75 SF
+        Column("shaman_save_boost", 0, True),   # 13 - Shaman Saves boost (1% per boost, max 100%)                               // 100 SF
+        Column("league_points", 0, True),       # 14
+        Column("energy", 1, True),              # 15 - Current energy
+        Column("energy_time", 1, True),         # 16 - When to start energy regen
+        Column("clan", 0, False),               # 17 - Clan ID player's a part of
+        Column("max_points", 0, True),          # 18 - Highest ever league points
+    ]),
+    Table("temporary", [
+        Column("uid", 0, True),       # User ID
+        Column("type", 2, True),      # "mute" or "reminder"
+        Column("expiry", 4, True),    # When the action is due
+        Column("gid", 0, False),      # Guild ID if it's a mute
+        Column("message", 2, False),  # Message if it's a reminder
+        Column("entry_id", 0, True),  # Random ID to later find this entry in the database
+        Column("handled", 0, True),   # Whether the entry has been handled upon expiry
+    ]),
+    Table("timezones", [
+        Column("uid", 0, True),
+        Column("tz", 2, True)
+    ]),
 ]

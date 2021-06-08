@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import conworlds
+from cobble.utils import conlangs, conworlds
 from core.utils import arg_parser, emotes, general, time
 from languages import langs
 
@@ -356,8 +356,8 @@ class Conworlds(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def time78(self, ctx: commands.Context, ss: str, _date: str = None, _time: str = None):
         """ Times for GA-78
-        Date format: YYYY-MM-DD
-        Time format: hh:mm or hh:mm:ss (24-hour)"""
+        Date format: `YYYY-MM-DD`
+        Time format: `hh:mm` or `hh:mm:ss` (24-hour)"""
         if not ss.isnumeric():
             try:
                 return await general.send(conworlds.Place(ss).time_info(), ctx.channel)
@@ -379,7 +379,7 @@ class Conworlds(commands.Cog):
                         _time = f"{_time}:00"
                 dt = time.from_ts(time.get_ts(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")), None)
             except ValueError:
-                return await general.send("Failed to convert date. Make sure it is in the format YYYY-MM-DD hh:mm:ss (time part optional)", ctx.channel)
+                return await general.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)", ctx.channel)
         time_earth = langs.gts(dt, "en", True, False, True, True, False)
         output = f"Time on this Earth (English): **{time_earth}**"
         if ss == 23:
@@ -463,26 +463,32 @@ class Conworlds(commands.Cog):
     @commands.command(name="nlc")
     @commands.is_owner()
     async def ne_world_ll_calc(self, ctx: commands.Context, x: int, z: int, border: int = 100000):
-        """ Calculate latitude, local offset of position - NEWorld """
+        """ Calculate latitude and local offset of position """
         lat = -z / border * 90  # Latitude value
         long = x / border * 180
-        tzl = 48 / 180
-        tz = round(long / tzl)
-        tzo = tz / tzl - long  # Local Offset
-        return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLocal Offset: {tzo:.3f}", ctx.channel)
+        # tzl = 48 / 180
+        # tz = round(long / tzl)
+        tz = round(long / (360 / 24))
+        tzo = (tz * (360 / 24) - long) * -1  # Local Offset
+        return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLongitude: {long:.3f} | Local Offset: {tzo:.3f}", ctx.channel)
 
     @commands.command("rslt")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
         if not (1 <= s <= 8700):
-            return await general.send("De dejava idou, no mu maikal ir te edoa kihtemal. ", ctx.channel)
+            return await general.send("De dejava edea, no maikal, ir te ean kihterasva.", ctx.channel)
         shift = s * 128
-        code = rsl_number(s)
+        _code = "--code" in t
+        code = ""
+        # code = rsl_number(s)
+        if _code:
+            code = conlangs.rsl_number(s, 10, "rsl-1i")
+            t = t.replace(" --code", "").replace("--code ", "")
         try:
             text = "".join([chr(ord(letter) + shift) for letter in t])
         except ValueError:
-            return await general.send(f"Sil valse, alteknaar ka uvaar kuarhaavar qeraduar", ctx.channel)
+            return await general.send(f"Si valse, alteknaar ka un kudalsan kihteran", ctx.channel)
         return await general.send(f"{code} {text}", ctx.channel)
 
     @commands.command("rslf")
@@ -490,7 +496,7 @@ class Conworlds(commands.Cog):
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
         if not (1 <= s <= 8700):
-            return await general.send("De dejava idou, no mu maikal ir te edoa kihtemal", ctx.channel)
+            return await general.send("De dejava edea, no maikal, ir te ean kihterasva.", ctx.channel)
         shift = s * 128
         text = ""
         for letter in t:

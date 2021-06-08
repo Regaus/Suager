@@ -226,3 +226,6 @@
 ## v1.1.18 - 7 June 2021
 - Moved the centre of Kargadia to Sertangar
 - Added TBL locations to the map of Kargadia and made its locations available
+
+## v1.1.19 - 8 June 2021
+- Updated RSL encode and decode commands

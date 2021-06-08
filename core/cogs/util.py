@@ -724,52 +724,115 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def remind_me(self, ctx: commands.Context, duration: str, *, reminder: str):
-        """ Set yourself a reminder. """
+        """ Set yourself a reminder.
+
+        Example: //remind 2d12h Insert something interesting here"""
+        locale = langs.gl(ctx)
         delta = time.interpret_time(duration)
         if time.rd_is_above_5y(delta):
-            return await general.send("You can't specify a time range above 5 years.", ctx.channel)
+            return await general.send(langs.gls("util_reminders_limit", locale), ctx.channel)
+            # return await general.send("You can't specify a time range above 5 years.", ctx.channel)
         expiry, error = time.add_time(delta)
         if error:
-            return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
-        diff = langs.td_rd(delta, "en", accuracy=7, brief=False, suffix=True)
-        when = langs.gts(expiry, "en", True, True, False, True, False)
+            return await general.send(langs.gls("util_reminders_error", locale), ctx.channel)
+            # return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
+        diff = langs.td_rd(delta, locale, accuracy=7, brief=False, suffix=True)
+        when = langs.gts(expiry, locale, True, True, False, True, False)
         random_id = general.random_id()
         while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
             random_id = general.random_id()
         self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False))
-        return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
+        return await general.send(langs.gls("util_reminders_success", locale, ctx.author.name, diff, when), ctx.channel)
+        # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
-    @commands.command(name="reminders")
+    @commands.group(name="reminders")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def reminders(self, ctx: commands.Context):
-        """ See a list of your currently active reminders """
-        reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' ORDER BY expiry", (ctx.author.id,))
-        if not reminders:
-            return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
-        output = f"**{ctx.author}**, here is the list of your currently active reminders"
-        outputs = []
-        _reminder = 0
-        for reminder in reminders:
-            _reminder += 1
-            expiry = reminder["expiry"]
-            expires_on = langs.gts(expiry, "en", True, True, False, True, False)
-            expires_in = langs.td_dt(expiry, "en", accuracy=3, brief=False, suffix=True)
-            outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
-        output2 = "\n\n".join(outputs)
-        try:
-            try:  # Try to tell the user to check DMs
-                if permissions.can_react(ctx):
-                    await ctx.message.add_reaction(chr(0x2709))
+        """ See a list of your currently active reminders, and modify them """
+        if ctx.invoked_subcommand is None:
+            locale = langs.gl(ctx)
+            reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' ORDER BY expiry", (ctx.author.id,))
+            if not reminders:
+                return await general.send(langs.gls("util_reminders_none", locale, ctx.author.name), ctx.channel)
+                # return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
+            output = langs.gls("util_reminders_list", locale, ctx.author)
+            # output = f"**{ctx.author}**, here is the list of your currently active reminders"
+            outputs = []
+            _reminder = 0
+            for reminder in reminders:
+                _reminder += 1
+                expiry = reminder["expiry"]
+                expires_on = langs.gts(expiry, locale, True, True, False, True, False)
+                expires_in = langs.td_dt(expiry, locale, accuracy=3, brief=False, suffix=True)
+                outputs.append(langs.gls("util_reminders_item", locale, _reminder, reminder["message"], reminder["entry_id"], expires_on, expires_in))
+                # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
+            output2 = "\n\n".join(outputs)
+            try:
+                try:  # Try to tell the user to check DMs
+                    if permissions.can_react(ctx):
+                        await ctx.message.add_reaction(chr(0x2709))
+                except discord.Forbidden:
+                    pass
+                if len(output2) > 1900:
+                    _data = BytesIO(str(output2).encode('utf-8'))
+                    return await ctx.author.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+                else:
+                    return await ctx.author.send(f"{output}\n\n{output2}")
             except discord.Forbidden:
-                pass
-            if len(output2) > 1900:
-                _data = BytesIO(str(output2).encode('utf-8'))
-                return await ctx.author.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+                return await general.send(langs.gls("util_reminders_dms", locale), ctx.channel)
+                # return await general.send("You need to have your DMs open for me to be able to send you the list of your reminders.", ctx.channel)
+
+    @reminders.command(name="edit")
+    async def reminders_edit(self, ctx: commands.Context, reminder_id: int, *, args: str):
+        """ Edit a reminder
+        -m/--message/--text: Edit the reminder's text
+        -t/--time/--expiry: Edit when you want to be reminded (Format: `YYYY-MM-DD hh:mm:ss`)
+        Time part optional, and may be just `hh:mm`. Time must be in 24-hour format.
+
+        Example: //reminders edit 1048576 --time 2021-06-08 17:00:00 --message Insert something interesting here"""
+        locale = langs.gl(ctx)
+        reminder = self.bot.db.fetchrow("SELECT * FROM temporary WHERE entry_id=? AND uid=? AND type='reminder'", (reminder_id, ctx.author.id))
+        if not reminder:
+            return await general.send(langs.gls("util_reminders_edit_none", locale, reminder_id), ctx.channel)
+        parser = arg_parser.Arguments()
+        parser.add_argument('-m', '--message', '--text', nargs="+")
+        parser.add_argument('-t', '--time', '--expiry', nargs="+")
+        args, valid_check = parser.parse_args(args)
+        if not valid_check:
+            return await general.send(args, ctx.channel)
+        message = args.message
+        _message = " ".join(message) if message else reminder["message"]
+        _expiry = reminder["expiry"]
+        if args.time is not None:
+            _datetime = args.time
+            if len(_datetime) == 1:
+                _date, _time = _datetime[0], "00:00:00"
+            elif len(_datetime) == 2:
+                _date, _time = _datetime
+                _time = _time.replace(".", ":")
+                c = _time.count(":")
+                if c == 1:
+                    _time = f"{_time}:00"
             else:
-                return await ctx.author.send(f"{output}\n{output2}")
-        except discord.Forbidden:
-            return await general.send("You need to have your DMs open for me to be able to send you the list of your reminders.", ctx.channel)
+                return await general.send(langs.gls("util_reminders_edit_time2", locale), ctx.channel)
+            try:
+                _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                return await general.send(langs.gls("util_reminders_edit_time", locale), ctx.channel)
+        expiry = langs.gts(_expiry, locale, True, True, False, True, False)
+        self.bot.db.execute("UPDATE temporary SET message=?, expiry=? WHERE entry_id=?", (_message, _expiry, reminder_id))
+        return await general.send(langs.gls("util_reminders_edit", locale, reminder_id, _message, expiry), ctx.channel)
+
+    @reminders.command(name="delete", aliases=["remove", "cancel"])
+    async def reminders_delete(self, ctx: commands.Context, reminder_id: int):
+        """ Delete a reminder """
+        locale = langs.gl(ctx)
+        reminder = self.bot.db.fetchrow("SELECT * FROM temporary WHERE entry_id=? AND uid=? AND type='reminder'", (reminder_id, ctx.author.id))
+        if not reminder:
+            return await general.send(langs.gls("util_reminders_edit_none", locale, reminder_id), ctx.channel)
+        self.bot.db.execute("DELETE FROM temporary WHERE entry_id=? AND uid=?", (reminder_id, ctx.author.id))
+        return await general.send(langs.gls("util_reminders_delete", locale, reminder_id), ctx.channel)
 
 
 def setup(bot):

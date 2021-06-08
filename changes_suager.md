@@ -784,3 +784,9 @@
 ## v7.2.27 - 1 June 2021
 - Reminders and mutes now use a 7-digit ID
 - Reminders now indicate usage of UTC
+
+## v7.2.28 - 8 June 2021
+- Alphabetically sorted table names in database.py
+- Made reminders translatable
+- Added ability to edit and delete reminders
+- Made temporaries handling cleaner and more efficient
