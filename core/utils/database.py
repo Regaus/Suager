@@ -140,9 +140,10 @@ tables = [
     ]),
     Table("starboard", [
         Column("message", 0, True),       # Original message ID
-        Column("channel", 0, True),
-        Column("guild", 0, True),
-        Column("stars", 0, True),
+        Column("channel", 0, True),       # Original message's channel ID
+        Column("author", 0, True),        # Original message's author's user ID
+        Column("guild", 0, True),         # Original message's guild ID
+        Column("stars", 0, True),         # Star count
         Column("star_message", 0, False)  # Starboard message ID
     ]),
     Table("tags", [

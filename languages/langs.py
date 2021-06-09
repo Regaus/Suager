@@ -31,15 +31,21 @@ def gl(ctx):
 
 def gbs(value: int, locale: str = "en", precision: int = 2) -> str:  # Get Byte String
     """ Gets Byte value name (for dlram) """
-    names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
-    step = 1024
     if locale in ["rsl-1d", "rsl-1e"]:
         value //= 2
         names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1d" else \
             ["V", "KV", "UV", "DV", "TV", "SeV", "PV", "SnV", "EV", "OV", "ZV"]
         step = 4096
-    if locale == "ru":
+    elif locale in ["rsl-1k", "rsk-1i"]:
+        value //= 2
+        names = ["V", "MV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV", "ZV"]
+        step = 65536
+    elif locale == "ru":
         names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
+        step = 1024
+    else:
+        names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+        step = 1024
     range_val = len(names)
     for i in range(range_val):
         req = step ** (i + 1)
@@ -109,7 +115,7 @@ def plural(v: Union[int, float], what: str, locale: str = "en", float_pre: int =
         name = name_pl if int(p2) <= v2 <= int(p2) * 2 or (v3 >= int(p1) or v3 == 0) else name_2 if v3 != 1 else name_1
     else:
         name_1, name_2 = get_data(what, locale)
-        cond = (v % 100) == 1 if locale == "rsl-1e" else v == 1
+        cond = (v % 100) == 1 if locale in ["rsl-1e"] else v == 1
         name = name_1 if cond else name_2
     reverse = []
     return f"{name} {gfs(v, locale, float_pre)}" if locale in reverse else f"{gfs(v, locale, float_pre)} {name}"
@@ -117,7 +123,7 @@ def plural(v: Union[int, float], what: str, locale: str = "en", float_pre: int =
 
 def join(seq, joiner: str = ', ', final: str = 'and'):
     size = len(seq)
-    return '' if size == 0 else seq[0] if size == 1 else f"{seq[0]} {final} {seq[1]}" if size == 2 else joiner.join(seq[:-1]) + f" {final} {seq[-1]}"
+    return '' if size == 0 else seq[0] if size == 1 else f"{seq[0]} {final} {seq[1]}" if size == 2 else f"{joiner.join(seq[:-1])} {final} {seq[-1]}"
 
 
 def td_dt(dt: datetime, locale: str = "en", source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:

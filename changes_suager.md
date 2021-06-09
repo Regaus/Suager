@@ -389,7 +389,6 @@
 - TBL location now automatically updates on levelup
 - TBL now has a small chance to boost your rewards
 - Fixed TBL stats next shaman level XP requirement output
-- Added chocolatt to the Blacklist
 - Removed meme command
 
 ## v6.1.11.1 - 21 September 2020
@@ -790,3 +789,10 @@
 - Made reminders translatable
 - Added ability to edit and delete reminders
 - Made temporaries handling cleaner and more efficient
+
+## v7.2.29 - 9 June 2021
+- Removed Suager v6 systems from level history, leaving only v6.1.6
+- Merged leaderboards with leveling
+- Translated reminders into Russian and RSL-1e
+- Made starboard track message authors
+- Made starboard automatically delete all starboard entries that have zero stars

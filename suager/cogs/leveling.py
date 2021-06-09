@@ -10,6 +10,7 @@ from core.utils import emotes, general, http, time
 from languages import langs
 from suager.cogs.birthdays import Ctx
 from suager.utils import settings
+from suager.utils.leaderboards import leaderboard, leaderboard2
 
 
 async def catch_colour(ctx: commands.Context, c: int):
@@ -57,15 +58,12 @@ def _levels():
 
 
 def _level_history():
-    keys = ["v3", "v4", "v5", "v6_beta4", "v6_beta12", "v615", "v616", "v7"]
+    keys = ["v3", "v4", "v5", "v6", "v7"]
     req = {}
     xp = {}
     for key in keys:
         req[key] = 0
         xp[key] = []
-    req["v6_beta4"] = 150
-    req["v6_beta12"] = 250
-    # 25000
     for x in range(max_level):
         v3 = x ** 2 + x * 75 + 200
         req["v3"] += v3
@@ -73,18 +71,10 @@ def _level_history():
         req["v4"] += v4
         v5 = 1.25 * x ** 3 + 50 * x ** 2 + 15000 * x + 15000
         req["v5"] += v5 / 100
-        power_6b = 2 + x / 40 if x < 70 else 3.75 - (x - 70) / 200 if x < 220 else 3
-        v6b = x ** power_6b + 125 * x ** (1 + x / 5 if x < 5 else 2) + 7500 * x
-        req["v6_beta4"] += v6b / 100
-        v6b12 = x ** power_6b + 200 * x ** 2 + 7500 * x + 25000
-        req["v6_beta12"] += v6b12 / 100
-        power_61 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 110 else 3 - (x - 110) / 180 if x < 200 else 2.5
-        v615 = x ** power_61 + 200 * x ** 2 + 7500 * x + 25000
-        req["v615"] += v615 / 100
-        power_616 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
-        multiplier_616 = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
-        v616 = x ** power_616 + multiplier_616 * x ** 2 + 7500 * x + 25000
-        req["v616"] += v616 / 100
+        power_6 = 2 + x / 40 if x < 60 else 3.5 - (x - 60) / 100 if x < 160 else 2.5 - (x - 160) / 400 if x < 360 else 2
+        multiplier_6 = 200 if x < 100 else (200 - (x - 100) / 2.5) if x < 400 else 80 - (x - 400) / 4 if x < 500 else 55
+        v6 = x ** power_6 + multiplier_6 * x ** 2 + 7500 * x + 25000
+        req["v6"] += v6 / 100
         v7 = x ** 2 + 99 * x + 175
         req["v7"] += v7
         if x not in bad:
@@ -126,20 +116,19 @@ class Leveling(commands.Cog):
         output = "\n".join(outputs)
         return await general.send(f"```fix\n{output}```", ctx.channel)
 
-    @commands.command(name="oldlevels")
+    @commands.command(name="oldlevels", aliases=["levelhistory"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def old_levels(self, ctx: commands.Context, level: int = None):
-        """ See previous Suager leveling systems """
-        names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6_beta4": "Suager v6-beta4", "v6_beta12": "Suager v6-beta12",
-                 "v615": "Suager v6.1.5", "v616": "Suager v6.1.6", "v7": "Suager v7"}
+        """ See Suager's previous leveling systems """
+        names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6": "Suager v6", "v7": "Suager v7"}
         if level is not None:
             if level > max_level:
                 return await general.send(f"The max level is {max_level:,}", ctx.channel)
             output = ""
             for key, name in names.items():
-                output += f"\n`{name:<16} -> {level_history[key][level - 1]:>10,.0f} XP`"
-            return await general.send(f"{ctx.author.name}, for **level {level}**:{output}", ctx.channel)
+                output += f"\n`{name:<9} -> {level_history[key][level - 1]:>9,.0f} XP`"
+            return await general.send(f"{ctx.author.name}, for **level {level}** you would've needed:{output}", ctx.channel)
         else:
             xp_ = self.bot.db.fetchrow(f"SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             xp = xp_["xp"] if xp_ else 0
@@ -151,7 +140,7 @@ class Leveling(commands.Cog):
                         level += 1
                     else:
                         break
-                output += f"\n`{name:<16} -> Level {level:>3}`"
+                output += f"\n`{name:<9} -> Level {level:>3}`"
             return await general.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you would have been on "
                                       f"in the older leveling systems:{output}", ctx.channel)
 
@@ -325,7 +314,7 @@ class Leveling(commands.Cog):
     @commands.guild_only()
     @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
     async def rewards(self, ctx: commands.Context):
-        """ Rewards """
+        """ Level rewards in a server """
         locale = langs.gl(ctx)
         _settings = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
@@ -579,7 +568,7 @@ class Leveling(commands.Cog):
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
-        """ Check your or someone's rank """
+        """ Check your or someone's global XP """
         locale = langs.gl(ctx)
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
@@ -617,7 +606,7 @@ class Leveling(commands.Cog):
     @commands.check(lambda ctx: ctx.author.id not in custom_rank_blacklist)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
-        """ Customise your rank """
+        """ Customise your rank card """
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
@@ -759,6 +748,31 @@ class Leveling(commands.Cog):
             error = "Never"
             t1, t2 = [error, error]
         return await general.send(langs.gls("leveling_next_level", locale, ctx.author.name, r1, r2, r3, r5, r4, t1, t2), ctx.channel)
+
+    @commands.command(name="levels", aliases=["ranks", "lb"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def levels_lb(self, ctx: commands.Context, top: str = ""):
+        """ Server's XP Leaderboard """
+        locale = langs.gl(ctx)
+        return await leaderboard(self, ctx, f"SELECT * FROM leveling WHERE gid=? ORDER BY xp DESC", (ctx.guild.id,),
+                                 top, "leaderboards_levels", locale, "xp", ctx.guild.name)
+
+    @commands.command(name="levelsyear", aliases=["ranksyear", "levelsy", "ylevels", "lby", "levels3"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def levels_lb_yearly(self, ctx: commands.Context, year: int = _year, top: str = ""):
+        """ Server's Yearly XP Leaderboard """
+        locale = langs.gl(ctx)
+        return await leaderboard(self, ctx, f"SELECT * FROM leveling WHERE gid=? AND \"{year}\"!=0 ORDER BY \"{year}\" DESC", (ctx.guild.id,),
+                                 top, "leaderboards_levels_yearly", locale, str(year), ctx.guild.name)
+
+    @commands.command(name="levelsglobal", aliases=["levelsg", "glevels"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def global_levels(self, ctx: commands.Context, top: str = ""):
+        """ Global XP Leaderboard """
+        locale = langs.gl(ctx)
+        return await leaderboard2(self, ctx, f"SELECT * FROM leveling", (), top, "leaderboards_levels_global", locale, "xp")
 
 
 def setup(bot):

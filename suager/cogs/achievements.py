@@ -6,9 +6,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from cobble.utils import tbl
 from core.utils import emotes, general
-
-# achievement_colours = ["808080", "ffffff", "ff0000", "ff4000", "ff8000", "ffff00", "80ff00", "32ff32", "00ff80", "00ffff", "ff00ff", "ff00a0", "ff0057"]
 from languages import langs
+
 
 achievement_colours = [
     (96, 96, 96),     # Tier -0
@@ -28,41 +27,7 @@ achievement_colours = [
     (255, 0, 160),    # Tier 11/14
     (255, 0, 87)      # Tier 12/15
 ]
-tbl_level_ah = [
-    "Reach the Mountains of Snow",
-    "Reach the Swamp",
-    "Reach Squirrels City",
-    "Reach the Valleys of the Sun",
-    "Reach the Blue Sea",
-    "Reach the Great Squirrel Desert",
-    "Reach the Wild Lands",
-    "Reach the Stormy Plains",
-    "Reach the Hills of Challenges",
-    "Reach the Forest",
-    "Reach the Anomalous Zone",
-    "Reach the Dark Cave",
-    "Reach the Shadow Volcano",
-    "Reach the Sunken Ship",
-    "Reach the Southern Ice",
-    "Reach the Land of the Dead",
-    "Reach the Ship of Salvation",
-    "Highest achievement tier reached!"
-]
-tbl_league_ah = [
-    "Reach the Wooden League",
-    "Reach the Stone League",
-    "Reach the Copper League",
-    "Reach the Tin League",
-    "Reach the Bronze League",
-    "Reach the Iron League",
-    "Reach the Silver League",
-    "Reach the Gold League",
-    "Reach the Platinum League",
-    "Reach the Ruby League",
-    "Reach the Emerald League",
-    "Reach the Sapphire League",
-    "Reach the Diamond League"
-]
+# achievement_colours = ["808080", "ffffff", "ff0000", "ff4000", "ff8000", "ffff00", "80ff00", "32ff32", "00ff80", "00ffff", "ff00ff", "ff00a0", "ff0057"]
 
 
 class Achievements(commands.Cog):

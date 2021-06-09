@@ -21,6 +21,7 @@ class Starboard(commands.Cog):
             discord.RawMessageDeleteEvent: 4
         }.get(type(payload))
         increase = (1 if payload.event_type == "REACTION_ADD" else -1 if payload.event_type == "REACTION_REMOVE" else 0) if _type == 1 else 0
+        self.bot.db.execute("DELETE FROM starboard WHERE stars=0")
         # print(f"DEBUG: {_type=}, {increase=}")
         if _type in [1, 3]:
             emoji = payload.emoji
@@ -59,6 +60,8 @@ class Starboard(commands.Cog):
             _author = _message.author.id
             if user == _author:
                 return  # You shouldn't star your own messages
+        else:
+            _author = 0
         # adder = payload.user_id
         data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=?", (message,))
         new = not data
@@ -69,7 +72,7 @@ class Starboard(commands.Cog):
         else:
             minimum = __settings["starboard"]["minimum"]
         if new:
-            self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?)", (message, channel, server, stars, None))
+            self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None))
         elif _type == 4:
             self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))  # The message has been deleted, so also remove it from the database.
             logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {message} has been deleted.")

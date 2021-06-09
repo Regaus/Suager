@@ -4,7 +4,6 @@
       "name": "Suager",
       "internal_name": "suager",
       "token": "token",
-      "admins": [],
       "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:762336598645407785>",
       "prefixes": [
         "s/",
@@ -14,8 +13,6 @@
       "timezone": "Europe/Dublin",
       "exclude_core_cogs": [],
       "shared": {},
-      "home_server_id": 738425418637639775,
-      "home_invite": "",
       "error_channel": 738442483591151638,
       "default_locale": "en"
     },
@@ -23,7 +20,6 @@
       "name": "CobbleBot",
       "internal_name": "cobble",
       "token": "token",
-      "admins": [],
       "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:762336598645407785>",
       "prefixes": [
         "c.",
@@ -35,12 +31,9 @@
       "shared": {
         "suager": [
           "achievements",
-          "leaderboards",
           "leveling"
         ]
       },
-      "home_server_id": 738425418637639775,
-      "home_invite": "",
       "error_channel": 738442483591151638,
       "default_locale": "rsl-1i"
     }
