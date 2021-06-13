@@ -229,3 +229,7 @@
 
 ## v1.1.19 - 8 June 2021
 - Updated RSL encode and decode commands
+
+## v1.1.20 - 13 June 2021
+- Updated Zeivela and Kargadia year lengths
+- Improved the script for calculation of solar calendars for ga78

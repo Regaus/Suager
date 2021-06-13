@@ -71,7 +71,7 @@ class Starboard(commands.Cog):
             minimum = 3
         else:
             minimum = __settings["starboard"]["minimum"]
-        if new:
+        if new and stars != 0:
             self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None))
         elif _type == 4:
             self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))  # The message has been deleted, so also remove it from the database.
@@ -156,33 +156,53 @@ class Starboard(commands.Cog):
         """ Message was deleted """
         return await self.starboard_update(payload)
 
+    def find_user(self, user_id: int):
+        user = self.bot.get_user(user_id)
+        return user if user is not None else f"Unknown user {user_id}"
+
     @commands.command(name="stars", aliases=["starboard"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def star_data(self, ctx: commands.Context):
-        """ Starboard stats for the server """
-        async with ctx.typing():
+    async def star_data(self, ctx: commands.Context, user: discord.User = None):
+        """ Starboard stats for the server or a specific user """
+        if user is None:
             embed = discord.Embed(colour=general.random_colour())
             self.bot.db.execute("DELETE FROM starboard WHERE stars=0")
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? ORDER BY stars DESC", (ctx.guild.id,))
             stars = 0
+            authors = {}
             top = []
             for i, message in enumerate(data):
                 # message = data[i]
-                if i < 10:
+                if i < 5:
                     top.append(message)
                 stars += message["stars"]
+                if message["author"] in authors:
+                    authors[message["author"]] += message["stars"]
+                else:
+                    authors[message["author"]] = message["stars"]
+            authors_sorted = dict(sorted(authors.items(), key=lambda x: x[1]))
             embed.title = f"Starboard stats for {ctx.guild.name}"
-            embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
+            embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
+            top_messages = ""
+            authors_out = ""
             # Top Starred Posts
-            for i, _message in enumerate(top):
+            for i, _message in enumerate(top, start=1):
                 # [<stars> by <author>](link)
-                try:
-                    message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
-                    embed.description += f"\n{i + 1}) [⭐ {_message['stars']} by {message.author}]({message.jump_url})"
-                except (discord.NotFound, AttributeError):
-                    embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
-            # embed.add_field(name="Top starred messages", value="\n".join(outputs), inline=False)
+                # try:
+                #     message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
+                jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
+                top_messages += f"\n{i}) ⭐ {_message['stars']} - Message by [{self.find_user(_message['author'])}]({jump_url})"
+                # except (discord.NotFound, AttributeError):
+                #     embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
+            for i, _data in enumerate(authors_sorted.items(), start=1):
+                if i <= 5:
+                    _uid, _stars = _data
+                    authors_out += f"\n{i}) ⭐ {_stars} - <@{_uid}>"
+            if top_messages:
+                embed.add_field(name="Top starred messages", value=top_messages, inline=False)
+            if authors_out:
+                embed.add_field(name="Top message authors", value=authors_out, inline=False)
             return await general.send(None, ctx.channel, embed=embed)
 
 

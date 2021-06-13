@@ -9,7 +9,7 @@ from numpy.random import Generator, PCG64
 from core.utils import general, time
 
 
-def solar_normal(now: datetime, start: datetime, day_length: float, days_nl: int, days_leap: int, ly_freq, months: list[int], leap_month: int, tz: float = 0):
+def solar_normal(now: datetime, start: datetime, day_length: float, year_len: int, ly_freq, months: list[int], leap_month: int, tz: float = 0):
     """ Calculate the time somewhere else """
     # hours, minutes and seconds settings removed since it now uses 24:60:60 anyways
     # ly_freq is a lambda/function that would calculate the logic behind leap years (since some are more complex than a single if-statement)
@@ -23,7 +23,7 @@ def solar_normal(now: datetime, start: datetime, day_length: float, days_nl: int
     m, s = divmod(ms, 60)
     days_overall = days_left = int(days)
     while True:
-        year_length = days_leap if ly_freq(year) else days_nl
+        year_length = year_len + ly_freq(year)
         if days_left >= year_length:
             year += 1
             days_left -= year_length
@@ -32,9 +32,9 @@ def solar_normal(now: datetime, start: datetime, day_length: float, days_nl: int
     day = days_left
     month = 1
     leap = ly_freq(year)
-    extra = days_leap - days_nl
-    if leap:
-        months[leap_month - 1] += extra
+    # extra = days_leap - days_nl
+    if leap != 0:
+        months[leap_month - 1] += leap
     for length in months:
         if day >= length:
             day -= length
@@ -47,10 +47,20 @@ def solar_normal(now: datetime, start: datetime, day_length: float, days_nl: int
 def time_zeivela(when: datetime = None, tz: float = 0):  # 23.4
     irl = when or time.now(None)
     start = datetime(60, 12, 5, 3, 40, tzinfo=timezone.utc)
-    day_length = 10.0445856 * 3600  # New reduced day lengths while preserving local year length - 28/05/2021
-    # day_length = 27.12176253 * 3600
+    day_length = 20.4685576923076 * 3600
     month_lengths = [36] * 12
-    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 432, 433, lambda y: y % 3 == 0, month_lengths, 1, tz)
+    # TODO: Update something to do with these months while RLC-2 and RLC-3 still don't exist
+
+    def leap_calc(y: int):
+        if y % 5 == 0:
+            if y % 20 == 0:
+                if y % 100 == 0:
+                    return 1
+                return 0
+            return 1
+        return 0
+
+    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 212, leap_calc, month_lengths, 1, tz)
     weekdays = ["Vantakku", "Vantallu", "Hennettu", "Kaiva", "Leiva", "Kahkatu"]
     months = ["Vinhirus", "Kavderus", "Tinnerus", "Hednerus", "Hainerus", "Katterus",
               "Neiteverus", "Zeivellus", "Pentallus", "Tebarrus", "Faitualus", "Kaggarus"]
@@ -65,17 +75,11 @@ def time_zeivela(when: datetime = None, tz: float = 0):  # 23.4
 def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"):  # 23.5
     irl = when or time.now(None)
     start = datetime(276, 12, 26, 22, 30, tzinfo=timezone.utc)
-    day_length = 13.8876831 * 3600
-    # day_length = 37.49865756 * 3600
-    month_lengths = [32] * 16
-    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 512, 513, lambda y: y % 8 == 0, month_lengths, 1, tz)
-    # weekdays = [f"{wd}{parts[part]}" for wd in weekdays_sub]
+    day_length = 27.7753663234561 * 3600
+    month_lengths = [16] * 16
+    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 256, lambda y: 1 if y % 16 == 0 else 0, month_lengths, 1, tz)
     weekdays, months = [f"{language} not available"] * 8, [f"{language} not available"] * 16
-    if language == "rsl-1d":
-        weekdays = ["Senka", "Navai", "Sanva", "Havlei", "Teine", "Kannai", "Sua", "Shira"]
-        months = ["Senkannaran", "Shirannaran", "Kanvamaran", "Arhanmaran", "Nurinnaran", "Aijamaran", "Kionnaran", "Gairannaran",
-                  "Bassemaran", "Finkannaran", "Suvannaran", "Kittannaran", "Semarmaran", "Haltannaran", "Kaivynnaran", "Kärasmaran"]
-    elif language == "rsl-1k":
+    if language == "rsl-1k":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
         months = ["Senkavan", "Shiravan", "Nuuvan", "Kaivuan", "Antuvan", "Vainaran", "Kiitavan", "Hartuvan",
                   "Raavan", "Nummavan", "Vitteran", "Vaikivan", "Kaivyan", "Kaaratan", "Kallüvan", "Suvakän"]
@@ -84,6 +88,7 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
         months = ["Senkaan", "Shiraan", "Nuuan", "Kaivuan", "Antuan", "Vainaan", "Kiitaan", "Hartuan",
                   "Raan", "Nummaan", "Vittean", "Vaikian", "Kaivyan", "Karratan", "Kaijuan", "Suvajan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
+    output.day_of_week = output.year_day % 8
     if output.hour < 6:
         output.day_of_week -= 1
     parts = ["tea", "rea", "sea", "vea"]
@@ -95,10 +100,10 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
 def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
     irl = when or time.now(None)
     start = datetime(1686, 11, 21, 11, 55, 21, tzinfo=timezone.utc)
-    day_length = 19.126 * 3600
+    day_length = 19.1259928695 * 3600
     # day_length = 51.642812 * 3600
     month_lengths = [50] * 16
-    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, 800, lambda _: False, month_lengths, 1, tz)
+    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)
     weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
     months = ["Senka", "Shira", "Kanvarus", "Arkaneda", "Nurus", "Ai", "Kiona", "Gairnar",
               "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
@@ -119,7 +124,7 @@ def time_sinvimania(when: datetime = None, tz: float = 0):  # 24.4
     month_lengths = [31, 31, 31, 31, 31, 32, 31, 31, 31, 31, 31, 32]
     weekdays = ["Placeholder 1", "Placeholder 2", "Placeholder 3", "Placeholder 4", "Placeholder 5", "Placeholder 6"]
     months = ["Month 1", "Month 2", "Month 3", "Month 4", "Month 5", "Month 6", "Month 7", "Month 8", "Month 9", "Month 10", "Month 11", "Month 12"]
-    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 374, 373, lambda y: y % 5 == 0, month_lengths, 12, tz)
+    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 374, lambda y: -1 if y % 5 == 0 else 0, month_lengths, 12, tz)
     return TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 6, ds, yd)
 
 
@@ -131,7 +136,7 @@ def time_hosvalnerus(when: datetime = None, tz: float = 0):  # 24.5
     weekdays = ["Placeholder 1", "Placeholder 2", "Placeholder 3", "Placeholder 4", "Placeholder 5"]
     months = ["Month 1", "Month 2", "Month 3", "Month 4", "Month 5", "Month 6", "Month 7", "Month 8", "Month 9", "Month 10",
               "Month 11", "Month 12", "Month 13", "Month 14", "Month 15", "Month 16", "Month 17", "Month 18", "Month 19", "Month 20"]
-    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 378, 379, lambda y: y % 2 == 0, month_lengths, 20, tz)
+    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 378, lambda y: 1 if y % 2 == 0 else 0, month_lengths, 20, tz)
     # year, month, day, h, m, s, ds = solar_normal(irl, start, day_length, 20, 20, 20, 378, 379, 2, month_lengths, 20, 0)
     return TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 5, ds, yd)
 
@@ -287,8 +292,8 @@ times = {
     "Kuastall-11": time_kuastall_11,
 }
 lengths = {
-    "Zeivela": 432 + 1/3,
-    "Kargadia": 512.125,
+    "Zeivela": 212.16,  # 432 + 1/3
+    "Kargadia": 256.0625,  # 512.125
     "Kaltaryna": 800,
     "Sinvimania": 373.8,
     "Hosvalnerus": 378.5,

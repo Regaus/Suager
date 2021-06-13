@@ -796,3 +796,9 @@
 - Translated reminders into Russian and RSL-1e
 - Made starboard track message authors
 - Made starboard automatically delete all starboard entries that have zero stars
+
+## v7.2.30 - 11 June 2021
+- Merged utils/events with cogs/events
+- Made more guild-specific database entries clean themselves if Suager is removed from the guild
+- Starboard now shows top message authors in the guild
+- Starboard now shows only the top 5 messages (instead of top 10)

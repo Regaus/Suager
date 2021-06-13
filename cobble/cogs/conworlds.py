@@ -389,7 +389,6 @@ class Conworlds(commands.Cog):
             time_earth1i = langs.gts(dt, "rsl-1i", True, False, True, True, False)
             time_earth1h = langs.gts(dt, "rsl-1h", True, False, True, True, False)
             time_23_4 = conworlds.time_zeivela(dt, 0).str()    # 23.4 Zeivela Local
-            time_23_5d = conworlds.time_kargadia(dt, 0, "rsl-1d").str()  # 23.5 Kargadia RSL-1d
             time_23_5k = conworlds.time_kargadia(dt, 0, "rsl-1k").str()  # 23.5 Kargadia RSL-1k
             time_23_5i = conworlds.time_kargadia(dt, 0, "rsl-1i").str()  # 23.5 Kargadia RSL-1i
             time_23_6 = conworlds.time_kaltaryna(dt, 0).str()  # 23.6 Qevenerus RSL-1h
@@ -397,7 +396,6 @@ class Conworlds(commands.Cog):
                       f"\nTime on this Earth (RSL-1i): **{time_earth1i}**" \
                       f"\nTime on this Earth (RSL-1h): **{time_earth1h}**" \
                       f"\nTime on 23.4 Zeivela (Local): **{time_23_4}**" \
-                      f"\nTime on 23.5 Kargadia (RSL-1d): **{time_23_5d}**" \
                       f"\nTime on 23.5 Kargadia (RSL-1k): **{time_23_5k}**" \
                       f"\nTime on 23.5 Kargadia (RSL-1i): **{time_23_5i}**" \
                       f"\nTime on 23.6 Qevenerus (RSL-1h): **{time_23_6}**"
