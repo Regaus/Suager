@@ -802,3 +802,8 @@
 - Made more guild-specific database entries clean themselves if Suager is removed from the guild
 - Starboard now shows top message authors in the guild
 - Starboard now shows only the top 5 messages (instead of top 10)
+
+## v7.2.31 - 14 June 2021
+- Made birthdays and avatars wait until the turn of the next hour before initialising 
+- Made birthdays update itself only once every hour instead of every 5 seconds
+- Made playing wait until the next 150-second period before initialising

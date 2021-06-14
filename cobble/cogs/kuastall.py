@@ -910,10 +910,6 @@ class Kuastall(commands.Cog):
         embed = location.status(locale, player.level)
         return await general.send(None, ctx.channel, embed=embed)
 
-    # TODO: use clan upgrade points
-    # TODO: use guild coins
-    # TODO: translations into Russian and RSL-1e ("kuastall_*")
-
 
 def setup(bot):
     bot.add_cog(Kuastall(bot))

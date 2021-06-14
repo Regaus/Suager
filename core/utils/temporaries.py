@@ -1,7 +1,7 @@
 import asyncio
 import json
 import random
-from datetime import date
+from datetime import date, timedelta
 
 import aiohttp
 import discord
@@ -16,7 +16,7 @@ from suager.utils import lists
 async def temporaries(bot: bot_data.Bot):
     """ Handle reminders and mutes """
     await bot.wait_until_ready()
-    # print(f"{time.time()} > Initialised Temporaries handler")
+    print(f"{time.time()} > Initialised Temporaries")
     while True:
         expired = bot.db.fetch("SELECT * FROM temporary WHERE DATETIME(expiry) < DATETIME('now') AND handled=0", ())
         bot.db.execute("DELETE FROM temporary WHERE handled=1", ())
@@ -151,7 +151,12 @@ bd_config = {  # Birthday data: {Guild: [BirthdayChannel, BirthdayRole]}
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
     await bot.wait_until_ready()
-    # print(f"{time.time()} > Initialised Birthdays handler")
+
+    now = time.now(None)
+    then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
+    await asyncio.sleep((then - now).total_seconds())
+    print(f"{time.time()} > Initialised Birthdays")
+
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
         _guilds.append(guild)
@@ -198,12 +203,18 @@ async def birthdays(bot: bot_data.Bot):
                             print(f"{time.time()} > {guild.name} > Removed birthday role from {user.name}")
                 except Exception as e:
                     print(f"{time.time()} > Birthdays Handler > {e}")
-        await asyncio.sleep(5)
+        await asyncio.sleep(3600)
 
 
 async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    # print(f"{time.time()} > Initialised Playing changer ({bot.local_config['name']})")
+    update_speed = 150
+
+    now = time.now(None)
+    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
+    await asyncio.sleep((then - now).total_seconds())
+    print(f"{time.time()} > Initialised Playing updater for {bot.local_config['name']}")
+
     while True:
         try:
             log = bot.local_config["logs"]
@@ -319,12 +330,17 @@ async def playing(bot: bot_data.Bot):
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > {type(e).__name__}: {e}")
-        await asyncio.sleep(150)
+        await asyncio.sleep(update_speed)
 
 
 async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    # print(f"{time.time()} > Initialised Avatar changer")
+
+    now = time.now(None)
+    then = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
+    await asyncio.sleep((then - now).total_seconds())
+    print(f"{time.time()} > Initialised Avatar updater")
+
     while True:
         try:
             bot.config = general.get_config()
