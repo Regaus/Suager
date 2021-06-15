@@ -405,10 +405,21 @@ class Place:
             season, s = "autumn", 2
         else:
             season, s = "winter", 3
+        if self.sun_data.sunrise == "Always daytime today":
+            sunrise, noon, sunset = dt_time(0, 0, 0), self.sun_data.solar_noon, dt_time(23, 59, 59)
+            is_day = True
+            no_sun = True
+        elif self.sun_data.sunrise == "Always nighttime today":
+            sunrise, noon, sunset = self.sun_data.solar_noon, self.sun_data.solar_noon, self.sun_data.solar_noon
+            is_day = False
+            no_sun = True
+        else:
+            sunrise, noon, sunset = self.sun_data.sunrise, self.sun_data.solar_noon, self.sun_data.sunset
+            is_day = sunrise < self.dt_time < sunset
+            no_sun = False
         if self.weathers is not None:
-            is_day = self.sun_data.sunrise < self.dt_time < self.sun_data.sunset
-            if self.sun_data.sunrise == self.sun_data.sunset == dt_time(0, 0, 0):
-                is_day = 1 < month <= _q2
+            # if self.sun_data.sunrise == self.sun_data.sunset == dt_time(0, 0, 0):
+            #     is_day = 1 < month <= _q2
             # if is_day:
             #     ranges = self.weathers["temperature_low_day"], self.weathers["temperature_high_day"]
             # else:
@@ -444,11 +455,11 @@ class Place:
             # rain = random.randint(0, 100) <= rain_chance
             # temp_add *= random.uniform(0.95, 1.05)
             # temp *= temp_add
-            if self.dt_time < self.sun_data.sunrise:
+            if self.dt_time < sunrise:
                 temp -= 1.75
-            elif self.sun_data.sunrise <= self.dt_time < self.sun_data.solar_noon:
+            elif sunrise <= self.dt_time < noon:
                 temp -= 0.35
-            elif self.sun_data.solar_noon <= self.dt_time < self.sun_data.sunset:
+            elif noon <= self.dt_time < sunset:
                 temp += 1.25
             # No change between sunset and midnight
             temp_c = round(temp, 1)
@@ -520,9 +531,13 @@ class Place:
         else:
             embed.description += "\n\nWeather conditions not available."
 
-        embed.add_field(name="Sunrise", value=self.sun_data.sunrise.isoformat(), inline=True)
-        embed.add_field(name="Solar noon", value=self.sun_data.solar_noon.isoformat(), inline=True)
-        embed.add_field(name="Sunset", value=self.sun_data.sunset.isoformat(), inline=True)
+        if no_sun:
+            embed.add_field(name="Sunrise and Sunset", value=self.sun_data.sunrise, inline=True)
+            embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
+        else:
+            embed.add_field(name="Sunrise", value=sunrise.isoformat(), inline=True)
+            embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
+            embed.add_field(name="Sunset", value=sunset.isoformat(), inline=True)
         embed.set_footer(text=f"Current season: {season.title()}")
         embed.timestamp = time.now(None)
         return embed
@@ -557,6 +572,10 @@ class Sun:
         solar_noon = self.time_from_decimal(solar_noon_t)
         sunrise = self.time_from_decimal(sunrise_t)
         sunset = self.time_from_decimal(sunset_t)
+        if sunrise_t == 2 or sunset_t == 2:
+            sunrise, sunset = "Always daytime today", "Always daytime today"
+        elif sunrise_t == 3 or sunset_t == 3:
+            sunrise, sunset = "Always nighttime today", "Always nighttime today"
         return solar_noon, sunrise, sunset
 
     def calculate(self, day_number: float):
@@ -596,9 +615,9 @@ class Sun:
             sunrise_t = solar_noon_t - hour_angle * 4 / 1440
             sunset_t = solar_noon_t + hour_angle * 4 / 1440
         elif output < -1:
-            sunrise_t, sunset_t = 2, 2  # Eternal nighttime
+            sunrise_t, sunset_t = 2, 2  # Eternal daylight
         else:
-            sunrise_t, sunset_t = 3, 3  # Eternal daylight
+            sunrise_t, sunset_t = 3, 3  # Eternal nighttime
             # print(output)
             # hour_angle = deg(acos(cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))))
         # except ValueError:

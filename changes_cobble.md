@@ -237,3 +237,6 @@
 ## v1.1.21 - 15 June 2021
 - Made time78 place not found error more readable
 - Added Shonangar to Kargadia
+
+## v1.1.22 - 15 June 2021
+- Made weather78 represent cases when the sun doesn't rise or set at high latitudes
