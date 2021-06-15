@@ -347,8 +347,7 @@ class Place:
         }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
-        self.time = time_function(when=time.dt(2021, 6, 21), tz=self.tz)
-        # self.time = time_function(tz=self.tz)
+        self.time = time_function(tz=self.tz)
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun_data = Sun(self)
         try:
