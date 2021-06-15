@@ -807,3 +807,6 @@
 - Made birthdays and avatars wait until the turn of the next hour before initialising 
 - Made birthdays update itself only once every hour instead of every 5 seconds
 - Made playing wait until the next 150-second period before initialising
+
+## v7.2.32 - 15 June 2021
+- Made timestamp conversion not dramatically shit itself and then catch on fire whenever you try to convert a date earlier than 1970

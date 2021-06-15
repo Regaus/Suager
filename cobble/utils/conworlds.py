@@ -80,17 +80,21 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 256, lambda y: 1 if y % 16 == 0 else 0, month_lengths, 1, tz)
     weekdays, months = [f"{language} not available"] * 8, [f"{language} not available"] * 16
     if language == "rsl-1k":
-        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
+        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkavan", "Shiravan", "Nuuvan", "Kaivuan", "Antuvan", "Vainaran", "Kiitavan", "Hartuvan",
                   "Raavan", "Nummavan", "Vitteran", "Vaikivan", "Kaivyan", "Kaaratan", "Kallüvan", "Suvakän"]
     elif language == "rsl-1i":
-        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"]
+        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkaan", "Shiraan", "Nuuan", "Kaivuan", "Antuan", "Vainaan", "Kiitaan", "Hartuan",
                   "Raan", "Nummaan", "Vittean", "Vaikian", "Kaivyan", "Karratan", "Kaijuan", "Suvajan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
-    output.day_of_week = output.year_day % 8
+    output.day_of_week = (output.day - 1) % 8
+    if output.day == 17:
+        output.day_of_week = 8
     if output.hour < 6:
         output.day_of_week -= 1
+    if output.day_of_week == -1:
+        output.day_of_week = 7
     parts = ["tea", "rea", "sea", "vea"]
     part = h // 6
     output.day_name = weekdays[output.day_of_week] + parts[part]
@@ -99,7 +103,7 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
 
 def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
     irl = when or time.now(None)
-    start = datetime(1686, 11, 21, 11, 55, 21, tzinfo=timezone.utc)
+    start = datetime(1686, 11, 21, 11, 55, 21, tzinfo=timezone.utc)  # Time of landing on Qevenerus
     day_length = 19.1259928695 * 3600
     # day_length = 51.642812 * 3600
     month_lengths = [50] * 16
@@ -154,7 +158,7 @@ class TimeSolarNormal:
         self.week_length = wl
         self.ds = ds
         self.year_day = yd
-        self.day_of_week = self.ds % self.week_length
+        self.day_of_week = (self.ds - 1) % self.week_length
         self.day_name = self.dow_names[self.day_of_week]
         self.month_name = self.month_names[self.month - 1]
 
@@ -270,6 +274,7 @@ places = {
     "Seivanlias":          ["Kargadia", 1623.5, 794.2],
     "Sentagar":            ["Kargadia",  843.7, 249.3],
     "Sentatebaria":        ["Kargadia",  298.4, 811.4],
+    "Shonangar":           ["Kargadia",   92.7, 220.0],
     "Sunovalliat":         ["Kargadia",   87.9, 737.5],
     "Taivead":             ["Kargadia", 1606.7, 800.9],
     "Tebarimostus":        ["Kargadia",  315.4, 759.2],
@@ -342,7 +347,8 @@ class Place:
         }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
-        self.time = time_function(tz=self.tz)
+        self.time = time_function(when=time.dt(2021, 6, 21), tz=self.tz)
+        # self.time = time_function(tz=self.tz)
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun_data = Sun(self)
         try:
@@ -530,7 +536,7 @@ class Sun:
 
     def convert_time(self):
         year_start = date(2021, 1, 1)  # Assume it to always be 2021 to not deal with the year day differences shenanigans
-        if self.place.planet == "Kargadia":
+        if self.place.planet in ["Kargadia", "Kaltaryna"]:
             year_start = date(2021, 3, 20)  # Kargadian years start in spring, so make it be the equinox
         start = year_start.toordinal() - 693595  # To convert it to the calculator's date format
         _time = self.place.time
@@ -574,21 +580,28 @@ class Sun:
         m_obliq = 23 + (26 + (21.448 - j_cent * (46.815 + j_cent * (0.00059 - j_cent * 0.001813))) / 60) / 60
         obliq = m_obliq + 0.00256 * cos(rad(125.04 - 1934.136 * j_cent))
         vary = tan(rad(obliq / 2)) * tan(rad(obliq / 2))
-        seqcent = sin(rad(m_anom)) * (1.914602 - j_cent * (0.004817 + 0.000014 * j_cent)) + sin(rad(2 * m_anom)) * (0.019993 - 0.000101 * j_cent) + sin(
-            rad(3 * m_anom)) * 0.000289
+        seqcent = sin(rad(m_anom)) * (1.914602 - j_cent * (0.004817 + 0.000014 * j_cent)) + sin(rad(2 * m_anom)) * (0.019993 - 0.000101 * j_cent) \
+            + sin(rad(3 * m_anom)) * 0.000289
         struelong = m_long + seqcent
         sapplong = struelong - 0.00569 - 0.00478 * sin(rad(125.04 - 1934.136 * j_cent))
         declination = deg(asin(sin(rad(obliq)) * sin(rad(sapplong))))
 
-        eqtime = 4 * deg(
-            vary * sin(2 * rad(m_long)) - 2 * eccent * sin(rad(m_anom)) + 4 * eccent * vary * sin(rad(m_anom)) * cos(2 * rad(m_long)) - 0.5 * vary
-            * vary * sin(4 * rad(m_long)) - 1.25 * eccent * eccent * sin(2 * rad(m_anom)))
+        eqtime = 4 * deg(vary * sin(2 * rad(m_long)) - 2 * eccent * sin(rad(m_anom)) + 4 * eccent * vary * sin(rad(m_anom)) * cos(2 * rad(m_long))
+                         - 0.5 * vary * vary * sin(4 * rad(m_long)) - 1.25 * eccent * eccent * sin(2 * rad(m_anom)))
 
         solar_noon_t = (720 - 4 * longitude - eqtime + self.place.tz * 60) / 1440
-        try:
-            hour_angle = deg(acos(cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))))
+        # try:
+        output = cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
+        if -1 <= output <= 1:
+            hour_angle = deg(acos(output))
             sunrise_t = solar_noon_t - hour_angle * 4 / 1440
             sunset_t = solar_noon_t + hour_angle * 4 / 1440
-        except ValueError:
-            sunrise_t, sunset_t = 0.0, 0.0  # Probably time so early in the year that there is no way to calculate its sunrise/sunset times
+        elif output < -1:
+            sunrise_t, sunset_t = 2, 2  # Eternal nighttime
+        else:
+            sunrise_t, sunset_t = 3, 3  # Eternal daylight
+            # print(output)
+            # hour_angle = deg(acos(cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))))
+        # except ValueError:
+        #     sunrise_t, sunset_t = 0.0, 0.0  # Mostly happens at late summer/winter in polar regions
         return solar_noon_t, sunrise_t, sunset_t

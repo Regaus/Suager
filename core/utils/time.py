@@ -5,6 +5,13 @@ import pytz
 from dateutil.relativedelta import relativedelta
 
 
+def dt(year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
+    return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+
+
+zero = dt(1970)
+
+
 def time_output(when: datetime, day: bool = True, seconds: bool = False, dow: bool = False, tz: bool = False):
     d, n = "%a, ", ''
     m = "34 June" if (when.day == 4 and when.month == 7) else "%d %b"
@@ -19,6 +26,8 @@ def now(tz: str = None):
 
 
 def set_tz(when: datetime, tz: str):
+    if when.tzinfo is None:
+        return datetime(when.year, when.month, when.day, when.hour, when.minute, when.second, when.microsecond, pytz.timezone(tz))
     return when.astimezone(tz=pytz.timezone(tz))
 
 
@@ -50,9 +59,15 @@ def time(tz: str = None, day: bool = True, seconds: bool = True, dow: bool = Fal
 
 
 def from_ts(timestamp: int or float, tz: str = None) -> datetime:
-    if not tz:
-        return datetime.fromtimestamp(timestamp, tz=timezone.utc)
-    return datetime.fromtimestamp(timestamp, tz=pytz.timezone(tz))
+    # Костыли на костылях, но хотя бы работает
+    _tz = timezone.utc if not tz else pytz.timezone(tz)
+    try:
+        return datetime.fromtimestamp(timestamp, _tz)
+    except OSError:
+        return (zero + td(seconds=timestamp)).astimezone(_tz)
+    # if not tz:
+    #     return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+    # return datetime.fromtimestamp(timestamp, tz=pytz.timezone(tz))
 
 
 def now_ts() -> float:
@@ -60,15 +75,14 @@ def now_ts() -> float:
 
 
 def get_ts(when: datetime) -> float:
-    return datetime.timestamp(when)
+    try:
+        return datetime.timestamp(when)
+    except OSError:
+        return (when - zero).total_seconds()  # Still shows exact amount of seconds between zero time and the timestamp
 
 
 def file_ts(name: str, ext: str = "txt") -> str:
     return f"{name}_{int(now_ts())}.{ext}"
-
-
-def dt(year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
-    return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
 
 
 def interpret_time(period: str) -> relativedelta:

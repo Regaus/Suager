@@ -362,7 +362,7 @@ class Conworlds(commands.Cog):
             try:
                 return await general.send(conworlds.Place(ss).time_info(), ctx.channel)
             except conworlds.PlaceDoesNotExist as e:
-                return await general.send(e, ctx.channel)
+                return await general.send(e.text, ctx.channel)
         ss = int(ss)
         if ss < 1 or ss > 100:
             return await general.send("The SS number must be between 1 and 100.", ctx.channel)
@@ -377,7 +377,7 @@ class Conworlds(commands.Cog):
                     c = _time.count(":")
                     if c == 1:
                         _time = f"{_time}:00"
-                dt = time.from_ts(time.get_ts(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")), None)
+                dt = time.set_tz(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S"), "UTC")
             except ValueError:
                 return await general.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)", ctx.channel)
         time_earth = langs.gts(dt, "en", True, False, True, True, False)

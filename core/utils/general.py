@@ -104,3 +104,4 @@ def bold(string: str) -> str:
 class RegausError(Exception):
     def __init__(self, text):
         super().__init__(self, text)
+        self.text = text

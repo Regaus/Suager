@@ -233,3 +233,7 @@
 ## v1.1.20 - 13 June 2021
 - Updated Zeivela and Kargadia year lengths
 - Improved the script for calculation of solar calendars for ga78
+
+## v1.1.21 - 15 June 2021
+- Made time78 place not found error more readable
+- Added Shonangar to Kargadia
