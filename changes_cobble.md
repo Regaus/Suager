@@ -236,7 +236,10 @@
 
 ## v1.1.21 - 15 June 2021
 - Made time78 place not found error more readable
-- Added Shonangar to Kargadia
 
 ## v1.1.22 - 15 June 2021
 - Made weather78 represent cases when the sun doesn't rise or set at high latitudes
+
+## v1.1.23 - 15 June 2021
+- Separated data about Kargadian places from the conworlds time file
+- Moved some Kargadian cities around and added new ones

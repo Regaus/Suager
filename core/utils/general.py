@@ -7,6 +7,8 @@ from io import BytesIO
 from typing import Union
 
 import discord
+from numpy import around
+from numpy.random import Generator, PCG64
 
 from core.utils import time
 
@@ -105,3 +107,15 @@ class RegausError(Exception):
     def __init__(self, text):
         super().__init__(self, text)
         self.text = text
+
+
+def random1(low: float = 0.0, high: float = 1.0, seed: int = 0) -> float:
+    # state = RandomState(seed)
+    state = Generator(PCG64(seed))
+    return float(around(state.uniform(low, high, None), 1))
+
+
+def random2(mean: float, sd: float, seed: int = 0) -> float:
+    # state = RandomState(seed)
+    state = Generator(PCG64(seed))
+    return float(around(state.normal(mean, sd, None), 1))

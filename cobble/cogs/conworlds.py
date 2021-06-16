@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import conlangs, conworlds
+from cobble.utils import conlangs, conworlds, places
 from core.utils import arg_parser, emotes, general, time
 from languages import langs
 
@@ -360,8 +360,8 @@ class Conworlds(commands.Cog):
         Time format: `hh:mm` or `hh:mm:ss` (24-hour)"""
         if not ss.isnumeric():
             try:
-                return await general.send(conworlds.Place(ss).time_info(), ctx.channel)
-            except conworlds.PlaceDoesNotExist as e:
+                return await general.send(places.Place(ss).time_info(), ctx.channel)
+            except places.PlaceDoesNotExist as e:
                 return await general.send(e.text, ctx.channel)
         ss = int(ss)
         if ss < 1 or ss > 100:
@@ -425,8 +425,8 @@ class Conworlds(commands.Cog):
     async def weather78(self, ctx: commands.Context, *, where: str):
         """ Weather for a place in GA78 """
         try:
-            place = conworlds.Place(where)
-        except conworlds.PlaceDoesNotExist:
+            place = places.Place(where)
+        except places.PlaceDoesNotExist:
             return await general.send(f"Location {where!r} not found.", ctx.channel)
         embed = place.status()
         return await general.send(None, ctx.channel, embed=embed)
@@ -440,20 +440,20 @@ class Conworlds(commands.Cog):
         Input a place to see where it is"""
         if where:
             if where in ["Kargadia"]:
-                places = []
-                for city, data in conworlds.places.items():
+                _places = []
+                for city, data in places.places.items():
                     if data[0] == where:
-                        place = conworlds.Place(city)
-                        places.append(f"`{city:<19} - {place.location(True)}`")
-                return await general.send(f"Locations in {where}:\n\n" + "\n".join(places), ctx.channel)
+                        place = places.Place(city)
+                        _places.append(f"`{city:<19} - {place.location(True)}`")
+                return await general.send(f"Locations in {where}:\n\n" + "\n".join(_places), ctx.channel)
             else:
                 try:
-                    place = conworlds.Place(where)
+                    place = places.Place(where)
                     return await general.send(f"{where} - {place.planet} - {place.location(False)}", ctx.channel)
-                except conworlds.PlaceDoesNotExist:
+                except places.PlaceDoesNotExist:
                     return await general.send(f"Location {where!r} not found.", ctx.channel)
         planets = []
-        for data in conworlds.places.values():
+        for data in places.places.values():
             if data[0] not in planets:
                 planets.append(data[0])
         return await general.send("Planets with locations available:\n\n" + "\n".join(planets), ctx.channel)
