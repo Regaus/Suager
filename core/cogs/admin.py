@@ -625,6 +625,46 @@ class Admin(commands.Cog):
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
+    @commands.group(name="config")
+    @commands.is_owner()
+    @commands.check(lambda ctx: ctx.channel.id == 753000962297299005)
+    async def config(self, ctx: commands.Context):
+        """ See or update config """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @config.command(name="current")
+    @permissions.has_permissions(administrator=True)
+    async def settings_current(self, ctx: commands.Context):
+        """ Current config (in JSON) """
+        return await general.send("Current config:", ctx.channel, file=discord.File("config.json"))
+        # stuff = json.dumps(json.loads(data["data"]), indent=2)
+        # bio = BytesIO(stuff.encode("utf-8"))
+        # return await general.send(f"Current settings for {ctx.guild.name}", ctx.channel, file=discord.File(bio, time.file_ts("settings", "json")))
+
+    @config.command(name="upload", aliases=["update"])
+    @permissions.has_permissions(administrator=True)
+    async def settings_upload(self, ctx: commands.Context):
+        """ Upload settings using a JSON file """
+        ma = ctx.message.attachments
+        if len(ma) == 1:
+            name = ma[0].filename
+            if not name.endswith('.json'):
+                return await ctx.send("This must be a JSON file.")
+            try:
+                stuff: bytes = await ma[0].read()
+            except discord.HTTPException or discord.NotFound:
+                return await ctx.send("There was an error getting the file.")
+        else:
+            return await ctx.send("There must be exactly one JSON file.")
+        try:
+            stuff_str = json.dumps(json.loads(stuff), indent=2)
+        except Exception as e:
+            return await ctx.send(f"Error loading file:\n{type(e).__name__}: {e}")
+        # stuff = json.dumps(json.loads(stuff), indent=0)
+        open("config.json", "w").write(stuff_str)
+        return await general.send("Config updated.", ctx.channel)
+
 
 async def status(ctx: commands.Context, _type: int):
     try:

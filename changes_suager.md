@@ -810,3 +810,6 @@
 
 ## v7.2.32 - 15 June 2021
 - Made timestamp conversion not dramatically shit itself and then catch on fire whenever you try to convert a date earlier than 1970
+
+## v7.2.33 - 16 June 2021
+- Added ability to update config through commands
