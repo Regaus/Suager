@@ -155,7 +155,7 @@ async def birthdays(bot: bot_data.Bot):
     now = time.now(None)
     then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > Initialised Birthdays")
+    print(f"{time.time()} > Initialised Birthdays for {bot.local_config['name']}")
 
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
@@ -260,6 +260,11 @@ async def playing(bot: bot_data.Bot):
                     {"type": 3, "name": "the void"},
                     {"type": 0, "name": status_regaus},
                     {"type": 0, "name": status_cobble},
+                ],
+                "kyomi": [
+                    {"type": 0, "name": fv},
+                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 0, "name": status_regaus},
                 ],
                 "suager": [
                     {"type": 0, "name": fv},

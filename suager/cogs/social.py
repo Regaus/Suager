@@ -373,6 +373,7 @@ class Social(commands.Cog):
 
     @commands.command(name="kill")
     @commands.guild_only()
+    @commands.check(lambda ctx: ctx.bot.name != "kyomi")
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
     async def kill(self, ctx: commands.Context, user: discord.Member):
         """ Kill someone """
@@ -400,7 +401,7 @@ class Social(commands.Cog):
 
     @commands.command(name="bang", aliases=["fuck"])
     @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442) and ctx.bot.name != "kyomi")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def fuck(self, ctx, user: discord.Member):
         """ Bang someone """
@@ -431,7 +432,7 @@ class Social(commands.Cog):
 
     @commands.command(name="rape")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005])  # Secret Room 9 and testing zone only
+    @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005] and ctx.bot.name != "kyomi")  # Secret Room 9 and testing zone only
     # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rape(self, ctx, user: discord.Member):
         """ Rape someone """
@@ -454,7 +455,7 @@ class Social(commands.Cog):
 
     @commands.command(name="suck", aliases=["succ"])
     @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442) and ctx.bot.name != "kyomi")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def suck(self, ctx, user: discord.Member):
         """ Succ someone """
@@ -478,7 +479,7 @@ class Social(commands.Cog):
 
     @commands.command(name="facefuck", aliases=["ff"])
     @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442) and ctx.bot.name != "kyomi")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def face_fuck(self, ctx, user: discord.User):
         """ Face-fuck someone """

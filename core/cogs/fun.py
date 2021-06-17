@@ -14,6 +14,7 @@ class Entertainment(commands.Cog):
 
     @commands.command(name="beer")
     @commands.guild_only()
+    @commands.check(lambda ctx: ctx.bot.name != "kyomi")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def beer(self, ctx: commands.Context, user: discord.Member = None, *, reason: str = ""):
         """ Give someone a beer! 🍻 """

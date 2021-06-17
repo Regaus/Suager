@@ -91,6 +91,8 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.avatars(bot)))
         if bot.name == "cobble":
             tasks.append(loop.create_task(temporaries.tbl_seasons(bot)))
+        if bot.name == "kyomi":
+            tasks.append(loop.create_task(temporaries.birthdays(bot)))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))
