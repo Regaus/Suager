@@ -8,3 +8,6 @@
 
 ## v0.1.2 - 17 June 2021
 - Added another 2 statuses
+
+## v0.1.3 - 17 June 2021
+- Added pineapple command

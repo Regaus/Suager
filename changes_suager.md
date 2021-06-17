@@ -817,3 +817,6 @@
 ## v7.2.34 - 17 June 2021
 - Fixed levels leaderboard
 - Removed RSL-1e locale
+
+## v7.2.35 - 17 June 2021
+- Added pineapple command
