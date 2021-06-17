@@ -223,27 +223,32 @@ async def playing(bot: bot_data.Bot):
             fv, sv = f"v{version['version']}", f"v{version['short_version']}"
             today = date.today()
             year = today.year
-            ny = year + 1
-            regaus = date(year, 1, 27)
-            if today > regaus:
-                regaus = date(ny, 1, 27)
-            suager = date(year, 5, 13)
-            if today > suager:
-                suager = date(ny, 5, 13)
-            cobble = date(year, 12, 5)
-            if today > cobble:
-                cobble = date(ny, 12, 5)
-            is_regaus, is_suager, is_cobble = today == regaus, today == suager, today == cobble
+
+            def get_date(month, day):
+                _date = date(year, month, day)
+                if today > _date:
+                    return date(year + 1, month, day)
+                return _date
 
             def until(when: date):
                 days = (when - today).days
                 s = "s" if days != 1 else ""
                 return f"{days} day{s}"
 
-            until_regaus, until_suager, until_cobble = until(regaus), until(suager), until(cobble)
-            status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until_regaus} until Regaus's birthday"
-            status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until_suager} until my birthday"
-            status_cobble = f"🎉 Today is my birthday!" if is_cobble else f"{until_cobble} until my birthday"
+            regaus = get_date(1, 27)
+            suager = get_date(5, 13)
+            cobble = get_date(12, 5)
+            kyomi = get_date(5, 19)
+            blucy = get_date(7, 13)
+            mizuki = get_date(6, 17)
+            is_regaus, is_suager, is_cobble, is_kyomi, is_blucy, is_mizuki = today == regaus, today == suager, today == cobble, today == kyomi, today == blucy, today == mizuki
+
+            status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus)} until Regaus's birthday"
+            status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager)} until my birthday"
+            status_cobble = f"🎉 Today is my birthday!" if is_cobble else f"{until(cobble)} until my birthday"
+            status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi)} until Kyomi's birthday"
+            status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy)} until Blucy's birthday"
+            status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki)} until my birthday"
             plays = {
                 "cobble": [
                     {"type": 0, "name": fv},
@@ -265,6 +270,11 @@ async def playing(bot: bot_data.Bot):
                     {"type": 0, "name": fv},
                     {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 0, "name": status_regaus},
+                    {"type": 0, "name": status_kyomi},
+                    {"type": 0, "name": status_blucy},
+                    {"type": 0, "name": status_mizuki},
+                    {"type": 0, "name": "Snuggling with Mochi"},
+                    {"type": 0, "name": "Feeding Mochi"},
                 ],
                 "suager": [
                     {"type": 0, "name": fv},
