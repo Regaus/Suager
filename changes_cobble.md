@@ -243,3 +243,9 @@
 ## v1.1.23 - 15 June 2021
 - Separated data about Kargadian places from the conworlds time file
 - Moved some Kargadian cities around and added new ones
+
+## v1.1.24 - 17 June 2021
+- Renamed conworlds util to times
+- Removed RSL-1e locale
+- Removed RSL-1e documentation command
+- Removed TBL v1

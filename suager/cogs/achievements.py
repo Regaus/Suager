@@ -4,10 +4,8 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import tbl
 from core.utils import emotes, general
 from languages import langs
-
 
 achievement_colours = [
     (96, 96, 96),     # Tier -0
@@ -44,15 +42,10 @@ class Achievements(commands.Cog):
         achievement_levels = [10, 20, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200]
         achievement_xp = [10000, 25000, 50000, 100000, 250000, 500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2500000, 3000000, 4000000, 5000000]
         # achievement_xp = [10000, 25000, 50000, 100000, 200000, 500000, 750000, 1000000, 1750000, 2500000, 3750000, 5000000]
-        achievement_tbl_levels = [7, 12, 20, 30, 40, 50, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250]
-        achievement_tbl_shaman = [5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 125, 150, 175]
-        # achievement_tbl_league = [500, 2000, 5000, 10000, 20000, 50000, 100000, 250000, 500000, 1000000]
-        achievement_tbl_league = tbl.leagues[1:]
-        achievement_tbl_araksat = [1000, 2500, 5000, 10000, 25000, 50000, 750000, 100000, 250000, 500000, 1000000, 2500000]
         # rows = 6 if not player.is_new else 2
         # shelves = 1
-        if self.bot.name == "cobble" and langs.get_data("_conlang", locale) is None:
-            rows = 6
+        if self.bot.name == "cobble":  # and langs.get_data("_conlang", locale) is None:
+            rows = 2
             shelves = 1
         else:
             rows = 2
@@ -147,46 +140,7 @@ class Achievements(commands.Cog):
         tiers.append(round(tier * 0.75))
         generate_box(0, 1, tier, 16, langs.gls("achievements_leveling_xp", locale), langs.gls("achievements_leveling_xp_desc", locale, langs.gns(req, locale)),
                      total_xp, req, prev)
-        player = tbl.Player.from_db(user, ctx.guild)
-        req, prev, tier = 0, 0, 0
-        for req in achievement_tbl_league:
-            if player.max_points >= req:
-                tier += 1
-                prev = req
-            else:
-                break
-        tiers.append(round(tier / 13 * 12))
-        generate_box(0, 2, tier, 13, langs.gls("achievements_tbl_leagues", locale), langs.get_data("achievements_tbl_leagues_desc", locale)[tier],
-                     player.max_points, req, prev)
-        req, prev, tier = 0, 0, 0
-        for req in achievement_tbl_levels:
-            if player.level >= req:
-                tier += 1
-                prev = req
-            else:
-                break
-        tiers.append(round(tier / 17 * 12))
-        generate_box(0, 3, tier, 17, langs.gls("achievements_tbl_levels", locale), langs.get_data("achievements_tbl_levels_desc", locale)[tier], player.level, req, prev)
-        req, prev, tier = 0, 0, 0
-        for req in achievement_tbl_araksat:
-            if player.araksat >= req:
-                tier += 1
-                prev = req
-            else:
-                break
-        tiers.append(tier)
-        generate_box(0, 4, tier, 12, langs.gls("achievements_tbl_araksat", locale), langs.gls("achievements_tbl_araksat_desc", locale, langs.gns(req, locale)),
-                     int(player.araksat), req, prev)
-        req, prev, tier = 0, 0, 0
-        for req in achievement_tbl_shaman:
-            if player.shaman_level >= req:
-                tier += 1
-                prev = req
-            else:
-                break
-        tiers.append(tier / 15 * 12)
-        generate_box(0, 5, tier, 15, langs.gls("achievements_tbl_shaman", locale), langs.gls("achievements_tbl_shaman_desc", locale, langs.gns(req, locale)),
-                     player.shaman_level, req, prev)
+        # TBL v2 achievements - Shelf 1
         # CC2 - Depth - Shelf 2
         # CC2 - Cobble Levels - Shelf 2
         # CC2 - Cobble Mined - Shelf 2

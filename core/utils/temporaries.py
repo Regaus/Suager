@@ -6,7 +6,6 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from cobble.utils import tbl
 from core.utils import bot_data, general, http, logger, time
 from languages import langs
 from suager.cogs.birthdays import Ctx
@@ -275,6 +274,8 @@ async def playing(bot: bot_data.Bot):
                     {"type": 0, "name": status_mizuki},
                     {"type": 0, "name": "Snuggling with Mochi"},
                     {"type": 0, "name": "Feeding Mochi"},
+                    {"type": 0, "name": "Stealing pineapples"},
+                    {"type": 0, "name": "Stealing star cookies"},
                 ],
                 "suager": [
                     {"type": 0, "name": fv},
@@ -380,33 +381,3 @@ async def avatars(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(3600)
-
-
-async def tbl_seasons(bot: bot_data.Bot):
-    _season = tbl.get_season()
-    await bot.wait_until_ready()
-    # print(f"{time.time()} > Initialised TBL Seasons Updater")
-    while True:
-        season = tbl.get_season()
-        if season != _season:
-            channel = bot.get_channel(819223338844946522)
-            all_players = bot.db.fetch("SELECT * FROM tbl_player")
-            old_points = []
-            for player in all_players:
-                old_points.append({"name": f"{player['name']}#{player['disc']:04d}", "points": player["league_points"], 'id': player['uid']})
-            old_points.sort(key=lambda x: x["points"], reverse=True)
-            top_5 = ""
-            emotes = ["🥇", "🥈", "🥉", "🏆", "🏆", "🏆", "🏆", "🏆", "🏆", "🏆"]
-            prize = [250, 225, 200, 175, 150, 125, 100, 75, 50, 25]
-            prizes = [f"{i} Coins" for i in prize]
-            # prizes = [langs.plural(i, "tbl_coins") for i in prize]
-            for place, user in enumerate(old_points[:10], start=1):
-                emote = emotes[place - 1]
-                top_5 += f"\n{emote} **#{place}: {user['name']}** at **{user['points']:,} League Points** - Prize: **{prizes[place - 1]}**"
-                bot.db.execute("UPDATE tbl_player SET coins=coins+? WHERE uid=?", (prize[place - 1], user["id"]))
-            bot.db.execute("UPDATE tbl_player SET araksat=araksat+(league_points/5), league_points=league_points/10, coins=coins+50")
-            await general.send(f"Season {_season} has now ended! Here are the Top 5 people of the past season:{top_5}", channel)
-            # 1/10 of everyone's League Points will carry over to the next season, and some will be converted to extra Araksat.
-            # Everyone gets 50 coins. The top 10 will also receive some extra coins.
-            _season = season
-        await asyncio.sleep(1800)

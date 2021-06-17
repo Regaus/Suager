@@ -8,7 +8,7 @@ import pytz
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from cobble.utils import conworlds
+from cobble.utils import times
 from core.utils import arg_parser, bases, emotes, general, http, permissions, time
 from languages import langs
 
@@ -41,29 +41,19 @@ class Utility(commands.Cog):
         """ Current time """
         locale = langs.gl(ctx)
         send = ""
-        # if locale == "rsl-1d":
-        #     # a = ga78.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-        #     # b = langs.gts(time.now(None), locale, True, False, False, True, False)
-        #     # send += langs.gls("util_time_sl", locale, b, a)
-        #     a = langs.gts(time.now(None), locale, True, False, False, True, False)
-        #     b = langs.gts(time.kargadia_convert(time.now(None)), locale, True, False, False, True, False)
-        #     c = ga78.time_kargadia(time.now(None)).str(False, False, False)
-        #     send += f"Zymlä (UTC/GMT): **{a}**\n" \
-        #             f"Senka'dar Laikadu: **{b}**\n" \
-        #             f"Kargadia (Sentagar): **{c}**"
-        if locale == "rsl-1e":
-            a = conworlds.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-            b = langs.gts(time.now(None), locale, True, False, True, True, False)
-            d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
-            z = time.now_k()  # time.kargadia_convert(time.now(None))
-            m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
-            c = f"{z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
-            send += f"Zymlä (UTC/GMT): **{b}**\n" \
-                    f"Zymlä (SL-Taida AD'i): **{d}**\n" \
-                    f"Zymlä (SL-Taida NE'i): **{c}**\n" \
-                    f"Kargadia (Sentagar): **{a}**"
-        elif locale in ["rsl-1k", "rsl-1i"]:
-            a = conworlds.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+        # if locale == "rsl-1e":
+        #     a = times.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+        #     b = langs.gts(time.now(None), locale, True, False, True, True, False)
+        #     d = langs.gts(time.now_sl(), locale, True, False, True, True, False)
+        #     z = time.now_k()  # time.kargadia_convert(time.now(None))
+        #     m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
+        #     c = f"{z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
+        #     send += f"Zymlä (UTC/GMT): **{b}**\n" \
+        #             f"Zymlä (SL-Taida AD'i): **{d}**\n" \
+        #             f"Zymlä (SL-Taida NE'i): **{c}**\n" \
+        #             f"Kargadia (Sentagar): **{a}**"
+        if locale in ["rsl-1k", "rsl-1i"]:
+            a = times.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
             b = langs.gts(time.now(None), locale, True, False, True, True, False)
             d = langs.gts(time.now_k(), locale, True, False, True, True, False)
             send += f"Zymlä: **{b}**\n" \

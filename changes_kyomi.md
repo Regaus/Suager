@@ -5,3 +5,6 @@
 
 ## v0.1.1 - 17 June 2021
 - Added more statuses
+
+## v0.1.2 - 17 June 2021
+- Added another 2 statuses

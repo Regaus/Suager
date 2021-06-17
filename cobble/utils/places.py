@@ -3,7 +3,7 @@ from math import acos, asin, cos, degrees as deg, radians as rad, sin, tan
 
 import discord
 
-from cobble.utils.conworlds import time_hosvalnerus, time_kaltaryna, time_kargadia, time_kuastall_11, time_sinvimania, time_zeivela
+from cobble.utils.times import time_hosvalnerus, time_kaltaryna, time_kargadia, time_kuastall_11, time_sinvimania, time_zeivela
 from core.utils import general, time
 
 places = {

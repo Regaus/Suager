@@ -71,7 +71,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
     if key.isnumeric():
         args.append(key)
     output = langs.gls(string, locale, *args)
-    if int(key) == 2021:
+    if str(key) == "2021":
         cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
         if ctx.guild.id not in cobble_servers:
             output += langs.gls("leveling_rank_yearly21", locale, ctx.guild.name)

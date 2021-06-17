@@ -813,3 +813,7 @@
 
 ## v7.2.33 - 16 June 2021
 - Added ability to update config through commands
+
+## v7.2.34 - 17 June 2021
+- Fixed levels leaderboard
+- Removed RSL-1e locale
