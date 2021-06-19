@@ -276,6 +276,8 @@ async def playing(bot: bot_data.Bot):
                     {"type": 0, "name": "Feeding Mochi"},
                     {"type": 0, "name": "Stealing pineapples"},
                     {"type": 0, "name": "Stealing star cookies"},
+                    {"type": 0, "name": "Praying to the Pineapple God"},
+                    {"type": 3, "name": "you"},
                 ],
                 "suager": [
                     {"type": 0, "name": fv},

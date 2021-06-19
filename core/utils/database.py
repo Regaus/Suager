@@ -156,58 +156,6 @@ tables = [
         Column("edited", 0, True),
         Column("usage", 0, True)
     ]),
-    Table("tbl_clan", [
-        Column("clan_id", 0, True),
-        Column("name", 2, True),
-        Column("description", 2, False),        # Description of clan
-        Column("type", 0, True),                # 0 = open, 1 = invite-only, 2 = closed
-        Column("level", 0, True),
-        Column("xp", 1, True),
-        Column("points", 1, True),              # Upgrade Points
-        Column("owner", 0, True),               # Owner's user ID
-        Column("locations", 2, True),           # JSON of Clan Locations and how long they'll last
-        Column("araksat", 1, True),             # Clan Araksat
-        Column("tax_gain", 0, True),            # How much the clan gains from tax (Default: 0.025 (2.5%), 0.1% per boost, max 25%)       // 225 UP
-        Column("reward_boost", 0, True),        # How much more Araksat and XP all clan members gain (0.5% each per boost, max 100%)      // 200 UP
-        Column("energy_limit_boost", 0, True),  # How much bigger members' energy limit will be (1 per boost, max 250)                    // 250 UP
-        Column("energy_regen_boost", 0, True),  # Amount of seconds members' energy takes less time to regen (-0.7s per boost, max -105s) // 150 UP
-    ]),
-    Table("tbl_guild", [
-        Column("gid", 0, True),               # Guild ID
-        Column("name", 2, True),
-        Column("level", 0, True),
-        Column("xp", 1, True),
-        Column("coins", 1, True),             # Guild Coins
-        Column("araksat_boost", 0, True),     # How much members' Araksat gain is increased (1% per boost, max 150%) // 150 GC
-        Column("xp_boost", 0, True),          # How much members' XP gain is increased (1% per boost, max 150%)      // 150 GC
-        Column("energy_reduction", 0, True),  # How much less energy members need per round (-0.1 per boost, max -5) //  50 GC
-    ]),
-    Table("tbl_invite", [
-        Column("user", 0, True),
-        Column("clan", 0, True),
-        Column("type", 0, True),
-        Column("id", 0, True)     # Invite ID
-    ]),
-    Table("tbl_player", [
-        Column("uid", 0, True),                 # 01 - User ID
-        Column("name", 2, True),                # 02 - Username
-        Column("disc", 0, True),                # 03 - Discriminator
-        Column("araksat", 1, True),             # 04 - Player's Araksat balance
-        Column("coins", 0, True),               # 05 - Player's Coins
-        Column("level", 0, True),               # 06 - Normal Level
-        Column("xp", 1, True),                  # 07
-        Column("shaman_level", 0, True),        # 08
-        Column("shaman_xp", 1, True),           # 09
-        Column("shaman_feathers", 0, True),     # 10 - Shaman Feathers for upgrading capabilities
-        Column("shaman_probability", 0, True),  # 11 - Probability of being Shaman (default: 0.08 (8%), 0.5% per boost, max 40%) //  64 SF
-        Column("shaman_xp_boost", 0, True),     # 12 - Shaman XP gain boost (2% per boost, max 150%)                             //  75 SF
-        Column("shaman_save_boost", 0, True),   # 13 - Shaman Saves boost (1% per boost, max 100%)                               // 100 SF
-        Column("league_points", 0, True),       # 14
-        Column("energy", 1, True),              # 15 - Current energy
-        Column("energy_time", 1, True),         # 16 - When to start energy regen
-        Column("clan", 0, False),               # 17 - Clan ID player's a part of
-        Column("max_points", 0, True),          # 18 - Highest ever league points
-    ]),
     Table("temporary", [
         Column("uid", 0, True),       # User ID
         Column("type", 2, True),      # "mute" or "reminder"
