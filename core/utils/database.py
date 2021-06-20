@@ -85,6 +85,11 @@ tables = [
         Column("birthday", 4, True),
         Column("has_role", 3, True)
     ]),
+    Table("birthdays_kyomi", [
+        Column("uid", 0, True),
+        Column("birthday", 4, True),
+        Column("has_role", 3, True)
+    ]),
     Table("counters", [
         Column("uid1", 0, True),       # 00
         Column("uid2", 0, True),       # 01

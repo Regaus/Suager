@@ -820,3 +820,6 @@
 
 ## v7.2.35 - 17 June 2021
 - Added pineapple command
+
+## v7.2.36 - 20 June 2021
+- Fixed birthdays not going through properly

@@ -156,6 +156,7 @@ async def birthdays(bot: bot_data.Bot):
     await asyncio.sleep((then - now).total_seconds())
     print(f"{time.time()} > Initialised Birthdays for {bot.local_config['name']}")
 
+    birthday_table = "birthdays_kyomi" if bot.name == "kyomi" else "birthdays"
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
         _guilds.append(guild)
@@ -165,7 +166,7 @@ async def birthdays(bot: bot_data.Bot):
     channels = [bot.get_channel(cid) for cid in _channels]
     roles = [discord.Object(id=rid) for rid in _roles]
     while True:
-        birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
+        birthday_today = bot.db.fetch(f"SELECT * FROM {birthday_table} WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
         if birthday_today:
             for person in birthday_today:
                 dm = True
@@ -178,20 +179,23 @@ async def birthdays(bot: bot_data.Bot):
                                 dm = False
                                 await general.send(langs.gls("birthdays_message", langs.gl(Ctx(guild, bot)), user.mention), channels[i], u=True)
                                 await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
-                                print(f"{time.time()} > {guild.name} > Gave birthday role to {user.name}")
+                                print(f"{time.time()} > {bot.name} > {guild.name} > Gave birthday role to {user.name}")
                     except Exception as e:
-                        print(f"{time.time()} > Birthdays Handler > {e}")
+                        print(f"{time.time()} > {bot.name} > Birthdays Handler > {e}")
                 if dm:
                     try:
                         user = bot.get_user(person["uid"])
                         if user is not None:
                             await user.send(langs.gls("birthdays_message", "en", user.mention))
+                            print(f"{time.time()} > {bot.name} > Told {user.name} happy birthday in DMs")
+                        else:
+                            print(f"{time.time()} > {bot.name} > User {person['uid']} was not found")
                     except Exception as e:
-                        print(f"{time.time()} > Birthdays Handler > {e}")
-                bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
-        birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
+                        print(f"{time.time()} > {bot.name} > Birthdays Handler > {e}")
+                bot.db.execute(f"UPDATE {birthday_table} SET has_role=1 WHERE uid=?", (person["uid"],))
+        birthday_over = bot.db.fetch(f"SELECT * FROM {birthday_table} WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
         for person in birthday_over:
-            bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=?", (person["uid"],))
+            bot.db.execute(f"UPDATE {birthday_table} SET has_role=0 WHERE uid=?", (person["uid"],))
             for i in range(len(guilds)):
                 try:
                     guild = guilds[i]
@@ -199,9 +203,9 @@ async def birthdays(bot: bot_data.Bot):
                         user = guild.get_member(person["uid"])
                         if user is not None:
                             await user.remove_roles(roles[i], reason=f"It is no longer {user}'s birthday...")
-                            print(f"{time.time()} > {guild.name} > Removed birthday role from {user.name}")
+                            print(f"{time.time()} > {bot.name} > {guild.name} > Removed birthday role from {user.name}")
                 except Exception as e:
-                    print(f"{time.time()} > Birthdays Handler > {e}")
+                    print(f"{time.time()} > {bot.name} > Birthdays Handler > {e}")
         await asyncio.sleep(3600)
 
 
