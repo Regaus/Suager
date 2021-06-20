@@ -14,3 +14,8 @@
 
 ## v0.1.3.1 - 20 June 2021
 - Split Mizuki birthdays database from Suager's
+
+## v0.1.4 - 21 June 2021
+- Removed confirmation on setting your birthday
+- Added ability to change your birthday
+- Added command to delete your birthday

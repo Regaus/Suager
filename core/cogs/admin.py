@@ -90,7 +90,7 @@ def reload_module(human_name: str, module_name: str, bot):
         return f"Module {human_name} returned an error and was not reloaded...\n{error}"
     reloaded = f"Reloaded module {human_name}"
     if bot.local_config["logs"]:
-        logger.log(bot.name, "changes", f"{time.time()} > {bot.local_config['name']} > {reloaded}")
+        logger.log(bot.name, "changes", f"{time.time()} > {bot.internal_name} > {reloaded}")
     return reloaded
 
 
@@ -100,9 +100,8 @@ def reload_extension(bot, base: str, name: str):
     except Exception as e:
         return f"{type(e).__name__}: {e}"
     reloaded = f"Reloaded extension **{base}/cogs/{name}.py**"
-    lc = general.get_config()["bots"][bot.index]
-    if lc["logs"]:
-        logger.log(bot.name, "changes", f"{time.time()} > {lc['name']} > {reloaded}")
+    if bot.local_config["logs"]:
+        logger.log(bot.name, "changes", f"{time.time()} > {bot.internal_name} > {reloaded}")
     return reloaded
 
 
@@ -285,7 +284,7 @@ class Admin(commands.Cog):
                     error_collection.append([f"{base}/cogs/{cog}", f"{type(e).__name__}: {e}"])
             if error_collection:
                 output = "\n".join([f"**{error[0]}** - `{error[1]}`" for error in error_collection])
-                logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Unsuccessfully reloaded all shared extensions")
+                logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.internal_name} > Unsuccessfully reloaded all shared extensions")
                 return await general.send(f"Attempted to reload all shared extensions.\nThe following failed:\n\n{output}", ctx.channel)
             return await general.send("Successfully reloaded all shared extensions", ctx.channel)
 
@@ -314,9 +313,9 @@ class Admin(commands.Cog):
                         error_collection.append([file, f"{type(e).__name__}: {e}"])
         if error_collection:
             output = "\n".join([f"**{error[0]}** - `{error[1]}`" for error in error_collection])
-            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Unsuccessfully reloaded all extensions")
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.internal_name} > Unsuccessfully reloaded all extensions")
             return await general.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}", ctx.channel)
-        logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > Successfully reloaded all extensions")
+        logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.internal_name} > Successfully reloaded all extensions")
         return await general.send("Successfully reloaded all extensions", ctx.channel)
 
     @commands.command(name="reloadutil", aliases=["ru"])
@@ -348,7 +347,7 @@ class Admin(commands.Cog):
         reloaded = f"Loaded extension **{name1}/cogs/{name2}.py**"
         await general.send(reloaded, ctx.channel)
         if self.bot.local_config["logs"]:
-            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.internal_name} > {reloaded}")
 
     async def unload_ext(self, ctx, name1: str, name2: str):
         try:
@@ -358,7 +357,7 @@ class Admin(commands.Cog):
         reloaded = f"Unloaded extension **{name1}/cogs/{name2}.py**"
         await general.send(reloaded, ctx.channel)
         if self.bot.local_config["logs"]:
-            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.internal_name} > {reloaded}")
 
     @commands.command(name="load", aliases=["l"])
     @commands.check(permissions.is_owner)
@@ -390,7 +389,7 @@ class Admin(commands.Cog):
         self.bot.local_config = config["bots"][self.bot.index]
         reloaded = "Reloaded config.json"
         if self.bot.local_config["logs"]:
-            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.local_config['name']} > {reloaded}")
+            logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.internal_name} > {reloaded}")
         return reloaded
 
     @commands.command(name="updateconfig", aliases=["uc"])
@@ -408,7 +407,7 @@ class Admin(commands.Cog):
         import sys
         await general.send("Shutting down...", ctx.channel)
         if self.bot.local_config["logs"]:
-            logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.local_config['name']} > Shutting down from command...")
+            logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.internal_name} > Shutting down from command...")
         _time.sleep(1)
         sys.stderr.close()
         sys.exit(0)
@@ -481,7 +480,7 @@ class Admin(commands.Cog):
         self.reload_config()
         to_send = f"Changed full version from **{old_version}** to **{new_version}**"
         if self.bot.local_config["logs"]:
-            logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.local_config['name']} > {to_send}")
+            logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.internal_name} > {to_send}")
         return await general.send(to_send, ctx.channel)
 
     @commands.command(name="sversion", aliases=["shortversion", "sv"])
@@ -497,7 +496,7 @@ class Admin(commands.Cog):
         self.reload_config()
         to_send = f"Changed short version from **{old_version}** to **{new_version}**"
         if self.bot.local_config["logs"]:
-            logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.local_config['name']} > {to_send}")
+            logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.internal_name} > {to_send}")
         return await general.send(to_send, ctx.channel)
 
     @commands.group()

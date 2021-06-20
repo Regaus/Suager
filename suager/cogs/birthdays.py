@@ -1,5 +1,3 @@
-import asyncio
-import random
 import re
 from datetime import datetime
 
@@ -20,30 +18,23 @@ class Birthdays(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.re_timestamp = r"^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])"
-        # self.already = False
+        self.birthdays, self.birthday_self = ("birthdays_kyomi", "birthdays_birthday_mizuki") if bot.name == "kyomi" else ("birthdays", "birthdays_birthday_suager")
 
-    # @commands.Cog.listener()
-    # async def on_ready(self):
-    #     if not self.already:
-    #         self.already = True
-    # moved to temporaries.py
-
-    def check_birthday_noted(self, user_id):
-        """ Convert timestamp string to datetime """
-        data = self.bot.db.fetchrow("SELECT * FROM birthdays WHERE uid=?", (user_id,))
+    def check_birthday(self, user_id):
+        data = self.bot.db.fetchrow(f"SELECT * FROM {self.birthdays} WHERE uid=?", (user_id,))
         return data["birthday"] if data else None
 
     @commands.group(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @commands.max_concurrency(1, per=commands.BucketType.user)
     async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
-        """ Check your birthday or other people """
+        """ Check someone's birthday"""
         if ctx.invoked_subcommand is None:
             locale = langs.gl(ctx)
             user = user or ctx.author
             if user.id == self.bot.user.id:
-                return await general.send(langs.gls("birthdays_birthday_suager", locale), ctx.channel)
-            has_birthday = self.check_birthday_noted(user.id)
+                return await general.send(langs.gls(self.birthday_self, locale), ctx.channel)
+            has_birthday = self.check_birthday(user.id)
             if not has_birthday:
                 return await general.send(langs.gls("birthdays_birthday_not_saved", locale, user.name), ctx.channel)
             birthday = langs.gts_date(has_birthday, locale, False, False)
@@ -53,19 +44,11 @@ class Birthdays(commands.Cog):
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
-        """ Set your birthday :) [DD/MM] """
-        locale = langs.gl(ctx)
-        has_birthday = self.check_birthday_noted(ctx.author.id)
-        if has_birthday:
-            return await general.send(langs.gls("birthdays_set_already", locale, ctx.author.name, langs.gts_date(has_birthday, locale, False, False)),
-                                      ctx.channel)
-        confirm_code = random.randint(10000, 99999)
+        """ Set your birthday :)
 
-        def check_confirm(m):
-            if m.author == ctx.author and m.channel == ctx.channel:
-                if m.content.startswith(str(confirm_code)):
-                    return True
-            return False
+        Format: `DD/MM`
+        Example: //birthdays set 27/01"""
+        locale = langs.gl(ctx)
         if re.compile(self.re_timestamp).search(date):
             try:
                 timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
@@ -74,29 +57,43 @@ class Birthdays(commands.Cog):
         else:
             return await general.send(langs.gls("birthdays_set_invalid", locale), ctx.channel)
         date = langs.gts_date(timestamp, locale, False, False)
-        confirm_msg = await general.send(langs.gls("birthdays_set_confirmation", locale, ctx.author.name, date, confirm_code), ctx.channel)
-        try:
-            await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
-        except asyncio.TimeoutError:
-            return await confirm_msg.edit(content=langs.gls("generic_timed_out", locale, confirm_msg.clean_content))
-        self.bot.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (ctx.author.id, timestamp, False))
-        await confirm_msg.delete()
-        return await general.send(langs.gls("birthdays_set_set", locale, ctx.author.name, date), ctx.channel)
+        has_birthday = self.check_birthday(ctx.author.id)
+        if has_birthday:
+            self.bot.db.execute(f"UPDATE {self.birthdays} SET birthday=? WHERE uid=?", (timestamp, ctx.author.id))
+            old_date = langs.gts_date(has_birthday, locale, False, False)
+            return await general.send(langs.gls("birthdays_set_already", locale, ctx.author.name, date, old_date), ctx.channel)
+        else:
+            self.bot.db.execute(f"INSERT INTO {self.birthdays} VALUES (?, ?, ?)", (ctx.author.id, timestamp, False))
+            return await general.send(langs.gls("birthdays_set_set", locale, ctx.author.name, date), ctx.channel)
+
+    @birthday.command(name="clear", aliases=["reset", "delete"])
+    async def delete(self, ctx: commands.Context):
+        """ Delete your birthday """
+        locale = langs.gl(ctx)
+        self.bot.db.execute(f"DELETE FROM {self.birthdays} WHERE uid=?", (ctx.author.id,))
+        return await general.send(langs.gls("birthdays_clear", locale, ctx.author.name), ctx.channel)
 
     @birthday.command(name="forceset", aliases=["force"])
     @commands.check(permissions.is_owner)
     async def force_set(self, ctx: commands.Context, user: discord.User, *, new_time: str):
         """ Force-set someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
-        data = self.bot.db.execute("UPDATE birthdays SET birthday=? WHERE uid=?", (timestamp, user.id))
+        data = self.bot.db.execute(f"UPDATE {self.birthdays} SET birthday=? WHERE uid=?", (timestamp, user.id))
         return await general.send(data, ctx.channel)
 
     @birthday.command(name="insert")
     @commands.check(permissions.is_owner)
     async def insert(self, ctx: commands.Context, user: discord.User, *, new_time: str):
-        """ Insert someone's birthday """
+        """ Force-insert someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
-        data = self.bot.db.execute("INSERT INTO birthdays VALUES (?, ?, ?)", (user.id, timestamp, False))
+        data = self.bot.db.execute(f"INSERT INTO {self.birthdays} VALUES (?, ?, ?)", (user.id, timestamp, False))
+        return await general.send(data, ctx.channel)
+
+    @birthday.command(name="forcedelete")
+    @commands.check(permissions.is_owner)
+    async def force_delete(self, ctx: commands.Context, user: discord.User):
+        """ Force-delete someone's birthday """
+        data = self.bot.db.execute(f"DELETE FROM {self.birthdays} WHERE uid=?", (user.id,))
         return await general.send(data, ctx.channel)
 
 

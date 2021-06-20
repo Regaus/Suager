@@ -77,7 +77,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        send = f"{time.time()} > {self.bot.local_config['name']} > Joined {guild.name} ({guild.id})"
+        send = f"{time.time()} > {self.bot.internal_name} > Joined {guild.name} ({guild.id})"
         if self.local_config["logs"]:
             logger.log(self.bot.name, "guilds", send)
         print(send)
@@ -93,7 +93,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        send = f"{time.time()} > {self.bot.local_config['name']} > Left {guild.name} ({guild.id})"
+        send = f"{time.time()} > {self.bot.internal_name} > Left {guild.name} ({guild.id})"
         if self.local_config["logs"]:
             logger.log(self.bot.name, "guilds", send)
         print(send)
@@ -112,7 +112,7 @@ class Events(commands.Cog):
         except AttributeError:
             g = "Private Message"
         content = ctx.message.clean_content
-        send = f"{time.time()} > {self.bot.local_config['name']} > {g} > {ctx.author} ({ctx.author.id}) > {content}"
+        send = f"{time.time()} > {self.bot.internal_name} > {g} > {ctx.author} ({ctx.author.id}) > {content}"
         if self.local_config["logs"]:
             logger.log(self.bot.name, "commands", send)
         print(send)
@@ -123,7 +123,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just joined {member.guild.name}")
+        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.internal_name} > {member} ({member.id}) just joined {member.guild.name}")
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:
                 members = len(member.guild.members)
@@ -147,7 +147,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {member} ({member.id}) just left {member.guild.name}")
+        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.internal_name} > {member} ({member.id}) just left {member.guild.name}")
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:
                 survival = langs.td_dt(member.joined_at, "en")
@@ -170,7 +170,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {user} ({user.id}) just got banned from {guild.name}")
+        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.internal_name} > {user} ({user.id}) just got banned from {guild.name}")
         message = f"{user} ({user.id}) has been **banned** from {guild.name}"
         if self.bot.name == "suager":
             if guild.id == 568148147457490954:
@@ -180,7 +180,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.local_config['name']} > {user} ({user.id}) just got unbanned from {guild.name}")
+        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.internal_name} > {user} ({user.id}) just got unbanned from {guild.name}")
         message = f"{user} ({user.id}) has been **unbanned** from {guild.name}"
         if self.bot.name == "suager":
             if guild.id == 568148147457490954:
@@ -193,11 +193,11 @@ class Events(commands.Cog):
         if not hasattr(self.bot, 'uptime'):
             self.bot.uptime = time.now(None)
         self.blocked_logs = self.bot.get_channel(739183533792297164)
-        print(f"{time.time()} > {self.bot.local_config['name']} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
+        print(f"{time.time()} > {self.bot.internal_name} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
         playing = f"Loading... | v{general.get_version()[self.bot.name]['short_version']}"
         await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
         if self.local_config["logs"]:
-            logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.local_config['name']} > Bot is online")
+            logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.internal_name} > Bot is online")
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):

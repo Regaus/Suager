@@ -14,6 +14,7 @@ class Bot(AutoShardedBot):
         self.local_config = lc
         self.config = config
         self.name = name
+        self.internal_name = self.local_config["name"]
         self.db = db
         self.usages = usages
 

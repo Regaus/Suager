@@ -823,3 +823,9 @@
 
 ## v7.2.36 - 20 June 2021
 - Fixed birthdays not going through properly
+
+## v7.2.37 - 20 June 2021
+- Added `bot.internal_name` (instead of having to do `bot.local_config["name"]`)
+- Removed confirmation on setting your birthday
+- Added ability to change your birthday
+- Added command to delete your birthday

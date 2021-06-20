@@ -98,7 +98,6 @@ _year = time.now(None).year
 class Leveling(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.lvl = "leveling" if bot.name == "suager" else "leveling2"
 
     @commands.command(name="leveling")
     @commands.is_owner()

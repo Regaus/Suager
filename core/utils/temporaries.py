@@ -154,9 +154,9 @@ async def birthdays(bot: bot_data.Bot):
     now = time.now(None)
     then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > Initialised Birthdays for {bot.local_config['name']}")
+    print(f"{time.time()} > Initialised Birthdays for {bot.internal_name}")
 
-    birthday_table = "birthdays_kyomi" if bot.name == "kyomi" else "birthdays"
+    birthday_table, birthday_message = ("birthdays_kyomi", "birthdays_message2") if bot.name == "kyomi" else ("birthdays", "birthdays_message")
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
         _guilds.append(guild)
@@ -179,19 +179,19 @@ async def birthdays(bot: bot_data.Bot):
                                 dm = False
                                 await general.send(langs.gls("birthdays_message", langs.gl(Ctx(guild, bot)), user.mention), channels[i], u=True)
                                 await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
-                                print(f"{time.time()} > {bot.name} > {guild.name} > Gave birthday role to {user.name}")
+                                print(f"{time.time()} > {bot.internal_name} > {guild.name} > Gave birthday role to {user.name}")
                     except Exception as e:
-                        print(f"{time.time()} > {bot.name} > Birthdays Handler > {e}")
+                        general.print_error(f"{time.time()} > {bot.internal_name} > Birthdays Handler > {e}")
                 if dm:
                     try:
                         user = bot.get_user(person["uid"])
                         if user is not None:
                             await user.send(langs.gls("birthdays_message", "en", user.mention))
-                            print(f"{time.time()} > {bot.name} > Told {user.name} happy birthday in DMs")
+                            print(f"{time.time()} > {bot.internal_name} > Told {user.name} happy birthday in DMs")
                         else:
-                            print(f"{time.time()} > {bot.name} > User {person['uid']} was not found")
+                            general.print_error(f"{time.time()} > {bot.internal_name} > User {person['uid']} was not found")
                     except Exception as e:
-                        print(f"{time.time()} > {bot.name} > Birthdays Handler > {e}")
+                        general.print_error(f"{time.time()} > {bot.internal_name} > Birthdays Handler > {e}")
                 bot.db.execute(f"UPDATE {birthday_table} SET has_role=1 WHERE uid=?", (person["uid"],))
         birthday_over = bot.db.fetch(f"SELECT * FROM {birthday_table} WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
         for person in birthday_over:
@@ -203,9 +203,9 @@ async def birthdays(bot: bot_data.Bot):
                         user = guild.get_member(person["uid"])
                         if user is not None:
                             await user.remove_roles(roles[i], reason=f"It is no longer {user}'s birthday...")
-                            print(f"{time.time()} > {bot.name} > {guild.name} > Removed birthday role from {user.name}")
+                            print(f"{time.time()} > {bot.internal_name} > {guild.name} > Removed birthday role from {user.name}")
                 except Exception as e:
-                    print(f"{time.time()} > {bot.name} > Birthdays Handler > {e}")
+                    general.print_error(f"{time.time()} > {bot.internal_name} > Birthdays Handler > {e}")
         await asyncio.sleep(3600)
 
 
@@ -216,7 +216,7 @@ async def playing(bot: bot_data.Bot):
     now = time.now(None)
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > Initialised Playing updater for {bot.local_config['name']}")
+    print(f"{time.time()} > Initialised Playing updater for {bot.internal_name}")
 
     while True:
         try:
@@ -345,13 +345,13 @@ async def playing(bot: bot_data.Bot):
                     3: "Watching",
                     5: "Competing in"
                 }.get(_activity["type"], "Undefined")
-                logger.log(bot.name, "playing", f"{time.time()} > {bot.local_config['name']} > Updated activity to {status} {name}")
+                logger.log(bot.name, "playing", f"{time.time()} > {bot.internal_name} > Updated activity to {status} {name}")
         except PermissionError:
-            general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > Failed to save changes.")
+            general.print_error(f"{time.time()} > {bot.internal_name} > Playing Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > The bot tried to do something while disconnected.")
+            general.print_error(f"{time.time()} > {bot.internal_name} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
-            general.print_error(f"{time.time()} > {bot.local_config['name']} > Playing Changer > {type(e).__name__}: {e}")
+            general.print_error(f"{time.time()} > {bot.internal_name} > Playing Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(update_speed)
 
 
@@ -359,7 +359,7 @@ async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
     now = time.now(None)
-    then = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
+    then = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
     await asyncio.sleep((then - now).total_seconds())
     print(f"{time.time()} > Initialised Avatar updater")
 
@@ -371,7 +371,7 @@ async def avatars(bot: bot_data.Bot):
             # avatars = lists.avatars
             avatar = random.choice(lists.avatars)
             e = False
-            s1, s2 = [f"{time.time()} > {bot.local_config['name']} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
+            s1, s2 = [f"{time.time()} > {bot.internal_name} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
             try:
                 bio = await http.get(avatar, res_method="read")
                 await bot.user.edit(avatar=bio)
@@ -381,9 +381,9 @@ async def avatars(bot: bot_data.Bot):
             if log:
                 logger.log(bot.name, "avatar", send)
         except PermissionError:
-            general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > Failed to save changes.")
+            general.print_error(f"{time.time()} > {bot.internal_name} > Avatar Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > The bot tried to do something while disconnected.")
+            general.print_error(f"{time.time()} > {bot.internal_name} > Avatar Changer > The bot tried to do something while disconnected.")
         except Exception as e:
-            general.print_error(f"{time.time()} > {bot.local_config['name']} > Avatar Changer > {type(e).__name__}: {e}")
+            general.print_error(f"{time.time()} > {bot.internal_name} > Avatar Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(3600)
