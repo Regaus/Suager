@@ -76,12 +76,12 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
     weekdays, months = [f"{language} not available"] * 8, [f"{language} not available"] * 16
     if language == "rsl-1k":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
-        months = ["Senkavan", "Shiravan", "Nuuvan", "Kaivuan", "Antuvan", "Vainaran", "Kiitavan", "Hartuvan",
-                  "Raavan", "Nummavan", "Vitteran", "Vaikivan", "Kaivyan", "Kaaratan", "Kallüvan", "Suvakän"]
+        months = ["Senkavan", "Shiravan", "Nuuvan", "Bylkuvan", "Akuvan", "Vainavan", "Kiitavan", "Lürvuan",
+                  "Raavan", "Kummavan", "Vittevan", "Avikkan", "Kaivyan", "Karratan", "Darvuan", "Suvakän"]
     elif language == "rsl-1i":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
-        months = ["Senkaan", "Shiraan", "Nuuan", "Kaivuan", "Antuan", "Vainaan", "Kiitaan", "Hartuan",
-                  "Raan", "Nummaan", "Vittean", "Vaikian", "Kaivyan", "Karratan", "Kaijuan", "Suvajan"]
+        months = ["Senkaan", "Shiraan", "Nuuan", "Bylkuan", "Akuan", "Vainaan", "Kiitaan", "Lürvuan",
+                  "Raaan", "Kummaan", "Vittean", "Aviggan", "Kaivyan", "Karratan", "Darvuan", "Suvajan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
     output.day_of_week = (output.day - 1) % 8
     if output.day == 17:

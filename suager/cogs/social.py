@@ -30,7 +30,7 @@ class Social(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
-            self.poke, self.boop, self.tickle, self.laugh = [lists.error] * 17
+            self.poke, self.boop, self.tickle, self.laugh, self.dance = [lists.error] * 18
         self.insert = f"INSERT INTO counters VALUES ({'?, ' * 19}?)"
         self.empty = [0] * 20
         self.locked = [667187968145883146, 746173049174229142]
@@ -560,6 +560,19 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = langs.gls("social_laugh", locale, ctx.author.name) if at is None else langs.gls("social_laugh_at", locale, ctx.author.name, at.name)
         embed.set_image(url=random.choice(self.laugh))
+        return await general.send(None, ctx.channel, embed=embed)
+
+    @commands.command(name="dance")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def dance(self, ctx):
+        """ You're dancing """
+        locale = langs.gl(ctx)
+        if is_fucked(self.dance):
+            self.dance = await lists.get_images(self.bot, 'd')
+        embed = discord.Embed(colour=general.random_colour())
+        embed.title = langs.gls("social_dance", locale, ctx.author.name)
+        embed.set_image(url=random.choice(self.dance))
         return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="bean")

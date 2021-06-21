@@ -252,6 +252,7 @@
   "social_bot": "Я не думаю, что бот тебе ответит...",
   "social_cry": "{0} плачет",
   "social_cuddle": "{0} cuddled {1}",
+  "social_dance": "{0} танцует",
   "social_food": "**{0}** дал **{1}** {2}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ {2}",
   "social_food_bot": "Боты не питаются человеческой едой...",
   "social_forbidden": "{emotes.Deny} Это нельзя делать.",

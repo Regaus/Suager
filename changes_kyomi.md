@@ -19,3 +19,6 @@
 - Removed confirmation on setting your birthday
 - Added ability to change your birthday
 - Added command to delete your birthday
+
+## v0.1.5 - 21 June 2021
+- Added dance command

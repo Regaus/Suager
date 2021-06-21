@@ -265,6 +265,7 @@
   "social_bot": "I don't think the bot is going to respond to you...",
   "social_cry": "{0} is crying",
   "social_cuddle": "{0} cuddled {1}",
+  "social_dance": "{0} is dancing",
   "social_food": "**{0}** gave **{1}** a {2}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ {2}",
   "social_food_bot": "Bots can't eat normal food...",
   "social_forbidden": "{emotes.Deny} This action cannot be done.",

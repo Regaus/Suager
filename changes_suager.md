@@ -838,3 +838,6 @@
 ## v7.2.39 - 21 June 2021
 - Removed source command
 - Updated permissions used by the invite command
+
+## v7.2.40 - 21 June 2021
+- Added dance command

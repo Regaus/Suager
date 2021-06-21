@@ -249,3 +249,6 @@
 - Removed RSL-1e locale
 - Removed RSL-1e documentation command
 - Removed TBL v1
+
+## v1.1.25 - 21 June 2021
+- Updated RSL-1 months
