@@ -1,10 +1,10 @@
 {
   "suager": {
     "short_version": "7.2",
-    "version": "7.2.38",
+    "version": "7.2.39",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1624236506
+    "last_update": 1624237876
   },
   "cobble": {
     "short_version": "1.1",

@@ -2,7 +2,9 @@ import sys
 from io import BytesIO
 
 import discord
+from discord import Permissions
 from discord.ext import commands
+from discord.utils import oauth_url
 
 from core.utils import general, time
 from languages import langs
@@ -12,12 +14,12 @@ class BotInformation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="source")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def source(self, ctx: commands.Context):
-        """ Source codes """
-        links = "\n<https://github.com/AlexFlipnote/discord_bot.py>\n<https://github.com/AlexFlipnote/birthday.py>"
-        return await general.send(langs.gls("info_source", langs.gl(ctx)) + links, ctx.channel)
+    # @commands.command(name="source")
+    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    # async def source(self, ctx: commands.Context):
+    #     """ Source codes """
+    #     links = "\n<https://github.com/AlexFlipnote/discord_bot.py>\n<https://github.com/AlexFlipnote/birthday.py>"
+    #     return await general.send(langs.gls("info_source", langs.gl(ctx)) + links, ctx.channel)
 
     @commands.command(name="stats", aliases=["info", "about", "status"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -77,51 +79,26 @@ class BotInformation(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def invite(self, ctx: commands.Context):
         """ Invite me to your own server! """
-        perms = 470150231
-        link = f"\n<https://discordapp.com/oauth2/authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>"
-        return await general.send(langs.gls("info_invite_bot", langs.gl(ctx), ctx.author.name) + link, ctx.channel)
-
-    # @commands.command(name="botserver")
-    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    # async def my_server(self, ctx: commands.Context):
-    #     """ Get an invite to my server """
-    #     locale = langs.gl(ctx)
-    #     if isinstance(ctx.channel, discord.DMChannel) or ctx.guild.id != self.bot.local_config["home_server_id"]:
-    #         invite = self.bot.local_config["home_invite"]
-    #         if invite:
-    #             try:
-    #                 await ctx.author.send(langs.gls("info_server", locale, ctx.author.name))
-    #                 await ctx.author.send(invite)
-    #                 try:
-    #                     await ctx.message.add_reaction("✉")
-    #                 except discord.Forbidden:
-    #                     pass
-    #             except discord.Forbidden:
-    #                 return await general.send(langs.gls("info_server_failed", locale), ctx.channel)
-    #         else:
-    #             return await general.send(langs.gls("info_server_none", locale), ctx.channel)
-    #     else:
-    #         return await general.send(langs.gls("info_server_home", locale), ctx.channel)
+        perms = 470150358  # Old: 470150231
+        # link = f"\n<https://discordapp.com/oauth2/authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>"
+        link = f"<{oauth_url(str(self.bot.user.id), Permissions(perms))}>"
+        return await general.send(langs.gls("info_invite_bot", langs.gl(ctx), ctx.author.name, link), ctx.channel)
 
     @commands.command(name="ping")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def ping(self, ctx: commands.Context):
         """ Check how slow Discord API is today """
         import time as _time
-        # from datetime import datetime
         ws = int(self.bot.latency * 1000)
-        # t0 = int((datetime.utcnow() - ctx.message.created_at).total_seconds() * 1000)
         t1 = _time.time()
-        r1 = f"Message Send: undefined\nMessage Edit: undefined\nWS Latency: {ws:,}ms"
+        r1 = f"Message Send: unknown\nMessage Edit: unknown\nWS Latency: {ws:,}ms"
         msg = await general.send(r1, ctx.channel, u=[ctx.author])
         t2 = int((_time.time() - t1) * 1000)
-        r2 = f"Message Send: {t2:,}ms\nMessage Edit: undefined\nWS Latency: {ws:,}ms"
-        # r2 = langs.gls("info_ping_2", locale, langs.gns(ws), langs.gns(t2))
+        r2 = f"Message Send: {t2:,}ms\nMessage Edit: unknown\nWS Latency: {ws:,}ms"
         t2s = _time.time()
         await msg.edit(content=r2)
         t3 = int((_time.time() - t2s) * 1000)
         r3 = f"Message Send: {t2:,}ms\nMessage Edit: {t3:,}ms\nWS Latency: {ws:,}ms"
-        # r3 = langs.gls("info_ping_3", locale, langs.gns(ws), langs.gns(t2), langs.gns(t3))
         await msg.edit(content=r3)
 
 

@@ -1,12 +1,12 @@
 Pillow
 discord
-discord.py
+discord.py>=1.7
 aiohttp
 python-dateutil
 asyncio
 yarl<1.2
 pytz
-jishaku
+jishaku>=2.0.0
 luas.py
 requests
 psutil

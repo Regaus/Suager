@@ -834,3 +834,7 @@
 - Improved output of global rank command
 - Improved output of yearly rank command
 - Changed the progress on Suager's own rank to 100% (from 50%)
+
+## v7.2.39 - 21 June 2021
+- Removed source command
+- Updated permissions used by the invite command
