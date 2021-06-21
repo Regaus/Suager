@@ -829,3 +829,8 @@
 - Removed confirmation on setting your birthday
 - Added ability to change your birthday
 - Added command to delete your birthday
+
+## v7.2.38 - 21 June 2021
+- Improved output of global rank command
+- Improved output of yearly rank command
+- Changed the progress on Suager's own rank to 100% (from 50%)

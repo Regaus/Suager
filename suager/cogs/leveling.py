@@ -338,15 +338,15 @@ class Leveling(commands.Cog):
             return await general.send(langs.gls("leveling_rewards_none", locale), ctx.channel)
 
     async def level(self, ctx: commands.Context, who: discord.Member or None, locale: str, key: str = "xp"):
+        user = who or ctx.author
+        is_self = user.id == self.bot.user.id
+        if user.bot and not is_self:
+            return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
         async with ctx.typing():
-            user = who or ctx.author
-            is_self = user.id == self.bot.user.id
-            if user.bot and not is_self:
-                return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             if key.isnumeric():
                 r = langs.gls("leveling_rank_yearly", locale, user, ctx.guild.name, key)
-                if key == "2021":
+                if str(key) == "2021":
                     cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
                     if ctx.guild.id not in cobble_servers:
                         r += langs.gls("leveling_rank_yearly21", locale, ctx.guild.name)
@@ -419,12 +419,7 @@ class Leveling(commands.Cog):
             except IndexError:
                 prev = 0
             _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? ORDER BY \"{key}\" DESC", (ctx.guild.id,))
-            # print(key)
-            # print(_data)
             place = langs.gls("leveling_rank_rank", locale, langs.gls("generic_unknown", locale))
-            # if user.id == 430891116318031872:  # Alex Five is always fifth
-            #     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(5, locale)))
-            # else:
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
                     place = langs.gls("leveling_rank_rank", locale, langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale)))
@@ -438,7 +433,7 @@ class Leveling(commands.Cog):
                 r4 = langs.gls("leveling_rank_xp_left", locale, langs.gns((req - xp), locale)) if level < max_level else ""
                 dr.text((text_x, (298 if r4 else 362)), langs.gls("leveling_rank_xp", locale, r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
-                progress = 0.5
+                progress = 1  # 0.5
                 place = langs.gls("leaderboards_place", locale, langs.gns(1, locale))
                 _rank = langs.gls("leveling_rank_rank", locale, place)
                 _level = langs.gls("leveling_rank_level", locale, langs.gns(69420, locale))
@@ -472,14 +467,6 @@ class Leveling(commands.Cog):
         """ Check your or someone's rank """
         locale = langs.gl(ctx)
         return await self.level(ctx, who, locale, "xp")
-
-    @commands.command(name="rankyearly", aliases=["rank3", "ranky", "rankyear"])
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_yearly(self, ctx: commands.Context, year: int = _year, *, who: discord.Member = None):
-        """ Check someone's activity during a certain year """
-        locale = langs.gl(ctx)
-        return await self.level(ctx, who, locale, str(year))
 
     @commands.command(name="rankembed", aliases=["rank2", "ranke"])
     @commands.guild_only()
@@ -562,6 +549,46 @@ class Leveling(commands.Cog):
         # if self.bot.name == "cobble":
         #     embed.description += "\nCobbleBot XP is counted since 2 January 2021 AD."
         return await general.send(None, ctx.channel, embed=embed)
+
+    @commands.command(name="rankyearly", aliases=["rank3", "ranky", "rankyear"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def rank_yearly(self, ctx: commands.Context, year: int = _year, *, who: discord.Member = None):
+        """ Check someone's activity during a certain year """
+        locale = langs.gl(ctx)
+        # return await self.level(ctx, who, locale, str(year))
+        user = who or ctx.author
+        if user.bot:
+            return await general.send(langs.gls("leveling_rank_bot", locale), ctx.channel)
+        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
+        if data:
+            try:
+                xp = data[str(year)]
+            except KeyError:
+                return await general.send(langs.gls("leveling_rank_yearly_no", locale, year), ctx.channel)
+            level = 0
+            for lvl in levels:
+                if xp >= lvl:
+                    level += 1
+                else:
+                    break
+        else:
+            return await general.send(langs.gls("leveling_rank_none", locale, ctx.author, year), ctx.channel)
+        _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? ORDER BY \"{year}\" DESC", (ctx.guild.id,))
+        place = langs.gls("generic_unknown", locale)
+        for x in range(len(_data)):
+            if _data[x]['uid'] == user.id:
+                place = langs.gls("leaderboards_place", locale, langs.gns(x + 1, locale))
+                break
+        r1 = langs.gns(int(xp), locale)
+        r2 = langs.gns(level, locale)
+
+        output = langs.gls("leveling_rank_yearly", locale, user, ctx.guild.name, year, r1, r2, place)
+        if str(year) == "2021":
+            cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
+            if ctx.guild.id not in cobble_servers:
+                output += langs.gls("leveling_rank_yearly21", locale, ctx.guild.name)
+        return await general.send(output, ctx.channel)
 
     @commands.command(name="rankglobal", aliases=["rankg", "grank"])
     @commands.guild_only()
