@@ -841,3 +841,6 @@
 
 ## v7.2.40 - 21 June 2021
 - Added dance command
+
+## v7.2.41 - 23 June 2021
+- See starboard stats per-user

@@ -160,7 +160,7 @@ class Starboard(commands.Cog):
         user = self.bot.get_user(user_id)
         return user if user is not None else f"Unknown user {user_id}"
 
-    @commands.command(name="stars", aliases=["starboard"])
+    @commands.command(name="stars", aliases=["starboard", "sb"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def star_data(self, ctx: commands.Context, user: discord.User = None):
@@ -184,6 +184,7 @@ class Starboard(commands.Cog):
             authors_sorted = dict(sorted(authors.items(), key=lambda x: x[1]))
             embed.title = f"Starboard stats for {ctx.guild.name}"
             embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
+            embed.set_thumbnail(url=ctx.guild.icon_url)
             top_messages = ""
             authors_out = ""
             # Top Starred Posts
@@ -203,6 +204,24 @@ class Starboard(commands.Cog):
                 embed.add_field(name="Top starred messages", value=top_messages, inline=False)
             if authors_out:
                 embed.add_field(name="Top message authors", value=authors_out, inline=False)
+            return await general.send(None, ctx.channel, embed=embed)
+        else:
+            embed = discord.Embed(colour=general.random_colour())
+            self.bot.db.execute("DELETE FROM starboard WHERE stars=0")
+            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? ORDER BY stars DESC", (ctx.guild.id, user.id))
+            stars = 0
+            top = []
+            for i, message in enumerate(data):
+                # message = data[i]
+                if i < 10:
+                    top.append(message)
+                stars += message["stars"]
+            embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
+            embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
+            embed.set_thumbnail(url=user.avatar_url)
+            for i, _message in enumerate(top, start=1):
+                jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
+                embed.description += f"\n{i}) ⭐ {_message['stars']} - Message in [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
             return await general.send(None, ctx.channel, embed=embed)
 
 
