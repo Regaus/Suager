@@ -22,3 +22,6 @@
 
 ## v0.1.5 - 21 June 2021
 - Added dance command
+
+## v0.1.6 - 23 June 2021
+- Added Midnight Desserts to the birthdays list

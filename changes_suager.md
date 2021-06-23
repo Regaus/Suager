@@ -844,3 +844,7 @@
 
 ## v7.2.41 - 23 June 2021
 - See starboard stats per-user
+
+## v7.2.41.1 - 23 June 2021
+- Improved starboard error-handling
+- Deletion of messages keeps them on the starboard, and simply removes their entry from the database
