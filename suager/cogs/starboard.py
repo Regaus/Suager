@@ -1,5 +1,4 @@
 import json
-from typing import Union
 
 import discord
 from discord.ext import commands
@@ -13,20 +12,19 @@ class Starboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def starboard_update(self, payload: Union[discord.RawReactionActionEvent, discord.RawReactionClearEvent, discord.RawReactionClearEmojiEvent]):
+    async def starboard_update(self, payload: discord.RawReactionActionEvent):
         """ Handle updating the data on the message. """
-        _type = {
-            discord.RawReactionActionEvent: 1,
-            discord.RawReactionClearEvent: 2,
-            discord.RawReactionClearEmojiEvent: 3,
-            # discord.RawMessageDeleteEvent: 4
-        }.get(type(payload))
-        increase = (1 if payload.event_type == "REACTION_ADD" else -1 if payload.event_type == "REACTION_REMOVE" else 0) if _type == 1 else 0
-        # print(f"DEBUG: {_type=}, {increase=}")
-        if _type in [1, 3]:
-            emoji = payload.emoji
-            if emoji.name != "⭐":
-                return  # Not a star, ignore.
+        # _type = {
+        #     discord.RawReactionActionEvent: 1,
+        #     discord.RawReactionClearEvent: 2,
+        #     discord.RawReactionClearEmojiEvent: 3,
+        #     # discord.RawMessageDeleteEvent: 4
+        # }.get(type(payload))
+        increase = 1 if payload.event_type == "REACTION_ADD" else -1 if payload.event_type == "REACTION_REMOVE" else 0
+        # if _type in [1, 3]:
+        emoji = payload.emoji
+        if emoji.name != "⭐":
+            return  # Not a star, ignore.
         server = payload.guild_id
         if server is None:
             return
@@ -65,17 +63,17 @@ class Starboard(commands.Cog):
             _message: discord.Message = await _channel.fetch_message(message)
         except (discord.NotFound, discord.Forbidden):
             return  # Since what's the point of starring a message you don't even know
-        if _type == 1:
-            user = payload.user_id
-            _author = _message.author.id
-            if user == _author:
-                return  # You shouldn't star your own messages
-        else:
-            _author = 0
+        # if _type == 1:
+        user = payload.user_id
+        _author = _message.author.id
+        if user == _author:
+            return  # You shouldn't star your own messages
+        # else:
+        #     _author = 0
         # adder = payload.user_id
         data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=?", (message,))
         new = not data
-        stars = (1 if new else data["stars"] + increase) if _type == 1 else 0
+        stars = 1 if new else data["stars"] + increase  # if _type == 1 else 0
         star_message = f"⭐ {stars} - <#{channel}>"
         if "minimum" not in __settings["starboard"] or not __settings["starboard"]["minimum"]:
             minimum = 3
@@ -87,10 +85,10 @@ class Starboard(commands.Cog):
         #     self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))  # The message has been deleted, so also remove it from the database.
         #     logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {message} has been deleted.")
         else:
-            if _type == 1:
-                self.bot.db.execute("UPDATE starboard SET stars=stars+? WHERE message=?", (increase, message))
-            else:
-                self.bot.db.execute("UPDATE starboard SET stars=0 WHERE message=?", (increase, message))
+            # if _type == 1:
+            self.bot.db.execute("UPDATE starboard SET stars=stars+? WHERE message=?", (increase, message))
+            # else:
+            #     self.bot.db.execute("UPDATE starboard SET stars=0 WHERE message=?", (increase, message))
         logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {message} in #{_channel.name} ({guild.name}) now has {stars} stars.")
 
         async def send_starboard_message():
@@ -110,6 +108,7 @@ class Starboard(commands.Cog):
             try:
                 _starboard_message = await general.send(star_message, starboard_channel, embed=embed)
                 self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=?", (_starboard_message.id, message))
+                logger.log(self.bot.name, "starboard", f"{time.time()} > Saved Message ID {message} to starboard channel")
             except discord.Forbidden:
                 try:
                     await general.send(langs.gls("starboard_error_message", locale), _channel)
@@ -164,20 +163,38 @@ class Starboard(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload: discord.RawReactionClearEvent):
         """ All reactions were cleared from a message """
-        return await self.starboard_update(payload)
+        # return await self.starboard_update(payload)
+        # Delete the message from the database, but keep it on the starboard channel
+        output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
+        if output != "DELETE 0":
+            logger.log(self.bot.name, "starboard", f"{time.time()} > Reactions of Message ID {payload.message_id} were cleared.")
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent):
         """ An emote has been cleared from a message """
-        return await self.starboard_update(payload)
+        # return await self.starboard_update(payload)
+        if payload.emoji.name == "⭐":
+            # Delete the message from the database, but keep it on the starboard channel
+            output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
+            if output != "DELETE 0":
+                logger.log(self.bot.name, "starboard", f"{time.time()} > Star reactions of Message ID {payload.message_id} were cleared.")
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         """ Message was deleted """
         # return await self.starboard_update(payload)
         # Delete the message from the database, but keep it on the starboard channel
-        self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
-        logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {payload.message_id} has been deleted.")
+        output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
+        if output != "DELETE 0":
+            logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {payload.message_id} has been deleted.")
+
+    @commands.Cog.listener()
+    async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
+        """ Several messages were deleted """
+        for message in payload.message_ids:
+            output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))
+            if output != "DELETE 0":
+                logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {message} has been bulk-deleted.")
 
     def find_user(self, user_id: int):
         user = self.bot.get_user(user_id)
@@ -215,7 +232,7 @@ class Starboard(commands.Cog):
                 # try:
                 #     message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
                 jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
-                top_messages += f"\n{i}) ⭐ {_message['stars']} - {self.find_user(_message['author'])} in [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
+                top_messages += f"\n{i}) ⭐ {_message['stars']} - {self.find_user(_message['author'])} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
                 # except (discord.NotFound, AttributeError):
                 #     embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
             for i, _data in enumerate(authors_sorted.items(), start=1):

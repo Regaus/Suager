@@ -848,3 +848,6 @@
 ## v7.2.41.1 - 23 June 2021
 - Improved starboard error-handling
 - Deletion of messages keeps them on the starboard, and simply removes their entry from the database
+
+## v7.2.41.2 - 24 June 2021
+- Handle reaction clearing same as message deletion for starboard

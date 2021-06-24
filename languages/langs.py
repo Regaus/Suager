@@ -167,7 +167,7 @@ def td_dt(dt: datetime, locale: str = "en", source: datetime = None, accuracy: i
 # Code based on R. Danny
 
 
-def td_int(seconds: int, locale: str = "en", accuracy: int = 3, is_future: bool = False, brief: bool = True, suffix: bool = False) -> str:
+def td_int(seconds: Union[int, float], locale: str = "en", accuracy: int = 3, is_future: bool = False, brief: bool = True, suffix: bool = False) -> str:
     return td_dt(time.now(None) + timedelta(seconds=seconds if is_future else -seconds - 1), locale, accuracy=accuracy, brief=brief, suffix=suffix)
 
 

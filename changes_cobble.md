@@ -252,3 +252,6 @@
 
 ## v1.1.25 - 21 June 2021
 - Updated RSL-1 months
+
+## v1.1.26 - 24 June 2021
+- Data about dawn and dusk for Kargadia

@@ -5,6 +5,7 @@ import discord
 
 from cobble.utils.times import time_hosvalnerus, time_kaltaryna, time_kargadia, time_kuastall_11, time_sinvimania, time_zeivela
 from core.utils import general, time
+from languages import langs
 
 places = {
     "Akkigar":             ["Kargadia", 1282.3, 148.7],
@@ -298,12 +299,24 @@ class Place:
             embed.description += "\n\nWeather conditions not available."
 
         if no_sun:
-            embed.add_field(name="Sunrise and Sunset", value=self.sun_data.sunrise, inline=True)
-            embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
+            sun_output = f"{self.sun_data.sunrise}\nSolar noon: {noon.isoformat()}"
         else:
-            embed.add_field(name="Sunrise", value=sunrise.isoformat(), inline=True)
-            embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
-            embed.add_field(name="Sunset", value=sunset.isoformat(), inline=True)
+            daylight = langs.td_int(self.sun_data.daylight_length * 86400, "en", 2, brief=False)
+            sun_output = f"`Dawn:       {self.sun_data.dawn.isoformat()}`\n" \
+                         f"`Sunrise:    {sunrise.isoformat()}`\n" \
+                         f"`Solar noon: {noon.isoformat()}`\n" \
+                         f"`Sunset:     {sunset.isoformat()}`\n" \
+                         f"`Dusk:       {self.sun_data.dusk.isoformat()}`\n\n" \
+                         f"Daylight length: {daylight}"
+        embed.add_field(name="About the Sun", value=sun_output, inline=False)
+
+        # if no_sun:
+        #     embed.add_field(name="Sunrise and Sunset", value=self.sun_data.sunrise, inline=True)
+        #     embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
+        # else:
+        #     embed.add_field(name="Sunrise", value=sunrise.isoformat(), inline=True)
+        #     embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
+        #     embed.add_field(name="Sunset", value=sunset.isoformat(), inline=True)
         embed.set_footer(text=f"Current season: {season.title()}")
         embed.timestamp = time.now(None)
         return embed
@@ -312,7 +325,7 @@ class Place:
 class Sun:
     def __init__(self, place: Place):
         self.place = place
-        self.solar_noon, self.sunrise, self.sunset = self.get_data()
+        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.daylight_length = self.get_data()
 
     def convert_time(self):
         year_start = date(2021, 1, 1)  # Assume it to always be 2021 to not deal with the year day differences shenanigans
@@ -334,15 +347,18 @@ class Sun:
 
     def get_data(self):
         day_number: float = self.convert_time()
-        solar_noon_t, sunrise_t, sunset_t = self.calculate(day_number)
+        solar_noon_t, sunrise_t, sunset_t, dawn_t, dusk_t = self.calculate(day_number)
         solar_noon = self.time_from_decimal(solar_noon_t)
         sunrise = self.time_from_decimal(sunrise_t)
         sunset = self.time_from_decimal(sunset_t)
+        dawn = self.time_from_decimal(dawn_t)
+        dusk = self.time_from_decimal(dusk_t)
         if sunrise_t == 2 or sunset_t == 2:
             sunrise, sunset = "Always daytime today", "Always daytime today"
         elif sunrise_t == 3 or sunset_t == 3:
             sunrise, sunset = "Always nighttime today", "Always nighttime today"
-        return solar_noon, sunrise, sunset
+        daylight = sunset_t - sunrise_t
+        return solar_noon, sunrise, sunset, dawn, dusk, daylight
 
     def calculate(self, day_number: float):
         """
@@ -375,12 +391,21 @@ class Sun:
 
         solar_noon_t = (720 - 4 * longitude - eqtime + self.place.tz * 60) / 1440
         output = cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
+        twilight = cos(rad(96)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
         if -1 <= output <= 1:
             hour_angle = deg(acos(output))
             sunrise_t = solar_noon_t - hour_angle * 4 / 1440
             sunset_t = solar_noon_t + hour_angle * 4 / 1440
+            if -1 <= twilight <= 1:
+                twilight_ha = deg(acos(twilight))
+                dawn_t = solar_noon_t - twilight_ha * 4 / 1440
+                dusk_t = solar_noon_t + twilight_ha * 4 / 1440
+            else:
+                dawn_t, dusk_t = 0, 0
         elif output < -1:
             sunrise_t, sunset_t = 2, 2  # Eternal daylight
+            dawn_t, dusk_t = 0, 0
         else:
             sunrise_t, sunset_t = 3, 3  # Eternal nighttime
-        return solar_noon_t, sunrise_t, sunset_t
+            dawn_t, dusk_t = 0, 0
+        return solar_noon_t, sunrise_t, sunset_t, dawn_t, dusk_t
