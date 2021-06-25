@@ -9,6 +9,12 @@ from core.utils import emotes, general, time
 from languages import langs
 
 
+longest_city = {
+    "Kargadia": 19,
+    "Qevenerus": 9,
+}
+
+
 class Conworlds(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -98,12 +104,13 @@ class Conworlds(commands.Cog):
         Input a planet (e.g. Kargadia) to see list of all locations on the planet
         Input a place to see where it is"""
         if where:
-            if where in ["Kargadia"]:
+            if where in ["Zeivela", "Kargadia", "Qevenerus"]:
                 _places = []
+                _longest = longest_city[where]
                 for city, data in places.places.items():
                     if data[0] == where:
                         place = places.Place(city)
-                        _places.append(f"`{city:<19} - {place.location(True)}`")
+                        _places.append(f"`{city:<{_longest}} - {place.location(True)}`")
                 return await general.send(f"Locations in {where}:\n\n" + "\n".join(_places), ctx.channel)
             else:
                 try:

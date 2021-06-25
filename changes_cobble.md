@@ -257,4 +257,9 @@
 - Data about dawn and dusk for Kargadia
 
 ## v1.1.27 - 25 June 2021
-- More solar accuracy, hopefully: Part 1
+- More solar accuracy, hopefully
+
+## v1.1.28 - 25 June 2021
+- Converted Kargadian places to 3600x1800 map format
+- Made latitude/longitude output more precise
+- Removed "month of" parts from Zeivela and Qevenerus time generation

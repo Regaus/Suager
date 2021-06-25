@@ -1,5 +1,5 @@
-from datetime import date, time as dt_time
-from math import acos, asin, cos, degrees as deg, radians as rad, sin, tan
+from datetime import time as dt_time
+from math import acos, asin, cos, degrees as deg, radians as rad, sin
 
 import discord
 
@@ -8,53 +8,63 @@ from core.utils import general, time
 from languages import langs
 
 places = {
-    "Akkigar":             ["Kargadia", 1282.3, 148.7],
-    "Bylkangar":           ["Kargadia", 1184.2, 665.8],
-    "Bylkankaldanpeaskat": ["Kargadia", 1361.8, 835.2],
-    "Degan Ihat":          ["Kargadia", 1744.6, 788.6],
-    "Erellgar":            ["Kargadia",  637.1, 466.9],
-    "Iha na Sevarddain":   ["Kargadia", 1352.5, 879.2],
-    "Irtangar":            ["Kargadia", 1349.8,  93.4],
-    "Kaivus na Advuräin":  ["Kargadia", 1199.0, 730.0],
-    "Kanerakainead":       ["Kargadia",  506.0,  50.5],
-    "Kanertebaria":        ["Kargadia",  333.5, 758.9],
-    "Kiomigar":            ["Kargadia", 1310.8, 166.3],
-    "Kirtinangar":         ["Kargadia",  477.3, 158.1],
-    "Kitnagar":            ["Kargadia", 1494.9, 620.2],
-    "Kunval na Shaivain":  ["Kargadia", 1224.3, 782.1],
-    "Lakkeaina":           ["Kargadia", 1337.0, 341.1],
-    "Leitagar":            ["Kargadia",  170.0, 157.2],
-    "Lersedigar":          ["Kargadia",  707.6, 328.8],
-    "Liidennan Koirantat": ["Kargadia",  147.7, 834.5],
-    "Lirrinta Teinain":    ["Kargadia",   24.0, 796.3],
-    "Muruvasaitari":       ["Kargadia", 1306.6, 264.6],
-    "Neikelaa":            ["Kargadia",  971.4, 403.5],
-    "Orlagar":             ["Kargadia",  174.3, 171.3],
-    "Pakigar":             ["Kargadia",  177.7, 191.2],
-    "Peaskar":             ["Kargadia",  244.9, 324.4],
-    "Regavall":            ["Kargadia",  654.5, 111.7],  # Original: 672, 132
-    "Reggar":              ["Kargadia",  617.1, 147.5],  # Original: 591, 148
-    "Seivanlias":          ["Kargadia", 1623.5, 794.2],
-    "Senkan Laikadu":      ["Kargadia",  518.9, 269.1],
-    "Sentagar":            ["Kargadia",  843.7, 249.3],
-    "Sentatebaria":        ["Kargadia",  298.4, 811.4],
-    "Shonangar":           ["Kargadia",  173.9, 173.7],
-    "Sunovalliat":         ["Kargadia",   87.9, 737.5],
-    "Taivead":             ["Kargadia", 1606.7, 800.9],
-    "Tebarimostus":        ["Kargadia",  315.4, 759.2],
-    "Tentar Hintakadu":    ["Kargadia", 1428.7, 796.7],
-    "Tevivall":            ["Kargadia",  491.3, 294.6],
-    "Vaidoks":             ["Kargadia", 1366.5, 496.1],
-    "Vintelingar":         ["Kargadia",  743.2, 461.7],
-    "Virsetgar":           ["Kargadia",  893.8, 450.0],
+    "Akkigar":             ["Kargadia", 2602.1,  313.1],
+    "Bylkangar":           ["Kargadia", 2382.3, 1311.8],
+    "Bylkankaldanpeaskat": ["Kargadia", 2828.2, 1689.3],
+    "Bylkanseivanlias":    ["Kargadia", 3283.0, 1553.2],
+    "Bylkantaivead":       ["Kargadia", 3274.3, 1564.4],
+    "Degan Ihat":          ["Kargadia", 3539.7, 1536.5],
+    "Ekspigar":            ["Kargadia", 2560.4,  317.3],
+    "Erellgar":            ["Kargadia", 1275.5,  944.2],
+    "Erdapeaskat":         ["Kargadia",  504.1, 1140.6],
+    "Huntavall":           ["Kargadia", 1545.2, 1529.9],
+    "Iha na Sevarddain":   ["Kargadia", 2791.5, 1745.7],
+    "Irtangar":            ["Kargadia", 2731.3,  163.8],
+    "Kaivus na Advuräin":  ["Kargadia", 2510.2, 1515.1],
+    "Kanerakainead":       ["Kargadia", 1015.0,  100.8],
+    "Kanertebaria":        ["Kargadia",  666.6, 1515.9],
+    "Kiomigar":            ["Kargadia", 2628.7,  349.0],
+    "Kirtinangar":         ["Kargadia",  953.3,  319.2],
+    "Kitnagar":            ["Kargadia", 3005.5, 1240.0],
+    "Kunval na Shaivain":  ["Kargadia", 2623.3, 1624.5],
+    "Lakkeaina":           ["Kargadia", 2662.6,  673.6],
+    "Leitagar":            ["Kargadia",  335.4,  318.4],
+    "Lersedigar":          ["Kargadia", 1417.2,  631.3],
+    "Liidennan Koirantat": ["Kargadia",  317.7, 1664.1],
+    "Lirrinta Teinain":    ["Kargadia",   25.0, 1598.4],
+    "Muruvasaitari":       ["Kargadia", 2614.2,  526.3],
+    "Neikelaa":            ["Kargadia", 1960.6,  733.1],
+    "Nurvutgar":           ["Kargadia", 2114.1, 1498.2],
+    "Orlagar":             ["Kargadia",  342.7,  346.7],
+    "Pakigar":             ["Kargadia",  347.5,  376.0],
+    "Peaskar":             ["Kargadia",  510.0,  642.4],
+    "Regavall":            ["Kargadia", 1295.3,  210.8],
+    "Reggar":              ["Kargadia", 1236.4,  300.0],
+    "Seankar Kainead":     ["Kargadia", 2670.4, 1800.0],
+    "Senkadar Laikadu":    ["Kargadia", 1031.7,  548.6],
+    "Sentagar":            ["Kargadia", 1691.2,  495.3],
+    "Sentatebaria":        ["Kargadia",  602.3, 1610.5],
+    "Shonangar":           ["Kargadia",  344.1,  347.8],
+    "Steirigar":           ["Kargadia",  305.2,  538.2],
+    "Sunovalliat":         ["Kargadia",  157.2, 1462.2],
+    "Tebarimostus":        ["Kargadia",  636.2, 1524.7],
+    "Tentar Hintakadu":    ["Kargadia", 2877.7, 1579.9],
+    "Tevivall":            ["Kargadia",  982.3,  576.2],
+    "Vaidoks":             ["Kargadia", 2754.5,  986.3],
+    "Vintelingar":         ["Kargadia", 1485.2,  892.5],
+    "Virsetgar":           ["Kargadia", 1800.0,  900.0],
+
+    "Kaltarena":           ["Qevenerus", 2100.0,  655.1],
 }
 offsets = {
-    "Kargadia": -893.8,  # -843.7 | -343
+    "Kargadia": -1800.0,  # -843.7 | -343
+    "Qevenerus": -2100.0,
 }
 times = {
     "Zeivela": time_zeivela,
     "Kargadia": time_kargadia,
-    "Kaltaryna": time_kaltaryna,
+    "Qevenerus": time_kaltaryna,
+
     "Sinvimania": time_sinvimania,
     "Hosvalnerus": time_hosvalnerus,
     "Kuastall-11": time_kuastall_11,
@@ -62,7 +72,8 @@ times = {
 lengths = {
     "Zeivela": 212.16,  # 432 + 1/3
     "Kargadia": 256.0625,  # 512.125
-    "Kaltaryna": 800.0,
+    "Qevenerus": 800.0,
+
     "Sinvimania": 373.8,
     "Hosvalnerus": 378.5,
     "Kuastall-11": 19384.2,
@@ -70,16 +81,20 @@ lengths = {
 month_counts = {
     "Zeivela": 12,
     "Kargadia": 16,
-    "Kaltaryna": 16,
+    "Qevenerus": 16,
+
     "Sinvimania": 12,
     "Hosvalnerus": 20,
 }
 eccentricity = {
     "Zeivela": 0.0271,
     "Kargadia": 0.01721,
+    "Qevenerus": 0.0216,
 }
 axial_tilts = {
+    "Zeivela": 23.47,
     "Kargadia": 26.7,
+    "Qevenerus": 63.71,
 }
 weathers = {
 
@@ -100,7 +115,7 @@ class Place:
             raise PlaceDoesNotExist(place)
         self.tz = round(self.long / (360 / 24))
         self.tz += {
-            "Kanertebaria": -1,
+            "Kiomigar": -1,
             "Regavall": -1,
         }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
@@ -127,21 +142,22 @@ class Place:
             lat *= -1
         if long < 0:
             long *= -1
-        return f"{lat:>4.1f}°{n}, {long:>5.1f}°{e}" if indent else f"{lat:.1f}°{n}, {long:.1f}°{e}"
+        return f"{lat:>5.2f}°{n}, {long:>6.2f}°{e}" if indent else f"{lat:.2f}°{n}, {long:.2f}°{e}"
 
     def get_location(self):
         planet, x, y = places[self.place]
         offset = offsets[planet]
         x += offset
-        long = x / 5
+        size = 10
+        long = x / size
         if long > 180:
             long = -(360 - long)
-        lat = y / 5
+        lat = y / size
         if lat > 90:
             lat = 90 - lat
         else:
             lat = -(lat - 90)
-        return planet, round(lat, 1), round(long, 1)
+        return planet, lat, long
 
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
@@ -330,96 +346,6 @@ class Place:
         return embed
 
 
-class SunEarth:
-    def __init__(self, place: Place):
-        self.place = place
-        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.daylight_length = self.get_data()
-
-    def convert_time(self):
-        year_start = date(2021, 1, 1)  # Assume it to always be 2021 to not deal with the year day differences shenanigans
-        if self.place.planet in ["Kargadia", "Kaltaryna"]:
-            year_start = date(2021, 3, 20)  # Kargadian years start in spring, so make it be the equinox
-        start = year_start.toordinal() - 693595  # To convert it to the calculator's date format
-        _time = self.place.time
-        year_day = _time.year_day  # Amount of days past since New Year
-        addition = round(year_day / lengths[self.place.planet] * 365.25)  # Try to fit the date into a 365-day Earth year
-        day_part = (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400  # How much of the day passed (as a fraction)
-        return start + addition + day_part
-
-    @staticmethod
-    def time_from_decimal(day_part: float):
-        seconds = int((day_part % 1) * 86400)
-        h, ms = divmod(seconds, 3600)
-        m, s = divmod(ms, 60)
-        return dt_time(h, m, s)
-
-    def get_data(self):
-        day_number: float = self.convert_time()
-        solar_noon_t, sunrise_t, sunset_t, dawn_t, dusk_t = self.calculate(day_number)
-        solar_noon = self.time_from_decimal(solar_noon_t)
-        sunrise = self.time_from_decimal(sunrise_t)
-        sunset = self.time_from_decimal(sunset_t)
-        dawn = self.time_from_decimal(dawn_t)
-        dusk = self.time_from_decimal(dusk_t)
-        if sunrise_t == 2 or sunset_t == 2:
-            sunrise, sunset = "Always daytime today", "Always daytime today"
-        elif sunrise_t == 3 or sunset_t == 3:
-            sunrise, sunset = "Always nighttime today", "Always nighttime today"
-        daylight = sunset_t - sunrise_t
-        return solar_noon, sunrise, sunset, dawn, dusk, daylight
-
-    def calculate(self, day_number: float):
-        """
-        Perform the actual calculations for sunrise, sunset and
-        a number of related quantities.
-
-        The results are stored in the instance variables
-        sunrise_t, sunset_t and solar_noon_t
-        """
-        longitude = self.place.long  # in decimal degrees, east is positive
-        latitude = self.place.lat  # in decimal degrees, north is positive
-
-        j_day = day_number + 2415018.5  # Julian day
-        j_cent = (j_day - 2451545) / 36525  # Julian century
-
-        mean_anomaly = 357.52911 + j_cent * (35999.05029 - 0.0001537 * j_cent)
-        mean_long = 280.46646 + j_cent * (36000.76983 + j_cent * 0.0003032) % 360
-        eccent = 0.016708634 - j_cent * (0.000042037 + 0.0001537 * j_cent)
-        mean_obliquity = 23 + (26 + (21.448 - j_cent * (46.815 + j_cent * (0.00059 - j_cent * 0.001813))) / 60) / 60
-        obliquity = mean_obliquity + 0.00256 * cos(rad(125.04 - 1934.136 * j_cent))
-        # obliquity = 26.7
-        vary = tan(rad(obliquity / 2)) * tan(rad(obliquity / 2))
-        eq_of_centre = sin(rad(mean_anomaly)) * (1.914602 - j_cent * (0.004817 + 0.000014 * j_cent)) + sin(rad(2 * mean_anomaly)) * (0.019993 - 0.000101 * j_cent) \
-            + sin(rad(3 * mean_anomaly)) * 0.000289
-        solar_true_long = mean_long + eq_of_centre
-        solar_app_long = solar_true_long - 0.00569 - 0.00478 * sin(rad(125.04 - 1934.136 * j_cent))
-        declination = deg(asin(sin(rad(obliquity)) * sin(rad(solar_app_long))))
-
-        eq_of_time = 4 * deg(vary * sin(2 * rad(mean_long)) - 2 * eccent * sin(rad(mean_anomaly)) + 4 * eccent * vary * sin(rad(mean_anomaly)) * cos(2 * rad(mean_long))
-                             - 0.5 * vary * vary * sin(4 * rad(mean_long)) - 1.25 * eccent * eccent * sin(2 * rad(mean_anomaly)))
-
-        solar_noon_t = (720 - 4 * longitude - eq_of_time + self.place.tz * 60) / 1440
-        output = cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
-        twilight = cos(rad(96)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
-        if -1 <= output <= 1:
-            hour_angle = deg(acos(output))
-            sunrise_t = solar_noon_t - hour_angle * 4 / 1440
-            sunset_t = solar_noon_t + hour_angle * 4 / 1440
-            if -1 <= twilight <= 1:
-                twilight_ha = deg(acos(twilight))
-                dawn_t = solar_noon_t - twilight_ha * 4 / 1440
-                dusk_t = solar_noon_t + twilight_ha * 4 / 1440
-            else:
-                dawn_t, dusk_t = 0, 0
-        elif output < -1:
-            sunrise_t, sunset_t = 2, 2  # Eternal daylight
-            dawn_t, dusk_t = 0, 0
-        else:
-            sunrise_t, sunset_t = 3, 3  # Eternal nighttime
-            dawn_t, dusk_t = 0, 0
-        return solar_noon_t, sunrise_t, sunset_t, dawn_t, dusk_t
-
-
 def time_from_decimal(day_part: float):
     seconds = int((day_part % 1) * 86400)
     h, ms = divmod(seconds, 3600)
@@ -443,11 +369,10 @@ class Sun:
         # Assume that perihelion was exactly at December solstice of year 0, and adjust the amount of days passed to perihelion
         # Perihelion variable shows the mean anomaly of the star at 1/1/0001
         perihelion = {
-            "Kargadia": 90
+            "Kargadia": 90,
+            "Qevenerus": 90,  # This calculation uses the solar RSL-1h calendar
         }[self.place.planet]
-        spin_speed = {
-            "Kargadia": 360 / year_length  # 1.4059067610446667
-        }[self.place.planet]
+        spin_speed = 360 / year_length  # 1.4059067610446667
         # per_days = (year_day + perihelion) % year_length  # Days passed, adjusted to the perihelion
         mean_anomaly = (perihelion + spin_speed * days) % 360
         # mean_anomaly = 360 * (per_days / year_length)  # Current mean anomaly, in degrees

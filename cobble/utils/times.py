@@ -63,7 +63,7 @@ def time_zeivela(when: datetime = None, tz: float = 0):  # 23.4
     output.day_name = f"Keina te {output.day_name}"
     if output.day == 37:
         output.day_name = f"Keine te Vantakku-Tahnall"
-    output.month_name = f"te Vaiku te {output.month_name}"
+    output.month_name = f"{output.month_name}"
     return output
 
 
@@ -112,7 +112,7 @@ def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
     parts = ["Tea", "Rea", "Sea", "Vea"]
     part = h // 6
     output.day_name = f"{parts[part]} ida {weekdays[output.day_of_week]}"
-    output.month_name = f"ida Sakku ida {output.month_name}"
+    output.month_name = f"{output.month_name}"
     return output
 
 
