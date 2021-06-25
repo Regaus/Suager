@@ -62,7 +62,7 @@ times = {
 lengths = {
     "Zeivela": 212.16,  # 432 + 1/3
     "Kargadia": 256.0625,  # 512.125
-    "Kaltaryna": 800,
+    "Kaltaryna": 800.0,
     "Sinvimania": 373.8,
     "Hosvalnerus": 378.5,
     "Kuastall-11": 19384.2,
@@ -73,6 +73,13 @@ month_counts = {
     "Kaltaryna": 16,
     "Sinvimania": 12,
     "Hosvalnerus": 20,
+}
+eccentricity = {
+    "Zeivela": 0.0271,
+    "Kargadia": 0.01721,
+}
+axial_tilts = {
+    "Kargadia": 26.7,
 }
 weathers = {
 
@@ -99,6 +106,7 @@ class Place:
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
         self.time = time_function(tz=self.tz)
+        # self.time = time_function(datetime(276, 12, 26, 22, 30, tzinfo=timezone.utc) + timedelta(days=296.3429057999991 * 10000), tz=self.tz)
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun_data = Sun(self)
         try:
@@ -322,7 +330,7 @@ class Place:
         return embed
 
 
-class Sun:
+class SunEarth:
     def __init__(self, place: Place):
         self.place = place
         self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.daylight_length = self.get_data()
@@ -374,22 +382,23 @@ class Sun:
         j_day = day_number + 2415018.5  # Julian day
         j_cent = (j_day - 2451545) / 36525  # Julian century
 
-        m_anom = 357.52911 + j_cent * (35999.05029 - 0.0001537 * j_cent)
-        m_long = 280.46646 + j_cent * (36000.76983 + j_cent * 0.0003032) % 360
+        mean_anomaly = 357.52911 + j_cent * (35999.05029 - 0.0001537 * j_cent)
+        mean_long = 280.46646 + j_cent * (36000.76983 + j_cent * 0.0003032) % 360
         eccent = 0.016708634 - j_cent * (0.000042037 + 0.0001537 * j_cent)
-        m_obliq = 23 + (26 + (21.448 - j_cent * (46.815 + j_cent * (0.00059 - j_cent * 0.001813))) / 60) / 60
-        obliq = m_obliq + 0.00256 * cos(rad(125.04 - 1934.136 * j_cent))
-        vary = tan(rad(obliq / 2)) * tan(rad(obliq / 2))
-        seqcent = sin(rad(m_anom)) * (1.914602 - j_cent * (0.004817 + 0.000014 * j_cent)) + sin(rad(2 * m_anom)) * (0.019993 - 0.000101 * j_cent) \
-            + sin(rad(3 * m_anom)) * 0.000289
-        struelong = m_long + seqcent
-        sapplong = struelong - 0.00569 - 0.00478 * sin(rad(125.04 - 1934.136 * j_cent))
-        declination = deg(asin(sin(rad(obliq)) * sin(rad(sapplong))))
+        mean_obliquity = 23 + (26 + (21.448 - j_cent * (46.815 + j_cent * (0.00059 - j_cent * 0.001813))) / 60) / 60
+        obliquity = mean_obliquity + 0.00256 * cos(rad(125.04 - 1934.136 * j_cent))
+        # obliquity = 26.7
+        vary = tan(rad(obliquity / 2)) * tan(rad(obliquity / 2))
+        eq_of_centre = sin(rad(mean_anomaly)) * (1.914602 - j_cent * (0.004817 + 0.000014 * j_cent)) + sin(rad(2 * mean_anomaly)) * (0.019993 - 0.000101 * j_cent) \
+            + sin(rad(3 * mean_anomaly)) * 0.000289
+        solar_true_long = mean_long + eq_of_centre
+        solar_app_long = solar_true_long - 0.00569 - 0.00478 * sin(rad(125.04 - 1934.136 * j_cent))
+        declination = deg(asin(sin(rad(obliquity)) * sin(rad(solar_app_long))))
 
-        eqtime = 4 * deg(vary * sin(2 * rad(m_long)) - 2 * eccent * sin(rad(m_anom)) + 4 * eccent * vary * sin(rad(m_anom)) * cos(2 * rad(m_long))
-                         - 0.5 * vary * vary * sin(4 * rad(m_long)) - 1.25 * eccent * eccent * sin(2 * rad(m_anom)))
+        eq_of_time = 4 * deg(vary * sin(2 * rad(mean_long)) - 2 * eccent * sin(rad(mean_anomaly)) + 4 * eccent * vary * sin(rad(mean_anomaly)) * cos(2 * rad(mean_long))
+                             - 0.5 * vary * vary * sin(4 * rad(mean_long)) - 1.25 * eccent * eccent * sin(2 * rad(mean_anomaly)))
 
-        solar_noon_t = (720 - 4 * longitude - eqtime + self.place.tz * 60) / 1440
+        solar_noon_t = (720 - 4 * longitude - eq_of_time + self.place.tz * 60) / 1440
         output = cos(rad(90.833)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
         twilight = cos(rad(96)) / (cos(rad(latitude)) * cos(rad(declination))) - tan(rad(latitude)) * tan(rad(declination))
         if -1 <= output <= 1:
@@ -409,3 +418,80 @@ class Sun:
             sunrise_t, sunset_t = 3, 3  # Eternal nighttime
             dawn_t, dusk_t = 0, 0
         return solar_noon_t, sunrise_t, sunset_t, dawn_t, dusk_t
+
+
+def time_from_decimal(day_part: float):
+    seconds = int((day_part % 1) * 86400)
+    h, ms = divmod(seconds, 3600)
+    m, s = divmod(ms, 60)
+    return dt_time(h, m, s)
+
+
+class Sun:
+    def __init__(self, place: Place):
+        self.place = place
+        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.daylight_length = self.get_data()
+
+    def calculate(self):
+        _time = self.place.time
+        # Total days passed + current part of day, adjusted to central TZ | Started from the dawn of the calendar
+        days = _time.ds + (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400
+        year_length = lengths[self.place.planet]  # Exact length of the year in local solar days
+        # year_day = days % year_length  # Current day of the real solar year, without any calendar error
+        # solar_day = year_day - self.place.long / 360  # Day adjusted to current longitude
+
+        # Assume that perihelion was exactly at December solstice of year 0, and adjust the amount of days passed to perihelion
+        # Perihelion variable shows the mean anomaly of the star at 1/1/0001
+        perihelion = {
+            "Kargadia": 90
+        }[self.place.planet]
+        spin_speed = {
+            "Kargadia": 360 / year_length  # 1.4059067610446667
+        }[self.place.planet]
+        # per_days = (year_day + perihelion) % year_length  # Days passed, adjusted to the perihelion
+        mean_anomaly = (perihelion + spin_speed * days) % 360
+        # mean_anomaly = 360 * (per_days / year_length)  # Current mean anomaly, in degrees
+        coefficient = eccentricity[self.place.planet] * 114.6  # EOC coefficient seems to be approximately 114.6x the eccentricity
+        equation_of_centre = coefficient * sin(rad(mean_anomaly))
+        ecliptic_longitude = (mean_anomaly + equation_of_centre + 180 + 87) % 360  # degrees
+        axial_tilt = axial_tilts[self.place.planet]  # Axial tilt (obliquity) of the planet, in degrees
+        declination = deg(asin(sin(rad(ecliptic_longitude)) * sin(rad(axial_tilt))))  # Declination of the sun, degrees
+        # (720 - 4 * self.place.long - eq_of_time + self.place.tz * 60) / 1440
+        solar_noon_t = 0.5 + 0.0053 * sin(rad(mean_anomaly)) - 0.0069 * sin(rad(2 * ecliptic_longitude)) - self.place.long / 360 + self.place.tz / 24  # Fraction of the day
+
+        def hour_angle_cos(zenith: float):
+            return (sin(rad(zenith) - sin(rad(self.place.lat)) * sin(rad(declination)))) / (cos(rad(self.place.lat)) * cos(rad(declination)))
+
+        sunrise_cos = hour_angle_cos(-0.833)
+        twilight_cos = hour_angle_cos(-6)
+        if -1 <= sunrise_cos <= 1:
+            hour_angle = deg(acos(sunrise_cos))
+            sunrise_t = solar_noon_t - hour_angle * 4 / 1440
+            sunset_t = solar_noon_t + hour_angle * 4 / 1440
+            if -1 <= twilight_cos <= 1:
+                twilight_ha = deg(acos(twilight_cos))
+                dawn_t = solar_noon_t - twilight_ha * 4 / 1440
+                dusk_t = solar_noon_t + twilight_ha * 4 / 1440
+            else:
+                dawn_t, dusk_t = 0, 1
+        elif sunrise_cos < -1:
+            sunrise_t, sunset_t = 2, 2  # Eternal daylight
+            dawn_t, dusk_t = 0, 1
+        else:
+            sunrise_t, sunset_t = 3, 3  # Eternal nighttime
+            dawn_t, dusk_t = 0, 1
+        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t
+
+    def get_data(self):
+        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t = self.calculate()
+        dawn = time_from_decimal(dawn_t)
+        sunrise = time_from_decimal(sunrise_t)
+        solar_noon = time_from_decimal(solar_noon_t)
+        sunset = time_from_decimal(sunset_t)
+        dusk = time_from_decimal(dusk_t)
+        if sunrise_t == 2 or sunset_t == 2:
+            sunrise, sunset = "Always daytime today", "Always daytime today"
+        elif sunrise_t == 3 or sunset_t == 3:
+            sunrise, sunset = "Always nighttime today", "Always nighttime today"
+        daylight = sunset_t - sunrise_t
+        return solar_noon, sunrise, sunset, dawn, dusk, daylight

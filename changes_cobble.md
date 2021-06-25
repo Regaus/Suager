@@ -255,3 +255,6 @@
 
 ## v1.1.26 - 24 June 2021
 - Data about dawn and dusk for Kargadia
+
+## v1.1.27 - 25 June 2021
+- More solar accuracy, hopefully: Part 1
