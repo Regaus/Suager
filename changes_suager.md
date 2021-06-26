@@ -854,3 +854,8 @@
 
 ## v7.3.0 - 26 June 2021
 - Starboard is now translatable
+
+## v7.3.1 - 26 June 2021
+- Rearranged all cogs and utils to be in one folder, and updated index.py to just load the necessary ones
+- Made reload commands support the new cogs and utils structure
+- Removed the online, offline, restart commands from admin, they're not needed anymore

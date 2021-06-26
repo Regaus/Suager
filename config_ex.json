@@ -9,10 +9,7 @@
         "s/",
         "S/"
       ],
-      "logs": true,
       "timezone": "Europe/Dublin",
-      "exclude_core_cogs": [],
-      "shared": {},
       "error_channel": 738442483591151638,
       "default_locale": "en"
     },
@@ -25,15 +22,7 @@
         "c.",
         "C."
       ],
-      "logs": true,
       "timezone": "Europe/Dublin",
-      "exclude_core_cogs": [],
-      "shared": {
-        "suager": [
-          "achievements",
-          "leveling"
-        ]
-      },
       "error_channel": 738442483591151638,
       "default_locale": "rsl-1i"
     },
@@ -46,16 +35,7 @@
         "m!",
         "M!"
       ],
-      "logs": true,
       "timezone": "CST6CDT",
-      "exclude_core_cogs": [],
-      "shared": {
-        "suager": [
-          "birthdays",
-          "social",
-          "starboard"
-        ]
-      },
       "error_channel": 738442483591151638,
       "default_locale": "en"
     }
