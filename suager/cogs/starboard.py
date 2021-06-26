@@ -205,9 +205,12 @@ class Starboard(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def star_data(self, ctx: commands.Context, user: discord.User = None):
         """ Starboard stats for the server or a specific user """
+        locale = langs.gl(ctx)
         if user is None:
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? ORDER BY stars DESC", (ctx.guild.id,))
+            if not data:
+                return await general.send(langs.gls("starboard_stats_none", locale), ctx.channel)
             stars = 0
             authors = {}
             top = []
@@ -221,8 +224,10 @@ class Starboard(commands.Cog):
                 else:
                     authors[message["author"]] = message["stars"]
             authors_sorted = dict(sorted(authors.items(), key=lambda x: x[1], reverse=True))
-            embed.title = f"Starboard stats for {ctx.guild.name}"
-            embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
+            # embed.title = f"Starboard stats for {ctx.guild.name}"
+            embed.title = langs.gls("starboard_stats", locale, ctx.guild.name)
+            # embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
+            embed.description = langs.gls("starboard_stats_desc", locale, langs.gns(stars, locale), langs.gns(len(data), locale))
             embed.set_thumbnail(url=ctx.guild.icon_url)
             top_messages = ""
             authors_out = ""
@@ -232,7 +237,8 @@ class Starboard(commands.Cog):
                 # try:
                 #     message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
                 jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
-                top_messages += f"\n{i}) ⭐ {_message['stars']} - {self.find_user(_message['author'])} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
+                _stars = langs.gns(_message["stars"], locale)
+                top_messages += f"\n{i}) ⭐ {_stars} - {self.find_user(_message['author'])} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
                 # except (discord.NotFound, AttributeError):
                 #     embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
             for i, _data in enumerate(authors_sorted.items(), start=1):
@@ -240,13 +246,15 @@ class Starboard(commands.Cog):
                     _uid, _stars = _data
                     authors_out += f"\n{i}) ⭐ {_stars} - <@{_uid}>"
             if top_messages:
-                embed.add_field(name="Top starred messages", value=top_messages, inline=False)
+                embed.add_field(name=langs.gls("starboard_stats_messages", locale), value=top_messages, inline=False)
             if authors_out:
-                embed.add_field(name="Top message authors", value=authors_out, inline=False)
+                embed.add_field(name=langs.gls("starboard_stats_authors", locale), value=authors_out, inline=False)
             return await general.send(None, ctx.channel, embed=embed)
         else:
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? ORDER BY stars DESC", (ctx.guild.id, user.id))
+            if not data:
+                return await general.send(langs.gls("starboard_stats_none2", locale, user.name), ctx.channel)
             stars = 0
             top = []
             for i, message in enumerate(data):
@@ -254,12 +262,15 @@ class Starboard(commands.Cog):
                 if i < 10:
                     top.append(message)
                 stars += message["stars"]
-            embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
-            embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
+            # embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
+            embed.title = langs.gls("starboard_stats_user", locale, user, ctx.guild.name)
+            # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
+            embed.description = langs.gls("starboard_stats_user_desc", locale, langs.gns(stars, locale), langs.gns(len(data), locale))
             embed.set_thumbnail(url=user.avatar_url)
             for i, _message in enumerate(top, start=1):
                 jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
-                embed.description += f"\n{i}) ⭐ {_message['stars']} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
+                _stars = langs.gns(_message["stars"], locale)
+                embed.description += f"\n{i}) ⭐ {_stars} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
             return await general.send(None, ctx.channel, embed=embed)
 
 

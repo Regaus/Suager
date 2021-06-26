@@ -851,3 +851,6 @@
 
 ## v7.2.41.2 - 24 June 2021
 - Handle reaction clearing same as message deletion for starboard
+
+## v7.3.0 - 26 June 2021
+- Starboard is now translatable
