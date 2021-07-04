@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, UnidentifiedImageError
 
-from utils import emotes, general, http, languages
+from utils import emotes, general, http
 
 
 async def af_image_gen(ctx: commands.Context, user: discord.User or discord.Member, link, filename=None, extra_args=None):
@@ -58,6 +58,7 @@ class Images(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def colourify(self, ctx: commands.Context, user: discord.User = None, colour: str = "7289da", colour2: str = None):
         """ Turn a user's avatar into a certain colour """
+        # TODO: Rewrite this to use proper variable names...
         if user is None:
             user = ctx.author
         z, y, x = "7289da", "Invalid values", "colourify"
@@ -110,7 +111,7 @@ class Images(commands.Cog):
         if _filter == "random":
             _filter = random.choice(filters)
         elif _filter not in filters or _filter == "help":
-            return await general.send(languages.gls("images_filter_filters", languages.gl(ctx), "`, `".join(filters)), ctx.channel)
+            return await general.send(self.bot.language(ctx).string("images_filter_filters", "`, `".join(filters)), ctx.channel)
         return await af_image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="ship")
@@ -118,16 +119,16 @@ class Images(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def ship(self, ctx: commands.Context, user1: discord.User, user2: discord.User):
         """ Build a ship """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         pr = False
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             if user1.id != 302851022790066185 and user2.id != 302851022790066185:
-                return await general.send(f"{emotes.Deny} {languages.gls('generic_no', locale)}.", ctx.channel)
+                return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
             pr = True
         if (user1.bot ^ user2.bot) and not pr:
-            return await general.send(languages.gls("social_ship_bot", locale), ctx.channel)
+            return await general.send(language.string("social_ship_bot"), ctx.channel)
         if user1 == user2:
-            return await general.send(languages.gls("social_alone", locale), ctx.channel)
+            return await general.send(language.string("social_alone"), ctx.channel)
         av1 = str(user1.avatar_url_as(size=512, format="png"))
         av2 = str(user2.avatar_url_as(size=512, format="png"))
         # link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
@@ -138,9 +139,9 @@ class Images(commands.Cog):
         n3 = user2.name[:_names[1]]
         n4 = user2.name[_names[1]:]
         names = [f"{n1}{n3}", f"{n1}{n4}", f"{n2}{n3}", f"{n2}{n4}", f"{n3}{n1}", f"{n4}{n1}", f"{n3}{n2}", f"{n4}{n2}"]
-        message = languages.gls("social_ship", locale)
+        message = language.string("social_ship")
         for i, j in enumerate(names, start=1):
-            message += f"\n{languages.gns(i, locale)}) **{j}**"
+            message += f"\n{i}) **{j}**"
         # img = Image.new("RGB", (1536, 512), color=(0, 0, 0))
         async with ctx.typing():
             img = Image.open("assets/ship.png")

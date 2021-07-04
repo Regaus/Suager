@@ -1,17 +1,15 @@
 from discord.ext import commands
 
-from utils import general, languages, time
-
-_year = time.now(None).year
+from utils import general, languages
 
 
-async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, locale, key: str, guild: str = None):
+async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, key: str, guild: str = None):
     """ Generate Leaderboard """
     data = self.bot.db.fetch(query, statement)
     if not data:
         if key.isnumeric():
-            return await general.send(languages.gls("leveling_rank_yearly_no", locale, key), ctx.channel)
-        return await general.send(languages.gls("leaderboards_no_data", locale), ctx.channel)
+            return await general.send(language.string("leveling_rank_yearly_no", key), ctx.channel)
+        return await general.send(language.string("leaderboards_no_data"), ctx.channel)
     block = "```fix\n"
     un = []   # User names
     xp = []   # XP
@@ -20,17 +18,17 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
         for user in data:
             name = f"{user['name']}#{user['disc']:04d}"
             un.append(name)
-            val = languages.gns(int(user[key]), locale)
+            val = language.number(user[key], precision=0)
             xp.append(val)
             xpl.append(len(val))
     except KeyError:
-        return await general.send(languages.gls("leveling_rank_yearly_no", locale, key), ctx.channel)
+        return await general.send(language.string("leveling_rank_yearly_no", key), ctx.channel)
     total = len(xp)
-    place = languages.gls("generic_unknown", locale)
+    place = language.string("generic_unknown")
     n = 0
     for x in range(len(data)):
         if data[x]['uid'] == ctx.author.id:
-            place = languages.gls("leaderboards_place", locale, languages.gns(x + 1, locale, 0, False))
+            place = language.string("leaderboards_place", language.number(x + 1))
             n = x + 1
             break
     try:
@@ -60,23 +58,23 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
                 who = f"-> {who}"
             s = ' '
             sp = xpl[k]
-            block += f"{languages.gns(i, locale, 2, False)}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
+            block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
     except (ValueError, IndexError):
         block += "No data available"
-    s, e, t = languages.gns(start, locale), languages.gns(start + 9, locale), languages.gns(total, locale)
+    s, e, t = language.number(start), language.number(start + 9), language.number(total)
     args = [guild] if guild else []
     args += [place, s, e, t, block]
     if key.isnumeric():
         args.append(key)
-    output = languages.gls(string, locale, *args)
+    output = language.string(string, *args)
     if str(key) == "2021":
         cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
         if ctx.guild.id not in cobble_servers:
-            output += languages.gls("leveling_rank_yearly21", locale, ctx.guild.name)
+            output += language.string("leveling_rank_yearly21", ctx.guild.name)
     return await general.send(output, ctx.channel)
 
 
-async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, locale, key: str, guild: str = None):
+async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, key: str, guild: str = None):
     data = self.bot.db.fetch(query, statement)
     coll = {}
     for i in data:
@@ -90,15 +88,15 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     for thing in range(r):
         v = sl[thing][1]
         un.append(v[1])
-        x = languages.gns(int(v[0]), locale)
+        x = language.number(v[0], precision=0)
         xp.append(x)
         xpl.append(len(x))
     total = len(xp)
-    place = languages.gls("generic_unknown", locale)
+    place = language.string("generic_unknown")
     n = 0
     for someone in range(len(sl)):
         if sl[someone][0] == ctx.author.id:
-            place = languages.gls("leaderboards_place", locale, languages.gns(someone + 1, locale, 0, False))
+            place = language.string("leaderboards_place", language.number(someone + 1))
             n = someone + 1
             break
     s = ' '
@@ -129,12 +127,12 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
                 if d[0] == ctx.author.id:
                     who = f"-> {who}"
                 sp = xpl[k]
-                block += f"{languages.gns(i, locale, 2, False)}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
+                block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
             except IndexError:
                 pass
     except (ValueError, IndexError):
         block += "No data available"
-    s, e, t = languages.gns(start, locale), languages.gns(start + 9, locale), languages.gns(total, locale)
+    s, e, t = language.number(start), language.number(start + 9), language.number(total)
     args = [guild] if guild else []
     args += [place, s, e, t, block]
-    return await general.send(languages.gls(string, locale, *args), ctx.channel)
+    return await general.send(language.string(string, *args), ctx.channel)

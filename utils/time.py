@@ -14,8 +14,8 @@ zero = dt(1970)
 
 def time_output(when: datetime, day: bool = True, seconds: bool = False, dow: bool = False, tz: bool = False):
     d, n = "%a, ", ''
-    m = "34 June" if (when.day == 4 and when.month == 7) else "%d %b"
-    f = f"{f'{d if dow else n}{m} %Y, ' if day else ''}%H:%M{':%S' if seconds else ''}{' %Z' if tz else ''}"
+    # m = "34 June" if (when.day == 4 and when.month == 7) else "%d %b"
+    f = f"{f'{d if dow else n}%d %b %Y, ' if day else ''}%H:%M{':%S' if seconds else ''}{' %Z' if tz else ''}"
     return when.strftime(f)
 
 
@@ -59,7 +59,6 @@ def time(tz: str = None, day: bool = True, seconds: bool = True, dow: bool = Fal
 
 
 def from_ts(timestamp: int or float, tz: str = None) -> datetime:
-    # Костыли на костылях, но хотя бы работает
     _tz = timezone.utc if not tz else pytz.timezone(tz)
     try:
         return datetime.fromtimestamp(timestamp, _tz)
@@ -132,12 +131,25 @@ def rd_is_zero(delta: relativedelta) -> bool:
 
 
 def rd_is_above_5y(delta: relativedelta) -> bool:
-    delta2 = relativedelta(now(None) + delta, now(None))
-    no = False
-    if delta2.years > 5:
-        no = True
-    elif delta2.years == 5:
-        delta2.years -= 5
-        if not rd_is_zero(delta2):
+    try:
+        delta2 = relativedelta(now(None) + delta, now(None))
+        no = False
+        if delta2.years > 5:
             no = True
-    return no
+        elif delta2.years == 5:
+            delta2.years -= 5
+            if not rd_is_zero(delta2):
+                no = True
+        return no
+    except (ValueError, OverflowError):
+        return True  # Errors out, assume something is wrong anyways
+
+
+def rd_future(delta: relativedelta) -> bool:
+    if delta.years >= 9999:
+        return True
+    try:
+        datetime.min + delta
+        return True
+    except (ValueError, OverflowError):
+        return False

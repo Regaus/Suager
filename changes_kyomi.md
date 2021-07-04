@@ -25,3 +25,6 @@
 
 ## v0.1.6 - 23 June 2021
 - Added Midnight Desserts to the birthdays list
+
+## v0.1.7 - 4 July 2021
+- Added reminders to the bot

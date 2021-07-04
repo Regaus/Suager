@@ -1,7 +1,7 @@
 import json
 import os
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Union
+from datetime import date, datetime, timedelta, timezone, time as dt_time
+from typing import Union
 
 from dateutil.relativedelta import relativedelta
 
@@ -13,71 +13,6 @@ for file in os.listdir("languages"):
         languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
 
 
-def gl(ctx):
-    # if hasattr(ctx, "channel") and ctx.channel.id in [725835449502924901, 787340111963881472, 799714065256808469, 7985134926971535361]:
-    #     return "rsl-1e"
-    if hasattr(ctx, "channel"):
-        if ctx.channel.id in [725835449502924901]:
-            return "rsl-1i"
-        elif ctx.channel.id in [787340111963881472, 799714065256808469]:
-            return "rsl-1k"
-    # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
-    if ctx.guild is not None:
-        data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
-        if data:
-            return data["locale"]
-    return ctx.bot.local_config["default_locale"]
-
-
-def gbs(value: int, locale: str = "en", precision: int = 2) -> str:  # Get Byte String
-    """ Gets Byte value name (for dlram) """
-    if locale in ["rsl-1d", "rsl-1e"]:
-        value //= 2
-        names = ["V", "KV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV"] if locale == "rsl-1d" else \
-            ["V", "KV", "UV", "DV", "TV", "SeV", "PV", "SnV", "EV", "OV", "ZV"]
-        step = 4096
-    elif locale in ["rsl-1k", "rsk-1i"]:
-        value //= 2
-        names = ["V", "MV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV", "ZV"]
-        step = 65536
-    elif locale == "ru":
-        names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
-        step = 1024
-    else:
-        names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
-        step = 1024
-    range_val = len(names)
-    for i in range(range_val):
-        req = step ** (i + 1)
-        if value < req or i == range_val - 1:
-            val = value / (step ** i)
-            number = gns(int(val), locale, 0, True) if precision == 0 else gfs(val, locale, precision, False)
-            return f"{number} {names[i]}"
-
-
-def gns(value: Union[int, float], locale: str = "en", fill: int = 0, commas: bool = True) -> str:  # Get number string
-    """ Get a string from an integer """
-    try:
-        value = int(value)
-    except OverflowError:
-        return "Infinity"
-    if locale == "ru":
-        return f"{value:0{fill}{',' if commas else ''}d}".replace(",", " ")
-    return f"{value:0{fill}{',' if commas else ''}d}"
-
-
-def gfs(value: Union[int, float], locale: str = "en", pre: int = 2, per: bool = False) -> str:  # Get float string | pre = precision, per = percentage
-    """ Get a string from a float """
-    if type(value) == int:
-        return gns(value, locale, 0, True)
-    try:
-        if locale == "ru":
-            return (f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}").replace(",", " ").replace(".", ",")
-        return f"{value:,.{pre}f}" if not per else f"{value:,.{pre}%}"
-    except OverflowError:
-        return "Infinity"
-
-
 def splits(value: str, step: int = 4, joiner: str = " ") -> str:
     _split = value.split(".", 1)
     _float = "" if len(_split) == 1 else f".{_split[1]}"
@@ -85,112 +20,167 @@ def splits(value: str, step: int = 4, joiner: str = " ") -> str:
     return (joiner.join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1] + _float
 
 
-def gls(string: str, locale: str = "en", *values, **kw_values) -> str:
-    """ Get language string """
-    output = str((languages.get(locale, languages["en"])).get(string, languages["en"].get(string, f"String not found: {string}")))
-    try:
-        return output.format(*values, **kw_values, emotes=emotes)
-    except IndexError:
-        return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
-
-
-def get_data(key: str, locale: str = "en") -> Any:  # Get multiple
-    return (languages.get(locale, languages["en"])).get(key, languages["en"].get(key))
-
-
-def yes(condition: bool, locale: str = "en") -> str:
-    return gls("generic_yes", locale) if condition else gls("generic_no", locale)
-
-
-def plural(v: Union[int, float], what: str, locale: str = "en", float_pre: int = 2) -> str:
-    """ Get plural form of words """
-    if locale in ["rsl-1f", "rsl-1g"]:
-        name = get_data(what, locale)[0]
-    elif locale in ["rsl-1d", "ru"]:
-        name_1, name_2, name_pl = get_data(what, locale)
-        pl = get_data("_pl", locale)
-        p1, p2, p3 = pl
-        v2 = v % int(p3)
-        v3 = v2 % int(p2)
-        name = name_pl if int(p2) <= v2 <= int(p2) * 2 or (v3 >= int(p1) or v3 == 0) else name_2 if v3 != 1 else name_1
-    else:
-        name_1, name_2 = get_data(what, locale)
-        cond = (v % 100) == 1 if locale in ["rsl-1e"] else v == 1
-        name = name_1 if cond else name_2
-    reverse = []
-    return f"{name} {gfs(v, locale, float_pre)}" if locale in reverse else f"{gfs(v, locale, float_pre)} {name}"
-
-
 def join(seq, joiner: str = ', ', final: str = 'and'):
     size = len(seq)
     return '' if size == 0 else seq[0] if size == 1 else f"{seq[0]} {final} {seq[1]}" if size == 2 else f"{joiner.join(seq[:-1])} {final} {seq[-1]}"
 
 
-def td_dt(dt: datetime, locale: str = "en", source: datetime = None, accuracy: int = 3, brief: bool = False, suffix: bool = False) -> str:
-    """ Get a string from datetime differences """
-    now = (source or time.now(None)).replace(microsecond=0)
-    then = dt.astimezone(timezone.utc)
-    if then > now:
-        delta = relativedelta(then, now)
-        pre = gls("time_in_p", locale) if suffix else ''
-        suf = gls("time_in_s", locale) if suffix else ''
-    else:
-        delta = relativedelta(now, then)
-        pre = gls("time_ago_p", locale) if suffix else ''
-        suf = gls("time_ago_s", locale) if suffix else ''
-    attrs = [('years', 'time_year', 'time_y'), ('months', 'time_month', 'time_mo'), ('days', 'time_day', 'time_d'), ('hours', 'time_hour', 'time_h'),
-             ('minutes', 'time_minute', 'time_m'), ('seconds', 'time_second', 'time_s')]
-    output = []
-    for attr in attrs:
-        element = getattr(delta, attr[0])
-        if not element:
-            continue
-        if attr[0] == "days" and not locale.startswith("rsl-3"):
-            weeks = delta.weeks
-            if weeks:
-                element -= weeks * 7
-                output.append(f"{gns(weeks, locale)}{gls('time_w', locale)}" if brief else plural(weeks, 'time_week', locale))
-        if element <= 0:
-            continue
-        if brief:
-            output.append(f"{gns(element, locale)}{gls(attr[2], locale)}")
+class Language:
+    def __init__(self, language: str):
+        self.language = language
+
+    @classmethod
+    def get(cls, ctx):
+        """ Find the language of the server """
+        if hasattr(ctx, "channel"):
+            if ctx.channel.id in [725835449502924901]:
+                return cls("rsl-1i")
+            elif ctx.channel.id in [787340111963881472, 799714065256808469]:
+                return cls("rsl-1k")
+        # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
+        if ctx.guild is not None:
+            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
+            if data:
+                return cls(data["locale"])
+        return cls(ctx.bot.local_config["default_locale"])
+
+    def bytes(self, value: int, precision: int = 2) -> str:
+        """ Turn byte value into string """
+        if self.language in ["rsl-1k", "rsk-1i"]:
+            value //= 2
+            names = ["V", "MV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV", "ZV"]
+            step = 65536
+        elif self.language == "russian":
+            names = ["Б", "КБ", "МБ", "ГБ", "ТБ", "ПБ", "ЭБ", "ЗБ", "ЙБ"]
+            step = 1024
         else:
-            output.append(plural(element, attr[1], locale))
-    output = output[:accuracy]
-    if len(output) == 0:
-        return gls("time_now", locale)
-    else:
-        if brief:
-            return pre + ' '.join(output) + suf
+            names = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"]
+            step = 1024
+        range_val = len(names)
+        for i in range(range_val):
+            req = step ** (i + 1)
+            if value < req or i == range_val - 1:
+                val = value / (step ** i)
+                # number = gns(int(val), locale, 0, True) if precision == 0 else gfs(val, locale, precision, False)
+                number = self.number(val, precision=precision, commas=val > 1024)
+                return f"{number} {names[i]}"
+
+    def number(self, value: Union[int, float], *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True) -> str:
+        """ Turn a number into a string """
+        c = "," if commas else ""
+        try:
+            if type(value) == int or (precision == 0 and not percentage):
+                value = int(value)  # Make sure the value is an integer, in case it's a float with precision zero
+                output = f"{value:0{fill}{c}d}"
+            else:
+                f = "%" if percentage else "f"
+                output = f"{value:0{fill}{c}.{precision}{f}}"
+            if self.language == "russian":
+                output = output.replace(",", " ").replace(".", ",")
+            return output
+        except OverflowError:
+            return self.string("generic_infinity")
+
+    def string(self, string: str, *values, **kwargs) -> str:
+        """ Get translated string """
+        output = str((languages.get(self.language, languages["english"])).get(string, languages["english"].get(string, f"String not found: {string}")))
+        try:
+            return output.format(*values, **kwargs, emotes=emotes)
+        except IndexError:
+            return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
+
+    def data(self, key: str):
+        """ Get list/dict language entry """
+        return (languages.get(self.language, languages["english"])).get(key, languages["english"].get(key))
+
+    def yes(self, condition: bool) -> str:
+        """ Yes or no """
+        return self.string("generic_yes" if condition else "generic_no")
+
+    def plural(self, value: Union[int, float], string: str, *, precision: int = 2, commas: bool = True) -> str:
+        """ Plural form of words """
+        data = self.data(string)
+        single = ["rsl-1f", "rsl-1g"]
+        if self.language in single:
+            name = data[0]
+        elif self.language == "russian":
+            name_1, name_2, name_pl = data
+            many, ten, hundred = self.data("_pl")
+            value_hundred = value % hundred
+            value_ten = value_hundred % ten
+            name = name_pl if ten <= value_hundred <= ten * 2 or (value_ten >= many or value_ten == 0) else name_2 if value_ten != 1 else name_1
         else:
-            return pre + join(output, final=gls("generic_and", locale)) + suf
-# Code based on R. Danny
+            name_1, name_2 = data
+            cond = (value % 100) == 1 if self.language == "rsl-1e" else value == 1
+            name = name_1 if cond else name_2
+        output = self.number(value, precision=precision, commas=commas)
+        reverse = []
+        return f"{name} {output}" if self.language in reverse else f"{output} {name}"
 
+    def delta_dt(self, dt: datetime, *, source: datetime = None, accuracy: int = 3, brief: bool = False, affix: bool = True) -> str:
+        """ Convert timedelta into human string """
+        now = source or time.now(None)
+        then = dt.astimezone(timezone.utc)
+        if then > now:
+            delta = relativedelta(then, now)
+            pre, suf = (self.string("time_in_p"), self.string("time_in_s")) if affix else ("", "")
+        else:
+            delta = relativedelta(now, then)
+            pre, suf = (self.string("time_ago_p"), self.string("time_ago_s")) if affix else ("", "")
+        attrs = [('years', 'time_year', 'time_y'), ('months', 'time_month', 'time_mo'), ('days', 'time_day', 'time_d'), ('hours', 'time_hour', 'time_h'),
+                 ('minutes', 'time_minute', 'time_m'), ('seconds', 'time_second', 'time_s')]
+        output = []
+        no_weeks = []
+        for attr in attrs:
+            element = getattr(delta, attr[0])
+            if not element:
+                continue
+            if attr[0] == "days" and self.language not in no_weeks:
+                weeks = delta.weeks
+                if weeks:
+                    element -= weeks * 7
+                    output.append(f"{self.number(weeks)}{self.string('time_w')}" if brief else self.plural(weeks, 'time_week'))
+                    # output.append(f"{gns(weeks, locale)}{gls('time_w', locale)}" if brief else plural(weeks, 'time_week', locale))
+            if element <= 0:
+                continue
+            else:
+                output.append(f"{self.number(element)}{self.string(attr[2])}" if brief else f"{self.plural(element, attr[1])}")
+            # if brief:
+            #     output.append(f"{gns(element, locale)}{gls(attr[2], locale)}")
+            # else:
+            #     output.append(plural(element, attr[1], locale))
+        output = output[:accuracy]
+        if len(output) == 0:
+            return self.string("time_now")
+        else:
+            if brief:
+                return pre + ' '.join(output) + suf
+            else:
+                return pre + join(output, final=self.string("generic_and")) + suf
 
-def td_int(seconds: Union[int, float], locale: str = "en", accuracy: int = 3, is_future: bool = False, brief: bool = True, suffix: bool = False) -> str:
-    return td_dt(time.now(None) + timedelta(seconds=seconds if is_future else -seconds - 1), locale, accuracy=accuracy, brief=brief, suffix=suffix)
+    def delta_int(self, seconds: Union[int, float], *, accuracy: int = 3, brief: bool = True, affix: bool = False) -> str:
+        now = time.now(None)
+        return self.delta_dt(now + timedelta(seconds=seconds), source=now, accuracy=accuracy, brief=brief, affix=affix)
 
+    def delta_ts(self, timestamp: Union[int, float], *, accuracy: int = 3, brief: bool = True, affix: bool = False) -> str:
+        return self.delta_dt(time.from_ts(timestamp, None), accuracy=accuracy, brief=brief, affix=affix)
 
-def td_ts(timestamp: int, locale: str = "en", accuracy: int = 3, brief: bool = True, suffix: bool = False) -> str:
-    return td_dt(time.from_ts(timestamp, None), locale, accuracy=accuracy, brief=brief, suffix=suffix)
+    def delta_rd(self, delta: relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False) -> str:
+        now = time.now(None)
+        return self.delta_dt(now + delta, source=now, accuracy=accuracy, brief=brief, affix=affix)
 
+    def date(self, when: Union[datetime, date], *, short: int = 0, dow: bool = False, year: bool = True) -> str:
+        """ Convert the date to string
 
-def td_rd(delta: relativedelta, locale: str = "en", accuracy: int = 3, brief: bool = False, suffix: bool = True) -> str:
-    now = time.now(None)
-    if time.rd_negative(delta):
-        delta.seconds -= 1
-    return td_dt(now + delta, locale, accuracy=accuracy, brief=brief, suffix=suffix, source=now)
-
-
-def gts(when: datetime = None, locale: str = "en", day: bool = True, short: bool = True, dow: bool = False, seconds: bool = False, tz: bool = False) -> str:
-    """ Get localised time string """
-    when = when or time.now(None)
-    month_names_l = get_data("time_month_names", locale)
-    base = ""
-    if day:
-        if dow and locale not in ["rsl-1d"]:
-            weekdays = get_data("time_weekdays", locale)
-            if locale in ["rsl-1k", "rsl-1i"]:
+        Short: 0 = Full month name, 1 = Short month name, 2 = dd/mm/yyyy format"""
+        no_weeks = []
+        no_months = []
+        # day, month = when.day, when.month
+        # if day == 4 and month == 7:
+        #     day, month = 34, 6
+        if dow and self.language not in no_weeks:
+            weekdays = self.data("time_weekdays")
+            if self.language in ["rsl-1k", "rsl-1i"]:
                 wd = when.weekday()
                 if when.hour < 6:
                     wd -= 1
@@ -198,28 +188,33 @@ def gts(when: datetime = None, locale: str = "en", day: bool = True, short: bool
                 weekday = weekdays[wd] + suffix[when.hour // 6]
             else:
                 weekday = weekdays[when.weekday()]
-            base += f"{weekday}, "
-        if locale in ["en_us"]:
-            base += f"{when.day:02d}/{when.month:02d}/{when.year:04d}, "
+            weekday = f"{weekday}, "
         else:
+            weekday = ""
+        _year = str(when.year)
+        if short == 2 or self.language in no_months:
+            return f"{weekday}{when.day}/{when.month}{'/' + _year if year else ''}"
+        else:
+            month_names_l = self.data("time_month_names")
             month_name = month_names_l[when.month % 12]
-            month_name_s = month_name[:3]
-            month = month_name_s if short else month_name
-            base += f"{gns(when.day, locale, 2)} {month} {gns(when.year, locale, 0, False)}, "
-    hour = gns(when.hour, locale, 2)
-    minute = gns(when.minute, locale, 2)
-    second = gns(when.second, locale, 2)
-    base += f"{hour}:{minute}"
-    if seconds:
-        base += f":{second}"
-    if tz:
-        base += f" {when.tzname()}"
-    return base
+            month = month_name if short == 0 else month_name[:3]
+            return f"{weekday}{when.day} {month}{' ' + _year if year else ''}"
+
+    @staticmethod
+    def time2(when: Union[datetime, dt_time], *, seconds: bool = True, tz: bool = False) -> str:
+        """ Convert time to string """
+        base = f"{when.hour:02d}:{when.minute:02d}"
+        if seconds:
+            base += f":{when.second:02d}"
+        if tz:
+            base += f" {when.tzname()}"
+        return base
+
+    def time(self, when: datetime = None, *, short: int = 0, dow: bool = False, seconds: bool = True, tz: bool = False) -> str:
+        return f"{self.date(when, short=short, dow=dow, year=True)}, {self.time2(when, seconds=seconds, tz=tz)}"
 
 
-def gts_date(when: Union[datetime, date], locale: str = "en", short: bool = False, year: bool = True) -> str:
-    month_names_l = get_data("time_month_names", locale)
-    month_name = month_names_l[when.month % 12]
-    month_name_s = month_name[:3]
-    month = month_name if not short else month_name_s
-    return f"{gns(when.day, locale)} {month}{' ' + gns(when.year, locale, 0, False) if year else ''}"
+class FakeContext:
+    def __init__(self, guild, bot):
+        self.guild = guild
+        self.bot = bot

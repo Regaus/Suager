@@ -3,7 +3,7 @@ import random
 import discord
 from discord.ext import commands
 
-from utils import emotes, general, languages, lists_suager
+from utils import bot_data, emotes, general, languages, lists_suager
 
 
 def is_fucked(something):
@@ -13,19 +13,19 @@ def is_fucked(something):
 but_why = "https://cdn.discordapp.com/attachments/610482988123422750/673642028357386241/butwhy.gif"
 
 
-def give(u1: str, u2: str, emote: str, locale: str) -> str:
-    return languages.gls("social_food", locale, u1, u2, emote)
+def give(u1: str, u2: str, emote: str, language: languages.Language) -> str:
+    return language.string("social_food", u1, u2, emote)
 
 
-def get_data(author: discord.Member, target: discord.Member, action: str, locale: str, given: int, received: int):
-    _given, _received = languages.plural(given, "generic_times", locale), languages.plural(received, "generic_times", locale)
-    title = languages.gls(f"social_{action}", locale, author.name, target.name)
-    title2 = languages.gls(f"social_{action}", locale, target.name, author.name)
+def get_data(author: discord.Member, target: discord.Member, action: str, language: languages.Language, given: int, received: int):
+    _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+    title = language.string(f"social_{action}", author.name, target.name)
+    title2 = language.string(f"social_{action}", target.name, author.name)
     return title, f"{title} {_given}\n{title2} {_received}"
 
 
 class Social(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.highfive, \
             self.poke, self.boop, self.tickle, self.laugh, self.dance = [lists_suager.error] * 18
@@ -63,7 +63,7 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def pat(self, ctx: commands.Context, user: discord.Member):
         """ Pat someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.pat):
             self.pat = await lists_suager.get_images(self.bot, 'p')
         if ctx.author == user:
@@ -71,10 +71,10 @@ class Social(commands.Cog):
         if user.id == self.bot.user.id:
             return await general.send(emotes.AlexHeart, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "pat", 9)
-        title, footer = get_data(ctx.author, user, "pat", locale, given, received)
+        title, footer = get_data(ctx.author, user, "pat", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.pat))
@@ -85,19 +85,19 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def hug(self, ctx: commands.Context, user: discord.Member):
         """ Hug someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.hug):
             self.hug = await lists_suager.get_images(self.bot, 'h')
         if ctx.author == user:
-            return await general.send(languages.gls("social_alone", locale), ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
+            return await general.send(language.string("social_alone"), ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673641089218904065/selfhug.gif"))
         if user.id == self.bot.user.id:
             return await general.send(emotes.AlexHeart, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "hug", 6)
-        title, footer = get_data(ctx.author, user, "hug", locale, given, received)
+        title, footer = get_data(ctx.author, user, "hug", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.hug))
@@ -108,19 +108,19 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cuddle(self, ctx: commands.Context, user: discord.Member):
         """ Cuddle someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.cuddle):
             self.cuddle = await lists_suager.get_images(self.bot, 'c')
         if ctx.author == user:
-            return await general.send(languages.gls("social_alone", locale), ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
+            return await general.send(language.string("social_alone"), ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673641089218904065/selfhug.gif"))
         if user.id == self.bot.user.id:
             return await general.send(emotes.AlexHeart, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "cuddle", 4)
-        title, footer = get_data(ctx.author, user, "cuddle", locale, given, received)
+        title, footer = get_data(ctx.author, user, "cuddle", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.cuddle))
@@ -128,37 +128,35 @@ class Social(commands.Cog):
 
     @commands.command(name="lick", aliases=["licc"])
     @commands.guild_only()
-    # @commands.check(lambda ctx: ctx.author.id not in [746173049174229142, 564244589897187349])
-    # @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id not in [784357864482537473])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """ Lick someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.lick):
             self.lick = await lists_suager.get_images(self.bot, 'l')
         if ctx.author == user:
             return await general.send(None, ctx.channel, embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673644219314733106/selflick.gif"))
         if user.id == 302851022790066185 and ctx.author.id in self.locked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_lick_suager", locale), ctx.channel)
+            return await general.send(language.string("social_lick_suager"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "lick", 8)
-        title, footer = get_data(ctx.author, user, "lick", locale, given, received)
+        title, footer = get_data(ctx.author, user, "lick", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.lick))
         return await general.send(None, ctx.channel, embed=embed)
 
-    @commands.command(name="kiss", aliases=["kith", "kish"])
+    @commands.command(name="kiss")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def kiss(self, ctx: commands.Context, user: discord.Member):
         """ Kiss someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.kiss):
             self.kiss = await lists_suager.get_images(self.bot, 'k')
         if ctx.channel.id == 725835449502924901:
@@ -166,14 +164,14 @@ class Social(commands.Cog):
         else:
             choice = self.kiss
         if ctx.author == user:
-            return await general.send(languages.gls("social_alone", locale), ctx.channel)
+            return await general.send(language.string("social_alone"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_kiss_suager", locale), ctx.channel)
+            return await general.send(language.string("social_kiss_suager"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_kiss_bot", locale), ctx.channel)
+            return await general.send(language.string("social_kiss_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "kiss", 7)
-        title, footer = get_data(ctx.author, user, "kiss", locale, given, received)
+        title, footer = get_data(ctx.author, user, "kiss", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(choice))
@@ -184,20 +182,20 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bite(self, ctx: commands.Context, user: discord.Member):
         """ Bite someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.bite):
             self.bite = await lists_suager.get_images(self.bot, 'b')
         if ctx.author == user:
-            return await general.send(languages.gls("social_slap_self", locale), ctx.channel)
+            return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_slap_bot", locale), ctx.channel)
+            return await general.send(language.string("social_slap_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "bite", 3)
-        title, footer = get_data(ctx.author, user, "bite", locale, given, received)
+        title, footer = get_data(ctx.author, user, "bite", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.bite))
@@ -208,22 +206,22 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def slap(self, ctx: commands.Context, user: discord.Member):
         """ Slap someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if ctx.author == user:
-            return await general.send(languages.gls("social_slap_self", locale), ctx.channel)
+            return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id in self.locked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_slap_bot", locale), ctx.channel)
+            return await general.send(language.string("social_slap_bot"), ctx.channel)
         if is_fucked(self.slap):
             self.slap = await lists_suager.get_images(self.bot, 'v')
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "slap", 10)
-        title, footer = get_data(ctx.author, user, "slap", locale, given, received)
+        title, footer = get_data(ctx.author, user, "slap", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.slap))
@@ -234,20 +232,20 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def smell(self, ctx: commands.Context, user: discord.Member):
         """ Sniff someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.smell):
             self.smell = await lists_suager.get_images(self.bot, 'n')
         if ctx.author == user:
-            return await general.send(languages.gls("social_poke_self", locale), ctx.channel)
+            return await general.send(language.string("social_poke_self"), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in self.locked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_sniff_suager", locale), ctx.channel)
+            return await general.send(language.string("social_sniff_suager"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "sniff", 11)
-        title, footer = get_data(ctx.author, user, "sniff", locale, given, received)
+        title, footer = get_data(ctx.author, user, "sniff", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.smell))
@@ -258,18 +256,18 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def highfive(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a high five """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.highfive):
             self.highfive = await lists_suager.get_images(self.bot, 'i')
         if ctx.author == user:
-            return await general.send(languages.gls("social_alone", locale), ctx.channel)
+            return await general.send(language.string("social_alone"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_high_five_suager", locale, ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_high_five_suager", ctx.author.name), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "high_five", 5)
-        title, footer = get_data(ctx.author, user, "high_five", locale, given, received)
+        title, footer = get_data(ctx.author, user, "high_five", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.highfive))
@@ -280,20 +278,20 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def poke(self, ctx: commands.Context, user: discord.Member):
         """ Poke someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.poke):
             self.poke = await lists_suager.get_images(self.bot, 'P')
         if ctx.author == user:
-            return await general.send(languages.gls("social_poke_self", locale), ctx.channel)
+            return await general.send(language.string("social_poke_self"), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in self.locked:  # and ctx.author.id in self.locked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_poke_suager", locale, ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_poke_suager", ctx.author.name), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "poke", 12)
-        title, footer = get_data(ctx.author, user, "poke", locale, given, received)
+        title, footer = get_data(ctx.author, user, "poke", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.poke))
@@ -304,20 +302,20 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def boop(self, ctx: commands.Context, user: discord.Member):
         """ Why is this a thing? """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.boop):
             self.boop = await lists_suager.get_images(self.bot, 'B')
         if ctx.author == user:
-            return await general.send(languages.gls("social_poke_self", locale), ctx.channel)
+            return await general.send(language.string("social_poke_self"), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in self.locked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_boop_suager", locale), ctx.channel)
+            return await general.send(language.string("social_boop_suager"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "boop", 13)
-        title, footer = get_data(ctx.author, user, "boop", locale, given, received)
+        title, footer = get_data(ctx.author, user, "boop", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.boop))
@@ -328,22 +326,20 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def tickle(self, ctx: commands.Context, user: discord.Member):
         """ How dare you """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.tickle):
             self.tickle = await lists_suager.get_images(self.bot, 't')
         if ctx.author == user:
-            return await general.send(languages.gls("social_poke_self", locale), ctx.channel)
+            return await general.send(language.string("social_poke_self"), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in self.locked:
-            return await general.send(languages.gls("social_tickle_regaus", locale), ctx.channel)
-        # if user.id == 302851022790066185:
-        #     return await general.send(langs.gls("social_tickle_regaus", locale, ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_tickle_regaus"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_tickle_suager", locale), ctx.channel)
+            return await general.send(language.string("social_tickle_suager"), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_bot", locale), ctx.channel)
+            return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         given, received = self.data_update(ctx.author.id, user.id, "tickle", 15)
-        title, footer = get_data(ctx.author, user, "tickle", locale, given, received)
+        title, footer = get_data(ctx.author, user, "tickle", language, given, received)
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(self.tickle))
@@ -354,157 +350,31 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def punch(self, ctx: commands.Context, user: discord.Member):
         """ Punch someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if ctx.author == user:
-            return await general.send(languages.gls("social_slap_self", locale), ctx.channel)
+            return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(languages.gls("social_kill_regaus", locale, ctx.author.id), ctx.channel)
+            return await general.send(language.string("social_kill_regaus", ctx.author.id), ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_slap_bot", locale), ctx.channel)
+            return await general.send(language.string("social_slap_bot"), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "punch", 16)
-        title, footer = get_data(ctx.author, user, "punch", locale, given, received)
+        title, footer = get_data(ctx.author, user, "punch", language, given, received)
         return await general.send(f"{title}\n{footer}", ctx.channel)
-
-    @commands.command(name="kill")
-    @commands.guild_only()
-    @commands.check(lambda ctx: ctx.bot.name != "kyomi")
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
-    async def kill(self, ctx: commands.Context, user: discord.Member):
-        """ Kill someone """
-        locale = languages.gl(ctx)
-        if ctx.author == user:
-            return await general.send(languages.gls("social_slap_self", locale), ctx.channel)
-        if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_slap_suager", locale, ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id not in [593736085327314954]:
-            return await general.send(languages.gls("social_kill_regaus", locale, ctx.author.name), ctx.channel)
-        if user.bot:
-            return await general.send(languages.gls("social_slap_bot", locale), ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "kill", 17)
-        title = languages.gls("social_kill", locale, ctx.author.name, user.name)
-        base = languages.gls("social_kill_counter", locale, ctx.author.name, user.name)
-        base2 = languages.gls("social_kill_counter", locale, user.name, ctx.author.name)
-        _given, _received = languages.plural(given, "generic_times", locale), languages.plural(received, "generic_times", locale)
-        footer = f"{base} {_given}\n{base2} {_received}"
-        # title, footer = get_data(ctx.author, user, "kill", locale, given, received)
-        # try:
-        #     await user.edit(nick=f"Dead {user.display_name[:27]}")
-        # except Exception as e:
-        #     await general.send(f"Could not update nickname: `{type(e).__name__}: {e}`", ctx.channel)
-        return await general.send(f"{title}\n{footer}", ctx.channel)
-
-    @commands.command(name="bang", aliases=["fuck"])
-    @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442) and ctx.bot.name != "kyomi")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def fuck(self, ctx, user: discord.Member):
-        """ Bang someone """
-        locale = languages.gl(ctx)
-        # if not ctx.channel.is_nsfw():
-        #     if ctx.channel.id != 764528556507922442:  # Secret Room 9
-        #         return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
-        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
-        if user.id == self.bot.user.id:
-            return await general.send(f"{emotes.Deny} {languages.gls('generic_no', locale)}.", ctx.channel)
-        if user.bot:
-            return await general.send(languages.gls("social_bang_bot", locale), ctx.channel)
-        if user == ctx.author:
-            return await general.send(emotes.UmmOK, ctx.channel)
-        lolis = [418151634087182359, 430891116318031872]
-        if ctx.author.id in lolis:
-            return await general.send(f"No futa lolis {emotes.KannaSpook}", ctx.channel)
-        elif user.id in lolis and ctx.channel.id != 671520521174777869:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "bang", 2)
-        t1, t2 = ctx.author.name, user.name
-        out = languages.gls("social_bang_main", locale, t1, t2)
-        _given, _received = languages.plural(given, "generic_times", locale), languages.plural(received, "generic_times", locale)
-        counter1 = languages.gls("social_bang_counter", locale, t1, t2, _given)
-        counter2 = languages.gls("social_bang_counter", locale, t2, t1, _received)
-        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
-
-    @commands.command(name="rape")
-    @commands.guild_only()
-    @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005] and ctx.bot.name != "kyomi")  # Secret Room 9 and testing zone only
-    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def rape(self, ctx, user: discord.Member):
-        """ Rape someone """
-        locale = languages.gl(ctx)
-        if user.id == self.bot.user.id:
-            return await general.send(f"{emotes.Deny} {languages.gls('generic_no', locale)}.", ctx.channel)
-        if user == ctx.author:
-            return await general.send(emotes.UmmOK, ctx.channel)
-        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
-            return await general.send(languages.gls('social_forbidden', locale), ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "r", 19)
-        t1, t2 = ctx.author.name, user.name
-        out = f"**{t1}** is now raping **{t2}**..."
-        # out = langs.gls("social_bang_main", locale, t1, t2)
-        _given, _received = languages.plural(given, "generic_times", locale), languages.plural(received, "generic_times", locale)
-        counter1, counter2 = f"{t1} raped {t2} {_given}", f"{t2} raped {t1} {_received}"
-        # counter1 = langs.gls("social_bang_counter", locale, t1, t2, _given)
-        # counter2 = langs.gls("social_bang_counter", locale, t2, t1, _received)
-        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
-
-    @commands.command(name="suck", aliases=["succ"])
-    @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442) and ctx.bot.name != "kyomi")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def suck(self, ctx, user: discord.Member):
-        """ Succ someone """
-        locale = languages.gl(ctx)
-        # if not ctx.channel.is_nsfw():
-        #     if ctx.channel.id != 764528556507922442:  # Secret Room 9
-        #         return await general.send(langs.gls("social_bang_channel", locale), ctx.channel)
-        if user.id == self.bot.user.id:
-            return await general.send(f"{emotes.Deny} {languages.gls('generic_no', locale)}.", ctx.channel)
-        if user.bot:
-            return await general.send(languages.gls("social_bang_bot", locale), ctx.channel)
-        if user == ctx.author:
-            return await general.send(emotes.UmmOK, ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "suck", 14)
-        t1, t2 = ctx.author.name, user.name
-        # out = langs.gls("social_suck_main", locale, t1, t2)
-        _given, _received = languages.plural(given, "generic_times", locale), languages.plural(received, "generic_times", locale)
-        # counter1 = langs.gls("social_suck_counter", locale, t1, t2, _given)
-        # counter2 = langs.gls("social_suck_counter", locale, t2, t1, _received)
-        return await general.send(f"**{t1}** is now sucking **{t2}**...\n{t1} did that to {t2} {_given}\n{t2} did that to {t1} {_received}", ctx.channel)
-
-    @commands.command(name="facefuck", aliases=["ff"])
-    @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442) and ctx.bot.name != "kyomi")
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def face_fuck(self, ctx, user: discord.User):
-        """ Face-fuck someone """
-        locale = languages.gl(ctx)
-        if user.id == self.bot.user.id:
-            return await general.send(f"{emotes.Deny} {languages.gls('generic_no', locale)}.", ctx.channel)
-        if user.bot:
-            return await general.send(languages.gls("social_bang_bot", locale), ctx.channel)
-        if user == ctx.author:
-            return await general.send(emotes.UmmOK, ctx.channel)
-        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
-            return await general.send(languages.gls('social_forbidden', locale), ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "ff", 18)
-        t1, t2 = ctx.author.name, user.name
-        _given, _received = languages.plural(given, "generic_times", locale), languages.plural(received, "generic_times", locale)
-        return await general.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}", ctx.channel)
 
     @commands.command(name="sleepy")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def sleepy(self, ctx):
         """ You're sleepy """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.sleepy):
             self.sleepy = await lists_suager.get_images(self.bot, 's')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = languages.gls("social_sleepy", locale, ctx.author.name)
+        embed.title = language.string("social_sleepy", ctx.author.name)
         embed.set_image(url=random.choice(self.sleepy))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -513,11 +383,11 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def cry(self, ctx):
         """ You're crying """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.cry):
             self.cry = await lists_suager.get_images(self.bot, 'r')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = languages.gls("social_cry", locale, ctx.author.name)
+        embed.title = language.string("social_cry", ctx.author.name)
         embed.set_image(url=random.choice(self.cry))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -526,11 +396,11 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def blush(self, ctx):
         """ You blush """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.blush):
             self.blush = await lists_suager.get_images(self.bot, 'u')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = languages.gls("social_blush", locale, ctx.author.name)
+        embed.title = language.string("social_blush", ctx.author.name)
         embed.set_image(url=random.choice(self.blush))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -539,11 +409,11 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def smile(self, ctx):
         """ You're smiling """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.smile):
             self.smile = await lists_suager.get_images(self.bot, 'm')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = languages.gls("social_smile", locale, ctx.author.name)
+        embed.title = language.string("social_smile", ctx.author.name)
         embed.set_image(url=random.choice(self.smile))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -552,11 +422,11 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def laugh(self, ctx, at: discord.User = None):
         """ Haha funny """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.laugh):
             self.laugh = await lists_suager.get_images(self.bot, 'L')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = languages.gls("social_laugh", locale, ctx.author.name) if at is None else languages.gls("social_laugh_at", locale, ctx.author.name, at.name)
+        embed.title = language.string("social_laugh", ctx.author.name) if at is None else language.string("social_laugh_at", ctx.author.name, at.name)
         embed.set_image(url=random.choice(self.laugh))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -565,11 +435,11 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def dance(self, ctx):
         """ You're dancing """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if is_fucked(self.dance):
             self.dance = await lists_suager.get_images(self.bot, 'd')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = languages.gls("social_dance", locale, ctx.author.name)
+        embed.title = language.string("social_dance", ctx.author.name)
         embed.set_image(url=random.choice(self.dance))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -578,16 +448,16 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bean(self, ctx: commands.Context, user: discord.Member):
         """ Bean someone """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(languages.gls("social_forbidden", locale), ctx.channel)
-        if user.id == ctx.guild.owner.id:  # and ctx.author.id != 302851022790066185:
-            return await general.send(languages.gls("social_bean_owner", locale), ctx.channel)
-        bean = languages.gls("social_bean", locale, user.name, ctx.guild.name)
+            return await general.send(language.string("social_forbidden"), ctx.channel)
+        if user.id == ctx.guild.owner.id:
+            return await general.send(language.string("social_bean_owner"), ctx.channel)
+        bean = language.string("social_bean", user.name, ctx.guild.name)
         return await general.send(bean, ctx.channel)
 
     @commands.command(name="cookie")
@@ -595,12 +465,12 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cookie(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a cookie """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_food_bot", locale), ctx.channel)
-        output = give(ctx.author.name, user.name, "🍪", locale)
+            return await general.send(language.string("social_food_bot"), ctx.channel)
+        output = give(ctx.author.name, user.name, "🍪", language)
         return await general.send(output, ctx.channel)
 
     @commands.command(name="lemon")
@@ -608,12 +478,12 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def lemon(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a lemon """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_food_bot", locale), ctx.channel)
-        output = give(ctx.author.name, user.name, "🍋", locale)
+            return await general.send(language.string("social_food_bot"), ctx.channel)
+        output = give(ctx.author.name, user.name, "🍋", language)
         return await general.send(output, ctx.channel)
 
     @commands.command(name="carrot")
@@ -621,12 +491,12 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def carrot(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a carrot """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_food_bot", locale), ctx.channel)
-        output = give(ctx.author.name, user.name, "🥕", locale)
+            return await general.send(language.string("social_food_bot"), ctx.channel)
+        output = give(ctx.author.name, user.name, "🥕", language)
         return await general.send(output, ctx.channel)
 
     @commands.command(name="fruit")
@@ -634,12 +504,12 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def fruit_snacks(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a fruit """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_food_bot", locale), ctx.channel)
-        output = give(ctx.author.name, user.name, random.choice(list("🍏🍎🍐🍊🍌🍉🍇🍓🍒🍍")), locale)
+            return await general.send(language.string("social_food_bot"), ctx.channel)
+        output = give(ctx.author.name, user.name, random.choice(list("🍏🍎🍐🍊🍌🍉🍇🍓🍒🍍")), language)
         return await general.send(output, ctx.channel)
 
     @commands.command(name="pineapple")
@@ -647,12 +517,12 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def pineapple(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a pineapple """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_food_bot", locale), ctx.channel)
-        output = give(ctx.author.name, user.name, "🍍", locale)
+            return await general.send(language.string("social_food_bot"), ctx.channel)
+        output = give(ctx.author.name, user.name, "🍍", language)
         return await general.send(output, ctx.channel)
 
     @commands.command(name="monke", aliases=["monkey"])
@@ -660,12 +530,12 @@ class Social(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def monkey(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a monke """
-        locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
         if user.bot:
-            return await general.send(languages.gls("social_food_bot", locale), ctx.channel)
-        output = give(ctx.author.name, user.name, "🐒", locale)
+            return await general.send(language.string("social_food_bot"), ctx.channel)
+        output = give(ctx.author.name, user.name, "🐒", language)
         return await general.send(output, ctx.channel)
 
     @commands.command(name="reloadimages", aliases=["ri"])
@@ -692,5 +562,117 @@ class Social(commands.Cog):
         return await general.send("Successfully reloaded images", ctx.channel)
 
 
-def setup(bot):
-    bot.add_cog(Social(bot))
+class SocialSuager(Social, name="Social"):
+    @commands.command(name="kill")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    async def kill(self, ctx: commands.Context, user: discord.Member):
+        """ Kill someone """
+        language = self.bot.language(ctx)
+        if ctx.author == user:
+            return await general.send(language.string("social_slap_self"), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
+            return await general.send(language.string("social_kill_regaus", ctx.author.name), ctx.channel)
+        if user.bot:
+            return await general.send(language.string("social_slap_bot"), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "kill", 17)
+        title = language.string("social_kill", ctx.author.name, user.name)
+        base = language.string("social_kill_counter", ctx.author.name, user.name)
+        base2 = language.string("social_kill_counter", user.name, ctx.author.name)
+        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        footer = f"{base} {_given}\n{base2} {_received}"
+        return await general.send(f"{title}\n{footer}", ctx.channel)
+
+    @commands.command(name="bang", aliases=["fuck"])
+    @commands.guild_only()
+    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def fuck(self, ctx, user: discord.Member):
+        """ Bang someone """
+        language = self.bot.language(ctx)
+        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
+            return await general.send(language.string("social_forbidden"), ctx.channel)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
+        if user.bot:
+            return await general.send(language.string("social_bang_bot"), ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        lolis = [418151634087182359, 430891116318031872]
+        if ctx.author.id in lolis:
+            return await general.send(f"No futa lolis {emotes.KannaSpook}", ctx.channel)
+        elif user.id in lolis and ctx.channel.id != 671520521174777869:
+            return await general.send(language.string("social_forbidden"), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "bang", 2)
+        t1, t2 = ctx.author.name, user.name
+        out = language.string("social_bang_main", t1, t2)
+        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        counter1 = language.string("social_bang_counter", t1, t2, _given)
+        counter2 = language.string("social_bang_counter", t2, t1, _received)
+        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
+
+    @commands.command(name="rape")
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005])
+    async def rape(self, ctx, user: discord.Member):
+        """ Rape someone """
+        language = self.bot.language(ctx)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
+            return await general.send(language.string('social_forbidden'), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "r", 19)
+        t1, t2 = ctx.author.name, user.name
+        out = f"**{t1}** is now raping **{t2}**..."
+        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        counter1, counter2 = f"{t1} raped {t2} {_given}", f"{t2} raped {t1} {_received}"
+        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
+
+    @commands.command(name="suck", aliases=["succ"])
+    @commands.guild_only()
+    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def suck(self, ctx, user: discord.Member):
+        """ Succ someone off """
+        language = self.bot.language(ctx)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
+        if user.bot:
+            return await general.send(language.string("social_bang_bot"), ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "suck", 14)
+        t1, t2 = ctx.author.name, user.name
+        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        return await general.send(f"**{t1}** is now sucking **{t2}** off...\n{t1} did that to {t2} {_given}\n{t2} did that to {t1} {_received}", ctx.channel)
+
+    @commands.command(name="facefuck", aliases=["ff"])
+    @commands.guild_only()
+    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def face_fuck(self, ctx, user: discord.User):
+        """ Face-fuck someone """
+        language = self.bot.language(ctx)
+        if user.id == self.bot.user.id:
+            return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
+        if user.bot:
+            return await general.send(language.string("social_bang_bot"), ctx.channel)
+        if user == ctx.author:
+            return await general.send(emotes.UmmOK, ctx.channel)
+        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
+            return await general.send(language.string('social_forbidden'), ctx.channel)
+        given, received = self.data_update(ctx.author.id, user.id, "ff", 18)
+        t1, t2 = ctx.author.name, user.name
+        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        return await general.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}", ctx.channel)
+
+
+def setup(bot: bot_data.Bot):
+    if bot.name == "suager":
+        bot.add_cog(SocialSuager(bot))
+    else:
+        bot.add_cog(Social(bot))

@@ -4,11 +4,11 @@ from typing import List
 import discord
 from discord.ext import commands
 
-from utils import general, http, languages, logger, time
+from utils import bot_data, general, http, logger, time
 
 
 class Events(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self.db = self.bot.db
         self.local_config = self.bot.local_config
@@ -51,16 +51,17 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, err):
-        locale = languages.gl(ctx)
+        # locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         if isinstance(err, commands.errors.MissingRequiredArgument) or isinstance(err, commands.errors.BadArgument):
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
             await ctx.send_help(helper)
         elif isinstance(err, commands.errors.CommandInvokeError):
             error = general.traceback_maker(err.original, ctx.message.content[:1000], ctx.guild, ctx.author)
             if "2000 or fewer" in str(err) and len(ctx.message.clean_content) > 1900:
-                return await general.send(languages.gls("events_err_message_too_long", locale), ctx.channel)
+                return await general.send(language.string("events_err_message_too_long"), ctx.channel)
                 # return general.send("You inputted a very long piece of text.. Well, congrats. The command broke.", ctx.channel)
-            await general.send(languages.gls("events_err_error", locale, type(err.original).__name__, str(err.original)), ctx.channel)
+            await general.send(language.string("events_err_error", type(err.original).__name__, str(err.original)), ctx.channel)
             # await general.send(f"{emotes.Deny} An error has occurred:\n`{type(err.original).__name__}: {err.original}`", ctx.channel)
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:
@@ -68,12 +69,12 @@ class Events(commands.Cog):
         elif isinstance(err, commands.errors.CheckFailure):
             pass
         elif isinstance(err, commands.errors.CommandOnCooldown):
-            await general.send(languages.gls("events_err_cooldown", locale, languages.gfs(err.retry_after, locale)), ctx.channel)
+            await general.send(language.string("events_err_cooldown", language.number(err.retry_after, precision=2)), ctx.channel)
             # await general.send(f"This command is currently on cooldown... Try again in {err.retry_after:.2f} seconds.", ctx.channel)
         elif isinstance(err, commands.errors.CommandNotFound):
             pass
         elif isinstance(err, commands.errors.MaxConcurrencyReached):
-            await general.send(languages.gls("events_err_concurrency", locale), ctx.channel)
+            await general.send(language.string("events_err_concurrency"), ctx.channel)
             # await general.send("Maximum concurrency has been reached - try again later.", ctx.channel)
 
     @commands.Cog.listener()
@@ -132,8 +133,9 @@ class Events(commands.Cog):
                 else:
                     await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
             if member.guild.id == 738425418637639775:
-                join = languages.gts(member.joined_at, "en", seconds=True)
-                age = languages.td_dt(member.created_at, "en")
+                language = self.bot.language2("english")
+                join = language.time(member.joined_at, short=1, dow=False, seconds=True, tz=False)
+                age = language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False)
                 await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
             if member.guild.id == 806811462345031690:
                 role = member.guild.get_role(841403040534888458)
@@ -147,13 +149,14 @@ class Events(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just left {member.guild.name}")
         if self.bot.name == "suager":
+            language = self.bot.language2("english")
             if member.guild.id == 568148147457490954:
-                survival = languages.td_dt(member.joined_at, "en")
+                survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
                 remaining = len(member.guild.members)
-                await general.send(f"**{member.name}** just **abandoned** Senko Lair...\nThey had survived for {survival}...\n"
-                                   f"**{remaining}** Senkoists remaining.", self.bot.get_channel(610836120321785869))
+                await general.send(f"**{member.name}** just abandoned Senko Lair after surviving for {survival}...\n"
+                                   f"{remaining} Senkoists remaining.", self.bot.get_channel(610836120321785869))
             if member.guild.id == 738425418637639775:
-                survival = languages.td_dt(member.joined_at, "en")
+                survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
                 await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))
             uid, gid = member.id, member.guild.id
             # self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
@@ -188,7 +191,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        if not hasattr(self.bot, 'uptime'):
+        if not hasattr(self.bot, 'uptime') or self.bot.uptime is None:
             self.bot.uptime = time.now(None)
         print(f"{time.time()} > {self.bot.full_name} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
         playing = f"Loading... | v{general.get_version()[self.bot.name]['short_version']}"
@@ -264,7 +267,11 @@ class Events(commands.Cog):
         if n1 != n2:
             send = f"{to} > {n1} ({uid}) is now known as {n2}"
             logger.log(self.bot.name, log, send)
-        if self.bot.user.id == 609423646347231282:
+        d1, d2 = [before.discriminator, after.discriminator]
+        if d1 != d2:
+            send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
+            logger.log(self.bot.name, log, send)
+        if self.bot.name in ["suager", "kyomi"]:
             a1, a2 = [before.avatar, after.avatar]
             al = self.bot.get_channel(745760639955370083)
             if a1 != a2:
@@ -277,10 +284,6 @@ class Events(commands.Cog):
                         print("No avatar log channel found.")
                     else:
                         await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
-        d1, d2 = [before.discriminator, after.discriminator]
-        if d1 != d2:
-            send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
-            logger.log(self.bot.name, log, send)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -292,14 +295,11 @@ class Events(commands.Cog):
         if after.guild.id in [568148147457490954, 738425418637639775, 679819572278198272] and uid not in [302851022790066185]:
             if after.display_name[0] < "A":
                 await after.edit(reason="De-hoist", nick=f"\u17b5{after.display_name[:31]}")
-        if after.guild.id in [430945139142426634] and uid == self.bot.user.id:
-            await after.guild.me.edit(nick=None)
-        # if after.guild.id == 784357864482537473 and uid == 302851022790066185:
-        #     if after.nick != "Regaboy Prime":
-        #         await after.edit(nick="Regaboy Prime", reason="I told you I'll do it")
-        if after.guild.id == 784357864482537473 and uid == 517012611573743621:
-            if after.nick is not None:
-                await after.edit(nick=None, reason="Don't you dare")
+        # if after.guild.id in [430945139142426634] and uid == self.bot.user.id:
+        #     await after.guild.me.edit(nick=None)
+        # if after.guild.id == 784357864482537473 and uid == 517012611573743621:
+        #     if after.nick is not None:
+        #        await after.edit(nick=None, reason="Don't you dare")
         n1, n2 = before.nick, after.nick
         if n1 != n2:
             logger.log(self.bot.name, "names", f"{to} > {guild} > {n}'s ({uid}) nickname is now {n2} (from {n1})")
@@ -319,5 +319,5 @@ class Events(commands.Cog):
                 logger.log(self.bot.name, log, f"{to} > {guild} > {n} ({uid}) got role {role}")
 
 
-def setup(bot):
+def setup(bot: bot_data.Bot):
     bot.add_cog(Events(bot))

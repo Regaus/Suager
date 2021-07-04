@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import discord
 from discord.ext import commands
 
-from utils import conlangs, emotes, general, languages, places, time, times
+from utils import bot_data, conlangs, emotes, general, places, time, times
 
 longest_city = {
     "Kargadia": 19,
@@ -13,7 +13,7 @@ longest_city = {
 
 
 class Conworlds(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: bot_data.Bot):
         self.bot = bot
 
     @commands.command(name="time78", aliases=["t78"])
@@ -44,14 +44,14 @@ class Conworlds(commands.Cog):
                 dt = time.set_tz(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S"), "UTC")
             except ValueError:
                 return await general.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)", ctx.channel)
-        time_earth = languages.gts(dt, "en", True, False, True, True, False)
+        time_earth = self.bot.language2("english").time(dt, short=1, dow=True, seconds=True, tz=False)  # True, False, True, True, False
         output = f"Time on this Earth (English): **{time_earth}**"
         if ss == 23:
             if dt < datetime(1686, 11, 22, tzinfo=timezone.utc):
                 return await general.send(f"{emotes.Deny} SS-23 times are not available for dates earlier than **22 November 1686 AD**", ctx.channel)
-            time_earth1k = languages.gts(dt, "rsl-1k", True, False, True, True, False)
-            time_earth1i = languages.gts(dt, "rsl-1i", True, False, True, True, False)
-            time_earth1h = languages.gts(dt, "rsl-1h", True, False, True, True, False)
+            time_earth1k = self.bot.language2("rsl-1k").time(dt, short=1, dow=True, seconds=True, tz=False)
+            time_earth1i = self.bot.language2("rsl-1i").time(dt, short=1, dow=True, seconds=True, tz=False)
+            time_earth1h = self.bot.language2("rsl-1h").time(dt, short=1, dow=True, seconds=True, tz=False)
             time_23_4 = times.time_zeivela(dt, 0).str()    # 23.4 Zeivela Local
             time_23_5k = times.time_kargadia(dt, 0, "rsl-1k").str()  # 23.5 Kargadia RSL-1k
             time_23_5i = times.time_kargadia(dt, 0, "rsl-1i").str()  # 23.5 Kargadia RSL-1i
@@ -66,11 +66,6 @@ class Conworlds(commands.Cog):
         elif ss == 24:
             if dt < datetime(1742, 1, 28, tzinfo=timezone.utc):
                 return await general.send(f"{emotes.Deny} SS-24 times are not available for dates earlier than **28 January 1742 AD**", ctx.channel)
-            # z = time.kargadia_convert(time.now(None))
-            # w = ["Senarsea", "Sillava Sea", "Sertansea", "Ahtarunsea", "Vastansea", "Hauvinsea", "Sehlunsea"]
-            # m = ["Vahkannun", "Navattun", "Senkavun", "Tevillun", "Leitavun", "Haltavun", "Arhanvun", "Nürivun", "Kovavun", "Eiderrun", "Raivazun", "Suvaghun"]
-            # time_earth1e = f"{w[z.weekday()]}, {z.day:02d} {m[z.month % 12]} {z.year}, {z.hour:02d}:{z.minute:02d}:{z.second:02d}"
-            # time_earth1g = langs.gts(z, "rsl-1g", True, False, True, True, False)
             time_24_4_10 = times.time_sinvimania(dt, 0).str()  # 24.4 Sinvimania RLC-10
             time_24_5l = times.time_hosvalnerus(dt, 0).str()   # 24.5 Hosvalnerus Local
             time_24_11e = times.time_kuastall_11(dt).str()     # 24.11 Kuastall-11 RSL-1e
@@ -81,7 +76,7 @@ class Conworlds(commands.Cog):
             output += f"\nNo times are available for SS-{ss}."
         return await general.send(output, ctx.channel)
 
-    @commands.command(name="weather78", aliases=["w78"])
+    @commands.command(name="weather78", aliases=["data78", "w78", "d78"])
     # @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def weather78(self, ctx: commands.Context, *, where: str):
@@ -173,7 +168,7 @@ class Conworlds(commands.Cog):
     async def ga78_info(self, ctx: commands.Context, ss: int = None, p: int = None):
         """ Details on GA-78
          ss = solar system """
-        data = json.loads(open("cobble/utils/ga78.json").read())
+        data = json.loads(open("assets/ga78.json").read())
         if ss is None:  # Solar system not specified
             systems = []
             for number, system in data.items():
@@ -217,5 +212,5 @@ class Conworlds(commands.Cog):
         return await general.send(f"Information on planet `87.78.{ss}.{p}`:", ctx.channel, embed=discord.Embed(colour=0xff0057, description=output))
 
 
-def setup(bot):
+def setup(bot: bot_data.Bot):
     bot.add_cog(Conworlds(bot))

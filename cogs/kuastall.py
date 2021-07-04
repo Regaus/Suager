@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-from utils import general, languages, times
+from utils import bot_data, general, times
 
 
 class Kuastall(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: bot_data.Bot):
         self.bot = bot
 
     @commands.group(name="tbl")
@@ -17,8 +17,8 @@ class Kuastall(commands.Cog):
         if ctx.invoked_subcommand is None:
             # return await ctx.send_help(str(ctx.command))
             # locale = tbl_locale(ctx)
-            locale = languages.gl(ctx)
-            return await general.send(languages.gls("placeholder", locale), ctx.channel)
+            language = self.bot.language(ctx)
+            return await general.send(language.string("placeholder"), ctx.channel)
 
     @tbl.command(name="time")
     async def tbl_time(self, ctx: commands.Context):
@@ -27,5 +27,5 @@ class Kuastall(commands.Cog):
         # return await general.send(ss23.date_kargadia(tz=2, tzn="TBT"), ctx.channel)
 
 
-def setup(bot):
+def setup(bot: bot_data.Bot):
     bot.add_cog(Kuastall(bot))

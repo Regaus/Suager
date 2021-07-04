@@ -6,16 +6,15 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from cogs.birthdays import Ctx
 from utils import bot_data, general, http, languages, lists_suager, logger, time
 
 
 async def temporaries(bot: bot_data.Bot):
     """ Handle reminders and mutes """
     await bot.wait_until_ready()
-    print(f"{time.time()} > Initialised Temporaries")
+    print(f"{time.time()} > {bot.full_name} > Initialised Temporaries")
     while True:
-        expired = bot.db.fetch("SELECT * FROM temporary WHERE DATETIME(expiry) < DATETIME('now') AND handled=0", ())
+        expired = bot.db.fetch("SELECT * FROM temporary WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
         bot.db.execute("DELETE FROM temporary WHERE handled=1", ())
         if expired:
             # print(expired)
@@ -24,7 +23,7 @@ async def temporaries(bot: bot_data.Bot):
                 handled = 2
                 if entry["type"] == "reminder":
                     user: discord.User = bot.get_user(entry["uid"])
-                    expiry = languages.gts(entry["expiry"], "en", True, True, False, True, False)
+                    expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=False)
                     try:
                         if user is not None:
                             await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")  # (for {expiry})
@@ -81,13 +80,13 @@ async def temporaries(bot: bot_data.Bot):
 
 async def try_error_temps(bot: bot_data.Bot):
     """ Try to handle temporaries that had an error, else delete them """
-    errors = bot.db.fetch("SELECT * FROM temporary WHERE handled=2", ())
+    errors = bot.db.fetch("SELECT * FROM temporary WHERE handled=2 AND bot=?", (bot.name,))
     if errors:
         for entry in errors:
             entry_id = entry["entry_id"]
             if entry["type"] == "reminder":
                 user: discord.User = bot.get_user(entry["uid"])
-                expiry = languages.gts(entry["expiry"], "en", True, True, False, True, False)
+                expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=False)
                 try:
                     if user is not None:
                         await user.send(f"There was an error sending this reminder earlier.\n⏰ **Reminder** (for {expiry}):\n\n{entry['message']}")
@@ -153,9 +152,9 @@ async def birthdays(bot: bot_data.Bot):
     now = time.now(None)
     then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > Initialised Birthdays for {bot.full_name}")
+    print(f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
-    birthday_table, birthday_message = ("birthdays_kyomi", "birthdays_message2") if bot.name == "kyomi" else ("birthdays", "birthdays_message")
+    birthday_message = "birthdays_message2" if bot.name == "kyomi" else "birthdays_message"
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
         _guilds.append(guild)
@@ -165,7 +164,7 @@ async def birthdays(bot: bot_data.Bot):
     channels = [bot.get_channel(cid) for cid in _channels]
     roles = [discord.Object(id=rid) for rid in _roles]
     while True:
-        birthday_today = bot.db.fetch(f"SELECT * FROM {birthday_table} WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now')")
+        birthday_today = bot.db.fetch(f"SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         if birthday_today:
             for person in birthday_today:
                 dm = True
@@ -176,7 +175,8 @@ async def birthdays(bot: bot_data.Bot):
                             user = guild.get_member(person["uid"])
                             if user is not None:
                                 dm = False
-                                await general.send(languages.gls("birthdays_message", languages.gl(Ctx(guild, bot)), user.mention), channels[i], u=True)
+                                language = bot.language(languages.FakeContext(guild, bot))
+                                await general.send(language.string(birthday_message, user.mention), channels[i], u=True)
                                 await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
                                 print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave birthday role to {user.name}")
                     except Exception as e:
@@ -185,16 +185,16 @@ async def birthdays(bot: bot_data.Bot):
                     try:
                         user = bot.get_user(person["uid"])
                         if user is not None:
-                            await user.send(languages.gls("birthdays_message", "en", user.mention))
+                            await user.send(bot.language2("english").string(birthday_message, user.name))
                             print(f"{time.time()} > {bot.full_name} > Told {user.name} happy birthday in DMs")
                         else:
                             general.print_error(f"{time.time()} > {bot.full_name} > User {person['uid']} was not found")
                     except Exception as e:
                         general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
-                bot.db.execute(f"UPDATE {birthday_table} SET has_role=1 WHERE uid=?", (person["uid"],))
-        birthday_over = bot.db.fetch(f"SELECT * FROM {birthday_table} WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now')")
+                bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
+        birthday_over = bot.db.fetch(f"SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         for person in birthday_over:
-            bot.db.execute(f"UPDATE {birthday_table} SET has_role=0 WHERE uid=?", (person["uid"],))
+            bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person["uid"], bot.name))
             for i in range(len(guilds)):
                 try:
                     guild = guilds[i]
@@ -215,7 +215,7 @@ async def playing(bot: bot_data.Bot):
     now = time.now(None)
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > Initialised Playing updater for {bot.full_name}")
+    print(f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     while True:
         try:
@@ -232,10 +232,15 @@ async def playing(bot: bot_data.Bot):
                     return date(year + 1, month, day)
                 return _date
 
-            def until(when: date):
+            def until(when: date, lang: str = "en"):
                 days = (when - today).days
-                s = "s" if days != 1 else ""
-                return f"{days} day{s}"
+                if lang == "rsl-1":
+                    s = "in" if days != 1 else ""
+                    v = "t" if days == 1 else "n"
+                    return f"{days} sea{s} astalla{v}"
+                else:
+                    s = "s" if days != 1 else ""
+                    return f"{days} day{s}"
 
             regaus = get_date(1, 27)
             suager = get_date(5, 13)
@@ -246,8 +251,9 @@ async def playing(bot: bot_data.Bot):
             is_regaus, is_suager, is_cobble, is_kyomi, is_blucy, is_mizuki = today == regaus, today == suager, today == cobble, today == kyomi, today == blucy, today == mizuki
 
             status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus)} until Regaus's birthday"
+            status_regaus2 = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, 'rsl-1')} Regaus'tat reideseat"
             status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager)} until my birthday"
-            status_cobble = f"🎉 Today is my birthday!" if is_cobble else f"{until(cobble)} until my birthday"
+            status_cobble = f"🎉 Esea jat reideseani!" if is_cobble else f"{until(cobble, 'rsl-1')} mun reideseat"
             status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi)} until Kyomi's birthday"
             status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy)} until Blucy's birthday"
             status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki)} until my birthday"
@@ -255,17 +261,17 @@ async def playing(bot: bot_data.Bot):
                 "cobble": [
                     {"type": 0, "name": fv},
                     {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                    {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 0, "name": "with Regaus"},
-                    {"type": 0, "name": "without you"},
-                    {"type": 0, "name": "with nobody"},
-                    {"type": 0, "name": "with your feelings"},
-                    {"type": 5, "name": "uselessness"},
-                    {"type": 0, "name": "nothing"},
-                    {"type": 3, "name": "you"},
-                    {"type": 2, "name": "a song"},
-                    {"type": 3, "name": "the void"},
-                    {"type": 0, "name": status_regaus},
+                    # {"type": 1, "name": "denedaa", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                    {"type": 0, "name": "Regaus'ar"},
+                    {"type": 0, "name": "dekedar"},
+                    {"type": 0, "name": "tarair sevirtair"},
+                    {"type": 5, "name": "noartai"},
+                    {"type": 0, "name": "denedaa"},
+                    {"type": 3, "name": "ten"},
+                    {"type": 2, "name": "ut penat"},
+                    {"type": 3, "name": "na meitan"},
+                    {"type": 2, "name": "na deinettat"},
+                    {"type": 0, "name": status_regaus2},
                     {"type": 0, "name": status_cobble},
                 ],
                 "kyomi": [
@@ -359,7 +365,7 @@ async def avatars(bot: bot_data.Bot):
     now = time.now(None)
     then = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > Initialised Avatar updater")
+    print(f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
     while True:
         try:

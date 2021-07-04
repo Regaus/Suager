@@ -12,39 +12,33 @@ class Settings(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="languages", aliases=["locales", "lang"])
+    @commands.command(name="languages", aliases=["langs"])
     async def languages(self, ctx: commands.Context):
         """ List of all supported languages """
-        # languages = [f"`{key}`: {langs.gls('_name', key)}" for key in sorted(list(langs.languages.keys()))]
-        # real, con, = [], []
-        # for language in languages:
-        #     if language.startswith("`rsl-"):
-        #         con.append(language)
-        #     else:
-        #         real.append(language)
         nat, con, rsl = [], [], []
         for language in list(languages.languages.keys()):
-            out = f"`{language}`: {languages.gls('_name', language)}"
-            conlang = languages.get_data("_conlang", language)
+            _language = languages.Language(language)
+            out = f"`{language}`: {_language.string('_name')}"
+            conlang = _language.data("_conlang")
             if conlang is None:
                 rsl.append(out)
             elif conlang:
                 con.append(out)
             else:
                 nat.append(out)
-        trusted = [302851022790066185, 577637595392245770, 651179888988127270, 430891116318031872, 291665491221807104, 679819572278198272]
+        # Regaus, Suager, Five, Leitoxz, 1337xp, Potato,
+        # Chikin, Karmeck, Kyomi, Shawn, Mid, Aya
+        trusted = [302851022790066185, 517012611573743621, 430891116318031872, 291665491221807104, 679819572278198272, 374853432168808448,
+                   441028310789783563, 857360761135431730, 417390734690484224, 236884090651934721, 581206591051923466, 527729196688998415]
+        # Senko Lair, RK, 3tk4
         trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
-        output = "List of supported languages:\n" + "\n".join(nat)
+        # List of trusted people and servers last updated 27/06/2021 AD
+        output = "__List of supported languages:__\n" + "\n".join(nat)
         if ctx.guild is not None and ctx.guild.id in trusted_servers:
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
             if ctx.author.id in trusted:
                 output += "\n\n__RSL-1 varieties supported:__\n" + "\n".join(rsl)
-        # if ctx.author.id in trusted and ctx.guild.id in trusted_servers:
-        #     out = "Here are supported real languages:\n" + "\n".join(real) + "\nAnd here are Regaus' conlangs, which can also be used:\n" + "\n".join(con)
-        # else:
-        #     out = "Here are supported languages:\n" + "\n".join(real)
         return await general.send(output, ctx.channel)
-        # return await general.send("Here is a list of supported languages:\n" + "\n".join(languages), ctx.channel)
 
     @commands.group(name="settings", aliases=["set"])
     @commands.guild_only()
@@ -104,15 +98,15 @@ class Settings(commands.Cog):
     @settings.command(name="language", aliases=["lang", "locale"])
     async def set_locale(self, ctx: commands.Context, new_locale: str):
         """ Change the bot's language in this server """
-        old_locale = languages.gl(ctx)
+        old_locale = self.bot.language(ctx)
         if new_locale not in languages.languages.keys():
-            return await general.send(languages.gls("settings_locale_invalid", old_locale, new_locale, ctx.prefix), ctx.channel)
+            return await general.send(old_locale.string("settings_locale_invalid", new_locale, ctx.prefix), ctx.channel)
         locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
         if locale:
             self.bot.db.execute("UPDATE locales SET locale=? WHERE gid=?", (new_locale, ctx.guild.id))
         else:
             self.bot.db.execute("INSERT INTO locales VALUES (?, ?)", (ctx.guild.id, new_locale))
-        return await general.send(languages.gls("settings_locale_set", new_locale, new_locale, languages.gls("_name", new_locale)), ctx.channel)
+        return await general.send(self.bot.language2(new_locale).string("settings_locale_set"), ctx.channel)
 
     # @settings.command(name="currency")
     # async def set_currency(self, ctx: commands.Context, new: str):

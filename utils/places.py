@@ -1,5 +1,5 @@
 from datetime import time as dt_time
-from math import acos, asin, cos, degrees as deg, radians as rad, sin
+from math import acos, asin, cos, degrees as deg, radians as rad, sin, tan
 
 import discord
 
@@ -120,7 +120,7 @@ class Place:
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
         self.time = time_function(tz=self.tz)
-        # self.time = time_function(datetime(276, 12, 26, 22, 30, tzinfo=timezone.utc) + timedelta(days=296.3429057999991 * 10000), tz=self.tz)
+        # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun_data = Sun(self)
         try:
@@ -162,7 +162,7 @@ class Place:
         embed = discord.Embed(colour=general.random_colour())
         embed.title = f"Weather in **{self.place}, {self.planet}**"
         embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**\n" \
-                            f"Time zone: {self.tz}:00 (Real offset {self.long / (360 / 24):.2f} hours)\n" \
+                            f"Time zone: {self.tz:+}:00 (Real offset {self.long / (360 / 24):+.2f} hours)\n" \
                             f"Location: {self.location(False)}"
         _months = month_counts[self.planet]
         month = self.time.month
@@ -321,17 +321,19 @@ class Place:
         else:
             embed.description += "\n\nWeather conditions not available."
 
-        if no_sun:
-            sun_output = f"{self.sun_data.sunrise}\nSolar noon: {noon.isoformat()}"
-        else:
-            daylight = languages.td_int(self.sun_data.daylight_length * 86400, "en", 2, brief=False)
-            sun_output = f"`Dawn:       {self.sun_data.dawn.isoformat()}`\n" \
-                         f"`Sunrise:    {sunrise.isoformat()}`\n" \
-                         f"`Solar noon: {noon.isoformat()}`\n" \
-                         f"`Sunset:     {sunset.isoformat()}`\n" \
-                         f"`Dusk:       {self.sun_data.dusk.isoformat()}`\n\n" \
-                         f"Daylight length: {daylight}"
-        embed.add_field(name="About the Sun", value=sun_output, inline=False)
+        # if no_sun:
+        #     sun_output = f"{self.sun_data.sunrise}\nSolar noon: {noon.isoformat()}"
+        # else:
+        #     # daylight = languages.td_int(self.sun_data.daylight_length * 86400, "english", 2, brief=False)
+        #     daylight = "Placeholder"
+        #     sun_output = f"`Dawn:       {self.sun_data.dawn.isoformat()}`\n" \
+        #                  f"`Sunrise:    {sunrise.isoformat()}`\n" \
+        #                  f"`Solar noon: {noon.isoformat()}`\n" \
+        #                  f"`Sunset:     {sunset.isoformat()}`\n" \
+        #                  f"`Dusk:       {self.sun_data.dusk.isoformat()}`\n\n" \
+        #                  f"Daylight length: {daylight}"
+        # embed.add_field(name="About the Sun", value=sun_output, inline=False)
+        embed.add_field(name="About the Sun", value=self.sun_data.sun_data, inline=False)
 
         # if no_sun:
         #     embed.add_field(name="Sunrise and Sunset", value=self.sun_data.sunrise, inline=True)
@@ -345,17 +347,21 @@ class Place:
         return embed
 
 
-def time_from_decimal(day_part: float):
+def time_from_decimal(day_part: float) -> dt_time:
     seconds = int((day_part % 1) * 86400)
     h, ms = divmod(seconds, 3600)
     m, s = divmod(ms, 60)
     return dt_time(h, m, s)
 
 
+def time_to_decimal(_time) -> float:  # types: dt_time, TimeSolar, etc.
+    return _time.hour / 24 + _time.minute / 1440 + _time.second / 86400
+
+
 class Sun:
     def __init__(self, place: Place):
         self.place = place
-        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.daylight_length = self.get_data()
+        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.sun_data = self.get_data()
 
     def calculate(self):
         _time = self.place.time
@@ -377,23 +383,26 @@ class Sun:
         # mean_anomaly = 360 * (per_days / year_length)  # Current mean anomaly, in degrees
         coefficient = eccentricity[self.place.planet] * 114.6  # EOC coefficient seems to be approximately 114.6x the eccentricity
         equation_of_centre = coefficient * sin(rad(mean_anomaly))
-        ecliptic_longitude = (mean_anomaly + equation_of_centre + 180 + 87) % 360  # degrees
+        ecliptic_longitude = (mean_anomaly + equation_of_centre + 180 + 88) % 360  # degrees
         axial_tilt = axial_tilts[self.place.planet]  # Axial tilt (obliquity) of the planet, in degrees
         declination = deg(asin(sin(rad(ecliptic_longitude)) * sin(rad(axial_tilt))))  # Declination of the sun, degrees
         # (720 - 4 * self.place.long - eq_of_time + self.place.tz * 60) / 1440
-        solar_noon_t = 0.5 + 0.0053 * sin(rad(mean_anomaly)) - 0.0069 * sin(rad(2 * ecliptic_longitude)) - self.place.long / 360 + self.place.tz / 24  # Fraction of the day
+        solar_time_change = 0.0053 * sin(rad(mean_anomaly)) - 0.0069 * sin(rad(2 * ecliptic_longitude)) - self.place.long / 360 + self.place.tz / 24
+        solar_time = (days % 1 + solar_time_change + self.place.tz / 24) % 1
+        solar_noon_t = 0.5 + solar_time_change  # Fraction of the day
 
-        def hour_angle_cos(zenith: float):
-            return (sin(rad(zenith) - sin(rad(self.place.lat)) * sin(rad(declination)))) / (cos(rad(self.place.lat)) * cos(rad(declination)))
+        def hour_angle_cos(_zenith: float):
+            return (sin(rad(_zenith) - sin(rad(self.place.lat)) * sin(rad(declination)))) / (cos(rad(self.place.lat)) * cos(rad(declination)))
 
+        # Calculate sunrise/set and twilight times
         sunrise_cos = hour_angle_cos(-0.833)
         twilight_cos = hour_angle_cos(-6)
         if -1 <= sunrise_cos <= 1:
-            hour_angle = deg(acos(sunrise_cos))
-            sunrise_t = solar_noon_t - hour_angle * 4 / 1440
-            sunset_t = solar_noon_t + hour_angle * 4 / 1440
+            sunrise_ha = deg(acos(sunrise_cos))  # Sunrise Hour Angle
+            sunrise_t = solar_noon_t - sunrise_ha * 4 / 1440
+            sunset_t = solar_noon_t + sunrise_ha * 4 / 1440
             if -1 <= twilight_cos <= 1:
-                twilight_ha = deg(acos(twilight_cos))
+                twilight_ha = deg(acos(twilight_cos))  # Twilight Hour Angle
                 dawn_t = solar_noon_t - twilight_ha * 4 / 1440
                 dusk_t = solar_noon_t + twilight_ha * 4 / 1440
             else:
@@ -403,19 +412,69 @@ class Sun:
             dawn_t, dusk_t = 0, 1
         else:
             sunrise_t, sunset_t = 3, 3  # Eternal nighttime
-            dawn_t, dusk_t = 0, 1
-        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t
+            if -1 <= twilight_cos <= 1:
+                twilight_ha = deg(acos(twilight_cos))
+                dawn_t = solar_noon_t - twilight_ha * 4 / 1440
+                dusk_t = solar_noon_t + twilight_ha * 4 / 1440
+            else:
+                dawn_t, dusk_t = 0, 1
+
+        # Calculate position of the sun (elevation and azimuth)
+        hour_angle = solar_time * 360 - 180  # degrees
+        zenith = deg(acos(sin(rad(self.place.lat)) * sin(rad(declination)) + cos(rad(self.place.lat)) * cos(rad(declination)) * cos(rad(hour_angle))))  # degrees
+        elevation = 90 - zenith  # degrees
+        if elevation > 85:
+            refraction = 0
+        elif elevation > 5:
+            refraction = 58.1 / tan(rad(elevation)) - 0.07 / (tan(rad(elevation)) ** 3) + 0.000086 / (tan(rad(elevation)) ** 5)
+        elif elevation > -0.575:
+            refraction = 1735 + elevation * (-518.2 + elevation * (103.4 + elevation * (-12.79 + elevation * 0.711)))
+        else:
+            refraction = -20.772 / tan(rad(elevation))
+        refraction /= 3600
+        # if self.place.lat in [0, 90]:
+        #     azimuth = -1
+        # else:
+        #     azimuth_equation = deg(acos(((sin(rad(self.place.lat)) * cos(rad(zenith))) - sin(rad(declination))) / (cos(rad(self.place.lat)) * sin(rad(zenith)))))
+        #     if hour_angle > 0:
+        #         azimuth = (azimuth_equation + 180) % 360
+        #     else:
+        #         azimuth = (540 - azimuth_equation) % 360
+        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction  # , azimuth
 
     def get_data(self):
-        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t = self.calculate()
+        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time_t, elevation = self.calculate()
         dawn = time_from_decimal(dawn_t)
         sunrise = time_from_decimal(sunrise_t)
         solar_noon = time_from_decimal(solar_noon_t)
         sunset = time_from_decimal(sunset_t)
         dusk = time_from_decimal(dusk_t)
+        solar_time = time_from_decimal(solar_time_t)
         if sunrise_t == 2 or sunset_t == 2:
-            sunrise, sunset = "Always daytime today", "Always daytime today"
+            sun_data = f"Always daytime today\n\n`Solar noon {solar_noon}`\n"
         elif sunrise_t == 3 or sunset_t == 3:
-            sunrise, sunset = "Always nighttime today", "Always nighttime today"
-        daylight = sunset_t - sunrise_t
-        return solar_noon, sunrise, sunset, dawn, dusk, daylight
+            if dawn_t != 0 and dusk_t != 1:
+                sun_data = f"Always nighttime today\n\n`Dawn       {dawn}`\n`Solar noon {solar_noon}`\n`Dusk       {dusk}`\n"
+            else:
+                sun_data = f"Always nighttime today\n\n`Solar noon {solar_noon}`\n"
+        else:
+            daylight = sunset_t - sunrise_t
+            daylight_length = languages.Language("english").delta_int(daylight * 86400, accuracy=2, brief=False, affix=False)
+            sun_data = f"`Dawn       {dawn}`\n" \
+                       f"`Sunrise    {sunrise}`\n" \
+                       f"`Solar noon {solar_noon}`\n" \
+                       f"`Sunset     {sunset}`\n" \
+                       f"`Dusk       {dusk}`\n\n" \
+                       f"Length of day {daylight_length}"
+        sun_data += f"\nTrue solar time {solar_time}"
+        # if self.place.lat not in [0, 90]:
+        #     parts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+        #     _azimuth = (azimuth + 22.5) % 360
+        #     direction = parts[int(_azimuth / 45)]
+        #     sun_data += f"\nThe sun is facing {direction} ({azimuth:.0f}°)"
+        # The method seems to be quite inaccurate at low and high latitudes
+        if elevation > 0:
+            sun_data += f"\nThe sun is {elevation:.0f}° above the horizon"
+        else:
+            sun_data += f"\nThe sun is {-elevation:.0f}° below the horizon"
+        return solar_noon, sunrise, sunset, dawn, dusk, sun_data

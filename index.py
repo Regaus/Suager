@@ -61,24 +61,6 @@ for i in range(len(config["bots"])):
     load = bot_data.load[name]
     for name in load:
         bot.load_extension(f"cogs.{name}")
-    # try:
-    #     for file in os.listdir(os.path.join(name, "cogs")):
-    #         if file.endswith(".py"):
-    #             name = file[:-3]
-    #             bot.load_extension(f"{name}.cogs.{name}")
-    # except FileNotFoundError:
-    #     pass
-    # for file in os.listdir(os.path.join("core", "cogs")):
-    #     if file.endswith(".py"):
-    #         name = file[:-3]
-    #         if name not in local_config["exclude_core_cogs"]:
-    #             bot.load_extension(f"core.cogs.{name}")
-    # for bot_name, cogs in bot.local_config["shared"].items():
-    #     for cog in cogs:
-    #         try:
-    #             bot.load_extension(f"{bot_name}.cogs.{cog}")
-    #         except FileNotFoundError:
-    #             print_error(f"File {bot_name}/cogs/{cog}.py was not found...")
     bot.load_extension("jishaku")
     for command in bot.commands:
         bot.usages[str(command)] = 0
@@ -86,11 +68,12 @@ for i in range(len(config["bots"])):
         tasks.append(loop.create_task(bot.start(local_config["token"])))
         tasks.append(loop.create_task(temporaries.playing(bot)))
         if bot.name == "suager":
-            tasks.append(loop.create_task(temporaries.temporaries(bot)))
-            tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.avatars(bot)))
+            tasks.append(loop.create_task(temporaries.birthdays(bot)))
+            tasks.append(loop.create_task(temporaries.temporaries(bot)))
         if bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
+            tasks.append(loop.create_task(temporaries.temporaries(bot)))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

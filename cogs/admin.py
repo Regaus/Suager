@@ -11,7 +11,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from utils import bot_data, data_io, database, general, http, languages, logger, permissions, time
+from utils import bot_data, data_io, database, general, http, logger, permissions, time
 
 
 def insert_returns(body):
@@ -62,13 +62,13 @@ async def eval_(ctx: commands.Context, cmd):
         return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
 
-def reload_util(name: str, bot):
+def reload_util(name: str, bot: bot_data.Bot):
     name_maker = f"**utils/{name}.py**"
     module_name = f"utils.{name}"
     return reload_module(name_maker, module_name, bot)
 
 
-def reload_module(human_name: str, module_name: str, bot):
+def reload_module(human_name: str, module_name: str, bot: bot_data.Bot):
     try:
         module = importlib.import_module(module_name)
         importlib.reload(module)
@@ -82,7 +82,7 @@ def reload_module(human_name: str, module_name: str, bot):
     return reloaded
 
 
-def reload_extension(bot, name: str):
+def reload_extension(bot: bot_data.Bot, name: str):
     try:
         bot.reload_extension(f"cogs.{name}")
     except Exception as e:
@@ -93,7 +93,7 @@ def reload_extension(bot, name: str):
 
 
 class Admin(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self.config = general.get_config()
 
@@ -312,7 +312,7 @@ class Admin(commands.Cog):
         logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.full_name} > {reloaded}")
         return reloaded
 
-    @commands.command(name="updateconfig", aliases=["uc"])
+    @commands.command(name="updateconfig", aliases=["reloadconfig", "uc", "rc"])
     @commands.check(permissions.is_owner)
     async def update_config(self, ctx: commands.Context):
         """ Reload config """
@@ -451,9 +451,16 @@ class Admin(commands.Cog):
 
     @commands.command(name="gls")
     @commands.check(permissions.is_owner)
-    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en"):
+    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "english"):
         """ Test a string """
-        return await general.send(languages.languages.get(locale, languages.languages["en"]).get(string, f"String not found: {string}"), ctx.channel)
+        return await general.send(self.bot.language2(locale).string(string), ctx.channel)
+        # return await general.send(languages.languages.get(locale, languages.languages["english"]).get(string, f"String not found: {string}"), ctx.channel)
+
+    @commands.command(name="data")
+    @commands.check(permissions.is_owner)
+    async def get_lang_data(self, ctx: commands.Context, key: str, locale: str = "english"):
+        """ Test a set of data of a language """
+        return await general.send(self.bot.language2(locale).data(key), ctx.channel)
 
     @commands.command(name="blacklist")
     @commands.check(permissions.is_owner)
@@ -498,7 +505,7 @@ class Admin(commands.Cog):
     async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = -0):
         """ Check someone's DMs with Suager """
         try:
-            data = "\n\n".join([f"{message.author} - {languages.gts(message.created_at, 'en', seconds=True)}\n{message.content}" for message in (await
+            data = "\n\n".join([f"{message.author} - {self.bot.language2('english').time(message.created_at, seconds=True)}\n{message.content}" for message in (await
                                 (await user.create_dm()).history(limit=None, oldest_first=True).flatten())[-limit:]])
             if ctx.guild is None:
                 _limit = 8000000
@@ -559,8 +566,8 @@ class Admin(commands.Cog):
             return await ctx.send(f"Error loading file:\n{type(e).__name__}: {e}")
         # stuff = json.dumps(json.loads(stuff), indent=0)
         open("config.json", "w").write(stuff_str)
-        return await general.send("Config updated.", ctx.channel)
+        return await general.send("Config file updated.", ctx.channel)
 
 
-def setup(bot):
+def setup(bot: bot_data.Bot):
     bot.add_cog(Admin(bot))

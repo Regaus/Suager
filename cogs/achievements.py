@@ -4,38 +4,39 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from utils import emotes, general, languages
+from utils import bot_data, emotes, general
 
 achievement_colours = [
-    (96, 96, 96),     # Tier -0
+    (96, 96, 96),     # Tier 0
     (255, 255, 255),  # Tier 1
-    # (255, 96, 96),    # Tier 2
-    (255, 0, 0),      # Tier 2/3
-    (255, 64, 0),     # Tier 3/4
-    (255, 170, 0),    # Tier 4/5
-    (255, 255, 0),    # Tier 5/6
-    (50, 255, 50),    # Tier 6/7
-    (0, 0, 255),      # Tier 7/8
-    (0, 255, 255),    # Tier 8/9
-    (0, 255, 128),    # Tier 9/10
-    # (0, 128, 128),    # Tier 11
-    (128, 0, 255),    # Tier 10/12
-    # (255, 0, 255),    # Tier 13
-    (255, 0, 160),    # Tier 11/14
-    (255, 0, 87)      # Tier 12/15
+    # (255, 96, 96),    # Tier (2)
+    (255, 0, 0),      # Tier 2 (3)
+    (255, 64, 0),     # Tier 3 (4)
+    (255, 170, 0),    # Tier 4 (5)
+    (255, 255, 0),    # Tier 5 (6)
+    (50, 255, 50),    # Tier 6 (7)
+    (0, 0, 255),      # Tier 7 (8)
+    (0, 255, 255),    # Tier 8 (9)
+    (0, 255, 128),    # Tier 9 (10)
+    # (0, 128, 128),    # Tier (11)
+    (128, 0, 255),    # Tier 10 (12)
+    # (255, 0, 255),    # Tier (13)
+    (255, 0, 160),    # Tier 11 (14)
+    (255, 0, 87)      # Tier 12 (15)
 ]
 # achievement_colours = ["808080", "ffffff", "ff0000", "ff4000", "ff8000", "ffff00", "80ff00", "32ff32", "00ff80", "00ffff", "ff00ff", "ff00a0", "ff0057"]
 
 
 class Achievements(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: bot_data.Bot):
         self.bot = bot
 
     @commands.command(name="achievements", aliases=["accomplishments", "ah"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def achievements(self, ctx: commands.Context, who: discord.User = None):
-        """ See what you or someone else has accomplished """
-        locale = languages.gl(ctx)
+        """ See your progress within my bots """
+        # locale = languages.gl(ctx)
+        language = self.bot.language(ctx)
         user = who or ctx.author
         # achievement_levels = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
         achievement_levels = [10, 20, 30, 40, 50, 60, 75, 100, 125, 150, 175, 200]
@@ -62,7 +63,7 @@ class Achievements(commands.Cog):
             await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
             font, font_med, font_small = None, None, None
         w, _ = dr.textsize(str(user), font=font)
-        max_description = languages.gls("achievements_highest", locale)
+        max_description = language.string("achievements_highest")
         # max_description = "Highest achievement tier reached!"
 
         def get_colour(level: int):
@@ -91,10 +92,11 @@ class Achievements(commands.Cog):
                 progress = 1 if progress > 1 else progress
             except ZeroDivisionError:
                 progress = 1
-            dr.text((x + text_x, y + 96), languages.gls("achievements_current", locale, languages.gns(level, locale), languages.gns(tier_count, locale)), font=font_small, fill=colour)
+            # These values are 1-2 digit numbers, so there isn't really a point in translating them, but oh well
+            dr.text((x + text_x, y + 96), language.string("achievements_current", language.number(level), language.number(tier_count)), font=font_small, fill=colour)
             # dr.text((x + text_x, y + 96), f"Current Tier: {level} of {tier_count}", font=font_small, fill=colour)
-            r1, r3, r4 = languages.gns(level + 1, locale), languages.gns(current, locale), languages.gns(requirement, locale)
-            desc = languages.gls("achievements_goal", locale, r1, details, r3, r4) if requirement > current else max_description
+            r1, r3, r4 = language.number(level + 1), language.number(current, precision=0), language.number(requirement, precision=0)
+            desc = language.string("achievements_goal", r1, details, r3, r4) if requirement > current else max_description
             # desc = f"Tier {level + 1} Goal: {details} ({current:,}/{requirement:,})" if requirement > current else max_description
             dr.text((x + text_x, y + 128), desc, font=font_small, fill=colour)
             fill = width - 192
@@ -110,7 +112,7 @@ class Achievements(commands.Cog):
             img.paste(i3, box3)
             img.paste(i4, box4)
             img.paste(i5, box5)
-            dr.text((x + text_x + fill + 30, y + 170), f"{progress:.0%}", font=font_small, fill=colour)
+            dr.text((x + text_x + fill + 30, y + 170), language.number(progress, percentage=True, precision=0), font=font_small, fill=colour)
 
         tiers = []
         user_xp = self.bot.db.fetch(f"SELECT * FROM leveling WHERE uid=? ORDER BY xp DESC", (user.id,))
@@ -126,7 +128,7 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(tier)
-        generate_box(0, 0, tier, 12, languages.gls("achievements_leveling_levels", locale), languages.gls("achievements_leveling_levels_desc", locale, languages.gns(req, locale)),
+        generate_box(0, 0, tier, 12, language.string("achievements_leveling_levels"), language.string("achievements_leveling_levels_desc", language.number(req)),
                      max_level, req, prev)
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
@@ -137,8 +139,9 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(round(tier * 0.75))
-        generate_box(0, 1, tier, 16, languages.gls("achievements_leveling_xp", locale), languages.gls("achievements_leveling_xp_desc", locale, languages.gns(req, locale)),
+        generate_box(0, 1, tier, 16, language.string("achievements_leveling_xp"), language.string("achievements_leveling_xp_desc", language.number(req)),
                      total_xp, req, prev)
+        # After TBL v2 is done - Remove Leveling achievements from Cobble's version of the command, only show them with Suager
         # TBL v2 achievements - Shelf 1
         # CC2 - Depth - Shelf 2
         # CC2 - Cobble Levels - Shelf 2
@@ -154,7 +157,7 @@ class Achievements(commands.Cog):
         img.save(bio, "PNG")
         bio.seek(0)
         # f"This is what **{user}** has accomplished so far."
-        return await general.send(languages.gls("achievements_achievements", locale, str(user)), ctx.channel, file=discord.File(bio, filename="achievements.png"))
+        return await general.send(language.string("achievements_achievements", str(user)), ctx.channel, file=discord.File(bio, filename="achievements.png"))
 
     @commands.command(name="tiers")
     @commands.is_owner()
@@ -175,5 +178,5 @@ class Achievements(commands.Cog):
         return await general.send(None, ctx.channel, file=discord.File(bio, filename="test.png"))
 
 
-def setup(bot):
+def setup(bot: bot_data.Bot):
     bot.add_cog(Achievements(bot))

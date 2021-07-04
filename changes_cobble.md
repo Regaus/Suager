@@ -263,3 +263,9 @@
 - Converted Kargadian places to 3600x1800 map format
 - Made latitude/longitude output more precise
 - Removed "month of" parts from Zeivela and Qevenerus time generation
+
+## v1.1.29 - 1 July 2021
+- Added more data about the sun's location to weather78
+
+## v1.1.30 - 3 July 2021
+- Added data78 as alias to weather78

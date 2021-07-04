@@ -83,12 +83,8 @@ tables = [
     Table("birthdays", [
         Column("uid", 0, True),
         Column("birthday", 4, True),
-        Column("has_role", 3, True)
-    ]),
-    Table("birthdays_kyomi", [
-        Column("uid", 0, True),
-        Column("birthday", 4, True),
-        Column("has_role", 3, True)
+        Column("has_role", 3, True),
+        Column("bot", 2, True),
     ]),
     Table("counters", [
         Column("uid1", 0, True),       # 00
@@ -169,6 +165,7 @@ tables = [
         Column("message", 2, False),  # Message if it's a reminder
         Column("entry_id", 0, True),  # Random ID to later find this entry in the database
         Column("handled", 0, True),   # Whether the entry has been handled upon expiry
+        Column("bot", 2, True),       # Bot name
     ]),
     Table("timezones", [
         Column("uid", 0, True),

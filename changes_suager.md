@@ -859,3 +859,12 @@
 - Rearranged all cogs and utils to be in one folder, and updated index.py to just load the necessary ones
 - Made reload commands support the new cogs and utils structure
 - Removed the online, offline, restart commands from admin, they're not needed anymore
+
+## v7.3.2 - 4 July 2021
+- Turned languages into a class
+- Made cog subclasses to not load
+- Made rank's XP and progress text slightly higher to not overlap with the progress bar
+- Removed "Progress" field from max levels
+- Translated embed field titles for embed rank
+- Removed "kith" and "kish" aliases of kiss
+- Limited the length of `reason` on mod commands to 400 characters
