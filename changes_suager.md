@@ -868,3 +868,7 @@
 - Translated embed field titles for embed rank
 - Removed "kith" and "kish" aliases of kiss
 - Limited the length of `reason` on mod commands to 400 characters
+
+## v7.3.3 - 4 July 2021
+- Improved birthdays invalid date output
+- Added `utils.time` to eval command

@@ -37,7 +37,7 @@ async def eval_(ctx: commands.Context, cmd):
         parsed = ast.parse(body)
         body = parsed.body[0].body
         insert_returns(body)
-        env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': ctx.bot.db, '__import__': __import__}
+        env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': ctx.bot.db, 'time': time, '__import__': __import__}
         exec(compile(parsed, filename="<ast>", mode="exec"), env)
         result = (await eval(f"{fn_name}()", env))
         if ctx.guild is None:

@@ -28,3 +28,6 @@
 
 ## v0.1.7 - 4 July 2021
 - Added reminders to the bot
+
+## v0.1.8 - 4 July 2021
+- Improved birthdays invalid date output
