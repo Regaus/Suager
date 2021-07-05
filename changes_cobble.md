@@ -269,3 +269,7 @@
 
 ## v1.1.30 - 3 July 2021
 - Added data78 as alias to weather78
+
+## v1.1.31 - 5 July 2021
+- Improved accuracy of solar time
+- Removed dawn and dusk values if they don't happen

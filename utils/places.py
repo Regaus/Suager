@@ -88,7 +88,7 @@ month_counts = {
 eccentricity = {
     "Zeivela": 0.0271,
     "Kargadia": 0.01721,
-    "Qevenerus": 0.0216,
+    "Qevenerus": 0.1016,
 }
 axial_tilts = {
     "Zeivela": 23.47,
@@ -121,6 +121,7 @@ class Place:
         time_function = times[self.planet]
         self.time = time_function(tz=self.tz)
         # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
+        # self.time = time_function(time.dt(2022, 1, 11))
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun_data = Sun(self)
         try:
@@ -383,12 +384,12 @@ class Sun:
         # mean_anomaly = 360 * (per_days / year_length)  # Current mean anomaly, in degrees
         coefficient = eccentricity[self.place.planet] * 114.6  # EOC coefficient seems to be approximately 114.6x the eccentricity
         equation_of_centre = coefficient * sin(rad(mean_anomaly))
-        ecliptic_longitude = (mean_anomaly + equation_of_centre + 180 + 88) % 360  # degrees
+        ecliptic_longitude = (mean_anomaly + equation_of_centre + 180 + (90 - coefficient)) % 360  # degrees
         axial_tilt = axial_tilts[self.place.planet]  # Axial tilt (obliquity) of the planet, in degrees
         declination = deg(asin(sin(rad(ecliptic_longitude)) * sin(rad(axial_tilt))))  # Declination of the sun, degrees
         # (720 - 4 * self.place.long - eq_of_time + self.place.tz * 60) / 1440
         solar_time_change = 0.0053 * sin(rad(mean_anomaly)) - 0.0069 * sin(rad(2 * ecliptic_longitude)) - self.place.long / 360 + self.place.tz / 24
-        solar_time = (days % 1 + solar_time_change + self.place.tz / 24) % 1
+        solar_time = (days % 1 - solar_time_change + self.place.tz / 24) % 1
         solar_noon_t = 0.5 + solar_time_change  # Fraction of the day
 
         def hour_angle_cos(_zenith: float):
@@ -460,12 +461,8 @@ class Sun:
         else:
             daylight = sunset_t - sunrise_t
             daylight_length = languages.Language("english").delta_int(daylight * 86400, accuracy=2, brief=False, affix=False)
-            sun_data = f"`Dawn       {dawn}`\n" \
-                       f"`Sunrise    {sunrise}`\n" \
-                       f"`Solar noon {solar_noon}`\n" \
-                       f"`Sunset     {sunset}`\n" \
-                       f"`Dusk       {dusk}`\n\n" \
-                       f"Length of day {daylight_length}"
+            _dawn, _dusk = (f"`Dawn       {dawn}`\n", f"`Dusk       {dusk}`\n") if dawn_t != 0 and dusk_t != 1 else ("", "")
+            sun_data = f"{_dawn}`Sunrise    {sunrise}`\n`Solar noon {solar_noon}`\n`Sunset     {sunset}`\n{_dusk}\nLength of day {daylight_length}"
         sun_data += f"\nTrue solar time {solar_time}"
         # if self.place.lat not in [0, 90]:
         #     parts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
