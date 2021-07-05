@@ -96,7 +96,134 @@ axial_tilts = {
     "Qevenerus": 63.71,
 }
 weathers = {
-
+    "Reggar": {
+        "temperature": [
+            {  # 1 - Spring
+                "morning": [-2.0, 5.0],
+                "day": [3.5, 11.0],
+                "evening": [2.5, 11.0],
+                "night": [1.0, 7.5],
+                "night2": [-4.0, 3.0],
+            },
+            {  # 2 - Spring
+                "morning": [2.5, 8.0],
+                "day": [5.0, 13.0],
+                "evening": [7.5, 12.5],
+                "night": [6.0, 14.5],
+                "night2": [3.5, 11.5],
+            },
+            {  # 3 - Spring
+                "morning": [5.5, 13.5],
+                "day": [10.0, 18.5],
+                "evening": [11.5, 18.5],
+                "night": [11.0, 16.0],
+                "night2": [5.0, 12.0],
+            },
+            {  # 4 - Spring
+                "morning": [7.5, 15.5],
+                "day": [12.0, 19.5],
+                "evening": [13.5, 19.5],
+                "night": [12.0, 17.0],
+                "night2": [5.0, 14.0],
+            },
+            {  # 5 - Summer
+                "morning": [11.5, 20.0],
+                "day": [16.0, 27.0],
+                "evening": [19.0, 27.0],
+                "night": [12.0, 17.0],
+                "night2": [5.0, 14.0],
+            },
+            {  # 6 - Summer
+                "morning": [15.0, 21.0],
+                "day": [20.0, 30.0],
+                "evening": [20.0, 28.0],
+                "night": [14.0, 23.0],
+                "night2": [11.0, 21.0],
+            },
+            {  # 7 - Summer
+                "morning": [14.0, 22.0],
+                "day": [19.0, 32.0],
+                "evening": [19.3, 29.0],
+                "night": [13.0, 25.0],
+                "night2": [11.0, 19.0],
+            },
+            {  # 8 - Summer
+                "morning": [12.2, 19.5],
+                "day": [17.5, 25.0],
+                "evening": [17.5, 23.0],
+                "night": [11.0, 19.0],
+                "night2": [11.0, 21.0],
+            },
+            {  # 9 - Autumn
+                "morning": [7.5, 15.0],
+                "day": [10.0, 20.0],
+                "evening": [9.0, 17.0],
+                "night": [6.8, 15.5],
+                "night2": [5.0, 12.0],
+            },
+            {  # 10 - Autumn
+                "morning": [0.5, 9.0],
+                "day": [3.0, 13.0],
+                "evening": [2.0, 13.5],
+                "night": [1.0, 7.0],
+                "night2": [-1.0, 7.0],
+            },
+            {  # 11 - Autumn
+                "morning": [-4.0, 5.0],
+                "day": [-2.0, 7.0],
+                "evening": [-1.5, 5.5],
+                "night": [-4.0, 3.0],
+                "night2": [-6.0, 2.0],
+            },
+            {  # 12 - Autumn
+                "morning": [-7.0, 1.0],
+                "day": [-5.5, 2.0],
+                "evening": [-5.5, 1.5],
+                "night": [-6.7, 0.0],
+                "night2": [-9.0, -1.0],
+            },
+            {  # 13 - Winter
+                "morning": [-11.0, -4.0],
+                "day": [-10.5, -2.0],
+                "evening": [-9.5, -1.5],
+                "night": [-10.5, -2.0],
+                "night2": [-12.0, -5.0],
+            },
+            {  # 14 - Winter
+                "morning": [-20.0, -7.5],
+                "day": [-18.5, -6.0],
+                "evening": [-19.0, -6.0],
+                "night": [-21.0, -8.0],
+                "night2": [-22.0, -11.0],
+            },
+            {  # 15 - Winter
+                "morning": [-12.0, -2.5],
+                "day": [-9.7, 0.0],
+                "evening": [-10.0, -0.5],
+                "night": [-12.0, -3.0],
+                "night2": [-14.0, -5.0],
+            },
+            {  # 16 - Winter
+                "morning": [-6.0, 3.0],
+                "day": [-2.2, 7.0],
+                "evening": [-2.0, 6.5],
+                "night": [-3.0, 3.5],
+                "night2": [-5.0, 2.0],
+            }
+        ],
+        # Seasons:          <--    Spring       --> <--    Summer       --> <--    Autumn       --> <--    Winter       -->
+        "rain_chance":     [0.40, 0.37, 0.32, 0.27, 0.20, 0.14, 0.13, 0.15, 0.17, 0.27, 0.39, 0.45, 0.43, 0.42, 0.41, 0.41],
+        "thunderstorms":   [0.00, 0.00, 0.00, 0.02, 0.15, 0.40, 0.50, 0.47, 0.27, 0.05, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
+        "clouds_light":    [0.12, 0.10, 0.12, 0.11, 0.11, 0.12, 0.11, 0.13, 0.11, 0.12, 0.13, 0.15, 0.15, 0.15, 0.15, 0.15],
+        "clouds_moderate": [0.15, 0.15, 0.17, 0.17, 0.19, 0.19, 0.19, 0.18, 0.20, 0.20, 0.20, 0.19, 0.10, 0.10, 0.10, 0.10],
+        "overcast":        [0.13, 0.16, 0.17, 0.19, 0.20, 0.22, 0.24, 0.27, 0.30, 0.32, 0.33, 0.32, 0.15, 0.07, 0.07, 0.11],
+        "wind": [5, 30],
+        "wind_storms": {
+            "probability": [0.11, 0.09, 0.06, 0.05, 0.04, 0.04, 0.04, 0.04, 0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.16, 0.13],
+            "severity": [1.7, 3.0],
+            "limit": 75
+        }
+    }
 }
 
 
@@ -123,7 +250,7 @@ class Place:
         # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
         # self.time = time_function(time.dt(2022, 1, 11))
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
-        self.sun_data = Sun(self)
+        self.sun = Sun(self)
         try:
             self.weathers = weathers[self.place]
         except KeyError:
@@ -165,190 +292,78 @@ class Place:
         embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**\n" \
                             f"Time zone: {self.tz:+}:00 (Real offset {self.long / (360 / 24):+.2f} hours)\n" \
                             f"Location: {self.location(False)}"
-        _months = month_counts[self.planet]
-        month = self.time.month
-        if self.lat < 0:
-            month += _months // 2
-            month %= _months
-        # spring 1-4, summer 5-8, autumn 9-12, winter 13-16
-        _q1, _q2, _q3 = _months // 4, _months // 2, _months // 4 * 3
-        if month <= _q1:
-            season, s = "spring", 0
-        elif _q1 < month <= _q2:
-            season, s = "summer", 1
-        elif _q2 < month <= _q3:
-            season, s = "autumn", 2
-        else:
-            season, s = "winter", 3
-        if self.sun_data.sunrise == "Always daytime today":
-            sunrise, noon, sunset = dt_time(0, 0, 0), self.sun_data.solar_noon, dt_time(23, 59, 59)
-            is_day = True
-            no_sun = True
-        elif self.sun_data.sunrise == "Always nighttime today":
-            sunrise, noon, sunset = self.sun_data.solar_noon, self.sun_data.solar_noon, self.sun_data.solar_noon
-            is_day = False
-            no_sun = True
-        else:
-            sunrise, noon, sunset = self.sun_data.sunrise, self.sun_data.solar_noon, self.sun_data.sunset
-            is_day = sunrise < self.dt_time < sunset
-            no_sun = False
+
         if self.weathers is not None:
-            # if self.sun_data.sunrise == self.sun_data.sunset == dt_time(0, 0, 0):
-            #     is_day = 1 < month <= _q2
-            # if is_day:
-            #     ranges = self.weathers["temperature_low_day"], self.weathers["temperature_high_day"]
-            # else:
-            #     ranges = self.weathers["temperature_low_night"], self.weathers["temperature_high_night"]
-            # month = self.time.month
-            # _low, _high = ranges
-            # low, high = _low[month - 1], _high[month - 1]
-            if no_sun and not is_day:
-                part = "night2"
-            else:
-                cond1, cond2 = (noon < self.dt_time < dt_time(17), dt_time(17) < self.dt_time < sunset) if sunset > dt_time(17) else \
-                    (noon < self.dt_time < sunset, sunset < self.dt_time < dt_time(21))
-                if self.dt_time < sunrise:
-                    part = "night2"
-                elif sunrise < self.dt_time < noon:
-                    part = "morning"
-                elif cond1:
-                    part = "afternoon"
-                elif cond2:
-                    part = "evening"
-                else:
-                    part = "night"
-            _mean, _sd = self.weathers["temperature"][season][part]
-            # wind_low, wind_high = [val * self.weathers["winds_mult"] for val in [3, 50]]
-            _seed0 = int(self.place[:8].lower(), base=36)
+            # Remove non-ascii stuff like äá to make sure it's only A-Z
+            _name = self.place[:8].encode("ascii", "replace").replace(b"?", b"0").replace(b" ", b"0")
+            _seed0 = int(_name, base=36)
             _seed1 = self.time.ds * 1440  # Seed the day from 1/1/0001, multiplied by 1440 minutes.
             _seed2 = self.time.hour * 60
-            # _seed3 = self.time.minute
             seed = _seed0 + _seed1
             seed2 = seed + _seed2
-            # seed3 = seed + _seed3
-            # _seed2 = (self.time.month * 100 + self.time.day) * 1440
-            # seed = (month * 100 + self.time.day) * 1440
-            # random.seed(self.place + str(seed))
 
-            # temp = random.uniform(low, high)
-            temp = general.random2(_mean, _sd, seed)
-            # wind = random.uniform(wind_low, wind_high)
-            # hour_part = self.time.hour + self.time.minute / 60
-            # Temperature modifiers for every hour
-            # adds = [-2, -3, -3, -3, -2, -1, 0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 2, 2, 1, 1, 0, 0, -1, -1]
-            # part = int(hour_part)
-            # part_1 = hour_part % 1
-            # part_2 = 1 - part_1
-            # temp_add = 1 + (adds[part] * part_1 + adds[(part + 1) % 24] * part_2
-            # random.seed(self.place + str(int(seed + hour_part * 60)))
-            # wind *= random.uniform(0.97, 1.03)
-            # rain = random.randint(0, 100) <= rain_chance
-            # temp_add *= random.uniform(0.95, 1.05)
-            # temp *= temp_add
-            # if not (no_sun and not is_day):
-            # if self.dt_time < sunrise:
-            #     temp -= 1.75
-            # elif sunrise <= self.dt_time < noon:
-            #     temp -= 0.35
-            # elif noon <= self.dt_time < sunset:
-            #     temp += 1.25
-            # No change between sunset and midnight
+            temp_min, temp_max = self.weathers["temperature"][self.time.month - 1][self.sun.day_part]
+            temp = general.random1(temp_min, temp_max, seed)
             temp_c = round(temp, 1)
             embed.add_field(name="Temperature", value=f"**{temp_c}°C**", inline=False)
 
-            wind_mean, wind_sd = self.weathers["wind"]
-            wind_max: int = self.weathers["wind_max"]
-            wind_storm = self.weathers["wind_storms"]
-            wind_base = general.random2(wind_mean, wind_sd, seed2)
-            wind_stormer = general.random1(0, 1, seed)
-            if wind_stormer > 0.9:  # 10% chance of low wind day
-                wind_base *= 0.2
-            if wind_stormer < wind_storm:
-                wind_stormer2 = general.random1(0, 1, seed - 1)
-                if wind_stormer2 < 0.07:
-                    wind_base *= 4
-                elif 0.07 <= wind_stormer2 < 0.14:
-                    wind_base *= 3
-                elif 0.14 <= wind_stormer2 < 0.70:  # 56%
-                    wind_base *= 2
-                else:  # 30%
-                    wind_base *= 1.5
-            if wind_base > wind_max:
-                wind_base = wind_max
-            speed_kmh = round(wind_base, 1)
-            speed_mps = round(wind_base / 3.6, 1)
-            if self.planet in ["Kargadia", "Kaltaryna"]:
-                kp_base = 0.8192
-                # m_name = "ks/h (kp/c)"
-                speed_kpc = round(wind_base / kp_base, 1)
-                speed_custom = f" | {speed_kpc} kh/h"
-            else:
-                speed_custom = ""
-            embed.add_field(name="Wind speed", value=f"**{speed_kmh} km/h** | {speed_mps} m/s{speed_custom}", inline=False)
+            wind_min, wind_max = self.weathers["wind"]
+            wind = general.random1(wind_min, wind_max, seed2)
+            # wind_max: int = self.weathers["wind_max"]
+            # if wind > wind_max:
+            #     wind = wind_max
+            storms = self.weathers["wind_storms"]
+            storm_probability = storms["probability"][self.time.month - 1]
+            storm = general.random1(0, 1, seed2 - 1)
+            if storm < storm_probability:
+                severity_min, severity_max = storms["severity"]
+                wind *= general.random1(severity_min, severity_max, seed2 - 2)
+                limit = storms["limit"]
+                if wind > limit:
+                    wind = limit
+            if wind < 0:
+                wind = 0
+            speed_kmh = round(wind, 1)
+            speed_mps = round(wind / 3.6, 1)
+            embed.add_field(name="Wind speed", value=f"**{speed_kmh} km/h** | {speed_mps} m/s", inline=False)
 
-            rain_chance = self.weathers["rain_chance"][s]  # [month - 1]
+            rain_chance = self.weathers["rain_chance"][self.time.month - 1]  # [month - 1]
             rain = general.random1(0, 100, seed2) <= rain_chance
             if rain:
-                if -5 > temp_c > 5:
+                if -3 > temp_c > 3:
                     rain_out = "Rain" if general.random1(0, 1, seed2 - 3) < 0.5 else "Snow"
                 else:
                     rain_out = "Rain" if temp_c > 0 else "Snow"
-                    thunder_chance = 0
-                    if 20 >= temp_c > 25:
-                        thunder_chance = 0.3  # 30% chance of thunder while raining at 20-25 degrees
-                    elif 25 >= temp_c > 30:
-                        thunder_chance = 0.5  # 50% chance of thunder while raining at 25-30 degrees
-                    elif temp_c >= 30:
-                        thunder_chance = 0.7  # 70% chance of thunder while raining at above 30 degrees
-                    if self.place == "Reggar":
-                        thunder_chance *= 1.25  # My place is more likely to have thunder instead of normal, boring rain
-                    if general.random1(0, 1, seed2) < thunder_chance:
-                        rain_out = "Thunder"
+                    if temp_c >= 17.5:
+                        thunder_chance = self.weathers["thunderstorms"][self.time.month - 1]
+                        if general.random1(0, 1, seed2) < thunder_chance:
+                            rain_out = "Thunder"
             else:
-                rain_out = "Sunny"
-                cloud_chance = self.weathers["cloudiness"][s]
-                overcast = self.weathers["overcast"][s]
-                r = general.random1(0, 1, seed2)
-                if r < cloud_chance:
+                cloud_chance = self.weathers["clouds_light"][self.time.month - 1]
+                cloud_moderate = self.weathers["clouds_moderate"][self.time.month - 1] + cloud_chance
+                overcast = self.weathers["overcast"][self.time.month - 1] + cloud_moderate
+                value = general.random1(0, 1, seed2)
+                if value < cloud_chance:
                     rain_out = "Slightly cloudy"
-                    r2 = general.random1(0, 1, seed2 - 1)
-                    r3 = general.random1(0, 1, seed2 - 2)
-                    if r2 < overcast:
-                        rain_out = "Overcast"
-                    elif r3 < 0.6:  # It's more likely to be cloudy than only slightly cloudy
-                        rain_out = "Cloudy"
-                # Account for clouds using the cloudiness set
-            embed.add_field(name="Sky's Mood", value=rain_out, inline=False)
+                elif cloud_chance < value < cloud_moderate:
+                    rain_out = "Cloudy"
+                elif cloud_moderate < value < overcast:
+                    rain_out = "Overcast"
+                else:
+                    rain_out = "Sunny"
+            embed.add_field(name="Sky's mood", value=rain_out, inline=False)
         else:
             embed.description += "\n\nWeather conditions not available."
 
-        # if no_sun:
-        #     sun_output = f"{self.sun_data.sunrise}\nSolar noon: {noon.isoformat()}"
-        # else:
-        #     # daylight = languages.td_int(self.sun_data.daylight_length * 86400, "english", 2, brief=False)
-        #     daylight = "Placeholder"
-        #     sun_output = f"`Dawn:       {self.sun_data.dawn.isoformat()}`\n" \
-        #                  f"`Sunrise:    {sunrise.isoformat()}`\n" \
-        #                  f"`Solar noon: {noon.isoformat()}`\n" \
-        #                  f"`Sunset:     {sunset.isoformat()}`\n" \
-        #                  f"`Dusk:       {self.sun_data.dusk.isoformat()}`\n\n" \
-        #                  f"Daylight length: {daylight}"
-        # embed.add_field(name="About the Sun", value=sun_output, inline=False)
-        embed.add_field(name="About the Sun", value=self.sun_data.sun_data, inline=False)
-
-        # if no_sun:
-        #     embed.add_field(name="Sunrise and Sunset", value=self.sun_data.sunrise, inline=True)
-        #     embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
-        # else:
-        #     embed.add_field(name="Sunrise", value=sunrise.isoformat(), inline=True)
-        #     embed.add_field(name="Solar noon", value=noon.isoformat(), inline=True)
-        #     embed.add_field(name="Sunset", value=sunset.isoformat(), inline=True)
-        embed.set_footer(text=f"Current season: {season.title()}")
+        embed.add_field(name="About the Sun", value=self.sun.sun_data, inline=False)
+        embed.set_footer(text=f"Current season: {self.sun.season.title()}")
         embed.timestamp = time.now(None)
         return embed
 
 
 def time_from_decimal(day_part: float) -> dt_time:
+    if day_part == 1:
+        return dt_time(23, 59, 59, 999999)
     seconds = int((day_part % 1) * 86400)
     h, ms = divmod(seconds, 3600)
     m, s = divmod(ms, 60)
@@ -362,7 +377,7 @@ def time_to_decimal(_time) -> float:  # types: dt_time, TimeSolar, etc.
 class Sun:
     def __init__(self, place: Place):
         self.place = place
-        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.sun_data = self.get_data()
+        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.sun_data, self.day_part, self.season = self.get_data()
 
     def calculate(self):
         _time = self.place.time
@@ -385,6 +400,8 @@ class Sun:
         coefficient = eccentricity[self.place.planet] * 114.6  # EOC coefficient seems to be approximately 114.6x the eccentricity
         equation_of_centre = coefficient * sin(rad(mean_anomaly))
         ecliptic_longitude = (mean_anomaly + equation_of_centre + 180 + (90 - coefficient)) % 360  # degrees
+        seasons = ["spring", "summer", "autumn", "winter"] if self.place.lat >= 0 else ["autumn", "winter", "spring", "summer"]
+        season = seasons[int(ecliptic_longitude / 90)]
         axial_tilt = axial_tilts[self.place.planet]  # Axial tilt (obliquity) of the planet, in degrees
         declination = deg(asin(sin(rad(ecliptic_longitude)) * sin(rad(axial_tilt))))  # Declination of the sun, degrees
         # (720 - 4 * self.place.long - eq_of_time + self.place.tz * 60) / 1440
@@ -441,10 +458,10 @@ class Sun:
         #         azimuth = (azimuth_equation + 180) % 360
         #     else:
         #         azimuth = (540 - azimuth_equation) % 360
-        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction  # , azimuth
+        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction, season  # , azimuth
 
     def get_data(self):
-        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time_t, elevation = self.calculate()
+        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time_t, elevation, season = self.calculate()
         dawn = time_from_decimal(dawn_t)
         sunrise = time_from_decimal(sunrise_t)
         solar_noon = time_from_decimal(solar_noon_t)
@@ -453,25 +470,56 @@ class Sun:
         solar_time = time_from_decimal(solar_time_t)
         if sunrise_t == 2 or sunset_t == 2:
             sun_data = f"Always daytime today\n\n`Solar noon {solar_noon}`\n"
+            if elevation < 15:
+                if solar_time < solar_noon:
+                    day_part = "morning"
+                else:
+                    day_part = "evening"
+            else:
+                day_part = "day"
         elif sunrise_t == 3 or sunset_t == 3:
             if dawn_t != 0 and dusk_t != 1:
                 sun_data = f"Always nighttime today\n\n`Dawn       {dawn}`\n`Solar noon {solar_noon}`\n`Dusk       {dusk}`\n"
+                if solar_time < dawn:
+                    day_part = "night2"
+                elif dawn < solar_time < solar_noon:
+                    day_part = "morning"
+                elif solar_noon < solar_time < dusk:
+                    day_part = "evening"
+                else:
+                    day_part = "night"
             else:
                 sun_data = f"Always nighttime today\n\n`Solar noon {solar_noon}`\n"
+                if solar_time < solar_noon:
+                    day_part = "night2"
+                else:
+                    day_part = "night"
         else:
             daylight = sunset_t - sunrise_t
             daylight_length = languages.Language("english").delta_int(daylight * 86400, accuracy=2, brief=False, affix=False)
             _dawn, _dusk = (f"`Dawn       {dawn}`\n", f"`Dusk       {dusk}`\n") if dawn_t != 0 and dusk_t != 1 else ("", "")
             sun_data = f"{_dawn}`Sunrise    {sunrise}`\n`Solar noon {solar_noon}`\n`Sunset     {sunset}`\n{_dusk}\nLength of day {daylight_length}"
+            morning_end = time_from_decimal(solar_noon_t - daylight / 4)
+            evening_start = time_from_decimal(solar_noon_t + daylight / 4)
+            if solar_time < dawn:
+                day_part = "night2"   # In an equal day: midnight-5:30am
+            elif dawn < solar_time < morning_end:
+                day_part = "morning"  # In an equal day: 5:30am-9am
+            elif morning_end < solar_time < evening_start:
+                day_part = "day"      # In an equal day: 9am-3pm
+            elif evening_start < solar_time < dusk:
+                day_part = "evening"  # In an equal day: 3pm-6:30pm
+            else:
+                day_part = "night"    # In an equal day: 6:30pm-midnight
         sun_data += f"\nTrue solar time {solar_time}"
         # if self.place.lat not in [0, 90]:
         #     parts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
         #     _azimuth = (azimuth + 22.5) % 360
         #     direction = parts[int(_azimuth / 45)]
-        #     sun_data += f"\nThe sun is facing {direction} ({azimuth:.0f}°)"
+        #     sun += f"\nThe sun is facing {direction} ({azimuth:.0f}°)"
         # The method seems to be quite inaccurate at low and high latitudes
         if elevation > 0:
             sun_data += f"\nThe sun is {elevation:.0f}° above the horizon"
         else:
             sun_data += f"\nThe sun is {-elevation:.0f}° below the horizon"
-        return solar_noon, sunrise, sunset, dawn, dusk, sun_data
+        return solar_noon, sunrise, sunset, dawn, dusk, sun_data, day_part, season

@@ -273,3 +273,7 @@
 ## v1.1.31 - 5 July 2021
 - Improved accuracy of solar time
 - Removed dawn and dusk values if they don't happen
+
+## v1.2-pre1 - 5 July 2021
+- Added weather patterns for Reggar
+- Improved weather generation algorithms
