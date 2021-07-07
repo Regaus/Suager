@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timezone
+from math import ceil
 
 import discord
 from discord.ext import commands
@@ -103,18 +104,25 @@ class Conworlds(commands.Cog):
                     if data[0] == where:
                         place = places.Place(city)
                         _places.append(f"`{city:<{_longest}} - {place.location(True)}`")
-                return await general.send(f"Locations in {where}:\n\n" + "\n".join(_places), ctx.channel)
+                if len(_places) <= 25:
+                    return await general.send(f"Locations in {where}:\n\n" + "\n".join(_places), ctx.channel)
+                else:
+                    await general.send(f"Locations in {where}:", ctx.channel)
+                    for i in range(ceil(len(_places) / 20)):
+                        j = i * 20
+                        await general.send("\n".join(_places[j:j+20]), ctx.channel)
             else:
                 try:
                     place = places.Place(where)
                     return await general.send(f"{where} - {place.planet} - {place.location(False)}", ctx.channel)
                 except places.PlaceDoesNotExist:
                     return await general.send(f"Location {where!r} not found.", ctx.channel)
-        planets = []
-        for data in places.places.values():
-            if data[0] not in planets:
-                planets.append(data[0])
-        return await general.send("Planets with locations available:\n\n" + "\n".join(planets), ctx.channel)
+        else:
+            planets = []
+            for data in places.places.values():
+                if data[0] not in planets:
+                    planets.append(data[0])
+            return await general.send("Planets with locations available:\n\n" + "\n".join(planets), ctx.channel)
 
     @commands.command(name="nlc")
     @commands.is_owner()

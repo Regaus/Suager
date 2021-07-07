@@ -25,6 +25,7 @@ places = {
     "Kiomigar":            ["Kargadia", 2628.7,  349.0],
     "Kirtinangar":         ["Kargadia",  953.3,  319.2],
     "Kitnagar":            ["Kargadia", 3005.5, 1240.0],
+    "Kunval na Bylkain":   ["Kargadia", 2464.0, 1414.1],
     "Kunval na Shaivain":  ["Kargadia", 2623.3, 1624.5],
     "Lakkeaina":           ["Kargadia", 2662.6,  673.6],
     "Leitagar":            ["Kargadia",  335.4,  318.4],
@@ -43,11 +44,13 @@ places = {
     "Senkadar Laikadu":    ["Kargadia", 1031.7,  548.6],
     "Sentagar":            ["Kargadia", 1691.2,  495.3],
     "Sentatebaria":        ["Kargadia",  602.3, 1610.5],
+    "Shiradar Koankadu":   ["Kargadia", 1145.7,  501.1],
     "Shonangar":           ["Kargadia",  344.1,  347.8],
     "Steirigar":           ["Kargadia",  305.2,  538.2],
     "Sunovalliat":         ["Kargadia",  157.2, 1462.2],
     "Tebarimostus":        ["Kargadia",  636.2, 1524.7],
     "Tentar Hintakadu":    ["Kargadia", 2877.7, 1579.9],
+    "Tevakta Jegittain":   ["Kargadia",  707.7,  624.2],
     "Tevivall":            ["Kargadia",  982.3,  576.2],
     "Vaidoks":             ["Kargadia", 2754.5,  986.3],
     "Vintelingar":         ["Kargadia", 1485.2,  892.5],
@@ -217,6 +220,8 @@ weathers = {
         "clouds_light":    [0.12, 0.10, 0.12, 0.11, 0.11, 0.12, 0.11, 0.13, 0.11, 0.12, 0.13, 0.15, 0.15, 0.15, 0.15, 0.15],
         "clouds_moderate": [0.15, 0.15, 0.17, 0.17, 0.19, 0.19, 0.19, 0.18, 0.20, 0.20, 0.20, 0.19, 0.10, 0.10, 0.10, 0.10],
         "overcast":        [0.13, 0.16, 0.17, 0.19, 0.20, 0.22, 0.24, 0.27, 0.30, 0.32, 0.33, 0.32, 0.15, 0.07, 0.07, 0.11],
+        "humidity_max":    [0.78, 0.68, 0.62, 0.55, 0.47, 0.50, 0.49, 0.50, 0.51, 0.55, 0.60, 0.70, 0.75, 0.85, 0.95, 0.86],
+        "humidity_min":    [0.60, 0.45, 0.30, 0.20, 0.10, 0.10, 0.10, 0.10, 0.20, 0.35, 0.50, 0.57, 0.60, 0.78, 0.80, 0.70],
         "wind": [5, 30],
         "wind_storms": {
             "probability": [0.11, 0.09, 0.06, 0.05, 0.04, 0.04, 0.04, 0.04, 0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.16, 0.13],
@@ -246,7 +251,8 @@ class Place:
         }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         time_function = times[self.planet]
-        self.time = time_function(tz=self.tz)
+        self.now = time.now(None)
+        self.time = time_function(self.now, tz=self.tz)
         # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
         # self.time = time_function(time.dt(2022, 1, 11))
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
@@ -326,6 +332,11 @@ class Place:
             speed_kmh = round(wind, 1)
             speed_mps = round(wind / 3.6, 1)
             embed.add_field(name="Wind speed", value=f"**{speed_kmh} km/h** | {speed_mps} m/s", inline=False)
+
+            humidity_max = self.weathers["humidity_max"][self.time.month - 1]
+            humidity_min = self.weathers["humidity_min"][self.time.month - 1]
+            humidity = general.random1(humidity_min, humidity_max, seed2)
+            embed.add_field(name="Humidity", value=f"{humidity:.0%}", inline=False)
 
             rain_chance = self.weathers["rain_chance"][self.time.month - 1]  # [month - 1]
             rain = general.random1(0, 100, seed2) <= rain_chance

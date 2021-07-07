@@ -277,3 +277,8 @@
 ## v1.2-pre1 - 5 July 2021
 - Added weather patterns for Reggar
 - Improved weather generation algorithms
+
+## v1.2-pre2 - 7 July 2021
+- Added more places to Kargadia
+- Added humidity to weather78
+- Made locations command split messages by 20 when there are too many of them
