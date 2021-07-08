@@ -611,6 +611,67 @@ class Utility(commands.Cog):
                 return await general.send(send, ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Bots')}"))
         return await general.send(f"{send}\n```ini\n{m}```", ctx.channel)
 
+    @commands.command(name="embed")
+    @permissions.has_permissions(embed_links=True)
+    @commands.bot_has_permissions(embed_links=True)
+    async def embed_creator(self, ctx: commands.Context, *, args: str):
+        """ Create a custom embed
+        -t/--title: Embed's title text
+        -d/--description: Embed's description text
+        -f/--footer: Embed's footer text
+        -th/--thumbnail: URL to embed's thumbnail
+        -i/--image: URL to embed's image
+        -c/--colour: A hex code for embed's colour
+
+        All of the arguments are optional, so if you don't fill them they will simply be empty.
+        Example: //embed --title Good evening --description Some very interesting text --colour ff0057"""
+        embed = discord.Embed()
+        parser = arg_parser.Arguments()
+        parser.add_argument('-t', '--title', nargs="+")
+        parser.add_argument('-d', '--description', nargs="+")
+        parser.add_argument('-f', '--footer', nargs="+")
+        parser.add_argument('-th', '--thumbnail', nargs=1)
+        parser.add_argument('-i', '--image', nargs=1)
+        parser.add_argument('-c', '--colour', nargs=1)
+        if self.bot.name == "kyomi":
+            parser.add_argument('-a', '--author', action='store_true')
+        else:
+            embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+
+        args, valid_check = parser.parse_args(args)
+        if not valid_check:
+            return await general.send(args, ctx.channel)
+        if self.bot.name == "kyomi":
+            if args.author:
+                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+        if args.title:
+            embed.title = " ".join(args.title)
+            if len(embed.title) > 256:
+                return await general.send("Embed title cannot be longer than 256 characters. Blame discord.", ctx.channel)
+        if args.description:
+            embed.description = " ".join(args.description)
+        if args.footer:
+            embed.set_footer(text=" ".join(args.footer))
+        if args.thumbnail:
+            embed.set_thumbnail(url=args.thumbnail[0])
+        if args.image:
+            embed.set_image(url=args.image[0])
+        if args.colour:
+            colour = args.colour[0]
+            a = len(colour)
+            if colour.startswith("#"):
+                colour = colour[1:]
+                a = len(colour)
+            if a == 6 or a == 3:
+                try:
+                    col = int(colour, base=16)
+                except Exception as e:
+                    return await general.send(f"Invalid colour - {type(e).__name__}: {e}", ctx.channel)
+            else:
+                return await general.send("Colour must be either 3 or 6 HEX digits long.", ctx.channel)
+            embed.colour = col
+        return await general.send(None, ctx.channel, embed=embed)
+
 
 class Reminders(Utility, name="Utility"):
     @commands.command(name="remind", aliases=["remindme"])

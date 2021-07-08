@@ -3,73 +3,72 @@ from math import acos, asin, cos, degrees as deg, radians as rad, sin, tan
 
 import discord
 
-from utils.times import time_hosvalnerus, time_kaltaryna, time_kargadia, time_kuastall_11, time_sinvimania, time_zeivela
-from utils import general, languages, time
+from utils import general, languages, time, times
 
 places = {
-    "Akkigar":             ["Kargadia", 2602.1,  313.1],
-    "Bylkangar":           ["Kargadia", 2382.3, 1311.8],
-    "Bylkankaldanpeaskat": ["Kargadia", 2828.2, 1689.3],
-    "Bylkanseivanlias":    ["Kargadia", 3283.0, 1553.2],
-    "Bylkantaivead":       ["Kargadia", 3274.3, 1564.4],
-    "Degan Ihat":          ["Kargadia", 3539.7, 1536.5],
-    "Ekspigar":            ["Kargadia", 2560.4,  317.3],
-    "Erellgar":            ["Kargadia", 1275.5,  944.2],
-    "Erdapeaskat":         ["Kargadia",  504.1, 1140.6],
-    "Huntavall":           ["Kargadia", 1545.2, 1529.9],
-    "Iha na Sevarddain":   ["Kargadia", 2791.5, 1745.7],
-    "Irtangar":            ["Kargadia", 2731.3,  163.8],
-    "Kaivus na Advuräin":  ["Kargadia", 2510.2, 1515.1],
-    "Kanerakainead":       ["Kargadia", 1015.0,  100.8],
-    "Kanertebaria":        ["Kargadia",  666.6, 1515.9],
-    "Kiomigar":            ["Kargadia", 2628.7,  349.0],
-    "Kirtinangar":         ["Kargadia",  953.3,  319.2],
-    "Kitnagar":            ["Kargadia", 3005.5, 1240.0],
-    "Kunval na Bylkain":   ["Kargadia", 2464.0, 1414.1],
-    "Kunval na Shaivain":  ["Kargadia", 2623.3, 1624.5],
-    "Lakkeaina":           ["Kargadia", 2662.6,  673.6],
-    "Leitagar":            ["Kargadia",  335.4,  318.4],
-    "Lersedigar":          ["Kargadia", 1417.2,  631.3],
-    "Liidennan Koirantat": ["Kargadia",  317.7, 1664.1],
-    "Lirrinta Teinain":    ["Kargadia",   25.0, 1598.4],
-    "Muruvasaitari":       ["Kargadia", 2614.2,  526.3],
-    "Neikelaa":            ["Kargadia", 1960.6,  733.1],
-    "Nurvutgar":           ["Kargadia", 2114.1, 1498.2],
-    "Orlagar":             ["Kargadia",  342.7,  346.7],
-    "Pakigar":             ["Kargadia",  347.5,  376.0],
-    "Peaskar":             ["Kargadia",  510.0,  642.4],
-    "Regavall":            ["Kargadia", 1295.3,  210.8],
-    "Reggar":              ["Kargadia", 1236.4,  300.0],
-    "Seankar Kainead":     ["Kargadia", 2670.4, 1800.0],
-    "Senkadar Laikadu":    ["Kargadia", 1031.7,  548.6],
-    "Sentagar":            ["Kargadia", 1691.2,  495.3],
-    "Sentatebaria":        ["Kargadia",  602.3, 1610.5],
-    "Shiradar Koankadu":   ["Kargadia", 1145.7,  501.1],
-    "Shonangar":           ["Kargadia",  344.1,  347.8],
-    "Steirigar":           ["Kargadia",  305.2,  538.2],
-    "Sunovalliat":         ["Kargadia",  157.2, 1462.2],
-    "Tebarimostus":        ["Kargadia",  636.2, 1524.7],
-    "Tentar Hintakadu":    ["Kargadia", 2877.7, 1579.9],
-    "Tevakta Jegittain":   ["Kargadia",  707.7,  624.2],
-    "Tevivall":            ["Kargadia",  982.3,  576.2],
-    "Vaidoks":             ["Kargadia", 2754.5,  986.3],
-    "Vintelingar":         ["Kargadia", 1485.2,  892.5],
-    "Virsetgar":           ["Kargadia", 1800.0,  900.0],
+    "Akkigar":             ["Kargadia", 2602.1,  313.1, "Verlennia", "Na Vadenaran Irrat"],
+    "Bylkangar":           ["Kargadia", 2382.3, 1311.8, "Tebaria",   "TBL"],
+    "Bylkankaldanpeaskat": ["Kargadia", 2828.2, 1689.3, "Tebaria",   "TBL"],
+    "Bylkanseivanlias":    ["Kargadia", 3283.0, 1553.2, "Tebaria",   "TBL"],
+    "Bylkantaivead":       ["Kargadia", 3274.3, 1564.4, "Tebaria",   "TBL"],
+    "Degan Ihat":          ["Kargadia", 3539.7, 1536.5, "Tebaria",   "TBL"],
+    "Ekspigar":            ["Kargadia", 2560.4,  317.3, "Verlennia", "Na Vadenaran Irrat"],
+    "Erellgar":            ["Kargadia", 1275.5,  944.2, "Erellia",   None],
+    "Erdapeaskat":         ["Kargadia",  504.1, 1140.6, "Nittavia",  None],
+    "Huntavall":           ["Kargadia", 1545.2, 1529.9, "Tebaria",   "Na Ihat na Iidian"],
+    "Iha na Sevarddain":   ["Kargadia", 2791.5, 1745.7, "Tebaria",   "TBL"],
+    "Irtangar":            ["Kargadia", 2731.3,  163.8, "Verlennia", None],
+    "Kaivus na Advuräin":  ["Kargadia", 2510.2, 1515.1, "Tebaria",   "TBL"],
+    "Kanerakainead":       ["Kargadia", 1015.0,  100.8, "Nehtivia",  "Kanernehtivia"],
+    "Kanertebaria":        ["Kargadia",  666.6, 1515.9, "Island",    "TBL"],
+    "Kiomigar":            ["Kargadia", 2628.7,  349.0, "Verlennia", "Na Vadenaran Irrat"],
+    "Kirtinangar":         ["Kargadia",  953.3,  319.2, "Nehtivia",  "Na Kirtinnat Lurvun"],
+    "Kitnagar":            ["Kargadia", 3005.5, 1240.0, "Inhattia",  None],
+    "Kunval na Bylkain":   ["Kargadia", 2464.0, 1414.1, "Tebaria",   "TBL"],
+    "Kunval na Shaivain":  ["Kargadia", 2623.3, 1624.5, "Tebaria",   "TBL"],
+    "Lakkeaina":           ["Kargadia", 2662.6,  673.6, "Inhattia",  None],
+    "Leitagar":            ["Kargadia",  335.4,  318.4, "Nehtivia",  "Na Irrat"],
+    "Lersedigar":          ["Kargadia", 1417.2,  631.3, "Erellia",   None],
+    "Liidennan Koirantat": ["Kargadia",  317.7, 1664.1, "Tebaria",   "TBL"],
+    "Lirrinta Teinain":    ["Kargadia",   25.0, 1598.4, "Tebaria",   "TBL"],
+    "Muruvasaitari":       ["Kargadia", 2614.2,  526.3, "Inhattia",  None],
+    "Neikelaa":            ["Kargadia", 1960.6,  733.1, "Centeria",  None],
+    "Nurvutgar":           ["Kargadia", 2114.1, 1498.2, "Tebaria",   "Seanka Tebaria"],
+    "Orlagar":             ["Kargadia",  342.7,  346.7, "Nehtivia",  "Na Irrat"],
+    "Pakigar":             ["Kargadia",  347.5,  376.0, "Nehtivia",  "Na Irrat"],
+    "Peaskar":             ["Kargadia",  510.0,  642.4, "Nehtivia",  "Na Peaskat na Jegittain"],
+    "Regavall":            ["Kargadia", 1295.3,  210.8, "Nehtivia",  "Regaazdall"],
+    "Reggar":              ["Kargadia", 1236.4,  300.0, "Nehtivia",  "Regaazdall"],
+    "Seankar Kainead":     ["Kargadia", 2670.4, 1800.0, "Tebaria",   "TBL"],
+    "Senkadar Laikadu":    ["Kargadia", 1031.7,  548.6, "Erellia",   "Senkadar Laikadu"],
+    "Sentagar":            ["Kargadia", 1691.2,  495.3, "Centeria",  None],
+    "Sentatebaria":        ["Kargadia",  602.3, 1610.5, "Tebaria",   "TBL"],
+    "Shiradar Koankadu":   ["Kargadia", 1145.7,  501.1, "Erellia",   "Senkadar Laikadu"],
+    "Shonangar":           ["Kargadia",  344.1,  347.8, "Nehtivia",  "Na Irrat"],
+    "Steirigar":           ["Kargadia",  305.2,  538.2, "Nehtivia",  "Sertanehtivia"],
+    "Sunovalliat":         ["Kargadia",  157.2, 1462.2, "Tebaria",   "TBL"],
+    "Tebarimostus":        ["Kargadia",  636.2, 1524.7, "Nittavia",  "TBL"],
+    "Tentar Hintakadu":    ["Kargadia", 2877.7, 1579.9, "Tebaria",   "TBL"],
+    "Tevakta Jegittain":   ["Kargadia",  707.7,  624.2, "Nehtivia",  "Na Peaskat na Jegittain"],
+    "Tevivall":            ["Kargadia",  982.3,  576.2, "Nehtivia",  "Vadernehtivia"],
+    "Vaidoks":             ["Kargadia", 2754.5,  986.3, "Inhattia",  None],
+    "Vintelingar":         ["Kargadia", 1485.2,  892.5, "Island",    None],
+    "Virsetgar":           ["Kargadia", 1800.0,  900.0, "Centeria",  None],
 
-    "Kaltarena":           ["Qevenerus", 2100.0,  655.1],
+    "Kaltarena":           ["Qevenerus", 2100.0,  655.1, "Kaltarena"],
 }
 offsets = {
     "Kargadia": -1800.0,  # -843.7 | -343
     "Qevenerus": -2100.0,
 }
-times = {
-    "Zeivela": time_zeivela,
-    "Kargadia": time_kargadia,
-    "Qevenerus": time_kaltaryna,
+_times = {
+    "Zeivela": times.time_zeivela,
+    "Kargadia": times.time_kargadia,
+    "Qevenerus": times.time_kaltaryna,
 
-    "Sinvimania": time_sinvimania,
-    "Hosvalnerus": time_hosvalnerus,
-    "Kuastall-11": time_kuastall_11,
+    "Sinvimania": times.time_sinvimania,
+    "Hosvalnerus": times.time_hosvalnerus,
+    "Kuastall-11": times.time_kuastall_11,
 }
 lengths = {
     "Zeivela": 212.16,  # 432 + 1/3
@@ -240,19 +239,12 @@ class PlaceDoesNotExist(general.RegausError):
 class Place:
     def __init__(self, place: str):
         self.place = place
+        self.now = time.now(None)
         try:
-            self.planet, self.lat, self.long = self.get_location()
+            self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self._local_time, self.region = self.get_location()
         except KeyError:
             raise PlaceDoesNotExist(place)
-        self.tz = round(self.long / (360 / 24))
-        self.tz += {
-            "Kiomigar": -1,
-            "Regavall": -1,
-        }.get(self.place, 0)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
-        time_function = times[self.planet]
-        self.now = time.now(None)
-        self.time = time_function(self.now, tz=self.tz)
         # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
         # self.time = time_function(time.dt(2022, 1, 11))
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
@@ -278,7 +270,7 @@ class Place:
         return f"{lat:>5.2f}°{n}, {long:>6.2f}°{e}" if indent else f"{lat:.2f}°{n}, {long:.2f}°{e}"
 
     def get_location(self):
-        planet, x, y = places[self.place]
+        planet, x, y, *data = places[self.place]
         offset = offsets[planet]
         x += offset
         size = 10
@@ -290,12 +282,53 @@ class Place:
             lat = 90 - lat
         else:
             lat = -(lat - 90)
-        return planet, lat, long
+        tz = round(long / (360 / 24))
+        tz += {
+            "Kiomigar": -1,
+            "Regavall": -1,
+        }.get(self.place, 0)
+        time_function = _times[planet]
+        _time = time_function(self.now, tz=tz)
+        _data = len(data)
+        if _data == 0:
+            _local_time = self.time
+            local_time = f"Local time: **{self.time.str(dow=False, month=False)}**\n"
+            region = None
+        else:
+            lang_region = data[0]
+            if planet == "Kargadia":
+                if lang_region == "Tebaria":
+                    _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
+                    local_time = f"Local time: **{_local_time.str(dow=False, month=False)}**"
+                elif lang_region in ["Nehtivia", "Nittavia", "Erellia", "Centeria", "Island"]:
+                    _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
+                    local_time = f"Local time: **{_local_time.str(dow=False, month=False)}**"
+                else:
+                    # Should be RSL-1m: Uses RSL-1k for placeholder, as RSL-1m does not yet exist.
+                    _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
+                    local_time = f"Local time: **{_local_time.str(dow=False, month=False)}**"
+                region = data[1]
+            elif planet == "Qevenerus":
+                if lang_region == "Kaltarena":
+                    _local_time = times.time_kaltaryna(self.now, tz)
+                    local_time = f"Local time (Kaltarenian RSL-1): **{_local_time.str(dow=False, month=False)}**\n" \
+                                 f"Local time (Kaltarenian RL-2): Placeholder\n" \
+                                 f"Local time (Kaltarena Gestedian): Placeholder"
+                else:
+                    _local_time = self.time
+                    local_time = "Local time unknown... So far."
+                region = data[0]
+            else:
+                _local_time = self.time
+                local_time = "Local time unknown"
+                region = None
+        return planet, lat, long, tz, _time, local_time, _local_time, region
 
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = f"Weather in **{self.place}, {self.planet}**"
-        embed.description = f"Local time: **{self.time.str(dow=False, month=False)}**\n" \
+        place_name = f"{self.place}, {self.planet}" if self.region is None else f"{self.place}, {self.region}, {self.planet}"
+        embed.title = f"Weather in **{place_name}**"
+        embed.description = f"{self.local_time}\n" \
                             f"Time zone: {self.tz:+}:00 (Real offset {self.long / (360 / 24):+.2f} hours)\n" \
                             f"Location: {self.location(False)}"
 
@@ -368,7 +401,7 @@ class Place:
 
         embed.add_field(name="About the Sun", value=self.sun.sun_data, inline=False)
         embed.set_footer(text=f"Current season: {self.sun.season.title()}")
-        embed.timestamp = time.now(None)
+        embed.timestamp = self.now
         return embed
 
 

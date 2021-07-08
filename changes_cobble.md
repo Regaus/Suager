@@ -282,3 +282,6 @@
 - Added more places to Kargadia
 - Added humidity to weather78
 - Made locations command split messages by 20 when there are too many of them
+
+## v1.2-pre3 - 8 July 2021
+- Added regions and local time to weather78

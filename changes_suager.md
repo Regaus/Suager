@@ -872,3 +872,6 @@
 ## v7.3.3 - 4 July 2021
 - Improved birthdays invalid date output
 - Added `utils.time` to eval command
+
+## v7.3.4 - 8 July 2021
+- Added a command to generate custom embeds

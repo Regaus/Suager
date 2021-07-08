@@ -31,3 +31,6 @@
 
 ## v0.1.8 - 4 July 2021
 - Improved birthdays invalid date output
+
+## v0.1.9 - 8 July 2021
+- Added a command to generate custom embeds

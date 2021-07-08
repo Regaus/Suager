@@ -154,8 +154,14 @@ class TimeSolarNormal:
         self.ds = ds
         self.year_day = yd
         self.day_of_week = (self.ds - 1) % self.week_length
-        self.day_name = self.dow_names[self.day_of_week]
-        self.month_name = self.month_names[self.month - 1]
+        try:
+            self.day_name = self.dow_names[self.day_of_week]
+        except IndexError:
+            self.day_name = f"Unavailable day {self.day_of_week + 1}"
+        try:
+            self.month_name = self.month_names[self.month - 1]
+        except IndexError:
+            self.month_name = f"Unavailable month {self.month}"
 
     def str(self, dow: bool = True, era: Optional[str] = None, month: bool = True):
         """ Output the date and time in a readable format """
