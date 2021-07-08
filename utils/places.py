@@ -15,7 +15,7 @@ places = {
     "Ekspigar":            ["Kargadia", 2560.4,  317.3, "Verlennia", "Na Vadenaran Irrat"],
     "Erellgar":            ["Kargadia", 1275.5,  944.2, "Erellia",   None],
     "Erdapeaskat":         ["Kargadia",  504.1, 1140.6, "Nittavia",  None],
-    "Huntavall":           ["Kargadia", 1545.2, 1529.9, "Tebaria",   "Na Ihat na Iidian"],
+    "Huntavall":           ["Kargadia", 1545.2, 1529.9, "Tebaria",   "Na Ihat na Iidain"],
     "Iha na Sevarddain":   ["Kargadia", 2791.5, 1745.7, "Tebaria",   "TBL"],
     "Irtangar":            ["Kargadia", 2731.3,  163.8, "Verlennia", None],
     "Kaivus na Advuräin":  ["Kargadia", 2510.2, 1515.1, "Tebaria",   "TBL"],
