@@ -34,3 +34,6 @@
 
 ## v0.1.9 - 8 July 2021
 - Added a command to generate custom embeds
+
+## v0.2.0 - 11 July 2021
+- Added unicode garbage to the nickname designs and birthday message

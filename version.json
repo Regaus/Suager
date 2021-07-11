@@ -14,11 +14,11 @@
     "last_update": 1625705620
   },
   "kyomi": {
-    "short_version": "0.1",
-    "version": "0.1.9",
+    "short_version": "0.2",
+    "version": "0.2.0",
     "first_version": 1623891776,
     "major_release": 1623891776,
-    "last_update": 1625705613
+    "last_update": 1626021488
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

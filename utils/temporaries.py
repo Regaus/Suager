@@ -154,7 +154,7 @@ async def birthdays(bot: bot_data.Bot):
     await asyncio.sleep((then - now).total_seconds())
     print(f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
-    birthday_message = "birthdays_message2" if bot.name == "kyomi" else "birthdays_message"
+    # birthday_message = "birthdays_message2" if bot.name == "kyomi" else "birthdays_message"
     _guilds, _channels, _roles = [], [], []
     for guild, data in bd_config.items():
         _guilds.append(guild)
@@ -164,7 +164,7 @@ async def birthdays(bot: bot_data.Bot):
     channels = [bot.get_channel(cid) for cid in _channels]
     roles = [discord.Object(id=rid) for rid in _roles]
     while True:
-        birthday_today = bot.db.fetch(f"SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+        birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         if birthday_today:
             for person in birthday_today:
                 dm = True
@@ -176,7 +176,23 @@ async def birthdays(bot: bot_data.Bot):
                             if user is not None:
                                 dm = False
                                 language = bot.language(languages.FakeContext(guild, bot))
-                                await general.send(language.string(birthday_message, user.mention), channels[i], u=True)
+                                if bot.name == "kyomi":
+                                    message = "<a:MD_LetterH_donotsteal_blu:863222874222100480> <a:MD_LetterA_donotsteal_blu:863219944341635102> " \
+                                              "<a:MD_LetterP_donotsteal_blu:863223147678793729> <a:MD_LetterP_donotsteal_blu:863223147678793729> " \
+                                              "<a:MD_LetterY_donotsteal_blu:863223393951416321> <a:MD_LetterB_donotsteal_blu:863222038520004608> " \
+                                              "<a:MD_LetterI_donotsteal_blu:863222958020493322> <a:MD_LetterR_donotsteal_blu:863223174904021013> " \
+                                              "<a:MD_LetterT_donotsteal_blu:863223224362598420> <a:MD_LetterH_donotsteal_blu:863222874222100480> " \
+                                              "<a:MD_LetterD_donotsteal_blu:863222736708435988> <a:MD_LetterA_donotsteal_blu:863219944341635102> " \
+                                              "<a:MD_LetterY_donotsteal_blu:863223393951416321> <a:MD_ExclamationMark_donotsteal_bl:863234846872829982>\n" \
+                                              "╰ ✧₊˚︶꒥︶꒷︶︶꒥꒷︶꒥︶︶꒷︶꒥︶꒷︶\n" \
+                                              "<a:MD_SparklyWand:714339324505882663> <a:MD_Sparkles:714339336404992021> <a:MD_SparklyCupcake:714339261415161866> " \
+                                              f"Happy Happy Birthday May All Of Your Wishes Come True! Happy Happy Birthday This Birthday Is For You {user.mention} " \
+                                              "<a:MD_SparklyCupcake:714339261415161866> <a:MD_Sparkles:714339336404992021> <a:MD_SparklyWand:714339324505882663>\n" \
+                                              "***__You are now a year older!!! Midnight Dessert wishes you a Happy Birthday!!__***\n" \
+                                              "https://cdn.discordapp.com/attachments/856936268482609172/862347223672815646/Untitled1148_20210707155944.png"
+                                else:
+                                    message = language.string("birthdays_message", user.mention)
+                                await general.send(message, channels[i], u=True)
                                 await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
                                 print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave birthday role to {user.name}")
                     except Exception as e:
@@ -185,16 +201,16 @@ async def birthdays(bot: bot_data.Bot):
                     try:
                         user = bot.get_user(person["uid"])
                         if user is not None:
-                            await user.send(bot.language2("english").string(birthday_message, user.name))
+                            await user.send(bot.language2("english").string("birthdays_message", user.name))
                             print(f"{time.time()} > {bot.full_name} > Told {user.name} happy birthday in DMs")
                         else:
                             general.print_error(f"{time.time()} > {bot.full_name} > User {person['uid']} was not found")
                     except Exception as e:
                         general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
-                bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
-        birthday_over = bot.db.fetch(f"SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+                bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
+        birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         for person in birthday_over:
-            bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person["uid"], bot.name))
+            bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person["uid"], bot.name))
             for i in range(len(guilds)):
                 try:
                     guild = guilds[i]

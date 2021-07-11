@@ -443,5 +443,106 @@ class Moderation(commands.Cog):
         # await general.send(f"🚮 Successfully removed {total_reactions:,} reactions.", ctx.channel)
 
 
+class ModerationKyomi(Moderation, name="Moderation"):
+    designs = [
+        "<nick> // 32",
+        "✧🌙<nick>🍰⊹˚ // 27",
+        "✧🍓❏<nick>🍰₊˚⊹ // 25",
+        "✎🍪✦<nick>🍦୨୧ // 26",
+        "✎🥮<nick>🍯✦꒦︶ // 26",
+        "☆🧁୨୧<nick>🍦‧₊˚. // 23",
+        "✧₊˚🍰⌇<nick>🌙⋆｡˚ // 23",
+        "⁀➷✧🔮<nick>🌙✦ˎˊ˗ // 23",
+        "⁀➷✦🔮⌇<nick>🍩ˎˊ˗ // 23",
+        "✰🍯ꔫ<nick>🥞✦ // 27",
+        "╭╯🍩⁺˖˚<nick>🍦୨୧ // 23"
+    ]
+
+    @commands.command(name="nickname", aliases=["nick"])
+    @commands.guild_only()
+    @permissions.has_permissions(manage_nicknames=True)
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nickname_user(self, ctx: commands.Context, member: discord.Member, design: int, *, name: str = None):
+        """ Sets a user's nickname """
+        language = self.bot.language(ctx)
+        try:
+            if member.id == ctx.guild.owner.id:
+                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+            if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
+                return await general.send(language.string("mod_nick_forbidden2"), ctx.channel)
+            name = name or member.name
+            _design, length = self.designs[design - 1].split(" // ")
+            name = _design.replace('<nick>', name[:int(length)])
+            await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
+            message = language.string("mod_nick", member, name)
+            return await general.send(message, ctx.channel)
+        except discord.Forbidden:
+            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
+    @commands.guild_only()
+    @permissions.has_permissions(change_nickname=True)
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nickname_self(self, ctx: commands.Context, design: int, *, name: str = None):
+        """ Change your own nickname """
+        language = self.bot.language(ctx)
+        try:
+            if ctx.author.id == ctx.guild.owner.id:
+                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+            name = name or ctx.author.name
+            _design, length = self.designs[design - 1].split(" // ")
+            name = _design.replace('<nick>', name[:int(length)])
+            await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
+            message = language.string("mod_nick_self", name)
+            return await general.send(message, ctx.channel)
+        except IndexError:
+            return await general.send(f"Nickname design {design} is not available.", ctx.channel)
+        except discord.Forbidden:
+            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.command(name="nicknamedesign", aliases=["nickdesign", "design"])
+    @commands.guild_only()
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nickname_design(self, ctx: commands.Context, design: int):
+        """ Change your nickname design
+        Example: `m!nickdesign 7`"""
+        language = self.bot.language(ctx)
+        try:
+            if ctx.author.id == ctx.guild.owner.id:
+                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+            _design, length = self.designs[design - 1].split(" // ")
+            name = _design.replace('<nick>', ctx.author.name[:int(length)])
+            await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
+            message = language.string("mod_nick_self", name)
+            return await general.send(message, ctx.channel)
+        except IndexError:
+            return await general.send(f"Nickname design {design} is not available.", ctx.channel)
+        except discord.Forbidden:
+            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+        except Exception as e:
+            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+
+    @commands.command(name="nicknamedesigns", aliases=["nickdesigns", "designs"])
+    async def nickname_designs(self, ctx: commands.Context):
+        """ See all nickname designs in the server """
+        # await ctx.send(str([32 - (len(x) - 6) for x in self.designs]))
+        output = "Here are the designs available in Midnight Dessert:\n"
+        for i, _design in enumerate(self.designs, start=1):
+            design, length = _design.split(" // ")
+            output += f"{i}) {design.replace('<nick>', ctx.author.name[:int(length)])}\n"
+        output += "\nUse `m!nickdesigns` to see the nicknames applied to your username" \
+                  "\nUse `m!nickdesign <design_number>` to apply a design to your name (Note: if you have any nickname, it will get reset) // Example: `m!nickdesign 7`" \
+                  f"\nUse `m!nickme <design_number> <nickname>` to apply a design to a nickname of your choice (Requires permission to change your nickname " \
+                  f"// Example `m!nickme 7 {ctx.author.name}`"
+        return await general.send(output, ctx.channel)
+
+
 def setup(bot: bot_data.Bot):
-    bot.add_cog(Moderation(bot))
+    if bot.name == "kyomi":
+        bot.add_cog(ModerationKyomi(bot))
+    else:
+        bot.add_cog(Moderation(bot))
