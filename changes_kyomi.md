@@ -37,3 +37,7 @@
 
 ## v0.2.0 - 11 July 2021
 - Added unicode garbage to the nickname designs and birthday message
+
+## v0.2.1 - 11 July 2021
+- Removed "Average members" stat from the stats command
+- Improved the nickname designs message

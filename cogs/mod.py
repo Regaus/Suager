@@ -63,7 +63,7 @@ class Moderation(commands.Cog):
     async def kick_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Kick a user from the server """
         language = self.bot.language(ctx)
-        reason = reason[:400] or language.string("mod_reason_none")
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         if member == ctx.author:
             return await general.send(language.string("mod_kick_self"), ctx.channel)
         elif member.id == ctx.guild.owner.id:
@@ -86,7 +86,7 @@ class Moderation(commands.Cog):
     async def ban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Ban a user from the server """
         language = self.bot.language(ctx)
-        reason = reason[:400] or language.string("mod_reason_none")
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         if member == ctx.author.id:
             return await general.send(language.string("mod_ban_self"), ctx.channel)
         elif member == ctx.guild.owner.id:
@@ -109,7 +109,7 @@ class Moderation(commands.Cog):
     async def mass_ban(self, ctx: commands.Context, reason: str, *who: MemberID):
         """ Mass ban users from the server """
         language = self.bot.language(ctx)
-        reason = reason[:400] or language.string("mod_reason_none")
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         if ctx.author.id in who:
             return await general.send(language.string("mod_ban_self"), ctx.channel)
         else:
@@ -139,7 +139,7 @@ class Moderation(commands.Cog):
     async def unban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Unban a user """
         language = self.bot.language(ctx)
-        reason = reason[:400] or language.string("mod_reason_none")
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         try:
             await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
             user = await self.bot.fetch_user(member)
@@ -199,7 +199,7 @@ class Moderation(commands.Cog):
     async def mute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Mute a user """
         language = self.bot.language(ctx)
-        reason = reason[:400] or language.string("mod_reason_none")
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         if member.id == self.bot.user.id:
             return await general.send(language.string("mod_mute_suager"), ctx.channel)
         if member == ctx.author:
@@ -253,7 +253,7 @@ class Moderation(commands.Cog):
     async def unmute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Unmute a user """
         language = self.bot.language(ctx)
-        reason = reason[:400] or language.string("mod_reason_none")
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         if member == ctx.author:
             return await general.send(language.string("mod_unmute_self"), ctx.channel)
             # return await general.send(f"Imagine trying to unmute yourself {emotes.BlobCatPolice}", ctx.channel)
@@ -530,14 +530,19 @@ class ModerationKyomi(Moderation, name="Moderation"):
     async def nickname_designs(self, ctx: commands.Context):
         """ See all nickname designs in the server """
         # await ctx.send(str([32 - (len(x) - 6) for x in self.designs]))
-        output = "Here are the designs available in Midnight Dessert:\n"
+        output = "Here are the designs available in Midnight Dessert:\n\n"
         for i, _design in enumerate(self.designs, start=1):
             design, length = _design.split(" // ")
             output += f"{i}) {design.replace('<nick>', ctx.author.name[:int(length)])}\n"
-        output += "\nUse `m!nickdesigns` to see the nicknames applied to your username" \
-                  "\nUse `m!nickdesign <design_number>` to apply a design to your name (Note: if you have any nickname, it will get reset) // Example: `m!nickdesign 7`" \
-                  f"\nUse `m!nickme <design_number> <nickname>` to apply a design to a nickname of your choice (Requires permission to change your nickname " \
-                  f"// Example `m!nickme 7 {ctx.author.name}`"
+        output += "\nUse `m!nickdesigns` to see the nicknames applied to your username\n" \
+                  "\nUse `m!nickdesign <design_number>` to apply a design to your name\n" \
+                  "  - Note: if you have any nickname, it will get reset\n" \
+                  "  - Example: `m!nickdesign 7`\n" \
+                  "\nUse `m!nickme <design_number> <nickname>` to apply a design to a nickname of your choice\n" \
+                  "  - Note: Requires permission to change your nickname\n" \
+                  f"  - Example: `m!nickme 7 {ctx.author.name}`\n" \
+                  f"\nNote: If you boost this server, you will get a special nickname design. It is not included here, " \
+                  f"so if you change it, only the admins will be able to change it back."
         return await general.send(output, ctx.channel)
 
 

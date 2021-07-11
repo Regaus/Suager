@@ -41,7 +41,10 @@ class BotInformation(commands.Cog):
         avg_members = round(tm / len(self.bot.guilds), 1)
         servers = len(self.bot.guilds)
         lm, lu, la = language.number(tm), language.number(users), language.number(avg_members, precision=1)
-        embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data", lm, lu, la), inline=True)
+        if self.bot.name == "kyomi":
+            embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data2", lm, lu), inline=True)
+        else:
+            embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data", lm, lu, la), inline=True)
         ls, lt, lc, lv = language.number(servers), language.number(tc), language.number(cc), language.number(vc)
         embed.add_field(name=language.string("info_stats_servers"), value=language.string("info_stats_servers_data", ls, lt, lc, lv), inline=True)
         _version = sys.version_info

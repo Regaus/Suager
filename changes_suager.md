@@ -875,3 +875,6 @@
 
 ## v7.3.4 - 8 July 2021
 - Added a command to generate custom embeds
+
+## v7.3.5 - 11 July 2021
+- Fixed mod commands breaking when the reason was empty

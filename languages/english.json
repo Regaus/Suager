@@ -163,6 +163,7 @@
   "info_stats_used": "What I use",
   "info_stats_users": "User counters",
   "info_stats_users_data": "Total members: **{0}**\nUnique users: **{1}**\nAvg. members: **{2}**",
+  "info_stats_users_data2": "Total members: **{0}**\nUnique users: **{1}**",
   "leaderboards_bank": "Top users **globally** by **balance**\nYour place: **{0}**\nShowing places **{1}** to **{2}** of **{3}**\n{4}```",
   "leaderboards_no_data": "No data is available for this server at the moment.",
   "leaderboards_levels": "Top users in **{0}** by **XP**\nYour place: **{1}**\nShowing places **{2}** to **{3}** of **{4}**\n{5}```",
