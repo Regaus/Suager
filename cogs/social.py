@@ -331,7 +331,7 @@ class Social(commands.Cog):
             self.tickle = await lists_suager.get_images(self.bot, 't')
         if ctx.author == user:
             return await general.send(language.string("social_poke_self"), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(language.string("social_tickle_regaus"), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_tickle_suager"), ctx.channel)
