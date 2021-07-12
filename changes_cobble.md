@@ -285,3 +285,6 @@
 
 ## v1.2-pre3 - 8 July 2021
 - Added regions and local time to weather78
+
+## v1.2-pre4 - 12 July 2021
+- Squished all weather data into one field

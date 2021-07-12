@@ -292,28 +292,28 @@ class Place:
         _data = len(data)
         if _data == 0:
             _local_time = self.time
-            local_time = f"Local time: **{self.time.str(dow=False, month=False)}**\n"
+            local_time = f"**{self.time.str(dow=False, month=False)}**"
             region = None
         else:
             lang_region = data[0]
             if planet == "Kargadia":
                 if lang_region == "Tebaria":
                     _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
-                    local_time = f"Local time: **{_local_time.str(dow=False, month=False)}**"
+                    local_time = f"**{_local_time.str(dow=False, month=False)}**"
                 elif lang_region in ["Nehtivia", "Nittavia", "Erellia", "Centeria", "Island"]:
                     _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
-                    local_time = f"Local time: **{_local_time.str(dow=False, month=False)}**"
+                    local_time = f"**{_local_time.str(dow=False, month=False)}**"
                 else:
                     # Should be RSL-1m: Uses RSL-1k for placeholder, as RSL-1m does not yet exist.
                     _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
-                    local_time = f"Local time: **{_local_time.str(dow=False, month=False)}**"
+                    local_time = f"**{_local_time.str(dow=False, month=False)}**"
                 region = data[1]
             elif planet == "Qevenerus":
                 if lang_region == "Kaltarena":
                     _local_time = times.time_kaltaryna(self.now, tz)
-                    local_time = f"Local time (Kaltarenian RSL-1): **{_local_time.str(dow=False, month=False)}**\n" \
-                                 f"Local time (Kaltarenian RL-2): Placeholder\n" \
-                                 f"Local time (Kaltarena Gestedian): Placeholder"
+                    local_time = f"\nKargadian: **{_local_time.str(dow=False, month=False)}**\n" \
+                                 f"Usturian: **Placeholder**\n" \
+                                 f"Gestedian: **Placeholder**\n"
                 else:
                     _local_time = self.time
                     local_time = "Local time unknown... So far."
@@ -327,10 +327,11 @@ class Place:
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
         place_name = f"{self.place}, {self.planet}" if self.region is None else f"{self.place}, {self.region}, {self.planet}"
-        embed.title = f"Weather in **{place_name}**"
-        embed.description = f"{self.local_time}\n" \
-                            f"Time zone: {self.tz:+}:00 (Real offset {self.long / (360 / 24):+.2f} hours)\n" \
-                            f"Location: {self.location(False)}"
+        embed.title = f"Information about **{place_name}**"
+        embed.add_field(name="Time and Location", inline=False,
+                        value=f"Local time: {self.local_time}\n"
+                              f"Time zone: {self.tz:+}:00 (Real offset {self.long / (360 / 24):+.2f} hours)\n"
+                              f"Location: {self.location(False)}")
 
         if self.weathers is not None:
             # Remove non-ascii stuff like äá to make sure it's only A-Z
@@ -344,7 +345,7 @@ class Place:
             temp_min, temp_max = self.weathers["temperature"][self.time.month - 1][self.sun.day_part]
             temp = general.random1(temp_min, temp_max, seed)
             temp_c = round(temp, 1)
-            embed.add_field(name="Temperature", value=f"**{temp_c}°C**", inline=False)
+            # embed.add_field(name="Temperature", value=f"**{temp_c}°C**", inline=False)
 
             wind_min, wind_max = self.weathers["wind"]
             wind = general.random1(wind_min, wind_max, seed2)
@@ -364,12 +365,12 @@ class Place:
                 wind = 0
             speed_kmh = round(wind, 1)
             speed_mps = round(wind / 3.6, 1)
-            embed.add_field(name="Wind speed", value=f"**{speed_kmh} km/h** | {speed_mps} m/s", inline=False)
+            # embed.add_field(name="Wind speed", value=f"**{speed_kmh} km/h** | {speed_mps} m/s", inline=False)
 
             humidity_max = self.weathers["humidity_max"][self.time.month - 1]
             humidity_min = self.weathers["humidity_min"][self.time.month - 1]
             humidity = general.random1(humidity_min, humidity_max, seed2)
-            embed.add_field(name="Humidity", value=f"{humidity:.0%}", inline=False)
+            # embed.add_field(name="Humidity", value=f"{humidity:.0%}", inline=False)
 
             rain_chance = self.weathers["rain_chance"][self.time.month - 1]  # [month - 1]
             rain = general.random1(0, 100, seed2) <= rain_chance
@@ -395,12 +396,18 @@ class Place:
                     rain_out = "Overcast"
                 else:
                     rain_out = "Sunny"
-            embed.add_field(name="Sky's mood", value=rain_out, inline=False)
+            # embed.add_field(name="Sky's mood", value=rain_out, inline=False)
+            output = f"Temperature: **{temp_c}°C**\n" \
+                     f"Wind speed: **{speed_kmh} km/h** | **{speed_mps} m/s**\n" \
+                     f"Humidity: **{humidity:.0%}**\n" \
+                     f"Sky's mood: **{rain_out}**"
+            embed.add_field(name="Weather", value=output, inline=False)
         else:
-            embed.description += "\n\nWeather conditions not available."
+            embed.add_field(name="Weather", value="Weather not available", inline=False)
+            # embed.description += "\n\nWeather conditions not available."
 
         embed.add_field(name="About the Sun", value=self.sun.sun_data, inline=False)
-        embed.set_footer(text=f"Current season: {self.sun.season.title()}")
+        embed.set_footer(text=f"Astronomical season: {self.sun.season.title()}")
         embed.timestamp = self.now
         return embed
 
