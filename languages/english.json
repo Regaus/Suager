@@ -276,7 +276,7 @@
   "social_cuddle": "{0} cuddled {1}",
   "social_dance": "{0} is dancing",
   "social_food": "**{0}** gave **{1}** a {2}\n\n(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧ {2}",
-  "social_food_bot": "Bots can't eat normal food...",
+  "social_food_bot": "We bots can't eat humans' food...",
   "social_forbidden": "{emotes.Deny} This action cannot be done.",
   "social_high_five": "{0} gave {1} a high five",
   "social_high_five_suager": "*High fives {0} back*",

@@ -878,3 +878,6 @@
 
 ## v7.3.5 - 11 July 2021
 - Fixed mod commands breaking when the reason was empty
+
+## v7.3.5.1 - 13 July 2021
+- Updated bot food output
