@@ -135,6 +135,20 @@ tables = [
         Column("gid", 0, True),
         Column("locale", 2, True)
     ]),
+    Table("reaction_groups", [
+        Column("gid", 0, True),      # Guild ID
+        Column("message", 0, True),  # Message ID
+        Column("type", 0, True)      # Reaction Type (1-4)
+    ]),
+    Table("reaction_roles", [
+        Column("message", 0, True),   # Message ID (Group)
+        Column("reaction", 2, True),  # Reaction Emoji
+        Column("role", 0, True)       # Role ID
+    ]),
+    Table("reaction_tracking", [      # Track if someone already has a role within Type 2 and 4 groups
+        Column("message", 0, True),   # Message ID (Group)
+        Column("uid", 0, True),       # User ID
+    ]),
     Table("settings", [
         Column("gid", 0, True),
         Column("data", 2, True)

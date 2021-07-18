@@ -41,3 +41,6 @@
 ## v0.2.1 - 11 July 2021
 - Removed "Average members" stat from the stats command
 - Improved the nickname designs message
+
+## v0.3.0 - 18 July 2021
+- Added reaction roles

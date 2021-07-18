@@ -28,6 +28,7 @@ load = {
         "info",
         "mod",
         "ratings",
+        "reactions",
         "social",
         "starboard",
         "util"
