@@ -106,9 +106,9 @@ class ReactionRoles(commands.Cog):
     @reaction_group.command(name="types")
     async def rg_types(self, ctx: commands.Context):
         """ Explains reaction group types """
-        return await general.send("1 - You can join and leave the roles. You can join multiple within the group (Default)"
-                                  "2 - You can join and leave the roles. You can only have one role within the group"
-                                  "3 - You can join roles but can't leave. You can join multiple within the group"
+        return await general.send("1 - You can join and leave the roles. You can join multiple within the group (Default)\n"
+                                  "2 - You can join and leave the roles. You can only have one role within the group\n"
+                                  "3 - You can join roles but can't leave. You can join multiple within the group\n"
                                   "4 - You can join roles but can't leave. You can only have one role within the group", ctx.channel)
 
     @commands.group(name="reactionroles", aliases=["reactionrole", "rr"])
@@ -122,7 +122,9 @@ class ReactionRoles(commands.Cog):
 
     @reaction_roles.command(name="add")
     async def rr_add(self, ctx: commands.Context, message_id: int, reaction: str, role: discord.Role):
-        """ Add a new reaction role """
+        """ Add a new reaction role
+
+        Note: Due to the way this command was designed, the bot won't react to the message."""
         group_exists = self.bot.db.fetchrow("SELECT * FROM reaction_groups WHERE gid=? AND message=?", (ctx.guild.id, message_id))
         if not group_exists:
             return await general.send("A reaction group with this Message ID does not exist.", ctx.channel)
@@ -139,8 +141,7 @@ class ReactionRoles(commands.Cog):
         if reaction2:
             return await general.send("This role already has a reaction assigned in this reaction group.", ctx.channel)
         self.bot.db.execute("INSERT INTO reaction_roles VALUES (?, ?, ?)", (message_id, emoji, role.id))
-        return await general.send(f"Added reaction {reaction} to give role {role} in reaction group {message_id}.\n"
-                                  f"Note: Due to the current design implementation, you have to add the reaction to the message by yourself.", ctx.channel)
+        return await general.send(f"Added reaction {reaction} to give role {role} in reaction group {message_id}.", ctx.channel)
 
     @reaction_roles.group(name="edit")
     async def rr_edit(self, ctx: commands.Context):

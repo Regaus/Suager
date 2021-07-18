@@ -47,3 +47,7 @@
 
 ## v0.3.1 - 18 July 2021
 - Updated emotes to be usable outside of Senko Lair
+
+## v0.3.1.1 - 18 July 2021
+- Moved the reaction role note to the command description
+- Fixed reaction group types description not having newlines
