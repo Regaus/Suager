@@ -887,3 +887,6 @@
 
 ## v7.3.6.1 - 18 July 2021
 - Merged lists and lists_suager
+
+## v7.3.7 - 18 July 2021
+- Added command to see rank in different languages

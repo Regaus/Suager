@@ -37,7 +37,7 @@ class Settings(commands.Cog):
         if ctx.guild is not None and ctx.guild.id in trusted_servers:
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
             if ctx.author.id in trusted:
-                output += "\n\n__RSL-1 varieties supported:__\n" + "\n".join(rsl)
+                output += "\n\n__RSLs supported:__\n" + "\n".join(rsl)
         return await general.send(output, ctx.channel)
 
     @commands.group(name="settings", aliases=["set"])

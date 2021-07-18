@@ -469,6 +469,16 @@ class Leveling(commands.Cog):
         language = self.bot.language(ctx)
         return await self.level(ctx, who, language)
 
+    @commands.command(name="ranklang", aliases=["rank4"], hidden=True)
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def rank_language(self, ctx: commands.Context, language: str, *, who: discord.Member = None):
+        """ Check your or someone's rank - In a different language """
+        _language = self.bot.language2(language)
+        if language not in languages.languages.keys():
+            return await general.send(self.bot.language(ctx).string("settings_locale_invalid", language, ctx.prefix), ctx.channel)
+        return await self.level(ctx, who, _language)
+
     @commands.command(name="rankembed", aliases=["rank2", "ranke"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
