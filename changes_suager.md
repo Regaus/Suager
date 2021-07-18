@@ -884,3 +884,6 @@
 
 ## v7.3.6 - 18 July 2021
 - Inside Counter
+
+## v7.3.6.1 - 18 July 2021
+- Merged lists and lists_suager

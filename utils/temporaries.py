@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from utils import bot_data, general, http, languages, lists_suager, logger, time
+from utils import bot_data, general, http, languages, lists, logger, time
 
 
 async def temporaries(bot: bot_data.Bot):
@@ -389,7 +389,7 @@ async def avatars(bot: bot_data.Bot):
             # bot.local_config = bot.config["bots"][bot.index]
             # log = bot.local_config["logs"]
             # avatars = lists.avatars
-            avatar = random.choice(lists_suager.avatars)
+            avatar = random.choice(lists.avatars)
             e = False
             s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
             try:

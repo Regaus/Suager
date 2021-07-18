@@ -44,3 +44,6 @@
 
 ## v0.3.0 - 18 July 2021
 - Added reaction roles
+
+## v0.3.1 - 18 July 2021
+- Updated emotes to be usable outside of Senko Lair

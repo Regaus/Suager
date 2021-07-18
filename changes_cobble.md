@@ -288,3 +288,8 @@
 
 ## v1.2-pre4 - 12 July 2021
 - Squished all weather data into one field
+
+## v1.2-pre5 - 18 July 2021
+- Added command to see a specific location's time
+- time78 now shows times based on planet
+- Moved weathers to their own file
