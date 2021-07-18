@@ -589,7 +589,7 @@ class SocialSuager(Social, name="Social"):
     @commands.guild_only()
     @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def fuck(self, ctx, user: discord.Member):
+    async def fuck(self, ctx: commands.Context, user: discord.Member):
         """ Bang someone """
         language = self.bot.language(ctx)
         if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
@@ -616,7 +616,7 @@ class SocialSuager(Social, name="Social"):
     @commands.command(name="rape")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005])
-    async def rape(self, ctx, user: discord.Member):
+    async def rape(self, ctx: commands.Context, user: discord.Member):
         """ Rape someone """
         language = self.bot.language(ctx)
         if user.id == self.bot.user.id:
@@ -636,7 +636,7 @@ class SocialSuager(Social, name="Social"):
     @commands.guild_only()
     @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def suck(self, ctx, user: discord.Member):
+    async def suck(self, ctx: commands.Context, user: discord.Member):
         """ Succ someone off """
         language = self.bot.language(ctx)
         if user.id == self.bot.user.id:
@@ -654,7 +654,7 @@ class SocialSuager(Social, name="Social"):
     @commands.guild_only()
     @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def face_fuck(self, ctx, user: discord.User):
+    async def face_fuck(self, ctx: commands.Context, user: discord.User):
         """ Face-fuck someone """
         language = self.bot.language(ctx)
         if user.id == self.bot.user.id:
@@ -669,6 +669,25 @@ class SocialSuager(Social, name="Social"):
         t1, t2 = ctx.author.name, user.name
         _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
         return await general.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}", ctx.channel)
+
+    @commands.command(name="fc", aliases=["ic"])
+    @commands.check(lambda ctx: ctx.channel.id in [672535025698209821, 764528556507922442, 753000962297299005])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def inside_counter(self, ctx: commands.Context):
+        """ Count how many times you've been inside each other """
+        uid1 = 302851022790066185
+        uid2 = 236884090651934721 if ctx.channel.id in [672535025698209821, 753000962297299005] else 622735873137573894
+        data1 = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid1, uid2))
+        data2 = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid2, uid1))
+        result1, result2 = 0, 0
+        counters = ["bang", "ff", "r"]
+        for counter in counters:
+            result1 += data1[counter]
+            result2 += data2[counter]
+        result2 += data1["suck"]
+        result1 += data2["suck"]
+        name1, name2 = self.bot.get_user(uid1), self.bot.get_user(uid2)
+        return await general.send(f"{name1} has been inside {name2} {result1} times\n{name2} has been inside {name1} {result2} times", ctx.channel)
 
 
 def setup(bot: bot_data.Bot):

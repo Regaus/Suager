@@ -881,3 +881,6 @@
 
 ## v7.3.5.1 - 13 July 2021
 - Updated bot food output
+
+## v7.3.6 - 18 July 2021
+- Inside Counter
