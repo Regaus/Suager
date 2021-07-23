@@ -25,9 +25,27 @@ class Ratings(commands.Cog):
         if ctx.channel.id != 764528556507922442:
             result = custom.get(user.id, _result)
         else:
-            result = _result
-            if user.id == 622735873137573894:
-                result += 5 * 2.54
+            result = 20
+            uid1 = 302851022790066185
+            uid2 = 622735873137573894
+            data1 = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid1, uid2))
+            data2 = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid2, uid1))
+            result1, result2 = 0, 0
+            counters = ["bang", "ff", "r"]
+            for counter in counters:
+                result1 += data1[counter]
+                result2 += data2[counter]
+            result2 += data1["suck"]
+            result1 += data2["suck"]
+            if user.id == uid1:
+                result += result1 * 0.02
+                result -= result2 * 0.03
+            else:
+                result -= result1 * 0.03
+                result += result2 * 0.02
+            # result = _result
+            # if user.id == 622735873137573894:
+            #     result += 5 * 2.54
         return await general.send(language.string("ratings_pickle", user.name, language.number(result, precision=2), language.number(result / 2.54, precision=2)), ctx.channel)
 
     @commands.command(name="rate")
