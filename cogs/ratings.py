@@ -117,6 +117,7 @@ class Ratings(commands.Cog):
                 609423646347231282: 0.875,
                 517012611573743621: 0.875,
                 291665491221807104: 0.75,
+                236884090651934721: 0.50,
                 667187968145883146: -1.00,
                 402238370249441281: -1.00,
             }.get(check.id, 0.00)
@@ -160,7 +161,7 @@ class Ratings(commands.Cog):
             else:
                 # rate = "undefined%"
                 author = check == ctx.author
-                return await output.edit(content=f"The level of friendship between **{'you' if author else check.name}** and **Regaus** is **undefined**")
+                return await output.edit(content=f"The level of friendship between **{'you' if author else check.name}** and **Regaus** is **unknown**.")
         return await general.send(language.string("ratings_friend", user1.name, user2.name, rate), ctx.channel)
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
