@@ -202,7 +202,7 @@ class Ratings(commands.Cog):
         # elif user.id == 533680271057354762:
         #     iq = -2147483647.0
         ri = language.number(iq, precision=2)
-        return await general.send(language.number("ratings_iq", user.name, ri), ctx.channel)
+        return await general.send(language.string("ratings_iq", user.name, ri), ctx.channel)
 
 
 def setup(bot: bot_data.Bot):
