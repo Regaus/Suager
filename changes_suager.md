@@ -890,3 +890,10 @@
 
 ## v7.3.7 - 18 July 2021
 - Added command to see rank in different languages
+
+## v7.3.8 - 23 July 2021
+- Added the new pickle system to sr9
+- Made friendship levels say unknown instead of undefined
+- Fixed IQ command breaking
+- Shortened SL time output in RSL-1 to "S. Laikadu"
+- Removed a handful of birthdays from timesince command, and added some SL holidays to it

@@ -113,7 +113,8 @@ class Utility(commands.Cog):
     @commands.command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
-        """ Time difference """
+        """ Time difference
+        If you don't specify any time, it will simply default to an arbitrary date within the near future"""
         language = self.bot.language(ctx)
         # if locale in ["rsl-1d", "rsl-5"]:
         #     if year is not None and year < 277:
@@ -124,7 +125,8 @@ class Utility(commands.Cog):
             if year is None:
                 def dt(_month, _day):
                     return datetime(now.year, _month, _day, tzinfo=timezone.utc)
-                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(5, 10), dt(5, 13), dt(5, 19), dt(7, 13), dt(10, 1), dt(10, 31), dt(12, 25),
+                dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25), dt(7, 27),
+                         dt(8, 8), dt(9, 27), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
                          datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)]
                 for _date in dates:
                     if now < _date:
@@ -132,7 +134,7 @@ class Utility(commands.Cog):
                         break
             else:
                 date = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
-            difference = language.delta_dt(date, accuracy=7, brief=False, suffix=True)  # time.human_timedelta(date, accuracy=7)
+            difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)  # time.human_timedelta(date, accuracy=7)
             current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)  # time.time_output(now, True, True, True)
             specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)  # time.time_output(date, True, True, True)
             return await general.send(language.string("util_timesince", current_time, specified_time, difference), ctx.channel)
