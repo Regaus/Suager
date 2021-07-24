@@ -47,7 +47,7 @@ class Utility(commands.Cog):
             b = language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)
             d = language.time(time.now_k(), short=0, dow=True, seconds=True, tz=False)
             send += f"Zymlä: **{b}**\n" \
-                    f"Senkadar Laikadu: **{d}**\n" \
+                    f"S. Laikadu: **{d}**\n" \
                     f"Kargadia: **{a}**"
         else:
             send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
