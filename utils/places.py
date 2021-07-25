@@ -244,7 +244,7 @@ class Place:
             rain_chance = self.weathers["rain_chance"][self.time.month - 1]  # [month - 1]
             rain = general.random1(0, 100, seed2) <= rain_chance
             if rain:
-                if -3 > temp_c > 3:
+                if -2.5 > temp_c > 2.5:
                     rain_out = "Rain" if general.random1(0, 1, seed2 - 3) < 0.5 else "Snow"
                 else:
                     rain_out = "Rain" if temp_c > 0 else "Snow"

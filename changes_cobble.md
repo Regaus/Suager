@@ -293,3 +293,6 @@
 - Added command to see a specific location's time
 - time78 now shows times based on planet
 - Moved weathers to their own file
+
+## v1.2.0 - 25 July 2021
+- Added weathers to Pakigar, Shonangar, Orlagar and Leitagar
