@@ -141,6 +141,9 @@ class Events(commands.Cog):
                 role = member.guild.get_role(841403040534888458)
                 await member.add_roles(role, reason="Welcome to /bin/games!")
                 await general.send(f"Welcome to {member.guild.name}, {member.name}!", self.bot.get_channel(841405544686551044))
+            if member.guild.id == 869975256566210641:
+                role = member.guild.get_role(869975498799845406)
+                await member.add_roles(role, reason="Nuriki asked for it")
         if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
             if member.name[0] < "A":
                 await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
