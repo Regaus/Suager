@@ -54,6 +54,7 @@ class MemberID(commands.Converter):
 class Moderation(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        self.votes = {}
         # self.admins = self.bot.config["owners"]
 
     @commands.command(name="kick")
@@ -441,6 +442,26 @@ class Moderation(commands.Cog):
                 await message.clear_reactions()
         return await general.send(language.string("mod_purge_reactions", language.number(total_reactions)), ctx.channel)
         # await general.send(f"🚮 Successfully removed {total_reactions:,} reactions.", ctx.channel)
+
+    @commands.command(name="voteban")
+    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
+    @commands.guild_only()
+    @commands.bot_has_permissions(ban_members=True)
+    async def vote_ban(self, ctx: commands.Context, *, member: discord.Member):
+        """ Vote-ban a user from the server"""
+        if member.id in self.votes.keys():
+            votes = self.votes[member.id]
+            if ctx.author.id in votes:
+                return await general.send("It seems you have already voted to ban this user.", ctx.channel)
+            else:
+                votes.append(ctx.author.id)
+                await general.send(f"{ctx.author} has voted to ban {member}. ({len(votes)}/3)", ctx.channel)
+            if len(votes) >= 3:
+                await member.ban(reason="Vote-banned")
+                return await general.send(f"{member} has been vote-banned from this server.", ctx.channel)
+        else:
+            self.votes[member.id] = [ctx.author.id]
+            return await general.send(f"{ctx.author} has voted to ban {member}. (1/3)", ctx.channel)
 
 
 class ModerationKyomi(Moderation, name="Moderation"):
