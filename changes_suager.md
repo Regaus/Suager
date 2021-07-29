@@ -914,9 +914,13 @@
 - Once you reach 5 votes and 90% upvotes, you are banned immediately (without waiting the end of the trial)
 - This is reversed if the upvotes go down or the trial ends
 
+## v7.3.10.2 - 29 July 2021
+- Disabled kick, ban, massban, and unban for Nuriki's anarchy server
+
 ## v7.3.11 - 26 July 2021
 - Made settings current and upload commands owner-only
 - Removed the "free roles" system
 - Removed "String not found": Now if the string is invalid it just shows the string itself
 - Added "prefix" and "p" as aliases to //settings prefixes
 - Added "prefixes" as alias to //prefix
+- Changed the reason format to "[Author#1234] Reason" (from "[ Author#1234 ] Reason")
