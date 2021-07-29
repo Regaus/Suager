@@ -25,6 +25,10 @@ def now(tz: str = None):
     return datetime.now(tz=pytz.timezone(tz))
 
 
+def now2():
+    return datetime.utcnow()
+
+
 def set_tz(when: datetime, tz: str):
     if when.tzinfo is None:
         return datetime(when.year, when.month, when.day, when.hour, when.minute, when.second, when.microsecond, pytz.timezone(tz))
