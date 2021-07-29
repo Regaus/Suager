@@ -418,21 +418,25 @@ async def vote_bans(bot: bot_data.Bot):
         expired = bot.db.fetch("SELECT * FROM vote_bans WHERE DATETIME(expiry) < DATETIME('now')", ())
         for entry in expired:
             upvotes, downvotes = len(json.loads(entry["upvotes"])), len(json.loads(entry["downvotes"]))
-            member: discord.User = await bot.fetch_user(entry["uid"])
+            user: discord.User = await bot.fetch_user(entry["uid"])
             votes = upvotes - downvotes
             acceptance = upvotes / (upvotes + downvotes)
             if votes >= 3 and acceptance >= 0.6:
                 try:
-                    await guild.ban(member, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"))
+                    await guild.ban(user, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"))
                 except discord.Forbidden:
-                    general.print_error(f"Failed to ban {member} - Missing permissions")
+                    general.print_error(f"Failed to ban {user} - Missing permissions")
                     if channel is not None:
-                        await general.send(f"Failed to ban {member} - Missing permissions", channel)
+                        await general.send(f"Failed to ban {user} - Missing permissions", channel)
                 if channel is not None:
-                    await general.send(f"The vote has ended: {member} has been banned. ({votes} votes, {acceptance:.0%} upvoted)", channel)
+                    await general.send(f"The vote has ended: {user} has been banned. ({votes} votes, {acceptance:.0%} upvoted)", channel)
             else:
+                member = guild.get_member(entry["uid"])
+                if member is not None:
+                    await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
+                    await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
                 if channel is not None:
-                    await general.send(f"The vote has ended: {member} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
+                    await general.send(f"The vote has ended: {user} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
                                        f"Must be at least 3 votes and 60% upvotes to ban.", channel)
             bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (entry["uid"],))
         await asyncio.sleep(1)

@@ -595,7 +595,11 @@ class ModerationSuager(Moderation, name="Moderation"):
                 return await general.send("It seems you already downvoted the ban of this user.", ctx.channel)
             downvotes.append(ctx.author.id)
             self.bot.db.execute("UPDATE vote_bans SET downvotes=? WHERE uid=?", (json.dumps(downvotes), member.id))
+            votes = len(upvotes) - len(downvotes)
             acceptance = len(upvotes) / (len(upvotes + downvotes))
+            if votes <= 3 or acceptance <= 0.6:
+                await member.remove_roles(ctx.guild.get_role(870338399922446336), reason="Vote-ban trial: Upvotes have gone down")  # Remove the On Trial role
+                await member.add_roles(ctx.guild.get_role(869975498799845406), reason="Vote-ban trial: Upvotes have gone down")  # Give the Anarchists role
             return await general.send(f"{ctx.author} has downvoted the ban of {member}. Votes: {len(upvotes) - len(downvotes)} ({acceptance:.0%})", ctx.channel)
         else:
             return await general.send(f"Nobody is trying to ban {member} yet.", ctx.channel)

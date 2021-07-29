@@ -912,6 +912,7 @@
 ## v7.3.10.1 - 29 July 2021
 - Once you reach 3 votes and 60% upvotes, you get the "on trial" role and revoked admin perms
 - Once you reach 5 votes and 90% upvotes, you are banned immediately (without waiting the end of the trial)
+- This is reversed if the upvotes go down or the trial ends
 
 ## v7.3.11 - 26 July 2021
 - Made settings current and upload commands owner-only
