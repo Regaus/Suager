@@ -566,8 +566,14 @@ class ModerationSuager(Moderation, name="Moderation"):
                 return await general.send("It seems you already voted to ban this user.", ctx.channel)
             upvotes.append(ctx.author.id)
             self.bot.db.execute("UPDATE vote_bans SET upvotes=? WHERE uid=?", (json.dumps(upvotes), member.id))
+            votes = len(upvotes) - len(downvotes)
             acceptance = len(upvotes) / (len(upvotes + downvotes))
-            return await general.send(f"{ctx.author} has voted to ban {member}. Votes: {len(upvotes) - len(downvotes)} ({acceptance:.0%})", ctx.channel)
+            if votes >= 3 and acceptance >= 0.6:
+                await member.add_roles(ctx.guild.get_role(870338399922446336), reason="Vote-ban in progress")  # Give the On Trial role
+                await member.remove_roles(ctx.guild.get_role(869975498799845406), reason="Vote-ban in progress")  # Revoke the Anarchists role
+            if votes >= 5 and acceptance >= 0.9:
+                self.bot.db.execute("UPDATE vote_bans SET expiry=? WHERE uid=?", (time.now2(), member.id))
+            return await general.send(f"{ctx.author} has voted to ban {member}. Votes: {votes} ({acceptance:.0%})", ctx.channel)
         else:
             expiry = time.now2() + time.td(hours=6)
             self.bot.db.execute("INSERT INTO vote_bans VALUES (?, ?, ?, ?)", (member.id, f"[{ctx.author.id}]", "[]", expiry))
