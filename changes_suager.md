@@ -897,3 +897,21 @@
 - Fixed IQ command breaking
 - Shortened SL time output in RSL-1 to "S. Laikadu"
 - Removed a handful of birthdays from timesince command, and added some SL holidays to it
+
+## v7.3.9 - 29 July 2021
+- Added code to give role on join in Nuriki's anarchy server
+- Added vote-ban command for Nuriki's anarchy server
+
+## v7.3.10 - 29 July 2021
+- Added a downvote system for the vote-bans
+- Made votes expire after a certain time
+- Now stores upvotes, downvotes and expiry information in a database
+- The ban only occurs after 6 hours from the start of the vote, if 3 votes are reached and the acceptance is 60% or higher
+- You can't vote on your own ban
+
+## v7.3.11 - 26 July 2021
+- Made settings current and upload commands owner-only
+- Removed the "free roles" system
+- Removed "String not found": Now if the string is invalid it just shows the string itself
+- Added "prefix" and "p" as aliases to //settings prefixes
+- Added "prefixes" as alias to //prefix

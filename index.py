@@ -71,6 +71,7 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.avatars(bot)))
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.temporaries(bot)))
+            tasks.append(loop.create_task(temporaries.vote_bans(bot)))
         if bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.temporaries(bot)))

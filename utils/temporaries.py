@@ -406,3 +406,33 @@ async def avatars(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(3600)
+
+
+async def vote_bans(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+
+    print(f"{time.time()} > {bot.full_name} > Initialised Vote Bans")
+    guild: discord.Guild = bot.get_guild(869975256566210641)
+    channel: discord.TextChannel = guild.get_channel(870015339142996079)
+    while True:
+        expired = bot.db.fetch("SELECT * FROM vote_bans WHERE DATETIME(expiry) < DATETIME('now')", ())
+        for entry in expired:
+            upvotes, downvotes = len(json.loads(entry["upvotes"])), len(json.loads(entry["downvotes"]))
+            member: discord.User = await bot.fetch_user(entry["uid"])
+            votes = upvotes - downvotes
+            acceptance = upvotes / (upvotes + downvotes)
+            if votes >= 3 and acceptance >= 0.6:
+                try:
+                    await guild.ban(member, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"))
+                except discord.Forbidden:
+                    general.print_error(f"Failed to ban {member} - Missing permissions")
+                    if channel is not None:
+                        await general.send(f"Failed to ban {member} - Missing permissions", channel)
+                if channel is not None:
+                    await general.send(f"The vote has ended: {member} has been banned. ({votes} votes, {acceptance:.0%} upvoted)", channel)
+            else:
+                if channel is not None:
+                    await general.send(f"The vote has ended: {member} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
+                                       f"Must be at least 3 votes and 60% upvotes to ban.", channel)
+            bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (entry["uid"],))
+        await asyncio.sleep(1)

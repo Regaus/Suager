@@ -185,4 +185,10 @@ tables = [
         Column("uid", 0, True),
         Column("tz", 2, True)
     ]),
+    Table("vote_bans", [
+        Column("uid", 0, True),        # User ID
+        Column("upvotes", 2, True),    # List of upvote IDs
+        Column("downvotes", 2, True),  # List of downvote IDs
+        Column("expiry", 4, True),     # When the vote expires
+    ])
 ]

@@ -54,7 +54,6 @@ class MemberID(commands.Converter):
 class Moderation(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
-        self.votes = {}
         # self.admins = self.bot.config["owners"]
 
     @commands.command(name="kick")
@@ -443,26 +442,6 @@ class Moderation(commands.Cog):
         return await general.send(language.string("mod_purge_reactions", language.number(total_reactions)), ctx.channel)
         # await general.send(f"🚮 Successfully removed {total_reactions:,} reactions.", ctx.channel)
 
-    @commands.command(name="voteban")
-    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
-    @commands.guild_only()
-    @commands.bot_has_permissions(ban_members=True)
-    async def vote_ban(self, ctx: commands.Context, *, member: discord.Member):
-        """ Vote-ban a user from the server"""
-        if member.id in self.votes.keys():
-            votes = self.votes[member.id]
-            if ctx.author.id in votes:
-                return await general.send("It seems you have already voted to ban this user.", ctx.channel)
-            else:
-                votes.append(ctx.author.id)
-                await general.send(f"{ctx.author} has voted to ban {member}. ({len(votes)}/3)", ctx.channel)
-            if len(votes) >= 3:
-                await member.ban(reason="Vote-banned")
-                return await general.send(f"{member} has been vote-banned from this server.", ctx.channel)
-        else:
-            self.votes[member.id] = [ctx.author.id]
-            return await general.send(f"{ctx.author} has voted to ban {member}. (1/3)", ctx.channel)
-
 
 class ModerationKyomi(Moderation, name="Moderation"):
     designs = [
@@ -567,8 +546,59 @@ class ModerationKyomi(Moderation, name="Moderation"):
         return await general.send(output, ctx.channel)
 
 
+class ModerationSuager(Moderation, name="Moderation"):
+    @commands.command(name="voteban")
+    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+    @commands.guild_only()
+    async def vote_ban(self, ctx: commands.Context, member: discord.Member):
+        """ Vote-ban a user from the server"""
+        if member.id == ctx.author.id:
+            return await general.send("You can't vote-ban yourself.", ctx.channel)
+        vote_data = self.bot.db.fetchrow("SELECT * FROM vote_bans WHERE uid=?", (member.id,))
+        # if vote_data:
+        #     if time.now2() > vote_data["expiry"]:
+        #         await general.send(f"The previous vote against {member} has expired", ctx.channel)
+        #         self.bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (member.id,))
+        #         vote_data = None  # Forget the previous vote
+        if vote_data:
+            upvotes, downvotes = json.loads(vote_data["upvotes"]), json.loads(vote_data["downvotes"])
+            if ctx.author.id in upvotes:
+                return await general.send("It seems you already voted to ban this user.", ctx.channel)
+            upvotes.append(ctx.author.id)
+            self.bot.db.execute("UPDATE vote_bans SET upvotes=? WHERE uid=?", (json.dumps(upvotes), member.id))
+            acceptance = len(upvotes) / (len(upvotes + downvotes))
+            return await general.send(f"{ctx.author} has voted to ban {member}. Votes: {len(upvotes) - len(downvotes)} ({acceptance:.0%})", ctx.channel)
+        else:
+            expiry = time.now2() + time.td(hours=6)
+            self.bot.db.execute("INSERT INTO vote_bans VALUES (?, ?, ?, ?)", (member.id, f"[{ctx.author.id}]", "[]", expiry))
+            return await general.send(f"{ctx.author} has voted to ban {member}. Vote lasts until: {self.bot.language2('english').time(expiry)}.", ctx.channel)
+
+    @commands.command(name="downvoteban")
+    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+    @commands.guild_only()
+    async def downvote_ban(self, ctx: commands.Context, member: discord.Member):
+        """ Downvote a ban of a user from the server"""
+        if member.id == ctx.author.id:
+            return await general.send("You can't downvote your own ban.", ctx.channel)
+        vote_data = self.bot.db.fetchrow("SELECT * FROM vote_bans WHERE uid=?", (member.id,))
+        if vote_data:
+            # if time.now2() > vote_data["expiry"]:
+            #     return await general.send(f"The vote against {member} has expired", ctx.channel)
+            upvotes, downvotes = json.loads(vote_data["upvotes"]), json.loads(vote_data["downvotes"])
+            if ctx.author.id in downvotes:
+                return await general.send("It seems you already downvoted the ban of this user.", ctx.channel)
+            downvotes.append(ctx.author.id)
+            self.bot.db.execute("UPDATE vote_bans SET downvotes=? WHERE uid=?", (json.dumps(downvotes), member.id))
+            acceptance = len(upvotes) / (len(upvotes + downvotes))
+            return await general.send(f"{ctx.author} has downvoted the ban of {member}. Votes: {len(upvotes) - len(downvotes)} ({acceptance:.0%})", ctx.channel)
+        else:
+            return await general.send(f"Nobody is trying to ban {member} yet.", ctx.channel)
+
+
 def setup(bot: bot_data.Bot):
     if bot.name == "kyomi":
         bot.add_cog(ModerationKyomi(bot))
+    elif bot.name == "suager":
+        bot.add_cog(ModerationSuager(bot))
     else:
         bot.add_cog(Moderation(bot))
