@@ -238,49 +238,38 @@ class Leveling(commands.Cog):
             if ctx.author.id == 430891116318031872 and level >= 5:
                 lu, ld = False, False
                 level = 5
-            if lu or ld:
-                try:
-                    language = self.bot.language(languages.FakeContext(ctx.guild, self.bot))
-                    send = str(__settings['leveling']['level_up_message']).replace('[MENTION]', ctx.author.mention)\
-                        .replace('[USER]', ctx.author.name).replace('[LEVEL]', language.number(level))
-                except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
-                try:
-                    ac = __settings['leveling']['announce_channel']
-                    if ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
-                    else:
-                        ch = ctx.channel
-                except KeyError:
-                    ch = ctx.channel
-                try:
-                    await general.send(send, ch, u=[ctx.author])
-                except discord.Forbidden:
-                    pass  # Well, if it can't send it there, too bad.
             reason = f"Level Rewards - Level {level}"
+            language = self.bot.language(languages.FakeContext(ctx.guild, self.bot))
+            current_reward, next_reward = {"role": language.string("generic_none"), "level": 0}, {"role": language.string("generic_unknown"), "level": 0}
+            top_role = False
             try:
                 rewards = __settings['leveling']['rewards']
                 if rewards:  # Don't bother if they're empty
-                    l1, l2 = [], []
+                    # l1, l2 = [], []
                     rewards.sort(key=lambda x: x['level'])
-                    for i in range(len(rewards)):
-                        l1.append(rewards[i]['level'])
-                        l2.append(rewards[i]['role'])
+                    # for i in range(len(rewards)):
+                    #     l1.append(rewards[i]['level'])
+                    #     l2.append(rewards[i]['role'])
                     roles = [r.id for r in ctx.author.roles]
-                    for i in range(len(rewards)):
-                        role = discord.Object(id=l2[i])
-                        has_role = l2[i] in roles
-                        if level >= l1[i]:
+                    # for i in range(len(rewards)):
+                    for i, reward in enumerate(rewards):
+                        role: discord.Role = ctx.guild.get_role(reward["role"])  # discord.Object(id=l2[i])
+                        has_role = reward["role"] in roles
+                        if level >= reward["level"]:
                             if i < len(rewards) - 1:
-                                if level < l1[i + 1]:
+                                next_role = rewards[i + 1]
+                                if level < next_role["level"]:
+                                    current_reward = {"role": role.name, "level": reward["level"]}
+                                    next_reward = {"role": ctx.guild.get_role(next_role["role"]).name, "level": next_role["level"]}
                                     if not has_role:
                                         await ctx.author.add_roles(role, reason=reason)
                                 else:
                                     if has_role:
                                         await ctx.author.remove_roles(role, reason=reason)
                             else:
+                                current_reward = {"role": role.name, "level": reward["level"]}
+                                next_reward = {"role": language.string("leveling_rewards_max"), "level": max_level}
+                                top_role = True
                                 if not has_role:
                                     await ctx.author.add_roles(role, reason=reason)
                         else:
@@ -293,6 +282,48 @@ class Leveling(commands.Cog):
                                    ctx.channel)
             except Exception as e:
                 general.print_error(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
+            if lu or ld:
+                try:
+                    next_left = next_reward["level"] - level
+                    level_up_message: str = __settings["leveling"]["level_up_message"]
+                    if top_role:
+                        if "level_up_highest" in __settings["leveling"]:
+                            if __settings["leveling"]["level_up_highest"]:
+                                level_up_message = __settings["leveling"]["level_up_highest"]
+                    if level == max_level:
+                        if "level_up_max" in __settings["leveling"]:
+                            if __settings["leveling"]["level_up_max"]:
+                                level_up_message = __settings["leveling"]["level_up_max"]
+                    # This allows to fall back to the default level up message if the highest/max one isn't available
+                    send = level_up_message\
+                        .replace("[MENTION]", ctx.author.mention)\
+                        .replace("[USER]", ctx.author.name)\
+                        .replace("[LEVEL]", language.number(level))\
+                        .replace("[CURRENT_REWARD]", current_reward["role"])\
+                        .replace("[CURRENT_REWARD_LEVEL]", language.number(current_reward["level"]))\
+                        .replace("[NEXT_REWARD]", next_reward["role"])\
+                        .replace("[NEXT_REWARD_LEVEL]", language.number(next_reward["level"]))\
+                        .replace("[NEXT_REWARD_PROGRESS]", language.number(next_left))\
+                        .replace("[MAX_LEVEL]", language.number(max_level))
+                except KeyError:
+                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
+                try:
+                    ac = __settings["leveling"]["announce_channel"]
+                    if ac == -1:  # -1 means level up announcements are disabled
+                        ch = None
+                    elif ac != 0:
+                        ch = self.bot.get_channel(ac)
+                        if ch is None or ch.guild.id != ctx.guild.id:
+                            ch = ctx.channel
+                    else:
+                        ch = ctx.channel
+                except KeyError:
+                    ch = ctx.channel
+                try:
+                    if ch is not None:
+                        await general.send(send, ch, u=[ctx.author])
+                except discord.Forbidden:
+                    pass  # Well, if it can't send it there, too bad.
             # _last = last if dc else now
             last_send = last if dc else now
             minute = now if full else ls
@@ -432,8 +463,10 @@ class Leveling(commands.Cog):
                     r4 = language.string("leveling_rank_xp_left", language.number((req - xp), precision=0))
                     y = 288
                 else:
-                    r3, r4 = "", ""
-                    y = 426
+                    progress = 1
+                    r3, r4 = language.string("leveling_rank_max_1"), random.choice(language.data("leveling_rank_max_2"))
+                    y = 288
+                    # y = 426
                 dr.text((text_x, y), language.string("leveling_rank_xp", r1, r2, r3, r4), font=font_small, fill=font_colour)
             else:
                 progress = 1  # 0.5
@@ -441,7 +474,7 @@ class Leveling(commands.Cog):
                 _rank = language.string("leveling_rank_rank", place)
                 _level = language.string("leveling_rank_level", language.number(69420))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
-                dr.text((text_x, 426), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour)
+                dr.text((text_x, 357), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour)  # 426
             full = width - 20
             done = int(progress * full)
             if done < 0:

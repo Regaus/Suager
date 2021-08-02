@@ -412,8 +412,8 @@ async def vote_bans(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
     print(f"{time.time()} > {bot.full_name} > Initialised Vote Bans")
-    guild: discord.Guild = bot.get_guild(869975256566210641)
-    channel: discord.TextChannel = guild.get_channel(870015339142996079)
+    guild: discord.Guild = bot.get_guild(869975256566210641)  # Nuriki's Anarchy Server
+    channel: discord.TextChannel = guild.get_channel(871811287166898187)  # Trials channel
     while True:
         expired = bot.db.fetch("SELECT * FROM vote_bans WHERE DATETIME(expiry) < DATETIME('now')", ())
         for entry in expired:
@@ -423,7 +423,7 @@ async def vote_bans(bot: bot_data.Bot):
             acceptance = upvotes / (upvotes + downvotes)
             if votes >= 3 and acceptance >= 0.6:
                 try:
-                    await guild.ban(user, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"))
+                    await guild.ban(user, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"), delete_message_days=0)
                 except discord.Forbidden:
                     general.print_error(f"Failed to ban {user} - Missing permissions")
                     if channel is not None:

@@ -29,6 +29,7 @@ load = {
         "mod",
         "ratings",
         "reactions",
+        "settings",
         "social",
         "starboard",
         "util"
@@ -44,6 +45,7 @@ load = {
         "leveling",
         "mod",
         "ratings",
+        "reactions",
         "settings",
         "social",
         "starboard",

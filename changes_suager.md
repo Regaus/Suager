@@ -917,10 +917,32 @@
 ## v7.3.10.2 - 29 July 2021
 - Disabled kick, ban, massban, and unban for Nuriki's anarchy server
 
-## v7.3.11 - 26 July 2021
+## v7.4-pre1 - 2 August 2021
+- Vote-ban no longer deletes banned users' messages
 - Made settings current and upload commands owner-only
 - Removed the "free roles" system
 - Removed "String not found": Now if the string is invalid it just shows the string itself
 - Added "prefix" and "p" as aliases to //settings prefixes
 - Added "prefixes" as alias to //prefix
 - Changed the reason format to "[Author#1234] Reason" (from "[ Author#1234 ] Reason")
+- Removed Russian language
+- Made //settings, //settings leveling and //settings starboard show their current settings if no command is entered
+- Added more variables to the level up message
+- Removed lum and xpm aliases from leveling settings commands
+- Added "ignore" and "blacklist" as aliases to //settings leveling ignored
+- Added "mutedrole", "muted", "mute" as aliases to //settings muterole
+- Added ability to disable level up messages
+- Added ability to have a custom level up message once the user gets the highest available level reward, or reaches the highest level
+- Improved the rank card for users who have reached level 200
+- Improved Suager's personal rank card
+- Fixed //t all
+- Added role reactions (whitelisted) to Suager
+
+## v7.4-pre2 - xx August 2021
+- Added birthday settings (Note: all these new settings don't work yet)
+- Added settings for mod logs and message logs
+- Added settings for polls
+- Added setting to give a role when a new user or bot joins the server
+- Added setting for welcome and goodbye messages
+- Made settings save which bot the settings belong to
+- If string formatting fails, it now just tries to fill in the values that are available

@@ -151,6 +151,7 @@ tables = [
     ]),
     Table("settings", [
         Column("gid", 0, True),
+        Column("bot", 2, True),  # The name of the bot to which the settings belong
         Column("data", 2, True)
     ]),
     Table("starboard", [

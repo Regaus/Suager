@@ -63,10 +63,9 @@ def random_colour() -> int:
 
 
 def reason(who, why=None) -> str:
-    r = f"[ {who} ]"
     if why is None:
-        return f"{r} No reason specified"
-    return f"{r} {why}"
+        return f"[{who}] No reason specified"
+    return f"[{who}] {why}"
 
 
 async def pretty_results(ctx, filename: str = "Results", result: str = "Here are the results:", loop=None):

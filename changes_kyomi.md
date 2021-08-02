@@ -51,3 +51,6 @@
 ## v0.3.1.1 - 18 July 2021
 - Moved the reaction role note to the command description
 - Fixed reaction group types description not having newlines
+
+## v0.3.2 - 2 August 2021
+- Enabled settings

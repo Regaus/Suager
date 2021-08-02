@@ -69,7 +69,7 @@ class Language:
         """ Turn a number into a string """
         c = "," if commas else ""
         try:
-            if type(value) == int or (precision == 0 and not percentage):
+            if (type(value) == int or precision == 0) and not percentage:
                 value = int(value)  # Make sure the value is an integer, in case it's a float with precision zero
                 output = f"{value:0{fill}{c}d}"
             else:
@@ -83,11 +83,14 @@ class Language:
 
     def string(self, string: str, *values, **kwargs) -> str:
         """ Get translated string """
-        output = str((languages.get(self.language, languages["english"])).get(string, languages["english"].get(string, f"String not found: {string}")))
+        output = str((languages.get(self.language, languages["english"])).get(string, languages["english"].get(string, string)))
         try:
             return output.format(*values, **kwargs, emotes=emotes)
         except IndexError:
-            return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
+            for i, value in enumerate(values):
+                output = output.replace(f"\x7b{i}\x7d", str(value))  # Try to fill in the values we do have
+            return output
+            # return f"Formatting failed:\n{output}\nFormat values:\n{', '.join([str(value) for value in values])}"
 
     def data(self, key: str):
         """ Get list/dict language entry """

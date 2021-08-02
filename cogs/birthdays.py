@@ -37,7 +37,7 @@ class Birthdays(commands.Cog):
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
-        """ Set your birthday :)
+        """ Set your birthday
 
         Format: `DD/MM`
         Example: //birthdays set 27/01"""

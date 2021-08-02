@@ -208,7 +208,7 @@ class Tags(commands.Cog):
         block = "```fix"
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
             block += f"\n{i:02d}) {d['name']} | {language.plural(d['usage'], 'tags_list_uses')}"
-        return await general.send(language.number("tags_all", ctx.guild, language.number(page), language.number(ceil(len(tags) / 20)), block), ctx.channel)
+        return await general.send(language.string("tags_all", ctx.guild, language.number(page), language.number(ceil(len(tags) / 20)), block), ctx.channel)
 
     @tags.command(name="top")
     async def tags_top(self, ctx: commands.Context, page: int = 1):

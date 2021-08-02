@@ -211,7 +211,7 @@ class Social(commands.Cog):
             return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
+        if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id in self.locked:
             return await general.send(language.string("social_forbidden"), ctx.channel)
@@ -283,7 +283,7 @@ class Social(commands.Cog):
             self.poke = await lists.get_images(self.bot, 'P')
         if ctx.author == user:
             return await general.send(language.string("social_poke_self"), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in self.locked:  # and ctx.author.id in self.locked:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_poke_suager", ctx.author.name), ctx.channel)
@@ -355,7 +355,7 @@ class Social(commands.Cog):
             return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id in [236884090651934721]:
+        if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(language.string("social_kill_regaus", ctx.author.id), ctx.channel)
@@ -451,7 +451,7 @@ class Social(commands.Cog):
         language = self.bot.language(ctx)
         if user == ctx.author:
             return await general.send(emotes.AlexPat, ctx.channel)
-        if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_forbidden"), ctx.channel)

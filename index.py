@@ -19,7 +19,7 @@ async def get_prefix(_bot, ctx):
     uid = _bot.user.id
     default = [f"<@!{uid}> ", f"<@{uid}> "]
     try:
-        settings = _bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        settings = _bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, _bot.name))
         if settings:
             data = json.loads(settings['data'])
             if data["use_default"]:
