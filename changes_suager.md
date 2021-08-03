@@ -917,7 +917,7 @@
 ## v7.3.10.2 - 29 July 2021
 - Disabled kick, ban, massban, and unban for Nuriki's anarchy server
 
-## v7.4-pre1 - 2 August 2021
+## v7.4-pre1 - 26 July - 2 August 2021
 - Vote-ban no longer deletes banned users' messages
 - Made settings current and upload commands owner-only
 - Removed the "free roles" system
@@ -938,7 +938,7 @@
 - Fixed //t all
 - Added role reactions (whitelisted) to Suager
 
-## v7.4-pre2 - xx August 2021
+## v7.4-pre2 - 2 August 2021
 - Added birthday settings (Note: all these new settings don't work yet)
 - Added settings for mod logs and message logs
 - Added settings for polls
@@ -946,3 +946,8 @@
 - Added setting for welcome and goodbye messages
 - Made settings save which bot the settings belong to
 - If string formatting fails, it now just tries to fill in the values that are available
+
+## v7.4.0 - 3 August 2021
+- Messages now cut off at 2000 characters
+- Made birthdays message cut off at 1024 characters for the settings embed
+- Birthdays now follow the updated structure

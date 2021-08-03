@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from utils import bot_data, general, http, languages, lists, logger, time
+from utils import bot_data, general, http, lists, logger, time
 
 
 async def temporaries(bot: bot_data.Bot):
@@ -137,12 +137,12 @@ async def try_error_temps(bot: bot_data.Bot):
             bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
 
 
-bd_config = {  # Birthday data: {Guild: [BirthdayChannel, BirthdayRole]}
-    568148147457490954: [568148147457490958, 663661621448802304],  # Senko Lair
-    706574018928443442: [715620849167761458, 720780796293677109],  # oda-shi
-    738425418637639775: [738425419325243424, 748647340423905420],  # Regaus'tar Koankadu
-    693948857939132478: [716144209567940660, 857074383985311755],  # Midnight Dessert
-}
+# bd_config = {  # Birthday data: {Guild: [BirthdayChannel, BirthdayRole]}
+#     568148147457490954: [568148147457490958, 663661621448802304],  # Senko Lair
+#     706574018928443442: [715620849167761458, 720780796293677109],  # oda-shi
+#     738425418637639775: [738425419325243424, 748647340423905420],  # Regaus'tar Koankadu
+#     693948857939132478: [716144209567940660, 857074383985311755],  # Midnight Dessert
+# }
 
 
 async def birthdays(bot: bot_data.Bot):
@@ -155,72 +155,78 @@ async def birthdays(bot: bot_data.Bot):
     print(f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
     # birthday_message = "birthdays_message2" if bot.name == "kyomi" else "birthdays_message"
-    _guilds, _channels, _roles = [], [], []
-    for guild, data in bd_config.items():
-        _guilds.append(guild)
-        _channels.append(data[0])
-        _roles.append(data[1])
-    guilds = [bot.get_guild(guild) for guild in _guilds]
-    channels = [bot.get_channel(cid) for cid in _channels]
-    roles = [discord.Object(id=rid) for rid in _roles]
+    # _guilds, _channels, _roles = [], [], []
+    # for guild, data in bd_config.items():
+    #     _guilds.append(guild)
+    #     _channels.append(data[0])
+    #     _roles.append(data[1])
+    # guilds = [bot.get_guild(guild) for guild in _guilds]
+    # channels = [bot.get_channel(cid) for cid in _channels]
+    # roles = [discord.Object(id=rid) for rid in _roles]
     while True:
+        guilds = {}
+        settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
+        for entry in settings:
+            data = json.loads(entry["data"])
+            if "birthdays" in data:
+                if data["birthdays"]["enabled"]:
+                    out = [data["birthdays"]["role"], data["birthdays"]["channel"], data["birthdays"]["message"]]
+                    guilds[entry["gid"]] = out
         birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         if birthday_today:
             for person in birthday_today:
-                dm = True
-                for i in range(len(guilds)):
-                    try:
-                        guild = guilds[i]
-                        if guild is not None:
-                            user = guild.get_member(person["uid"])
-                            if user is not None:
-                                dm = False
-                                language = bot.language(languages.FakeContext(guild, bot))
-                                if bot.name == "kyomi":
-                                    message = "<a:MD_LetterH_donotsteal_blu:863222874222100480> <a:MD_LetterA_donotsteal_blu:863219944341635102> " \
-                                              "<a:MD_LetterP_donotsteal_blu:863223147678793729> <a:MD_LetterP_donotsteal_blu:863223147678793729> " \
-                                              "<a:MD_LetterY_donotsteal_blu:863223393951416321> <a:MD_LetterB_donotsteal_blu:863222038520004608> " \
-                                              "<a:MD_LetterI_donotsteal_blu:863222958020493322> <a:MD_LetterR_donotsteal_blu:863223174904021013> " \
-                                              "<a:MD_LetterT_donotsteal_blu:863223224362598420> <a:MD_LetterH_donotsteal_blu:863222874222100480> " \
-                                              "<a:MD_LetterD_donotsteal_blu:863222736708435988> <a:MD_LetterA_donotsteal_blu:863219944341635102> " \
-                                              "<a:MD_LetterY_donotsteal_blu:863223393951416321> <a:MD_ExclamationMark_donotsteal_bl:863234846872829982>\n" \
-                                              "╰ ✧₊˚︶꒥︶꒷︶︶꒥꒷︶꒥︶︶꒷︶꒥︶꒷︶\n" \
-                                              "<a:MD_SparklyWand:714339324505882663> <a:MD_Sparkles:714339336404992021> <a:MD_SparklyCupcake:714339261415161866> " \
-                                              f"Happy Happy Birthday May All Of Your Wishes Come True! Happy Happy Birthday This Birthday Is For You {user.mention} " \
-                                              "<a:MD_SparklyCupcake:714339261415161866> <a:MD_Sparkles:714339336404992021> <a:MD_SparklyWand:714339324505882663>\n" \
-                                              "***__You are now a year older!!! Midnight Dessert wishes you a Happy Birthday!!__***\n" \
-                                              "https://cdn.discordapp.com/attachments/856936268482609172/862347223672815646/Untitled1148_20210707155944.png"
-                                else:
-                                    message = language.string("birthdays_message", user.mention)
-                                await general.send(message, channels[i], u=True)
-                                await user.add_roles(roles[i], reason=f"{user} has birthday 🎂🎉")
-                                print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave birthday role to {user.name}")
-                    except Exception as e:
-                        general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
-                if dm:
-                    try:
-                        user = bot.get_user(person["uid"])
+                # dm = True
+                for gid, data in guilds.items():
+                    # guild = guilds[i]
+                    guild: discord.Guild = bot.get_guild(gid)
+                    if guild is not None:
+                        user: discord.Member = guild.get_member(person["uid"])
                         if user is not None:
-                            await user.send(bot.language2("english").string("birthdays_message", user.name))
-                            print(f"{time.time()} > {bot.full_name} > Told {user.name} happy birthday in DMs")
-                        else:
-                            general.print_error(f"{time.time()} > {bot.full_name} > User {person['uid']} was not found")
-                    except Exception as e:
-                        general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+                            # dm = False
+                            if data[1] and data[2]:
+                                channel: discord.TextChannel = guild.get_channel(data[1])
+                                message = data[2].replace("[MENTION]", user.mention).replace("[USER]", user.name)
+                                try:
+                                    await general.send(message, channel, u=True)
+                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
+                                except Exception as e:
+                                    general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Message (Guild {gid}, User {user.id}) > {e}")
+                            if data[0]:
+                                role: discord.Role = guild.get_role(data[0])
+                                try:
+                                    await user.add_roles(role, reason=f"[Birthdays] It is {user}'s birthday")
+                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave {user} the birthday role")
+                                except Exception as e:
+                                    general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Role (Guild {gid}, User {user.id}) > {e}")
+                # if dm:
+                #     try:
+                #         user = bot.get_user(person["uid"])
+                #         if user is not None:
+                #             await user.send(bot.language2("english").string("birthdays_message", user.name))
+                #             print(f"{time.time()} > {bot.full_name} > Told {user.name} happy birthday in DMs")
+                #         else:
+                #             general.print_error(f"{time.time()} > {bot.full_name} > User {person['uid']} was not found")
+                #     except Exception as e:
+                #         general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
                 bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
         birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         for person in birthday_over:
             bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person["uid"], bot.name))
-            for i in range(len(guilds)):
-                try:
-                    guild = guilds[i]
-                    if guild is not None:
-                        user = guild.get_member(person["uid"])
-                        if user is not None:
-                            await user.remove_roles(roles[i], reason=f"It is no longer {user}'s birthday...")
-                            print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user.name}")
-                except Exception as e:
-                    general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+            for gid, data in guilds.items():
+                # guild = guilds[i]
+                guild: discord.Guild = bot.get_guild(gid)
+                if guild is not None:
+                    user: discord.Member = guild.get_member(person["uid"])
+                    if user is not None:
+                        if data[0]:
+                            role: discord.Role = guild.get_role(data[0])
+                            try:
+                                await user.remove_roles(role, reason=f"[Birthdays] It is no longer {user}'s birthday")
+                                print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user}")
+                            except Exception as e:
+                                general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Role End (Guild {gid}, User {user.id}) > {e}")
+                # except Exception as e:
+                #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
         await asyncio.sleep(3600)
 
 
@@ -379,7 +385,7 @@ async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
     now = time.now(None)
-    then = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)
     await asyncio.sleep((then - now).total_seconds())
     print(f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 

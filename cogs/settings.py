@@ -912,7 +912,11 @@ class Settings(commands.Cog):
             embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
             if birthdays["channel"] != 0:
                 embed.add_field(name=language.string("settings_birthdays_channel"), value=f"<#{birthdays['channel']}>", inline=False)
-                embed.add_field(name=language.string("settings_birthdays_message"), value=birthdays["message"], inline=False)
+                if birthdays["message"] and len(birthdays["message"]) > 1024:
+                    message = f"{birthdays['message'][:1021]}..."
+                else:
+                    message = birthdays["message"]
+                embed.add_field(name=language.string("settings_birthdays_message"), value=message, inline=False)
             else:
                 embed.add_field(name=language.string("settings_birthdays_channel"), value=language.string("settings_birthdays_channel_none"), inline=False)
             role = f"<@&{birthdays['role']}>" if birthdays["role"] != 0 else language.string("settings_birthdays_role_none")
@@ -1033,6 +1037,7 @@ class Settings(commands.Cog):
             return await general.send(self.bot.language(ctx).string("settings_birthdays_channel_none2"), ctx.channel)
 
     @settings.command(name="modlogs", aliases=["mod"])
+    @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])  # Mod logs and message logs will not be ready on v7.4.0
     async def set_audit(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Log moderator actions (mute, kick, ban) to a channel """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
@@ -1055,6 +1060,7 @@ class Settings(commands.Cog):
             return await general.send(self.bot.language(ctx).string("settings_audit_none"), ctx.channel)
 
     @settings.group(name="messagelogs", aliases=["messages", "message", "msg"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])
     async def set_messages(self, ctx: commands.Context):
         """ Log deleted and edited messages to a channel """
         if ctx.invoked_subcommand is None:

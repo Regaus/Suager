@@ -36,6 +36,9 @@ def make_dir(dir_name):
 
 async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None, files: list[discord.File] = None,
                delete_after: float = None, e: bool = False, u: Union[bool, list] = False, r: Union[bool, list] = False):
+    if text is not None:
+        if len(text) > 2000:
+            text = f"{text[:1997]}..."
     try:
         return await channel.send(content=text, embed=embed, file=file, files=files, delete_after=delete_after,
                                   allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))

@@ -293,7 +293,7 @@
   "settings_goodbye_channel_none": "There will no longer be any notification when users leave.",
   "settings_goodbye_channel_set": "There will now be a notification in {0} when someone leaves the server.",
   "settings_goodbye_message": "The goodbye message has been set to:\n{0}\n\nExample welcome message:\n{1}",
-  "settings_goodbye_message_variables": "Available goodbye message variables:\n\n[MENTION] - Mention the user who joined the server\n[USER] - The name of the user who left the server\n[SERVER] - The name of the server\n[CREATED_AT] - When the user created their account\n[JOINED_AT] - When the user joined the server\n[ACCOUNT_AGE] - How old the user's account is\n[LENGTH_OF_STAY] - How long the user had stayed in the server\n[MEMBERS] - The server's new member count",
+  "settings_goodbye_message_variables": "Available goodbye message variables:\n\n[MENTION] - Mention the user who left the server\n[USER] - The name of the user who left the server\n[SERVER] - The name of the server\n[CREATED_AT] - When the user created their account\n[JOINED_AT] - When the user joined the server\n[ACCOUNT_AGE] - How old the user's account is\n[LENGTH_OF_STAY] - How long the user had stayed in the server\n[MEMBERS] - The server's new member count",
   "settings_join_bots_none": "New bots will no longer get any role when they join.",
   "settings_join_bots_set": "New bots will now get the {0} role when they join.",
   "settings_join_members_none": "New members will no longer get any role when they join.",
