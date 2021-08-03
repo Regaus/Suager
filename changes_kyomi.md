@@ -54,3 +54,6 @@
 
 ## v0.3.2 - 2 August 2021
 - Enabled settings
+
+## v0.3.3 - 3 August 2021
+- Added more statuses

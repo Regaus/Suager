@@ -15,10 +15,10 @@
   },
   "kyomi": {
     "short_version": "0.3",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "first_version": 1623891776,
     "major_release": 1623891776,
-    "last_update": 1627919732
+    "last_update": 1627954387
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }
