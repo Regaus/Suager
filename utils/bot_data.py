@@ -17,6 +17,7 @@ load = {
         "kuastall",
         "leveling",
         "placeholder",
+        "settings",
         "util"
     ],
     "kyomi": [

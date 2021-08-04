@@ -47,6 +47,7 @@ places = {
     "Shonangar":           ["Kargadia",  344.1,  347.8, "Nehtivia",  "Na Irrat"],
     "Steirigar":           ["Kargadia",  305.2,  538.2, "Nehtivia",  "Sertanehtivia"],
     "Sunovalliat":         ["Kargadia",  157.2, 1462.2, "Tebaria",   "Na Ihat na TBL'n"],
+    "Suvagar":             ["Kargadia", 1220.0,  293.2, "Nehtivia",  "Regaazdall"],
     "Tebarimostus":        ["Kargadia",  636.2, 1524.7, "Nittavia",  "Na Ihat na TBL'n"],
     "Tentar Hintakadu":    ["Kargadia", 2877.7, 1579.9, "Tebaria",   "Na Ihat na TBL'n"],
     "Tevakta Jegittain":   ["Kargadia",  707.7,  624.2, "Nehtivia",  "Na Peaskat na Jegittain"],

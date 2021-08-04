@@ -296,3 +296,7 @@
 
 ## v1.2.0 - 25 July 2021
 - Added weathers to Pakigar, Shonangar, Orlagar and Leitagar
+
+## v1.2.1 - 4 August 2021
+- Added settings
+- Added Suvagar to data78
