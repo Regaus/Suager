@@ -247,6 +247,7 @@ class Leveling(commands.Cog):
                 if rewards:  # Don't bother if they're empty
                     # l1, l2 = [], []
                     rewards.sort(key=lambda x: x['level'])
+                    next_reward = {"role": ctx.guild.get_role(rewards[0]["role"]).name, "level": rewards[0]["level"]}
                     # for i in range(len(rewards)):
                     #     l1.append(rewards[i]['level'])
                     #     l2.append(rewards[i]['role'])
