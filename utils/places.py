@@ -80,18 +80,10 @@ lengths = {
     "Hosvalnerus": 378.5,
     "Kuastall-11": 19384.2,
 }
-month_counts = {
-    "Zeivela": 12,
-    "Kargadia": 16,
-    "Qevenerus": 16,
-
-    "Sinvimania": 12,
-    "Hosvalnerus": 20,
-}
 eccentricity = {
     "Zeivela": 0.0271,
     "Kargadia": 0.01721,
-    "Qevenerus": 0.1016,
+    "Qevenerus": 0.05172,
 }
 axial_tilts = {
     "Zeivela": 23.47,
@@ -443,4 +435,8 @@ class Sun:
             sun_data += f"\nThe sun is {elevation:.0f}° above the horizon"
         else:
             sun_data += f"\nThe sun is {-elevation:.0f}° below the horizon"
+        heading = (solar_time_t * 360) % 360
+        parts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+        direction = parts[int(((heading + 22.5) % 360) / 45)]
+        sun_data += f"\nThe sun is due {direction} ({heading:.0f}°)"
         return solar_noon, sunrise, sunset, dawn, dusk, sun_data, day_part, season

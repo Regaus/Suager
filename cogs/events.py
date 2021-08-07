@@ -1,10 +1,11 @@
+import json
 from io import BytesIO
 from typing import List
 
 import discord
 from discord.ext import commands
 
-from utils import bot_data, general, http, logger, time
+from utils import bot_data, general, http, languages, logger, time
 
 
 class Events(commands.Cog):
@@ -57,7 +58,7 @@ class Events(commands.Cog):
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
             await ctx.send_help(helper)
         elif isinstance(err, commands.errors.CommandInvokeError):
-            error = general.traceback_maker(err.original, ctx.message.content[:1000], ctx.guild, ctx.author)
+            error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
             if "2000 or fewer" in str(err) and len(ctx.message.clean_content) > 1900:
                 return await general.send(language.string("events_err_message_too_long"), ctx.channel)
                 # return general.send("You inputted a very long piece of text.. Well, congrats. The command broke.", ctx.channel)
@@ -125,42 +126,73 @@ class Events(commands.Cog):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just joined {member.guild.name}")
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:
-                members = len(member.guild.members)
-                await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
+                # members = len(member.guild.members)
+                # await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
                 if time.now() < time.dt(2022):
                     role = member.guild.get_role(794699877325471776)
                     await member.add_roles(role, reason="Joining Senko Lair during 2021.")
                 else:
                     await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
-            if member.guild.id == 738425418637639775:
-                language = self.bot.language2("english")
-                join = language.time(member.joined_at, short=1, dow=False, seconds=True, tz=False)
-                age = language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False)
-                await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
-            if member.guild.id == 806811462345031690:
-                role = member.guild.get_role(841403040534888458)
-                await member.add_roles(role, reason="Welcome to /bin/games!")
-                await general.send(f"Welcome to {member.guild.name}, {member.name}!", self.bot.get_channel(841405544686551044))
-            if member.guild.id == 869975256566210641:
-                role = member.guild.get_role(869975498799845406)
-                await member.add_roles(role, reason="Nuriki asked for it")
+            # if member.guild.id == 738425418637639775:
+            #     language = self.bot.language2("english")
+            #     join = language.time(member.joined_at, short=1, dow=False, seconds=True, tz=False)
+            #     age = language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False)
+            #     await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
+            # if member.guild.id == 806811462345031690:
+            #     role = member.guild.get_role(841403040534888458)
+            #     await member.add_roles(role, reason="Welcome to /bin/games!")
+            #     await general.send(f"Welcome to {member.guild.name}, {member.name}!", self.bot.get_channel(841405544686551044))
+            # if member.guild.id == 869975256566210641:
+            #     role = member.guild.get_role(869975498799845406)
+            #     await member.add_roles(role, reason="Nuriki asked for it")
+
         if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
             if member.name[0] < "A":
                 await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
+
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
+        if data:
+            settings = json.loads(data["data"])
+            if "join_roles" in settings:
+                try:
+                    _role = settings["join_roles"]["bots"] if member.bot else settings["join_roles"]["members"]
+                    if _role:
+                        role: discord.Role = member.guild.get_role(_role)
+                        if role:
+                            await member.add_roles(role, reason=f"[Auto-Roles] Joining the server")
+                except KeyError:
+                    pass
+                except discord.Forbidden:
+                    general.print_error(f"{time.time()} > {self.bot.full_name} > {member.guild} > Failed to give {member} join role (Forbidden)")
+            if "welcome" in settings:
+                welcome = settings["welcome"]
+                if welcome["channel"]:
+                    channel: discord.TextChannel = self.bot.get_channel(welcome["channel"])
+                    if channel:
+                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        message = welcome["message"] \
+                            .replace("[MENTION]", member.mention)\
+                            .replace("[USER]", member.name)\
+                            .replace("[SERVER]", member.guild.name)\
+                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
+                            .replace("[MEMBERS]", language.number(member.guild.member_count))
+                        await general.send(message, channel, u=[member])
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just left {member.guild.name}")
         if self.bot.name == "suager":
-            language = self.bot.language2("english")
-            if member.guild.id == 568148147457490954:
-                survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
-                remaining = len(member.guild.members)
-                await general.send(f"**{member.name}** just abandoned Senko Lair after surviving for {survival}...\n"
-                                   f"{remaining} Senkoists remaining.", self.bot.get_channel(610836120321785869))
-            if member.guild.id == 738425418637639775:
-                survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
-                await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))
+            # language = self.bot.language2("english")
+            # if member.guild.id == 568148147457490954:
+            #     survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
+            #     remaining = len(member.guild.members)
+            #     await general.send(f"**{member.name}** just abandoned Senko Lair after surviving for {survival}...\n"
+            #                        f"{remaining} Senkoists remaining.", self.bot.get_channel(610836120321785869))
+            # if member.guild.id == 738425418637639775:
+            #     survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
+            #     await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))
             uid, gid = member.id, member.guild.id
             # self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
             sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
@@ -171,6 +203,26 @@ class Events(commands.Cog):
                     self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=?", (uid, gid))
                 else:
                     self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
+        if data:
+            settings = json.loads(data["data"])
+            if "goodbye" in settings:
+                goodbye = settings["goodbye"]
+                if goodbye["channel"]:
+                    channel: discord.TextChannel = self.bot.get_channel(goodbye["channel"])
+                    if channel:
+                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        message = goodbye["message"] \
+                            .replace("[MENTION]", member.mention)\
+                            .replace("[USER]", member.name)\
+                            .replace("[SERVER]", member.guild.name)\
+                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
+                            .replace("[LENGTH_OF_STAY]", language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False))\
+                            .replace("[MEMBERS]", language.number(member.guild.member_count))
+                        await general.send(message, channel, u=[member])
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):

@@ -361,7 +361,7 @@ class Leveling(commands.Cog):
             if d:
                 embed.description = d
             else:
-                embed.description = language.number("leveling_rewards_none")
+                embed.description = language.string("leveling_rewards_none")
             return await general.send(None, ctx.channel, embed=embed)
         except KeyError:
             return await general.send(language.string("leveling_rewards_none"), ctx.channel)

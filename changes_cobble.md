@@ -300,3 +300,7 @@
 ## v1.2.1 - 4 August 2021
 - Added settings
 - Added Suvagar to data78
+
+## v1.2.2 - 7 August 2021
+- weather78 now shows where the sun should be
+- Changed Qevenerus eccentricity

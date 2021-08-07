@@ -39,6 +39,7 @@ async def send(text: str or None, channel: discord.TextChannel, *, embed: discor
     if text is not None:
         if len(text) > 2000:
             text = f"{text[:1997]}..."
+            await channel.send("Message length exceeded 2000 characters...", delete_after=10)
     try:
         return await channel.send(content=text, embed=embed, file=file, files=files, delete_after=delete_after,
                                   allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))

@@ -947,7 +947,13 @@
 - Made settings save which bot the settings belong to
 - If string formatting fails, it now just tries to fill in the values that are available
 
-## v7.4.0 - 3 August 2021
+## v7.4.0 - 3-7 August 2021
 - Messages now cut off at 2000 characters
-- Made birthdays message cut off at 1024 characters for the settings embed
+- Made messages cut off at 1024 characters for the settings embeds
 - Birthdays now follow the updated structure
+- Added a notice on how to change what role is given at what level
+- Fixed level rewards breaking when there aren't any
+- Added user logs setting
+- More settings are shown on the //settings command
+- Join roles, welcomes and goodbyes are now functional
+- Locked setting for mod logs, user logs and message logs until I actually make the logs themselves

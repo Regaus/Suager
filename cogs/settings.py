@@ -54,23 +54,85 @@ class Settings(commands.Cog):
             setting = json.loads(data["data"])
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_current", ctx.guild.name)
+            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             embed.set_footer(text=language.string("settings_current_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_current_language"), value=language.string("_name"), inline=False)
-            embed.add_field(name=language.string("settings_current_prefix"), value=language.string("settings_current_prefix2", ctx.prefix), inline=False)
-            mute_role = f"<@&{setting['mute_role']}>" if setting['mute_role'] != 0 else language.string("generic_none")
+            dp, cp = self.prefix_list(ctx)
+            embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
+            mute_role = language.string("generic_none")
+            if "mute_role" in setting:
+                if setting["mute_role"] != 0:
+                    mute_role = f"<@&{setting['mute_role']}>"
             embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
-            starboard = setting["starboard"]
-            if starboard["enabled"]:
-                sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
-            else:
-                sb = language.string("settings_current_disabled")
-            leveling = setting["leveling"]
-            if leveling["enabled"]:
-                lvl = language.string("settings_current_leveling2", ctx.prefix)
-            else:
-                lvl = language.string("settings_current_disabled")
+            if ctx.guild.id in [568148147457490954, 738425418637639775]:
+                mod, users, messages = language.string("settings_current_disabled"), language.string("settings_current_disabled"), language.string("settings_current_disabled")
+                message_ignore = False
+                if "audit_logs" in setting:
+                    if setting["audit_logs"]:
+                        mod = f"<#{setting['audit_logs']}>"
+                if "user_logs" in setting:
+                    if setting["user_logs"]:
+                        users = f"<#{setting['user_logs']}>"
+                if "message_logs" in setting:
+                    if setting["message_logs"]:
+                        messages = f"<#{setting['message_logs']}>"
+                        message_ignore = True
+                embed.add_field(name=language.string("settings_current_logs"), value=language.string("settings_current_logs2", mod, users, messages), inline=False)
+                if message_ignore:
+                    ignore = language.string("generic_none")
+                    if "message_ignore" in setting:
+                        if setting["message_ignore"]:
+                            ignore = ", ".join([f"<#{channel}>" for channel in setting["message_ignore"]])
+                    embed.add_field(name=language.string("settings_current_messages_ignore"), value=ignore, inline=False)
+            sb = language.string("settings_current_disabled")
+            if "starboard" in setting:
+                starboard = setting["starboard"]
+                if starboard["enabled"]:
+                    sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
             embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
+            lvl = language.string("settings_current_disabled")
+            if "leveling" in setting:
+                if setting["leveling"]["enabled"]:
+                    lvl = language.string("settings_current_leveling", ctx.prefix)
             embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
+            bd = language.string("settings_current_disabled")
+            if "birthdays" in setting:
+                if setting["birthdays"]["enabled"]:
+                    bd = language.string("settings_current_birthdays", ctx.prefix)
+            embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
+            polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
+            if "polls" in setting:
+                polls = setting["polls"]
+                if polls["channel"]:
+                    polls_channel = f"<#{polls['channel']}>"
+                polls_anonymity = language.yes(polls["voter_anonymity"])
+            embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
+            members, bots = language.string("generic_none"), language.string("generic_none")
+            if "join_roles" in setting:
+                join_roles = setting["join_roles"]
+                if join_roles["members"]:
+                    members = f"<@&{join_roles['members']}>"
+                if join_roles["bots"]:
+                    bots = f"<@&{join_roles['bots']}>"
+            embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
+            welcome_channel, welcome_message = language.string("settings_current_disabled"), None
+            if "welcome" in setting:
+                welcome = setting["welcome"]
+                if welcome["channel"]:
+                    welcome_channel = language.string("settings_current_welcome_channel", welcome["channel"])
+                    welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
+            embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
+            if welcome_message:
+                embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
+            goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
+            if "goodbye" in setting:
+                goodbye = setting["goodbye"]
+                if goodbye["channel"]:
+                    goodbye_channel = language.string("settings_current_goodbye_channel", goodbye["channel"])
+                    goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
+            embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
+            if goodbye_message:
+                embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
             return await general.send(None, ctx.channel, embed=embed)
             # return await ctx.send_help(str(ctx.command))
 
@@ -134,22 +196,6 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO locales VALUES (?, ?)", (ctx.guild.id, new_language))
         return await general.send(self.bot.language2(new_language).string("settings_locale_set"), ctx.channel)
-
-    # @settings.command(name="currency")
-    # async def set_currency(self, ctx: commands.Context, new: str):
-    #     """ Change server currency """
-    #     data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     if data:
-    #         _settings = json.loads(data["data"])
-    #     else:
-    #         _settings = settings.template.copy()
-    #     _settings["currency"] = new
-    #     stuff = json.dumps(_settings)
-    #     if data:
-    #         self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
-    #     else:
-    #         self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-    #     return await general.send(f"Updated the currency to {new}.", ctx.channel)
 
     @settings.group(name="prefixes", aliases=["prefix", "p"], case_insensitive=True)
     async def set_prefixes(self, ctx: commands.Context):
@@ -228,6 +274,7 @@ class Settings(commands.Cog):
             leveling = setting["leveling"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_leveling", ctx.guild.name)
+            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             embed.set_footer(text=language.string("settings_leveling_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
             embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
@@ -239,15 +286,23 @@ class Settings(commands.Cog):
                     embed.add_field(name=language.string("settings_leveling_announcements"), value=language.string("settings_leveling_announcements_zero"), inline=False)
                 else:
                     embed.add_field(name=language.string("settings_leveling_announcements"), value=f"<#{ac}>", inline=False)
-                embed.add_field(name=language.string("settings_leveling_message"), value=leveling["level_up_message"], inline=False)
+                message = f"{leveling['level_up_message'][:1021]}..." if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
+                embed.add_field(name=language.string("settings_leveling_message"), value=message, inline=False)
                 if leveling["level_up_highest"]:
-                    embed.add_field(name=language.string("settings_leveling_message_highest"), value=leveling["level_up_highest"], inline=False)
+                    message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
+                    embed.add_field(name=language.string("settings_leveling_message_highest"), value=message, inline=False)
                 if leveling["level_up_max"]:
-                    embed.add_field(name=language.string("settings_leveling_message_max"), value=leveling["level_up_max"], inline=False)
+                    message = f"{leveling['level_up_max'][:1021]}..." if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
+                    embed.add_field(name=language.string("settings_leveling_message_max"), value=message, inline=False)
             if not leveling["ignored_channels"]:
                 ignored = language.string("generic_none")
             else:
-                ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"])
+                length = len(leveling["ignored_channels"])
+                if length <= 48:
+                    ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"])
+                else:
+                    ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"][:45])
+                    ignored += language.string("settings_leveling_ignored_many", language.number(length - 45))
             embed.add_field(name=language.string("settings_leveling_ignored"), value=ignored, inline=False)
             embed.add_field(name=language.string("settings_leveling_rewards"), value=language.string("settings_leveling_rewards2", ctx.prefix), inline=False)
             return await general.send(None, ctx.channel, embed=embed)
@@ -536,10 +591,10 @@ class Settings(commands.Cog):
         # if role.id in roles:
         for reward in rr:
             if role.id == reward["role"]:
-                return await general.send(language.string("settings_leveling_rewards_already_role", language.number(reward["level"])), ctx.channel)
+                return await general.send(language.string("settings_leveling_rewards_already_role", language.number(reward["level"]), ctx.prefix), ctx.channel)
             if level == reward["level"]:
                 role = ctx.guild.get_role(reward["role"])
-                return await general.send(language.string("settings_leveling_rewards_already_level", role), ctx.channel)
+                return await general.send(language.string("settings_leveling_rewards_already_level", role, ctx.prefix), ctx.channel)
             # return await general.send("This role is already rewarded", ctx.channel)
         # levels = [i["level"] for i in rr]
         # if level in levels:
@@ -654,7 +709,7 @@ class Settings(commands.Cog):
             rr = []
         roles = [i["role"] for i in rr]
         if new_role.id in roles:
-            return await general.send(language.string("settings_leveling_rewards_already_role2"), ctx.channel)
+            return await general.send(language.string("settings_leveling_rewards_already_role2", ctx.prefix), ctx.channel)
             # return await general.send("This role is already rewarded", ctx.channel)
         u = False
         for i, reward in enumerate(rr):
@@ -700,7 +755,7 @@ class Settings(commands.Cog):
             rr = []
         levels = [i["level"] for i in rr]
         if new_level in levels:
-            return await general.send(language.string("settings_leveling_rewards_already_level2"), ctx.channel)
+            return await general.send(language.string("settings_leveling_rewards_already_level2", ctx.prefix), ctx.channel)
             # return await general.send("There is already a reward for this level", ctx.channel)
         u = False
         for i, r in enumerate(rr):
@@ -717,64 +772,6 @@ class Settings(commands.Cog):
         else:
             return await general.send(language.string("settings_leveling_rewards_edit_fail2", role.name), ctx.channel)
             # return await general.send("I don't think that worked... Maybe the role is not awarded at all.", ctx.channel)
-
-    # @settings.group(name="roles")
-    # async def set_shop(self, ctx: commands.Context):
-    #     """ Let people get free roles """
-    #     if ctx.invoked_subcommand is None:
-    #         return await ctx.send_help(str(ctx.command))
-
-    # @set_shop.command(name="add")
-    # async def shop_add(self, ctx: commands.Context, role: discord.Role):
-    #     """ Add a role """
-    #     data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     if data:
-    #         _settings = json.loads(data["data"])
-    #     else:
-    #         _settings = settings.template.copy()
-    #     try:
-    #         roles = _settings["roles"]
-    #     except KeyError:
-    #         roles = []
-    #     if role.id in roles:
-    #         return await general.send("This role is already available", ctx.channel)
-    #     roles.append(role.id)
-    #     _settings["roles"] = roles
-    #     stuff = json.dumps(_settings)
-    #     if data:
-    #         self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
-    #     else:
-    #         self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-    #     return await general.send(f"The role {role.name} is now available for available roles.", ctx.channel)
-
-    # @set_shop.command(name="remove")
-    # async def shop_remove(self, ctx: commands.Context, role: discord.Role):
-    #     """ Remove a role """
-    #     data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     if data:
-    #         _settings = json.loads(data["data"])
-    #     else:
-    #         _settings = settings.template.copy()
-    #     try:
-    #         rr = _settings["roles"]
-    #     except KeyError:
-    #         return await general.send("There are already no roles", ctx.channel)
-    #     r = False
-    #     for _role in rr:
-    #         if _role == role.id:
-    #             rr.remove(_role)
-    #             r = True
-    #             break
-    #     if r:
-    #         _settings["roles"] = rr
-    #         stuff = json.dumps(_settings)
-    #         if data:
-    #             self.bot.db.execute(f"UPDATE settings SET data=? WHERE gid=?", (stuff, ctx.guild.id))
-    #         else:
-    #             self.bot.db.execute(f"INSERT INTO settings VALUES (?, ?)", (ctx.guild.id, stuff))
-    #         return await general.send(f"The role {role.name} has been removed from the available roles", ctx.channel)
-    #     else:
-    #         return await general.send(f"The role {role.name} was not removed from the available roles", ctx.channel)
 
     @settings.command(name="muterole", aliases=["mutedrole", "muted", "mute"])
     async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
@@ -807,6 +804,7 @@ class Settings(commands.Cog):
             starboard = setting["starboard"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_starboard", ctx.guild.name)
+            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             embed.set_footer(text=language.string("settings_starboard_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_starboard_enabled2"), value=language.yes(starboard["enabled"]), inline=False)
             channel = f"<#{starboard['channel']}>" if starboard["channel"] != 0 else language.string("settings_starboard_channel_none")
@@ -908,6 +906,7 @@ class Settings(commands.Cog):
             birthdays = setting["birthdays"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_birthdays", ctx.guild.name)
+            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             embed.set_footer(text=language.string("settings_birthdays_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
             if birthdays["channel"] != 0:
@@ -1058,6 +1057,29 @@ class Settings(commands.Cog):
             return await general.send(self.bot.language(ctx).string("settings_audit_set", channel.mention), ctx.channel)
         else:
             return await general.send(self.bot.language(ctx).string("settings_audit_none"), ctx.channel)
+
+    @settings.command(name="userlogs", aliases=["users"])
+    @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])  # Mod logs and message logs will not be ready on v7.4.0
+    async def set_users(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Log users who join and leave the server """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = settings.template.copy()
+        if channel is None:
+            _settings["user_logs"] = 0
+        else:
+            _settings["user_logs"] = channel.id
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        if channel is not None:
+            return await general.send(self.bot.language(ctx).string("settings_users_set", channel.mention), ctx.channel)
+        else:
+            return await general.send(self.bot.language(ctx).string("settings_users_none"), ctx.channel)
 
     @settings.group(name="messagelogs", aliases=["messages", "message", "msg"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])
@@ -1388,66 +1410,27 @@ class Settings(commands.Cog):
     async def prefix(self, ctx: commands.Context):
         """ Server prefixes """
         language = self.bot.language(ctx)
-        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if not _data:
-            dp = self.bot.local_config["prefixes"].copy()
-            cp = None
-        else:
-            data = json.loads(_data['data'])
-            dp = self.bot.local_config["prefixes"].copy() if data['use_default'] else []
-            cp = data['prefixes']
-        dp.append(self.bot.user.mention)
+        dp, cp = self.prefix_list(ctx)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("settings_prefixes_title", self.bot.user.name, ctx.guild.name)
         # embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
         embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
         embed.add_field(name=language.string("settings_prefixes_default"), value='\n'.join(dp), inline=True)
-        if cp is not None and cp != []:
+        if cp:
             embed.add_field(name=language.string("settings_prefixes_custom"), value='\n'.join(cp), inline=True)
         return await general.send(None, ctx.channel, embed=embed)
 
-    # @commands.command(name="addrole", aliases=["getrole", "giverole", "joinrole"])
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    # async def give_role(self, ctx: commands.Context, role: discord.Role = None):
-    #     """ Add a role """
-    #     _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     # data = {}
-    #     if not _data or "roles" not in (data := json.loads(_data['data'])):
-    #         return await general.send("There are no roles available like that.", ctx.channel)
-    #     roles = data["roles"]
-    #     if role is not None:
-    #         if role.id in roles:
-    #             try:
-    #                 await ctx.author.add_roles(role, reason="Free roles")
-    #                 return await general.send(f"Successfully gave {ctx.author.name} the role {role}", ctx.channel)
-    #             except Exception as e:
-    #                 return await general.send(f"Unable to give you the role:\n`{type(e).__name__}: {e}`", ctx.channel)
-    #         else:
-    #             return await general.send("You can't have that role.", ctx.channel)
-    #     else:
-    #         embed = discord.Embed(description="\n".join(f"<@&{r}>" for r in roles), colour=general.random_colour())
-    #         embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
-    #         return await general.send(f"Roles available in {ctx.guild}", ctx.channel, embed=embed)
-
-    # @commands.command(name="removerole", aliases=["takerole", "leaverole"])
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    # async def leave_role(self, ctx: commands.Context, role: discord.Role):
-    #     """ Remove a role """
-    #     _data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
-    #     # data = {}
-    #     if not _data or "roles" not in (data := json.loads(_data['data'])):
-    #         return await general.send("There are no roles available in these commands in this server.", ctx.channel)
-    #     roles = data["roles"]
-    #     if role.id in roles:
-    #         try:
-    #             await ctx.author.remove_roles(role, reason="Free roles")
-    #             return await general.send(f"Successfully removed {role} from {ctx.author.name}", ctx.channel)
-    #         except Exception as e:
-    #             return await general.send(f"Unable to remove the role from you:\n`{type(e).__name__}: {e}`", ctx.channel)
-    #     else:
-    #         return await general.send("You can't remove that role.", ctx.channel)
+    def prefix_list(self, ctx: commands.Context):
+        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if not _data:
+            dp = self.bot.local_config["prefixes"].copy()
+            cp = []
+        else:
+            data = json.loads(_data['data'])
+            dp = self.bot.local_config["prefixes"].copy() if data['use_default'] else []
+            cp = data['prefixes']
+        dp.append(self.bot.user.mention)
+        return dp, cp
 
 
 def setup(bot: bot_data.Bot):

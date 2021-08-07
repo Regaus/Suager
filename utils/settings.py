@@ -13,9 +13,6 @@ template = {
         "announce_channel": 0,
         "rewards": []
     },
-    # "currency": "€",
-    # "shop_items": [],
-    # "roles": [],
     "mute_role": 0,
     "starboard": {
         "enabled": False,
@@ -29,6 +26,7 @@ template = {
         "message": "Happy birthday [MENTION], have a nice one! 🎂🎉"
     },
     "audit_logs": 0,
+    "user_logs": 0,
     "message_logs": 0,
     "message_ignore": [],
     "polls": {
