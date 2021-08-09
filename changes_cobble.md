@@ -304,3 +304,6 @@
 ## v1.2.2 - 7 August 2021
 - weather78 now shows where the sun should be
 - Changed Qevenerus eccentricity
+
+## v1.2.3 - 9 August 2021
+- Added Virkada

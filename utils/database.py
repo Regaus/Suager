@@ -133,7 +133,8 @@ tables = [
     ]),
     Table("locales", [
         Column("gid", 0, True),
-        Column("locale", 2, True)
+        Column("locale", 2, True),
+        Column("bot", 2, True)
     ]),
     Table("reaction_groups", [
         Column("gid", 0, True),      # Guild ID

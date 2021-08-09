@@ -8,6 +8,7 @@ from discord.ext import commands
 from utils import bot_data, conlangs, general, places, time, times
 
 longest_city = {
+    "Virkada": 21,
     "Kargadia": 19,
     "Qevenerus": 9,
 }
@@ -44,10 +45,14 @@ class Conworlds(commands.Cog):
         time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
         output = f"Earth - English: **{time_earth}**"
         if ss == 23:
-            if pl == 4:
+            if pl == 3:
+                if dt < time.dt(2004, 1, 28):
+                    return await general.send("Time on Virkada is not available before 28th January 2021 AD", ctx.channel)
+                output += f"\nVirkada: **{times.time_virkada(dt, 0).str()}**"
+            elif pl == 4:
                 if dt < time.dt(60, 12, 6):
                     return await general.send("Time on Zeivela is not available before 6th December 60 AD", ctx.channel)
-                output += f"\nZeivela - Local: {times.time_zeivela(dt, 0).str()}"
+                output += f"\nZeivela - Local: **{times.time_zeivela(dt, 0).str()}**"
             elif pl == 5:
                 if dt < time.dt(276, 12, 27):
                     return await general.send("Time on Kargadia is not available before 27th December 276 AD", ctx.channel)
@@ -117,7 +122,7 @@ class Conworlds(commands.Cog):
         Input a planet (e.g. Kargadia) to see list of all locations on the planet
         Input a place to see where it is"""
         if where:
-            if where in ["Zeivela", "Kargadia", "Qevenerus"]:
+            if where in ["Virkada", "Zeivela", "Kargadia", "Qevenerus"]:
                 _places = []
                 _longest = longest_city[where]
                 for city, data in places.places.items():

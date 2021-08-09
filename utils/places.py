@@ -6,6 +6,14 @@ import discord
 from utils import general, languages, time, times, weathers
 
 places = {
+    "Gar an Virkaran":       ["Virkada", 1745.4, 403.2, "Kaltarena Kargadian"],
+    "Gestedian Placeholder": ["Virkada", 1477.2, 218.4, "Gestedian"],
+    "Ghazhan Kunemad":       ["Virkada", 1837.7, 572.0, "Usturian"],
+    "Suttaligar":            ["Virkada", 1713.4, 452.1, "West Kargadian"],
+    "Virkada Central":       ["Virkada", 1800.0, 900.0, "Multiple"],
+    "Virkadagar":            ["Virkada", 2029.4, 874.0, "West Kargadian"],
+    "Zeivelan Placeholder":  ["Virkada", 1965.3, 720.7, "(Unknown)"],
+
     "Akkigar":             ["Kargadia", 2602.1,  313.1, "Verlennia", "Na Vadenaran Irrat"],
     "Bylkangar":           ["Kargadia", 2382.3, 1311.8, "Tebaria",   "Na Ihat na TBL'n"],
     "Bylkankaldanpeaskat": ["Kargadia", 2828.2, 1689.3, "Tebaria",   "Na Ihat na TBL'n"],
@@ -59,10 +67,12 @@ places = {
     "Kaltarena":           ["Qevenerus", 2100.0,  655.1, "Kaltarena"],
 }
 offsets = {
+    "Virkada": -1800.0,
     "Kargadia": -1800.0,  # -843.7 | -343
     "Qevenerus": -2100.0,
 }
 _times = {
+    "Virkada": times.time_virkada,
     "Zeivela": times.time_zeivela,
     "Kargadia": times.time_kargadia,
     "Qevenerus": times.time_kaltaryna,
@@ -72,6 +82,7 @@ _times = {
     "Kuastall-11": times.time_kuastall_11,
 }
 lengths = {
+    "Virkada": 30.7,
     "Zeivela": 212.16,  # 432 + 1/3
     "Kargadia": 256.0625,  # 512.125
     "Qevenerus": 800.0,
@@ -81,11 +92,13 @@ lengths = {
     "Kuastall-11": 19384.2,
 }
 eccentricity = {
+    "Virkada": 0.0112,
     "Zeivela": 0.0271,
     "Kargadia": 0.01721,
     "Qevenerus": 0.05172,
 }
 axial_tilts = {
+    "Virkada": 176.2,
     "Zeivela": 23.47,
     "Kargadia": 26.7,
     "Qevenerus": 63.71,
@@ -158,7 +171,11 @@ class Place:
             region = None
         else:
             lang_region = data[0]
-            if planet == "Kargadia":
+            if planet == "Virkada":
+                _local_time = times.time_virkada(self.now, tz)
+                local_time = f"**{_local_time.str()}**\nLocal language: **{data[0]}**"
+                region = "Virkada"
+            elif planet == "Kargadia":
                 if lang_region == "Tebaria":
                     _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
                     local_time = f"**{_local_time.str(dow=False, month=False)}**"
@@ -192,8 +209,8 @@ class Place:
         embed.title = f"Information about **{place_name}**"
         embed.add_field(name="Time and Location", inline=False,
                         value=f"Local time: {self.local_time}\n"
-                              f"Time zone: {self.tz:+}:00 (Real offset {self.long / (360 / 24):+.2f} hours)\n"
-                              f"Location: {self.location(False)}")
+                              f"Time zone: **{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)\n"
+                              f"Location: **{self.location(False)}**")
 
         if self.weathers is not None:
             # Remove non-ascii stuff like äá to make sure it's only A-Z
@@ -303,8 +320,9 @@ class Sun:
         # Assume that perihelion was exactly at December solstice of year 0, and adjust the amount of days passed to perihelion
         # Perihelion variable shows the mean anomaly of the star at 1/1/0001
         perihelion = {
-            "Kargadia": 90,
-            "Qevenerus": 90,  # This calculation uses the solar RSL-1h calendar
+            "Virkada": 35.17915309446254,  # Let's just say this is where the sun those on Day 1 of the landing
+            "Kargadia": 90.0,
+            "Qevenerus": 90.0,  # This calculation uses the solar RSL-1h calendar
         }[self.place.planet]
         spin_speed = 360 / year_length  # 1.4059067610446667
         # per_days = (year_day + perihelion) % year_length  # Days passed, adjusted to the perihelion
@@ -371,10 +389,13 @@ class Sun:
         #         azimuth = (azimuth_equation + 180) % 360
         #     else:
         #         azimuth = (540 - azimuth_equation) % 360
-        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction, season  # , azimuth
+        heading = (solar_time * 360) % 360
+        if axial_tilt > 90:
+            heading = 360 - heading
+        return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction, season, heading
 
     def get_data(self):
-        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time_t, elevation, season = self.calculate()
+        dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time_t, elevation, season, heading = self.calculate()
         dawn = time_from_decimal(dawn_t)
         sunrise = time_from_decimal(sunrise_t)
         solar_noon = time_from_decimal(solar_noon_t)
@@ -435,7 +456,6 @@ class Sun:
             sun_data += f"\nThe sun is {elevation:.0f}° above the horizon"
         else:
             sun_data += f"\nThe sun is {-elevation:.0f}° below the horizon"
-        heading = (solar_time_t * 360) % 360
         parts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
         direction = parts[int(((heading + 22.5) % 360) / 45)]
         sun_data += f"\nThe sun is due {direction} ({heading:.0f}°)"

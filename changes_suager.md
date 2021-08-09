@@ -957,3 +957,7 @@
 - More settings are shown on the //settings command
 - Join roles, welcomes and goodbyes are now functional
 - Locked setting for mod logs, user logs and message logs until I actually make the logs themselves
+
+## v7.4.1 - 9 August 2021
+- You can now set different languages on different bots
+- Suager no longer wipes all data related to the guild when the bot is removed from it

@@ -245,3 +245,58 @@ class TimeSolarLong:
         dn = f"{self.day_name}, " if dow else ""
         _era = f" {era}" if era is not None else ""
         return f"{dn}{self.day:02d}/{self.week:02d}/{self.month:02d}/{self.year:03d}{_era}, {self.hour:02d}:{self.minute:02d}:{self.second:02d}"
+
+
+def solar_short(now: datetime, start: datetime, day_length: float, year_len: int, ly_freq, tz: float = 0):
+    """ Calculate the time on short-year planets """
+    # hours, minutes and seconds settings removed since it now uses 24:60:60 anyways
+    # ly_freq is a lambda/function that would calculate the logic behind leap years (since some are more complex than a single if-statement)
+    total = (now - start).total_seconds()
+    year = 1
+    days = total / day_length + tz / 24
+    seconds = (days % 1) * day_length
+    local_second = day_length / 86400
+    day_seconds = int(seconds / local_second)
+    h, ms = divmod(day_seconds, 3600)
+    m, s = divmod(ms, 60)
+    days_overall = days_left = int(days)
+    while True:
+        year_length = year_len + ly_freq(year)
+        if days_left >= year_length:
+            year += 1
+            days_left -= year_length
+        else:
+            break
+    day = days_left
+    return year, day + 1, h, m, s, days_overall, days_left
+
+
+def time_virkada(when: datetime = None, tz: float = 0):  # 23.3
+    irl = when or time.now(None)
+    start = datetime(2004, 1, 27, 7, 45, tzinfo=timezone.utc)
+    day_length = 62.73232495114 * 3600
+    year, day, h, m, s, ds, yd = solar_short(irl, start, day_length, 30, lambda y: 1 if y % 10 in [0, 2, 3, 4, 5, 7, 8] else 0, tz)
+    return TimeSolarShort(year, day, h, m, s, ds, yd)
+
+
+class TimeSolarShort:
+    def __init__(self, year: int, day: int, hour: int, minute: int, second: int, ds: int, yd: int):
+        self.year = year
+        self.day = day
+        self.hour = hour
+        self.minute = minute
+        self.second = second
+        # self.dow_names = down
+        # self.week_length = wl
+        self.ds = ds
+        self.year_day = yd
+        # self.day_of_week = (self.ds - 1) % self.week_length
+        # try:
+        #     self.day_name = self.dow_names[self.day_of_week]
+        # except IndexError:
+        #     self.day_name = f"Unavailable day {self.day_of_week + 1}"
+
+    def str(self, era: Optional[str] = None):
+        """ Output the date and time in a readable format """
+        e = f" {era}" if era else ""
+        return f"Day {self.day} of Year {self.year}{e}, {self.hour:02d}:{self.minute:02d}:{self.second:02d}"

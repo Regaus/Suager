@@ -39,7 +39,7 @@ class Language:
                 return cls("rsl-1k")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
         if ctx.guild is not None:
-            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
+            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, ctx.bot.name))
             if data:
                 return cls(data["locale"])
         return cls(ctx.bot.local_config["default_locale"])

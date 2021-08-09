@@ -190,11 +190,11 @@ class Settings(commands.Cog):
         old_language = self.bot.language(ctx)
         if new_language not in languages.languages.keys():
             return await general.send(old_language.string("settings_locale_invalid", new_language, ctx.prefix), ctx.channel)
-        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=?", (ctx.guild.id,))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if locale:
-            self.bot.db.execute("UPDATE locales SET locale=? WHERE gid=?", (new_language, ctx.guild.id))
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE gid=? AND bot=?", (new_language, ctx.guild.id, self.bot.name))
         else:
-            self.bot.db.execute("INSERT INTO locales VALUES (?, ?)", (ctx.guild.id, new_language))
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?)", (ctx.guild.id, new_language, self.bot.name))
         return await general.send(self.bot.language2(new_language).string("settings_locale_set"), ctx.channel)
 
     @settings.group(name="prefixes", aliases=["prefix", "p"], case_insensitive=True)

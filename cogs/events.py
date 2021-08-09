@@ -98,13 +98,14 @@ class Events(commands.Cog):
         send = f"{time.time()} > {self.bot.full_name} > Left {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
-        if self.bot.name == "suager":
-            self.db.execute("DELETE FROM leveling WHERE gid=?", (guild.id,))
-            self.db.execute("DELETE FROM locales WHERE gid=?", (guild.id,))
-            self.db.execute("DELETE FROM settings WHERE gid=?", (guild.id,))
-            self.db.execute("DELETE FROM starboard WHERE gid=?", (guild.id,))
-            self.db.execute("DELETE FROM tags WHERE gid=?", (guild.id,))
-            self.db.execute("DELETE FROM tbl_guild WHERE gid=?", (guild.id,))
+        # At this point I think it's easier to just let it all stay, since Suager barely ever leaves servers, and they probably don't have that much data anyways
+        # if self.bot.name == "suager":
+        #     self.db.execute("DELETE FROM leveling WHERE gid=?", (guild.id,))
+        #     self.db.execute("DELETE FROM locales WHERE gid=?", (guild.id,))
+        #     self.db.execute("DELETE FROM settings WHERE gid=? AND bot=?", (guild.id, self.bot.name))
+        #     self.db.execute("DELETE FROM starboard WHERE gid=?", (guild.id,))
+        #     self.db.execute("DELETE FROM tags WHERE gid=?", (guild.id,))
+        #     # self.db.execute("DELETE FROM tbl_guild WHERE gid=?", (guild.id,))
 
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):
