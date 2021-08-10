@@ -961,3 +961,6 @@
 ## v7.4.1 - 9 August 2021
 - You can now set different languages on different bots
 - Suager no longer wipes all data related to the guild when the bot is removed from it
+
+## v7.4.1.1 - 10 August 2021
+- Removed say command (so people can't use it to bypass blocks)

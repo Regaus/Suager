@@ -370,19 +370,19 @@ class Utility(commands.Cog):
             return await general.send(f"{emotes.Deny} Failed to send the message: `{type(e).__name__}: {e}`", ctx.channel)
         return await general.send(f"{emotes.Allow} Successfully sent the message to {channel.mention}", ctx.channel, delete_after=5)
 
-    @commands.command(name="say")
-    @commands.check(lambda ctx: not (ctx.author.id == 667187968145883146 and ctx.guild.id == 568148147457490954))
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def say(self, ctx: commands.Context, *, message: str):
-        """ Make me speak! """
-        language = self.bot.language(ctx)
-        try:
-            await ctx.message.delete()
-        except Exception as e:
-            await general.send(language.string("fun_say_delete_fail", type(e).__name__, str(e)), ctx.channel, delete_after=5)
-        await general.send(f"**{ctx.author}:**\n{message}", ctx.channel)
-        return await general.send(language.string("fun_say_success"), ctx.channel, delete_after=5)
+    # @commands.command(name="say")
+    # @commands.check(lambda ctx: not (ctx.author.id == 667187968145883146 and ctx.guild.id == 568148147457490954))
+    # @commands.guild_only()
+    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    # async def say(self, ctx: commands.Context, *, message: str):
+    #     """ Make me speak! """
+    #     language = self.bot.language(ctx)
+    #     try:
+    #         await ctx.message.delete()
+    #     except Exception as e:
+    #         await general.send(language.string("fun_say_delete_fail", type(e).__name__, str(e)), ctx.channel, delete_after=5)
+    #     await general.send(f"**{ctx.author}:**\n{message}", ctx.channel)
+    #     return await general.send(language.string("fun_say_success"), ctx.channel, delete_after=5)
 
     @commands.command(name="vote", aliases=["petition"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
