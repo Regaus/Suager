@@ -251,7 +251,7 @@
   "polls_end_neutral": "Neutral",
   "polls_end_title": "The poll has ended",
   "polls_new_description": "Poll ID: {0}\nQuestion: {1}\nDuration: {2} (Ends {3} UTC)",
-  "polls_new_footer": "To vote, type `{0}poll vote {1}`",
+  "polls_new_footer": "To vote, type `{0}poll vote {1} yes/neutral/no`",
   "polls_new_success": "{0}, your poll has been started.",
   "polls_new_title": "A new poll has been started",
   "polls_not_found": "Poll with ID {0} not found.",
