@@ -29,7 +29,7 @@ class Polls(commands.Cog):
                 return await general.send(language.string("polls_length_error", expiry), ctx.channel)
             _question = general.reason(ctx.author, question)
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
-            _expiry = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
+            _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=False)
             poll_channel: discord.TextChannel = ctx.channel
             poll_anonymity = True
             data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
@@ -167,7 +167,9 @@ class Polls(commands.Cog):
             colour = general.yellow
         embed = discord.Embed(colour=colour)
         embed.title = language.string("polls_status_title", data["poll_id"])
-        embed.description = language.string("polls_status_description", data["question"], language.time(data["expiry"]))
+        ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=False)
+        ends_in = language.delta_dt(data["expiry"], accuracy=3, brief=False, affix=True)
+        embed.description = language.string("polls_status_description", data["question"], ends, ends_in)
         embed.add_field(name=language.string("polls_votes_current"), inline=False,
                         value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
                                               language.number(total), language.number(score), language.number(upvotes, precision=2, percentage=True)))
@@ -182,8 +184,8 @@ class Polls(commands.Cog):
             return await general.send(language.string("polls_list_none"), ctx.channel)
         output = []
         for i, poll in enumerate(polls, start=1):
-            ends = language.time(poll["expiry"])
-            ends_in = language.delta_dt(poll["expiry"])
+            ends = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=False)
+            ends_in = language.delta_dt(poll["expiry"], accuracy=3, brief=False, affix=True)
             output.append(language.string("polls_list_entry", language.number(i, commas=False), poll["poll_id"], poll["question"], ends, ends_in))
         return await general.send(language.string("polls_list", ctx.guild.name, "\n\n".join(output)), ctx.channel)
 

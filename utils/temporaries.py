@@ -493,7 +493,8 @@ async def polls(bot: bot_data.Bot):
                             embed.colour = general.yellow
                             result = language.string("polls_end_neutral")
                         embed.title = language.string("polls_end_title")
-                        embed.description = language.string("polls_end_description", poll["question"], language.time(poll["expiry"]), result)
+                        ended = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=False)
+                        embed.description = language.string("polls_end_description", poll["question"], ended, result)
                         embed.add_field(name=language.string("polls_votes_result"), inline=False,
                                         value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
                                                               language.number(total), language.number(score), language.number(upvotes, precision=2, percentage=True)))
