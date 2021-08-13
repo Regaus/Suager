@@ -103,15 +103,15 @@ def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
     # day_length = 51.642812 * 3600
     month_lengths = [50] * 16
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)
-    weekdays = ["Senka", "Navate", "Sanvar", "Havas-Lesar", "Tenear", "Kannate", "Suvaker", "Shira"]
-    months = ["Senka", "Shira", "Kanvarus", "Arkaneda", "Nurus", "Ai", "Kiona", "Gairnar",
-              "Basrus", "Finkal", "Suvaker", "Kitta", "Semartar", "Kaltnar", "Kaiveal", "Karasnar"]
+    weekdays = ["Luuvu", "Haa", "Naavu", "Veşhu", "Tuttu", "Sira", "Maa", "Aste"]
+    months = ["Senkavan", "Şiravan", "Nuuvan", "Ylhuvan", "Ahuvan", "Vaanavan", "Siitavan", "Lurvuan",
+              "Raavan", "Hummavan", "Vittevan", "Avikkan", "Haavyan", "Haaratan", "Daavuan", "Suvasan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
     if output.hour < 6:
         output.day_of_week -= 1
-    parts = ["Tea", "Rea", "Sea", "Vea"]
+    parts = ["te", "re", "se", "ve"]
     part = h // 6
-    output.day_name = f"{parts[part]} ida {weekdays[output.day_of_week]}"
+    output.day_name = f"{weekdays[output.day_of_week]}{parts[part]}"
     output.month_name = f"{output.month_name}"
     return output
 

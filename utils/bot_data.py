@@ -45,6 +45,7 @@ load = {
         "info",
         "leveling",
         "mod",
+        "polls",
         "ratings",
         "reactions",
         "settings",

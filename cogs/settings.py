@@ -288,12 +288,14 @@ class Settings(commands.Cog):
                     embed.add_field(name=language.string("settings_leveling_announcements"), value=f"<#{ac}>", inline=False)
                 message = f"{leveling['level_up_message'][:1021]}..." if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
                 embed.add_field(name=language.string("settings_leveling_message"), value=message, inline=False)
-                if leveling["level_up_highest"]:
-                    message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
-                    embed.add_field(name=language.string("settings_leveling_message_highest"), value=message, inline=False)
-                if leveling["level_up_max"]:
-                    message = f"{leveling['level_up_max'][:1021]}..." if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
-                    embed.add_field(name=language.string("settings_leveling_message_max"), value=message, inline=False)
+                if "level_up_highest" in leveling:
+                    if leveling["level_up_highest"]:
+                        message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
+                        embed.add_field(name=language.string("settings_leveling_message_highest"), value=message, inline=False)
+                if "level_up_max" in leveling:
+                    if leveling["level_up_max"]:
+                        message = f"{leveling['level_up_max'][:1021]}..." if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
+                        embed.add_field(name=language.string("settings_leveling_message_max"), value=message, inline=False)
             if not leveling["ignored_channels"]:
                 ignored = language.string("generic_none")
             else:

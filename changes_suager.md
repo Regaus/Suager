@@ -964,3 +964,7 @@
 
 ## v7.4.1.1 - 10 August 2021
 - Removed say command (so people can't use it to bypass blocks)
+
+## v7.4.2 - 12 August 2021
+- Added polls
+- Fixed leveling settings breaking when no settings are found

@@ -183,7 +183,7 @@ class Language:
         #     day, month = 34, 6
         if dow and self.language not in no_weeks:
             weekdays = self.data("time_weekdays")
-            if self.language in ["rsl-1k", "rsl-1i"]:
+            if self.language in ["rsl-1k", "rsl-1i"]:  # Also Kaltarena Kargadian
                 wd = when.weekday()
                 if when.hour < 6:
                     wd -= 1

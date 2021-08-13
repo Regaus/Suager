@@ -307,3 +307,6 @@
 
 ## v1.2.3 - 9 August 2021
 - Added Virkada
+
+## v1.2.4 - 11 August 2021
+- Updated RSL-1h month and weekday names

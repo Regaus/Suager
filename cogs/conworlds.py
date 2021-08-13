@@ -10,7 +10,7 @@ from utils import bot_data, conlangs, general, places, time, times
 longest_city = {
     "Virkada": 21,
     "Kargadia": 19,
-    "Qevenerus": 9,
+    "Qevenerus": 16,
 }
 
 
@@ -48,7 +48,7 @@ class Conworlds(commands.Cog):
             if pl == 3:
                 if dt < time.dt(2004, 1, 28):
                     return await general.send("Time on Virkada is not available before 28th January 2021 AD", ctx.channel)
-                output += f"\nVirkada: **{times.time_virkada(dt, 0).str()}**"
+                output += f"\nVirkada - All: **{times.time_virkada(dt, 0).str()}**"
             elif pl == 4:
                 if dt < time.dt(60, 12, 6):
                     return await general.send("Time on Zeivela is not available before 6th December 60 AD", ctx.channel)

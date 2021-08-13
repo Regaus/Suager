@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from utils import bot_data, general, http, lists, logger, time
+from utils import bot_data, general, http, languages, lists, logger, time
 
 
 async def temporaries(bot: bot_data.Bot):
@@ -449,4 +449,85 @@ async def vote_bans(bot: bot_data.Bot):
                     await general.send(f"The vote has ended: {user} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
                                        f"Must be at least 3 votes and 60% upvotes to ban.", channel)
             bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (entry["uid"],))
+        await asyncio.sleep(1)
+
+
+async def polls(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+
+    print(f"{time.time()} > {bot.full_name} > Initialised Polls")
+    while True:
+        expired = bot.db.fetch("SELECT * FROM polls WHERE DATETIME(expiry) < DATETIME('now')", ())
+        for poll in expired:
+            voters_yes: list = json.loads(poll["voters_yes"])
+            voters_neutral: list = json.loads(poll["voters_neutral"])
+            voters_no: list = json.loads(poll["voters_no"])
+            guild_id = poll["guild_id"]
+            settings = bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (guild_id, bot.name))
+            resend = True
+            if settings:
+                setting = json.loads(settings["data"])
+                if "polls" in setting:
+                    resend = setting["polls"]["channel"] == 0
+            try:
+                guild: discord.Guild = bot.get_guild(guild_id)
+                language = bot.language(languages.FakeContext(guild, bot))
+                if guild:
+                    channel: discord.TextChannel = guild.get_channel(poll["channel_id"])
+                    if channel:
+                        embed = discord.Embed()
+                        yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                        total = yes + neutral + no
+                        score = yes - no
+                        try:
+                            upvotes = yes / (yes + no)
+                        except ZeroDivisionError:
+                            upvotes = 0
+                        if score > 0:
+                            embed.colour = general.green
+                            result = language.string("generic_yes")
+                        elif score < 0:
+                            embed.colour = general.red
+                            result = language.string("generic_no")
+                        else:
+                            embed.colour = general.yellow
+                            result = language.string("polls_end_neutral")
+                        embed.title = language.string("polls_end_title")
+                        embed.description = language.string("polls_end_description", poll["question"], language.time(poll["expiry"]), result)
+                        embed.add_field(name=language.string("polls_votes_result"), inline=False,
+                                        value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
+                                                              language.number(total), language.number(score), language.number(upvotes, precision=2, percentage=True)))
+                        if not poll["anonymous"]:
+                            _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
+                            if yes >= 45:
+                                _yes += language.string("polls_votes_many", language.number(yes - 45))
+                            if not _yes:
+                                _yes = language.string("polls_votes_none2")
+                            embed.add_field(name=language.string("polls_votes_yes"), value=_yes, inline=True)
+                            _neutral = "\n".join([f"<@{voter}>" for voter in voters_neutral[:45]])
+                            if neutral >= 45:
+                                _neutral += language.string("polls_votes_many", language.number(neutral - 45))
+                            if not _neutral:
+                                _neutral = language.string("polls_votes_none2")
+                            embed.add_field(name=language.string("polls_votes_neutral"), value=_neutral, inline=True)
+                            _no = "\n".join([f"<@{voter}>" for voter in voters_no[:45]])
+                            if no >= 45:
+                                _no += language.string("polls_votes_many", language.number(no - 45))
+                            if not _no:
+                                _no = language.string("polls_votes_none2")
+                            embed.add_field(name=language.string("polls_votes_no"), value=_no, inline=True)
+                        if not resend:
+                            try:
+                                message: discord.Message = await channel.fetch_message(poll["message_id"])
+                                if message.embeds:
+                                    # embed = message.embeds[0]
+                                    await message.edit(embed=embed)
+                                    resend = False
+                            except discord.NotFound:
+                                resend = True
+                        if resend:
+                            await general.send(None, channel, embed=embed)
+            except Exception as e:
+                general.print_error(f"{time.time()} > {bot.full_name} > Polls > Poll {poll['poll_id']} error: {type(e).__name__}: {e}")
+            bot.db.execute("DELETE FROM polls WHERE poll_id=?", (poll["poll_id"],))
         await asyncio.sleep(1)

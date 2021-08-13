@@ -112,7 +112,7 @@ def interpret_time(period: str) -> relativedelta:
 
 def add_time(delta: relativedelta):
     if rd_is_zero(delta):
-        return "You either set the time to zero or broke the script. Either way, congrats, but no thank you.", True
+        return "No time was specified, or an error has occurred.", True
     try:
         return datetime.utcnow() + delta, False
     except Exception as e:
@@ -132,6 +132,21 @@ def rd_is_zero(delta: relativedelta) -> bool:
         return datetime.min + delta == datetime.min
     except (ValueError, OverflowError):
         return False
+
+
+def rd_is_above_1w(delta: relativedelta) -> bool:
+    try:
+        delta2 = relativedelta(now(None) + delta, now(None))
+        no = False
+        if delta2.days > 7:
+            no = True
+        elif delta2.days == 7:
+            delta2.days -= 7
+            if not rd_is_zero(delta2):
+                no = True
+        return no
+    except (ValueError, OverflowError):
+        return True  # Errors out, assume something is wrong anyways
 
 
 def rd_is_above_5y(delta: relativedelta) -> bool:

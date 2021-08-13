@@ -99,6 +99,10 @@ def random_id() -> int:
     return random.randint(1, 9999999)
 
 
+def random_id2() -> int:
+    return random.randint(1000, 9999)
+
+
 def bold(string: str) -> str:
     return f"**{string}**"
 
@@ -119,3 +123,6 @@ def random1(low: float = 0.0, high: float = 1.0, seed: int = 0) -> float:
 #     # state = RandomState(seed)
 #     state = Generator(PCG64(seed))
 #     return state.normal(mean, sd, None)
+
+
+red, yellow, green = 0xff0000, 0xffc000, 0x00ff00

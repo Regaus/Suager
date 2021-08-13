@@ -6,12 +6,12 @@ import discord
 from utils import general, languages, time, times, weathers
 
 places = {
-    "Gar an Virkaran":       ["Virkada", 1745.4, 403.2, "Kaltarena Kargadian"],
+    "Aa an Viiharan":        ["Virkada", 1745.4, 403.2, "Kaltarena Kargadian"],
     "Gestedian Placeholder": ["Virkada", 1477.2, 218.4, "Gestedian"],
     "Ghazhan Kunemad":       ["Virkada", 1837.7, 572.0, "Usturian"],
     "Suttaligar":            ["Virkada", 1713.4, 452.1, "West Kargadian"],
     "Virkada Central":       ["Virkada", 1800.0, 900.0, "Multiple"],
-    "Virkadagar":            ["Virkada", 2029.4, 874.0, "West Kargadian"],
+    "Virkadagar":            ["Virkada", 1772.0, 477.3, "West Kargadian"],
     "Zeivelan Placeholder":  ["Virkada", 1965.3, 720.7, "(Unknown)"],
 
     "Akkigar":             ["Kargadia", 2602.1,  313.1, "Verlennia", "Na Vadenaran Irrat"],
@@ -64,7 +64,10 @@ places = {
     "Vintelingar":         ["Kargadia", 1485.2,  892.5, "Island",    None],
     "Virsetgar":           ["Kargadia", 1800.0,  900.0, "Centeria",  None],
 
-    "Kaltarena":           ["Qevenerus", 2100.0,  655.1, "Kaltarena"],
+    "Gar a na Redenan": ["Qevenerus", 2385.7, 1133.2, "Kaltarena", "Serenaanaa"],
+    "Kaltarena":        ["Qevenerus", 2100.0,  655.1, "Kaltarena", "Haltaren"],
+    "Kanerar Kainead":  ["Qevenerus", 2283.1,  191.0, "Kaltarena", "Hanerahaane"],
+    "Sertavall":        ["Qevenerus", 2408.4,  900.0, "Kaltarena", "Seetaaveşhu"],
 }
 offsets = {
     "Virkada": -1800.0,
@@ -115,7 +118,7 @@ class Place:
         self.place = place
         self.now = time.now(None)
         try:
-            self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self._local_time, self.region = self.get_location()
+            self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self._local_time, self.region, self.local_names = self.get_location()
         except KeyError:
             raise PlaceDoesNotExist(place)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
@@ -165,6 +168,7 @@ class Place:
         time_function = _times[planet]
         _time = time_function(self.now, tz=tz)
         _data = len(data)
+        local_names = None
         if _data == 0:
             _local_time = self.time
             local_time = f"**{self.time.str(dow=False, month=False)}**"
@@ -197,11 +201,12 @@ class Place:
                     _local_time = self.time
                     local_time = "Local time unknown... So far."
                 region = data[0]
+                local_names = f"Kaltarena Kargadian: {data[1]}"
             else:
                 _local_time = self.time
                 local_time = "Local time unknown"
                 region = None
-        return planet, lat, long, tz, _time, local_time, _local_time, region
+        return planet, lat, long, tz, _time, local_time, _local_time, region, local_names
 
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
@@ -211,6 +216,8 @@ class Place:
                         value=f"Local time: {self.local_time}\n"
                               f"Time zone: **{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)\n"
                               f"Location: **{self.location(False)}**")
+        if self.local_names:
+            embed.add_field(name="Other Names", value=self.local_names, inline=False)
 
         if self.weathers is not None:
             # Remove non-ascii stuff like äá to make sure it's only A-Z
