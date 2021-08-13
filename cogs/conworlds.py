@@ -69,8 +69,8 @@ class Conworlds(commands.Cog):
                     return await general.send("Time on Qevenerus is not available before 22nd November 1686 AD", ctx.channel)
                 time_earth1h = self.bot.language2("rsl-1h").time(dt, short=0, dow=True, seconds=True, tz=False)
                 output += f"\nEarth - Ka. Kargadian: **{time_earth1h}**\n" \
-                          f"\nQevenerus - Ka. Kargadian: **{times.time_kaltaryna(dt, 0).str()}**" \
-                          f"\nQevenerus - Usturian: **Placeholder**" \
+                          f"\nQevenerus - Ka. Kargadian: **{times.time_qevenerus_ka(dt, 0).str()}**" \
+                          f"\nQevenerus - Usturian: **{times.time_qevenerus_us(dt, 0).str()}**" \
                           f"\nQevenerus - Ka. Gestedian: **Placeholder**"
             else:
                 return await general.send(f"No time is available for {ss}.{pl} right now.", ctx.channel)

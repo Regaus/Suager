@@ -1,14 +1,23 @@
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Union
+
+from numpy import datetime64, timedelta64
 
 from utils import time
 
 
-def solar_normal(now: datetime, start: datetime, day_length: float, year_len: int, ly_freq, months: list[int], leap_month: int, tz: float = 0):
+def solar_normal(now: datetime, start: Union[datetime, datetime64], day_length: float, year_len: int, ly_freq, months: list[int], leap_month: int, tz: float = 0):
     """ Calculate the time somewhere else """
     # hours, minutes and seconds settings removed since it now uses 24:60:60 anyways
     # ly_freq is a lambda/function that would calculate the logic behind leap years (since some are more complex than a single if-statement)
-    total = (now - start).total_seconds()
+    if type(start) == datetime:
+        total = (now - start).total_seconds()
+    elif type(start) == datetime64:
+        _now = datetime64(now)
+        delta = _now - start
+        total = delta / timedelta64(1, "s")
+    else:
+        raise TypeError("start variable got unsupported type %r" % type(start).__name__)
     year = 1
     days = total / day_length + tz / 24
     seconds = (days % 1) * day_length
@@ -96,11 +105,13 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
     return output
 
 
-def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
+qevenerus_day = 19.1259928695 * 3600
+
+
+def time_qevenerus_ka(when: datetime = None, tz: float = 0):  # 23.6 Kaltarena Kargadian
     irl = when or time.now(None)
     start = datetime(1686, 11, 21, 11, 55, 21, tzinfo=timezone.utc)  # Time of landing on Qevenerus
-    day_length = 19.1259928695 * 3600
-    # day_length = 51.642812 * 3600
+    day_length = qevenerus_day
     month_lengths = [50] * 16
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)
     weekdays = ["Luuvu", "Haa", "Naavu", "Veşhu", "Tuttu", "Sira", "Maa", "Aste"]
@@ -112,7 +123,22 @@ def time_kaltaryna(when: datetime = None, tz: float = 0):  # 23.6
     parts = ["te", "re", "se", "ve"]
     part = h // 6
     output.day_name = f"{weekdays[output.day_of_week]}{parts[part]}"
-    output.month_name = f"{output.month_name}"
+    # output.month_name = f"{output.month_name}"
+    return output
+
+
+def time_qevenerus_us(when: datetime = None, tz: float = 0):  # 23.6 Usturian
+    irl = when or time.now(None)
+    start = datetime64("-2174-06-09T19:57:59.941886")  # The day Ancient Usturia formed
+    day_length = qevenerus_day
+    month_lengths = [40] * 20
+    year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)
+    weekdays = ["Jorunat", "Usturojuvanat", "Muqakat", "Pedat", "Furonat", "Dzasat", "Zhangejat", "Pyrynat", "Tachat", "Maghadat"]
+    months = ["Jorunuza", "Usturojuvanuza", "Muqakuza", "Pededze", "Furonuza", "Dzasuza", "Zhangejuza", "Pyrynedze", "Tachuza", "Maghaduza",
+              "Nakhavuza", "Gaghavuza", "Poradedze", "Boravedze", "Avadedze", "Akeruza", "Vezeluza", "Makuza", "Lapenuza", "Ghomuza"]
+    output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 10, ds, yd)
+    output.day_name = f"Sharuad {weekdays[output.day_of_week]}"
+    # output.month_name = f"sharuad {output.month_name}"
     return output
 
 

@@ -64,10 +64,10 @@ places = {
     "Vintelingar":         ["Kargadia", 1485.2,  892.5, "Island",    None],
     "Virsetgar":           ["Kargadia", 1800.0,  900.0, "Centeria",  None],
 
-    "Gar a na Redenan": ["Qevenerus", 2385.7, 1133.2, "Kaltarena", "Serenaanaa"],
-    "Kaltarena":        ["Qevenerus", 2100.0,  655.1, "Kaltarena", "Haltaren"],
-    "Kanerar Kainead":  ["Qevenerus", 2283.1,  191.0, "Kaltarena", "Hanerahaane"],
-    "Sertavall":        ["Qevenerus", 2408.4,  900.0, "Kaltarena", "Seetaaveşhu"],
+    "Gar a na Redenan": ["Qevenerus", 2385.7, 1133.2, "Kaltarena", "Serenaanaa",  None],
+    "Kaltarena":        ["Qevenerus", 2100.0,  655.1, "Kaltarena", "Haltaren",    "Khupatsad Usturat"],
+    "Kanerar Kainead":  ["Qevenerus", 2283.1,  191.0, "Kaltarena", "Hanerahaane", None],
+    "Sertavall":        ["Qevenerus", 2408.4,  900.0, "Kaltarena", "Seetaaveşhu", None],
 }
 offsets = {
     "Virkada": -1800.0,
@@ -78,7 +78,7 @@ _times = {
     "Virkada": times.time_virkada,
     "Zeivela": times.time_zeivela,
     "Kargadia": times.time_kargadia,
-    "Qevenerus": times.time_kaltaryna,
+    "Qevenerus": times.time_qevenerus_ka,
 
     "Sinvimania": times.time_sinvimania,
     "Hosvalnerus": times.time_hosvalnerus,
@@ -117,6 +117,7 @@ class Place:
     def __init__(self, place: str):
         self.place = place
         self.now = time.now(None)
+        # self.now = time.dt(1686, 11, 21, 11, 55, 21)
         try:
             self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self._local_time, self.region, self.local_names = self.get_location()
         except KeyError:
@@ -170,8 +171,8 @@ class Place:
         _data = len(data)
         local_names = None
         if _data == 0:
-            _local_time = self.time
-            local_time = f"**{self.time.str(dow=False, month=False)}**"
+            _local_time = _time
+            local_time = f"**{_time.str(dow=False, month=False)}**"
             region = None
         else:
             lang_region = data[0]
@@ -193,17 +194,18 @@ class Place:
                 region = data[1]
             elif planet == "Qevenerus":
                 if lang_region == "Kaltarena":
-                    _local_time = times.time_kaltaryna(self.now, tz)
+                    _local_time = times.time_qevenerus_ka(self.now, tz)
+                    usturian = times.time_qevenerus_us(self.now, tz)
                     local_time = f"\nKargadian: **{_local_time.str(dow=False, month=False)}**\n" \
-                                 f"Usturian: **Placeholder**\n" \
+                                 f"Usturian: **{usturian.str(dow=False, month=False)}**\n" \
                                  f"Gestedian: **Placeholder**\n"
                 else:
-                    _local_time = self.time
+                    _local_time = _time
                     local_time = "Local time unknown... So far."
                 region = data[0]
-                local_names = f"Kaltarena Kargadian: {data[1]}"
+                local_names = f"Ka. Kargadian: {data[1]}\nUsturian: {data[2]}"
             else:
-                _local_time = self.time
+                _local_time = _time
                 local_time = "Local time unknown"
                 region = None
         return planet, lat, long, tz, _time, local_time, _local_time, region, local_names

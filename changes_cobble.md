@@ -310,3 +310,8 @@
 
 ## v1.2.4 - 11 August 2021
 - Updated RSL-1h month and weekday names
+
+## v1.2.5 - 13 August 2021
+- Added Usturian time
+- Added support of dates outside of years 1-9999 for time generation (using numpy datetime64)
+- Added support for Usturian place names on Qevenerus

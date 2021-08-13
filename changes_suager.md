@@ -967,7 +967,10 @@
 
 ## v7.4.2 - 11-13 August 2021
 - Added polls
-- Fixed leveling settings breaking when no settings are found
+- Fixed leveling settings breaking when the new settings are not available
 
 ## v7.4.2.1 - 13 August 2021
 - Made polls only show minutes and made the time output more consistent
+
+## v7.4.2.2 - 13 August 2021
+- Fixed command description in //settings leveling message

@@ -39,6 +39,8 @@ class Polls(commands.Cog):
                     polls = settings["polls"]
                     if polls["channel"]:
                         poll_channel: discord.TextChannel = ctx.guild.get_channel(polls["channel"])
+                        if not poll_channel:
+                            poll_channel = ctx.channel
                     poll_anonymity = polls["voter_anonymity"]
             embed = discord.Embed(colour=general.yellow)
             embed.title = language.string("polls_new_title")

@@ -380,7 +380,7 @@ class Settings(commands.Cog):
     async def lvl_message(self, ctx: commands.Context, *, value: str):
         """ Set level up message
 
-        See `//leveling settings message variables` for the list of available variables"""
+        See `//settings leveling message variables` for the list of available variables"""
         if ctx.invoked_subcommand is None:
             return await self.level_up_message_general(ctx, value, {
                 "key": "level_up_message",
