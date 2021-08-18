@@ -87,6 +87,10 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkavan", "Shiravan", "Nuuvan", "Bylkuvan", "Akuvan", "Vainavan", "Kiitavan", "Lürvuan",
                   "Raavan", "Kummavan", "Vittevan", "Avikkan", "Kaivyan", "Karratan", "Darvuan", "Suvakän"]
+    elif language == "rsl-1m":  # Placeholders for until I actually make RSL-1m
+        weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
+        months = ["Senkavan", "Shiravan", "Nuuvan", "Bylkuvan", "Akuvan", "Vainavan", "Kiitavan", "Lürvuan",
+                  "Raavan", "Kummavan", "Vittevan", "Avikkan", "Kaivyan", "Karratan", "Darvuan", "Suvakän"]
     elif language == "rsl-1i":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkaan", "Shiraan", "Nuuan", "Bylkuan", "Akuan", "Vainaan", "Kiitaan", "Lürvuan",
@@ -129,7 +133,7 @@ def time_qevenerus_ka(when: datetime = None, tz: float = 0):  # 23.6 Kaltarena K
 
 def time_qevenerus_us(when: datetime = None, tz: float = 0):  # 23.6 Usturian
     irl = when or time.now(None)
-    start = datetime64("-2174-06-09T19:57:59.941886")  # The day Ancient Usturia formed
+    start = datetime64("-2174-06-09T19:57:59.941886")  # The day Ancient Usturia formed | Note: -2174 = 2175 BC (since year 0 = 1 BC)
     day_length = qevenerus_day
     month_lengths = [40] * 20
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)

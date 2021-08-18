@@ -5,70 +5,631 @@ import discord
 
 from utils import general, languages, time, times, weathers
 
-places = {
-    "Aa an Viiharan":        ["Virkada", 1745.4, 403.2, "Kaltarena Kargadian"],
-    "Gestedian Placeholder": ["Virkada", 1477.2, 218.4, "Gestedian"],
-    "Ghazhan Kunemad":       ["Virkada", 1837.7, 572.0, "Usturian"],
-    "Suttaligar":            ["Virkada", 1713.4, 452.1, "West Kargadian"],
-    "Virkada Central":       ["Virkada", 1800.0, 900.0, "Multiple"],
-    "Virkadagar":            ["Virkada", 1772.0, 477.3, "West Kargadian"],
-    "Zeivelan Placeholder":  ["Virkada", 1965.3, 720.7, "(Unknown)"],
+places = [
+    {
+        "name": {
+            "English": "Village on Virkada",
+            "Kaltarena Kargadian": "Aa an Viiharan",
+        },
+        "location": [2172.5, 553.2],
+        "language": "Kaltarena Kargadian",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Village of Cold Heat",
+            "West Kargadian": "Gar na Kaldan Gartan",
+        },
+        "location": [1835.2, 24.7],
+        "language": "West Kargadian",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Hot Village",
+            "West Kargadian": "Ghazhan Kunemad",
+        },
+        "location": [2052.0, 560.1],
+        "language": "Usturian",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Suttaligar",
+            "West Kargadian": "Suttaligar",
+        },
+        "location": [1324.1, 252.9],
+        "language": "West Kargadian",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Virkadagar",
+            "West Kargadian": "Virkadagar",
+        },
+        "location": [1312.8, 221.5],
+        "language": "West Kargadian",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Virkada Central",
+        },
+        "location": [1800.0, 900.0],
+        "language": "Multiple",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Virkada Southern",
+        },
+        "location": [1800.0, 1500.0],
+        "language": "Tebarian",
+        "planet": "Virkada",
+    },
+    {
+        "name": {
+            "English": "Virkadan Tebaria",
+            "Tebarian": "Virkatebaria",
+        },
+        "location": [1821.7, 1553.0],
+        "language": "Tebarian",
+        "planet": "Virkada",
+    },
 
-    "Akkigar":             ["Kargadia", 2602.1,  313.1, "Verlennia", "Na Vadenaran Irrat"],
-    "Bylkangar":           ["Kargadia", 2382.3, 1311.8, "Tebaria",   "Na Ihat na TBL'n"],
-    "Bylkankaldanpeaskat": ["Kargadia", 2828.2, 1689.3, "Tebaria",   "Na Ihat na TBL'n"],
-    "Bylkanseivanlias":    ["Kargadia", 3283.0, 1553.2, "Tebaria",   "Na Ihat na TBL'n"],
-    "Bylkantaivead":       ["Kargadia", 3274.3, 1564.4, "Tebaria",   "Na Ihat na TBL'n"],
-    "Degan Ihat":          ["Kargadia", 3539.7, 1536.5, "Tebaria",   "Na Ihat na TBL'n"],
-    "Ekspigar":            ["Kargadia", 2560.4,  317.3, "Verlennia", "Na Vadenaran Irrat"],
-    "Erellgar":            ["Kargadia", 1275.5,  944.2, "Erellia",   None],
-    "Erdapeaskat":         ["Kargadia",  504.1, 1140.6, "Nittavia",  None],
-    "Huntavall":           ["Kargadia", 1545.2, 1529.9, "Tebaria",   "Na Ihat na Iidain"],
-    "Iha na Sevarddain":   ["Kargadia", 2791.5, 1745.7, "Tebaria",   "Na Ihat na TBL'n"],
-    "Irtangar":            ["Kargadia", 2731.3,  163.8, "Verlennia", None],
-    "Kaivus na Advuräin":  ["Kargadia", 2510.2, 1515.1, "Tebaria",   "Na Ihat na TBL'n"],
-    "Kanerakainead":       ["Kargadia", 1015.0,  100.8, "Nehtivia",  "Kanernehtivia"],
-    "Kanertebaria":        ["Kargadia",  666.6, 1515.9, "Island",    "Na Ihat na TBL'n"],
-    "Kiomigar":            ["Kargadia", 2628.7,  349.0, "Verlennia", "Na Vadenaran Irrat"],
-    "Kirtinangar":         ["Kargadia",  953.3,  319.2, "Nehtivia",  "Na Kirtinnat Lurvun"],
-    "Kitnagar":            ["Kargadia", 3005.5, 1240.0, "Inhattia",  None],
-    "Kunval na Bylkain":   ["Kargadia", 2464.0, 1414.1, "Tebaria",   "Na Ihat na TBL'n"],
-    "Kunval na Shaivain":  ["Kargadia", 2623.3, 1624.5, "Tebaria",   "Na Ihat na TBL'n"],
-    "Lakkeaina":           ["Kargadia", 2662.6,  673.6, "Inhattia",  None],
-    "Leitagar":            ["Kargadia",  335.4,  318.4, "Nehtivia",  "Na Irrat"],
-    "Lersedigar":          ["Kargadia", 1417.2,  631.3, "Erellia",   None],
-    "Liidennan Koirantat": ["Kargadia",  317.7, 1664.1, "Tebaria",   "Na Ihat na TBL'n"],
-    "Lirrinta Teinain":    ["Kargadia",   25.0, 1598.4, "Tebaria",   "Na Ihat na TBL'n"],
-    "Muruvasaitari":       ["Kargadia", 2614.2,  526.3, "Inhattia",  None],
-    "Neikelaa":            ["Kargadia", 1960.6,  733.1, "Centeria",  None],
-    "Nurvutgar":           ["Kargadia", 2114.1, 1498.2, "Tebaria",   "Seanka Tebaria"],
-    "Orlagar":             ["Kargadia",  342.7,  346.7, "Nehtivia",  "Na Irrat"],
-    "Pakigar":             ["Kargadia",  347.5,  376.0, "Nehtivia",  "Na Irrat"],
-    "Peaskar":             ["Kargadia",  510.0,  642.4, "Nehtivia",  "Na Peaskat na Jegittain"],
-    "Regavall":            ["Kargadia", 1295.3,  210.8, "Nehtivia",  "Regaazdall"],
-    "Reggar":              ["Kargadia", 1236.4,  300.0, "Nehtivia",  "Regaazdall"],
-    "Seankar Kainead":     ["Kargadia", 2670.4, 1800.0, "Tebaria",   "Na Ihat na TBL'n"],
-    "Senkadar Laikadu":    ["Kargadia", 1031.7,  548.6, "Erellia",   "Senkadar Laikadu"],
-    "Sentagar":            ["Kargadia", 1691.2,  495.3, "Centeria",  None],
-    "Sentatebaria":        ["Kargadia",  602.3, 1610.5, "Tebaria",   "Na Ihat na TBL'n"],
-    "Shiradar Koankadu":   ["Kargadia", 1145.7,  501.1, "Erellia",   "Senkadar Laikadu"],
-    "Shonangar":           ["Kargadia",  344.1,  347.8, "Nehtivia",  "Na Irrat"],
-    "Steirigar":           ["Kargadia",  305.2,  538.2, "Nehtivia",  "Sertanehtivia"],
-    "Sunovalliat":         ["Kargadia",  157.2, 1462.2, "Tebaria",   "Na Ihat na TBL'n"],
-    "Suvagar":             ["Kargadia", 1220.0,  293.2, "Nehtivia",  "Regaazdall"],
-    "Tebarimostus":        ["Kargadia",  636.2, 1524.7, "Nittavia",  "Na Ihat na TBL'n"],
-    "Tentar Hintakadu":    ["Kargadia", 2877.7, 1579.9, "Tebaria",   "Na Ihat na TBL'n"],
-    "Tevakta Jegittain":   ["Kargadia",  707.7,  624.2, "Nehtivia",  "Na Peaskat na Jegittain"],
-    "Tevivall":            ["Kargadia",  982.3,  576.2, "Nehtivia",  "Vadernehtivia"],
-    "Vaidoks":             ["Kargadia", 2754.5,  986.3, "Inhattia",  None],
-    "Vintelingar":         ["Kargadia", 1485.2,  892.5, "Island",    None],
-    "Virsetgar":           ["Kargadia", 1800.0,  900.0, "Centeria",  None],
+    {
+        "name": {
+            "English": "Akkigar",
+            "East Kargadian": "Akkigar",
+        },
+        "location": [2602.1, 313.1],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Vadenaran Irrat",
+    },
+    {
+        "name": {
+            "English": "Squirrels' City",
+            "Tebarian": "Bylkangar",
+        },
+        "location": [2382.3, 1311.8],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Squirrels' Tundra",
+            "Tebarian": "Na Bylkankaldanpeaskat",
+            "West Kargadian": "Na Bylkankaldanpeaskat",
+        },
+        "location": [2828.2, 1689.3],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Squirrels' Forest",
+            "Tebarian": "Na Bylkanseivanlias",
+            "West Kargadian": "Na Bylkanseivulias",
+        },
+        "location": [3283.0, 1553.2],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Squirrels' Swamp",
+            "Tebarian": "Na Bylkantaivead",
+            "West Kargadian": "Na Bylkantaivead",
+        },
+        "location": [3274.3, 1564.4],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "The Wild Lands",
+            "Tebarian": "Na Degan Ihat",
+            "West Kargadian": "Na Degaeltat",
+        },
+        "location": [3539.7, 1536.5],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Ekspi City",
+            "East Kargadian": "Ekspigar",
+        },
+        "location": [2560.4, 317.3],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Vadenaran Irrat",
+    },
+    {
+        "name": {
+            "English": "Erelltown",
+            "West Kargadian": "Erellgar",
+        },
+        "location": [1275.5, 944.2],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Erda Desert",
+            "West Kargadian": "Erdapeaskat",
+        },
+        "location": [504.1, 1140.6],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Hunta Shore",
+            "Tebarian": "Huntavall",
+        },
+        "location": [1542.2, 1529.9],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na Iidain",
+    },
+    {
+        "name": {
+            "English": "The Land of the Dead",
+            "Tebarian": "Na Iha na Sevarddain",
+            "West Kargadian": "Na Elta na Sevarddain"
+        },
+        "location": [2791.5, 1745.7],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Irtangar",
+            "East Kargadian": "Irtangar",
+        },
+        "location": [2731.3, 163.8],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "The Hill of Challenges",
+            "Tebarian": "Na Kalvus na Advuräin",
+            "West Kargadian": "Na Kalvus na Advuräin"
+        },
+        "location": [2791.5, 1745.7],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Northern End Kargadia",
+            "West Kargadian": "Kanerakainead",
+        },
+        "location": [1015.0, 100.8],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Kanernehtivia",
+    },
+    {
+        "name": {
+            "English": "Northern Tebaria",
+            "Tebarian": "Kanertebaria",
+            "West Kargadian": "Kanertebaria",
+        },
+        "location": [666.6, 1515.9],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Kyomi City",
+            "East Kargadian": "Kiomigar",
+        },
+        "location": [2628.7, 349.0],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Vadenaran Irrat",
+    },
+    {
+        "name": {
+            "English": "Mountain City",
+            "West Kargadian": "Kirtinangar",
+        },
+        "location": [953.3, 319.2],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Kirtinnat Lurvun",
+    },
+    {
+        "name": {
+            "English": "Kitnagar",
+            "East Kargadian": "Kitnagar",
+        },
+        "location": [3005.5, 1240.0],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Squirrels' Temple",
+            "Tebarian": "Kunval na Bylkain",
+            "West Kargadian": "Kunval na Bylkain",
+        },
+        "location": [2464.0, 1414.1],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Shamans' Temple",
+            "Tebarian": "Kunval na Shaivain",
+            "West Kargadian": "Kunval na Shaivain",
+        },
+        "location": [2623.3, 1624.5],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Lakkeaina",
+            "East Kargadian": "Lakkeáina",
+        },
+        "location": [2662.6, 673.6],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Leita City",
+            "West Kargadian": "Leitagar",
+        },
+        "location": [335.4, 318.4],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Irrat",
+    },
+    {
+        "name": {
+            "English": "Lersedigar",
+            "West Kargadian": "Lersédigar",
+        },
+        "location": [1417.2, 631.3],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "The Soaring Heights",
+            "Tebarian": "Na Liidennan Koirantat",
+            "West Kargadian": "Na Liidennan Koirantat",
+        },
+        "location": [317.7, 1664.1],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "The Volcano of Shadows",
+            "Tebarian": "Na Lirrinta Teinain",
+            "West Kargadian": "Na Lirkinta Teinain",
+        },
+        "location": [25.0, 1598.4],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Muruvasaitari",
+            "East Kargadian": "Muruvasáitari",
+        },
+        "location": [2614.2, 526.3],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Neikelaa",
+            "East Kargadian": "Neikélaa",
+        },
+        "location": [1960.6, 733.1],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Nurvutton",
+            "Tebarian": "Nurvutgar",
+        },
+        "location": [2114.1, 1498.2],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Seanka Tebaria",
+    },
+    {
+        "name": {
+            "English": "Orla City",
+            "West Kargadian": "Orlagar",
+        },
+        "location": [342.7, 346.7],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Irrat",
+    },
+    {
+        "name": {
+            "English": "The City of Five",
+            "West Kargadian": "Pakigar",
+        },
+        "location": [347.5, 376.0],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Irrat",
+    },
+    {
+        "name": {
+            "English": "Desert City",
+            "West Kargadian": "Peaskar",
+        },
+        "location": [510.0, 642.4],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Peaskat na Jegittain",
+    },
+    {
+        "name": {
+            "English": "Regan Shores",
+            "West Kargadian": "Regavall",
+        },
+        "location": [1295.3, 210.8],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Regaazdal",
+    },
+    {
+        "name": {
+            "English": "Rega-City",
+            "West Kargadian": "Reggar",
+        },
+        "location": [1236.4, 300.0],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Regaazdal",
+    },
+    {
+        "name": {
+            "English": "South Pole Kargadia",
+            "Tebarian": "Seankar Kainead",
+            "West Kargadian": "Senankar Kainead",
+        },
+        "location": [2670.4, 1800.0],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Senko's Lair",
+            "West Kargadian": "Senkadar Laikadu",
+        },
+        "location": [1031.7, 548.6],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Senkadar Laikadu",
+    },
+    {
+        "name": {
+            "English": "Sentagar",
+            "West Kargadian": "Sentagar",
+        },
+        "location": [1691.2, 495.3],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Central Tebaria",
+            "Tebarian": "Sentatebaria",
+            "West Kargadian": "Sentatebaria",
+        },
+        "location": [602.3, 1610.5],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Shiro's Playground",
+            "West Kargadian": "Shiradar Koankadu",
+        },
+        "location": [1145.7, 501.1],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Senkadar Laikadu",
+    },
+    {
+        "name": {
+            "English": "Shawn City",
+            "West Kargadian": "Shonangar",
+        },
+        "location": [344.1, 347.8],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Irrat",
+    },
+    {
+        "name": {
+            "English": "Steir City",
+            "West Kargadian": "Steirigar",
+        },
+        "location": [305.2, 538.2],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Sertanehtivia",
+    },
+    {
+        "name": {
+            "English": "Valleys of the Sun",
+            "Tebarian": "Na Sunovalliat",
+            "West Kargadian": "Na Sunonvailantat",
+        },
+        "location": [157.2, 1462.2],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "Suager City",
+            "West Kargadian": "Suvagar",
+        },
+        "location": [1220.0, 293.2],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Regaazdal",
+    },
+    {
+        "name": {
+            "English": "Tebaria Bridge",
+            "Tebarian": "Tebarimost",
+            "West Kargadian": "Tebarimostus",
+        },
+        "location": [636.2, 1524.7],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "The Dark Cave",
+            "Tebarian": "Na Tentar Hintakadu",
+            "West Kargadian": "Na Temannar Hintakadu",
+        },
+        "location": [2877.7, 1579.9],
+        "language": "Tebarian",
+        "planet": "Kargadia",
+        "region": "Na Ihat na TBL'n",
+    },
+    {
+        "name": {
+            "English": "The Egyptians' Pyramid",
+            "West Kargadian": "Na Tevakta na Jegittain",
+        },
+        "location": [707.7, 624.2],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Na Peaskat na Jegittain",
+    },
+    {
+        "name": {
+            "English": "The Warm Shores",
+            "West Kargadian": "Tevivall",
+        },
+        "location": [982.3, 576.2],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": "Vadernehtivia",
+    },
+    {
+        "name": {
+            "English": "Vaidoks",
+            "East Kargadian": "Vaidoks",
+        },
+        "location": [2754.5, 986.3],
+        "language": "East Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Potato City",
+            "West Kargadian": "Vintelingar",
+        },
+        "location": [1485.2, 892.5],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
+    {
+        "name": {
+            "English": "Equator City",
+            "West Kargadian": "Virsetgar",
+        },
+        "location": [1800.0, 900.0],
+        "language": "West Kargadian",
+        "planet": "Kargadia",
+        "region": None,
+    },
 
-    "Gar a na Redenan": ["Qevenerus", 2385.7, 1133.2, "Kaltarena", "Serenaanaa",  None],
-    "Kaltarena":        ["Qevenerus", 2100.0,  655.1, "Kaltarena", "Haltaren",    "Khupatsad Usturat"],
-    "Kanerar Kainead":  ["Qevenerus", 2283.1,  191.0, "Kaltarena", "Hanerahaane", None],
-    "Sertavall":        ["Qevenerus", 2408.4,  900.0, "Kaltarena", "Seetaaveşhu", None],
-}
+    {
+        "name": {
+            "English": "Border City",
+            "West Kargadian": "Gar a na Redenan",
+            "Kaltarena Kargadian": "Serenaanaa"
+        },
+        "location": [2375.6, 1133.2],
+        "language": "Kaltarena Kargadian, Usturian",
+        "planet": "Qevenerus",
+        "region": "Kaltarena"
+    },
+    {
+        "name": {
+            "English": "Kaltarena City",
+            "West Kargadian": "Kaltarena",
+            "Kaltarena Kargadian": "Haltaren",
+            "Usturian": "Khupatsad Usturat"
+        },
+        "location": [2100.0, 655.1],
+        "language": "Kaltarena Kargadian, Usturian",
+        "planet": "Qevenerus",
+        "region": "Kaltarena"
+    },
+    {
+        "name": {
+            "English": "Northern End Kaltarena",
+            "West Kargadian": "Kanerar Kainead",
+            "Kaltarena Kargadian": "Hanerahaane",
+        },
+        "location": [2283.1, 191.0],
+        "language": "Kaltarena Kargadian",
+        "planet": "Qevenerus",
+        "region": "Kaltarena"
+    },
+    {
+        "name": {
+            "English": "Equatorial Shores",
+            "West Kargadian": "Sertavall",
+            "Kaltarena Kargadian": "Seetaaveşhu",
+        },
+        "location": [2408.4, 900.0],
+        "language": "Kaltarena Kargadian, Usturian",
+        "planet": "Qevenerus",
+        "region": "Kaltarena"
+    },
+]
 offsets = {
     "Virkada": -1800.0,
     "Kargadia": -1800.0,  # -843.7 | -343
@@ -115,26 +676,26 @@ class PlaceDoesNotExist(general.RegausError):
 
 class Place:
     def __init__(self, place: str):
-        self.place = place
+        self.name = place
         self.now = time.now(None)
         # self.now = time.dt(1686, 11, 21, 11, 55, 21)
-        try:
-            self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self._local_time, self.region, self.local_names = self.get_location()
-        except KeyError:
-            raise PlaceDoesNotExist(place)
+        # try:
+        self.name, self.names, self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self.region, self.language = self.get_location()
+        # except KeyError:
+        #     raise PlaceDoesNotExist(place)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
         # self.time = time_function(time.dt(2022, 1, 11))
         self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
         self.sun = Sun(self)
         try:
-            self.weathers = weathers.weathers[self.place]
+            self.weathers = weathers.weathers[self.name]
         except KeyError:
             self.weathers = None
         # self.weathers = patterns[self.place]
 
     def time_info(self):
-        return f"Current local time in **{self.place}, {self.planet}**: {self.local_time}"
+        return f"Current local time in **{self.name}, {self.planet}**: {self.local_time}"
         # _time = f"{self.time.hour:02d}:{self.time.minute:02d}:{self.time.second:02d}"
         # _date = f"{self.time.day:02d}/{self.time.month:02d}/{self.time.year}"
         # return f"It is currently **{_time}** on **{_date}** in **{self.place}, {self.planet}**"
@@ -149,8 +710,17 @@ class Place:
         return f"{lat:>5.2f}°{n}, {long:>6.2f}°{e}" if indent else f"{lat:.2f}°{n}, {long:.2f}°{e}"
 
     def get_location(self):
-        planet, x, y, *data = places[self.place]
+        # planet, x, y, *data = places_old[self.place]
+        place = None
+        for _place in places:
+            if self.name in _place["name"].values():
+                place = _place
+                break
+        if not place:
+            raise PlaceDoesNotExist(self.name)
+        planet = place["planet"]
         offset = offsets[planet]
+        x, y = place["location"]
         x += offset
         size = 10
         long = x / size
@@ -161,69 +731,104 @@ class Place:
             lat = 90 - lat
         else:
             lat = -(lat - 90)
+        if lat in [90, -90]:
+            long = 0
+        names = "\n".join(f"{language}: **{name}**" for language, name in place["name"].items())
+        name = place["name"]["English"]
         tz = round(long / (360 / 24))
         tz += {
-            "Kiomigar": -1,
-            "Regavall": -1,
-        }.get(self.place, 0)
+            "Kyomi City": -1,
+            "Regan Shores": -1,
+            "South Pole Kargadia": 5,
+        }.get(name, 0)
         time_function = _times[planet]
         _time = time_function(self.now, tz=tz)
-        _data = len(data)
-        local_names = None
-        if _data == 0:
-            _local_time = _time
-            local_time = f"**{_time.str(dow=False, month=False)}**"
+        try:
+            region = place["region"]
+        except KeyError:
             region = None
-        else:
-            lang_region = data[0]
-            if planet == "Virkada":
-                _local_time = times.time_virkada(self.now, tz)
-                local_time = f"**{_local_time.str()}**\nLocal language: **{data[0]}**"
-                region = "Virkada"
-            elif planet == "Kargadia":
-                if lang_region == "Tebaria":
-                    _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
-                    local_time = f"**{_local_time.str(dow=False, month=False)}**"
-                elif lang_region in ["Nehtivia", "Nittavia", "Erellia", "Centeria", "Island"]:
-                    _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
-                    local_time = f"**{_local_time.str(dow=False, month=False)}**"
-                else:
-                    # Should be RSL-1m: Uses RSL-1k for placeholder, as RSL-1m does not yet exist.
-                    _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
-                    local_time = f"**{_local_time.str(dow=False, month=False)}**"
-                region = data[1]
-            elif planet == "Qevenerus":
-                if lang_region == "Kaltarena":
-                    _local_time = times.time_qevenerus_ka(self.now, tz)
-                    usturian = times.time_qevenerus_us(self.now, tz)
-                    local_time = f"\nKargadian: **{_local_time.str(dow=False, month=False)}**\n" \
-                                 f"Usturian: **{usturian.str(dow=False, month=False)}**\n" \
-                                 f"Gestedian: **Placeholder**\n"
-                else:
-                    _local_time = _time
-                    local_time = "Local time unknown... So far."
-                region = data[0]
-                local_names = f"Ka. Kargadian: {data[1]}\nUsturian: {data[2]}"
+        local_time = f"**{_time.str()}**"
+        language = place["language"]
+        if planet == "Kargadia":
+            if language == "West Kargadian":
+                _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
+            elif language == "East Kargadian":
+                _local_time = times.time_kargadia(self.now, tz, 'rsl-1m')
+            elif language == "Tebarian":
+                _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
             else:
                 _local_time = _time
-                local_time = "Local time unknown"
-                region = None
-        return planet, lat, long, tz, _time, local_time, _local_time, region, local_names
+            local_time = f"**{_local_time.str(dow=False, month=False)}**"
+        elif planet == "Qevenerus":
+            if language == "Kaltarena Kargadian, Usturian":
+                ka_time = times.time_qevenerus_ka(self.now, tz)
+                us_time = times.time_qevenerus_us(self.now, tz)
+                local_time = f"Ka. Kargadian: **{ka_time.str(dow=False, month=False)}**\nUsturian: **{us_time.str(dow=False, month=False)}**"
+            elif language == "Kaltarena Kargadian":
+                ka_time = times.time_qevenerus_ka(self.now, tz)
+                local_time = f"**{ka_time.str(dow=False, month=False)}**"
+
+        # if planet == "Virkada":
+        #     local_time = f"**{_time.str()}**"
+        # _data = len(data)
+        # local_names = None
+        # if _data == 0:
+        #     _local_time = _time
+        #     local_time = f"**{_time.str(dow=False, month=False)}**"
+        #     region = None
+        # else:
+        #     lang_region = data[0]
+        #     if planet == "Virkada":
+        #         _local_time = times.time_virkada(self.now, tz)
+        #         local_time = f"**{_local_time.str()}**\nLocal language: **{data[0]}**"
+        #         region = "Virkada"
+        #     elif planet == "Kargadia":
+        #         if lang_region == "Tebaria":
+        #             _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
+        #             local_time = f"**{_local_time.str(dow=False, month=False)}**"
+        #         elif lang_region in ["Nehtivia", "Nittavia", "Erellia", "Centeria", "Island"]:
+        #             _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
+        #             local_time = f"**{_local_time.str(dow=False, month=False)}**"
+        #         else:
+        #             # Should be RSL-1m: Uses RSL-1k for placeholder, as RSL-1m does not yet exist.
+        #             _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
+        #             local_time = f"**{_local_time.str(dow=False, month=False)}**"
+        #         region = data[1]
+        #     elif planet == "Qevenerus":
+        #         if lang_region == "Kaltarena":
+        #             _local_time = times.time_qevenerus_ka(self.now, tz)
+        #             usturian = times.time_qevenerus_us(self.now, tz)
+        #             local_time = f"\nKargadian: **{_local_time.str(dow=False, month=False)}**\n" \
+        #                          f"Usturian: **{usturian.str(dow=False, month=False)}**\n" \
+        #                          f"Gestedian: **Placeholder**\n"
+        #         else:
+        #             _local_time = _time
+        #             local_time = "Local time unknown... So far."
+        #         region = data[0]
+        #         local_names = f"Ka. Kargadian: {data[1]}\nUsturian: {data[2]}"
+        #     else:
+        #         _local_time = _time
+        #         local_time = "Local time unknown"
+        #         region = None
+        return name, names, planet, lat, long, tz, _time, local_time, region, language
 
     def status(self):
         embed = discord.Embed(colour=general.random_colour())
-        place_name = f"{self.place}, {self.planet}" if self.region is None else f"{self.place}, {self.region}, {self.planet}"
+        place_name = f"{self.name}, {self.planet}" if self.region is None else f"{self.name}, {self.region}, {self.planet}"
         embed.title = f"Information about **{place_name}**"
-        embed.add_field(name="Time and Location", inline=False,
-                        value=f"Local time: {self.local_time}\n"
-                              f"Time zone: **{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)\n"
-                              f"Location: **{self.location(False)}**")
-        if self.local_names:
-            embed.add_field(name="Other Names", value=self.local_names, inline=False)
+        # embed.add_field(name="Time and Location", inline=False,
+        #                 value=f"Local time: {self.local_time}\n"
+        #                       f"Time zone: **{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)\n"
+        #                       f"Location: **{self.location(False)}**")
+        embed.add_field(name="Local Time", value=self.local_time, inline=False)
+        embed.add_field(name="Timezone", value=f"**{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)", inline=False)
+        embed.add_field(name="Location", value=self.location(False), inline=False)
+        embed.add_field(name="Local Names", value=self.names, inline=False)
+        embed.add_field(name="Local Language(s)", value=self.language, inline=False)
 
         if self.weathers is not None:
             # Remove non-ascii stuff like äá to make sure it's only A-Z
-            _name = self.place[:8].encode("ascii", "replace").replace(b"?", b"0").replace(b" ", b"0")
+            _name = self.name[:8].encode("ascii", "replace").replace(b"?", b"0").replace(b" ", b"0")
             _seed0 = int(_name, base=36)
             _seed1 = self.time.ds * 1440  # Seed the day from 1/1/0001, multiplied by 1440 minutes.
             _seed2 = self.time.hour * 60
@@ -454,7 +1059,8 @@ class Sun:
                 day_part = "evening"  # In an equal day: 3pm-6:30pm
             else:
                 day_part = "night"    # In an equal day: 6:30pm-midnight
-        sun_data += f"\nTrue solar time {solar_time}"
+        if self.place.lat not in [90, -90]:
+            sun_data += f"\nTrue solar time {solar_time}"
         # if self.place.lat not in [0, 90]:
         #     parts = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
         #     _azimuth = (azimuth + 22.5) % 360

@@ -315,3 +315,6 @@
 - Added Usturian time
 - Added support of dates outside of years 1-9999 for time generation (using numpy datetime64)
 - Added support for Usturian place names on Qevenerus
+
+## v1.2.6 - 18 August 2021
+- Improved the data for cities of Virkada, Kargadia and Qevenerus

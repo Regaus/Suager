@@ -974,3 +974,7 @@
 
 ## v7.4.2.2 - 13 August 2021
 - Fixed command description in //settings leveling message
+
+## v7.4.3 - 18 August 2021
+- Added more data to the weather command, and made the embed fields not inline
+- Updated settings command's text for birthday and leveling settings when they're enabled

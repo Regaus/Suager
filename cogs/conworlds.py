@@ -8,9 +8,9 @@ from discord.ext import commands
 from utils import bot_data, conlangs, general, places, time, times
 
 longest_city = {
-    "Virkada": 21,
-    "Kargadia": 19,
-    "Qevenerus": 16,
+    "Virkada": 20,
+    "Kargadia": 22,
+    "Qevenerus": 22,
 }
 
 
@@ -116,38 +116,39 @@ class Conworlds(commands.Cog):
 
     @commands.command(name="locations", aliases=["location", "loc"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def location(self, ctx: commands.Context, *, where: str = None):
+    async def location(self, ctx: commands.Context, *, where: str):
         """ Locations of Places in GA-78
 
         Input a planet (e.g. Kargadia) to see list of all locations on the planet
         Input a place to see where it is"""
-        if where:
-            if where in ["Virkada", "Zeivela", "Kargadia", "Qevenerus"]:
-                _places = []
-                _longest = longest_city[where]
-                for city, data in places.places.items():
-                    if data[0] == where:
-                        place = places.Place(city)
-                        _places.append(f"`{city:<{_longest}} - {place.location(True)}`")
-                if len(_places) <= 25:
-                    return await general.send(f"Locations in {where}:\n\n" + "\n".join(_places), ctx.channel)
-                else:
-                    await general.send(f"Locations in {where}:", ctx.channel)
-                    for i in range(ceil(len(_places) / 20)):
-                        j = i * 20
-                        await general.send("\n".join(_places[j:j+20]), ctx.channel)
+        # if where:
+        if where in ["Virkada", "Zeivela", "Kargadia", "Qevenerus"]:
+            _places = []
+            _longest = longest_city[where]
+            # for city, data in places.places_old.items():
+            for city in places.places:
+                if city["planet"] == where:
+                    place = places.Place(city["name"]["English"])
+                    _places.append(f"`{place.name:<{_longest}} - {place.location(True)}`")
+            if len(_places) <= 25:
+                return await general.send(f"Locations in {where}:\n\n" + "\n".join(_places), ctx.channel)
             else:
-                try:
-                    place = places.Place(where)
-                    return await general.send(f"{where} - {place.planet} - {place.location(False)}", ctx.channel)
-                except places.PlaceDoesNotExist:
-                    return await general.send(f"Location {where!r} not found.", ctx.channel)
+                await general.send(f"Locations in {where}:", ctx.channel)
+                for i in range(ceil(len(_places) / 20)):
+                    j = i * 20
+                    await general.send("\n".join(_places[j:j+20]), ctx.channel)
         else:
-            planets = []
-            for data in places.places.values():
-                if data[0] not in planets:
-                    planets.append(data[0])
-            return await general.send("Planets with locations available:\n\n" + "\n".join(planets), ctx.channel)
+            try:
+                place = places.Place(where)
+                return await general.send(f"{where} - {place.planet} - {place.location(False)}", ctx.channel)
+            except places.PlaceDoesNotExist:
+                return await general.send(f"Location {where!r} not found.", ctx.channel)
+        # else:
+        #     planets = []
+        #     for data in places.places_old.values():
+        #         if data[0] not in planets:
+        #             planets.append(data[0])
+        #     return await general.send("Planets with locations available:\n\n" + "\n".join(planets), ctx.channel)
 
     @commands.command(name="nlc")
     @commands.is_owner()
