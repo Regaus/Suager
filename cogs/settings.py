@@ -188,6 +188,7 @@ class Settings(commands.Cog):
     async def set_language(self, ctx: commands.Context, new_language: str):
         """ Change the bot's language in this server """
         old_language = self.bot.language(ctx)
+        new_language = new_language.lower()  # Make it case-insensitive just in case
         if new_language not in languages.languages.keys():
             return await general.send(old_language.string("settings_locale_invalid", new_language, ctx.prefix), ctx.channel)
         locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))

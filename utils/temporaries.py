@@ -67,6 +67,12 @@ async def temporaries(bot: bot_data.Bot):
                                     else:
                                         try:
                                             await member.remove_roles(mute_role, reason=f"[Auto-Unmute] Punishment expired")
+                                            if guild.id == 869975256566210641:  # Nuriki's anarchy server
+                                                await member.add_roles(guild.get_role(869975498799845406), reason="Punishment expired")  # Give back the Anarchists role
+                                                try:
+                                                    await member.send(f"You have been unmuted in {guild.name}: Your mute has expired.")
+                                                except discord.Forbidden:
+                                                    pass
                                             logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
                                                                                 f"guild {guild} ({entry_id})")
                                             handled = 1
@@ -296,6 +302,12 @@ async def playing(bot: bot_data.Bot):
                     {"type": 2, "name": "na deinettat"},
                     {"type": 0, "name": status_regaus2},
                     {"type": 0, "name": status_cobble},
+                    {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
+                    {"type": 0, "name": "na TBL'n"},
+                    {"type": 0, "name": "Akos'an"},
+                    {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
+                    {"type": 0, "name": "na TKP'n"},
+                    {"type": 0, "name": "vaihaga kiinanshavarkan"}
                 ],
                 "kyomi": [
                     {"type": 0, "name": fv},
@@ -418,38 +430,38 @@ async def avatars(bot: bot_data.Bot):
         await asyncio.sleep(3600)
 
 
-async def vote_bans(bot: bot_data.Bot):
-    await bot.wait_until_ready()
-
-    print(f"{time.time()} > {bot.full_name} > Initialised Vote Bans")
-    guild: discord.Guild = bot.get_guild(869975256566210641)  # Nuriki's Anarchy Server
-    channel: discord.TextChannel = guild.get_channel(871811287166898187)  # Trials channel
-    while True:
-        expired = bot.db.fetch("SELECT * FROM vote_bans WHERE DATETIME(expiry) < DATETIME('now')", ())
-        for entry in expired:
-            upvotes, downvotes = len(json.loads(entry["upvotes"])), len(json.loads(entry["downvotes"]))
-            user: discord.User = await bot.fetch_user(entry["uid"])
-            votes = upvotes - downvotes
-            acceptance = upvotes / (upvotes + downvotes)
-            if votes >= 3 and acceptance >= 0.6:
-                try:
-                    await guild.ban(user, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"), delete_message_days=0)
-                except discord.Forbidden:
-                    general.print_error(f"Failed to ban {user} - Missing permissions")
-                    if channel is not None:
-                        await general.send(f"Failed to ban {user} - Missing permissions", channel)
-                if channel is not None:
-                    await general.send(f"The vote has ended: {user} has been banned. ({votes} votes, {acceptance:.0%} upvoted)", channel)
-            else:
-                member = guild.get_member(entry["uid"])
-                if member is not None:
-                    await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
-                    await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
-                if channel is not None:
-                    await general.send(f"The vote has ended: {user} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
-                                       f"Must be at least 3 votes and 60% upvotes to ban.", channel)
-            bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (entry["uid"],))
-        await asyncio.sleep(1)
+# async def vote_bans(bot: bot_data.Bot):
+#     await bot.wait_until_ready()
+#
+#     print(f"{time.time()} > {bot.full_name} > Initialised Vote Bans")
+#     guild: discord.Guild = bot.get_guild(869975256566210641)  # Nuriki's Anarchy Server
+#     channel: discord.TextChannel = guild.get_channel(871811287166898187)  # Trials channel
+#     while True:
+#         expired = bot.db.fetch("SELECT * FROM vote_bans WHERE DATETIME(expiry) < DATETIME('now')", ())
+#         for entry in expired:
+#             upvotes, downvotes = len(json.loads(entry["upvotes"])), len(json.loads(entry["downvotes"]))
+#             user: discord.User = await bot.fetch_user(entry["uid"])
+#             votes = upvotes - downvotes
+#             acceptance = upvotes / (upvotes + downvotes)
+#             if votes >= 3 and acceptance >= 0.6:
+#                 try:
+#                     await guild.ban(user, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"), delete_message_days=0)
+#                 except discord.Forbidden:
+#                     general.print_error(f"Failed to ban {user} - Missing permissions")
+#                     if channel is not None:
+#                         await general.send(f"Failed to ban {user} - Missing permissions", channel)
+#                 if channel is not None:
+#                     await general.send(f"The vote has ended: {user} has been banned. ({votes} votes, {acceptance:.0%} upvoted)", channel)
+#             else:
+#                 member = guild.get_member(entry["uid"])
+#                 if member is not None:
+#                     await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
+#                     await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
+#                 if channel is not None:
+#                     await general.send(f"The vote has ended: {user} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
+#                                        f"Must be at least 3 votes and 60% upvotes to ban.", channel)
+#             bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (entry["uid"],))
+#         await asyncio.sleep(1)
 
 
 async def polls(bot: bot_data.Bot):
@@ -471,8 +483,8 @@ async def polls(bot: bot_data.Bot):
                     resend = setting["polls"]["channel"] == 0
             try:
                 guild: discord.Guild = bot.get_guild(guild_id)
-                language = bot.language(languages.FakeContext(guild, bot))
                 if guild:
+                    language = bot.language(languages.FakeContext(guild, bot))
                     channel: discord.TextChannel = guild.get_channel(poll["channel_id"])
                     if channel:
                         embed = discord.Embed()
@@ -483,10 +495,16 @@ async def polls(bot: bot_data.Bot):
                             upvotes = yes / (yes + no)
                         except ZeroDivisionError:
                             upvotes = 0
-                        if score > 0:
+                        if 3 >= score > 0:
+                            embed.colour = general.green2
+                            result = language.string("generic_yes")
+                        elif score > 3:
                             embed.colour = general.green
                             result = language.string("generic_yes")
-                        elif score < 0:
+                        elif -3 <= score < 0:
+                            embed.colour = general.red2
+                            result = language.string("generic_no")
+                        elif score < -3:
                             embed.colour = general.red
                             result = language.string("generic_no")
                         else:
@@ -497,7 +515,8 @@ async def polls(bot: bot_data.Bot):
                         embed.description = language.string("polls_end_description", poll["question"], ended, result)
                         embed.add_field(name=language.string("polls_votes_result"), inline=False,
                                         value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                                              language.number(total), language.number(score), language.number(upvotes, precision=2, percentage=True)))
+                                                              language.number(total), language.number(score, positives=True),
+                                                              language.number(upvotes, precision=2, percentage=True)))
                         if not poll["anonymous"]:
                             _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
                             if yes >= 45:
@@ -531,4 +550,210 @@ async def polls(bot: bot_data.Bot):
             except Exception as e:
                 general.print_error(f"{time.time()} > {bot.full_name} > Polls > Poll {poll['poll_id']} error: {type(e).__name__}: {e}")
             bot.db.execute("DELETE FROM polls WHERE poll_id=?", (poll["poll_id"],))
+        await asyncio.sleep(1)
+
+
+async def trials(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+
+    print(f"{time.time()} > {bot.full_name} > Initialised Trials")
+    while True:
+        expired = bot.db.fetch("SELECT * FROM trials WHERE DATETIME(expiry) < DATETIME('now')", ())
+        for trial in expired:
+            voters_yes: list = json.loads(trial["voters_yes"])
+            voters_neutral: list = json.loads(trial["voters_neutral"])
+            voters_no: list = json.loads(trial["voters_no"])
+            trial_id: int = trial["trial_id"]
+            try:
+                guild: discord.Guild = bot.get_guild(trial["guild_id"])
+                if guild:
+                    language = bot.language(languages.FakeContext(guild, bot))
+                    yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                    total = yes + neutral + no
+                    score = yes - no
+                    try:
+                        upvotes = yes / (yes + no)
+                    except ZeroDivisionError:
+                        upvotes = 0
+                    required = trial["required_score"]
+                    if score >= required:
+                        colour = general.green
+                    elif score >= 0:
+                        colour = general.red2
+                    else:
+                        colour = general.red
+                    success = score >= required and upvotes >= 0.6  # The trial has reached a high enough score, therefore it succeeded
+                    action: str = trial["type"]
+                    user: discord.User = await bot.fetch_user(trial["user_id"])  # Load the overall user
+                    member: discord.Member = guild.get_member(trial["user_id"])  # Load the Member for the functions that need it
+                    channel: discord.TextChannel = guild.get_channel(trial["channel_id"])
+                    output = "Error: Trial result next not defined"
+                    if success:
+                        reason_dm = f"Reason: {action.capitalize()} trial ({trial_id}) has succeeded - Score: {score:+}, {upvotes:.2%} voted yes"
+                        trial_success_text = general.reason(guild.me, f"{action.capitalize()} trial {trial_id} has succeeded (Score: {score:+} - {upvotes:.2%} voted yes)")
+                        if action in ["mute", "unmute"]:
+                            if member:
+                                _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
+                                if not _data:
+                                    general.print_error(f"{time.time()} > Trials > Trial {trial_id} > Guild settings not found")
+                                else:
+                                    data = json.loads(_data["data"])
+                                    try:
+                                        mute_role_id = data["mute_role"]
+                                    except KeyError:
+                                        general.print_error(f"{time.time()} > Trials > Trial {trial_id} > Guild has no mute role set")
+                                    else:
+                                        mute_role = guild.get_role(mute_role_id)
+                                        if not mute_role:
+                                            general.print_error(f"{time.time()} > Trials > Trial {trial_id} > Mute role not found")
+                                        else:
+                                            if action == "mute":
+                                                await member.add_roles(mute_role, reason=trial_success_text)
+                                                duration = trial["mute_length"]
+                                                temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
+                                                                                  (member.id, guild.id, bot.name))
+                                                if duration:
+                                                    new_mute_end = time.now2() + timedelta(seconds=duration)
+                                                    if temp_mute_entry:
+                                                        bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (new_mute_end, temp_mute_entry["entry_id"]))
+                                                    else:
+                                                        random_id = general.random_id()
+                                                        while bot.db.fetchrow("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
+                                                            random_id = general.random_id()
+                                                        bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                                                       (member.id, "mute", new_mute_end, guild.id, None, random_id, 0, bot.name))
+                                                    if channel:
+                                                        _duration = language.delta_int(duration, accuracy=3, brief=False, affix=False)
+                                                        output = language.string("trials_success_mute_timed", trial_id, user, _duration)
+                                                        await general.send(output, channel)
+                                                else:
+                                                    if temp_mute_entry:
+                                                        bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
+                                                    if channel:
+                                                        output = language.string("trials_success_mute", trial_id, user)
+                                                        await general.send(output, channel)
+                                                if guild.id == 869975256566210641:  # Nuriki's anarchy server
+                                                    await member.remove_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Remove the Anarchists role
+                                                    try:
+                                                        if duration:
+                                                            _duration2 = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
+                                                            _output = f"You've been muted in {guild.name} for {_duration2}.\n{reason_dm}"
+                                                        else:
+                                                            _output = f"You've been muted in {guild.name}.\n{reason_dm}"
+                                                        await user.send(_output)
+                                                    except discord.Forbidden:
+                                                        pass
+                                            else:
+                                                await member.remove_roles(mute_role, reason=trial_success_text)
+                                                temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
+                                                                                  (member.id, guild.id, bot.name))
+                                                if temp_mute_entry:
+                                                    bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
+                                                if guild.id == 869975256566210641:  # Nuriki's anarchy server
+                                                    await member.add_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Give back the Anarchists role
+                                                    try:
+                                                        await user.send(f"You've been unmuted in {guild.name}.\n{reason_dm}")
+                                                    except discord.Forbidden:
+                                                        pass
+                                                if channel:
+                                                    output = language.string("trials_success_unmute", trial_id, user)
+                                                    await general.send(output, channel)
+                            else:
+                                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't mute")
+                                if channel:
+                                    string = "trials_error_member_none_mute" if action == "mute" else "trials_error_member_none_unmute"
+                                    await general.send(language.string(string, trial_id), channel)
+                        elif action == "kick":
+                            if member:
+                                try:
+                                    await user.send(f"You have been kicked from {guild.name}.\n{reason_dm}")
+                                except (discord.HTTPException, discord.Forbidden):
+                                    pass
+                                await member.kick(reason=trial_success_text)
+                                if channel:
+                                    output = language.string("trials_success_kick", trial_id, user)
+                                    await general.send(output, channel)
+                            else:
+                                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't kick")
+                                if channel:
+                                    await general.send(language.string("trials_error_member_none_kick", trial_id), channel)
+                        elif action == "ban":
+                            # I don't have to check if the user exists here, because otherwise it would raise a discord.NotFound while fetching
+                            try:
+                                await user.send(f"You have been banned from {guild.name}.\n{reason_dm}")
+                            except (discord.HTTPException, discord.Forbidden):
+                                pass
+                            await guild.ban(user, reason=trial_success_text, delete_message_days=0)
+                            if channel:
+                                output = language.string("trials_success_ban", trial_id, user)
+                                await general.send(output, channel)
+                        elif action == "unban":
+                            try:
+                                await user.send(f"You have been unbanned from {guild.name}.\n{reason_dm}")
+                            except (discord.HTTPException, discord.Forbidden):
+                                pass
+                            await guild.unban(user, reason=trial_success_text)
+                            if channel:
+                                output = language.string("trials_success_unban", trial_id, user)
+                                await general.send(output, channel)
+                        else:
+                            general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong.")
+                    else:  # The trial has failed, so restore the member's anarchist roles
+                        if guild.id == 869975256566210641 and member:  # Nuriki's anarchy server
+                            await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
+                            await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
+                        if channel:
+                            fail_text = {
+                                "ban": "trials_failure_ban",
+                                "kick": "trials_failure_kick",
+                                "mute": "trials_failure_mute",
+                                "unban": "trials_failure_unban",
+                                "unmute": "trials_failure_unmute",
+                            }.get(action)
+                            output = language.string(fail_text, trial_id, user)
+                            await general.send(output, channel)
+                    if channel:
+                        embed = discord.Embed(colour=colour)
+                        embed.title = language.string("trials_end_title")
+                        _expiry = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=False)
+                        embed.description = language.string("trials_end_description", output, trial["reason"], _expiry)
+                        embed.add_field(name=language.string("trials_votes_result"), inline=False,
+                                        value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
+                                                              language.number(total), language.number(score, positives=True),
+                                                              language.number(upvotes, precision=2, percentage=True), language.number(required, positives=True)))
+                        if not trial["anonymous"]:
+                            _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
+                            if yes >= 45:
+                                _yes += language.string("polls_votes_many", language.number(yes - 45))
+                            if not _yes:
+                                _yes = language.string("polls_votes_none2")
+                            embed.add_field(name=language.string("polls_votes_yes"), value=_yes, inline=True)
+                            _neutral = "\n".join([f"<@{voter}>" for voter in voters_neutral[:45]])
+                            if neutral >= 45:
+                                _neutral += language.string("polls_votes_many", language.number(neutral - 45))
+                            if not _neutral:
+                                _neutral = language.string("polls_votes_none2")
+                            embed.add_field(name=language.string("polls_votes_neutral"), value=_neutral, inline=True)
+                            _no = "\n".join([f"<@{voter}>" for voter in voters_no[:45]])
+                            if no >= 45:
+                                _no += language.string("polls_votes_many", language.number(no - 45))
+                            if not _no:
+                                _no = language.string("polls_votes_none2")
+                            embed.add_field(name=language.string("polls_votes_no"), value=_no, inline=True)
+                        resend = True
+                        try:
+                            message: discord.Message = await channel.fetch_message(trial["message_id"])
+                            if message.embeds:
+                                # embed = message.embeds[0]
+                                await message.edit(embed=embed)
+                                resend = False
+                        except discord.NotFound:
+                            resend = True
+                        if resend:
+                            await general.send(None, channel, embed=embed)
+                else:
+                    general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Guild not found")
+            except Exception as e:
+                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} error: {type(e).__name__}: {e}")
+            bot.db.execute("DELETE FROM trials WHERE trial_id=?", (trial_id,))
         await asyncio.sleep(1)

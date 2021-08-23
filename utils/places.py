@@ -35,7 +35,7 @@ places = [
     },
     {
         "name": {
-            "English": "Suttaligar",
+            "English": "Village of Suttalis",
             "West Kargadian": "Suttaligar",
         },
         "location": [1324.1, 252.9],
@@ -44,7 +44,7 @@ places = [
     },
     {
         "name": {
-            "English": "Virkadagar",
+            "English": "Virkadan Village",
             "West Kargadian": "Virkadagar",
         },
         "location": [1312.8, 221.5],
@@ -380,7 +380,7 @@ places = [
     },
     {
         "name": {
-            "English": "The City of Five",
+            "English": "Five's City",
             "West Kargadian": "Pakigar",
         },
         "location": [347.5, 376.0],
@@ -410,7 +410,7 @@ places = [
     },
     {
         "name": {
-            "English": "Rega-City",
+            "English": "Regaus City",
             "West Kargadian": "Reggar",
         },
         "location": [1236.4, 300.0],
@@ -712,8 +712,9 @@ class Place:
     def get_location(self):
         # planet, x, y, *data = places_old[self.place]
         place = None
+        _name = self.name.lower()
         for _place in places:
-            if self.name in _place["name"].values():
+            if _name in [place_name.lower() for place_name in _place["name"].values()]:
                 place = _place
                 break
         if not place:

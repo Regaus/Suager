@@ -225,7 +225,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
         out = language.string("mod_mute", member, reason)
-        exists = self.bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+        exists = self.bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'", (member.id, ctx.guild.id, self.bot.name))
         _duration = reason.split(" ")[0]
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
@@ -540,85 +540,86 @@ class ModerationKyomi(Moderation, name="Moderation"):
             output += f"{i}) {design.replace('<nick>', ctx.author.name[:int(length)])}\n"
         output += "\nUse `m!nickdesigns` to see the nicknames applied to your username\n" \
                   "\nUse `m!nickdesign <design_number>` to apply a design to your name\n" \
-                  "  - Note: if you have any nickname, it will get reset\n" \
+                  "  - Note: This command will use your username (and therefore reset any nickname you have)\n" \
+                  "  - If you want to have a nickname, use `m!nickme`\n" \
                   "  - Example: `m!nickdesign 7`\n" \
                   "\nUse `m!nickme <design_number> <nickname>` to apply a design to a nickname of your choice\n" \
                   "  - Note: Requires permission to change your nickname\n" \
                   f"  - Example: `m!nickme 7 {ctx.author.name}`\n" \
-                  f"\nNote: If you boost this server, you will get a special nickname design. It is not included here, " \
-                  f"so if you change it, only the admins will be able to change it back."
+                  "\nNote: If you boost this server, you will get a special nickname design. It is not included here, " \
+                  "so if you change it, only the admins will be able to change it back."
         return await general.send(output, ctx.channel)
 
 
-class ModerationSuager(Moderation, name="Moderation"):
-    @commands.command(name="voteban")
-    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
-    @commands.guild_only()
-    async def vote_ban(self, ctx: commands.Context, member: MemberID):
-        """ Vote-ban a user from the server"""
-        if member == ctx.author.id:
-            return await general.send("You can't vote-ban yourself.", ctx.channel)
-        vote_data = self.bot.db.fetchrow("SELECT * FROM vote_bans WHERE uid=?", (member,))
-        # if vote_data:
-        #     if time.now2() > vote_data["expiry"]:
-        #         await general.send(f"The previous vote against {member} has expired", ctx.channel)
-        #         self.bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (member.id,))
-        #         vote_data = None  # Forget the previous vote
-        _user = await self.bot.fetch_user(member)
-        if vote_data:
-            upvotes, downvotes = json.loads(vote_data["upvotes"]), json.loads(vote_data["downvotes"])
-            if ctx.author.id in upvotes:
-                return await general.send("It seems you already voted to ban this user.", ctx.channel)
-            upvotes.append(ctx.author.id)
-            self.bot.db.execute("UPDATE vote_bans SET upvotes=? WHERE uid=?", (json.dumps(upvotes), member))
-            votes = len(upvotes) - len(downvotes)
-            acceptance = len(upvotes) / (len(upvotes + downvotes))
-            if votes >= 3 and acceptance >= 0.6:
-                _member = ctx.guild.get_member(member)
-                if _member:
-                    await _member.add_roles(ctx.guild.get_role(870338399922446336), reason="Vote-ban in progress")  # Give the On Trial role
-                    await _member.remove_roles(ctx.guild.get_role(869975498799845406), reason="Vote-ban in progress")  # Revoke the Anarchists role
-            if votes >= 5 and acceptance >= 0.9:
-                self.bot.db.execute("UPDATE vote_bans SET expiry=? WHERE uid=?", (time.now2(), member))
-            return await general.send(f"{ctx.author} has voted to ban {_user}. Votes: {votes} ({acceptance:.0%})", ctx.channel)
-        else:
-            expiry = time.now2() + time.td(hours=6)
-            self.bot.db.execute("INSERT INTO vote_bans VALUES (?, ?, ?, ?)", (member, f"[{ctx.author.id}]", "[]", expiry))
-            return await general.send(f"{ctx.author} has voted to ban {_user}. Vote lasts until: {self.bot.language2('english').time(expiry)} UTC.", ctx.channel)
-
-    @commands.command(name="downvoteban")
-    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
-    @commands.guild_only()
-    async def downvote_ban(self, ctx: commands.Context, member: MemberID):
-        """ Downvote a ban of a user from the server"""
-        if member == ctx.author.id:
-            return await general.send("You can't downvote your own ban.", ctx.channel)
-        vote_data = self.bot.db.fetchrow("SELECT * FROM vote_bans WHERE uid=?", (member,))
-        _user = await self.bot.fetch_user(member)
-        if vote_data:
-            # if time.now2() > vote_data["expiry"]:
-            #     return await general.send(f"The vote against {member} has expired", ctx.channel)
-            upvotes, downvotes = json.loads(vote_data["upvotes"]), json.loads(vote_data["downvotes"])
-            if ctx.author.id in downvotes:
-                return await general.send("It seems you already downvoted the ban of this user.", ctx.channel)
-            downvotes.append(ctx.author.id)
-            self.bot.db.execute("UPDATE vote_bans SET downvotes=? WHERE uid=?", (json.dumps(downvotes), member))
-            votes = len(upvotes) - len(downvotes)
-            acceptance = len(upvotes) / (len(upvotes + downvotes))
-            if votes <= 3 or acceptance <= 0.6:
-                _member = ctx.guild.get_member(member)
-                if _member:
-                    await _member.remove_roles(ctx.guild.get_role(870338399922446336), reason="Vote-ban trial: Upvotes have gone down")  # Remove the On Trial role
-                    await _member.add_roles(ctx.guild.get_role(869975498799845406), reason="Vote-ban trial: Upvotes have gone down")  # Give the Anarchists role
-            return await general.send(f"{ctx.author} has downvoted the ban of {_user}. Votes: {len(upvotes) - len(downvotes)} ({acceptance:.0%})", ctx.channel)
-        else:
-            return await general.send(f"Nobody is trying to ban {_user} yet.", ctx.channel)
+# class ModerationSuager(Moderation, name="Moderation"):
+#     @commands.command(name="voteban")
+#     @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+#     @commands.guild_only()
+#     async def vote_ban(self, ctx: commands.Context, member: MemberID):
+#         """ Vote-ban a user from the server"""
+#         if member == ctx.author.id:
+#             return await general.send("You can't vote-ban yourself.", ctx.channel)
+#         vote_data = self.bot.db.fetchrow("SELECT * FROM vote_bans WHERE uid=?", (member,))
+#         # if vote_data:
+#         #     if time.now2() > vote_data["expiry"]:
+#         #         await general.send(f"The previous vote against {member} has expired", ctx.channel)
+#         #         self.bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (member.id,))
+#         #         vote_data = None  # Forget the previous vote
+#         _user = await self.bot.fetch_user(member)
+#         if vote_data:
+#             upvotes, downvotes = json.loads(vote_data["upvotes"]), json.loads(vote_data["downvotes"])
+#             if ctx.author.id in upvotes:
+#                 return await general.send("It seems you already voted to ban this user.", ctx.channel)
+#             upvotes.append(ctx.author.id)
+#             self.bot.db.execute("UPDATE vote_bans SET upvotes=? WHERE uid=?", (json.dumps(upvotes), member))
+#             votes = len(upvotes) - len(downvotes)
+#             acceptance = len(upvotes) / (len(upvotes + downvotes))
+#             if votes >= 3 and acceptance >= 0.6:
+#                 _member = ctx.guild.get_member(member)
+#                 if _member:
+#                     await _member.add_roles(ctx.guild.get_role(870338399922446336), reason="Vote-ban in progress")  # Give the On Trial role
+#                     await _member.remove_roles(ctx.guild.get_role(869975498799845406), reason="Vote-ban in progress")  # Revoke the Anarchists role
+#             if votes >= 5 and acceptance >= 0.9:
+#                self.bot.db.execute("UPDATE vote_bans SET expiry=? WHERE uid=?", (time.now2(), member))
+#              return await general.send(f"{ctx.author} has voted to ban {_user}. Votes: {votes} ({acceptance:.0%})", ctx.channel)
+#         else:
+#             expiry = time.now2() + time.td(hours=6)
+#             self.bot.db.execute("INSERT INTO vote_bans VALUES (?, ?, ?, ?)", (member, f"[{ctx.author.id}]", "[]", expiry))
+#             return await general.send(f"{ctx.author} has voted to ban {_user}. Vote lasts until: {self.bot.language2('english').time(expiry)} UTC.", ctx.channel)
+#
+#     @commands.command(name="downvoteban")
+#     @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+#     @commands.guild_only()
+#     async def downvote_ban(self, ctx: commands.Context, member: MemberID):
+#         """ Downvote a ban of a user from the server"""
+#         if member == ctx.author.id:
+#             return await general.send("You can't downvote your own ban.", ctx.channel)
+#         vote_data = self.bot.db.fetchrow("SELECT * FROM vote_bans WHERE uid=?", (member,))
+#         _user = await self.bot.fetch_user(member)
+#         if vote_data:
+#             # if time.now2() > vote_data["expiry"]:
+#             #     return await general.send(f"The vote against {member} has expired", ctx.channel)
+#             upvotes, downvotes = json.loads(vote_data["upvotes"]), json.loads(vote_data["downvotes"])
+#             if ctx.author.id in downvotes:
+#                 return await general.send("It seems you already downvoted the ban of this user.", ctx.channel)
+#             downvotes.append(ctx.author.id)
+#             self.bot.db.execute("UPDATE vote_bans SET downvotes=? WHERE uid=?", (json.dumps(downvotes), member))
+#             votes = len(upvotes) - len(downvotes)
+#             acceptance = len(upvotes) / (len(upvotes + downvotes))
+#             if votes <= 3 or acceptance <= 0.6:
+#                 _member = ctx.guild.get_member(member)
+#                 if _member:
+#                     await _member.remove_roles(ctx.guild.get_role(870338399922446336), reason="Vote-ban trial: Upvotes have gone down")  # Remove the On Trial role
+#                     await _member.add_roles(ctx.guild.get_role(869975498799845406), reason="Vote-ban trial: Upvotes have gone down")  # Give the Anarchists role
+#             return await general.send(f"{ctx.author} has downvoted the ban of {_user}. Votes: {len(upvotes) - len(downvotes)} ({acceptance:.0%})", ctx.channel)
+#         else:
+#             return await general.send(f"Nobody is trying to ban {_user} yet.", ctx.channel)
 
 
 def setup(bot: bot_data.Bot):
     if bot.name == "kyomi":
         bot.add_cog(ModerationKyomi(bot))
-    elif bot.name == "suager":
-        bot.add_cog(ModerationSuager(bot))
+    # elif bot.name == "suager":
+    #     bot.add_cog(ModerationSuager(bot))
     else:
         bot.add_cog(Moderation(bot))

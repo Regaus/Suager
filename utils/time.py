@@ -136,17 +136,42 @@ def rd_is_zero(delta: relativedelta) -> bool:
 
 def rd_is_above_1w(delta: relativedelta) -> bool:
     try:
-        delta2 = relativedelta(now(None) + delta, now(None))
-        no = False
-        if delta2.days > 7:
-            no = True
-        elif delta2.days == 7:
-            delta2.days -= 7
-            if not rd_is_zero(delta2):
-                no = True
-        return no
+        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        return delta2 > 7 * 86400
+        # no = False
+        # if delta2.days > 7:
+        #     no = True
+        # elif delta2.days == 7:
+        #     delta2.days -= 7
+        #     if not rd_is_zero(delta2):
+        #         no = True
+        # return no
     except (ValueError, OverflowError):
         return True  # Errors out, assume something is wrong anyways
+
+
+def rd_is_above_30d(delta: relativedelta) -> bool:
+    try:
+        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        return delta2 > 30 * 86400
+    except (ValueError, OverflowError):
+        return True
+
+
+def rd_is_below_15m(delta: relativedelta) -> bool:
+    try:
+        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        return delta2 < 900
+    except (ValueError, OverflowError):
+        return True
+
+
+def rd_is_below_1h(delta: relativedelta) -> bool:
+    try:
+        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        return delta2 < 3600
+    except (ValueError, OverflowError):
+        return True
 
 
 def rd_is_above_5y(delta: relativedelta) -> bool:

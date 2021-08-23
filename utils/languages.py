@@ -65,16 +65,17 @@ class Language:
                 number = self.number(val, precision=precision, commas=val > 1024)
                 return f"{number} {names[i]}"
 
-    def number(self, value: Union[int, float], *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True) -> str:
+    def number(self, value: Union[int, float], *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True, positives: bool = False) -> str:
         """ Turn a number into a string """
         c = "," if commas else ""
+        p = "+" if positives and value != 0 else ""
         try:
             if (type(value) == int or precision == 0) and not percentage:
                 value = int(value)  # Make sure the value is an integer, in case it's a float with precision zero
-                output = f"{value:0{fill}{c}d}"
+                output = f"{value:{p}0{fill}{c}d}"
             else:
                 f = "%" if percentage else "f"
-                output = f"{value:0{fill}{c}.{precision}{f}}"
+                output = f"{value:{p}0{fill}{c}.{precision}{f}}"
             if self.language == "russian":
                 output = output.replace(",", " ").replace(".", ",")
             return output
@@ -215,6 +216,12 @@ class Language:
 
     def time(self, when: datetime = None, *, short: int = 0, dow: bool = False, seconds: bool = True, tz: bool = False) -> str:
         return f"{self.date(when, short=short, dow=dow, year=True)}, {self.time2(when, seconds=seconds, tz=tz)}"
+
+    def __str__(self):
+        return self.language
+
+    def __repr__(self):
+        return f"<Language code={self.language!r}>"
 
 
 class FakeContext:

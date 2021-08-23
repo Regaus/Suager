@@ -125,4 +125,4 @@ def random1(low: float = 0.0, high: float = 1.0, seed: int = 0) -> float:
 #     return state.normal(mean, sd, None)
 
 
-red, yellow, green = 0xff0000, 0xffc000, 0x00ff00
+red, red2, yellow, green2, green = 0xff0000, 0xff4000, 0xffc000, 0xc0ff00, 0x00ff00

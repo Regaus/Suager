@@ -8,17 +8,17 @@
   },
   "cobble": {
     "short_version": "1.2",
-    "version": "1.2.6",
+    "version": "1.2.7",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1629250095
+    "last_update": 1629303542
   },
   "kyomi": {
     "short_version": "0.3",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "first_version": 1623891776,
     "major_release": 1623891776,
-    "last_update": 1627954387
+    "last_update": 1629658946
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

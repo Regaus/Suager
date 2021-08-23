@@ -978,3 +978,14 @@
 ## v7.4.3 - 18 August 2021
 - Added more data to the weather command, and made the embed fields not inline
 - Updated settings command's text for birthday and leveling settings when they're enabled
+
+## v7.4.4 - 18-22 August 2021
+- Polls now have a slightly different colour when they have a (non-zero) score between -3 and 3
+- Added positives variable to Language.number() - for polls/trials scores (shows up as +2 instead of just 2)
+- Added `__str__` and `__repr__` to Language class
+- Added trials
+- Made trials check for fail conditions (such as member not being in the server), unlike vote-bans
+- Removed original vote-ban system
+- Poll and trial lists are now sorted: those that end sooner are shown first
+- Slightly rearranged poll results string
+- Polls must last at least 1 hour in Nuriki's server now

@@ -318,3 +318,7 @@
 
 ## v1.2.6 - 18 August 2021
 - Improved the data for cities of Virkada, Kargadia and Qevenerus
+
+## v1.2.7 - 18 August 2021
+- Made weather78 place names case-insensitive
+- Added some more playing statuses

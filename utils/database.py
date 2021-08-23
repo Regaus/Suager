@@ -204,20 +204,23 @@ tables = [
         Column("channel_id", 0, True),      # The Channel ID of the trial status message
         Column("message_id", 0, True),      # The Message ID of the trial status message
         Column("trial_id", 0, True),        # The Trial ID
+        Column("author_id", 0, True),       # The User ID of who started the trial
         Column("user_id", 0, True),         # The User ID, to which the action will be done if the trial succeeds
         Column("type", 2, True),            # The type of trial (ban, unban, kick, mute, unmute)
-        Column("mute_length", 0, False),    # The mute length (if the trial type is mute)
+        Column("mute_length", 0, True),     # The mute length in seconds (if the trial type is mute)
         Column("reason", 2, True),          # The reason for starting the trial ([Author#1234] Reason)
         Column("voters_yes", 2, True),      # List of users who voted Yes
         Column("voters_neutral", 2, True),  # List of users who voted Neutral
         Column("voters_no", 2, True),       # List of users who voted No
+        Column("start_time", 1, True),      # Timestamp when the trial was started
         Column("expiry", 4, True),          # When the poll ends
         Column("anonymous", 3, True),       # Whether the poll is anonymous or not
+        Column("required_score", 0, True),  # Score required for the trial to pass
     ]),
-    Table("vote_bans", [
-        Column("uid", 0, True),        # User ID
-        Column("upvotes", 2, True),    # List of upvote IDs
-        Column("downvotes", 2, True),  # List of downvote IDs
-        Column("expiry", 4, True),     # When the vote expires
-    ])
+    # Table("vote_bans", [
+    #     Column("uid", 0, True),        # User ID
+    #     Column("upvotes", 2, True),    # List of upvote IDs
+    #     Column("downvotes", 2, True),  # List of downvote IDs
+    #     Column("expiry", 4, True),     # When the vote expires
+    # ])
 ]

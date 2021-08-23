@@ -126,7 +126,7 @@ class Events(commands.Cog):
     async def on_member_join(self, member: discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just joined {member.guild.name}")
         if self.bot.name == "suager":
-            if member.guild.id == 568148147457490954:
+            if member.guild.id == 568148147457490954:  # Senko Lair
                 # members = len(member.guild.members)
                 # await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
                 if time.now() < time.dt(2022):
@@ -134,6 +134,24 @@ class Events(commands.Cog):
                     await member.add_roles(role, reason="Joining Senko Lair during 2021.")
                 else:
                     await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
+            if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
+                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=869975256566210641 and user_id=?", (member.id,))
+                if trials:
+                    for trial in trials:
+                        if trial["type"] in ["mute", "kick", "ban"]:
+                            voters_yes: list = json.loads(trial["voters_yes"])
+                            voters_neutral: list = json.loads(trial["voters_neutral"])
+                            voters_no: list = json.loads(trial["voters_no"])
+                            yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                            score = yes - no
+                            try:
+                                upvotes = yes / (yes + no)
+                            except ZeroDivisionError:
+                                upvotes = 0
+                            if score >= trial["required_votes"] and upvotes >= 0.6:
+                                await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
+                                await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
+                                break
             # if member.guild.id == 738425418637639775:
             #     language = self.bot.language2("english")
             #     join = language.time(member.joined_at, short=1, dow=False, seconds=True, tz=False)

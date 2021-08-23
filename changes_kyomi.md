@@ -57,3 +57,6 @@
 
 ## v0.3.3 - 3 August 2021
 - Added more statuses
+
+## v0.3.4 - 22 August 2021
+- Slightly changed nick designs message
