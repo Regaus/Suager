@@ -529,7 +529,7 @@ class Polls(commands.Cog):
 
     @commands.command(name="voteban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
     async def vote_ban(self, ctx: commands.Context, user: MemberID, *, reason: str = ""):
         """ Deprecated command, use //trials """
         _reason = f" {reason}" if reason else ""
@@ -540,8 +540,8 @@ class Polls(commands.Cog):
 
     @commands.command(name="downvoteban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
-    async def vote_ban(self, ctx: commands.Context, user: MemberID):
+    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
+    async def downvote_ban(self, ctx: commands.Context, user: MemberID):
         """ Deprecated command, use //trials """
         return await general.send(f"This command is no longer used.\n"
                                   f"To vote no on a trial, use `{ctx.prefix}trial vote {user} no`\n"
