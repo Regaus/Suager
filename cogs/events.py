@@ -182,20 +182,19 @@ class Events(commands.Cog):
                         await general.send(message, channel, u=[member])
         if self.bot.name == "suager":
             if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
-                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=869975256566210641 and user_id=?", (member.id,))
+                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
                 if trials:
                     for trial in trials:
                         if trial["type"] in ["mute", "kick", "ban"]:
                             voters_yes: list = json.loads(trial["voters_yes"])
-                            voters_neutral: list = json.loads(trial["voters_neutral"])
                             voters_no: list = json.loads(trial["voters_no"])
-                            yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                            yes, no = len(voters_yes), len(voters_no)
                             score = yes - no
                             try:
                                 upvotes = yes / (yes + no)
                             except ZeroDivisionError:
                                 upvotes = 0
-                            if score >= trial["required_votes"] and upvotes >= 0.6:
+                            if score >= trial["required_score"] and upvotes >= 0.6:
                                 await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
                                 await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
                                 break
