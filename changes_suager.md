@@ -989,3 +989,6 @@
 - Poll and trial lists are now sorted: those that end sooner are shown first
 - Slightly rearranged poll results string
 - Polls must last at least 1 hour in Nuriki's server now
+
+## v7.4.4.1 - 23 August 2021
+- Added temporary vote-ban commands that just show how to use the new Trials system

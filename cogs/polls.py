@@ -209,7 +209,7 @@ class Polls(commands.Cog):
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def trial(self, ctx: commands.Context, duration: str, action: str, user: MemberID, *, reason: str = None):
+    async def trial(self, ctx: commands.Context, duration: str, action: str, user: MemberID, *, reason: str = ""):
         """ Start a new trial to take action against a user or interact with existing ones
         Supported actions: mute, unmute, kick, ban, unban
         For muting, you can specify the length of the mute, or only specify a reason if you with to mute permanently
@@ -526,6 +526,26 @@ class Polls(commands.Cog):
             output.append(language.string("trials_list_entry", language.number(i, commas=False), trial["trial_id"], language.string(action_text, user),
                                           ends, ends_in, trial["reason"]))
         return await general.send(language.string("trials_list", ctx.guild.name, "\n\n".join(output)), ctx.channel)
+
+    @commands.command(name="voteban")
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+    async def vote_ban(self, ctx: commands.Context, user: MemberID, *, reason: str = ""):
+        """ Deprecated command, use //trials """
+        _reason = f" {reason}" if reason else ""
+        return await general.send(f"This command is no longer used.\n"
+                                  f"To start a new trial - `{ctx.prefix}trial <duration> ban {user}{_reason}`\n"
+                                  f"To vote yes if there already is a trial - `{ctx.prefix}trial vote {user} yes`\n"
+                                  f"Note: Yes, you can actually use the user ID instead of the trial ID for voting.", ctx.channel)
+
+    @commands.command(name="downvoteban")
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.guild.id == 869975256566210641)
+    async def vote_ban(self, ctx: commands.Context, user: MemberID):
+        """ Deprecated command, use //trials """
+        return await general.send(f"This command is no longer used.\n"
+                                  f"To vote no on a trial, use `{ctx.prefix}trial vote {user} no`\n"
+                                  f"Note: Yes, you can actually use the user ID instead of the trial ID for voting.", ctx.channel)
 
 
 def setup(bot: bot_data.Bot):
