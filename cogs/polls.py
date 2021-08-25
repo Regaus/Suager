@@ -61,7 +61,7 @@ class Polls(commands.Cog):
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_no"), value=language.string("polls_votes_none"), inline=True)
             content = "<@&880091178559737946>" if ctx.guild.id == 869975256566210641 else None
-            message = await general.send(content, poll_channel, embed=embed)
+            message = await general.send(content, poll_channel, embed=embed, r=ctx.guild.id == 869975256566210641)
             self.bot.db.execute("INSERT INTO polls VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.guild.id, poll_channel.id, message.id, poll_id, _question, "[]", "[]", "[]", expiry, poll_anonymity))
             return await general.send(language.string("polls_new_success", ctx.author.name), ctx.channel)
