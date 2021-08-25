@@ -992,3 +992,7 @@
 
 ## v7.4.4.1 - 23 August 2021
 - Added temporary vote-ban commands that just show how to use the new Trials system
+
+## v7.4.4.2 - 25 August 2021
+- Changed SL timezone name
+- Polls now ping a role in Nuriki's server
