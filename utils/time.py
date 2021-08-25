@@ -161,7 +161,7 @@ def rd_is_above_30d(delta: relativedelta) -> bool:
 def rd_is_below_15m(delta: relativedelta) -> bool:
     try:
         delta2 = ((now(None) + delta) - now(None)).total_seconds()
-        return delta2 < 900
+        return delta2 < 899
     except (ValueError, OverflowError):
         return True
 
@@ -169,7 +169,7 @@ def rd_is_below_15m(delta: relativedelta) -> bool:
 def rd_is_below_1h(delta: relativedelta) -> bool:
     try:
         delta2 = ((now(None) + delta) - now(None)).total_seconds()
-        return delta2 < 3600
+        return delta2 < 3599
     except (ValueError, OverflowError):
         return True
 
