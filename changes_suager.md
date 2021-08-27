@@ -996,3 +996,6 @@
 ## v7.4.4.2 - 25 August 2021
 - Changed SL timezone name
 - Polls now ping a role in Nuriki's server
+
+## v7.4.4.3 - 27 August 2021
+- Make the embed command try to have newlines with \n

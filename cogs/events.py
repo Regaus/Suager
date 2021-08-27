@@ -198,6 +198,9 @@ class Events(commands.Cog):
                                 await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
                                 await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
                                 break
+        if self.bot.name == "kyomi":
+            if member.guild.id == 693948857939132478:  # Midnight Dessert
+                await member.edit(nick=f"✧₊˚🍰⌇{member.name[:23]}🌙⋆｡˚", reason="Joining the server")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -391,6 +394,13 @@ class Events(commands.Cog):
                 logger.log(self.bot.name, log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
             for role in roles_gained:
                 logger.log(self.bot.name, log, f"{to} > {guild} > {n} ({uid}) got role {role}")
+            if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
+                booster_role = after.guild.get_role(716324385119535168)
+                if booster_role in roles_gained:  # User started boosting MD
+                    await after.edit(nick=f"⁀➷Booster!🧁 ☆ {after.name[:14]} 🍩 ✦", reason="Applying booster nick design")
+                if booster_role in roles_lost:  # User no longer boosts MD
+                    if "⁀➷Booster!🧁 ☆ " in after.nick:  # If they still have "Booster" in their nickname
+                        await after.edit(nick=f"✧₊˚🍰⌇{after.name[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
 
 
 def setup(bot: bot_data.Bot):

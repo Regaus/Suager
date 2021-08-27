@@ -60,3 +60,7 @@
 
 ## v0.3.4 - 22 August 2021
 - Slightly changed nick designs message
+
+## v0.3.5 - 27 August 2021
+- Automatic ~~unicode garbage~~ nickname designs for new MD members and boosters
+- Make the embed command try to have newlines with \n

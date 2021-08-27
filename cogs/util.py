@@ -671,13 +671,13 @@ class Utility(commands.Cog):
             if args.author:
                 embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
         if args.title:
-            embed.title = " ".join(args.title)
+            embed.title = " ".join(args.title).replace("\\n", "\n")
             if len(embed.title) > 256:
                 return await general.send("Embed title cannot be longer than 256 characters. Blame discord.", ctx.channel)
         if args.description:
-            embed.description = " ".join(args.description)
+            embed.description = " ".join(args.description).replace("\\n", "\n")
         if args.footer:
-            embed.set_footer(text=" ".join(args.footer))
+            embed.set_footer(text=" ".join(args.footer).replace("\\n", "\n"))
         if args.thumbnail:
             embed.set_thumbnail(url=args.thumbnail[0])
         if args.image:
