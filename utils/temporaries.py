@@ -307,7 +307,8 @@ async def playing(bot: bot_data.Bot):
                     {"type": 0, "name": "Akos'an"},
                     {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
                     {"type": 0, "name": "na TKP'n"},
-                    {"type": 0, "name": "vaihaga kiinanshavarkan"}
+                    {"type": 0, "name": "vaihaga kiinanshavarkan"},
+                    {"type": 0, "name": "RIP discord.py"},
                 ],
                 "kyomi": [
                     {"type": 0, "name": fv},
@@ -366,6 +367,7 @@ async def playing(bot: bot_data.Bot):
                     {"type": 0, "name": "sentience"},
                     {"type": 0, "name": status_regaus},
                     {"type": 0, "name": status_suager},
+                    {"type": 0, "name": "RIP discord.py"},
                 ]
             }
             _activity = random.choice(plays.get(bot.name))
