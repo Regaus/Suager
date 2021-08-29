@@ -999,3 +999,8 @@
 
 ## v7.4.4.3 - 27 August 2021
 - Make the embed command try to have newlines with \n
+
+## v7.4.5 - 29 August 2021
+- Added av as alias to //avatar
+- Added xp as alias to //rank
+- Automatically vote "yes" on trials you start

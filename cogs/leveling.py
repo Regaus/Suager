@@ -495,7 +495,7 @@ class Leveling(commands.Cog):
             bio.seek(0)
             return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
 
-    @commands.command(name="rank", aliases=["level"])
+    @commands.command(name="rank", aliases=["level", "xp"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):

@@ -418,7 +418,7 @@ class Utility(commands.Cog):
         await message.add_reaction(emotes.Meh)
         await message.add_reaction(emotes.Deny)
 
-    @commands.command(name="avatar")
+    @commands.command(name="avatar", aliases=["av"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """

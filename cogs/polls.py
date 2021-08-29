@@ -338,16 +338,18 @@ class Polls(commands.Cog):
                 embed.description = language.string("trials_new_description", trial_id, language.string(action_text, _user), _reason, _duration, _expiry)
             embed.set_footer(text=language.string("trials_new_footer", ctx.prefix, trial_id))
             zero = language.number(0)
+            one = language.number(1)
+            one2 = language.number(1, positives=True)
             embed.add_field(name=language.string("trials_votes_current"), inline=False,
-                            value=language.string("trials_votes_current2", zero, zero, zero, zero, zero, language.number(0, precision=2, percentage=True), _required))
+                            value=language.string("trials_votes_current2", one, zero, zero, one, one2, language.number(1, precision=2, percentage=True), _required))
             if not poll_anonymity:
-                embed.add_field(name=language.string("polls_votes_yes"), value=language.string("polls_votes_none"), inline=True)
+                embed.add_field(name=language.string("polls_votes_yes"), value=ctx.author.mention, inline=True)
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_no"), value=language.string("polls_votes_none"), inline=True)
             message = await general.send(None, poll_channel, embed=embed)
             self.bot.db.execute(f"INSERT INTO trials VALUES ({'?, ' * 15}?)",
                                 (ctx.guild.id, poll_channel.id, message.id, trial_id, ctx.author.id, user, action, mute_duration, _reason,
-                                 "[]", "[]", "[]", now_ts, expiry, poll_anonymity, required))
+                                 f"[{ctx.author.id}]", "[]", "[]", now_ts, expiry, poll_anonymity, required))
             return await general.send(language.string("trials_new_success"), ctx.channel)
 
     @trial.command(name="vote")
