@@ -322,3 +322,6 @@
 ## v1.2.7 - 18 August 2021
 - Made weather78 place names case-insensitive
 - Added some more playing statuses
+
+## v1.2.7.1 - 2 September 2021
+- Made settings command not load irrelevant settings, and made the template only contain relevant settings

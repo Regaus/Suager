@@ -64,3 +64,7 @@
 ## v0.3.5 - 27 August 2021
 - Automatic ~~unicode garbage~~ nickname designs for new MD members and boosters
 - Make the embed command try to have newlines with \n
+
+## v0.3.5.1 - 2 September 2021
+- Made settings command not load irrelevant settings, and made the template only contain relevant settings
+- Fix booster nickname detection

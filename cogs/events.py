@@ -399,7 +399,7 @@ class Events(commands.Cog):
                 if booster_role in roles_gained:  # User started boosting MD
                     await after.edit(nick=f"⁀➷Booster!🧁 ☆ {after.name[:14]} 🍩 ✦", reason="Applying booster nick design")
                 if booster_role in roles_lost:  # User no longer boosts MD
-                    if "⁀➷Booster!🧁 ☆ " in after.nick:  # If they still have "Booster" in their nickname
+                    if "⁀➷Booster!🧁 ☆" in after.nick:  # If they still have "Booster" in their nickname
                         await after.edit(nick=f"✧₊˚🍰⌇{after.name[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
 
 

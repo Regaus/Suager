@@ -1004,3 +1004,6 @@
 - Added av as alias to //avatar
 - Added xp as alias to //rank
 - Automatically vote "yes" on trials you start
+
+## v7.4.5.1 - 2 September 2021
+- Made settings command not load irrelevant settings, and made the template only contain relevant settings

@@ -169,7 +169,7 @@ class Leveling(commands.Cog):
             except KeyError:
                 pass
         else:
-            __settings = settings.template.copy()
+            __settings = settings.template_suager.copy()
             xp_disabled = True
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if data:

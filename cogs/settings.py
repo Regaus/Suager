@@ -11,6 +11,11 @@ from utils import bot_data, general, languages, permissions, settings, time
 class Settings(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        self.template = {
+            "cobble": settings.template_cobble,
+            "kyomi": settings.template_mizuki,
+            "suager": settings.template_suager
+        }.get(self.bot.name).copy()
 
     @commands.command(name="languages", aliases=["language", "langs", "lang"])
     async def languages(self, ctx: commands.Context):
@@ -59,81 +64,83 @@ class Settings(commands.Cog):
             embed.add_field(name=language.string("settings_current_language"), value=language.string("_name"), inline=False)
             dp, cp = self.prefix_list(ctx)
             embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
-            mute_role = language.string("generic_none")
-            if "mute_role" in setting:
-                if setting["mute_role"] != 0:
-                    mute_role = f"<@&{setting['mute_role']}>"
-            embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
-            if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                mod, users, messages = language.string("settings_current_disabled"), language.string("settings_current_disabled"), language.string("settings_current_disabled")
-                message_ignore = False
-                if "audit_logs" in setting:
-                    if setting["audit_logs"]:
-                        mod = f"<#{setting['audit_logs']}>"
-                if "user_logs" in setting:
-                    if setting["user_logs"]:
-                        users = f"<#{setting['user_logs']}>"
-                if "message_logs" in setting:
-                    if setting["message_logs"]:
-                        messages = f"<#{setting['message_logs']}>"
-                        message_ignore = True
-                embed.add_field(name=language.string("settings_current_logs"), value=language.string("settings_current_logs2", mod, users, messages), inline=False)
-                if message_ignore:
-                    ignore = language.string("generic_none")
-                    if "message_ignore" in setting:
-                        if setting["message_ignore"]:
-                            ignore = ", ".join([f"<#{channel}>" for channel in setting["message_ignore"]])
-                    embed.add_field(name=language.string("settings_current_messages_ignore"), value=ignore, inline=False)
-            sb = language.string("settings_current_disabled")
-            if "starboard" in setting:
-                starboard = setting["starboard"]
-                if starboard["enabled"]:
-                    sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
-            embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
-            lvl = language.string("settings_current_disabled")
-            if "leveling" in setting:
-                if setting["leveling"]["enabled"]:
-                    lvl = language.string("settings_current_leveling", ctx.prefix)
-            embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
-            bd = language.string("settings_current_disabled")
-            if "birthdays" in setting:
-                if setting["birthdays"]["enabled"]:
-                    bd = language.string("settings_current_birthdays", ctx.prefix)
-            embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
-            polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
-            if "polls" in setting:
-                polls = setting["polls"]
-                if polls["channel"]:
-                    polls_channel = f"<#{polls['channel']}>"
-                polls_anonymity = language.yes(polls["voter_anonymity"])
-            embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
-            members, bots = language.string("generic_none"), language.string("generic_none")
-            if "join_roles" in setting:
-                join_roles = setting["join_roles"]
-                if join_roles["members"]:
-                    members = f"<@&{join_roles['members']}>"
-                if join_roles["bots"]:
-                    bots = f"<@&{join_roles['bots']}>"
-            embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
-            welcome_channel, welcome_message = language.string("settings_current_disabled"), None
-            if "welcome" in setting:
-                welcome = setting["welcome"]
-                if welcome["channel"]:
-                    welcome_channel = language.string("settings_current_welcome_channel", welcome["channel"])
-                    welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
-            embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
-            if welcome_message:
-                embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
-            goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
-            if "goodbye" in setting:
-                goodbye = setting["goodbye"]
-                if goodbye["channel"]:
-                    goodbye_channel = language.string("settings_current_goodbye_channel", goodbye["channel"])
-                    goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
-            embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
-            if goodbye_message:
-                embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
-            return await general.send(None, ctx.channel, embed=embed)
+            if self.bot.name in ["kyomi", "suager"]:
+                mute_role = language.string("generic_none")
+                if "mute_role" in setting:
+                    if setting["mute_role"] != 0:
+                        mute_role = f"<@&{setting['mute_role']}>"
+                embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
+                if ctx.guild.id in [568148147457490954, 738425418637639775]:
+                    mod, users, messages = language.string("settings_current_disabled"), language.string("settings_current_disabled"), language.string("settings_current_disabled")
+                    message_ignore = False
+                    if "audit_logs" in setting:
+                        if setting["audit_logs"]:
+                            mod = f"<#{setting['audit_logs']}>"
+                    if "user_logs" in setting:
+                        if setting["user_logs"]:
+                            users = f"<#{setting['user_logs']}>"
+                    if "message_logs" in setting:
+                        if setting["message_logs"]:
+                            messages = f"<#{setting['message_logs']}>"
+                            message_ignore = True
+                    embed.add_field(name=language.string("settings_current_logs"), value=language.string("settings_current_logs2", mod, users, messages), inline=False)
+                    if message_ignore:
+                        ignore = language.string("generic_none")
+                        if "message_ignore" in setting:
+                            if setting["message_ignore"]:
+                                ignore = ", ".join([f"<#{channel}>" for channel in setting["message_ignore"]])
+                        embed.add_field(name=language.string("settings_current_messages_ignore"), value=ignore, inline=False)
+                sb = language.string("settings_current_disabled")
+                if "starboard" in setting:
+                    starboard = setting["starboard"]
+                    if starboard["enabled"]:
+                        sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
+                embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
+                if self.bot.name in ["suager"]:
+                    lvl = language.string("settings_current_disabled")
+                    if "leveling" in setting:
+                        if setting["leveling"]["enabled"]:
+                            lvl = language.string("settings_current_leveling", ctx.prefix)
+                    embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
+                bd = language.string("settings_current_disabled")
+                if "birthdays" in setting:
+                    if setting["birthdays"]["enabled"]:
+                        bd = language.string("settings_current_birthdays", ctx.prefix)
+                embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
+                polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
+                if "polls" in setting:
+                    polls = setting["polls"]
+                    if polls["channel"]:
+                        polls_channel = f"<#{polls['channel']}>"
+                    polls_anonymity = language.yes(polls["voter_anonymity"])
+                embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
+                members, bots = language.string("generic_none"), language.string("generic_none")
+                if "join_roles" in setting:
+                    join_roles = setting["join_roles"]
+                    if join_roles["members"]:
+                        members = f"<@&{join_roles['members']}>"
+                    if join_roles["bots"]:
+                        bots = f"<@&{join_roles['bots']}>"
+                embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
+                welcome_channel, welcome_message = language.string("settings_current_disabled"), None
+                if "welcome" in setting:
+                    welcome = setting["welcome"]
+                    if welcome["channel"]:
+                        welcome_channel = language.string("settings_current_welcome_channel", welcome["channel"])
+                        welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
+                embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
+                if welcome_message:
+                    embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
+                goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
+                if "goodbye" in setting:
+                    goodbye = setting["goodbye"]
+                    if goodbye["channel"]:
+                        goodbye_channel = language.string("settings_current_goodbye_channel", goodbye["channel"])
+                        goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
+                embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
+                if goodbye_message:
+                    embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
+                return await general.send(None, ctx.channel, embed=embed)
             # return await ctx.send_help(str(ctx.command))
 
     @settings.command(name="current")
@@ -152,7 +159,7 @@ class Settings(commands.Cog):
     @commands.is_owner()
     async def settings_template(self, ctx: commands.Context):
         """ Settings template (in JSON) """
-        stuff = json.dumps(settings.template.copy(), indent=2)
+        stuff = json.dumps(self.template.copy(), indent=2)
         bio = BytesIO(stuff.encode("utf-8"))
         return await general.send("Settings template", ctx.channel, file=discord.File(bio, "template.json"))
 
@@ -213,7 +220,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         _settings["prefixes"].append(prefix)
         stuff = json.dumps(_settings)
         if data:
@@ -230,7 +237,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         try:
             _settings["prefixes"].remove(prefix)
         except ValueError:
@@ -251,7 +258,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         _settings["use_default"] ^= True
         stuff = json.dumps(_settings)
         if data:
@@ -262,6 +269,7 @@ class Settings(commands.Cog):
         # return await general.send(f"Default prefixes are now {'enabled' if t else 'disabled'} in this server.", ctx.channel)
 
     @settings.group(name="leveling", aliases=["levels", "lvl"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["suager"])
     async def set_lvl(self, ctx: commands.Context):
         """ Leveling settings """
         if ctx.invoked_subcommand is None:
@@ -317,9 +325,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         _settings["leveling"]["enabled"] = True
         stuff = json.dumps(_settings)
@@ -337,9 +345,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         _settings["leveling"]["enabled"] = False
         stuff = json.dumps(_settings)
@@ -364,9 +372,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         _settings["leveling"]["xp_multiplier"] = value
         stuff = json.dumps(_settings)
@@ -427,9 +435,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         value = value.replace("\\n", "\n")
         _settings["leveling"][key] = value
@@ -469,9 +477,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         if channel.id in _settings["leveling"]["ignored_channels"]:
             return await general.send(language.string("settings_leveling_ignored_already", channel.mention), ctx.channel)
@@ -493,9 +501,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         try:
             _settings["leveling"]["ignored_channels"].remove(channel.id)
@@ -522,9 +530,9 @@ class Settings(commands.Cog):
             if data:
                 _settings = json.loads(data["data"])
             else:
-                _settings = settings.template.copy()
+                _settings = self.template.copy()
             if "leveling" not in _settings:
-                _settings["leveling"] = settings.template["leveling"].copy()
+                _settings["leveling"] = self.template["leveling"].copy()
                 _settings["leveling"]["rewards"] = []
             if channel is None:
                 _settings["leveling"]["announce_channel"] = 0
@@ -549,9 +557,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         _settings["leveling"]["announce_channel"] = -1
         stuff = json.dumps(_settings)
@@ -582,9 +590,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
@@ -620,9 +628,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
@@ -656,9 +664,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "leveling" not in _settings:
-            _settings["leveling"] = settings.template["leveling"].copy()
+            _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
@@ -777,13 +785,14 @@ class Settings(commands.Cog):
             # return await general.send("I don't think that worked... Maybe the role is not awarded at all.", ctx.channel)
 
     @settings.command(name="muterole", aliases=["mutedrole", "muted", "mute"])
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
         """ Set the Muted role """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         _settings["mute_role"] = role.id
         stuff = json.dumps(_settings)
         if data:
@@ -794,6 +803,7 @@ class Settings(commands.Cog):
         # return await general.send(f"The muted role has been set to {role.name}", ctx.channel)
 
     @settings.group(name="starboard", aliases=["stars", "sb"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_starboard(self, ctx: commands.Context):
         """ Starboard settings """
         if ctx.invoked_subcommand is None:
@@ -822,9 +832,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "starboard" not in _settings:
-            _settings["starboard"] = settings.template["starboard"].copy()
+            _settings["starboard"] = self.template["starboard"].copy()
         _settings["starboard"]["enabled"] = True
         # is_or_not = "enabled" if _settings["starboard"]["enabled"] else "disabled"
         stuff = json.dumps(_settings)
@@ -842,9 +852,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "starboard" not in _settings:
-            _settings["starboard"] = settings.template["starboard"].copy()
+            _settings["starboard"] = self.template["starboard"].copy()
         _settings["starboard"]["enabled"] = False
         stuff = json.dumps(_settings)
         if data:
@@ -860,9 +870,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "starboard" not in _settings:
-            _settings["starboard"] = settings.template["starboard"].copy()
+            _settings["starboard"] = self.template["starboard"].copy()
         _settings["starboard"]["channel"] = channel.id
         stuff = json.dumps(_settings)
         if data:
@@ -883,9 +893,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "starboard" not in _settings:
-            _settings["starboard"] = settings.template["starboard"].copy()
+            _settings["starboard"] = self.template["starboard"].copy()
         _settings["starboard"]["minimum"] = requirement
         stuff = json.dumps(_settings)
         if data:
@@ -896,6 +906,7 @@ class Settings(commands.Cog):
         # return await general.send(f"The minimum amount of stars to appear on the starboard is now {requirement}.", ctx.channel)
 
     @settings.group(name="birthdays", aliases=["birthday", "bd", "b"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_birthday(self, ctx: commands.Context):
         """ Birthday settings """
         if ctx.invoked_subcommand is None:
@@ -933,9 +944,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "birthdays" not in _settings:
-            _settings["birthdays"] = settings.template["birthdays"].copy()
+            _settings["birthdays"] = self.template["birthdays"].copy()
         _settings["birthdays"]["enabled"] = True
         stuff = json.dumps(_settings)
         if data:
@@ -952,9 +963,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "birthdays" not in _settings:
-            _settings["birthdays"] = settings.template["birthdays"].copy()
+            _settings["birthdays"] = self.template["birthdays"].copy()
         _settings["birthdays"]["enabled"] = False
         stuff = json.dumps(_settings)
         if data:
@@ -970,9 +981,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "birthdays" not in _settings:
-            _settings["birthdays"] = settings.template["birthdays"].copy()
+            _settings["birthdays"] = self.template["birthdays"].copy()
         if channel is None:
             _settings["birthdays"]["channel"] = 0
         else:
@@ -994,9 +1005,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "birthdays" not in _settings:
-            _settings["birthdays"] = settings.template["birthdays"].copy()
+            _settings["birthdays"] = self.template["birthdays"].copy()
         if role is None:
             _settings["birthdays"]["role"] = 0
         else:
@@ -1022,9 +1033,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "birthdays" not in _settings:
-            _settings["birthdays"] = settings.template["birthdays"].copy()
+            _settings["birthdays"] = self.template["birthdays"].copy()
         text = text.replace("\\n", "\n")
         _settings["birthdays"]["message"] = text
         stuff = json.dumps(_settings)
@@ -1040,13 +1051,14 @@ class Settings(commands.Cog):
 
     @settings.command(name="modlogs", aliases=["mod"])
     @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])  # Mod logs and message logs will not be ready on v7.4.0
+    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_audit(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Log moderator actions (mute, kick, ban) to a channel """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if channel is None:
             _settings["audit_logs"] = 0
         else:
@@ -1063,13 +1075,14 @@ class Settings(commands.Cog):
 
     @settings.command(name="userlogs", aliases=["users"])
     @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])  # Mod logs and message logs will not be ready on v7.4.0
+    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_users(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Log users who join and leave the server """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if channel is None:
             _settings["user_logs"] = 0
         else:
@@ -1086,6 +1099,7 @@ class Settings(commands.Cog):
 
     @settings.group(name="messagelogs", aliases=["messages", "message", "msg"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])
+    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_messages(self, ctx: commands.Context):
         """ Log deleted and edited messages to a channel """
         if ctx.invoked_subcommand is None:
@@ -1098,7 +1112,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         _settings["message_logs"] = 0
         stuff = json.dumps(_settings)
         if data:
@@ -1114,7 +1128,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         _settings["message_logs"] = channel.id
         stuff = json.dumps(_settings)
         if data:
@@ -1136,7 +1150,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "message_ignore" in _settings:
             _settings["message_ignore"].append(channel.id)
         else:
@@ -1155,7 +1169,7 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         try:
             _settings["message_ignore"].remove(channel.id)
         except (ValueError, KeyError):
@@ -1168,6 +1182,7 @@ class Settings(commands.Cog):
         return await general.send(self.bot.language(ctx).string("settings_messages_ignore_remove", channel.mention), ctx.channel)
 
     @settings.group(name="polls", case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["suager"])
     async def set_polls(self, ctx: commands.Context):
         """ Polls settings """
         if ctx.invoked_subcommand is None:
@@ -1180,9 +1195,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "polls" not in _settings:
-            _settings["polls"] = settings.template["polls"].copy()
+            _settings["polls"] = self.template["polls"].copy()
         if channel is None:
             _settings["polls"]["channel"] = 0
         else:
@@ -1205,9 +1220,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "polls" not in _settings:
-            _settings["polls"] = settings.template["polls"].copy()
+            _settings["polls"] = self.template["polls"].copy()
         if value.lower() == "yes":
             _settings["polls"]["voter_anonymity"] = True
         elif value.lower() == "no":
@@ -1225,6 +1240,7 @@ class Settings(commands.Cog):
             return await general.send(self.bot.language(ctx).string("settings_poll_anonymity_no"), ctx.channel)
 
     @settings.group(name="joinrole", aliases=["autorole", "join", "jr"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_join_role(self, ctx: commands.Context):
         """ Automatically give new members a role """
         if ctx.invoked_subcommand is None:
@@ -1237,9 +1253,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "join_roles" not in _settings:
-            _settings["join_roles"] = settings.template["join_roles"].copy()
+            _settings["join_roles"] = self.template["join_roles"].copy()
         if role is None:
             _settings["join_roles"]["members"] = 0
         else:
@@ -1261,9 +1277,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "join_roles" not in _settings:
-            _settings["join_roles"] = settings.template["join_roles"].copy()
+            _settings["join_roles"] = self.template["join_roles"].copy()
         if role is None:
             _settings["join_roles"]["bots"] = 0
         else:
@@ -1279,6 +1295,7 @@ class Settings(commands.Cog):
             return await general.send(self.bot.language(ctx).string("settings_join_bots_none"), ctx.channel)
 
     @settings.group(name="welcome", case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_welcome(self, ctx: commands.Context):
         """ Welcome new members to your server """
         if ctx.invoked_subcommand is None:
@@ -1291,9 +1308,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "welcome" not in _settings:
-            _settings["welcome"] = settings.template["welcome"].copy()
+            _settings["welcome"] = self.template["welcome"].copy()
         if channel is None:
             _settings["welcome"]["channel"] = 0
         else:
@@ -1317,9 +1334,9 @@ class Settings(commands.Cog):
             if data:
                 _settings = json.loads(data["data"])
             else:
-                _settings = settings.template.copy()
+                _settings = self.template.copy()
             if "welcome" not in _settings:
-                _settings["welcome"] = settings.template["welcome"].copy()
+                _settings["welcome"] = self.template["welcome"].copy()
             value = value.replace("\\n", "\n")
             _settings["welcome"]["message"] = value
             message2 = value \
@@ -1343,6 +1360,7 @@ class Settings(commands.Cog):
         return await general.send(self.bot.language(ctx).string("settings_welcome_message_variables"), ctx.channel)
 
     @settings.group(name="goodbye", aliases=["farewell"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_goodbye(self, ctx: commands.Context):
         """ Say something when a user leaves your server """
         if ctx.invoked_subcommand is None:
@@ -1355,9 +1373,9 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = settings.template.copy()
+            _settings = self.template.copy()
         if "goodbye" not in _settings:
-            _settings["goodbye"] = settings.template["goodbye"].copy()
+            _settings["goodbye"] = self.template["goodbye"].copy()
         if channel is None:
             _settings["goodbye"]["channel"] = 0
         else:
@@ -1381,9 +1399,9 @@ class Settings(commands.Cog):
             if data:
                 _settings = json.loads(data["data"])
             else:
-                _settings = settings.template.copy()
+                _settings = self.template.copy()
             if "goodbye" not in _settings:
-                _settings["goodbye"] = settings.template["goodbye"].copy()
+                _settings["goodbye"] = self.template["goodbye"].copy()
             value = value.replace("\\n", "\n")
             _settings["goodbye"]["message"] = value
             message2 = value \
