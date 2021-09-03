@@ -1007,3 +1007,7 @@
 
 ## v7.4.5.1 - 2 September 2021
 - Made settings command not load irrelevant settings, and made the template only contain relevant settings
+
+## v7.4.5.2 - 4 September 2021
+- Locked certain people out of seeing the "conlangs" field in the language list even while in trusted servers
+- Made conlangs and RSLs show up if the command is called in DMs by trusted users

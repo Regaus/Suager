@@ -1,5 +1,5 @@
 weathers = {
-    "Reggar": {
+    "Regaus City": {
         "temperature": [
             {  # 1 - Spring - Late March
                 "morning": [-2.0, 5.0],
@@ -129,7 +129,7 @@ weathers = {
             "limit": 75
         }
     },
-    "Pakigar": {
+    "Five's City": {
         "temperature": [
             {  # 1 - Spring - Late March
                 "morning": [3.0, 8.0],
@@ -259,7 +259,7 @@ weathers = {
             "limit": 110
         }
     },
-    "Shonangar": {
+    "Shawn City": {
         "temperature": [
             {  # 1 - Spring - Late March
                 "morning": [2.5, 7.5],
@@ -389,7 +389,7 @@ weathers = {
             "limit": 90
         }
     },
-    "Orlagar": {
+    "Orla City": {
         "temperature": [
             {  # 1 - Spring - Late March
                 "morning": [2.5, 7.5],
@@ -519,7 +519,7 @@ weathers = {
             "limit": 95
         }
     },
-    "Leitagar": {
+    "Leita City": {
         "temperature": [
             {  # 1 - Spring - Late March
                 "morning": [0.5, 5.5],

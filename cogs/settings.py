@@ -35,11 +35,14 @@ class Settings(commands.Cog):
         # Chikin, Karmeck, Kyomi, Shawn, Mid, Aya
         trusted = [302851022790066185, 517012611573743621, 430891116318031872, 291665491221807104, 679819572278198272, 374853432168808448,
                    441028310789783563, 857360761135431730, 417390734690484224, 236884090651934721, 581206591051923466, 527729196688998415]
+        # wanderer, neppkun, dragon, bowser
+        no_conlangs = [411996407642456076, 350199484246130690, 443363116504580117,  94762492923748352]
         # Senko Lair, RK, 3tk4
         trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
         # List of trusted people and servers last updated 27/06/2021 AD
         output = "__List of supported languages:__\n" + "\n".join(nat)
-        if ctx.guild is not None and ctx.guild.id in trusted_servers:
+        # If the person is in a trusted server while not being in the No Conlangs list, or if the person is in a DM while they're trusted
+        if ((ctx.guild is not None and ctx.guild.id in trusted_servers) and ctx.author.id not in no_conlangs) or (ctx.guild is None and ctx.author.id in trusted):
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
             if ctx.author.id in trusted:
                 output += "\n\n__RSLs supported:__\n" + "\n".join(rsl)
@@ -107,13 +110,14 @@ class Settings(commands.Cog):
                     if setting["birthdays"]["enabled"]:
                         bd = language.string("settings_current_birthdays", ctx.prefix)
                 embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
-                polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
-                if "polls" in setting:
-                    polls = setting["polls"]
-                    if polls["channel"]:
-                        polls_channel = f"<#{polls['channel']}>"
-                    polls_anonymity = language.yes(polls["voter_anonymity"])
-                embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
+                if self.bot.name in ["suager"]:
+                    polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
+                    if "polls" in setting:
+                        polls = setting["polls"]
+                        if polls["channel"]:
+                            polls_channel = f"<#{polls['channel']}>"
+                        polls_anonymity = language.yes(polls["voter_anonymity"])
+                    embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
                 members, bots = language.string("generic_none"), language.string("generic_none")
                 if "join_roles" in setting:
                     join_roles = setting["join_roles"]

@@ -325,3 +325,6 @@
 
 ## v1.2.7.1 - 2 September 2021
 - Made settings command not load irrelevant settings, and made the template only contain relevant settings
+
+## v1.2.7.2 - 4 September 2021
+- Fixed weather78 to actually show weather
