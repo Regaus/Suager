@@ -346,7 +346,9 @@ class Polls(commands.Cog):
                 embed.add_field(name=language.string("polls_votes_yes"), value=ctx.author.mention, inline=True)
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_no"), value=language.string("polls_votes_none"), inline=True)
-            message = await general.send(None, poll_channel, embed=embed)
+            # message = await general.send(None, poll_channel, embed=embed)
+            content = "<@&884408145756164116>" if ctx.guild.id == 869975256566210641 else None
+            message = await general.send(content, poll_channel, embed=embed, r=ctx.guild.id == 869975256566210641)
             self.bot.db.execute(f"INSERT INTO trials VALUES ({'?, ' * 15}?)",
                                 (ctx.guild.id, poll_channel.id, message.id, trial_id, ctx.author.id, user, action, mute_duration, _reason,
                                  f"[{ctx.author.id}]", "[]", "[]", now_ts, expiry, poll_anonymity, required))
