@@ -86,9 +86,10 @@ class Bot(AutoShardedBot):
 
 class HelpFormat(MinimalHelpCommand):
     def __init__(self):
-        super().__init__(dm_help=None, dm_help_threshold=750, command_attrs={
+        super().__init__(dm_help=None, dm_help_threshold=1000, command_attrs={
             "name": "help",
-            "aliases": ["commands"]
+            "aliases": ["commands"],
+            "help": "I wonder what this command does..."
         })
 
     async def send_pages(self):

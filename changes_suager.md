@@ -1018,3 +1018,7 @@
 
 ## v7.4.6.1 - 8 September 2021
 - Made //vote detect if you're trying to vote on a poll and are using the wrong command
+
+## v7.4.6.2 - 8 September 2021
+- Added `applications.commands` to the bot invite link (for slash commands in the future)
+- Updated help command description

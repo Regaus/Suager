@@ -414,11 +414,12 @@ class Utility(commands.Cog):
     async def vote(self, ctx: commands.Context, *, question: str):
         """ Start a vote """
         language = self.bot.language(ctx)
-        if re.compile(r"^(\d{4}) (yes|neutral|no)$").search(question):  # If the vote question is something like "1337 yes" - checks if someone is trying to vote for a poll
-            if ctx.guild is not None and ctx.guild.id == 869975256566210641:
-                await general.send(language.string("fun_vote_poll_question2", ctx.prefix, question), ctx.channel)
-            else:
-                await general.send(language.string("fun_vote_poll_question", ctx.prefix, question), ctx.channel)
+        if self.bot.name == "suager":
+            if re.compile(r"^(\d{4}) (yes|neutral|no)$").search(question):  # If the vote question is something like "1337 yes" - checks if someone is trying to vote for a poll
+                if ctx.guild is not None and ctx.guild.id == 869975256566210641:
+                    await general.send(language.string("fun_vote_poll_question2", ctx.prefix, question), ctx.channel)
+                else:
+                    await general.send(language.string("fun_vote_poll_question", ctx.prefix, question), ctx.channel)
         message = await general.send(language.string("fun_vote", ctx.author.name, language.string(f"fun_vote_{str(ctx.invoked_with).lower()}"), question), ctx.channel)
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
