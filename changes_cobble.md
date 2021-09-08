@@ -328,3 +328,7 @@
 
 ## v1.2.7.2 - 4 September 2021
 - Fixed weather78 to actually show weather
+
+## v1.2.8 - 8 September 2021
+- Moved the location list to new "weather78 list" subcommand
+- Location now only shows the location of a specific place

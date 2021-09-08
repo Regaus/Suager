@@ -1014,3 +1014,7 @@
 
 ## v7.4.6 - 8 September 2021
 - Added ability to set up a custom level up message for when the user reaches a new level reward
+- Improved the level rewards string in leveling settings embed
+
+## v7.4.6.1 - 8 September 2021
+- Made //vote detect if you're trying to vote on a poll and are using the wrong command
