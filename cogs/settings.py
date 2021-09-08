@@ -301,6 +301,10 @@ class Settings(commands.Cog):
                     embed.add_field(name=language.string("settings_leveling_announcements"), value=f"<#{ac}>", inline=False)
                 message = f"{leveling['level_up_message'][:1021]}..." if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
                 embed.add_field(name=language.string("settings_leveling_message"), value=message, inline=False)
+                if "level_up_role" in leveling:
+                    if leveling["level_up_role"]:
+                        message = f"{leveling['level_up_role'][:1021]}..." if len(leveling["level_up_role"]) > 1024 else leveling["level_up_role"]
+                        embed.add_field(name=language.string("settings_leveling_message_role"), value=message, inline=False)
                 if "level_up_highest" in leveling:
                     if leveling["level_up_highest"]:
                         message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
@@ -404,6 +408,19 @@ class Settings(commands.Cog):
                 "next_reward_progress": 3,
                 "output": "settings_leveling_message_set"
             })
+
+    @lvl_message.command(name="newrole", aliases=["newreward", "nr"])
+    async def level_up_message_new_role(self, ctx: commands.Context, *, value: str):
+        """ Add a custom level up message when the user has achieved a new level reward """
+        return await self.level_up_message_general(ctx, value, {
+            "key": "level_up_role",
+            "level": 10,
+            "current_reward_level": 10,
+            "next_reward": "settings_leveling_reward_placeholder2",
+            "next_reward_level": 15,
+            "next_reward_progress": 5,
+            "output": "settings_leveling_message_set4"
+        })
 
     @lvl_message.command(name="highestrole", aliases=["hr"])
     async def level_up_message_highest_role(self, ctx: commands.Context, *, value: str):

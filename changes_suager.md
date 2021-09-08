@@ -1011,3 +1011,6 @@
 ## v7.4.5.2 - 4 September 2021
 - Locked certain people out of seeing the "conlangs" field in the language list even while in trusted servers
 - Made conlangs and RSLs show up if the command is called in DMs by trusted users
+
+## v7.4.6 - 8 September 2021
+- Added ability to set up a custom level up message for when the user reaches a new level reward

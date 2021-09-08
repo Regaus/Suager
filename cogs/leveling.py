@@ -210,6 +210,7 @@ class Leveling(commands.Cog):
         if not xp_disabled:
             xp += new
             yearly += new
+            # old_level = level
             lu, ld = False, False
             if level >= 0:
                 while level < max_level and xp >= levels[level]:
@@ -242,6 +243,7 @@ class Leveling(commands.Cog):
             language = self.bot.language(languages.FakeContext(ctx.guild, self.bot))
             current_reward, next_reward = {"role": language.string("generic_none"), "level": 0}, {"role": language.string("generic_unknown"), "level": 0}
             top_role = False
+            new_role = False
             try:
                 rewards = __settings['leveling']['rewards']
                 if rewards:  # Don't bother if they're empty
@@ -264,6 +266,7 @@ class Leveling(commands.Cog):
                                     next_reward = {"role": ctx.guild.get_role(next_role["role"]).name, "level": next_role["level"]}
                                     if not has_role:
                                         await ctx.author.add_roles(role, reason=reason)
+                                        new_role = True
                                 else:
                                     if has_role:
                                         await ctx.author.remove_roles(role, reason=reason)
@@ -273,6 +276,7 @@ class Leveling(commands.Cog):
                                 top_role = True
                                 if not has_role:
                                     await ctx.author.add_roles(role, reason=reason)
+                                    new_role = True
                         else:
                             if has_role:
                                 await ctx.author.remove_roles(role, reason=reason)
@@ -287,6 +291,10 @@ class Leveling(commands.Cog):
                 try:
                     next_left = next_reward["level"] - level
                     level_up_message: str = __settings["leveling"]["level_up_message"]
+                    if new_role:
+                        if "level_up_role" in __settings["leveling"]:
+                            if __settings["leveling"]["level_up_role"]:
+                                level_up_message = __settings["leveling"]["level_up_role"]
                     if top_role:
                         if "level_up_highest" in __settings["leveling"]:
                             if __settings["leveling"]["level_up_highest"]:

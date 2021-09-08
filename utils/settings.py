@@ -47,9 +47,9 @@ template_suager = {
         "enabled": False,
         "xp_multiplier": 1.0,
         "level_up_message": f"[MENTION] is now level **[LEVEL]**! {emotes.ForsenDiscoSnake}",  # General level up message
+        "level_up_role": None,     # Level up message for when you reach a new level reward
         "level_up_highest": None,  # Level up message for when you reach the highest level reward
         "level_up_max": None,      # Level up message for level 200
-        "role_announcement": None,
         "ignored_channels": [],
         "announce_channel": 0,
         "rewards": []
