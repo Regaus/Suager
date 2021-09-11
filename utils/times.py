@@ -97,12 +97,13 @@ def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"
                   "Raaan", "Kummaan", "Vittean", "Aviggan", "Kaivyan", "Karratan", "Darvuan", "Suvajan"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 8, ds, yd)
     output.day_of_week = (output.day - 1) % 8
+    leap = output.year % 16 == 0
     if output.day == 17:
         output.day_of_week = 8
     if output.hour < 6:
         output.day_of_week -= 1
     if output.day_of_week == -1:
-        output.day_of_week = 7
+        output.day_of_week = 8 if (leap and output.month == 2 and output.day == 1) else 7
     parts = ["tea", "rea", "sea", "vea"]
     part = h // 6
     output.day_name = weekdays[output.day_of_week] + parts[part]
@@ -133,7 +134,8 @@ def time_qevenerus_ka(when: datetime = None, tz: float = 0):  # 23.6 Kaltarena K
 
 def time_qevenerus_us(when: datetime = None, tz: float = 0):  # 23.6 Usturian
     irl = when or time.now(None)
-    start = datetime64("-2174-06-09T19:57:59.941886")  # The day Ancient Usturia formed | Note: -2174 = 2175 BC (since year 0 = 1 BC)
+    # start = datetime64("-2174-06-09T19:57:59.941886")  # The day Ancient Usturia formed | Note: -2174 = 2175 BC (since year 0 = 1 BC)
+    start = datetime64("-2174-01-24T13:25:18.731422")  # The day Ancient Usturia formed, adjusted to agree with the Kargadian calendar
     day_length = qevenerus_day
     month_lengths = [40] * 20
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)

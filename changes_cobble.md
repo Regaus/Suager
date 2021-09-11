@@ -332,3 +332,7 @@
 ## v1.2.8 - 8 September 2021
 - Moved the location list to new "weather78 list" subcommand
 - Location now only shows the location of a specific place
+
+## v1.2.8.1 - 11 September 2021
+- Fix Usturian calendar to actually align the dates properly
+- Improved Kargadian weekday calculation
