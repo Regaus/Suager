@@ -336,3 +336,9 @@
 ## v1.2.8.1 - 11 September 2021
 - Fix Usturian calendar to actually align the dates properly
 - Improved Kargadian weekday calculation
+
+## v1.3.0-pre1 - 12 September 2021
+- Improved language support to weather78
+- Added support for other languages to weather78
+- The "Real offset" is now shown as hh:mm rather than as a fraction of the hour
+- Updated language strings for proper support of RSL-1 in the future

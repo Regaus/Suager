@@ -1,0 +1,61 @@
+{
+  "and": "and",
+  "directions": ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"],
+  "languages": {
+    "english": "English",
+    "kargadian_east": "East Kargadian",
+    "kargadian_kaltarena": "Kaltarena Kargadian",
+    "kargadian_west": "West Kargadian",
+    "multiple": "Multiple",
+    "tebarian": "Tebarian",
+    "usturian": "Usturian"
+  },
+  "planets": {
+    "Virkada": "Virkada",
+    "Zeivela": "Zeivela",
+    "Kargadia": "Kargadia",
+    "Qevenerus": "Qevenerus"
+  },
+  "seasons": {
+    "spring": "Spring",
+    "summer": "Summer",
+    "autumn": "Autumn",
+    "winter": "Winter"
+  },
+  "sides": ["N", "E", "S", "W"],
+  "speed": "{kmh} km/h | {mps} m/s | {miles} mph",
+  "sun_above": "The sun is {0}° above the horizon",
+  "sun_always_day": "Always daytime today",
+  "sun_always_night": "Always nighttime today",
+  "sun_below": "The sun is {0}° below the horizon",
+  "sun_dawn": "`Dawn       {0}`",
+  "sun_direction": "The sun is due {0} ({1}°)",
+  "sun_dusk": "`Dusk       {0}`",
+  "sun_length": "Day length: {0}",
+  "sun_noon": "`Solar noon {0}`",
+  "sun_sunrise": "`Sunrise    {0}`",
+  "sun_sunset": "`Sunset     {0}`",
+  "sun_time": "Solar time {0}",
+  "temperature": "{c}°C | {f}°F",
+  "weather78": {
+    "sunny": "Sunny",
+    "cloudy1": "Slightly cloudy",
+    "cloudy2": "Cloudy",
+    "cloudy3": "Overcast",
+    "rain": "Raining",
+    "snow": "Snowing",
+    "thunder": "Thunder"
+  },
+  "weather78_languages": "Local language(s)",
+  "weather78_local_time": "Local Time",
+  "weather78_location": "Location",
+  "weather78_names": "Local name(s)",
+  "weather78_season": "Astronomical season: {0}",
+  "weather78_status": "Temperature: {0}\nWind speed: {1}\nHumidity: {2}\nSky's mood: {3}",
+  "weather78_sun": "About the Sun",
+  "weather78_timezone": "Timezone",
+  "weather78_timezone2": "**{0}** (Real offset: {1})",
+  "weather78_title": "Information about **{0}**",
+  "weather78_weather": "Weather",
+  "weather78_weather_none": "Weather not available"
+}

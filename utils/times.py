@@ -76,22 +76,22 @@ def time_zeivela(when: datetime = None, tz: float = 0):  # 23.4
     return output
 
 
-def time_kargadia(when: datetime = None, tz: float = 0, language: str = "rsl-1k"):  # 23.5
+def time_kargadia(when: datetime = None, tz: float = 0, language: str = "kargadian_west"):  # 23.5
     irl = when or time.now(None)
     start = datetime(276, 12, 26, 22, 30, tzinfo=timezone.utc)
     day_length = 27.7753663234561 * 3600
     month_lengths = [16] * 16
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 256, lambda y: 1 if y % 16 == 0 else 0, month_lengths, 1, tz)
     weekdays, months = [f"{language} not available"] * 8, [f"{language} not available"] * 16
-    if language == "rsl-1k":
+    if language == "kargadian_west":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkavan", "Shiravan", "Nuuvan", "Bylkuvan", "Akuvan", "Vainavan", "Kiitavan", "Lürvuan",
                   "Raavan", "Kummavan", "Vittevan", "Avikkan", "Kaivyan", "Karratan", "Darvuan", "Suvakän"]
-    elif language == "rsl-1m":  # Placeholders for until I actually make RSL-1m
+    elif language == "kargadian_east":  # Placeholders for until I actually make RSL-1m
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkavan", "Shiravan", "Nuuvan", "Bylkuvan", "Akuvan", "Vainavan", "Kiitavan", "Lürvuan",
                   "Raavan", "Kummavan", "Vittevan", "Avikkan", "Kaivyan", "Karratan", "Darvuan", "Suvakän"]
-    elif language == "rsl-1i":
+    elif language == "tebarian":
         weekdays = ["Zeiju", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"]
         months = ["Senkaan", "Shiraan", "Nuuan", "Bylkuan", "Akuan", "Vainaan", "Kiitaan", "Lürvuan",
                   "Raaan", "Kummaan", "Vittean", "Aviggan", "Kaivyan", "Karratan", "Darvuan", "Suvajan"]

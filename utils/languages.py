@@ -7,10 +7,27 @@ from dateutil.relativedelta import relativedelta
 
 from utils import emotes, time
 
-languages = {}
-for file in os.listdir("languages"):
-    if file.endswith(".json"):
-        languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
+languages, countries, time_strings, weather = {}, {}, {}, {}
+for folder in os.listdir("languages"):
+    # if file.endswith(".json"):
+    #     languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
+    if folder != "__pychache__":
+        try:  # Load main set of strings
+            languages[folder] = json.loads(open(os.path.join("languages", folder, "strings.json"), encoding="utf-8").read())
+        except FileNotFoundError:
+            pass
+        try:  # Load country names list
+            countries[folder] = json.loads(open(os.path.join("languages", folder, "countries.json"), encoding="utf-8").read())
+        except FileNotFoundError:
+            pass
+        try:  # Load time-related strings
+            time_strings[folder] = json.loads(open(os.path.join("languages", folder, "time.json"), encoding="utf-8").read())
+        except FileNotFoundError:
+            pass
+        try:  # Load weather-related strings
+            weather[folder] = json.loads(open(os.path.join("languages", folder, "weather.json"), encoding="utf-8").read())
+        except FileNotFoundError:
+            pass
 
 
 def splits(value: str, step: int = 4, joiner: str = " ") -> str:
@@ -26,6 +43,7 @@ def join(seq, joiner: str = ', ', final: str = 'and'):
 
 
 class Language:
+    """ Provides language support to my bots """
     def __init__(self, language: str):
         self.language = language
 
@@ -34,9 +52,9 @@ class Language:
         """ Find the language of the server """
         if hasattr(ctx, "channel"):
             if ctx.channel.id in [725835449502924901]:  # SR-8
-                return cls("rsl-1i")
+                return cls("tebarian")
             elif ctx.channel.id in [787340111963881472, 799714065256808469]:  # RSL-1 channel and SR-11
-                return cls("rsl-1k")
+                return cls("kargadian_west")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
         if ctx.guild is not None:
             data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, ctx.bot.name))
@@ -46,7 +64,7 @@ class Language:
 
     def bytes(self, value: int, precision: int = 2) -> str:
         """ Turn byte value into string """
-        if self.language in ["rsl-1k", "rsk-1i"]:
+        if self.language in ["kargadian_west", "tebarian"]:
             value //= 2
             names = ["V", "MV", "UV", "DV", "TV", "CV", "PV", "SV", "EV", "OV", "ZV"]
             step = 65536
@@ -97,19 +115,23 @@ class Language:
         """ Get list/dict language entry """
         return (languages.get(self.language, languages["english"])).get(key, languages["english"].get(key))
 
+    # Temporary aliases to get this to work with weather while I work on actual time support
+    string2 = string
+    data2 = data
+
     def yes(self, condition: bool) -> str:
         """ Yes or no """
         return self.string("generic_yes" if condition else "generic_no")
 
     def plural(self, value: Union[int, float], string: str, *, precision: int = 2, commas: bool = True) -> str:
         """ Plural form of words """
-        data = self.data(string)
+        data = self.data2(string)
         single = ["rsl-1f", "rsl-1g"]
         if self.language in single:
             name = data[0]
         elif self.language == "russian":
             name_1, name_2, name_pl = data
-            many, ten, hundred = self.data("_pl")
+            many, ten, hundred = self.data2("_pl")
             value_hundred = value % hundred
             value_ten = value_hundred % ten
             name = name_pl if ten <= value_hundred <= ten * 2 or (value_ten >= many or value_ten == 0) else name_2 if value_ten != 1 else name_1
@@ -127,10 +149,10 @@ class Language:
         then = dt.astimezone(timezone.utc)
         if then > now:
             delta = relativedelta(then, now)
-            pre, suf = (self.string("time_in_p"), self.string("time_in_s")) if affix else ("", "")
+            pre, suf = (self.string2("time_in_p"), self.string2("time_in_s")) if affix else ("", "")
         else:
             delta = relativedelta(now, then)
-            pre, suf = (self.string("time_ago_p"), self.string("time_ago_s")) if affix else ("", "")
+            pre, suf = (self.string2("time_ago_p"), self.string2("time_ago_s")) if affix else ("", "")
         attrs = [('years', 'time_year', 'time_y'), ('months', 'time_month', 'time_mo'), ('days', 'time_day', 'time_d'), ('hours', 'time_hour', 'time_h'),
                  ('minutes', 'time_minute', 'time_m'), ('seconds', 'time_second', 'time_s')]
         output = []
@@ -143,12 +165,12 @@ class Language:
                 weeks = delta.weeks
                 if weeks:
                     element -= weeks * 7
-                    output.append(f"{self.number(weeks)}{self.string('time_w')}" if brief else self.plural(weeks, 'time_week'))
+                    output.append(f"{self.number(weeks)}{self.string2('time_w')}" if brief else self.plural(weeks, 'time_week'))
                     # output.append(f"{gns(weeks, locale)}{gls('time_w', locale)}" if brief else plural(weeks, 'time_week', locale))
             if element <= 0:
                 continue
             else:
-                output.append(f"{self.number(element)}{self.string(attr[2])}" if brief else f"{self.plural(element, attr[1])}")
+                output.append(f"{self.number(element)}{self.string2(attr[2])}" if brief else f"{self.plural(element, attr[1])}")
             # if brief:
             #     output.append(f"{gns(element, locale)}{gls(attr[2], locale)}")
             # else:
@@ -160,7 +182,7 @@ class Language:
             if brief:
                 return pre + ' '.join(output) + suf
             else:
-                return pre + join(output, final=self.string("generic_and")) + suf
+                return pre + join(output, final=self.string2("generic_and")) + suf
 
     def delta_int(self, seconds: Union[int, float], *, accuracy: int = 3, brief: bool = True, affix: bool = False) -> str:
         now = time.now(None)
@@ -184,11 +206,11 @@ class Language:
         #     day, month = 34, 6
         if dow and self.language not in no_weeks:
             weekdays = self.data("time_weekdays")
-            if self.language in ["rsl-1k", "rsl-1i"]:  # Also Kaltarena Kargadian
+            if self.language in ["kargadian_west", "tebarian", "kargadian_kaltarena"]:  # Also Kaltarena Kargadian
                 wd = when.weekday()
                 if when.hour < 6:
                     wd -= 1
-                suffix = ["tea", "rea", "sea", "vea"]
+                suffix = ["te", "re", "se", "ve"] if self.language == "kargadian_kaltarena" else ["tea", "rea", "sea", "vea"]
                 weekday = weekdays[wd] + suffix[when.hour // 6]
             else:
                 weekday = weekdays[when.weekday()]
@@ -221,7 +243,29 @@ class Language:
         return self.language
 
     def __repr__(self):
-        return f"<Language code={self.language!r}>"
+        return f"<{self.__class__.__name__} code={self.language!r}>"
+
+
+class Weather(Language):
+    """ Subclass of Language for weather-specific stuff """
+    @classmethod
+    def from_language(cls, language: Language):
+        """ Convert from Language to Weather """
+        return cls(language=language.language)
+
+    def string(self, string: str, *values, **kwargs) -> str:
+        """ Get translated weather string """
+        output = str((weather.get(self.language, weather["english"])).get(string, weather["english"].get(string, string)))
+        try:
+            return output.format(*values, **kwargs, emotes=emotes)
+        except IndexError:
+            for i, value in enumerate(values):
+                output = output.replace(f"\x7b{i}\x7d", str(value))  # Try to fill in the values we do have
+            return output
+
+    def data(self, key: str):
+        """ Get list/dict language entry """
+        return (weather.get(self.language, weather["english"])).get(key, weather["english"].get(key))
 
 
 class FakeContext:

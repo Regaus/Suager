@@ -292,7 +292,7 @@ class Events(commands.Cog):
             await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
 
         if self.bot.name == "suager":
-            if message.guild.id in [568148147457490954, 738425418637639775]:
+            if message.guild is not None and message.guild.id in [568148147457490954, 738425418637639775]:
                 if message.channel.id not in self.message_ignore:
                     if not message.author.bot:
                         await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)

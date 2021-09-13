@@ -43,19 +43,19 @@ class Utility(commands.Cog):
         """ Current time """
         language = self.bot.language(ctx)
         send = ""
-        if language.language in ["rsl-1k", "rsl-1i"]:
-            a = times.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-            b = language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)
-            d = language.time(time.now_k(), short=0, dow=True, seconds=True, tz=False)
-            send += f"Zymlä: **{b}**\n" \
-                    f"S. Laikadu: **{d}**\n" \
-                    f"Kargadia: **{a}**"
-        else:
-            send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
-            send += f"UTC/GMT: **{language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)}**"
-            if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
-                send += f"\nSenko Lair: **{language.time(time.now_sl(), short=0, dow=True, seconds=True, tz=False)}**"  # \n" \
-                # f"Senko Lair Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, False)}**"
+        # if language.language in ["kargadian_west", "tebarian"]:
+        #     a = times.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
+        #     b = language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)
+        #     d = language.time(time.now_k(), short=0, dow=True, seconds=True, tz=False)
+        #     send += f"Zymlä: **{b}**\n" \
+        #             f"S. Laikadu: **{d}**\n" \
+        #             f"Kargadia: **{a}**"
+        # else:
+        send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
+        send += f"UTC/GMT: **{language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)}**"
+        if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
+            send += f"\nSenko Lair: **{language.time(time.now_sl(), short=0, dow=True, seconds=True, tz=False)}**"  # \n" \
+            # f"Senko Lair Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, False)}**"
         data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
         if data:
             send += language.string("util_time_custom", language.time(time.set_tz(time.now(None), data['tz']), short=0, dow=True, seconds=True, tz=False))

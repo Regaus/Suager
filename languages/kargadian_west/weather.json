@@ -1,0 +1,61 @@
+{
+  "and": "u",
+  "directions": ["kanerun", "kanera-vaderun", "vaderun", "senanka-vaderun", "senkarun", "senanka-zoranun", "zoranun", "kanera-zoranun"],
+  "languages": {
+    "english": "Angallar",
+    "kargadian_east": "Vaderkargadiannar",
+    "kargadian_kaltarena": "Kaltarynnar",
+    "kargadian_west": "Zorankargadiannar",
+    "multiple": "Valsen",
+    "tebarian": "Tebariannar",
+    "usturian": "Usturinnar"
+  },
+  "planets": {
+    "Virkada": "Virkada",
+    "Zeivela": "Zeivela",
+    "Kargadia": "Kargadia",
+    "Qevenerus": "Qevenerus"
+  },
+  "seasons": {
+    "spring": "Vahtataida",
+    "summer": "Teviltaida",
+    "autumn": "Hintataida",
+    "winter": "Kaldataida"
+  },
+  "sides": ["K", "V", "S", "Z"],
+  "speed": "{kmh} km/c | {mps} m/u",
+  "sun_above": "Na suno jat ad {0}° kuja na neevuredenan",
+  "sun_always_day": "Na suno de niivyatva esea",
+  "sun_always_night": "Na suno de vaikeatva esea",
+  "sun_below": "Na suno jat ad {0}° kunna na neevuredenan",
+  "sun_dawn": "`Seansumrak      {0}`",
+  "sun_direction": "Na suno veiteat a na {0} ({1}°)",
+  "sun_dusk": "`Teansumrak      {0}`",
+  "sun_length": "Seandalkanta: {0}",
+  "sun_noon": "`Nuukanseanserta {0}`",
+  "sun_sunrise": "`Reantaida       {0}`",
+  "sun_sunset": "`Veantaida       {0}`",
+  "sun_time": "Sunotaida {0}",
+  "temperature": "{c}°C",
+  "weather78": {
+    "sunny": "Veiteve",
+    "cloudy1": "Virse aivallain",
+    "cloudy2": "Aivallat",
+    "cloudy3": "Hintaaivallat",
+    "rain": "Neevunvaidaa",
+    "snow": "Senkus",
+    "thunder": "Rujanahtaru"
+  },
+  "weather78_languages": "Kadunhantus/at",
+  "weather78_local_time": "Kaduntaida",
+  "weather78_location": "Kadu",
+  "weather78_names": "Kadunineva(t)",
+  "weather78_season": "Sunonuuka Kaadunsaida: {0}",
+  "weather78_status": "Tevilta: {0}\nSaika vidun: {1}\nSeruta: {2}\nNeevunsevirtat: {3}",
+  "weather78_sun": "Av na Sunon",
+  "weather78_timezone": "Taidankadu",
+  "weather78_timezone2": "**{0}** (Vyllimar taidankadu: {1})",
+  "weather78_title": "Ne mu zaiva av **{0}**",
+  "weather78_weather": "Tevaaika",
+  "weather78_weather_none": "Tevaaika de zaivama"
+}

@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 
 from utils import bot_data, conlangs, general, places, time, times
+from utils.languages import Weather
 
 longest_city = {
     "Virkada": 20,
@@ -56,10 +57,10 @@ class Conworlds(commands.Cog):
             elif pl == 5:
                 if dt < time.dt(276, 12, 27):
                     return await general.send("Time on Kargadia is not available before 27th December 276 AD", ctx.channel)
-                time_earth1k = self.bot.language2("rsl-1k").time(dt, short=0, dow=True, seconds=True, tz=False)
-                time_earth1i = self.bot.language2("rsl-1i").time(dt, short=0, dow=True, seconds=True, tz=False)
-                time_23_5k = times.time_kargadia(dt, 0, "rsl-1k").str()  # 23.5 Kargadia RSL-1k
-                time_23_5i = times.time_kargadia(dt, 0, "rsl-1i").str()  # 23.5 Kargadia RSL-1i
+                time_earth1k = self.bot.language2("kargadian_west").time(dt, short=0, dow=True, seconds=True, tz=False)
+                time_earth1i = self.bot.language2("tebarian").time(dt, short=0, dow=True, seconds=True, tz=False)
+                time_23_5k = times.time_kargadia(dt, 0, "kargadian_west").str()  # 23.5 Kargadia RSL-1k
+                time_23_5i = times.time_kargadia(dt, 0, "tebarian").str()  # 23.5 Kargadia RSL-1i
                 output += f"\nEarth - W. Kargadian: **{time_earth1k}**" \
                           f"\nEarth - Tebarian: **{time_earth1i}**\n" \
                           f"\nKargadia - W. Kargadian: **{time_23_5k}**" \
@@ -67,7 +68,7 @@ class Conworlds(commands.Cog):
             elif pl == 6:
                 if dt < time.dt(1686, 11, 22):
                     return await general.send("Time on Qevenerus is not available before 22nd November 1686 AD", ctx.channel)
-                time_earth1h = self.bot.language2("rsl-1h").time(dt, short=0, dow=True, seconds=True, tz=False)
+                time_earth1h = self.bot.language2("kargadian_kaltarena").time(dt, short=0, dow=True, seconds=True, tz=False)
                 output += f"\nEarth - Ka. Kargadian: **{time_earth1h}**\n" \
                           f"\nQevenerus - Ka. Kargadian: **{times.time_qevenerus_ka(dt, 0).str()}**" \
                           f"\nQevenerus - Usturian: **{times.time_qevenerus_us(dt, 0).str()}**" \
@@ -109,8 +110,10 @@ class Conworlds(commands.Cog):
         """ Weather for a place in GA78 """
         if ctx.invoked_subcommand is None:
             try:
+                # language = Weather.from_language(self.bot.language(ctx))
+                language = Weather.get(ctx)
                 place = places.Place(where)
-                embed = place.status()
+                embed = place.status(language)
                 return await general.send(None, ctx.channel, embed=embed)
             except places.PlaceDoesNotExist:
                 return await general.send(f"Location {where!r} not found.", ctx.channel)
