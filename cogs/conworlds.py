@@ -126,7 +126,7 @@ class Conworlds(commands.Cog):
         # for city, data in places.places_old.items():
         for city in places.places:
             if city["planet"] == planet:
-                place = places.Place(city["name"]["English"])
+                place = places.Place(city["name"]["english"])
                 _places.append(f"`{place.name:<{_longest}} - {place.location(True)}`")
         if len(_places) <= 25:
             return await general.send(f"Locations in {planet}:\n\n" + "\n".join(_places), ctx.channel)

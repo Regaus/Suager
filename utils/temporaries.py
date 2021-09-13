@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from utils import bot_data, general, http, languages, lists, logger, time
+from utils import bot_data, general, http, languages, lists, logger, places, time
 
 
 async def temporaries(bot: bot_data.Bot):
@@ -236,9 +236,98 @@ async def birthdays(bot: bot_data.Bot):
         await asyncio.sleep(3600)
 
 
+ka_cities = {
+    "Akkigar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Bylkangar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Ekspigar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Huntavall":     {"english": None, "tebarian": None, "time": None},  # Weight: 3
+    "Kaivalgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 3
+    "Kanerakainead": {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Kiomigar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Leitagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Nurvutgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Pakigar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Peaskar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Regavall":      {"english": None, "tebarian": None, "time": None},  # Weight: 5
+    "Reggar":        {"english": None, "tebarian": None, "time": None},  # Weight: 5
+    "Sentagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Sentatebaria":  {"english": None, "tebarian": None, "time": None},  # Weight: 3
+    "Shonangar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Steirigar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Suvagar":       {"english": None, "tebarian": None, "time": None},  # Weight: 3
+    "Vintelingar":   {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Virsetgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
+}
+update_speed = 120  # 150
+
+
+async def city_data_updater(bot: bot_data.Bot):
+    """ Update time and weather data for Kargadian cities """
+    await bot.wait_until_ready()
+
+    now = time.now(None)
+    # Start this script 3 seconds ahead to make sure the playing updater gets accurate data
+    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 3, None)
+    await asyncio.sleep((then - now).total_seconds())
+    print(f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
+
+    while True:
+        try:
+            for city in ka_cities.keys():
+                place = places.Place(city)
+                tebarian = place.time.str(dow=False, era=None, month=False, short=True, seconds=False)
+                # Tricks into changing the month from Genitive to Nominative
+                english = place.time.str(dow=False, era=None, month=False, short=False, seconds=False).replace("n ", "r ")
+                temperature, _, _, rain_out = place.weather()
+                if temperature is not None and rain_out is not None:
+                    temp = f"{temperature:.0f}°C"
+                    weather_en = languages.Weather("english").data("weather78")[rain_out]
+                    weather_tb = languages.Weather("tebarian").data("weather78")[rain_out]
+                    english += f" | {temp} | {weather_en}"
+                    tebarian += f" | {temp} | {weather_tb}"
+                ka_cities[city] = {"english": english, "tebarian": tebarian, "time": place.time}
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated city data")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
+        await asyncio.sleep(update_speed)
+
+
+async def city_time_updater(bot: bot_data.Bot):
+    """ Update the time and weather info for Kargadian cities in Regaus'tar Koankadu """
+    await bot.wait_until_ready()
+
+    now = time.now(None)
+    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
+    await asyncio.sleep((then - now).total_seconds())
+    print(f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
+
+    while True:
+        data = []
+        for city, _data in ka_cities.items():
+            data.append(f"`{city:<13} - {_data['english']}`")
+        out = "\n".join(data)
+        channel: discord.TextChannel = bot.get_channel(887087307918802964)  # ka-time
+        try:
+            # message: discord.Message = (await channel.history(limit=1, oldest_first=True).flatten())[0]
+            message = None
+            async for msg in channel.history(limit=None, oldest_first=True):
+                if msg.author.id == bot.user.id:
+                    message = msg
+                    break
+            if message is None:
+                raise general.RegausError("City time message not found")
+            await message.edit(content=out)
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated city time message")
+        except (IndexError, discord.NotFound, general.RegausError):
+            await channel.send(out)
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset city time message")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
+        await asyncio.sleep(update_speed)
+
+
 async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    update_speed = 150
 
     now = time.now(None)
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
@@ -430,40 +519,6 @@ async def avatars(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
         await asyncio.sleep(3600)
-
-
-# async def vote_bans(bot: bot_data.Bot):
-#     await bot.wait_until_ready()
-#
-#     print(f"{time.time()} > {bot.full_name} > Initialised Vote Bans")
-#     guild: discord.Guild = bot.get_guild(869975256566210641)  # Nuriki's Anarchy Server
-#     channel: discord.TextChannel = guild.get_channel(871811287166898187)  # Trials channel
-#     while True:
-#         expired = bot.db.fetch("SELECT * FROM vote_bans WHERE DATETIME(expiry) < DATETIME('now')", ())
-#         for entry in expired:
-#             upvotes, downvotes = len(json.loads(entry["upvotes"])), len(json.loads(entry["downvotes"]))
-#             user: discord.User = await bot.fetch_user(entry["uid"])
-#             votes = upvotes - downvotes
-#             acceptance = upvotes / (upvotes + downvotes)
-#             if votes >= 3 and acceptance >= 0.6:
-#                 try:
-#                     await guild.ban(user, reason=general.reason(guild.me, f"Vote-banned ({votes} votes, {acceptance:.0%} upvoted)"), delete_message_days=0)
-#                 except discord.Forbidden:
-#                     general.print_error(f"Failed to ban {user} - Missing permissions")
-#                     if channel is not None:
-#                         await general.send(f"Failed to ban {user} - Missing permissions", channel)
-#                 if channel is not None:
-#                     await general.send(f"The vote has ended: {user} has been banned. ({votes} votes, {acceptance:.0%} upvoted)", channel)
-#             else:
-#                 member = guild.get_member(entry["uid"])
-#                 if member is not None:
-#                     await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
-#                     await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
-#                 if channel is not None:
-#                     await general.send(f"The vote has ended: {user} has __not__ been banned. ({votes} votes, {acceptance:.0%} upvoted)\n"
-#                                        f"Must be at least 3 votes and 60% upvotes to ban.", channel)
-#             bot.db.execute("DELETE FROM vote_bans WHERE uid=?", (entry["uid"],))
-#         await asyncio.sleep(1)
 
 
 async def polls(bot: bot_data.Bot):

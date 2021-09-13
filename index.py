@@ -74,7 +74,10 @@ for i in range(len(config["bots"])):
             # tasks.append(loop.create_task(temporaries.vote_bans(bot)))
             tasks.append(loop.create_task(temporaries.polls(bot)))
             tasks.append(loop.create_task(temporaries.trials(bot)))
-        if bot.name == "kyomi":
+        elif bot.name == "cobble":
+            tasks.append(loop.create_task(temporaries.city_data_updater(bot)))
+            tasks.append(loop.create_task(temporaries.city_time_updater(bot)))
+        elif bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.temporaries(bot)))
 

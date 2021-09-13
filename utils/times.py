@@ -195,12 +195,14 @@ class TimeSolarNormal:
         except IndexError:
             self.month_name = f"Unavailable month {self.month}"
 
-    def str(self, dow: bool = True, era: Optional[str] = None, month: bool = True):
+    def str(self, dow: bool = True, era: Optional[str] = None, month: bool = True, short: bool = False, seconds: bool = True):
         """ Output the date and time in a readable format """
         dn = f"{self.day_name}, " if dow else ""
         e = f" {era}" if era else ""
         m = f" (Month {self.month})" if month else ""
-        return f"{dn}{self.day:02d} {self.month_name} {self.year}{e}, {self.hour:02d}:{self.minute:02d}:{self.second:02d}{m}"
+        n = self.month_name if not short else self.month_name[:3]
+        s = f":{self.second:02d}" if seconds else ""
+        return f"{dn}{self.day:02d} {n} {self.year}{e}, {self.hour:02d}:{self.minute:02d}{s}{m}"
 
 
 def solar_longer(now: datetime, start: datetime, day_length: float, hours: int, mins: int, secs: int, days_nly: int, days_ly: int, ly_freq: int,

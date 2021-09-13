@@ -800,7 +800,7 @@ class Place:
     def weather(self):
         if self.weathers is not None:
             # Remove non-ascii stuff like äá to make sure it's only A-Z
-            _name = self.name[:8].encode("ascii", "replace").replace(b"?", b"0").replace(b" ", b"0")
+            _name = self.name[:8].encode("ascii", "replace").replace(b"?", b"0").replace(b" ", b"0").replace(b"'", b"0")
             _seed0 = int(_name, base=36)
             _seed1 = self.time.ds * 1440  # Seed the day from 1/1/0001, multiplied by 1440 minutes.
             _seed2 = self.time.hour * 60

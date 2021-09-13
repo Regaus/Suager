@@ -68,3 +68,6 @@
 ## v0.3.5.1 - 2 September 2021
 - Made settings command not load irrelevant settings, and made the template only contain relevant settings
 - Fix booster nickname detection
+
+## v0.3.5.2 - 13 September 2021
+- Made the playing status update speed 2 minutes rather than 2m30s

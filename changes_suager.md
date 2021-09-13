@@ -1022,3 +1022,6 @@
 ## v7.4.6.2 - 8 September 2021
 - Added `applications.commands` to the bot invite link (for slash commands in the future)
 - Updated help command description
+
+## v7.4.6.3 - 13 September 2021
+- Made the playing status update speed 2 minutes rather than 2m30s

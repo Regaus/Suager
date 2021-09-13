@@ -342,3 +342,9 @@
 - Added support for other languages to weather78
 - The "Real offset" is now shown as hh:mm rather than as a fraction of the hour
 - Updated language strings for proper support of RSL-1 in the future
+
+## v1.3.0-pre2 - 13 September 2021
+- Fixed weather78 crashing if a city name has an apostrophe in it
+- Fixed weather78 list command
+- Made the playing status update speed 2 minutes rather than 2m30s
+- Added a clock that shows current time and weather in Kargadian cities
