@@ -81,6 +81,7 @@ async def temporaries(bot: bot_data.Bot):
                                             logger.log(bot.name, "temporaries", f"{time.time()} > Mute ID {entry_id} - Error: {e}")
                                             # return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
                 bot.db.execute("UPDATE temporary SET handled=? WHERE entry_id=?", (handled, entry_id,))
+
         await asyncio.sleep(1)
 
 
@@ -233,6 +234,7 @@ async def birthdays(bot: bot_data.Bot):
                                 general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Role End (Guild {gid}, User {user.id}) > {e}")
                 # except Exception as e:
                 #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+
         await asyncio.sleep(3600)
 
 
@@ -266,8 +268,8 @@ async def city_data_updater(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
     now = time.now(None)
-    # Start this script 3 seconds ahead to make sure the playing updater gets accurate data
-    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 3, None)
+    # Start this script ahead of the updates to make sure the city time updater and the playing status get accurate data
+    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 1, None)
     await asyncio.sleep((then - now).total_seconds())
     print(f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
 
@@ -289,7 +291,13 @@ async def city_data_updater(bot: bot_data.Bot):
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated city data")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
-        await asyncio.sleep(update_speed)
+
+        # This should make it adjust itself for lag caused
+        await asyncio.sleep(2)  # Hopefully prevents it from lagging ahead of itself and hanging
+        now = time.now(None)
+        then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 1, None)
+        await asyncio.sleep((then - now).total_seconds())
+        # await asyncio.sleep(update_speed)
 
 
 async def city_time_updater(bot: bot_data.Bot):
@@ -323,7 +331,13 @@ async def city_time_updater(bot: bot_data.Bot):
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset city time message")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
-        await asyncio.sleep(update_speed)
+
+        # This should make it adjust itself for lag caused
+        await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
+        now = time.now(None)
+        then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
+        await asyncio.sleep((then - now).total_seconds())
+        # await asyncio.sleep(update_speed)
 
 
 async def playing(bot: bot_data.Bot):
@@ -485,7 +499,13 @@ async def playing(bot: bot_data.Bot):
             general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
-        await asyncio.sleep(update_speed)
+
+        # This should make it adjust itself for lag caused
+        await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
+        now = time.now(None)
+        then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
+        await asyncio.sleep((then - now).total_seconds())
+        # await asyncio.sleep(update_speed)
 
 
 async def avatars(bot: bot_data.Bot):
@@ -518,6 +538,7 @@ async def avatars(bot: bot_data.Bot):
             general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > The bot tried to do something while disconnected.")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+
         await asyncio.sleep(3600)
 
 
@@ -607,6 +628,7 @@ async def polls(bot: bot_data.Bot):
             except Exception as e:
                 general.print_error(f"{time.time()} > {bot.full_name} > Polls > Poll {poll['poll_id']} error: {type(e).__name__}: {e}")
             bot.db.execute("DELETE FROM polls WHERE poll_id=?", (poll["poll_id"],))
+
         await asyncio.sleep(1)
 
 
@@ -813,4 +835,5 @@ async def trials(bot: bot_data.Bot):
             except Exception as e:
                 general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} error: {type(e).__name__}: {e}")
             bot.db.execute("DELETE FROM trials WHERE trial_id=?", (trial_id,))
+
         await asyncio.sleep(1)

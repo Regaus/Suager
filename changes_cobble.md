@@ -348,3 +348,6 @@
 - Fixed weather78 list command
 - Made the playing status update speed 2 minutes rather than 2m30s
 - Added a clock that shows current time and weather in Kargadian cities
+
+## v1.3.0-pre2.1 - 13 September 2021
+- Made the city data, city time, and playing updater scripts adjust themselves for lag caused
