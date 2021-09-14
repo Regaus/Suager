@@ -299,6 +299,16 @@ places = [
     },
     {
         "name": {
+            "english": "Lilia City",
+            "kargadian_west": "Lailagar",
+        },
+        "location": [1094.0, 126.8],
+        "language": ["kargadian_west"],
+        "planet": "Kargadia",
+        "region": "Kanernehtivia",
+    },
+    {
+        "name": {
             "english": "Lakkeaina",
             "kargadian_east": "Lakkeáina",
         },

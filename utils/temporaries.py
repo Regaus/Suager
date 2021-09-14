@@ -246,6 +246,7 @@ ka_cities = {
     "Kaivalgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 3
     "Kanerakainead": {"english": None, "tebarian": None, "time": None},  # Weight: 2
     "Kiomigar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
+    "Lailagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
     "Leitagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
     "Nurvutgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
     "Pakigar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2

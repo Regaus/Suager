@@ -351,3 +351,6 @@
 
 ## v1.3.0-pre2.1 - 13 September 2021
 - Made the city data, city time, and playing updater scripts adjust themselves for lag caused
+
+## v1.3.0-pre2.2 - 14 September 2021
+- Added Lailagar
