@@ -381,7 +381,7 @@ async def playing(bot: bot_data.Bot):
                     return date(year + 1, month, day)
                 return _date
 
-            def until(when: date, rsl: bool = True):
+            def until(when: date, rsl: bool = False):
                 days = (when - today).days
                 if rsl:
                     s = "in" if days != 1 else ""
@@ -393,7 +393,7 @@ async def playing(bot: bot_data.Bot):
 
             regaus = get_date(1, 27)
             is_regaus = today == regaus
-            status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus)} until Regaus's birthday"
+            status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus, False)} until Regaus's birthday"
             if bot.name == "cobble":
                 status_type = random.choices([1, 2, 3, 4], [15, 40, 15, 30])[0]
                 # 1 = birthdays, 2 = playing, 3 = holidays, 4 = time and weather
@@ -474,9 +474,9 @@ async def playing(bot: bot_data.Bot):
                     blucy = get_date(7, 13)
                     mizuki = get_date(6, 17)
                     is_kyomi, is_blucy, is_mizuki = today == kyomi, today == blucy, today == mizuki
-                    status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi)} until Kyomi's birthday"
-                    status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy)} until Blucy's birthday"
-                    status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki)} until my birthday"
+                    status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi, False)} until Kyomi's birthday"
+                    status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy, False)} until Blucy's birthday"
+                    status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki, False)} until my birthday"
                     status = random.choice([status_mizuki, status_regaus, status_kyomi, status_blucy])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
@@ -516,7 +516,7 @@ async def playing(bot: bot_data.Bot):
                 if status_type <= 0.2:  # 20% chance of being a birthday status
                     suager = get_date(5, 13)
                     is_suager = today == suager
-                    status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager)} until my birthday"
+                    status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager, False)} until my birthday"
                     status = random.choice([status_suager, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
