@@ -354,3 +354,7 @@
 
 ## v1.3.0-pre2.2 - 14 September 2021
 - Added Lailagar
+
+## v1.3.0-pre3 - 15 September 2021
+- The playing status now shows Kargadian holidays and Kargadian time and weather
+- Made types of status only show up at set probabilities

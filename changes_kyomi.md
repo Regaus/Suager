@@ -71,3 +71,6 @@
 
 ## v0.3.5.2 - 13 September 2021
 - Made the playing status update speed 2 minutes rather than 2m30s
+
+## v0.3.6 - 15 September 2021
+- Made birthday statuses show up 20% of the time, while other playing statuses are 80%

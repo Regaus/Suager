@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from utils import bot_data, general, http, languages, lists, logger, places, time
+from utils import bot_data, general, http, languages, lists, logger, places, time, times
 
 
 async def temporaries(bot: bot_data.Bot):
@@ -238,30 +238,44 @@ async def birthdays(bot: bot_data.Bot):
         await asyncio.sleep(3600)
 
 
-ka_cities = {
-    "Akkigar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Bylkangar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Ekspigar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Huntavall":     {"english": None, "tebarian": None, "time": None},  # Weight: 3
-    "Kaivalgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 3
-    "Kanerakainead": {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Kiomigar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Lailagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Leitagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Nurvutgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Pakigar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Peaskar":       {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Regavall":      {"english": None, "tebarian": None, "time": None},  # Weight: 5
-    "Reggar":        {"english": None, "tebarian": None, "time": None},  # Weight: 5
-    "Sentagar":      {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Sentatebaria":  {"english": None, "tebarian": None, "time": None},  # Weight: 3
-    "Shonangar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Steirigar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Suvagar":       {"english": None, "tebarian": None, "time": None},  # Weight: 3
-    "Vintelingar":   {"english": None, "tebarian": None, "time": None},  # Weight: 2
-    "Virsetgar":     {"english": None, "tebarian": None, "time": None},  # Weight: 2
+ka_cities = {  # List of Kargadian cities to be shown in the ka-time clock, and in playing statuses
+    "Akkigar":       {"english": None, "tebarian": None},  # Weight: 2
+    "Bylkangar":     {"english": None, "tebarian": None},  # Weight: 2
+    "Ekspigar":      {"english": None, "tebarian": None},  # Weight: 2
+    "Huntavall":     {"english": None, "tebarian": None},  # Weight: 3
+    "Kaivalgar":     {"english": None, "tebarian": None},  # Weight: 3
+    "Kanerakainead": {"english": None, "tebarian": None},  # Weight: 2
+    "Kiomigar":      {"english": None, "tebarian": None},  # Weight: 2
+    "Lailagar":      {"english": None, "tebarian": None},  # Weight: 2
+    "Leitagar":      {"english": None, "tebarian": None},  # Weight: 2
+    "Nurvutgar":     {"english": None, "tebarian": None},  # Weight: 2
+    "Pakigar":       {"english": None, "tebarian": None},  # Weight: 2
+    "Peaskar":       {"english": None, "tebarian": None},  # Weight: 2
+    "Regavall":      {"english": None, "tebarian": None},  # Weight: 5
+    "Reggar":        {"english": None, "tebarian": None},  # Weight: 5
+    "Sentagar":      {"english": None, "tebarian": None},  # Weight: 2
+    "Sentatebaria":  {"english": None, "tebarian": None},  # Weight: 3
+    "Shonangar":     {"english": None, "tebarian": None},  # Weight: 2
+    "Steirigar":     {"english": None, "tebarian": None},  # Weight: 2
+    "Suvagar":       {"english": None, "tebarian": None},  # Weight: 3
+    "Vintelingar":   {"english": None, "tebarian": None},  # Weight: 2
+    "Virsetgar":     {"english": None, "tebarian": None},  # Weight: 2
 }
+ka_time: times.TimeSolarNormal = times.time_kargadia(tz=0)  # Current time in Virsetgar, used to determine time until next holiday
 update_speed = 120  # 150
+ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they occur
+    1:   ("Nuan Kadan",              "Nuat Kadut"),
+    21:  ("Kattansean",              "Kattanseat"),
+    55:  ("Sean Tebarian",           "Seat Tebarian"),
+    60:  ("Sean na Liidenvirkalten", "Seat na Liidenvirkalten"),
+    97:  ("Semiansean",              "Semianseat"),
+    105: ("Sean Kaivallun",          "Seat Kaivallun"),
+    119: ("Sean Suvakyn",            "Seat Suvakyn"),
+    162: ("Sean Regaus'an",          "Seat Regaus'an"),
+    193: ("Tentasean",               "Tentaseat"),
+    209: ("Sean na Sevarddain",      "Seat na Sevarddain"),
+    220: ("Sean Leitakin",           "Seat Leitakin")
+}
 
 
 async def city_data_updater(bot: bot_data.Bot):
@@ -288,7 +302,10 @@ async def city_data_updater(bot: bot_data.Bot):
                     weather_tb = languages.Weather("tebarian").data("weather78")[rain_out]
                     english += f" | {temp} | {weather_en}"
                     tebarian += f" | {temp} | {weather_tb}"
-                ka_cities[city] = {"english": english, "tebarian": tebarian, "time": place.time}
+                ka_cities[city] = {"english": english, "tebarian": tebarian}
+                if city == "Virsetgar":
+                    global ka_time
+                    ka_time = place.time
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated city data")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
@@ -364,9 +381,9 @@ async def playing(bot: bot_data.Bot):
                     return date(year + 1, month, day)
                 return _date
 
-            def until(when: date, lang: str = "en"):
+            def until(when: date, rsl: bool = True):
                 days = (when - today).days
-                if lang == "rsl-1":
+                if rsl:
                     s = "in" if days != 1 else ""
                     v = "t" if days == 1 else "n"
                     return f"{days} sea{s} astalla{v}"
@@ -375,125 +392,296 @@ async def playing(bot: bot_data.Bot):
                     return f"{days} day{s}"
 
             regaus = get_date(1, 27)
-            suager = get_date(5, 13)
-            cobble = get_date(12, 5)
-            kyomi = get_date(5, 19)
-            blucy = get_date(7, 13)
-            mizuki = get_date(6, 17)
-            is_regaus, is_suager, is_cobble, is_kyomi, is_blucy, is_mizuki = today == regaus, today == suager, today == cobble, today == kyomi, today == blucy, today == mizuki
-
+            is_regaus = today == regaus
             status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus)} until Regaus's birthday"
-            status_regaus2 = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, 'rsl-1')} Regaus'tat reideseat"
-            status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager)} until my birthday"
-            status_cobble = f"🎉 Esea jat reideseani!" if is_cobble else f"{until(cobble, 'rsl-1')} mun reideseat"
-            status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi)} until Kyomi's birthday"
-            status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy)} until Blucy's birthday"
-            status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki)} until my birthday"
-            plays = {
-                "cobble": [
-                    {"type": 0, "name": fv},
-                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                    # {"type": 1, "name": "denedaa", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 0, "name": "Regaus'ar"},
-                    {"type": 0, "name": "dekedar"},
-                    {"type": 0, "name": "tarair sevirtair"},
-                    {"type": 5, "name": "noartai"},
-                    {"type": 0, "name": "denedaa"},
-                    {"type": 3, "name": "ten"},
-                    {"type": 3, "name": "ten sevartan"},
-                    {"type": 2, "name": "ut penat"},
-                    {"type": 3, "name": "na meitan"},
-                    {"type": 2, "name": "na deinettat"},
-                    {"type": 0, "name": status_regaus2},
-                    {"type": 0, "name": status_cobble},
-                    {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
-                    {"type": 0, "name": "na TBL'n"},
-                    {"type": 0, "name": "Akos'an"},
-                    {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
-                    {"type": 0, "name": "na TKP'n"},
-                    {"type": 0, "name": "vaihaga kiinanshavarkan"},
-                    {"type": 0, "name": "RIP discord.py"},
-                ],
-                "kyomi": [
-                    {"type": 0, "name": fv},
-                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                    {"type": 0, "name": status_regaus},
-                    {"type": 0, "name": status_kyomi},
-                    {"type": 0, "name": status_blucy},
-                    {"type": 0, "name": status_mizuki},
-                    {"type": 0, "name": "Snuggling with Mochi"},
-                    {"type": 0, "name": "Feeding Mochi"},
-                    {"type": 0, "name": "Petting Mochi"},
-                    {"type": 0, "name": "Eating pineapples"},
-                    {"type": 0, "name": "Eating pineapple pizza"},
-                    {"type": 0, "name": "Stealing pineapples"},
-                    {"type": 0, "name": "Stealing star cookies"},
-                    {"type": 0, "name": "Praying to the Pineapple God"},
-                    {"type": 3, "name": "you"},
-                ],
-                "suager": [
-                    {"type": 0, "name": fv},
-                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                    {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-                    {"type": 2, "name": "music"},
-                    {"type": 5, "name": "a competition"},
-                    {"type": 0, "name": "with Regaus"},
-                    {"type": 0, "name": "without you"},
-                    {"type": 0, "name": "with nobody"},
-                    {"type": 0, "name": "with your feelings"},
-                    # {"type": 0, "name": "Custom Status"},
-                    {"type": 0, "name": "Discord"},
-                    {"type": 3, "name": "Senko"},
-                    {"type": 5, "name": "uselessness"},
-                    # {"type": 0, "name": "nothing"},
-                    {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
-                    {"type": 3, "name": "you"},
-                    # {"type": 0, "name": "None"},
-                    # {"type": 0, "name": "KeyError: 'name'"},
-                    # {"type": 0, "name": "IndexError: list index out of range"},
-                    # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
-                    # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
-                    {"type": 3, "name": "the Void"},
-                    # {"type": 0, "name": "PyCharm"},
-                    {"type": 0, "name": "a game"},
-                    {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
-                    {"type": 2, "name": "a song"},
-                    {"type": 2, "name": "the void"},
-                    {"type": 2, "name": "Terraria's soundtrack"},
-                    {"type": 2, "name": "your conversations"},
-                    {"type": 3, "name": "murder"},
-                    {"type": 3, "name": "arson"},
-                    {"type": 2, "name": "your screams for help"},
-                    # {"type": 3, "name": "something"},
-                    # {"type": 3, "name": "nothing"},
-                    # {"type": 0, "name": "something"},
-                    {"type": 0, "name": "sentience"},
-                    {"type": 0, "name": status_regaus},
-                    {"type": 0, "name": status_suager},
-                    {"type": 0, "name": "RIP discord.py"},
-                ]
-            }
-            _activity = random.choice(plays.get(bot.name))
+            if bot.name == "cobble":
+                status_type = random.choices([1, 2, 3, 4], [15, 40, 15, 30])[0]
+                # 1 = birthdays, 2 = playing, 3 = holidays, 4 = time and weather
+                if status_type == 1:
+                    cobble = get_date(12, 5)
+                    is_cobble = today == cobble
+                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat"
+                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat"
+                    status = random.choice([status_cobble, status_regaus])
+                    activity = discord.Game(name=status)
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
+                elif status_type == 2:
+                    activities = [
+                        {"type": 0, "name": fv},
+                        {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                        {"type": 0, "name": "Regaus'ar"},
+                        {"type": 0, "name": "dekedar"},
+                        {"type": 0, "name": "tarair sevirtair"},
+                        {"type": 5, "name": "noartai"},
+                        {"type": 0, "name": "denedaa"},
+                        {"type": 3, "name": "ten"},
+                        {"type": 3, "name": "ten sevartan"},
+                        {"type": 2, "name": "ut penat"},
+                        {"type": 3, "name": "na meitan"},
+                        {"type": 2, "name": "na deinettat"},
+                        {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
+                        {"type": 0, "name": "na TBL'n"},
+                        {"type": 0, "name": "Akos'an"},
+                        {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
+                        {"type": 0, "name": "na TKP'n"},
+                        {"type": 0, "name": "vaihaga kiinanshavarkan"},
+                        {"type": 0, "name": "Vainar veikidat pahtemar, discord.py"},
+                    ]
+                    _activity = random.choice(activities)
+                    if _activity["type"] == 0:  # Game
+                        activity = discord.Game(name=_activity["name"])
+                    elif _activity["type"] == 1:  # Streaming
+                        name = _activity["name"]
+                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
+                    else:
+                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    name = _activity["name"]
+                    status = {
+                        0: "Koa",
+                        1: "Eimia",
+                        2: "Sanna",
+                        3: "Veita",
+                        5: "Aara sen"
+                    }.get(_activity["type"], "Undefined")
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+                elif status_type == 3:
+                    year_day, holiday = random.choice(list(ka_holidays.items()))
+                    now_day = ka_time.year_day
+                    if ka_time.year % 16 == 0:
+                        now_day -= 1
+                    if now_day > year_day:
+                        year_day += 256
+                        if (ka_time.year + 1) % 16 == 0:
+                            year_day += 1
+                    days_left = year_day - now_day
+                    if days_left == 0:
+                        status = f"Kovanan {holiday[0]}"
+                    elif days_left == 1:
+                        status = f"1 sea astallat {holiday[1]}"
+                    else:
+                        status = f"{days_left} seain astallan {holiday[1]}"
+                    activity = discord.Game(name=status)
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 3)")
+                else:  # status_type == 4
+                    city, city_data = random.choices(list(ka_cities.items()), [2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 5, 5, 2, 3, 2, 2, 3, 2, 2])[0]
+                    status = f"{city}: {city_data['tebarian']}"
+                    activity = discord.Game(name=status)
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")
+            elif bot.name == "kyomi":
+                status_type = random.random()
+                if status_type <= 0.2:  # 20% chance of being a birthday status
+                    kyomi = get_date(5, 19)
+                    blucy = get_date(7, 13)
+                    mizuki = get_date(6, 17)
+                    is_kyomi, is_blucy, is_mizuki = today == kyomi, today == blucy, today == mizuki
+                    status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi)} until Kyomi's birthday"
+                    status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy)} until Blucy's birthday"
+                    status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki)} until my birthday"
+                    status = random.choice([status_mizuki, status_regaus, status_kyomi, status_blucy])
+                    activity = discord.Game(name=status)
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
+                else:
+                    activities = [
+                        {"type": 0, "name": fv},
+                        {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                        {"type": 0, "name": "Snuggling with Mochi"},
+                        {"type": 0, "name": "Feeding Mochi"},
+                        {"type": 0, "name": "Petting Mochi"},
+                        {"type": 0, "name": "Eating pineapples"},
+                        {"type": 0, "name": "Eating pineapple pizza"},
+                        {"type": 0, "name": "Stealing pineapples"},
+                        {"type": 0, "name": "Stealing star cookies"},
+                        {"type": 0, "name": "Praying to the Pineapple God"},
+                        {"type": 3, "name": "you"},
+                    ]
+                    _activity = random.choice(activities)
+                    if _activity["type"] == 0:  # Game
+                        activity = discord.Game(name=_activity["name"])
+                    elif _activity["type"] == 1:  # Streaming
+                        name = _activity["name"]
+                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
+                    else:
+                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    name = _activity["name"]
+                    status = {
+                        0: "Playing",
+                        1: "Streaming",
+                        2: "Listening to",
+                        3: "Watching",
+                        5: "Competing in"
+                    }.get(_activity["type"], "Undefined")
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+            else:  # Suager
+                status_type = random.random()
+                if status_type <= 0.2:  # 20% chance of being a birthday status
+                    suager = get_date(5, 13)
+                    is_suager = today == suager
+                    status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager)} until my birthday"
+                    status = random.choice([status_suager, status_regaus])
+                    activity = discord.Game(name=status)
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
+                else:
+                    activities = [
+                        {"type": 0, "name": fv},
+                        {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                        {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                        {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                        {"type": 2, "name": "music"},
+                        {"type": 5, "name": "a competition"},
+                        {"type": 0, "name": "with Regaus"},
+                        {"type": 0, "name": "without you"},
+                        {"type": 0, "name": "with nobody"},
+                        {"type": 0, "name": "with your feelings"},
+                        # {"type": 0, "name": "Custom Status"},
+                        {"type": 0, "name": "Discord"},
+                        {"type": 3, "name": "Senko"},
+                        {"type": 5, "name": "uselessness"},
+                        # {"type": 0, "name": "nothing"},
+                        {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
+                        {"type": 3, "name": "you"},
+                        # {"type": 0, "name": "None"},
+                        # {"type": 0, "name": "KeyError: 'name'"},
+                        # {"type": 0, "name": "IndexError: list index out of range"},
+                        # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
+                        # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
+                        {"type": 3, "name": "the Void"},
+                        # {"type": 0, "name": "PyCharm"},
+                        {"type": 0, "name": "a game"},
+                        {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
+                        {"type": 2, "name": "a song"},
+                        {"type": 2, "name": "the void"},
+                        {"type": 2, "name": "Terraria's soundtrack"},
+                        {"type": 2, "name": "your conversations"},
+                        {"type": 3, "name": "murder"},
+                        {"type": 3, "name": "arson"},
+                        {"type": 2, "name": "your screams for help"},
+                        # {"type": 3, "name": "something"},
+                        # {"type": 3, "name": "nothing"},
+                        # {"type": 0, "name": "something"},
+                        {"type": 0, "name": "sentience"},
+                        {"type": 0, "name": "RIP discord.py"},
+                    ]
+                    _activity = random.choice(activities)
+                    if _activity["type"] == 0:  # Game
+                        activity = discord.Game(name=_activity["name"])
+                    elif _activity["type"] == 1:  # Streaming
+                        name = _activity["name"]
+                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
+                    else:
+                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    name = _activity["name"]
+                    status = {
+                        0: "Playing",
+                        1: "Streaming",
+                        2: "Listening to",
+                        3: "Watching",
+                        5: "Competing in"
+                    }.get(_activity["type"], "Undefined")
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+            # plays = {
+            #     "cobble": [
+            #         {"type": 0, "name": fv},
+            #         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+            #         # {"type": 1, "name": "denedaa", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+            #         {"type": 0, "name": "Regaus'ar"},
+            #         {"type": 0, "name": "dekedar"},
+            #         {"type": 0, "name": "tarair sevirtair"},
+            #         {"type": 5, "name": "noartai"},
+            #         {"type": 0, "name": "denedaa"},
+            #         {"type": 3, "name": "ten"},
+            #         {"type": 3, "name": "ten sevartan"},
+            #         {"type": 2, "name": "ut penat"},
+            #         {"type": 3, "name": "na meitan"},
+            #         {"type": 2, "name": "na deinettat"},
+            #         {"type": 0, "name": status_regaus2},
+            #         {"type": 0, "name": status_cobble},
+            #         {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
+            #         {"type": 0, "name": "na TBL'n"},
+            #         {"type": 0, "name": "Akos'an"},
+            #         {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
+            #         {"type": 0, "name": "na TKP'n"},
+            #         {"type": 0, "name": "vaihaga kiinanshavarkan"},
+            #         {"type": 0, "name": "RIP discord.py"},
+            #     ],
+            #     "kyomi": [
+            #         {"type": 0, "name": fv},
+            #         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+            #         {"type": 0, "name": status_regaus},
+            #         {"type": 0, "name": status_kyomi},
+            #         {"type": 0, "name": status_blucy},
+            #         {"type": 0, "name": status_mizuki},
+            #         {"type": 0, "name": "Snuggling with Mochi"},
+            #         {"type": 0, "name": "Feeding Mochi"},
+            #         {"type": 0, "name": "Petting Mochi"},
+            #         {"type": 0, "name": "Eating pineapples"},
+            #         {"type": 0, "name": "Eating pineapple pizza"},
+            #         {"type": 0, "name": "Stealing pineapples"},
+            #         {"type": 0, "name": "Stealing star cookies"},
+            #         {"type": 0, "name": "Praying to the Pineapple God"},
+            #         {"type": 3, "name": "you"},
+            #     ],
+            #     "suager": [
+            #         {"type": 0, "name": fv},
+            #         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+            #         {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+            #         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+            #         {"type": 2, "name": "music"},
+            #         {"type": 5, "name": "a competition"},
+            #         {"type": 0, "name": "with Regaus"},
+            #         {"type": 0, "name": "with nobody"},
+            #         {"type": 0, "name": "with your feelings"},
+            #         # {"type": 0, "name": "Custom Status"},
+            #         {"type": 0, "name": "Discord"},
+            #         {"type": 3, "name": "Senko"},
+            #         {"type": 5, "name": "uselessness"},
+            #         # {"type": 0, "name": "nothing"},
+            #         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
+            #         {"type": 3, "name": "you"},
+            #         # {"type": 0, "name": "None"},
+            #         # {"type": 0, "name": "KeyError: 'name'"},
+            #         # {"type": 0, "name": "IndexError: list index out of range"},
+            #         # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
+            #         # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
+            #         {"type": 3, "name": "the Void"},
+            #         # {"type": 0, "name": "PyCharm"},
+            #         {"type": 0, "name": "a game"},
+            #         {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
+            #         {"type": 2, "name": "a song"},
+            #         {"type": 2, "name": "the void"},
+            #         {"type": 2, "name": "Terraria's soundtrack"},
+            #         {"type": 2, "name": "your conversations"},
+            #         {"type": 3, "name": "murder"},
+            #         {"type": 3, "name": "arson"},
+            #         {"type": 2, "name": "your screams for help"},
+            #         # {"type": 3, "name": "something"},
+            #         # {"type": 3, "name": "nothing"},
+            #         # {"type": 0, "name": "something"},
+            #         {"type": 0, "name": "sentience"},
+            #         {"type": 0, "name": status_regaus},
+            #         {"type": 0, "name": status_suager},
+            #         {"type": 0, "name": "RIP discord.py"},
+            #     ]
+            # }
+            # _activity = random.choice(plays.get(bot.name))
             # playing = f"{play} | v{self.local_config['short_version']}"
-            if _activity["type"] == 0:  # Game
-                activity = discord.Game(name=_activity["name"])
-            elif _activity["type"] == 1:  # Streaming
-                name = _activity["name"]
-                activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-            else:
-                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
-                # activity = discord.Activity(type=activity, name=playing)
+            # if _activity["type"] == 0:  # Game
+            #     activity = discord.Game(name=_activity["name"])
+            # elif _activity["type"] == 1:  # Streaming
+            #     name = _activity["name"]
+            #     activity = discord.Streaming(name=name, details=name, url=_activity["url"])
+            # else:
+            #     activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+            #     # activity = discord.Activity(type=activity, name=playing)
             await bot.change_presence(activity=activity, status=discord.Status.dnd)
-            name = _activity["name"]
-            status = {
-                0: "Playing",
-                1: "Streaming",
-                2: "Listening to",
-                3: "Watching",
-                5: "Competing in"
-            }.get(_activity["type"], "Undefined")
-            logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+            # name = _activity["name"]
+            # status = {
+            #     0: "Playing",
+            #     1: "Streaming",
+            #     2: "Listening to",
+            #     3: "Watching",
+            #     5: "Competing in"
+            # }.get(_activity["type"], "Undefined")
+            # logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
         except PermissionError:
             general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
