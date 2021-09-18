@@ -74,3 +74,6 @@
 
 ## v0.3.6 - 15 September 2021
 - Made birthday statuses show up 20% of the time, while other playing statuses are 80%
+
+## v0.3.7 - 18 September 2021
+- Improved the invite command

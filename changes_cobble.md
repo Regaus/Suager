@@ -362,3 +362,6 @@
 ## v1.3.0-pre3.1 - 18 September 2021
 - Funnier responses on polar days/nights in weather78
 - Fixed bug that showed dawn and dusk even when not necessary
+
+## v1.3.0-pre4 - 18 September 2021
+- Improved the invite command

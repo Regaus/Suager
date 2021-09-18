@@ -78,11 +78,20 @@ class BotInformation(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def invite(self, ctx: commands.Context):
         """ Invite me to your own server! """
+        language = self.bot.language(ctx)
         perms = 470150358  # Old: 470150231
         # link = f"\n<https://discordapp.com/oauth2/authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>"
         # applications.commands is the scope for slash commands because discord is retarded
-        link = f"<{oauth_url(str(self.bot.user.id), Permissions(perms), scopes=['bot', 'applications.commands'])}>"
-        return await general.send(self.bot.language(ctx).string("info_invite_bot", ctx.author.name, link), ctx.channel)
+        # link = f"<{oauth_url(str(self.bot.user.id), Permissions(perms), scopes=['bot', 'applications.commands'])}>"
+        link1 = oauth_url(str(self.bot.user.id), Permissions(perms), scopes=['bot', 'applications.commands'])
+        link2 = oauth_url(str(self.bot.user.id), Permissions(0), scopes=['bot', 'applications.commands'])
+        embed = discord.Embed()
+        embed.title = language.string("info_invite_bot")
+        embed.description = language.string("info_invite_bot2", link1, link2)
+        if self.bot.name in ["cobble", "kyomi"]:
+            embed.set_footer(text=language.string("info_invite_private"))
+        # return await general.send(self.bot.language(ctx).string("info_invite_bot", ctx.author.name, link), ctx.channel)
+        return await general.send(None, ctx.channel, embed=embed)
 
     @commands.command(name="ping")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
