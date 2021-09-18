@@ -1143,6 +1143,9 @@ class Sun:
                 day_part = "evening"  # In an equal day: 3pm-6:30pm
             else:
                 day_part = "night"    # In an equal day: 6:30pm-midnight
+            if dawn_t == 0 and dusk_t == 1:
+                sun_data["dawn"] = None
+                sun_data["dusk"] = None
         # sun_data["day_part"] = day_part
         # if self.place.lat not in [90, -90]:
         #     sun_data += f"\nTrue solar time {solar_time}"
