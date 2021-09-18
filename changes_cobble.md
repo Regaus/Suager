@@ -358,3 +358,6 @@
 ## v1.3.0-pre3 - 15 September 2021
 - The playing status now shows Kargadian holidays and Kargadian time and weather
 - Made types of status only show up at set probabilities
+
+## v1.3.0-pre3.1 - 18 September 2021
+- Funnier responses on polar days/nights in weather78
