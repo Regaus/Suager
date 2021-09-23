@@ -11,8 +11,11 @@ print(f"{time.time()} > Initialisation Started")
 config = general.get_config()
 general.create_dirs()
 tables = database.creation()
-loop = asyncio.get_event_loop()
+# loop = asyncio.get_event_loop()
+# loop = asyncio.new_event_loop()
+loop = asyncio.get_event_loop_policy().get_event_loop()
 tasks = []
+db = database.Database()  # The database is the same for all bots anyways, so no point in initialising it thrice...
 
 
 async def get_prefix(_bot, ctx):
@@ -50,7 +53,6 @@ for i in range(len(config["bots"])):
     except FileNotFoundError:
         blacklist = []
     name = local_config["internal_name"]
-    db = database.Database()
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db, {},
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
@@ -80,6 +82,29 @@ for i in range(len(config["bots"])):
         elif bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.temporaries(bot)))
+
+server_settings = db.fetch("SELECT * FROM settings")
+for server in server_settings:
+    setting = json.loads(server["data"])
+    for key in ["audit_logs", "user_logs", "message_logs", "message_ignore"]:
+        try:
+            setting.pop(key)
+        except KeyError:
+            pass
+    if "join_roles" in setting:
+        members = setting["join_roles"]["members"]
+        if type(members) == int:  # If it is old
+            if members == 0:
+                setting["join_roles"]["members"] = []
+            else:
+                setting["join_roles"]["members"] = [members]
+        bots = setting["join_roles"]["bots"]
+        if type(bots) == int:  # If it is old
+            if bots == 0:
+                setting["join_roles"]["bots"] = []
+            else:
+                setting["join_roles"]["bots"] = [bots]
+    db.execute("UPDATE SETTINGS set data=? WHERE gid=? AND bot=?", (json.dumps(setting), server["gid"], server["bot"]))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

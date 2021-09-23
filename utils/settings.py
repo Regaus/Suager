@@ -22,13 +22,9 @@ template_mizuki = {
         "channel": 0,
         "message": "Happy birthday [MENTION], have a nice one! 🎂🎉"
     },
-    "audit_logs": 0,
-    "user_logs": 0,
-    "message_logs": 0,
-    "message_ignore": [],
     "join_roles": {
-        "members": 0,
-        "bots": 0
+        "members": [],
+        "bots": []
     },
     "welcome": {
         "channel": 0,
@@ -66,17 +62,13 @@ template_suager = {
         "channel": 0,
         "message": "Happy birthday [MENTION], have a nice one! 🎂🎉"
     },
-    "audit_logs": 0,
-    "user_logs": 0,
-    "message_logs": 0,
-    "message_ignore": [],
     "polls": {
         "channel": 0,
         "voter_anonymity": True
     },
     "join_roles": {
-        "members": 0,
-        "bots": 0
+        "members": [],
+        "bots": []
     },
     "welcome": {
         "channel": 0,

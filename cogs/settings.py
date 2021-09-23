@@ -122,9 +122,14 @@ class Settings(commands.Cog):
                 if "join_roles" in setting:
                     join_roles = setting["join_roles"]
                     if join_roles["members"]:
-                        members = f"<@&{join_roles['members']}>"
+                        # members = f"<@&{join_roles['members']}>"
+                        members = language.join([f"<@&{role}>" for role in join_roles["members"]])
+                    else:
+                        members = language.string("generic_none")
                     if join_roles["bots"]:
-                        bots = f"<@&{join_roles['bots']}>"
+                        bots = language.join([f"<@&{role}>" for role in join_roles["bots"]])
+                    else:
+                        bots = language.string("generic_none")
                 embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
                 welcome_channel, welcome_message = language.string("settings_current_disabled"), None
                 if "welcome" in setting:
@@ -1267,33 +1272,15 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_join_role.command(name="members", aliases=["member"])
-    async def set_member_join_role(self, ctx: commands.Context, role: discord.Role = None):
+    @set_join_role.group(name="members", aliases=["member"])
+    async def set_member_join_role(self, ctx: commands.Context):
         """ Set the role to give to new human members """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "join_roles" not in _settings:
-            _settings["join_roles"] = self.template["join_roles"].copy()
-        if role is None:
-            _settings["join_roles"]["members"] = 0
-        else:
-            _settings["join_roles"]["members"] = role.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if role is not None:
-            return await general.send(self.bot.language(ctx).string("settings_join_members_set", role.name), ctx.channel)
-        else:
-            return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
 
-    @set_join_role.command(name="bots", aliases=["bot"])
-    async def set_bot_join_role(self, ctx: commands.Context, role: discord.Role = None):
-        """ Set the role to give to new bots """
+    @set_member_join_role.command(name="add")
+    async def add_member_join_role(self, ctx: commands.Context, role: discord.Role):
+        """ Give this role to new human members """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
             _settings = json.loads(data["data"])
@@ -1301,19 +1288,115 @@ class Settings(commands.Cog):
             _settings = self.template.copy()
         if "join_roles" not in _settings:
             _settings["join_roles"] = self.template["join_roles"].copy()
-        if role is None:
-            _settings["join_roles"]["bots"] = 0
-        else:
-            _settings["join_roles"]["bots"] = role.id
+        members = _settings["join_roles"]["members"]
+        if type(members) == int:  # If it is old
+            if members == 0:
+                _settings["join_roles"]["members"] = []
+            else:
+                _settings["join_roles"]["members"] = [members]
+        _settings["join_roles"]["members"].append(role.id)
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if role is not None:
-            return await general.send(self.bot.language(ctx).string("settings_join_bots_set", role.name), ctx.channel)
+        # if role is not None:
+        return await general.send(self.bot.language(ctx).string("settings_join_members_add", role.name), ctx.channel)
+        # else:
+        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+
+    @set_member_join_role.command(name="remove")
+    async def remove_member_join_role(self, ctx: commands.Context, role: discord.Role):
+        """ Don't give this role new human members """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
         else:
-            return await general.send(self.bot.language(ctx).string("settings_join_bots_none"), ctx.channel)
+            _settings = self.template.copy()
+        if "join_roles" not in _settings:
+            _settings["join_roles"] = self.template["join_roles"].copy()
+        members = _settings["join_roles"]["members"]
+        if type(members) == int:  # If it is old
+            if members == 0:
+                _settings["join_roles"]["members"] = []
+            else:
+                _settings["join_roles"]["members"] = [members]
+        try:
+            _settings["join_roles"]["members"].remove(role.id)
+        except (IndexError, ValueError):
+            return await general.send(self.bot.language(ctx).string("settings_join_members_error", role.name), ctx.channel)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        # if role is not None:
+        return await general.send(self.bot.language(ctx).string("settings_join_members_remove", role.name), ctx.channel)
+        # else:
+        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+
+    @set_join_role.group(name="bots", aliases=["bot"])
+    async def set_bot_join_role(self, ctx: commands.Context):
+        """ Set the role to give to new bots """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @set_bot_join_role.command(name="add")
+    async def add_bot_join_role(self, ctx: commands.Context, role: discord.Role):
+        """ Give this role to new bots """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "join_roles" not in _settings:
+            _settings["join_roles"] = self.template["join_roles"].copy()
+        members = _settings["join_roles"]["bots"]
+        if type(members) == int:  # If it is old
+            if members == 0:
+                _settings["join_roles"]["bots"] = []
+            else:
+                _settings["join_roles"]["bots"] = [members]
+        _settings["join_roles"]["bots"].append(role.id)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        # if role is not None:
+        return await general.send(self.bot.language(ctx).string("settings_join_bots_add", role.name), ctx.channel)
+        # else:
+        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+
+    @set_bot_join_role.command(name="remove")
+    async def remove_bot_join_role(self, ctx: commands.Context, role: discord.Role):
+        """ Don't give this role new bots """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "join_roles" not in _settings:
+            _settings["join_roles"] = self.template["join_roles"].copy()
+        members = _settings["join_roles"]["bots"]
+        if type(members) == int:  # If it is old
+            if members == 0:
+                _settings["join_roles"]["bots"] = []
+            else:
+                _settings["join_roles"]["bots"] = [members]
+        try:
+            _settings["join_roles"]["bots"].remove(role.id)
+        except (IndexError, ValueError):
+            return await general.send(self.bot.language(ctx).string("settings_join_bots_error", role.name), ctx.channel)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        # if role is not None:
+        return await general.send(self.bot.language(ctx).string("settings_join_bots_remove", role.name), ctx.channel)
+        # else:
+        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
 
     @settings.group(name="welcome", case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])

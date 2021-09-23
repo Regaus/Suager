@@ -139,8 +139,8 @@ def time_qevenerus_us(when: datetime = None, tz: float = 0):  # 23.6 Usturian
     day_length = qevenerus_day
     month_lengths = [40] * 20
     year, month, day, h, m, s, ds, yd = solar_normal(irl, start, day_length, 800, lambda _: 0, month_lengths, 1, tz)
-    weekdays = ["Jorunat", "Usturojuvanat", "Muqakat", "Pedat", "Furonat", "Dzasat", "Zhangejat", "Pyrynat", "Tachat", "Maghadat"]
-    months = ["Jorunuza", "Usturojuvanuza", "Muqakuza", "Pededze", "Furonuza", "Dzasuza", "Zhangejuza", "Pyrynedze", "Tachuza", "Maghaduza",
+    weekdays = ["Jorunat", "Usturonat", "Muqakat", "Pedat", "Furonat", "Dzasat", "Zhangejat", "Pyrynat", "Tachat", "Maghadat"]
+    months = ["Jorunuza", "Usturonuza", "Muqakuza", "Pededze", "Furonuza", "Dzasuza", "Zhangejuza", "Pyrynedze", "Tachuza", "Maghaduza",
               "Nakhavuza", "Gaghavuza", "Poradedze", "Boravedze", "Avadedze", "Akeruza", "Vezeluza", "Makuza", "Lapenuza", "Ghomuza"]
     output = TimeSolarNormal(year, month, day, h, m, s, weekdays, months, 10, ds, yd)
     output.day_name = f"Sharuad {weekdays[output.day_of_week]}"

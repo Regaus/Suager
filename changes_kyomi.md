@@ -77,3 +77,6 @@
 
 ## v0.3.7 - 18 September 2021
 - Improved the invite command
+
+## v0.3.8 - 22 September 2021
+- Added ability to give multiple roles at once

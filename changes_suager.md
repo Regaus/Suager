@@ -1031,3 +1031,7 @@
 
 ## v7.4.8 - 18 September 2021
 - Improved the invite command
+
+## v7.4.9 - 22 September 2021
+- Added ability to give multiple roles at once
+- Removed the logs settings, so that I can set the new ones later on

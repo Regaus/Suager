@@ -156,15 +156,17 @@ class Events(commands.Cog):
             settings = json.loads(data["data"])
             if "join_roles" in settings:
                 try:
-                    _role = settings["join_roles"]["bots"] if member.bot else settings["join_roles"]["members"]
-                    if _role:
-                        role: discord.Role = member.guild.get_role(_role)
-                        if role:
-                            await member.add_roles(role, reason=f"[Auto-Roles] Joining the server")
+                    _roles = settings["join_roles"]["bots"] if member.bot else settings["join_roles"]["members"]
+                    if _roles:
+                        for _role in _roles:
+                            role: discord.Role = member.guild.get_role(_role)
+                            if role:
+                                try:
+                                    await member.add_roles(role, reason=f"[Auto-Roles] Joining the server")
+                                except discord.Forbidden:
+                                    general.print_error(f"{time.time()} > {self.bot.full_name} > {member.guild} > Failed to give {member} join role (Forbidden)")
                 except KeyError:
                     pass
-                except discord.Forbidden:
-                    general.print_error(f"{time.time()} > {self.bot.full_name} > {member.guild} > Failed to give {member} join role (Forbidden)")
             if "welcome" in settings:
                 welcome = settings["welcome"]
                 if welcome["channel"]:

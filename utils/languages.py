@@ -37,7 +37,7 @@ def splits(value: str, step: int = 4, joiner: str = " ") -> str:
     return (joiner.join([reverse[i:i+step] for i in range(0, len(reverse), step)]))[::-1] + _float
 
 
-def join(seq, joiner: str = ', ', final: str = 'and'):
+def join(seq, joiner: str = ', ', final: str = 'and') -> str:
     size = len(seq)
     return '' if size == 0 else seq[0] if size == 1 else f"{seq[0]} {final} {seq[1]}" if size == 2 else f"{joiner.join(seq[:-1])} {final} {seq[-1]}"
 
@@ -115,6 +115,10 @@ class Language:
         """ Get list/dict language entry """
         return (languages.get(self.language, languages["english"])).get(key, languages["english"].get(key))
 
+    def join(self, seq):
+        """ x, y and z """
+        return join(seq, final=self.string2("generic_and"))
+
     # Temporary aliases to get this to work with weather while I work on actual time support
     string2 = string
     data2 = data
@@ -182,7 +186,7 @@ class Language:
             if brief:
                 return pre + ' '.join(output) + suf
             else:
-                return pre + join(output, final=self.string2("generic_and")) + suf
+                return pre + self.join(output) + suf
 
     def delta_int(self, seconds: Union[int, float], *, accuracy: int = 3, brief: bool = True, affix: bool = False) -> str:
         now = time.now(None)
