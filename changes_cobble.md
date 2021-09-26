@@ -363,5 +363,8 @@
 - Funnier responses on polar days/nights in weather78
 - Fixed bug that showed dawn and dusk even when not necessary
 
-## v1.3.0-pre4 - 18 September 2021
+## v1.3.0 - 18 September 2021
 - Improved the invite command
+
+## v1.4.0a1 - 26 September 2021
+- Created custom datetime system, to later improve the way time works in Kargadia

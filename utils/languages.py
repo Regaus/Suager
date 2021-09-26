@@ -115,6 +115,20 @@ class Language:
         """ Get list/dict language entry """
         return (languages.get(self.language, languages["english"])).get(key, languages["english"].get(key))
 
+    def weather_string(self, string: str, *values, **kwargs) -> str:
+        """ Get translated weather string """
+        output = str((weather.get(self.language, weather["english"])).get(string, weather["english"].get(string, string)))
+        try:
+            return output.format(*values, **kwargs, emotes=emotes)
+        except IndexError:
+            for i, value in enumerate(values):
+                output = output.replace(f"\x7b{i}\x7d", str(value))  # Try to fill in the values we do have
+            return output
+
+    def weather_data(self, key: str):
+        """ Get list/dict language entry """
+        return (weather.get(self.language, weather["english"])).get(key, weather["english"].get(key))
+
     def join(self, seq):
         """ x, y and z """
         return join(seq, final=self.string2("generic_and"))
@@ -243,33 +257,32 @@ class Language:
     def time(self, when: datetime = None, *, short: int = 0, dow: bool = False, seconds: bool = True, tz: bool = False) -> str:
         return f"{self.date(when, short=short, dow=dow, year=True)}, {self.time2(when, seconds=seconds, tz=tz)}"
 
+    def time_weekday(self, obj, short: bool = True):
+        """ Return the weekday name """
+        # Using the object itself rather than its values will allow to more accurately represent weekdays for RSL-1
+        day = obj.weekday
+        time_class = obj.time_class()
+        default = time_class.default_language
+        value = "weekdays_short" if short else "weekdays"
+        _data = (time_strings.get(self.language, time_strings[default])).get(value, time_strings[default].get(value))
+        data = _data.get(time_class.__class__.__name__)
+        return data[day]
+
+    def time_month(self, obj, short: bool = True):
+        """ Return the month name """
+        month = obj.month
+        time_class = obj.time_class()
+        default = time_class.default_language
+        value = "months_short" if short else "months"
+        _data = (time_strings.get(self.language, time_strings[default])).get(value, time_strings[default].get(value))
+        data = _data.get(time_class.__class__.__name__)
+        return data[month - 1]
+
     def __str__(self):
         return self.language
 
     def __repr__(self):
         return f"<{self.__class__.__name__} code={self.language!r}>"
-
-
-class Weather(Language):
-    """ Subclass of Language for weather-specific stuff """
-    @classmethod
-    def from_language(cls, language: Language):
-        """ Convert from Language to Weather """
-        return cls(language=language.language)
-
-    def string(self, string: str, *values, **kwargs) -> str:
-        """ Get translated weather string """
-        output = str((weather.get(self.language, weather["english"])).get(string, weather["english"].get(string, string)))
-        try:
-            return output.format(*values, **kwargs, emotes=emotes)
-        except IndexError:
-            for i, value in enumerate(values):
-                output = output.replace(f"\x7b{i}\x7d", str(value))  # Try to fill in the values we do have
-            return output
-
-    def data(self, key: str):
-        """ Get list/dict language entry """
-        return (weather.get(self.language, weather["english"])).get(key, weather["english"].get(key))
 
 
 class FakeContext:

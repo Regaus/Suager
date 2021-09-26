@@ -721,11 +721,11 @@ class Place:
         # _date = f"{self.time.day:02d}/{self.time.month:02d}/{self.time.year}"
         # return f"It is currently **{_time}** on **{_date}** in **{self.place}, {self.planet}**"
 
-    def location(self, indent: bool = False, language: languages.Weather = None):
+    def location(self, indent: bool = False, language: languages.Language = None):
         lat, long = self.lat, self.long
         if language is None:
-            language = languages.Weather("english")
-        _n, _e, _s, _w = language.data("sides")
+            language = languages.Language("english")
+        _n, _e, _s, _w = language.weather_data("sides")
         # This allows to translate the N, E, S, W pieces into other languages
         n, e = _n if lat >= 0 else _s, _e if long >= 0 else _w
         if lat < 0:
@@ -875,7 +875,7 @@ class Place:
         else:
             return None, None, None, None
 
-    def status(self, language: languages.Weather) -> discord.Embed:
+    def status(self, language: languages.Language) -> discord.Embed:
         """ Get current weather conditions as Embed """
         temp, wind_kmh, humidity, rain_out = self.weather()
         embed = discord.Embed(colour=general.random_colour())
@@ -894,13 +894,13 @@ class Place:
             name = self.names.get(language.language, self.name)
         place_name = f"{name}, {self.planet}" if self.region is None else f"{name}, {self.region}, {self.planet}"
         # embed.title = f"Information about **{place_name}**"
-        embed.title = language.string("weather78_title", place_name)
+        embed.title = language.weather_string("weather78_title", place_name)
 
         # embed.add_field(name="Time and Location", inline=False,
         #                 value=f"Local time: {self.local_time}\n"
         #                       f"Time zone: **{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)\n"
         #                       f"Location: **{self.location(False)}**")
-        lang_names = language.data("languages")
+        lang_names = language.weather_data("languages")
         lt_langs = list(self.local_time.keys())
         if lt_langs == ["any"]:
             local_time = self.local_time["any"]
@@ -914,7 +914,7 @@ class Place:
                 for lang in lt_langs:
                     _local_time.append(f"{lang_names[lang]}: {self.local_time[lang]}")
                 local_time = "\n".join(_local_time)
-        embed.add_field(name=language.string("weather78_local_time"), value=local_time, inline=False)
+        embed.add_field(name=language.weather_string("weather78_local_time"), value=local_time, inline=False)
 
         offset1 = f"{self.tz:+}:00"
         offset2_raw = self.long / (360 / 24)
@@ -927,15 +927,15 @@ class Place:
             minutes = round(minutes * 60)
         offset2 = f"{hours:+}:{minutes:02d}"
         # embed.add_field(name="Timezone", value=f"**{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)", inline=False)
-        embed.add_field(name=language.string("weather78_timezone"), value=language.string("weather78_timezone2", offset1, offset2), inline=False)
+        embed.add_field(name=language.weather_string("weather78_timezone"), value=language.weather_string("weather78_timezone2", offset1, offset2), inline=False)
 
-        embed.add_field(name=language.string("weather78_location"), value=self.location(indent=False, language=language), inline=False)
+        embed.add_field(name=language.weather_string("weather78_location"), value=self.location(indent=False, language=language), inline=False)
 
-        names = "\n".join([f"{lang_names[lang]}: {self.names[lang]}" for lang in self.names])
-        embed.add_field(name=language.string("weather78_names"), value=names, inline=False)
+        names = "\n".join([f"{lang_names[lang]}: {self.names[lang]}" for lang in self.names.keys()])
+        embed.add_field(name=language.weather_string("weather78_names"), value=names, inline=False)
 
         langs = languages.join([lang_names[lang] for lang in self.language], final=language.string("and"))
-        embed.add_field(name=language.string("weather78_languages"), value=langs, inline=False)
+        embed.add_field(name=language.weather_string("weather78_languages"), value=langs, inline=False)
         if temp is not None:
             # output = f"Temperature: **{temp_c}°C**\n" \
             #          f"Wind speed: **{speed_kmh} km/h** | **{speed_mps} m/s**\n" \
@@ -943,21 +943,21 @@ class Place:
             #          f"Sky's mood: **{rain_out}**"
             c = language.number(temp, precision=1)
             f = language.number(temp * 1.8 + 32, precision=1)
-            temperature = language.string("temperature", c=c, f=f)
+            temperature = language.weather_string("temperature", c=c, f=f)
             kmh = language.number(wind_kmh, precision=1)
             mps = language.number(wind_kmh / 3.6, precision=1)
             mph = language.number(wind_kmh / 1.609, precision=1)
-            wind = language.string("speed", kmh=kmh, mps=mps, miles=mph)
+            wind = language.weather_string("speed", kmh=kmh, mps=mps, miles=mph)
             humidity = language.number(humidity, precision=0, percentage=True)
-            weather_data = language.data("weather78")
+            weather_data = language.weather_data("weather78")
             rain = weather_data[rain_out]
-            embed.add_field(name=language.string("weather78_weather"), value=language.string("weather78_status", temperature, wind, humidity, rain), inline=False)
+            embed.add_field(name=language.weather_string("weather78_weather"), value=language.weather_string("weather78_status", temperature, wind, humidity, rain), inline=False)
         else:
-            embed.add_field(name=language.string("weather78_weather"), value=language.string("weather78_weather_none"), inline=False)
-        embed.add_field(name=language.string("weather78_sun"), value=self.sun.sun_data_str(language), inline=False)
+            embed.add_field(name=language.weather_string("weather78_weather"), value=language.weather_string("weather78_weather_none"), inline=False)
+        embed.add_field(name=language.weather_string("weather78_sun"), value=self.sun.sun_data_str(language), inline=False)
         # embed.set_footer(text=f"Astronomical season: {self.sun.season.title()}")
-        seasons = language.data("seasons")
-        embed.set_footer(text=language.string("weather78_season", seasons[self.sun.season]))
+        seasons = language.weather_data("seasons")
+        embed.set_footer(text=language.weather_string("weather78_season", seasons[self.sun.season]))
         embed.timestamp = self.now
         return embed
 
@@ -1164,37 +1164,37 @@ class Sun:
         # sun_data += f"\nThe sun is due {direction} ({heading:.0f}°)"
         return solar_noon, sunrise, sunset, dawn, dusk, sun_data, day_part, season
 
-    def sun_data_str(self, language: languages.Weather) -> str:
+    def sun_data_str(self, language: languages.Language) -> str:
         """ Show all the sun data """
         data = self.sun_data
         sun_data = []
         if data["always_day"]:
-            sun_data.append(language.string("sun_always_day"))
+            sun_data.append(language.weather_string("sun_always_day"))
         elif data["always_night"]:
-            sun_data.append(language.string("sun_always_night"))
+            sun_data.append(language.weather_string("sun_always_night"))
         sun = []
         if data["dawn"] is not None:
-            sun.append(language.string("sun_dawn", data["dawn"]))
+            sun.append(language.weather_string("sun_dawn", data["dawn"]))
         if data["sunrise"] is not None:
-            sun.append(language.string("sun_sunrise", data["sunrise"]))
+            sun.append(language.weather_string("sun_sunrise", data["sunrise"]))
         if self.place.lat not in [-90, 90]:
-            sun.append(language.string("sun_noon", data["noon"]))
+            sun.append(language.weather_string("sun_noon", data["noon"]))
         if data["sunset"] is not None:
-            sun.append(language.string("sun_sunset", data["sunset"]))
+            sun.append(language.weather_string("sun_sunset", data["sunset"]))
         if data["dusk"] is not None:
-            sun.append(language.string("sun_dusk", data["dusk"]))
+            sun.append(language.weather_string("sun_dusk", data["dusk"]))
         if sun:
             sun_data.append("\n".join(sun))
         details = []
         if data["day_length"] is not None:
-            details.append(language.string("sun_length", language.delta_int(data["day_length"], accuracy=2, brief=False, affix=False)))
+            details.append(language.weather_string("sun_length", language.delta_int(data["day_length"], accuracy=2, brief=False, affix=False)))
         if self.place.lat not in [-90, 90]:
-            details.append(language.string("sun_time", data["solar_time"]))
+            details.append(language.weather_string("sun_time", data["solar_time"]))
         if data["sun_below"]:
-            details.append(language.string("sun_below", data["elevation"]))
+            details.append(language.weather_string("sun_below", data["elevation"]))
         else:
-            details.append(language.string("sun_above", data["elevation"]))
-        directions = language.data("directions")
-        details.append(language.string("sun_direction", directions[data["direction"]], data["heading"]))
+            details.append(language.weather_string("sun_above", data["elevation"]))
+        directions = language.weather_data("directions")
+        details.append(language.weather_string("sun_direction", directions[data["direction"]], data["heading"]))
         sun_data.append("\n".join(details))
         return "\n\n".join(sun_data)

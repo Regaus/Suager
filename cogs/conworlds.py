@@ -6,7 +6,6 @@ import discord
 from discord.ext import commands
 
 from utils import bot_data, conlangs, general, places, time, times
-from utils.languages import Weather
 
 longest_city = {
     "Virkada": 20,
@@ -111,7 +110,8 @@ class Conworlds(commands.Cog):
         if ctx.invoked_subcommand is None:
             try:
                 # language = Weather.from_language(self.bot.language(ctx))
-                language = Weather.get(ctx)
+                # language = Weather.get(ctx)
+                language = self.bot.language(ctx)
                 place = places.Place(where)
                 embed = place.status(language)
                 return await general.send(None, ctx.channel, embed=embed)

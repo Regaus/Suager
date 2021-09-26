@@ -298,8 +298,8 @@ async def city_data_updater(bot: bot_data.Bot):
                 temperature, _, _, rain_out = place.weather()
                 if temperature is not None and rain_out is not None:
                     temp = f"{temperature:.0f}°C"
-                    weather_en = languages.Weather("english").data("weather78")[rain_out]
-                    weather_tb = languages.Weather("tebarian").data("weather78")[rain_out]
+                    weather_en = languages.Language("english").weather_data("weather78")[rain_out]
+                    weather_tb = languages.Language("tebarian").weather_data("weather78")[rain_out]
                     english += f" | {temp} | {weather_en}"
                     tebarian += f" | {temp} | {weather_tb}"
                 ka_cities[city] = {"english": english, "tebarian": tebarian}

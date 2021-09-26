@@ -267,6 +267,14 @@ class Admin(commands.Cog):
         out = reload_util(name, self.bot)
         return await general.send(out, ctx.channel)
 
+    @commands.command(name="reloadtime", aliases=["rt"])
+    @commands.check(permissions.is_owner)
+    async def reload_time(self, ctx: commands.Context):
+        """ Reloads regaus/time.py """
+        # out = reload_util(name, self.bot)
+        out = reload_module(f"**regaus/time.py**", "regaus.time", self.bot)
+        return await general.send(out, ctx.channel)
+
     # @commands.command(name="reloadlangs", aliases=["rl"])
     # @commands.check(permissions.is_owner)
     # async def reload_lang(self, ctx: commands.Context):
