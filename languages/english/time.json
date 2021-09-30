@@ -17,14 +17,14 @@
   "weekdays": {
     "Earth": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
     "Virkada": [null],
-    "Kargadia": ["Lurvusday", "Haurday", "Neevusday", "Peskusday", "Tuhtusday", "Sidaday", "Maatday", "Bastetday"],
+    "Kargadia": ["Lurvusday", "Haurday", "Neevusday", "Peskusday", "Tuhtusday", "Sidaday", "Maatday", "Bastetday", "Leap Day"],
     "QevenerusKa": ["Lurvusday", "Haurday", "Neevusday", "Peskusday", "Tuhtusday", "Sidaday", "Maatday", "Bastetday"],
     "QevenerusUs": ["Jorunysday", "Usturonysday", "Muqakysday", "Pedadday", "Furonysday", "Dzasysday", "Zhangejysday", "Pyrynalday", "Tachysday", "Maghadysday"]
   },
   "weekdays_short": {
     "Earth": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     "Virkada": [null],
-    "Kargadia": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas"],
+    "Kargadia": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas", "Leap"],
     "QevenerusKa": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas"],
     "QevenerusUs": ["Jor", "Ust", "Muq", "Ped", "Fur", "Dza", "Zha", "Pyr", "Tach", "Magh"]
   }

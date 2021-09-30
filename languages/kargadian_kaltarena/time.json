@@ -17,14 +17,14 @@
   "weekdays": {
     "Earth": ["Vaila", "Sillan", "Sertan", "Ahtar", "Advas", "Esvan", "Sehlun"],
     "Virkada": [null],
-    "Kargadia": ["Lurvu", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"],
+    "Kargadia": ["Lurvu", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste", "Dalka"],
     "QevenerusKa": ["Lurvu", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"],
     "QevenerusUs": ["Qoru", "Ustur", "Muka", "Peda", "Furo", "Zasi", "Qanne", "Piri", "Tashi", "Magha"]
   },
   "weekdays_short": {
     "Earth": ["Vai", "Sil", "Ser", "Aht", "Adv", "Esv", "Seh"],
     "Virkada": [null],
-    "Kargadia": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas"],
+    "Kargadia": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas", "Dal"],
     "QevenerusKa": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas"],
     "QevenerusUs": ["Qor", "Ust", "Muk", "Ped", "Fur", "Zas", "Qan", "Pir", "Tash", "Magh"]
   }

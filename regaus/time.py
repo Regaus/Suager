@@ -4,8 +4,8 @@ from typing import Optional, overload, Type, Union
 
 from utils import languages
 
-__version__ = (1, 0, 0, 'rc', 1)
-last_updated = (2021, 9, 30)
+__version__ = (1, 0, 0, 'rc', 2)
+last_updated = (2021, 10, 1)
 MIN_YEAR = -999999
 MAX_YEAR = 999999
 

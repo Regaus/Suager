@@ -6,3 +6,7 @@
 ## v1.0.0rc1 - 30 September 2021
 - Created changelog
 - Added Virkada, Qevenerus Kargadian and Usturian calendars to the system
+
+## v1.0.0rc2 - 1 October 2021
+- Fixed Kargadian leap days breaking from not having a day name specified
+- Added Usturian translations to Kargadian calendar

@@ -282,11 +282,11 @@ class Language:
         # data = _data.get(time_class.__class__.__name__)
         name = self.time_data(value, default, obj.time_class.__name__)[day]
         if not short:
-            if self.language in ["kargadian_west", "tebarian"] and not short:
+            if self.language in ["kargadian_west", "tebarian"]:
                 part = obj.hour // 6
                 parts = ["tea", "rea", "sea", "vea"]
                 name += parts[part]
-            if self.language == "usturian":
+            if self.language == "usturian" and str(time_class) in ["Kargadia", "QevenerusKa", "QevenerusUs"]:
                 name = "Sharuad " + name
         return name or "None"
 
