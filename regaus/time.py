@@ -4,6 +4,8 @@ from typing import Optional, overload, Type, Union
 
 from utils import languages
 
+__version__ = (1, 0, 0, 'rc', 1)
+last_updated = (2021, 9, 30)
 MIN_YEAR = -999999
 MAX_YEAR = 999999
 
@@ -24,7 +26,7 @@ class TimeClassError(TypeError):
         super().__init__(text)
 
 
-class EarthTime:
+class Earth:
     def __init__(self):
         self.days_in_month = [-1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         self.months_in_year = len(self.days_in_month) - 1
@@ -98,8 +100,9 @@ class EarthTime:
         # minute, second = divmod(ms, 60)
         # second, part = divmod(s, 1)
         days, hour, minute, second, us = self._from_timestamp_part(ts)
-        year, month, day = self.ord2ymd(days)
-        year += 1969
+        add = 719162  # 01/01/0001 -> 01/01/1970
+        year, month, day = self.ord2ymd(days + add)
+        # year += 1969
         return year, month, day, hour, minute, second, us
 
     def _days_in_month(self, year: int, month: int):
@@ -124,6 +127,7 @@ class EarthTime:
 
     def ord2ymd(self, n: int):
         """ ordinal -> (year, month, day) where 01/01/0001 is day 1 """
+        n = int(n)  # Try to make sure that n is an integer, else this will break...
         n -= 1
         di400 = self._days_since_ad(401)  # days in 400 years
         di100 = self._days_since_ad(101)  # days in 100 years
@@ -133,11 +137,10 @@ class EarthTime:
         assert di100 == 25 * di4 - 1
 
         n400, n = divmod(n, di400)  # the last 400-year cycle
-        year = n400 * 400 + 1  # Covers years: ..., -399, 1, 401, ...
         n100, n = divmod(n, di100)  # the last 100-year cycle before n
         n4, n = divmod(n, di4)  # the last 4-year cycle before n
         n1, n = divmod(n, 365)  # the last single year
-        year += n100 * 100 + n4 * 4 + n1
+        year = n400 * 400 + n100 * 100 + n4 * 4 + n1 + 1
         if n1 == 4 or n100 == 4:  # This means it's the 31/12 of the year before the last 4 or 400 year cycle
             assert n == 0
             return year - 1, 12, 31
@@ -147,8 +150,7 @@ class EarthTime:
         assert is_leap == self._is_leap(year)
 
         # This estimates the current month - the guess will be either exact or one too large
-        # >> 5 is the same as // 32
-        month = (n + 50) >> 5  # I have no idea how they came up with this, but it works so whatever...
+        month = (n + 50) // 32  # I have no idea how they came up with this, but it works so whatever...
         preceding = self.days_before_month[month] + (month > 2 and is_leap)
         if preceding > n:
             month -= 1
@@ -160,12 +162,12 @@ class EarthTime:
 
     def check_date_fields(self, year: int, month: int, day: int):
         if not MIN_YEAR <= year <= MAX_YEAR:
-            raise ValueError('year must be in %d..%d' % (MIN_YEAR, MAX_YEAR), year)
+            raise ValueError('year must be between %d and %d (got %d)' % (MIN_YEAR, MAX_YEAR, year))
         if not 1 <= month <= self.months_in_year:
-            raise ValueError('month must be in 1..%d' % self.months_in_year, month)
+            raise ValueError('month must be between 1 and %d (got %d)' % (self.months_in_year, month))
         dim = self._days_in_month(year, month)
         if not 1 <= day <= dim:
-            raise ValueError('day must be in 1..%d' % dim, day)
+            raise ValueError('day must be between 1 and %d (got %d)' % (dim, day))
         return year, month, day
 
     @staticmethod
@@ -174,10 +176,10 @@ class EarthTime:
         return (_date.ordinal + 6) % 7
 
     def from_earth_time(self, when: datetime) -> datetime:
-        if type(self) == EarthTime:  # No point in doing anything if it's EarthTime anyways
+        if type(self) == Earth:  # No point in doing anything if it's EarthTime anyways
             return when
 
-        if when.time_class != EarthTime:
+        if when.time_class != Earth:
             raise TimeClassError("Only EarthTime datetimes can be converted")
         when = when.to_timezone(timezone.utc)
         total = (when - self.start).total_seconds()
@@ -194,7 +196,7 @@ class EarthTime:
         return datetime.combine(_date, _time)
 
     def to_earth_time(self, when: datetime) -> datetime:
-        if type(self) == EarthTime:  # No point in doing anything if it's EarthTime anyways
+        if type(self) == Earth:  # No point in doing anything if it's EarthTime anyways
             return when
 
         if when.time_class != self.__class__:
@@ -261,8 +263,76 @@ class EarthTime:
     def __repr__(self):
         return "%s.%s()" % (self.__class__.__module__, self.__class__.__qualname__)
 
+    def __str__(self):
+        return self.__class__.__name__
 
-class Kargadia(EarthTime):
+
+class Virkada(Earth):
+    """ Virkada calendar """
+    def __init__(self):
+        super().__init__()
+        self.days_in_month = [-1, 30]
+        self.months_in_year = len(self.days_in_month) - 1
+        self.days_in_year = sum(self.days_in_month[1:])
+        self.days_before_month = [-1]
+        dbm = 0
+        for dim in self.days_in_month[1:]:
+            self.days_before_month.append(dbm)
+            dbm += dim
+        del dbm, dim
+        self.leap_day_month = 1  # The month where leap days are inserted
+        self.default_language = "english"
+
+        # The day the first settlement was founded on Virkada
+        self.start = datetime(2004, 1, 27, 7, 45, tz=timezone.utc)
+        self.day_length = 62.73232495114 * 3600
+
+        self.max_ordinal = self.ymd2ord(MAX_YEAR + 1, 1, 1) - 1  # 31/12/MAX_YEAR
+        self.min_ordinal = self.ymd2ord(MIN_YEAR, 1, 1)  # 01/01/MIN_YEAR
+
+    @staticmethod
+    def _is_leap(year: int) -> int:
+        return 1 if year % 10 in [0, 2, 3, 4, 5, 7, 8] else 0
+
+    @staticmethod
+    def _leap_days_until(years_passed: int):
+        decades, year = divmod(years_passed, 10)
+        leaps = decades * 7
+        values = [0, 2, 3, 4, 5, 7, 8]
+        for value in values:
+            if year > value:
+                leaps += 1
+        return leaps
+
+    def timestamp(self, year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0, us: int = 0):
+        # Virkada timestamp starts from 01/01/0001
+        return self._timestamp_part(self.ymd2ord(year, month, day) - 1, hour, minute, second, us)
+
+    def from_timestamp(self, ts: float):
+        days, hour, minute, second, us = self._from_timestamp_part(ts)
+        year, month, day = self.ord2ymd(days)
+        return year, month, day, hour, minute, second, us
+
+    def ord2ymd(self, n: int):
+        n = int(n)  # Try to make sure that n is an integer, else this will break...
+        n -= 1
+        n10, n = divmod(n, 307)
+        n1, n = divmod(n, 30)
+        n -= self._leap_days_until(n1)
+        year = n10 * 10 + n1 + 1
+
+        if n < 0:
+            year -= 1
+            n += 30 + self._is_leap(year)
+
+        # There is only 1 month on Virkada
+        return year, 1, n + 1
+
+    def weekday(self, _date: Union[date, datetime]):
+        return 0
+
+
+class Kargadia(Earth):
     """ Kargadian time and Kargadian calendar """
     def __init__(self):
         super().__init__()
@@ -278,6 +348,7 @@ class Kargadia(EarthTime):
         self.leap_day_month = 1  # The month where leap days are inserted
         self.default_language = "kargadian_west"
 
+        # Let's just say it was some kind of religious occasion in that year
         self.start = datetime(276, 12, 26, 22, 30, tz=timezone.utc)
         self.day_length = 27.7753663234561 * 3600
 
@@ -299,18 +370,20 @@ class Kargadia(EarthTime):
 
     def from_timestamp(self, ts: float):
         days, hour, minute, second, us = self._from_timestamp_part(ts)
-        year, month, day = self.ord2ymd(days)
-        year += 1969
+        # year, month, day = self.ord2ymd(days)
+        # year += 1727
+        add = 442219  # 01/01/0001 -> 01/01/1728
+        year, month, day = self.ord2ymd(days + add)
         return year, month, day, hour, minute, second, us
 
     def ord2ymd(self, n: int):
+        n = int(n)  # Try to make sure that n is an integer, else this will break...
         n -= 1
         di16 = self._days_since_ad(17)  # days in 16 years
         assert di16 == 16 * 256 + 1
         n16, n = divmod(n, di16)  # The last 16-year cycle
-        year = n16 * 16 + 1  # Covers years: ..., -15, 1, 17
         n1, n = divmod(n, 256)
-        year += n1
+        year = n16 * 16 + n1 + 1
         if n1 == 16:  # It's actually the last day of the 16-year cycle
             assert n == 0
             return year - 1, 16, 16
@@ -344,11 +417,14 @@ class Kargadia(EarthTime):
         return day
 
 
-class QevenerusKa(EarthTime):
+qevenerus_day = 19.1259928695 * 3600
+
+
+class QevenerusKa(Earth):
     """ Qevenerus - Kargadian calendar """
     def __init__(self):
         super().__init__()
-        self.days_in_month = [-1, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
+        self.days_in_month = [-1, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
         self.months_in_year = len(self.days_in_month) - 1
         self.days_in_year = sum(self.days_in_month[1:])
         self.days_before_month = [-1]
@@ -358,72 +434,117 @@ class QevenerusKa(EarthTime):
             dbm += dim
         del dbm, dim
         self.leap_day_month = 1  # The month where leap days are inserted
-        self.default_language = "kargadian_west"
+        self.default_language = "kargadian_kaltarena"
 
-        self.start = datetime(276, 12, 26, 22, 30, tz=timezone.utc)
-        self.day_length = 27.7753663234561 * 3600
+        # The first spring equinox after Kargadians' landing on Qevenerus
+        self.start = datetime(1686, 11, 21, 11, 55, 21, tz=timezone.utc)
+        self.day_length = qevenerus_day
 
         self.max_ordinal = self.ymd2ord(MAX_YEAR + 1, 1, 1) - 1  # 31/12/MAX_YEAR
         self.min_ordinal = self.ymd2ord(MIN_YEAR, 1, 1)  # 01/01/MIN_YEAR
 
     @staticmethod
     def _is_leap(year: int) -> int:
-        return int(year % 16 == 0)
+        return 0  # Qevenerus years are never leap
 
     @staticmethod
     def _leap_days_until(years_passed: int):
-        return years_passed // 16
+        return 0
 
     def timestamp(self, year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0, us: int = 0):
-        # The year 1728 is 0C6 in hex, and let's just say that they decided on this year to be their start of timestamps
-        # Kargadians landed on Qevenerus on 05/12/1738, so this puts them 10 years ahead of their start of space colonisation
-        return self._timestamp_part(self.ymd2ord(year, month, day) - self.ymd2ord(1728, 1, 1), hour, minute, second, us)
+        # They started their timestamps from the moment of landing, as Kargadian timestamps began 10 years prior
+        return self._timestamp_part(self.ymd2ord(year, month, day) - 1, hour, minute, second, us)
 
     def from_timestamp(self, ts: float):
         days, hour, minute, second, us = self._from_timestamp_part(ts)
         year, month, day = self.ord2ymd(days)
-        year += 1969
         return year, month, day, hour, minute, second, us
 
     def ord2ymd(self, n: int):
+        n = int(n)  # Try to make sure that n is an integer, else this will break...
         n -= 1
-        di16 = self._days_since_ad(17)  # days in 16 years
-        assert di16 == 16 * 256 + 1
-        n16, n = divmod(n, di16)  # The last 16-year cycle
-        year = n16 * 16 + 1  # Covers years: ..., -15, 1, 17
-        n1, n = divmod(n, 256)
-        year += n1
-        if n1 == 16:  # It's actually the last day of the 16-year cycle
-            assert n == 0
-            return year - 1, 16, 16
-
-        is_leap = n1 == 15
-        assert is_leap == self._is_leap(year)
-
+        n1, n = divmod(n, 800)
+        year = n1 + 1
         # Estimate the current month
-        # It's simpler in Kargadia's case - each month is 16 days, so I can just easily >> 4 it
-        month = (n >> 4) + 1
-        preceding = self.days_before_month[month] + (month > 1 and is_leap)
+        month = (n // 50) + 1
+        preceding = self.days_before_month[month]
         if preceding > n:
             month -= 1
-            preceding -= self.days_in_month[month] + (month == 1 and is_leap)
+            preceding -= self.days_in_month[month]
         n -= preceding
         assert 0 <= n < self._days_in_month(year, month)
         return year, month, n + 1
 
     def weekday(self, _date: Union[date, datetime]):
-        if _date.day == 17:  # Leap day
-            day = 8
-        else:
-            day = _date.day % 8
+        day = _date.ordinal % 8
 
         # Kargadian weekdays start at 6:00 am or "dawn", rather than midnight
         if _date.hour < 6:
             day -= 1
-
         if day == -1:
-            day = 8 if (self._is_leap(_date.year) and _date.month == 2 and _date.day == 1) else 7
+            day = 7
         return day
+
+
+class QevenerusUs(Earth):
+    """ Qevenerus - Usturian calendar """
+    def __init__(self):
+        super().__init__()
+        self.days_in_month = [-1, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40]
+        self.months_in_year = len(self.days_in_month) - 1
+        self.days_in_year = sum(self.days_in_month[1:])
+        self.days_before_month = [-1]
+        dbm = 0
+        for dim in self.days_in_month[1:]:
+            self.days_before_month.append(dbm)
+            dbm += dim
+        del dbm, dim
+        self.leap_day_month = 1  # The month where leap days are inserted
+        self.default_language = "kargadian_kaltarena"
+
+        # The day Ancient Usturia formed
+        self.start = datetime(-2174, 1, 24, 13, 25, 18, 731422, tz=timezone.utc)  # -2174 = 2175 BC
+        self.day_length = qevenerus_day
+
+        self.max_ordinal = self.ymd2ord(MAX_YEAR + 1, 1, 1) - 1  # 31/12/MAX_YEAR
+        self.min_ordinal = self.ymd2ord(MIN_YEAR, 1, 1)  # 01/01/MIN_YEAR
+
+    @staticmethod
+    def _is_leap(year: int) -> int:
+        return 0  # Qevenerus years are never leap
+
+    @staticmethod
+    def _leap_days_until(years_passed: int):
+        return 0
+
+    def timestamp(self, year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0, us: int = 0):
+        # The Usturian timestamp matches the Kargadian timestamp so that the two could actually work together...
+        # Let's say that they just made their computers able to handle both calendars
+        return self._timestamp_part(self.ymd2ord(year, month, day) - self.ymd2ord(2210, 18, 15), hour, minute, second, us)
+
+    def from_timestamp(self, ts: float):
+        days, hour, minute, second, us = self._from_timestamp_part(ts)
+        add = 1767894  # 01/01/0001 -> 15/18/2210
+        year, month, day = self.ord2ymd(days + add)
+        return year, month, day, hour, minute, second, us
+
+    def ord2ymd(self, n: int):
+        n = int(n)  # Try to make sure that n is an integer, else this will break...
+        n -= 1
+        n1, n = divmod(n, 800)
+        year = n1 + 1
+        # Estimate the current month
+        month = (n // 40) + 1
+        preceding = self.days_before_month[month]
+        if preceding > n:
+            month -= 1
+            preceding -= self.days_in_month[month]
+        n -= preceding
+        assert 0 <= n < self._days_in_month(year, month)
+        return year, month, n + 1
+
+    def weekday(self, _date: Union[date, datetime]):
+        return _date.ordinal % 10
 
 
 # class timedelta(_datetime.timedelta):
@@ -438,15 +559,15 @@ timezone = _datetime.timezone
 
 def _check_time_fields(hour: int, minute: int, second: int, microsecond: int, fold: int):
     if not 0 <= hour <= 23:
-        raise ValueError('hour must be in 0..23', hour)
+        raise ValueError('hour must be between 0 and 23 (got %d)' % hour)
     if not 0 <= minute <= 59:
-        raise ValueError('minute must be in 0..59', minute)
+        raise ValueError('minute must be between 0 and 59 (got %d)' % minute)
     if not 0 <= second <= 59:
-        raise ValueError('second must be in 0..59', second)
+        raise ValueError('second must be between 0 and 59 (got %d)' % second)
     if not 0 <= microsecond <= 999999:
-        raise ValueError('microsecond must be in 0..999999', microsecond)
+        raise ValueError('microsecond must be between 0 and 999999 (got %d)' % microsecond)
     if fold not in (0, 1):
-        raise ValueError('fold must be either 0 or 1', fold)
+        raise ValueError('fold must be either 0 or 1 (got %d)' % fold)
     return hour, minute, second, microsecond, fold
 
 
@@ -496,7 +617,7 @@ class date(object):
     _day: int
 
     # Construct a new date object
-    def __new__(cls, year: int, month: int = 1, day: int = 1, time_class=EarthTime):
+    def __new__(cls, year: int, month: int = 1, day: int = 1, time_class=Earth):
         """ Construct a new date """
         _time_cls = time_class()
         year, month, day = _time_cls.check_date_fields(year, month, day)
@@ -509,7 +630,7 @@ class date(object):
         return self
 
     @classmethod
-    def from_timestamp(cls, timestamp: float, time_class=EarthTime):
+    def from_timestamp(cls, timestamp: float, time_class=Earth):
         """ Construct a date from timestamp """
         _time_cls = time_class()
         year, month, day, _, _, _, _ = _time_cls.from_timestamp(timestamp)
@@ -520,25 +641,25 @@ class date(object):
     @classmethod
     def from_datetime(cls, dt: _datetime.date):
         """ Construct a date out of datetime.date """
-        return cls(dt.year, dt.month, dt.day, EarthTime)
+        return cls(dt.year, dt.month, dt.day, Earth)
 
     @classmethod
-    def today(cls, time_class=EarthTime):
+    def today(cls, time_class=Earth):
         """ Return today's date """
-        if time_class == EarthTime:
+        if time_class == Earth:
             today = _datetime.date.today()
             return cls.from_datetime(today)
         else:
-            return datetime.now(timezone.utc, EarthTime).from_earth_time(time_class).date()
+            return datetime.now(timezone.utc, Earth).from_earth_time(time_class).date()
 
     @classmethod
-    def from_ordinal(cls, n: int, time_class=EarthTime):
+    def from_ordinal(cls, n: int, time_class=Earth):
         """ Construct a date from the ordinal value, where 01/01/0001 is day 1 """
         year, month, day = time_class().ord2ymd(n)
         return cls(year, month, day, time_class)
 
     @classmethod
-    def from_iso(cls, date_string: str, time_class=EarthTime):
+    def from_iso(cls, date_string: str, time_class=Earth):
         """ Construct a date from ISO format """
         if not isinstance(date_string, str):
             raise TypeError("date_string must be str")
@@ -598,16 +719,16 @@ class date(object):
     # Converters
     def to_datetime(self):
         """ Convert to datetime.date """
-        if self.time_class == EarthTime:
+        if self.time_class == Earth:
             return _datetime.date(self.year, self.month, self.day)
         else:
             raise TimeClassError("Only EarthTime date can be converted into datetime.date")
 
-    def from_earth_time(self, time_class: Type[EarthTime]) -> date:
+    def from_earth_time(self, time_class: Type[Earth]) -> date:
         """ Convert from Earth time to a different time class """
-        if self.time_class != EarthTime:
+        if self.time_class != Earth:
             raise TimeClassError("self does not have EarthTime time class")
-        if time_class == EarthTime:
+        if time_class == Earth:
             return self  # No point in converting to yourself
         return time_class().from_earth_time(datetime.combine(self, time())).date()
 
@@ -618,7 +739,7 @@ class date(object):
     def __repr__(self):
         """ Convert to full string """
         s = "%s.%s(%d, %d, %d)" % (self.__class__.__module__, self.__class__.__qualname__, self.year, self.month, self.day)
-        if self.time_class is not EarthTime:
+        if self.time_class is not Earth:
             assert s[-1:] == ")"
             s = s[:-1] + ", time_class=%r" % self._time_cls[:-2] + ")"
         return s
@@ -912,7 +1033,7 @@ class time(object):
 
     def format(self, fmt: str, language: str = None):
         """ Format the value """
-        return EarthTime().str_format(self, fmt, language)
+        return Earth().str_format(self, fmt, language)
 
     strftime = format
 
@@ -1023,7 +1144,7 @@ class datetime(object):
 
     # Construct a new datetime
     def __new__(cls, year: int, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0, microsecond: int = 0,
-                tz: tzinfo = None, time_class=EarthTime, *, fold: int = 0):
+                tz: tzinfo = None, time_class=Earth, *, fold: int = 0):
         _time_cls = time_class()
         year, month, day = _time_cls.check_date_fields(year, month, day)
         self = super().__new__(cls)
@@ -1050,15 +1171,16 @@ class datetime(object):
         year, month, day, hour, minute, second, us = time_class.from_timestamp(timestamp)
         result = cls(year, month, day, hour, minute, second, us, timezone.utc, time_class.__class__)
         if tz is not None:
-            if type(time_class) == EarthTime:
+            if type(time_class) == Earth:
                 try:
                     _tz_time = result.to_datetime()
                     result += tz.utcoffset(_tz_time)
                 except ValueError:
                     result += tz.utcoffset(None)
+        return result
 
     @classmethod
-    def from_timestamp(cls, timestamp: float, tz: tzinfo = None, time_class=EarthTime):
+    def from_timestamp(cls, timestamp: float, tz: tzinfo = None, time_class=Earth):
         """ Construct a datetime from a timestamp """
         _time_cls = time_class()
         _check_tzinfo_arg(tz)
@@ -1069,12 +1191,12 @@ class datetime(object):
     @classmethod
     def from_datetime(cls, dt: _datetime.datetime):
         """ Construct a datetime from datetime.datetime """
-        return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, dt.tzinfo, EarthTime, fold=dt.fold)
+        return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond, dt.tzinfo, Earth, fold=dt.fold)
 
     @classmethod
-    def now(cls, tz: tzinfo = timezone.utc, time_class=EarthTime):
+    def now(cls, tz: tzinfo = timezone.utc, time_class=Earth):
         """ Return the time right now """
-        if time_class == EarthTime:
+        if time_class == Earth:
             # now = _datetime.datetime.utcnow()
             # now = now.replace(tzinfo=timezone.utc)
             # return cls.from_datetime(now).to_timezone(tz)
@@ -1083,7 +1205,7 @@ class datetime(object):
         else:
             _now = _datetime.datetime.now(timezone.utc)
             now = cls.from_datetime(_now)
-            return time_class().from_earth_time(now)
+            return time_class().from_earth_time(now).to_timezone(tz)
 
     @classmethod
     def combine(cls, _date: date, _time: time, tz: tzinfo = True):
@@ -1096,10 +1218,10 @@ class datetime(object):
         return cls(_date.year, _date.month, _date.day, _time.hour, _time.minute, _time.second, _time.microsecond, tz, _date.time_class, fold=_time.fold)
 
     @classmethod
-    def from_part(cls, day_part: float, time_class=EarthTime):
+    def from_part(cls, day_part: float, time_class=Earth):
         """ Convert from a day part (e.g. 0.5 for noon) """
         _ordinal, _part = divmod(day_part, 1)
-        _date = date.from_ordinal(_ordinal, time_class)
+        _date = date.from_ordinal(int(_ordinal) + 1, time_class)
         _time = time.from_part(_part)
         return cls.combine(_date, _time)
 
@@ -1166,7 +1288,7 @@ class datetime(object):
         """ The timestamp of this datetime """
         out = self.copy()
         if self.tzinfo is not None:
-            if self.time_class == EarthTime:
+            if self.time_class == Earth:
                 try:
                     _tz_time = self.to_datetime()
                     out -= out.tzinfo.utcoffset(_tz_time)
@@ -1218,7 +1340,7 @@ class datetime(object):
 
     def to_datetime(self) -> _datetime.datetime:
         """ Convert into datetime.datetime """
-        if self.time_class == EarthTime:
+        if self.time_class == Earth:
             return _datetime.datetime(self.year, self.month, self.day, self.hour, self.minute, self.second, self.microsecond, self.tzinfo, fold=self.fold)
         else:
             raise TimeClassError("Only EarthTime datetime can be converted into datetime.datetime")
@@ -1230,7 +1352,7 @@ class datetime(object):
             when = when.to_timezone(timezone.utc)
         out = when.hour / 24 + when.minute / 1440 + when.second / 86400 + when.microsecond / 86400000000
         if day:
-            out += when.ordinal
+            out += when.ordinal - 1
         return out
 
     def date(self):
@@ -1245,11 +1367,11 @@ class datetime(object):
         """ Return the time part, with tzinfo """
         return time(self.hour, self.minute, self.second, self.microsecond, self.tzinfo, fold=self.fold)
 
-    def from_earth_time(self, time_class: Type[EarthTime]) -> datetime:
+    def from_earth_time(self, time_class: Type[Earth]) -> datetime:
         """ Convert from Earth time to a different time class """
-        if self.time_class != EarthTime:
+        if self.time_class != Earth:
             raise TimeClassError("self does not have EarthTime time class")
-        if time_class == EarthTime:
+        if time_class == Earth:
             return self  # No point in converting to yourself
         return time_class().from_earth_time(self)
 
@@ -1268,7 +1390,7 @@ class datetime(object):
             _tz_time = self.to_datetime()
             offset = self.tzinfo.utcoffset(_tz_time)
             tz_offset = tz.utcoffset(_tz_time)
-        except ValueError:
+        except (ValueError, TimeClassError):
             offset = self.tzinfo.utcoffset(None)
             tz_offset = tz.utcoffset(None)
         if offset is None:
@@ -1298,7 +1420,7 @@ class datetime(object):
         if self._tzinfo is not None:
             assert s[-1:] == ")"
             s = s[:-1] + ", tzinfo=%r" % self._tzinfo + ")"
-        if self.time_class is not EarthTime:
+        if self.time_class is not Earth:
             assert s[-1:] == ")"
             s = s[:-1] + ", time_class=%s" % repr(self._time_cls)[:-2] + ")"
         if self._fold:
@@ -1442,9 +1564,13 @@ class datetime(object):
         delta += other
         hour, ms = divmod(delta.seconds, 3600)
         minute, second = divmod(ms, 60)
-        if self._time_cls.min_ordinal < delta.days <= self._time_cls.max_ordinal:
-            return type(self).combine(date.from_ordinal(delta.days, self.time_class), time(hour, minute, second, delta.microseconds, self.tzinfo))
-        raise OverflowError("Result out of range")
+        _date = date.from_ordinal(delta.days, self.time_class)
+        self._time_cls.check_date_fields(_date.year, _date.month, _date.day)
+        _time = time(hour, minute, second, delta.microseconds, self.tzinfo)
+        return type(self).combine(_date, _time)
+        # if self._time_cls.min_ordinal < delta.days <= self._time_cls.max_ordinal:
+        #     return type(self).combine(date.from_ordinal(delta.days, self.time_class), time(hour, minute, second, delta.microseconds, self.tzinfo))
+        # raise OverflowError("Result out of range")
 
     __radd__ = __add__
 

@@ -1035,3 +1035,6 @@
 ## v7.4.9 - 22 September 2021
 - Added ability to give multiple roles at once
 - Removed the logs settings, so that I can set the new ones later on
+
+## v7.4.9.1 - 30 September 2021
+- Updated readme

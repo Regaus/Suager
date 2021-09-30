@@ -1,11 +1,11 @@
 {
-  "virkada_time": "Day %d of year %Y, %H:%M:%S",
+  "virkada_time": "%d-an sharuad %Y-at kolkanat, %H:%M:%S",
   "months": {
     "Earth": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     "Virkada": [null],
     "Kargadia": ["Senkavar", "Shiravar", "Nuuvar", "Bylkuvar", "Akuvar", "Vainavar", "Kiitavar", "Lürvuar", "Raavar", "Kummavar", "Vittevar", "Avikkar", "Kaivyar", "Karratar", "Darvuar", "Suvakär"],
     "QevenerusKa": ["Senkavar", "Shiravar", "Nuuvar", "Bylkuvar", "Akuvar", "Vainavar", "Kiitavar", "Lürvuar", "Raavar", "Kummavar", "Vittevar", "Avikkar", "Kaivyar", "Karratar", "Darvuar", "Suvakär"],
-    "QevenerusUs": ["Jorunys", "Usturonys", "Muqakys", "Pedad", "Furonys", "Dzasys", "Zhangejys", "Pyrynal", "Tachys", "Maghadys", "Nakhadys", "Gaghavys", "Poradad", "Boraval", "Avadal", "Akerys", "Vezelys", "Makys", "Lapenys", "Ghomys"]
+    "QevenerusUs": ["Jorunuza", "Usturonuza", "Muqakuza", "Pededze", "Furonuza", "Dzasuza", "Zhangejuza", "Pyrynedze", "Tachuza", "Maghaduza", "Nakhavuza", "Gaghavuza", "Poradedze", "Boravedze", "Avadedze", "Akeruza", "Vezeluza", "Makuza", "Lapenuza", "Ghomuza"]
   },
   "months_short": {
     "Earth": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
@@ -19,7 +19,7 @@
     "Virkada": [null],
     "Kargadia": ["Lurvusday", "Haurday", "Neevusday", "Peskusday", "Tuhtusday", "Sidaday", "Maatday", "Bastetday"],
     "QevenerusKa": ["Lurvusday", "Haurday", "Neevusday", "Peskusday", "Tuhtusday", "Sidaday", "Maatday", "Bastetday"],
-    "QevenerusUs": ["Jorunysday", "Usturonysday", "Muqakysday", "Pedadday", "Furonysday", "Dzasysday", "Zhangejysday", "Pyrynalday", "Tachysday", "Maghadysday"]
+    "QevenerusUs": ["Jorunat", "Usturonat", "Muqakat", "Pedat", "Furonat", "Dzasat", "Zhangejat", "Pyrynat", "Tachat", "Maghadat"]
   },
   "weekdays_short": {
     "Earth": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],

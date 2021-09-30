@@ -368,3 +368,8 @@
 
 ## v1.4.0a1 - 26 September 2021
 - Created custom datetime system, to later improve the way time works in Kargadia
+
+## v1.4.0a2 - 30 September 2021
+- Improved the Regaus time system
+- Started integrating Regaus time into the conworld systems
+- Updated strings for playing statuses (types 1 and 4)

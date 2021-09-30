@@ -1,0 +1,31 @@
+{
+  "virkada_time": "%d'da sea %Y'dan kadan, %H:%M:%S",
+  "months": {
+    "Earth": ["Navajan", "Lunaan", "Seftaan", "Sunovan", "Havastan", "Advasvan", "Vahtaan", "Leitavan", "Rekkuan", "Hintaan", "Kanvaan", "Kainedan"],
+    "Virkada": [null],
+    "Kargadia": ["Senkaan", "Shiraan", "Nuuan", "Bylkuan", "Akuan", "Vainaan", "Kiitaan", "Lürvuan", "Raaan", "Kummaan", "Vittean", "Aviggan", "Kaivyan", "Karratan", "Darvuan", "Suvajan"],
+    "QevenerusKa": ["Senkaan", "Shiraan", "Nuuan", "Bylkuan", "Akuan", "Vainaan", "Kiitaan", "Lürvuan", "Raaan", "Kummaan", "Vittevn", "Aviggan", "Kaivyan", "Karratan", "Darvuan", "Suvajan"],
+    "QevenerusUs": ["Qorunin", "Usturonin", "Mukakin", "Pedadan", "Furonin", "Zasin", "Qanneqin", "Pirinan", "Tashin", "Maghadin", "Nahadin", "Gaghavin", "Poradan", "Boravan", "Avadan", "Akerin", "Vezelin", "Makin", "Lapenin", "Ghomin"]
+  },
+  "months_short": {
+    "Earth": ["Nav", "Lun", "Sef", "Sun", "Hav", "Adv", "Vah", "Lei", "Rek", "Hin", "Kan", "Kai"],
+    "Virkada": [null],
+    "Kargadia": ["Sen", "Shi", "Nuu", "Byl", "Aku", "Vai", "Kii", "Lür", "Raa", "Kum", "Vit", "Avi", "Kai", "Kar", "Dar", "Suv"],
+    "QevenerusKa": ["Sen", "Shi", "Nuu", "Byl", "Aku", "Vai", "Kii", "Lür", "Raa", "Kum", "Vit", "Avi", "Kai", "Kar", "Dar", "Suv"],
+    "QevenerusUs": ["Qor", "Ust", "Muk", "Ped", "Fur", "Zas", "Qan", "Pir", "Tash", "Magh", "Nah", "Gagh", "Por", "Bor", "Ava", "Ake", "Vez", "Mak", "Lap", "Gho"]
+  },
+  "weekdays": {
+    "Earth": ["Vaila", "Siltan", "Sertan", "Attun", "Advas", "Esvan", "Sellan"],
+    "Virkada": [null],
+    "Kargadia": ["Lurvu", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"],
+    "QevenerusKa": ["Lurvu", "Hau", "Neevu", "Pesku", "Tuhtu", "Sida", "Maa", "Baste"],
+    "QevenerusUs": ["Qoru", "Ustur", "Muka", "Peda", "Furo", "Zasi", "Qanne", "Piri", "Tashi", "Magha"]
+  },
+  "weekdays_short": {
+    "Earth": ["Vai", "Sil", "Ser", "Att", "Adv", "Esv", "Sel"],
+    "Virkada": [null],
+    "Kargadia": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas"],
+    "QevenerusKa": ["Lur", "Hau", "Nee", "Pes", "Tuh", "Sid", "Maa", "Bas"],
+    "QevenerusUs": ["Qor", "Ust", "Muk", "Ped", "Fur", "Zas", "Qan", "Pir", "Tash", "Magh"]
+  }
+}

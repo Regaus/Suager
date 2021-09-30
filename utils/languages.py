@@ -129,6 +129,20 @@ class Language:
         """ Get list/dict language entry """
         return (weather.get(self.language, weather["english"])).get(key, weather["english"].get(key))
 
+    def time_string(self, string: str, *values, **kwargs) -> str:
+        """ Get translated time string (languages/<language>/time.json) """
+        output = str((time_strings.get(self.language, time_strings["english"])).get(string, time_strings["english"].get(string, string)))
+        try:
+            return output.format(*values, **kwargs, emotes=emotes)
+        except IndexError:
+            for i, value in enumerate(values):
+                output = output.replace(f"\x7b{i}\x7d", str(value))  # Try to fill in the values we do have
+            return output
+
+    def time_data(self, key: str, default: str, time_class: str):
+        """ Get time translation data (languages/<language>/time.json) """
+        return (time_strings.get(self.language, time_strings[default])).get(key, time_strings[default].get(key)).get(time_class)
+
     def join(self, seq):
         """ x, y and z """
         return join(seq, final=self.string2("generic_and"))
@@ -264,9 +278,17 @@ class Language:
         time_class = obj.time_class()
         default = time_class.default_language
         value = "weekdays_short" if short else "weekdays"
-        _data = (time_strings.get(self.language, time_strings[default])).get(value, time_strings[default].get(value))
-        data = _data.get(time_class.__class__.__name__)
-        return data[day]
+        # _data = (time_strings.get(self.language, time_strings[default])).get(value, time_strings[default].get(value))
+        # data = _data.get(time_class.__class__.__name__)
+        name = self.time_data(value, default, obj.time_class.__name__)[day]
+        if not short:
+            if self.language in ["kargadian_west", "tebarian"] and not short:
+                part = obj.hour // 6
+                parts = ["tea", "rea", "sea", "vea"]
+                name += parts[part]
+            if self.language == "usturian":
+                name = "Sharuad " + name
+        return name or "None"
 
     def time_month(self, obj, short: bool = True):
         """ Return the month name """
@@ -274,9 +296,10 @@ class Language:
         time_class = obj.time_class()
         default = time_class.default_language
         value = "months_short" if short else "months"
-        _data = (time_strings.get(self.language, time_strings[default])).get(value, time_strings[default].get(value))
-        data = _data.get(time_class.__class__.__name__)
-        return data[month - 1]
+        # _data = (time_strings.get(self.language, time_strings[default])).get(value, time_strings[default].get(value))
+        # data = _data.get(time_class.__class__.__name__)
+        name = self.time_data(value, default, obj.time_class.__name__)[month - 1]
+        return name or "None"
 
     def __str__(self):
         return self.language

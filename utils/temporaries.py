@@ -239,27 +239,27 @@ async def birthdays(bot: bot_data.Bot):
 
 
 ka_cities = {  # List of Kargadian cities to be shown in the ka-time clock, and in playing statuses
-    "Akkigar":       {"english": None, "tebarian": None},  # Weight: 2
-    "Bylkangar":     {"english": None, "tebarian": None},  # Weight: 2
-    "Ekspigar":      {"english": None, "tebarian": None},  # Weight: 2
-    "Huntavall":     {"english": None, "tebarian": None},  # Weight: 3
-    "Kaivalgar":     {"english": None, "tebarian": None},  # Weight: 3
-    "Kanerakainead": {"english": None, "tebarian": None},  # Weight: 2
-    "Kiomigar":      {"english": None, "tebarian": None},  # Weight: 2
-    "Lailagar":      {"english": None, "tebarian": None},  # Weight: 2
-    "Leitagar":      {"english": None, "tebarian": None},  # Weight: 2
-    "Nurvutgar":     {"english": None, "tebarian": None},  # Weight: 2
-    "Pakigar":       {"english": None, "tebarian": None},  # Weight: 2
-    "Peaskar":       {"english": None, "tebarian": None},  # Weight: 2
-    "Regavall":      {"english": None, "tebarian": None},  # Weight: 5
-    "Reggar":        {"english": None, "tebarian": None},  # Weight: 5
-    "Sentagar":      {"english": None, "tebarian": None},  # Weight: 2
-    "Sentatebaria":  {"english": None, "tebarian": None},  # Weight: 3
-    "Shonangar":     {"english": None, "tebarian": None},  # Weight: 2
-    "Steirigar":     {"english": None, "tebarian": None},  # Weight: 2
-    "Suvagar":       {"english": None, "tebarian": None},  # Weight: 3
-    "Vintelingar":   {"english": None, "tebarian": None},  # Weight: 2
-    "Virsetgar":     {"english": None, "tebarian": None},  # Weight: 2
+    "Akkigar":       {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Bylkangar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Ekspigar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Huntavall":     {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
+    "Kaivalgar":     {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
+    "Kanerakainead": {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Kiomigar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Lailagar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Leitagar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Nurvutgar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Pakigar":       {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Peaskar":       {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Regavall":      {"english": None, "tebarian": None, "weight": 5},  # Weight: 5
+    "Reggar":        {"english": None, "tebarian": None, "weight": 5},  # Weight: 5
+    "Sentagar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Sentatebaria":  {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
+    "Shonangar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Steirigar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Suvagar":       {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
+    "Vintelingar":   {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Virsetgar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
 }
 ka_time: times.TimeSolarNormal = times.time_kargadia(tz=0)  # Current time in Virsetgar, used to determine time until next holiday
 update_speed = 120  # 150
@@ -289,12 +289,14 @@ async def city_data_updater(bot: bot_data.Bot):
     print(f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
 
     while True:
-        try:
-            for city in ka_cities.keys():
+        for city in ka_cities.keys():
+            try:
                 place = places.Place(city)
-                tebarian = place.time.str(dow=False, era=None, month=False, short=True, seconds=False)
+                # tebarian = place.time.str(dow=False, era=None, month=False, short=True, seconds=False)
                 # Tricks into changing the month from Genitive to Nominative
-                english = place.time.str(dow=False, era=None, month=False, short=False, seconds=False).replace("n ", "r ")
+                # english = place.time.str(dow=False, era=None, month=False, short=False, seconds=False).replace("n ", "r ")
+                tebarian = place.time.strftime("%d %b %Y, %H:%M", "tebarian")
+                english = place.time.strftime("%d %B %Y, %H:%M", "english")
                 temperature, _, _, rain_out = place.weather()
                 if temperature is not None and rain_out is not None:
                     temp = f"{temperature:.0f}°C"
@@ -302,13 +304,15 @@ async def city_data_updater(bot: bot_data.Bot):
                     weather_tb = languages.Language("tebarian").weather_data("weather78")[rain_out]
                     english += f" | {temp} | {weather_en}"
                     tebarian += f" | {temp} | {weather_tb}"
-                ka_cities[city] = {"english": english, "tebarian": tebarian}
+                ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
                 if city == "Virsetgar":
                     global ka_time
                     ka_time = place.time
-            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated city data")
-        except Exception as e:
-            general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
+                # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
+            except Exception as e:
+                general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
+                logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}")
+        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities data")
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(2)  # Hopefully prevents it from lagging ahead of itself and hanging
@@ -343,10 +347,10 @@ async def city_time_updater(bot: bot_data.Bot):
             if message is None:
                 raise general.RegausError("City time message not found")
             await message.edit(content=out)
-            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated city time message")
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities times message")
         except (IndexError, discord.NotFound, general.RegausError):
             await channel.send(out)
-            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset city time message")
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset Kargadian cities times message")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
 
@@ -386,7 +390,7 @@ async def playing(bot: bot_data.Bot):
                 if rsl:
                     s = "in" if days != 1 else ""
                     v = "t" if days == 1 else "n"
-                    return f"{days} sea{s} astalla{v}"
+                    return f"{days} Zymlä'an sea{s} astalla{v}"
                 else:
                     s = "s" if days != 1 else ""
                     return f"{days} day{s}"
@@ -455,15 +459,21 @@ async def playing(bot: bot_data.Bot):
                             year_day += 1
                     days_left = year_day - now_day
                     if days_left == 0:
-                        status = f"Kovanan {holiday[0]}"
+                        status = f"Kovanan {holiday[0]}!"
                     elif days_left == 1:
-                        status = f"1 sea astallat {holiday[1]}"
+                        status = f"1 Kargada sea astallat {holiday[1]}"
                     else:
-                        status = f"{days_left} seain astallan {holiday[1]}"
+                        status = f"{days_left} Kargadain seain astallan {holiday[1]}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 3)")
                 else:  # status_type == 4
-                    city, city_data = random.choices(list(ka_cities.items()), [2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 5, 5, 2, 3, 2, 2, 3, 2, 2])[0]
+                    # Original weights list: [2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 5, 5, 2, 3, 2, 2, 3, 2, 2]
+                    data, weights = [], []
+                    for city in ka_cities.items():
+                        data.append(city)
+                        weights.append(city[1]["weight"])
+                    # city, city_data = random.choices(list(ka_cities.items()), [v["weight"] for v in ka_cities.values()])[0]
+                    city, city_data = random.choices(data, weights)[0]
                     status = f"{city}: {city_data['tebarian']}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")

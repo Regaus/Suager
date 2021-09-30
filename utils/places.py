@@ -1,9 +1,9 @@
-from datetime import time as dt_time
 from math import acos, asin, cos, degrees as deg, radians as rad, sin, tan
 
 import discord
 
-from utils import general, languages, time, times, weathers
+from regaus import time
+from utils import general, languages, weathers
 
 places = [
     {
@@ -656,15 +656,21 @@ offsets = {
     "Kargadia": -1800.0,  # -843.7 | -343
     "Qevenerus": -2100.0,
 }
-_times = {
-    "Virkada": times.time_virkada,
-    "Zeivela": times.time_zeivela,
-    "Kargadia": times.time_kargadia,
-    "Qevenerus": times.time_qevenerus_ka,
+# _times = {
+#     "Virkada": times.time_virkada,
+#     "Zeivela": times.time_zeivela,
+#     "Kargadia": times.time_kargadia,
+#     "Qevenerus": times.time_qevenerus_ka,
 
-    "Sinvimania": times.time_sinvimania,
-    "Hosvalnerus": times.time_hosvalnerus,
-    "Kuastall-11": times.time_kuastall_11,
+#     "Sinvimania": times.time_sinvimania,
+#     "Hosvalnerus": times.time_hosvalnerus,
+#     "Kuastall-11": times.time_kuastall_11,
+# }
+time_classes = {
+    "Virkada": time.Virkada,
+    "Zeivela": None,
+    "Kargadia": time.Kargadia,
+    "Qevenerus": time.QevenerusKa
 }
 lengths = {
     "Virkada": 30.7,
@@ -698,7 +704,8 @@ class PlaceDoesNotExist(general.RegausError):
 class Place:
     def __init__(self, place: str):
         self.name = place
-        self.now = time.now(None)
+        # self.now = time.now(None)
+        self.now = time.datetime.now()
         # self.now = time.dt(1686, 11, 21, 11, 55, 21)
         # try:
         self.name, self.names, self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self.region, self.language = self.get_location()
@@ -707,7 +714,7 @@ class Place:
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
         # self.time = time_function(time.dt(2021, 5, 30), tz=self.tz)
         # self.time = time_function(time.dt(2022, 1, 11))
-        self.dt_time = dt_time(self.time.hour, self.time.minute, self.time.second)
+        self.dt_time = time.time(self.time.hour, self.time.minute, self.time.second)
         self.sun = Sun(self)
         try:
             self.weathers = weathers.weathers[self.name]
@@ -767,8 +774,10 @@ class Place:
             "Regan Shores": -1,
             "South Pole Kargadia": 5,
         }.get(name, 0)
-        time_function = _times[planet]
-        _time = time_function(self.now, tz=tz)
+        # time_function = _times[planet]
+        # _time = time_function(self.now, tz=tz)
+        timezone = time.timezone(time.timedelta(hours=tz))
+        _time = time.datetime.now(timezone, time_classes[planet])
         try:
             region = place["region"]
         except KeyError:
@@ -793,18 +802,28 @@ class Place:
         #     elif language == "Kaltarena Kargadian":
         #         ka_time = times.time_qevenerus_ka(self.now, tz)
         #         local_time = f"**{ka_time.str(dow=False, month=False)}**"
-        local_time = {"any": general.bold(_time.str())}
-        if planet != "Virkada":
+        # local_time = {"any": general.bold(_time.str())}
+        local_time = {"any": general.bold(_time.strftime("%d %B %Y, %H:%M:%S"))}
+        if planet == "Virkada":
+            _language = languages.Language("english")
+            local_time["any"] = general.bold(_time.strftime(_language.time_string("virkada_time")))
+            for language in _languages:
+                _language = languages.Language(language)
+                local_time[language] = general.bold(_time.strftime(_language.time_string("virkada_time")))
+        else:
             for language in _languages:
                 _local_time = _time
-                if planet == "Kargadia":
-                    _local_time = times.time_kargadia(self.now, tz, language)
-                elif planet == "Qevenerus":
-                    if language == "kargadian_kaltarena":
-                        _local_time = times.time_qevenerus_ka(self.now, tz)
-                    elif language == "usturian":
-                        _local_time = times.time_qevenerus_us(self.now, tz)
-                local_time[language] = general.bold(_local_time.str(dow=False, month=False))
+                if planet == "Qevenerus" and language == "usturian":
+                    _local_time = _time.to_earth_time().from_earth_time(time.QevenerusUs)
+                # if planet == "Kargadia":
+                #     _local_time = times.time_kargadia(self.now, tz, language)
+                # elif planet == "Qevenerus":
+                #     if language == "kargadian_kaltarena":
+                #         _local_time = times.time_qevenerus_ka(self.now, tz)
+                #     elif language == "usturian":
+                #         _local_time = times.time_qevenerus_us(self.now, tz)
+                # local_time[language] = general.bold(_local_time.str(dow=False, month=False))
+                local_time[language] = general.bold(_local_time.strftime("%d %B %Y, %H:%M:%S", language))
         return name, place["name"], planet, lat, long, tz, _time, local_time, region, _languages
 
     def weather(self):
@@ -812,7 +831,8 @@ class Place:
             # Remove non-ascii stuff like äá to make sure it's only A-Z
             _name = self.name[:8].encode("ascii", "replace").replace(b"?", b"0").replace(b" ", b"0").replace(b"'", b"0")
             _seed0 = int(_name, base=36)
-            _seed1 = self.time.ds * 1440  # Seed the day from 1/1/0001, multiplied by 1440 minutes.
+            # _seed1 = self.time.ds * 1440  # Seed the day from 1/1/0001, multiplied by 1440 minutes.
+            _seed1 = self.time.ordinal * 1440
             _seed2 = self.time.hour * 60
             seed = _seed0 + _seed1
             seed2 = seed + _seed2
@@ -958,35 +978,35 @@ class Place:
         # embed.set_footer(text=f"Astronomical season: {self.sun.season.title()}")
         seasons = language.weather_data("seasons")
         embed.set_footer(text=language.weather_string("weather78_season", seasons[self.sun.season]))
-        embed.timestamp = self.now
+        embed.timestamp = self.now.to_datetime()
         return embed
 
 
-def time_from_decimal(day_part: float) -> dt_time:
+def time_from_decimal(day_part: float) -> time.time:
     if day_part == 1:
-        return dt_time(23, 59, 59, 999999)
+        return time.time(23, 59, 59, 999999)
     seconds = int((day_part % 1) * 86400)
     h, ms = divmod(seconds, 3600)
     m, s = divmod(ms, 60)
-    return dt_time(h, m, s)
+    return time.time(h, m, s)
 
 
-def time_to_decimal(_time) -> float:  # types: dt_time, TimeSolar, etc.
+def time_to_decimal(_time) -> float:  # types: dt_time, time.time, TimeSolar, etc.
     return _time.hour / 24 + _time.minute / 1440 + _time.second / 86400
 
 
 class Sun:
     def __init__(self, place: Place):
         self.place = place
-        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.sun_data, self.day_part, self.season = self.get_data()
+        self.time: time.datetime = self.place.time  # This will allow me to change the time on the Sun while generating, without affecting the Place's time value
+        self.solar_noon, self.sunrise, self.sunset, self.dawn, self.dusk, self.sun_data, self.day_part, self.season = self.calculate_data()
 
     def calculate(self):
-        _time = self.place.time
+        # _time: time.datetime = self.place.time
         # Total days passed + current part of day, adjusted to central TZ | Started from the dawn of the calendar
-        days = _time.ds + (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400
+        # days = _time.ds + (_time.hour - self.place.tz) / 24 + _time.minute / 1440 + _time.second / 86400
+        days = self.time.to_part(day=True, utc=True)
         year_length = lengths[self.place.planet]  # Exact length of the year in local solar days
-        # year_day = days % year_length  # Current day of the real solar year, without any calendar error
-        # solar_day = year_day - self.place.long / 360  # Day adjusted to current longitude
 
         # Assume that perihelion was exactly at December solstice of year 0, and adjust the amount of days passed to perihelion
         # Perihelion variable shows the mean anomaly of the star at 1/1/0001
@@ -1065,7 +1085,7 @@ class Sun:
             heading = 360 - heading
         return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction, season, heading
 
-    def get_data(self):
+    def calculate_data(self):
         dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time_t, elevation, season, heading = self.calculate()
         dawn = time_from_decimal(dawn_t)
         sunrise = time_from_decimal(sunrise_t)
