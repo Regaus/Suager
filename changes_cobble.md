@@ -373,3 +373,7 @@
 - Improved the Regaus time system
 - Started integrating Regaus time into the conworld systems
 - Updated strings for playing statuses (types 1 and 4)
+
+## v1.4.0a3 - 2 October 2021
+- Improved the way local time is shown in weather78
+- Translated time to Kaltarena Kargadian

@@ -3,9 +3,10 @@
   "directions": ["kanerun", "kanera-vaderun", "vaderun", "seanka-vaderun", "searun", "seanka-zoranun", "zoranun", "kanera-zoranun"],
   "languages": {
     "english": "Angallar",
-    "kargadian_east": "Vaderkárgadar",
+    "kargadian": "Kargadar",
+    "kargadian_east": "Vaderkargadar",
     "kargadian_kaltarena": "Kaltarynnar",
-    "kargadian_west": "Zorankárgadar",
+    "kargadian_west": "Zorankargadar",
     "multiple": "Valsen",
     "tebarian": "Tebarinnar",
     "usturian": "Usturinnar"

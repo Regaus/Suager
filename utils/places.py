@@ -708,7 +708,7 @@ class Place:
         self.now = time.datetime.now()
         # self.now = time.dt(1686, 11, 21, 11, 55, 21)
         # try:
-        self.name, self.names, self.planet, self.lat, self.long, self.tz, self.time, self.local_time, self.region, self.language = self.get_location()
+        self.name, self.names, self.planet, self.lat, self.long, self.tz, self.time, self.region, self.language = self.get_location()
         # except KeyError:
         #     raise PlaceDoesNotExist(place)
         # self.tz = round(round(self.long / (180 / 24)) / 2, 1)
@@ -723,7 +723,7 @@ class Place:
         # self.weathers = patterns[self.place]
 
     def time_info(self):
-        return f"Current local time in **{self.name}, {self.planet}**: {self.local_time}"
+        return f"Current local time in **{self.name}, {self.planet}**: **{self.time.strftime('%A, %d %B %Y, %H:%M:%S', 'english')}**"
         # _time = f"{self.time.hour:02d}:{self.time.minute:02d}:{self.time.second:02d}"
         # _date = f"{self.time.day:02d}/{self.time.month:02d}/{self.time.year}"
         # return f"It is currently **{_time}** on **{_date}** in **{self.place}, {self.planet}**"
@@ -742,7 +742,6 @@ class Place:
         return f"{lat:>5.2f}°{n}, {long:>6.2f}°{e}" if indent else f"{lat:.2f}°{n}, {long:.2f}°{e}"
 
     def get_location(self):
-        # planet, x, y, *data = places_old[self.place]
         place = None
         _name = self.name.lower()
         for _place in places:
@@ -766,7 +765,6 @@ class Place:
             lat = -(lat - 90)
         if lat in [90, -90]:
             long = 0
-        # names = "\n".join(f"{language}: **{name}**" for language, name in place["name"].items())
         name = place["name"]["english"]
         tz = round(long / (360 / 24))
         tz += {
@@ -774,57 +772,36 @@ class Place:
             "Regan Shores": -1,
             "South Pole Kargadia": 5,
         }.get(name, 0)
-        # time_function = _times[planet]
-        # _time = time_function(self.now, tz=tz)
         timezone = time.timezone(time.timedelta(hours=tz))
         _time = time.datetime.now(timezone, time_classes[planet])
         try:
             region = place["region"]
         except KeyError:
             region = None
-        # local_time = f"**{_time.str()}**"
         _languages = place["language"]
-        # if planet == "Kargadia":
-        #     if language == "West Kargadian":
-        #         _local_time = times.time_kargadia(self.now, tz, 'rsl-1k')
-        #     elif language == "East Kargadian":
-        #         _local_time = times.time_kargadia(self.now, tz, 'rsl-1m')
-        #     elif language == "Tebarian":
-        #         _local_time = times.time_kargadia(self.now, tz, 'rsl-1i')
-        #     else:
-        #         _local_time = _time
-        #     local_time = f"**{_local_time.str(dow=False, month=False)}**"
-        # elif planet == "Qevenerus":
-        #     if language == "Kaltarena Kargadian, Usturian":
-        #         ka_time = times.time_qevenerus_ka(self.now, tz)
-        #         us_time = times.time_qevenerus_us(self.now, tz)
-        #         local_time = f"Ka. Kargadian: **{ka_time.str(dow=False, month=False)}**\nUsturian: **{us_time.str(dow=False, month=False)}**"
-        #     elif language == "Kaltarena Kargadian":
-        #         ka_time = times.time_qevenerus_ka(self.now, tz)
-        #         local_time = f"**{ka_time.str(dow=False, month=False)}**"
-        # local_time = {"any": general.bold(_time.str())}
-        local_time = {"any": general.bold(_time.strftime("%d %B %Y, %H:%M:%S"))}
-        if planet == "Virkada":
-            _language = languages.Language("english")
-            local_time["any"] = general.bold(_time.strftime(_language.time_string("virkada_time")))
-            for language in _languages:
-                _language = languages.Language(language)
-                local_time[language] = general.bold(_time.strftime(_language.time_string("virkada_time")))
-        else:
-            for language in _languages:
-                _local_time = _time
-                if planet == "Qevenerus" and language == "usturian":
-                    _local_time = _time.to_earth_time().from_earth_time(time.QevenerusUs)
-                # if planet == "Kargadia":
-                #     _local_time = times.time_kargadia(self.now, tz, language)
-                # elif planet == "Qevenerus":
-                #     if language == "kargadian_kaltarena":
-                #         _local_time = times.time_qevenerus_ka(self.now, tz)
-                #     elif language == "usturian":
-                #         _local_time = times.time_qevenerus_us(self.now, tz)
-                # local_time[language] = general.bold(_local_time.str(dow=False, month=False))
-                local_time[language] = general.bold(_local_time.strftime("%d %B %Y, %H:%M:%S", language))
-        return name, place["name"], planet, lat, long, tz, _time, local_time, region, _languages
+        # local_time = {}
+        # local_time = {"any": general.bold(_time.strftime("%d %B %Y, %H:%M:%S"))}
+        # if planet == "Virkada":
+        #     _language = languages.Language("english")
+        #     local_time["any"] = general.bold(_time.strftime(_language.time_string("virkada_time")))
+        #     for language in _languages:
+        #         _language = languages.Language(language)
+        #         local_time[language] = general.bold(_time.strftime(_language.time_string("virkada_time")))
+        # else:
+        #     # for language in _languages:
+        #     #     _local_time = _time
+        #     #     if planet == "Qevenerus" and language == "usturian":
+        #     #         _local_time = _time.to_earth_time().from_earth_time(time.QevenerusUs)
+        #     #     local_time[language] = general.bold(_local_time.strftime("%d %B %Y, %H:%M:%S", language))
+        #     _local_time = _time
+        #     if planet == "Qevenerus" and "usturian" in _languages:
+        #         _local_time = _time.to_earth_time().from_earth_time(time.QevenerusUs)
+        # for language in languages.time_strings.keys():
+        #     __time = _time
+        #     if planet == "Qevenerus" and language == "usturian":
+        #         __time = _time.to_earth_time().from_earth_time(time.QevenerusUs)
+        #     local_time[language] = __time.strftime("%d %B %Y, %H:%M:%S", language)
+        return name, place["name"], planet, lat, long, tz, _time, region, _languages
 
     def weather(self):
         if self.weathers is not None:
@@ -905,9 +882,9 @@ class Place:
         #     "tebarian": "Tebarian"
         # }.get(language.language, "English")
         if language.language == "kargadian_west":
-            name = self.names.get(language.language, self.names.get("tebarian", self.name))
+            name = self.names.get(language.language, self.names.get("tebarian", self.names.get("kargadian_east", self.name)))
         elif language.language == "tebarian":
-            name = self.names.get(language.language, self.names.get("kargadian_west", self.name))
+            name = self.names.get(language.language, self.names.get("kargadian_west", self.names.get("kargadian_east", self.name)))
         elif language.language == "kargadian_east":
             name = self.names.get(language.language, self.names.get("kargadian_west", self.names.get("tebarian", self.name)))
         else:
@@ -921,19 +898,30 @@ class Place:
         #                       f"Time zone: **{self.tz:+}:00** (Real offset {self.long / (360 / 24):+.2f} hours)\n"
         #                       f"Location: **{self.location(False)}**")
         lang_names = language.weather_data("languages")
-        lt_langs = list(self.local_time.keys())
-        if lt_langs == ["any"]:
-            local_time = self.local_time["any"]
-        else:
-            lt_langs.remove("any")
-            length = len(lt_langs)
-            if length == 1:
-                local_time = self.local_time[lt_langs[0]]
-            else:
-                _local_time = []
-                for lang in lt_langs:
-                    _local_time.append(f"{lang_names[lang]}: {self.local_time[lang]}")
-                local_time = "\n".join(_local_time)
+        # lt_langs = list(self.local_time.keys())
+        # if lt_langs == ["any"]:
+        #     local_time = self.local_time["any"]
+        # else:
+        #     lt_langs.remove("any")
+        #     length = len(lt_langs)
+        #     if length == 1:
+        #         local_time = self.local_time[lt_langs[0]]
+        #     else:
+        #         _local_time = []
+        #         for lang in lt_langs:
+        #             _local_time.append(f"{lang_names[lang]}: {self.local_time[lang]}")
+        #         local_time = "\n".join(_local_time)
+        time_format = "%d %B %Y, %H:%M:%S"
+        local_time = general.bold(self.time.strftime(time_format, language.language))
+        if self.planet == "Virkada":
+            local_time = general.bold(self.time.strftime(language.time_string("virkada_time")))
+        if self.planet == "Qevenerus":
+            usturian = self.time.convert_time_class(time.QevenerusUs)
+            times = [f"{lang_names['kargadian']}: {self.time.strftime(time_format, language.language)}",
+                     f"{lang_names['usturian']}: {usturian.strftime(time_format, language.language)}"]
+            # for lang in ["kargadian_kaltarena", "usturian"]:
+            #     times.append(f"{lang_names[lang]}: **{self.local_time[lang]}**")
+            local_time = "\n".join(times)
         embed.add_field(name=language.weather_string("weather78_local_time"), value=local_time, inline=False)
 
         offset1 = f"{self.tz:+}:00"

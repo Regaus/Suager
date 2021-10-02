@@ -6,7 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from utils import bot_data, general, http, languages, lists, logger, places, time, times
+from utils import bot_data, general, http, languages, lists, logger, places, time
 
 
 async def temporaries(bot: bot_data.Bot):
@@ -239,29 +239,30 @@ async def birthdays(bot: bot_data.Bot):
 
 
 ka_cities = {  # List of Kargadian cities to be shown in the ka-time clock, and in playing statuses
-    "Akkigar":       {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Bylkangar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Ekspigar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Huntavall":     {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
-    "Kaivalgar":     {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
-    "Kanerakainead": {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Kiomigar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Lailagar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Leitagar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Nurvutgar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Pakigar":       {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Peaskar":       {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Regavall":      {"english": None, "tebarian": None, "weight": 5},  # Weight: 5
-    "Reggar":        {"english": None, "tebarian": None, "weight": 5},  # Weight: 5
-    "Sentagar":      {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Sentatebaria":  {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
-    "Shonangar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Steirigar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Suvagar":       {"english": None, "tebarian": None, "weight": 3},  # Weight: 3
-    "Vintelingar":   {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
-    "Virsetgar":     {"english": None, "tebarian": None, "weight": 2},  # Weight: 2
+    "Akkigar":       {"english": None, "tebarian": None, "weight": 2},
+    "Bylkangar":     {"english": None, "tebarian": None, "weight": 2},
+    "Ekspigar":      {"english": None, "tebarian": None, "weight": 2},
+    "Huntavall":     {"english": None, "tebarian": None, "weight": 3},
+    "Kaivalgar":     {"english": None, "tebarian": None, "weight": 3},
+    "Kanerakainead": {"english": None, "tebarian": None, "weight": 2},
+    "Kiomigar":      {"english": None, "tebarian": None, "weight": 2},
+    "Lailagar":      {"english": None, "tebarian": None, "weight": 2},
+    "Leitagar":      {"english": None, "tebarian": None, "weight": 3},
+    "Nurvutgar":     {"english": None, "tebarian": None, "weight": 2},
+    "Orlagar":       {"english": None, "tebarian": None, "weight": 2},
+    "Pakigar":       {"english": None, "tebarian": None, "weight": 2},
+    "Peaskar":       {"english": None, "tebarian": None, "weight": 2},
+    "Regavall":      {"english": None, "tebarian": None, "weight": 5},
+    "Reggar":        {"english": None, "tebarian": None, "weight": 5},
+    "Sentagar":      {"english": None, "tebarian": None, "weight": 2},
+    "Sentatebaria":  {"english": None, "tebarian": None, "weight": 3},
+    "Shonangar":     {"english": None, "tebarian": None, "weight": 2},
+    "Steirigar":     {"english": None, "tebarian": None, "weight": 2},
+    "Suvagar":       {"english": None, "tebarian": None, "weight": 3},
+    "Vintelingar":   {"english": None, "tebarian": None, "weight": 2},
+    "Virsetgar":     {"english": None, "tebarian": None, "weight": 2},
 }
-ka_time: times.TimeSolarNormal = times.time_kargadia(tz=0)  # Current time in Virsetgar, used to determine time until next holiday
+ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
 update_speed = 120  # 150
 ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they occur
     1:   ("Nuan Kadan",              "Nuat Kadut"),
@@ -304,7 +305,9 @@ async def city_data_updater(bot: bot_data.Bot):
                     weather_tb = languages.Language("tebarian").weather_data("weather78")[rain_out]
                     english += f" | {temp} | {weather_en}"
                     tebarian += f" | {temp} | {weather_tb}"
-                ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
+                # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
+                ka_cities[city]["english"] = english
+                ka_cities[city]["tebarian"] = tebarian
                 if city == "Virsetgar":
                     global ka_time
                     ka_time = place.time
@@ -390,7 +393,7 @@ async def playing(bot: bot_data.Bot):
                 if rsl:
                     s = "in" if days != 1 else ""
                     v = "t" if days == 1 else "n"
-                    return f"{days} Zymlä'an sea{s} astalla{v}"
+                    return f"{days} sea{s} astalla{v}"
                 else:
                     s = "s" if days != 1 else ""
                     return f"{days} day{s}"
@@ -404,8 +407,8 @@ async def playing(bot: bot_data.Bot):
                 if status_type == 1:
                     cobble = get_date(12, 5)
                     is_cobble = today == cobble
-                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat"
-                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat"
+                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat an Zymlä'n"
+                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat an Zymlä'n"
                     status = random.choice([status_cobble, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
@@ -461,9 +464,9 @@ async def playing(bot: bot_data.Bot):
                     if days_left == 0:
                         status = f"Kovanan {holiday[0]}!"
                     elif days_left == 1:
-                        status = f"1 Kargada sea astallat {holiday[1]}"
+                        status = f"1 sea astallat {holiday[1]} an Kargadian"
                     else:
-                        status = f"{days_left} Kargadain seain astallan {holiday[1]}"
+                        status = f"{days_left} seain astallan {holiday[1]} an Kargadian"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 3)")
                 else:  # status_type == 4

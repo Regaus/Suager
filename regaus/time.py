@@ -4,7 +4,7 @@ from typing import Optional, overload, Type, Union
 
 from utils import languages
 
-__version__ = (1, 0, 0, 'rc', 2)
+__version__ = (1, 0, 0)
 last_updated = (2021, 10, 1)
 MIN_YEAR = -999999
 MAX_YEAR = 999999
@@ -736,6 +736,15 @@ class date(object):
         """ Convert from current time class to Earth time """
         return self._time_cls.to_earth_time(datetime.combine(self, time())).date()
 
+    def convert_time_class(self, time_class: Type[Earth]) -> date:
+        """ Convert from current time class to a new time class """
+        _time = datetime.combine(self, time())
+        if self.time_class != Earth:
+            _time = self.to_earth_time()
+        if time_class != Earth:
+            _time = _time.from_earth_time(time_class)
+        return _time.date()
+
     def __repr__(self):
         """ Convert to full string """
         s = "%s.%s(%d, %d, %d)" % (self.__class__.__module__, self.__class__.__qualname__, self.year, self.month, self.day)
@@ -1378,6 +1387,15 @@ class datetime(object):
     def to_earth_time(self) -> datetime:
         """ Convert from current time class to Earth time """
         return self._time_cls.to_earth_time(self)
+
+    def convert_time_class(self, time_class: Type[Earth]) -> datetime:
+        """ Convert from current time class to a new time class """
+        _time = self
+        if self.time_class != Earth:
+            _time = self.to_earth_time()
+        if time_class != Earth:
+            _time = _time.from_earth_time(time_class)
+        return _time
 
     def to_timezone(self, tz: tzinfo = timezone.utc) -> datetime:
         if not isinstance(tz, tzinfo):

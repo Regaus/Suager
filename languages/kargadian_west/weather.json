@@ -3,6 +3,7 @@
   "directions": ["kanerun", "kanera-vaderun", "vaderun", "senanka-vaderun", "senkarun", "senanka-zoranun", "zoranun", "kanera-zoranun"],
   "languages": {
     "english": "Angallar",
+    "kargadian": "Kargadiannar",
     "kargadian_east": "Vaderkargadiannar",
     "kargadian_kaltarena": "Kaltarynnar",
     "kargadian_west": "Zorankargadiannar",

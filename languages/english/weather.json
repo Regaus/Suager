@@ -3,6 +3,7 @@
   "directions": ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"],
   "languages": {
     "english": "English",
+    "kargadian": "Kargadian",
     "kargadian_east": "East Kargadian",
     "kargadian_kaltarena": "Kaltarena Kargadian",
     "kargadian_west": "West Kargadian",

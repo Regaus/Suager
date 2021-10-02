@@ -286,6 +286,12 @@ class Language:
                 part = obj.hour // 6
                 parts = ["tea", "rea", "sea", "vea"]
                 name += parts[part]
+            if self.language == "kargadian_kaltarena":
+                part = obj.hour // 6
+                parts = ["te", "re", "se", "ge"]
+                vowel = ["đe", "re", "ze", "ge"]
+                names = vowel if name[:-1] in "aeiou" else parts
+                name += names[part]
             if self.language == "usturian" and str(time_class) in ["Kargadia", "QevenerusKa", "QevenerusUs"]:
                 name = "Sharuad " + name
         return name or "None"
