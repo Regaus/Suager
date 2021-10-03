@@ -377,3 +377,6 @@
 ## v1.4.0a3 - 2 October 2021
 - Improved the way local time is shown in weather78
 - Translated time to Kaltarena Kargadian
+
+## v1.4.0a4 - 3 October 2021
+- Added ability to set cases for times, which will later be used to more accurately show times for both `datetime.datetime` and `regaus.time`

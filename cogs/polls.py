@@ -324,9 +324,9 @@ class Polls(commands.Cog):
                 poll_channel: discord.TextChannel = ctx.channel
             talked = self.bot.db.fetch("SELECT * FROM leveling WHERE last>? AND gid=?", (int(now_ts) - 21600, ctx.guild.id))  # All users who have talked within the last 6 hours
             required = round(len(talked) * 0.4)  # 40% of the people who've talked in the last 6 hours
-            if required < 3:
-                required = 3  # 3 is the minimum requirement to do anything
-            _required = language.number(required, positives=True)
+            if required < 6:
+                required = 6  # 6 is the minimum requirement to do anything
+            _required = language.number(required)
             embed = discord.Embed(colour=general.yellow)
             embed.title = language.string("trials_new_title")
             trial_id = general.random_id2()
@@ -400,9 +400,10 @@ class Polls(commands.Cog):
             upvotes = 0
         required = data["required_score"]
         guild_id, channel_id, message_id = data["guild_id"], data["channel_id"], data["message_id"]
-        if score >= (required * 2) and upvotes >= 0.9:
-            # Give 15 seconds grace for just in case
-            self.bot.db.execute("UPDATE trials SET expiry=? WHERE trial_id=?", (time.now2() + time.td(seconds=15), trial_id))
+        # Insta-ban on trials is now removed
+        # if score >= (required * 2) and upvotes >= 0.9:
+        #     # Give 15 seconds grace for just in case
+        #     self.bot.db.execute("UPDATE trials SET expiry=? WHERE trial_id=?", (time.now2() + time.td(seconds=15), trial_id))
         guild: discord.Guild = self.bot.get_guild(guild_id)
         if guild:
             if guild_id == 869975256566210641 and data["type"] in ["mute", "kick", "ban"]:
@@ -423,17 +424,17 @@ class Polls(commands.Cog):
                         embed.set_field_at(0, name=language.string("trials_votes_current"), inline=False,
                                            value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
                                                                  language.number(total), language.number(score, positives=True),
-                                                                 language.number(upvotes, precision=2, percentage=True), language.number(required, positives=True)))
-                        if required > score > 0:
-                            embed.colour = general.green2
-                        elif score >= required:
+                                                                 language.number(upvotes, precision=2, percentage=True), language.number(required)))
+                        if score > 0 and total >= required:
                             embed.colour = general.green
-                        elif -required < score < 0:
-                            embed.colour = general.red2
-                        elif score <= -required:
-                            embed.colour = general.red
-                        else:
+                        elif score > 0:
+                            embed.colour = general.green2
+                        elif score == 0:
                             embed.colour = general.yellow
+                        elif score < 0 and total <= required:
+                            embed.colour = general.red2
+                        else:
+                            embed.colour = general.red
                         if not anonymous:
                             _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
                             if yes >= 45:
@@ -506,7 +507,7 @@ class Polls(commands.Cog):
         embed.add_field(name=language.string("trials_votes_current"), inline=False,
                         value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
                                               language.number(total), language.number(score, positives=True),
-                                              language.number(upvotes, precision=2, percentage=True), language.number(required, positives=True)))
+                                              language.number(upvotes, precision=2, percentage=True), language.number(required)))
         return await general.send(None, ctx.channel, embed=embed)
 
     @trial.command(name="list")

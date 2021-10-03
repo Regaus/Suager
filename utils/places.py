@@ -917,8 +917,8 @@ class Place:
             local_time = general.bold(self.time.strftime(language.time_string("virkada_time")))
         if self.planet == "Qevenerus":
             usturian = self.time.convert_time_class(time.QevenerusUs)
-            times = [f"{lang_names['kargadian']}: {self.time.strftime(time_format, language.language)}",
-                     f"{lang_names['usturian']}: {usturian.strftime(time_format, language.language)}"]
+            times = [f"{lang_names['kargadian']}: **{self.time.strftime(time_format, language.language)}**",
+                     f"{lang_names['usturian']}: **{usturian.strftime(time_format, language.language)}**"]
             # for lang in ["kargadian_kaltarena", "usturian"]:
             #     times.append(f"{lang_names[lang]}: **{self.local_time[lang]}**")
             local_time = "\n".join(times)

@@ -1,5 +1,5 @@
 Pillow
-discord
+discord>=1.7
 discord.py>=1.7
 aiohttp
 python-dateutil

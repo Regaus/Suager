@@ -603,7 +603,7 @@
   "trials_user_self2": "You can't vote on a trial against yourself.",
   "trials_vote_success": "Your vote has been counted.",
   "trials_votes_current": "Current votes",
-  "trials_votes_current2": "{emotes.Allow} {0}, {emotes.Meh} {1}, {emotes.Deny} {2}\nTotal votes: {3}\nScore: {4} ({5} voted yes)\n\nRequired score: {6} (and at least 60% yes)",
+  "trials_votes_current2": "{emotes.Allow} {0}, {emotes.Meh} {1}, {emotes.Deny} {2}\nTotal votes: {3}\nScore: {4} ({5} voted yes)\n\nSuccess requirement: {6} votes, at least 60% yes",
   "trials_votes_result": "Final votes",
   "util_reminders_delete": "Reminder `{0}` was successfully deleted.",
   "util_reminders_dms": "You need to have your DMs open for me to be able to send you the list of your reminders.",

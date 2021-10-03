@@ -1038,3 +1038,8 @@
 
 ## v7.4.9.1 - 30 September 2021
 - Updated readme
+
+## v7.4.10 - 3 October 2021
+- Trials now ban by vote count, rather than score
+- Trials now have a minimum of 6 votes to win
+- Removed insta-ban option from trials

@@ -591,110 +591,8 @@ async def playing(bot: bot_data.Bot):
                         5: "Competing in"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
-            # plays = {
-            #     "cobble": [
-            #         {"type": 0, "name": fv},
-            #         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-            #         # {"type": 1, "name": "denedaa", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-            #         {"type": 0, "name": "Regaus'ar"},
-            #         {"type": 0, "name": "dekedar"},
-            #         {"type": 0, "name": "tarair sevirtair"},
-            #         {"type": 5, "name": "noartai"},
-            #         {"type": 0, "name": "denedaa"},
-            #         {"type": 3, "name": "ten"},
-            #         {"type": 3, "name": "ten sevartan"},
-            #         {"type": 2, "name": "ut penat"},
-            #         {"type": 3, "name": "na meitan"},
-            #         {"type": 2, "name": "na deinettat"},
-            #         {"type": 0, "name": status_regaus2},
-            #         {"type": 0, "name": status_cobble},
-            #         {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
-            #         {"type": 0, "name": "na TBL'n"},
-            #         {"type": 0, "name": "Akos'an"},
-            #         {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
-            #         {"type": 0, "name": "na TKP'n"},
-            #         {"type": 0, "name": "vaihaga kiinanshavarkan"},
-            #         {"type": 0, "name": "RIP discord.py"},
-            #     ],
-            #     "kyomi": [
-            #         {"type": 0, "name": fv},
-            #         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-            #         {"type": 0, "name": status_regaus},
-            #         {"type": 0, "name": status_kyomi},
-            #         {"type": 0, "name": status_blucy},
-            #         {"type": 0, "name": status_mizuki},
-            #         {"type": 0, "name": "Snuggling with Mochi"},
-            #         {"type": 0, "name": "Feeding Mochi"},
-            #         {"type": 0, "name": "Petting Mochi"},
-            #         {"type": 0, "name": "Eating pineapples"},
-            #         {"type": 0, "name": "Eating pineapple pizza"},
-            #         {"type": 0, "name": "Stealing pineapples"},
-            #         {"type": 0, "name": "Stealing star cookies"},
-            #         {"type": 0, "name": "Praying to the Pineapple God"},
-            #         {"type": 3, "name": "you"},
-            #     ],
-            #     "suager": [
-            #         {"type": 0, "name": fv},
-            #         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-            #         {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-            #         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
-            #         {"type": 2, "name": "music"},
-            #         {"type": 5, "name": "a competition"},
-            #         {"type": 0, "name": "with Regaus"},
-            #         {"type": 0, "name": "with nobody"},
-            #         {"type": 0, "name": "with your feelings"},
-            #         # {"type": 0, "name": "Custom Status"},
-            #         {"type": 0, "name": "Discord"},
-            #         {"type": 3, "name": "Senko"},
-            #         {"type": 5, "name": "uselessness"},
-            #         # {"type": 0, "name": "nothing"},
-            #         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
-            #         {"type": 3, "name": "you"},
-            #         # {"type": 0, "name": "None"},
-            #         # {"type": 0, "name": "KeyError: 'name'"},
-            #         # {"type": 0, "name": "IndexError: list index out of range"},
-            #         # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
-            #         # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
-            #         {"type": 3, "name": "the Void"},
-            #         # {"type": 0, "name": "PyCharm"},
-            #         {"type": 0, "name": "a game"},
-            #         {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
-            #         {"type": 2, "name": "a song"},
-            #         {"type": 2, "name": "the void"},
-            #         {"type": 2, "name": "Terraria's soundtrack"},
-            #         {"type": 2, "name": "your conversations"},
-            #         {"type": 3, "name": "murder"},
-            #         {"type": 3, "name": "arson"},
-            #         {"type": 2, "name": "your screams for help"},
-            #         # {"type": 3, "name": "something"},
-            #         # {"type": 3, "name": "nothing"},
-            #         # {"type": 0, "name": "something"},
-            #         {"type": 0, "name": "sentience"},
-            #         {"type": 0, "name": status_regaus},
-            #         {"type": 0, "name": status_suager},
-            #         {"type": 0, "name": "RIP discord.py"},
-            #     ]
-            # }
-            # _activity = random.choice(plays.get(bot.name))
-            # playing = f"{play} | v{self.local_config['short_version']}"
-            # if _activity["type"] == 0:  # Game
-            #     activity = discord.Game(name=_activity["name"])
-            # elif _activity["type"] == 1:  # Streaming
-            #     name = _activity["name"]
-            #     activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-            # else:
-            #     activity = discord.Activity(type=_activity["type"], name=_activity["name"])
-            #     # activity = discord.Activity(type=activity, name=playing)
-            await bot.change_presence(activity=activity, status=discord.Status.dnd)
-            # name = _activity["name"]
-            # status = {
-            #     0: "Playing",
-            #     1: "Streaming",
-            #     2: "Listening to",
-            #     3: "Watching",
-            #     5: "Competing in"
-            # }.get(_activity["type"], "Undefined")
-            # logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+            _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
+            await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
             general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
@@ -857,13 +755,13 @@ async def trials(bot: bot_data.Bot):
                     except ZeroDivisionError:
                         upvotes = 0
                     required = trial["required_score"]
-                    if score >= required:
+                    if upvotes >= 0.6 and total >= required:
                         colour = general.green
                     elif score >= 0:
                         colour = general.red2
                     else:
                         colour = general.red
-                    success = score >= required and upvotes >= 0.6  # The trial has reached a high enough score, therefore it succeeded
+                    success = total >= required and upvotes >= 0.6  # The trial has reached a high enough vote count and at least 60% upvoted
                     action: str = trial["type"]
                     user: discord.User = await bot.fetch_user(trial["user_id"])  # Load the overall user
                     member: discord.Member = guild.get_member(trial["user_id"])  # Load the Member for the functions that need it

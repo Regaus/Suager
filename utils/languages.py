@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from datetime import date, datetime, timedelta, timezone, time as dt_time
 from typing import Union
 
@@ -7,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 from utils import emotes, time
 
-languages, countries, time_strings, weather = {}, {}, {}, {}
+languages, countries, time_strings, weather, cases = {}, {}, {}, {}, {}
 for folder in os.listdir("languages"):
     # if file.endswith(".json"):
     #     languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
@@ -26,6 +27,10 @@ for folder in os.listdir("languages"):
             pass
         try:  # Load weather-related strings
             weather[folder] = json.loads(open(os.path.join("languages", folder, "weather.json"), encoding="utf-8").read())
+        except FileNotFoundError:
+            pass
+        try:  # Load weather-related strings
+            cases[folder] = json.loads(open(os.path.join("languages", folder, "cases.json"), encoding="utf-8").read())
         except FileNotFoundError:
             pass
 
@@ -143,6 +148,25 @@ class Language:
         """ Get time translation data (languages/<language>/time.json) """
         return (time_strings.get(self.language, time_strings[default])).get(key, time_strings[default].get(key)).get(time_class)
 
+    def case(self, string: str, case: str = "default", number: str = "default"):
+        """ Decline a word into its appropriate case """
+        # Case order: pattern[number][case]
+        available = cases.get(self.language, cases["english"])
+        for pattern, values in available.items():
+            result = re.fullmatch(pattern, string)
+            # This returns the first pattern that the value matches
+            if result is not None:
+                _number = values.get(number, values["default"])
+                _case = _number.get(case, _number["default"])
+                _format = re.search("<.*>", _case)
+                _match = _format.string
+                if _match == "<>":
+                    _case = _case.replace("<>", string)
+                return _case
+            else:
+                continue
+        return string  # If no cases matched, just return the string itself
+
     def join(self, seq):
         """ x, y and z """
         return join(seq, final=self.string2("generic_and"))
@@ -227,7 +251,7 @@ class Language:
         now = time.now(None)
         return self.delta_dt(now + delta, source=now, accuracy=accuracy, brief=brief, affix=affix)
 
-    def date(self, when: Union[datetime, date], *, short: int = 0, dow: bool = False, year: bool = True) -> str:
+    def date(self, when: Union[datetime, date], *, short: int = 0, dow: bool = False, year: bool = True, case: str = "default") -> str:
         """ Convert the date to string
 
         Short: 0 = Full month name, 1 = Short month name, 2 = dd/mm/yyyy format"""
@@ -237,15 +261,25 @@ class Language:
         # if day == 4 and month == 7:
         #     day, month = 34, 6
         if dow and self.language not in no_weeks:
-            weekdays = self.data("time_weekdays")
+            weekdays = self.time_data("weekdays", "english", "Earth")
             if self.language in ["kargadian_west", "tebarian", "kargadian_kaltarena"]:  # Also Kaltarena Kargadian
                 wd = when.weekday()
                 if when.hour < 6:
                     wd -= 1
-                suffix = ["te", "re", "se", "ve"] if self.language == "kargadian_kaltarena" else ["tea", "rea", "sea", "vea"]
-                weekday = weekdays[wd] + suffix[when.hour // 6]
+                # suffix = ["te", "re", "se", "ve"] if self.language == "kargadian_kaltarena" else ["tea", "rea", "sea", "vea"]
+                # weekday = weekdays[wd] + suffix[when.hour // 6]
+                weekday = weekdays[wd]
+                if self.language == "kargadian_kaltarena":
+                    parts = ["te", "re", "se", "ge"]
+                    vowel = ["đe", "re", "ze", "ge"]
+                    names = vowel if weekday[:-1] in "aeiou" else parts
+                else:  # if self.language in ["kargadian_west", "tebarian"]:
+                    names = ["tea", "rea", "sea", "vea"]
+                part = when.hour // 6
+                weekday += names[part]
             else:
                 weekday = weekdays[when.weekday()]
+            weekday = self.case(weekday, case, "singular")
             weekday = f"{weekday}, "
         else:
             weekday = ""
@@ -286,13 +320,13 @@ class Language:
                 part = obj.hour // 6
                 parts = ["tea", "rea", "sea", "vea"]
                 name += parts[part]
-            if self.language == "kargadian_kaltarena":
+            elif self.language == "kargadian_kaltarena":
                 part = obj.hour // 6
                 parts = ["te", "re", "se", "ge"]
                 vowel = ["đe", "re", "ze", "ge"]
                 names = vowel if name[:-1] in "aeiou" else parts
                 name += names[part]
-            if self.language == "usturian" and str(time_class) in ["Kargadia", "QevenerusKa", "QevenerusUs"]:
+            elif self.language == "usturian" and str(time_class) in ["Kargadia", "QevenerusKa", "QevenerusUs"]:
                 name = "Sharuad " + name
         return name or "None"
 
