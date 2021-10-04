@@ -83,28 +83,28 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.temporaries(bot)))
 
-server_settings = db.fetch("SELECT * FROM settings")
-for server in server_settings:
-    setting = json.loads(server["data"])
-    for key in ["audit_logs", "user_logs", "message_logs", "message_ignore"]:
-        try:
-            setting.pop(key)
-        except KeyError:
-            pass
-    if "join_roles" in setting:
-        members = setting["join_roles"]["members"]
-        if type(members) == int:  # If it is old
-            if members == 0:
-                setting["join_roles"]["members"] = []
-            else:
-                setting["join_roles"]["members"] = [members]
-        bots = setting["join_roles"]["bots"]
-        if type(bots) == int:  # If it is old
-            if bots == 0:
-                setting["join_roles"]["bots"] = []
-            else:
-                setting["join_roles"]["bots"] = [bots]
-    db.execute("UPDATE SETTINGS set data=? WHERE gid=? AND bot=?", (json.dumps(setting), server["gid"], server["bot"]))
+# server_settings = db.fetch("SELECT * FROM settings")
+# for server in server_settings:
+#     setting = json.loads(server["data"])
+#     for key in ["audit_logs", "user_logs", "message_logs", "message_ignore"]:
+#         try:
+#             setting.pop(key)
+#         except KeyError:
+#             pass
+#     if "join_roles" in setting:
+#         members = setting["join_roles"]["members"]
+#         if type(members) == int:  # If it is old
+#             if members == 0:
+#                 setting["join_roles"]["members"] = []
+#             else:
+#                 setting["join_roles"]["members"] = [members]
+#         bots = setting["join_roles"]["bots"]
+#         if type(bots) == int:  # If it is old
+#             if bots == 0:
+#                 setting["join_roles"]["bots"] = []
+#             else:
+#                 setting["join_roles"]["bots"] = [bots]
+#     db.execute("UPDATE SETTINGS set data=? WHERE gid=? AND bot=?", (json.dumps(setting), server["gid"], server["bot"]))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))
