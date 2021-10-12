@@ -1043,3 +1043,7 @@
 - Trials now ban by vote count, rather than score
 - Trials now have a minimum of 6 votes to win
 - Removed insta-ban option from trials
+
+## v7.4.11 - 8 October 2021
+- Added message log settings, that will actually work later on...
+- Made the trial success text say that the user was executed instead of banned
