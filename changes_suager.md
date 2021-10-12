@@ -1044,6 +1044,7 @@
 - Trials now have a minimum of 6 votes to win
 - Removed insta-ban option from trials
 
-## v7.4.11 - 8 October 2021
-- Added message log settings, that will actually work later on...
+## v7.4.11 - 8-12 October 2021
+- Added message log settings
+- Prefix settings can now be enabled/disabled, instead of toggling
 - Made the trial success text say that the user was executed instead of banned

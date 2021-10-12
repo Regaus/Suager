@@ -33,6 +33,31 @@ template_mizuki = {
     "goodbye": {
         "channel": 0,
         "message": "[USER] has left [SERVER]..."
+    },
+    "mod_logs": {  # Note: These will only work if the user is warned/muted/kicked/banned using the bot.
+        "warnings": 0,
+        "mutes": 0,
+        "kicks": 0,
+        "bans": 0,
+        "roles": 0  # Log when the user gets or loses a new role - Try to fetch data from audit logs, just show who got what role if audit logs are not available
+    },
+    "mod_dms": {
+        "warnings": 0,
+        "mutes": 0,
+        "kicks": 0,
+        "bans": 0
+    },
+    "user_logs": {
+        "join": 0,   # Channel ID where users who join are logged (Username, ID, created at, joined at)
+        "leave": 0,  # Channel ID where users who leave are logged (Username, ID, created at, joined at, roles they had) -- Time of leaving as footer timestamp
+        "preserve_roles": False  # Save a list of the user's role when they leave the server, so it can be recovered when they come back
+    },
+    "message_logs": {
+        "edit": 0,
+        "delete": 0,
+        "enabled": False,
+        "ignore_bots": True,    # Ignore edited/deleted messages if they're sent by a bot
+        "ignore_channels": []  # List of channels in which edited/deleted messages are ignored
     }
 }
 
@@ -77,5 +102,30 @@ template_suager = {
     "goodbye": {
         "channel": 0,
         "message": "[USER] has left [SERVER]..."
+    },
+    "mod_logs": {  # Note: These will only work if the user is warned/muted/kicked/banned using the bot.
+        "warnings": 0,
+        "mutes": 0,
+        "kicks": 0,
+        "bans": 0,
+        "roles": 0  # Log when the user gets or loses a new role - Try to fetch data from audit logs, just show who got what role if audit logs are not available
+    },
+    "mod_dms": {
+        "warnings": 0,
+        "mutes": 0,
+        "kicks": 0,
+        "bans": 0
+    },
+    "user_logs": {
+        "join": 0,   # Channel ID where users who join are logged (Username, ID, created at, joined at)
+        "leave": 0,  # Channel ID where users who leave are logged (Username, ID, created at, joined at, roles they had) -- Time of leaving as footer timestamp
+        "preserve_roles": False  # Save a list of the user's role when they leave the server, so it can be recovered when they come back
+    },
+    "message_logs": {
+        "edit": 0,
+        "delete": 0,
+        "enabled": False,
+        "ignore_bots": True,    # Ignore edited/deleted messages if they're sent by a bot
+        "ignore_channels": []  # List of channels in which edited/deleted messages are ignored
     }
 }

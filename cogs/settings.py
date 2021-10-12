@@ -73,43 +73,46 @@ class Settings(commands.Cog):
                     if setting["mute_role"] != 0:
                         mute_role = f"<@&{setting['mute_role']}>"
                 embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
-                if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                    mod, users, messages = language.string("settings_current_disabled"), language.string("settings_current_disabled"), language.string("settings_current_disabled")
-                    message_ignore = False
-                    if "audit_logs" in setting:
-                        if setting["audit_logs"]:
-                            mod = f"<#{setting['audit_logs']}>"
-                    if "user_logs" in setting:
-                        if setting["user_logs"]:
-                            users = f"<#{setting['user_logs']}>"
-                    if "message_logs" in setting:
-                        if setting["message_logs"]:
-                            messages = f"<#{setting['message_logs']}>"
-                            message_ignore = True
-                    embed.add_field(name=language.string("settings_current_logs"), value=language.string("settings_current_logs2", mod, users, messages), inline=False)
-                    if message_ignore:
-                        ignore = language.string("generic_none")
-                        if "message_ignore" in setting:
-                            if setting["message_ignore"]:
-                                ignore = ", ".join([f"<#{channel}>" for channel in setting["message_ignore"]])
-                        embed.add_field(name=language.string("settings_current_messages_ignore"), value=ignore, inline=False)
+                # if ctx.guild.id in [568148147457490954, 738425418637639775]:
+                #     mod, users, messages = language.string("settings_current_disabled"), language.string("settings_current_disabled"), language.string("settings_current_disabled")
+                #     message_ignore = False
+                #     if "audit_logs" in setting:
+                #         if setting["audit_logs"]:
+                #             mod = f"<#{setting['audit_logs']}>"
+                #     if "user_logs" in setting:
+                #         if setting["user_logs"]:
+                #             users = f"<#{setting['user_logs']}>"
+                #     if "message_logs" in setting:
+                #         if setting["message_logs"]:
+                #             messages = f"<#{setting['message_logs']}>"
+                #             message_ignore = True
+                #     embed.add_field(name=language.string("settings_current_logs"), value=language.string("settings_current_logs2", mod, users, messages), inline=False)
+                #     if message_ignore:
+                #         ignore = language.string("generic_none")
+                #         if "message_ignore" in setting:
+                #             if setting["message_ignore"]:
+                #                 ignore = ", ".join([f"<#{channel}>" for channel in setting["message_ignore"]])
+                #         embed.add_field(name=language.string("settings_current_messages_ignore"), value=ignore, inline=False)
                 sb = language.string("settings_current_disabled")
                 if "starboard" in setting:
                     starboard = setting["starboard"]
                     if starboard["enabled"]:
                         sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
                 embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
+
                 if self.bot.name in ["suager"]:
                     lvl = language.string("settings_current_disabled")
                     if "leveling" in setting:
                         if setting["leveling"]["enabled"]:
                             lvl = language.string("settings_current_leveling", ctx.prefix)
                     embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
+
                 bd = language.string("settings_current_disabled")
                 if "birthdays" in setting:
                     if setting["birthdays"]["enabled"]:
                         bd = language.string("settings_current_birthdays", ctx.prefix)
                 embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
+
                 if self.bot.name in ["suager"]:
                     polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
                     if "polls" in setting:
@@ -118,6 +121,7 @@ class Settings(commands.Cog):
                             polls_channel = f"<#{polls['channel']}>"
                         polls_anonymity = language.yes(polls["voter_anonymity"])
                     embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
+
                 members, bots = language.string("generic_none"), language.string("generic_none")
                 if "join_roles" in setting:
                     join_roles = setting["join_roles"]
@@ -131,6 +135,7 @@ class Settings(commands.Cog):
                     else:
                         bots = language.string("generic_none")
                 embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
+
                 welcome_channel, welcome_message = language.string("settings_current_disabled"), None
                 if "welcome" in setting:
                     welcome = setting["welcome"]
@@ -140,6 +145,7 @@ class Settings(commands.Cog):
                 embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
                 if welcome_message:
                     embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
+
                 goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
                 if "goodbye" in setting:
                     goodbye = setting["goodbye"]
@@ -149,6 +155,12 @@ class Settings(commands.Cog):
                 embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
                 if goodbye_message:
                     embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
+
+                msg = language.string("settings_current_disabled")
+                if "message_logs" in setting:
+                    if setting["message_logs"]["enabled"]:
+                        msg = language.string("settings_current_messages", ctx.prefix)
+                embed.add_field(name=language.string("settings_messages"), value=msg, inline=False)
                 return await general.send(None, ctx.channel, embed=embed)
             # return await ctx.send_help(str(ctx.command))
 
@@ -261,20 +273,23 @@ class Settings(commands.Cog):
         # return await general.send(f"Removed {prefix} from the prefix list", ctx.channel)
 
     @set_prefixes.command(name="default")
-    async def prefix_default(self, ctx: commands.Context):
-        """ Toggle the use of default prefixes """
+    async def prefix_default(self, ctx: commands.Context, action: str):
+        """ Enable or disable the use of default prefixes """
+        language = self.bot.language(ctx)
+        if action not in ["enable", "disable"]:
+            return await general.send(language.string("settings_prefix_default_invalid"), ctx.channel)
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
             _settings = json.loads(data["data"])
         else:
             _settings = self.template.copy()
-        _settings["use_default"] ^= True
+        _settings["use_default"] = action == "enable"
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await general.send(self.bot.language(ctx).string("settings_prefix_default" if _settings["use_default"] else "settings_prefix_default2"), ctx.channel)
+        return await general.send(language.string("settings_prefix_default" if action == "enable" else "settings_prefix_default2"), ctx.channel)
         # return await general.send(f"Default prefixes are now {'enabled' if t else 'disabled'} in this server.", ctx.channel)
 
     @settings.group(name="leveling", aliases=["levels", "lvl"], case_insensitive=True)
@@ -852,7 +867,7 @@ class Settings(commands.Cog):
             return await general.send(None, ctx.channel, embed=embed)
 
     @set_starboard.command(name="enable")
-    async def starboard_toggle(self, ctx: commands.Context):
+    async def starboard_enable(self, ctx: commands.Context):
         """ Enable starboard """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
@@ -1075,57 +1090,8 @@ class Settings(commands.Cog):
         else:
             return await general.send(self.bot.language(ctx).string("settings_birthdays_channel_none2"), ctx.channel)
 
-    @settings.command(name="modlogs", aliases=["mod"])
-    @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])  # Mod logs and message logs will not be ready on v7.4.0
-    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
-    async def set_audit(self, ctx: commands.Context, channel: discord.TextChannel = None):
-        """ Log moderator actions (mute, kick, ban) to a channel """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if channel is None:
-            _settings["audit_logs"] = 0
-        else:
-            _settings["audit_logs"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await general.send(self.bot.language(ctx).string("settings_audit_set", channel.mention), ctx.channel)
-        else:
-            return await general.send(self.bot.language(ctx).string("settings_audit_none"), ctx.channel)
-
-    @settings.command(name="userlogs", aliases=["users"])
-    @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])  # Mod logs and message logs will not be ready on v7.4.0
-    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
-    async def set_users(self, ctx: commands.Context, channel: discord.TextChannel = None):
-        """ Log users who join and leave the server """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if channel is None:
-            _settings["user_logs"] = 0
-        else:
-            _settings["user_logs"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await general.send(self.bot.language(ctx).string("settings_users_set", channel.mention), ctx.channel)
-        else:
-            return await general.send(self.bot.language(ctx).string("settings_users_none"), ctx.channel)
-
     @settings.group(name="messagelogs", aliases=["messages", "message", "msg"], case_insensitive=True)
-    @commands.check(lambda ctx: ctx.guild.id in [568148147457490954, 738425418637639775])
-    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_messages(self, ctx: commands.Context):
         """ Log deleted and edited messages to a channel """
         if ctx.invoked_subcommand is None:
@@ -1139,31 +1105,61 @@ class Settings(commands.Cog):
             _settings = json.loads(data["data"])
         else:
             _settings = self.template.copy()
-        _settings["message_logs"] = 0
+        if "message_logs" not in _settings:
+            _settings["message_logs"] = self.template["message_logs"].copy()
+        _settings["message_logs"]["enabled"] = False
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await general.send(self.bot.language(ctx).string("settings_messages_none"), ctx.channel)
+        return await general.send(self.bot.language(ctx).string("settings_messages_disabled"), ctx.channel)
 
-    @set_messages.command(name="set", aliases=["channel"])
-    async def set_message_channel(self, ctx: commands.Context, channel: discord.TextChannel):
-        """ Set the channel for the message logs """
+    @set_messages.command(name="enable")
+    async def set_message_enable(self, ctx: commands.Context):
+        """ Enable message logs """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if data:
             _settings = json.loads(data["data"])
         else:
             _settings = self.template.copy()
-        _settings["message_logs"] = channel.id
+        if "message_logs" not in _settings:
+            _settings["message_logs"] = self.template["message_logs"].copy()
+        _settings["message_logs"]["enabled"] = True
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await general.send(self.bot.language(ctx).string("settings_messages_set", channel.mention, ctx.prefix), ctx.channel)
+        return await general.send(self.bot.language(ctx).string("settings_messages_enabled"), ctx.channel)
 
-    @set_messages.group(name="ignore", aliases=["ic"], case_insensitive=True)
+    @set_messages.command(name="channel", aliases=["set"])
+    async def set_message_channel(self, ctx: commands.Context, log_type: str, channel: discord.TextChannel = None):
+        """ Set the channel for the message logs
+        log_type must be either "edit" or "delete" """
+        language = self.bot.language(ctx)
+        if log_type not in ["edit", "delete"]:
+            return await general.send(language.string("settings_messages_type_invalid"), ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "message_logs" not in _settings:
+            _settings["message_logs"] = self.template["message_logs"].copy()
+        if channel is None:
+            _settings["message_logs"][log_type] = 0
+        else:
+            _settings["message_logs"][log_type] = channel.id
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        output = "settings_messages_set_edit" if log_type == "edit" else "settings_messages_set_delete"
+        return await general.send(language.string(output, channel.mention, ctx.prefix), ctx.channel)
+
+    @set_messages.group(name="ignore", aliases=["ignoredchannels", "ignorechannels", "ic"], case_insensitive=True)
     async def set_message_ignore(self, ctx: commands.Context):
         """ Ignore edited and deleted messages in certain channels """
         if ctx.invoked_subcommand is None:
@@ -1177,10 +1173,9 @@ class Settings(commands.Cog):
             _settings = json.loads(data["data"])
         else:
             _settings = self.template.copy()
-        if "message_ignore" in _settings:
-            _settings["message_ignore"].append(channel.id)
-        else:
-            _settings["message_ignore"] = [channel.id]
+        if "message_logs" not in _settings:
+            _settings["message_logs"] = self.template["message_logs"].copy()
+        _settings["message_logs"]["ignore_channels"].append(channel.id)
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
@@ -1197,7 +1192,7 @@ class Settings(commands.Cog):
         else:
             _settings = self.template.copy()
         try:
-            _settings["message_ignore"].remove(channel.id)
+            _settings["message_logs"]["ignore_channels"].remove(channel.id)
         except (ValueError, KeyError):
             return await general.send(self.bot.language(ctx).string("settings_messages_ignore_invalid"), ctx.channel)
         stuff = json.dumps(_settings)
@@ -1206,6 +1201,27 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         return await general.send(self.bot.language(ctx).string("settings_messages_ignore_remove", channel.mention), ctx.channel)
+
+    @set_messages.command(name="ignorebots", aliases=["bots"])
+    async def prefix_default(self, ctx: commands.Context, action: str):
+        """ Ignore bots' messages """
+        language = self.bot.language(ctx)
+        if action not in ["enable", "disable"]:
+            return await general.send(language.string("settings_prefix_default_invalid"), ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "message_logs" not in _settings:
+            _settings["message_logs"] = self.template["message_logs"].copy()
+        _settings["message_logs"]["ignore_bots"] = action == "enable"
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await general.send(language.string("settings_messages_bots_enable" if action == "enable" else "settings_messages_bots_disable"), ctx.channel)
 
     @settings.group(name="polls", case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["suager"])

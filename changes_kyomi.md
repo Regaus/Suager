@@ -80,3 +80,6 @@
 
 ## v0.3.8 - 22 September 2021
 - Added ability to give multiple roles at once
+
+## v0.4.0 - 12 October 2021
+- Added message logs

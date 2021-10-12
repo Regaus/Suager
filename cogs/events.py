@@ -18,9 +18,9 @@ class Events(commands.Cog):
         self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
         self.blocked_logs = 739183533792297164
         # Ignored channels for Senko Lair and RK message logs
-        self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
-                               571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
-                               571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196, 798513492697153536, 799714065256808469]
+        # self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
+        #                        571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
+        #                        571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196, 798513492697153536, 799714065256808469]
         self.dm_logger = 806884278037643264  # DM logs channel
         # Suager, Suager Dev, Suager Original
         self.self = [609423646347231282, 568149836927467542, 520042197391769610]
@@ -280,8 +280,10 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
         async def process_msg(cid: int):
-            output = f"A message was deleted in {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
-                     f"Message sent: {message.created_at}\nMessage content: {message.content[:1850]}"
+            output = f"Channel: {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
+                     f"Message sent: {message.created_at:%Y-%m-%d %H:%M:%S}\nMessage content: {message.content}"  # [:1850]
+            # It should be fine now, since Discord says the description can be up to 4096 characters long
+            embed = discord.Embed(title="Message Deleted", description=output)
             files = []
             for attachment in message.attachments:
                 file = BytesIO()
@@ -290,20 +292,41 @@ class Events(commands.Cog):
                 except (discord.NotFound, discord.HTTPException):
                     pass
                 files.append(discord.File(file, filename=attachment.filename))
-            embed = message.embeds[0] if message.embeds else None
-            await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
+            # embed = message.embeds[0] if message.embeds else None
+            await general.send(None, self.bot.get_channel(cid), embed=embed, files=files)
 
-        if self.bot.name == "suager":
-            if message.guild is not None and message.guild.id in [568148147457490954, 738425418637639775]:
-                if message.channel.id not in self.message_ignore:
-                    if not message.author.bot:
-                        await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
+        if self.bot.name in ["suager", "kyomi"]:
+            if message.guild is not None:
+                data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message.guild.id, self.bot.name))
+                settings: dict = json.loads(data["data"])
+                if "message_logs" in settings:
+                    logs_settings: dict = settings["message_logs"]
+                    enabled: bool = logs_settings.get("enabled", False)
+                    if not enabled:
+                        return
+                    delete_id: int = logs_settings.get("delete", 0)
+                    if delete_id == 0:
+                        return
+                    # delete_channel: discord.TextChannel = message.guild.get_channel(delete_id)
+                    ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
+                    if ignore_bots and message.author.bot:
+                        return
+                    ignored_channels: list = logs_settings.get("ignore_channels", [])
+                    if message.channel.id in ignored_channels:
+                        return
+                    return await process_msg(delete_id)
+            # if message.guild is not None and message.guild.id in [568148147457490954, 738425418637639775]:
+            #     if message.channel.id not in self.message_ignore:
+            #         if not message.author.bot:
+            #             await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, messages: List[discord.Message]):
         async def process_msg(cid: int):
-            output = f"A message was deleted in {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
-                     f"Message sent: {message.created_at}\nMessage content: {message.content[:1850]}"
+            output = f"Channel: {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
+                     f"Message sent: {message.created_at:%Y-%m-%d %H:%M:%S}\nMessage content: {message.content}"  # [:1850]
+            # It should be fine now, since Discord says the description can be up to 4096 characters long
+            embed = discord.Embed(title="Message Deleted", description=output)
             files = []
             for attachment in message.attachments:
                 file = BytesIO()
@@ -312,30 +335,72 @@ class Events(commands.Cog):
                 except (discord.NotFound, discord.HTTPException):
                     pass
                 files.append(discord.File(file, filename=attachment.filename))
-            embed = message.embeds[0] if message.embeds else None
-            await general.send(output, self.bot.get_channel(cid), embed=embed, files=files)
-        if self.bot.name == "suager":
+            # embed = message.embeds[0] if message.embeds else None
+            await general.send(None, self.bot.get_channel(cid), embed=embed, files=files)
+        # if self.bot.name == "suager":
+        #     for message in messages:
+        #         if message.guild.id in [568148147457490954, 738425418637639775]:
+        #             if message.channel.id not in self.message_ignore:
+        #                 if not message.author.bot:
+        #                     await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
+        if self.bot.name in ["suager", "kyomi"]:
             for message in messages:
-                if message.guild.id in [568148147457490954, 738425418637639775]:
-                    if message.channel.id not in self.message_ignore:
-                        if not message.author.bot:
-                            await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
+                if message.guild is not None:
+                    data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message.guild.id, self.bot.name))
+                    settings: dict = json.loads(data["data"])
+                    if "message_logs" in settings:
+                        logs_settings: dict = settings["message_logs"]
+                        enabled: bool = logs_settings.get("enabled", False)
+                        if not enabled:
+                            return
+                        delete_id: int = logs_settings.get("delete", 0)
+                        if delete_id == 0:
+                            return
+                        # delete_channel: discord.TextChannel = message.guild.get_channel(delete_id)
+                        ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
+                        if ignore_bots and message.author.bot:
+                            return
+                        ignored_channels: list = logs_settings.get("ignore_channels", [])
+                        if message.channel.id in ignored_channels:
+                            return
+                        return await process_msg(delete_id)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         async def process_msg(cid: int):
-            embed = discord.Embed(description=f"Message was edited in {after.channel.mention} ({after.channel.id})\n"
-                                              f"Author: {after.author}\nMessage sent: {after.created_at}\nMessage edited: {after.edited_at}")
+            embed = discord.Embed(description=f"Message was edited in {after.channel.mention} ({after.channel.id})\nAuthor: {after.author}\n"
+                                              f"Message sent: {after.created_at:%Y-%m-%d %H:%M:%S}\n"
+                                              f"Message edited: {after.edited_at:%Y-%m-%d %H:%M:%S}")
             embed.add_field(name="Content Before", value=before.content[:1024], inline=False)
             embed.add_field(name="Content After", value=after.content[:1024], inline=False)
             await general.send(None, self.bot.get_channel(cid), embed=embed)
 
-        if self.bot.name == "suager":
-            if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
-                if after.channel.id not in self.message_ignore:
-                    if not after.author.bot:
-                        if after.content != before.content:
-                            await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
+        # if self.bot.name == "suager":
+        #     if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
+        #         if after.channel.id not in self.message_ignore:
+        #             if not after.author.bot:
+        #                 if after.content != before.content:
+        #                     await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
+        if self.bot.name in ["suager", "kyomi"]:
+            if after.guild is not None and after.content != before.content:
+                data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (after.guild.id, self.bot.name))
+                settings: dict = json.loads(data["data"])
+                if "message_logs" in settings:
+                    logs_settings: dict = settings["message_logs"]
+                    enabled: bool = logs_settings.get("enabled", False)
+                    if not enabled:
+                        return
+                    delete_id: int = logs_settings.get("delete", 0)
+                    if delete_id == 0:
+                        return
+                    # delete_channel: discord.TextChannel = message.guild.get_channel(delete_id)
+                    ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
+                    if ignore_bots and after.author.bot:
+                        return
+                    ignored_channels: list = logs_settings.get("ignore_channels", [])
+                    if after.channel.id in ignored_channels:
+                        return
+                    return await process_msg(delete_id)
 
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User):
