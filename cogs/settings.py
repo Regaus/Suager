@@ -1113,7 +1113,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await general.send(self.bot.language(ctx).string("settings_messages_disabled"), ctx.channel)
+        return await general.send(self.bot.language(ctx).string("settings_messages_disable"), ctx.channel)
 
     @set_messages.command(name="enable")
     async def set_message_enable(self, ctx: commands.Context):
@@ -1131,7 +1131,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await general.send(self.bot.language(ctx).string("settings_messages_enabled"), ctx.channel)
+        return await general.send(self.bot.language(ctx).string("settings_messages_enable"), ctx.channel)
 
     @set_messages.command(name="channel", aliases=["set"])
     async def set_message_channel(self, ctx: commands.Context, log_type: str, channel: discord.TextChannel = None):

@@ -184,6 +184,12 @@ class Events(commands.Cog):
                         await general.send(message, channel, u=[member])
         if self.bot.name == "suager":
             if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
+                if time.now2() - member.created_at < time.td(days=30):
+                    try:
+                        await member.send(f"Your account must be **at least 30 days old** to join **{member.guild}**.")
+                    except (discord.HTTPException, discord.Forbidden):
+                        pass
+                    await member.kick(reason="Users must be at least 30 days old to join the server.")
                 trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
                 if trials:
                     for trial in trials:
@@ -298,6 +304,8 @@ class Events(commands.Cog):
         if self.bot.name in ["suager", "kyomi"]:
             if message.guild is not None:
                 data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message.guild.id, self.bot.name))
+                if not data:
+                    return
                 settings: dict = json.loads(data["data"])
                 if "message_logs" in settings:
                     logs_settings: dict = settings["message_logs"]
@@ -347,6 +355,8 @@ class Events(commands.Cog):
             for message in messages:
                 if message.guild is not None:
                     data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message.guild.id, self.bot.name))
+                    if not data:
+                        return
                     settings: dict = json.loads(data["data"])
                     if "message_logs" in settings:
                         logs_settings: dict = settings["message_logs"]
@@ -384,6 +394,8 @@ class Events(commands.Cog):
         if self.bot.name in ["suager", "kyomi"]:
             if after.guild is not None and after.content != before.content:
                 data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (after.guild.id, self.bot.name))
+                if not data:
+                    return
                 settings: dict = json.loads(data["data"])
                 if "message_logs" in settings:
                     logs_settings: dict = settings["message_logs"]

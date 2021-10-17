@@ -1048,3 +1048,7 @@
 - Added message log settings
 - Prefix settings can now be enabled/disabled, instead of toggling
 - Made the trial success text say that the user was executed instead of banned
+
+## v7.4.12 - 17 October 2021
+- Fixed message logs breaking when no settings are found, fixed message logs settings values
+- Added a check that users are at least 30 days old to join Nuriki's server
