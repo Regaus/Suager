@@ -380,3 +380,8 @@
 
 ## v1.4.0a4 - 3 October 2021
 - Added ability to set cases for times, which will later be used to more accurately show times for both `datetime.datetime` and `regaus.time`
+
+## v1.4.0a5 - 25 October 2021
+- Converted `regaus` into its own module
+- Made the sun heading values more accurate
+- Now shows current version of Regaus.py in `..stats`

@@ -1,6 +1,6 @@
 Pillow
 discord>=1.7
-discord.py>=1.7
+enhanced-dpy>=1.7
 aiohttp
 python-dateutil
 asyncio
@@ -11,3 +11,4 @@ luas.py
 requests
 psutil
 numpy
+git+https://github.com/Regaus/Regaus.py.git#egg=regaus.py

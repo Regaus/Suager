@@ -12,7 +12,7 @@ languages, countries, time_strings, weather, cases = {}, {}, {}, {}, {}
 for folder in os.listdir("languages"):
     # if file.endswith(".json"):
     #     languages[file[:-5]] = json.loads(open(os.path.join("languages", file), encoding="utf-8").read())
-    if folder != "__pychache__":
+    if folder != "__pycache__":
         try:  # Load main set of strings
             languages[folder] = json.loads(open(os.path.join("languages", folder, "strings.json"), encoding="utf-8").read())
         except FileNotFoundError:

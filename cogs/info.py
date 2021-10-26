@@ -2,6 +2,7 @@ import sys
 from io import BytesIO
 
 import discord
+from regaus import version_info as regaus_version_info
 from discord import Permissions
 from discord.ext import commands
 from discord.utils import oauth_url
@@ -49,7 +50,14 @@ class BotInformation(commands.Cog):
         embed.add_field(name=language.string("info_stats_servers"), value=language.string("info_stats_servers_data", ls, lt, lc, lv), inline=True)
         _version = sys.version_info
         version = f"{_version.major}.{_version.minor}.{_version.micro}"
-        embed.add_field(name=language.string("info_stats_used"), inline=True, value=f"**discord.py v{discord.__version__}\nPython v{version}**")
+        _discord = discord.version_info
+        dis_version = f"{_discord.major}.{_discord.minor}.{_discord.micro}"
+        libs_used = f"**Python v{version}**\n**Enhanced d.py v{dis_version}**"
+        if self.bot.name == "cobble":
+            _regaus = regaus_version_info
+            reg_version = f"{_regaus.major}.{_regaus.minor}.{_regaus.micro}"
+            libs_used += f"\n**Regaus.py v{reg_version}**"
+        embed.add_field(name=language.string("info_stats_used"), inline=True, value=libs_used)
         mv = version_data["version"].split(".")[0]
         fv = language.time(time.from_ts(version_data["first_version"], None), short=1, dow=False, seconds=False, tz=False)
         mr = language.time(time.from_ts(version_data["major_release"], None), short=1, dow=False, seconds=False, tz=False)
