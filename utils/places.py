@@ -1049,7 +1049,13 @@ class Sun:
 
         # Calculate position of the sun (elevation and azimuth)
         hour_angle = solar_time * 360 - 180  # degrees
-        zenith = deg(acos(sin(rad(self.place.lat)) * sin(rad(declination)) + cos(rad(self.place.lat)) * cos(rad(declination)) * cos(rad(hour_angle))))  # degrees
+        dec = rad(declination)
+        lat = rad(self.place.lat)
+        ha = rad(hour_angle)
+        # zenith = deg(acos(sin(rad(self.place.lat)) * sin(rad(declination)) + cos(rad(self.place.lat)) * cos(rad(declination)) * cos(rad(hour_angle))))  # degrees
+        zenith_cos = sin(lat) * sin(dec) + cos(lat) * cos(dec) * cos(ha)
+        zenith = deg(acos(zenith_cos))
+        zen = rad(zenith)
         elevation = 90 - zenith  # degrees
         if elevation > 85:
             refraction = 0
@@ -1060,6 +1066,7 @@ class Sun:
         else:
             refraction = -20.772 / tan(rad(elevation))
         refraction /= 3600
+
         # if self.place.lat in [0, 90]:
         #     azimuth = -1
         # else:
@@ -1068,8 +1075,17 @@ class Sun:
         #         azimuth = (azimuth_equation + 180) % 360
         #     else:
         #         azimuth = (540 - azimuth_equation) % 360
-        heading = (solar_time * 360) % 360
-        if axial_tilt > 90:
+
+        if self.place.lat in [90, -90]:  # At the poles, where the normal equation didn't want to work
+            # In the north hemisphere
+            heading = (solar_time * 360) % 360   # East -> South -> West -> North
+            if self.place.lat < 0:  # In the south hemisphere
+                heading = (540 - heading) % 360  # East -> North -> West -> South
+        else:
+            # https://en.wikipedia.org/wiki/Solar_azimuth_angle
+            heading_cos = (sin(dec) - cos(zen) * sin(lat)) / (sin(zen) * cos(lat))
+            heading = 360 - deg(acos(heading_cos))
+        if axial_tilt > 90:  # Retrograde spins (like Venus)
             heading = 360 - heading
         return dawn_t, sunrise_t, solar_noon_t, sunset_t, dusk_t, solar_time, elevation + refraction, season, heading
 
