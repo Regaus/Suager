@@ -11,4 +11,4 @@ luas.py
 requests
 psutil
 numpy
-git+https://github.com/Regaus/Regaus.py.git#egg=regaus.py
+git+https://github.com/Regaus/Regaus.py.git@stable#egg=regaus.py
