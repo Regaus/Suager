@@ -451,8 +451,8 @@ class Events(commands.Cog):
         if after.guild.id in [568148147457490954, 738425418637639775] and uid not in [302851022790066185]:
             if after.display_name[0] < "A":
                 await after.edit(reason="De-hoist", nick=f"\u17b5{after.display_name[:31]}")
-            if "spoingus" in after.nick.lower():
-                await after.edit(reason="You cunt", nick="Nigger")
+            if "spoingus" in after.display_name.lower():
+                await after.edit(nick=None)
         # if after.guild.id in [430945139142426634] and uid == self.bot.user.id:
         #     await after.guild.me.edit(nick=None)
         # if after.guild.id == 784357864482537473 and uid == 517012611573743621:
