@@ -1,1 +1,1 @@
-pip install -U "git+https://github.com/Regaus/Regaus.py.git#egg=regaus.py"
+pip install -U "git+https://github.com/Regaus/Regaus.py.git@main#egg=regaus.py"

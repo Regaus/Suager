@@ -26,7 +26,7 @@ places = [
     },
     {
         "name": {
-            "English": "Hot Village",
+            "english": "Hot Village",
             "usturian": "Ghazhan Kunemad",
         },
         "location": [2052.0, 560.1],
