@@ -409,7 +409,7 @@ class Polls(commands.Cog):
             if guild_id == 869975256566210641 and data["type"] in ["mute", "kick", "ban"]:
                 _member = ctx.guild.get_member(data["user_id"])
                 if _member:
-                    if score >= required and upvotes >= 0.6:
+                    if total >= required and upvotes >= 0.6:
                         await _member.add_roles(ctx.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
                         await _member.remove_roles(ctx.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
                     else:

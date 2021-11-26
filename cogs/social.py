@@ -332,7 +332,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(language.string("social_poke_self"), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(language.string("social_tickle_regaus"), ctx.channel)
+            return await general.send(language.string("social_tickle_regaus", ctx.author.name), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_tickle_suager"), ctx.channel)
         if user.bot:

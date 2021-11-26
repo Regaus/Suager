@@ -1052,3 +1052,7 @@
 ## v7.4.12 - 17 October 2021
 - Fixed message logs breaking when no settings are found, fixed message logs settings values
 - Added a check that users are at least 30 days old to join Nuriki's server
+
+## v7.4.12.1 - 25 November 2021
+- Fixed `//tickle Regaus` not showing its correct response
+- Fixed `//trials vote` not giving the on trial role because it still required the score instead of total votes
