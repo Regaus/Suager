@@ -1056,3 +1056,6 @@
 ## v7.4.12.1 - 25 November 2021
 - Fixed `//tickle Regaus` not showing its correct response
 - Fixed `//trials vote` not giving the on trial role because it still required the score instead of total votes
+
+## v7.4.12.2 - 7 December 2021
+- Added reaction roles to Karmeck's server
