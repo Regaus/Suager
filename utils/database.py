@@ -217,10 +217,4 @@ tables = [
         Column("anonymous", 3, True),       # Whether the poll is anonymous or not
         Column("required_score", 0, True),  # Score required for the trial to pass
     ]),
-    # Table("vote_bans", [
-    #     Column("uid", 0, True),        # User ID
-    #     Column("upvotes", 2, True),    # List of upvote IDs
-    #     Column("downvotes", 2, True),  # List of downvote IDs
-    #     Column("expiry", 4, True),     # When the vote expires
-    # ])
 ]

@@ -3,9 +3,11 @@ from io import BytesIO
 from typing import List
 
 import discord
+from aiohttp import ClientPayloadError
 from discord.ext import commands
 
 from utils import bot_data, general, http, languages, logger, time
+from regaus import time as time2
 
 
 class Events(commands.Cog):
@@ -129,23 +131,43 @@ class Events(commands.Cog):
             if member.guild.id == 568148147457490954:  # Senko Lair
                 # members = len(member.guild.members)
                 # await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
-                if time.now() < time.dt(2022):
-                    role = member.guild.get_role(794699877325471776)
-                    await member.add_roles(role, reason="Joining Senko Lair during 2021.")
-                else:
-                    await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
-            # if member.guild.id == 738425418637639775:
-            #     language = self.bot.language2("english")
-            #     join = language.time(member.joined_at, short=1, dow=False, seconds=True, tz=False)
-            #     age = language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False)
-            #     await general.send(f"Welcome {member.name} to Regaus' Playground!\nJoin time: {join}\nAccount age: {age}", self.bot.get_channel(754425619336396851))
-            # if member.guild.id == 806811462345031690:
-            #     role = member.guild.get_role(841403040534888458)
-            #     await member.add_roles(role, reason="Welcome to /bin/games!")
-            #     await general.send(f"Welcome to {member.guild.name}, {member.name}!", self.bot.get_channel(841405544686551044))
-            # if member.guild.id == 869975256566210641:
-            #     role = member.guild.get_role(869975498799845406)
-            #     await member.add_roles(role, reason="Nuriki asked for it")
+
+                role_ids = {
+                    2021: 794699877325471776,
+                    2022: 922602168010309732
+                }
+                role_id = role_ids[time.now().year]
+                await member.add_roles(member.guild.get_role(role_id))
+
+                # if time.now() < time.dt(2022):
+                #     role = member.guild.get_role(794699877325471776)
+                #     await member.add_roles(role, reason="Joining Senko Lair during 2021.")
+                # else:
+                #     await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
+
+            if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
+                if time2.datetime.now() - time2.datetime.from_datetime(member.created_at) < time.td(days=30):
+                    try:
+                        await member.send(f"Your account must be **at least 30 days old** to join **{member.guild}**.")
+                    except (discord.HTTPException, discord.Forbidden):
+                        pass
+                    await member.kick(reason="Users must be at least 30 days old to join the server.")
+                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
+                if trials:
+                    for trial in trials:
+                        if trial["type"] in ["mute", "kick", "ban"]:
+                            voters_yes: list = json.loads(trial["voters_yes"])
+                            voters_neutral: list = json.loads(trial["voters_neutral"])
+                            voters_no: list = json.loads(trial["voters_no"])
+                            yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                            try:
+                                upvotes = yes / (yes + no)
+                            except ZeroDivisionError:
+                                upvotes = 0
+                            if yes + neutral + no >= trial["required_score"] and upvotes >= 0.6:
+                                await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
+                                await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
+                                break
 
         if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
             if member.name[0] < "A":
@@ -182,30 +204,6 @@ class Events(commands.Cog):
                             .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
                         await general.send(message, channel, u=[member])
-        if self.bot.name == "suager":
-            if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
-                if time.now2() - member.created_at < time.td(days=30):
-                    try:
-                        await member.send(f"Your account must be **at least 30 days old** to join **{member.guild}**.")
-                    except (discord.HTTPException, discord.Forbidden):
-                        pass
-                    await member.kick(reason="Users must be at least 30 days old to join the server.")
-                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
-                if trials:
-                    for trial in trials:
-                        if trial["type"] in ["mute", "kick", "ban"]:
-                            voters_yes: list = json.loads(trial["voters_yes"])
-                            voters_no: list = json.loads(trial["voters_no"])
-                            yes, no = len(voters_yes), len(voters_no)
-                            score = yes - no
-                            try:
-                                upvotes = yes / (yes + no)
-                            except ZeroDivisionError:
-                                upvotes = 0
-                            if score >= trial["required_score"] and upvotes >= 0.6:
-                                await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
-                                await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
-                                break
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
                 await member.edit(nick=f"✧₊˚🍰⌇{member.name[:23]}🌙⋆｡˚", reason="Joining the server")
@@ -434,12 +432,15 @@ class Events(commands.Cog):
                 send = f"{to} > {n2} ({uid}) changed their avatar"
                 logger.log(self.bot.name, "user_avatars", send)
                 if uid not in self.self:
-                    avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
-                    ext = "gif" if after.is_avatar_animated() else "png"
-                    if al is None:
-                        print("No avatar log channel found.")
-                    else:
-                        await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
+                    try:
+                        avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
+                        ext = "gif" if after.is_avatar_animated() else "png"
+                        if al is None:
+                            general.print_error("No avatar log channel found.")
+                        else:
+                            await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
+                    except (discord.HTTPException, ClientPayloadError) as e:
+                        general.print_error(f"{time.time()} > User Update > Failed to send updated avatar: {e}")
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):

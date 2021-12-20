@@ -1059,3 +1059,9 @@
 
 ## v7.4.12.2 - 7 December 2021
 - Added reaction roles to Karmeck's server
+
+## v7.4.13 - 20 December 2021
+- Added "Joined in 2022" role to Senko Lair
+- Hopefully fixed Nuriki's server breaking because of timezones
+- People joining Nuriki's server while on trial should now get the role by the new conditions
+- Fixed avatar updates breaking

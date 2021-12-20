@@ -1,6 +1,6 @@
 Pillow
 discord>=1.7
-enhanced-dpy>=1.7
+enhanced-dpy>=1.7,<2.0
 aiohttp
 python-dateutil
 asyncio
