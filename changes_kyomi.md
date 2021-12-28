@@ -86,3 +86,7 @@
 
 ## v0.4.1 - 22 December 2021
 - Added ability to send users a DM when a mod action is taken against them
+
+## v0.4.2 - 28 December 2021
+- Enabled mute commands (why were they disabled in the first place?
+- Improved the Message Edited embed on message logs)

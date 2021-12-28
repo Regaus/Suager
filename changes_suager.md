@@ -1033,7 +1033,7 @@
 - Improved the invite command
 
 ## v7.4.9 - 22 September 2021
-- Added ability to give multiple roles at once
+- Added ability to give multiple roles at once when people join
 - Removed the logs settings, so that I can set the new ones later on
 
 ## v7.4.9.1 - 30 September 2021
@@ -1068,3 +1068,6 @@
 
 ## v7.4.14 - 22 December 2021
 - Added ability to send users a DM when a mod action is taken against them
+
+## v7.4.14.1 - 28 December 2021
+- Improved the Message Edited embed on message logs

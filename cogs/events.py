@@ -376,7 +376,9 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         async def process_msg(cid: int):
-            embed = discord.Embed(description=f"Message was edited in {after.channel.mention} ({after.channel.id})\nAuthor: {after.author}\n"
+            embed = discord.Embed(title="Message Edited",
+                                  description=f"Channel: {after.channel.mention} ({after.channel.id})\n"
+                                              f"Author: {after.author}\n"
                                               f"Message sent: {after.created_at:%Y-%m-%d %H:%M:%S}\n"
                                               f"Message edited: {after.edited_at:%Y-%m-%d %H:%M:%S}")
             embed.add_field(name="Content Before", value=before.content[:1024], inline=False)

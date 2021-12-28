@@ -246,7 +246,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    # @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def mute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Mute a user """
         language = self.bot.language(ctx)
@@ -302,7 +302,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
-    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    # @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def unmute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Unmute a user """
         language = self.bot.language(ctx)
@@ -338,7 +338,7 @@ class Moderation(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
-    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    # @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def mute_list(self, ctx: commands.Context):
         """ See a list of the currently active temporary mutes """
         language = self.bot.language(ctx)
