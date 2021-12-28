@@ -6,6 +6,7 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
+from cogs.mod import send_mod_dm
 from utils import bot_data, general, http, languages, lists, logger, places, time
 
 
@@ -69,10 +70,11 @@ async def temporaries(bot: bot_data.Bot):
                                             await member.remove_roles(mute_role, reason=f"[Auto-Unmute] Punishment expired")
                                             if guild.id == 869975256566210641:  # Nuriki's anarchy server
                                                 await member.add_roles(guild.get_role(869975498799845406), reason="Punishment expired")  # Give back the Anarchists role
-                                                try:
-                                                    await member.send(f"You have been unmuted in {guild.name}: Your mute has expired.")
-                                                except discord.Forbidden:
-                                                    pass
+                                                # try:
+                                                #     await member.send(f"You have been unmuted in {guild.name}: Your mute has expired.")
+                                                # except discord.Forbidden:
+                                                #     pass
+                                            await send_mod_dm(bot, languages.FakeContext(guild, bot), member, "unmute", "Your punishment has expired", None)
                                             logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
                                                                                 f"guild {guild} ({entry_id})")
                                             handled = 1
@@ -877,6 +879,7 @@ async def trials(bot: bot_data.Bot):
                                 await general.send(output, channel)
                         else:
                             general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong.")
+                        await send_mod_dm(bot, languages.FakeContext(guild, bot), member, action, "Trial results", None)
                     else:  # The trial has failed, so restore the member's anarchist roles
                         if guild.id == 869975256566210641 and member:  # Nuriki's anarchy server
                             await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role

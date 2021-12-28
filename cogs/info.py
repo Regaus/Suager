@@ -52,7 +52,7 @@ class BotInformation(commands.Cog):
         version = f"{_version.major}.{_version.minor}.{_version.micro}"
         _discord = discord.version_info
         dis_version = f"{_discord.major}.{_discord.minor}.{_discord.micro}"
-        libs_used = f"**Python v{version}**\n**Enhanced d.py v{dis_version}**"
+        libs_used = f"**Python v{version}**\n**Discord.py v{dis_version}**"
         if self.bot.name == "cobble":
             _regaus = regaus_version_info
             reg_version = f"{_regaus.major}.{_regaus.minor}.{_regaus.micro}"

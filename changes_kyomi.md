@@ -83,3 +83,6 @@
 
 ## v0.4.0 - 12 October 2021
 - Added message logs
+
+## v0.4.1 - 22 December 2021
+- Added ability to send users a DM when a mod action is taken against them

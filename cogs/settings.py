@@ -161,6 +161,14 @@ class Settings(commands.Cog):
                     if setting["message_logs"]["enabled"]:
                         msg = language.string("settings_current_messages", ctx.prefix)
                 embed.add_field(name=language.string("settings_messages"), value=msg, inline=False)
+
+                mod_dms_text = language.string("settings_current_mod_dms_disabled", ctx.prefix)
+                if "mod_dms" in setting:
+                    mod_dms = setting["mod_dms"]
+                    warn, mute, kick, ban = mod_dms["warn"], mod_dms["mute"], mod_dms["kick"], mod_dms["ban"]
+                    mod_dms_text = language.string("settings_current_mod_dms2", language.yes(warn), language.yes(mute), language.yes(kick), language.yes(ban))
+                embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
+
                 return await general.send(None, ctx.channel, embed=embed)
             # return await ctx.send_help(str(ctx.command))
 
@@ -1544,6 +1552,45 @@ class Settings(commands.Cog):
     async def goodbye_message_vars(self, ctx: commands.Context):
         """ Goodbye message variables """
         return await general.send(self.bot.language(ctx).string("settings_goodbye_message_variables"), ctx.channel)
+
+    @settings.group(name="moddm", aliases=["moddms", "dmonmod", "dms"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    async def set_mod_dms(self, ctx: commands.Context, punishment: str, action: str = None):
+        """ Send a DM to the user when a punishment is applied against them
+        Punishment values: warn, mute, kick, ban
+        Action: enable, disable (leave empty to see current value)"""
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "mod_dms" not in _settings:
+            _settings["mod_dms"] = self.template["mod_dms"].copy()
+        punishment = punishment.lower()
+        if punishment not in ["warn", "mute", "kick", "ban"]:
+            return await general.send(language.string("settings_mod_dms_invalid", punishment), ctx.channel)
+        if action is None:
+            try:
+                enabled = _settings["mod_dms"][punishment]
+                text = "enabled2" if enabled else "disabled2"
+                return await general.send(language.string(f"settings_mod_dms_{punishment}_{text}"), ctx.channel)
+            except KeyError:
+                # return await general.send(language.string(f"settings_mod_dms_{punishment}_disabled2"), ctx.channel)
+                return await general.send(language.string("settings_mod_dms_invalid", punishment), ctx.channel)
+        else:
+            action = action.lower()
+            if action not in ["enable", "disable"]:
+                return await general.send(language.string("settings_mod_dms_invalid2", action), ctx.channel)
+            enable = action == "enable"
+            _settings["mod_dms"][punishment] = enable
+            stuff = json.dumps(_settings)
+            if data:
+                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+            else:
+                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+            text = "enabled" if enable else "disabled"
+            return await general.send(self.bot.language(ctx).string(f"settings_mod_dms_{punishment}_{text}"), ctx.channel)
 
     @commands.command(name="prefixes", aliases=["prefix"])
     @commands.guild_only()

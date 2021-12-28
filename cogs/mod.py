@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import re
 from io import BytesIO
@@ -6,6 +8,7 @@ import discord
 from discord.ext import commands
 
 from utils import bot_data, general, permissions, time
+from utils.languages import FakeContext
 
 
 async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: int = None, after: int = None, message: bool = True):
@@ -51,6 +54,43 @@ class MemberID(commands.Converter):
             return m.id
 
 
+async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, action: str, reason: str, duration: str = None):
+    """ Try to send the user a DM that they've been warned/muted/kicked/banned """
+    try:
+        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        data = json.loads(_data["data"])
+        mod_dms = data["mod_dms"]
+        key = "warn"  # Default
+        if action == "warn":
+            key = "warn"
+        elif action in ["mute", "unmute"]:
+            key = "mute"
+        elif action == "kick":
+            key = "kick"
+        elif action in ["ban", "unban"]:
+            key = "ban"
+        enabled = mod_dms[key]
+    except (IndexError, KeyError):
+        return  # If the settings can't be read, assume it's disabled
+    if not enabled:
+        return  # DMs for this action are disabled
+    if not hasattr(ctx, "author"):
+        author = bot.user
+    else:
+        author = ctx.author
+    language = bot.language(ctx)
+    if action == "mute" and duration is not None:
+        # The duration is already converted into str by the mute command
+        text = language.string("mod_dms_mute_temp", user=author, server=ctx.guild, reason=reason, duration=duration)
+    else:
+        string = f"mod_dms_{action}"
+        text = language.string(string, user=author, server=ctx.guild, reason=reason)
+    try:
+        return await user.send(text)
+    except Exception as e:
+        general.print_error(f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}")
+
+
 class Moderation(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
@@ -75,6 +115,8 @@ class Moderation(commands.Cog):
             return await general.send(language.string("mod_ban_suager", ctx.author.name), ctx.channel)
         try:
             user = str(member)
+            # TODO: Make sure we can kick the user *before* sending the message, so it wouldn't look stupid if this fails...
+            await send_mod_dm(self.bot, ctx, member, "kick", reason, None)
             await member.kick(reason=general.reason(ctx.author, reason))
             return await general.send(language.string("mod_kick", user, reason), ctx.channel)
         except Exception as e:
@@ -98,7 +140,9 @@ class Moderation(commands.Cog):
         elif member == self.bot.user.id:
             return await general.send(language.string("mod_ban_suager", ctx.author.name), ctx.channel)
         try:
+            # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
             user = await self.bot.fetch_user(member)
+            await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
             await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
             return await general.send(language.string("mod_ban", member, user, reason), ctx.channel)
         except Exception as e:
@@ -127,6 +171,8 @@ class Moderation(commands.Cog):
         failed = 0
         for member in who:
             try:
+                # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
+                await send_mod_dm(self.bot, ctx, self.bot.get_user(member), "ban", reason, None)
                 await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
                 banned += 1
             except Exception as e:
@@ -147,6 +193,7 @@ class Moderation(commands.Cog):
         try:
             await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
             user = await self.bot.fetch_user(member)
+            await send_mod_dm(self.bot, ctx, user, "unban", reason, None)
             return await general.send(language.string("mod_unban", member, user, reason), ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
@@ -230,7 +277,7 @@ class Moderation(commands.Cog):
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
         if time.rd_is_above_5y(delta):
-            await general.send(language.string("mod_mute_limit"), ctx.channel)
+            await general.send(language.string("mod_mute_limit"), ctx.channel, delete_after=15)
             error = True
         if not error:
             if exists is not None:
@@ -244,9 +291,11 @@ class Moderation(commands.Cog):
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
             out = language.string("mod_mute_timed", member, duration, reason)
+            await send_mod_dm(self.bot, ctx, member, "mute", reason, duration)
         else:
             if exists is not None:
                 self.bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (exists['entry_id'],))
+            await send_mod_dm(self.bot, ctx, member, "mute", reason, None)
         return await general.send(out, ctx.channel)
 
     @commands.command(name="unmute")
@@ -281,6 +330,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
         self.bot.db.execute("DELETE FROM temporary WHERE uid=? AND type='mute' AND gid=? AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+        await send_mod_dm(self.bot, ctx, member, "unmute", reason, None)
         return await general.send(language.string("mod_unmute", member, reason), ctx.channel)
         # return await general.send(f"{emotes.Allow} Successfully unmuted **{member}** for **{reason}**", ctx.channel)
 

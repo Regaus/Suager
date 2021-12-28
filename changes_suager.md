@@ -1065,3 +1065,6 @@
 - Hopefully fixed Nuriki's server breaking because of timezones
 - People joining Nuriki's server while on trial should now get the role by the new conditions
 - Fixed avatar updates breaking
+
+## v7.4.14 - 22 December 2021
+- Added ability to send users a DM when a mod action is taken against them

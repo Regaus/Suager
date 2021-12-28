@@ -111,10 +111,10 @@ template_suager = {
         "roles": 0  # Log when the user gets or loses a new role - Try to fetch data from audit logs, just show who got what role if audit logs are not available
     },
     "mod_dms": {  # DM the user affected when they're warned, muted, kicked or bans
-        "warnings": False,
-        "mutes": False,
-        "kicks": False,
-        "bans": False
+        "warn": False,
+        "mute": False,
+        "kick": False,
+        "ban": False
     },
     "user_logs": {
         "join": 0,   # Channel ID where users who join are logged (Username, ID, created at, joined at)
