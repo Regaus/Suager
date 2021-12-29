@@ -208,7 +208,7 @@ class Polls(commands.Cog):
 
     @commands.group(name="trial", aliases=["trials"], case_insensitive=True, invoke_without_command=True)
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
+    @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def trial(self, ctx: commands.Context, duration: str, action: str, user: MemberID, *, reason: str = ""):
         """ Start a new trial to take action against a user or interact with existing ones
@@ -535,7 +535,7 @@ class Polls(commands.Cog):
 
     @commands.command(name="voteban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
+    @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     async def vote_ban(self, ctx: commands.Context, user: MemberID, *, reason: str = ""):
         """ Deprecated command, use //trials """
         _reason = f" {reason}" if reason else ""
@@ -546,7 +546,7 @@ class Polls(commands.Cog):
 
     @commands.command(name="downvoteban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id in [869975256566210641, 738425418637639775])
+    @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     async def downvote_ban(self, ctx: commands.Context, user: MemberID):
         """ Deprecated command, use //trials """
         return await general.send(f"This command is no longer used.\n"

@@ -70,7 +70,7 @@ class ReactionRoles(commands.Cog):
     @commands.group(name="reactiongroup", aliases=["rrg", "rg"])
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
-    @commands.check(lambda ctx: ctx.bot.name == "kyomi" or ctx.guild.id in reaction_guilds)
+    @commands.check(lambda ctx: ctx.bot.name == "kyomi" or (ctx.guild is not None and ctx.guild.id in reaction_guilds))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def reaction_group(self, ctx: commands.Context):
         """ Control reaction groups """
@@ -119,7 +119,7 @@ class ReactionRoles(commands.Cog):
     @commands.group(name="reactionroles", aliases=["reactionrole", "rr"])
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
-    @commands.check(lambda ctx: ctx.bot.name == "kyomi" or ctx.guild.id in reaction_guilds)
+    @commands.check(lambda ctx: ctx.bot.name == "kyomi" or (ctx.guild is not None and ctx.guild.id in reaction_guilds))
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def reaction_roles(self, ctx: commands.Context):
         """ Control reaction roles """

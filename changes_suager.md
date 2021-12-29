@@ -1074,3 +1074,6 @@
 
 ## v7.4.14.2 - 29 December 2021
 - Removed "by x" part from the mod DMs
+
+## v7.4.14.3 - 29 December 2021
+- Fixed help command breaking in DMs
