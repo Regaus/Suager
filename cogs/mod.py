@@ -74,17 +74,17 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         return  # If the settings can't be read, assume it's disabled
     if not enabled:
         return  # DMs for this action are disabled
-    if not hasattr(ctx, "author"):
-        author = bot.user
-    else:
-        author = ctx.author
+    # if not hasattr(ctx, "author"):
+    #     author = bot.user
+    # else:
+    #     author = ctx.author
     language = bot.language(ctx)
     if action == "mute" and duration is not None:
         # The duration is already converted into str by the mute command
-        text = language.string("mod_dms_mute_temp", user=author, server=ctx.guild, reason=reason, duration=duration)
+        text = language.string("mod_dms_mute_temp", server=ctx.guild, reason=reason, duration=duration)
     else:
         string = f"mod_dms_{action}"
-        text = language.string(string, user=author, server=ctx.guild, reason=reason)
+        text = language.string(string, server=ctx.guild, reason=reason)
     try:
         return await user.send(text)
     except Exception as e:

@@ -1,10 +1,10 @@
 {
   "suager": {
     "short_version": "7.4",
-    "version": "7.4.14.1",
+    "version": "7.4.14.2",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1640735724
+    "last_update": 1640736184
   },
   "cobble": {
     "short_version": "1.4",
@@ -15,10 +15,10 @@
   },
   "kyomi": {
     "short_version": "0.4",
-    "version": "0.4.2",
+    "version": "0.4.2.1",
     "first_version": 1623891776,
     "major_release": 1623891776,
-    "last_update": 1640735718
+    "last_update": 1640736197
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

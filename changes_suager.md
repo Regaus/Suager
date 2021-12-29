@@ -1071,3 +1071,6 @@
 
 ## v7.4.14.1 - 28 December 2021
 - Improved the Message Edited embed on message logs
+
+## v7.4.14.2 - 29 December 2021
+- Removed "by x" part from the mod DMs
