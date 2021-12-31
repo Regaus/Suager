@@ -940,3 +940,22 @@ async def trials(bot: bot_data.Bot):
             bot.db.execute("DELETE FROM trials WHERE trial_id=?", (trial_id,))
 
         await asyncio.sleep(1)
+
+
+async def new_year(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+
+    print(f"{time.time()} > {bot.full_name} > Initialised 2022 New Year Script")
+    ny = time.dt(2022)
+    now = time.now()
+    if now > ny:
+        print(f"{time.time()} > {bot.full_name} > New Year script > It is already 2022...")
+        return
+
+    channel = bot.get_channel(572857995852251169)  # 742885168997466196 Secretive-commands | Announcements channel: 572857995852251169
+    delay = ny - now
+    print(f"{time.time()} > {bot.full_name} > New Year script > Waiting {delay} until midnight...")
+    await asyncio.sleep(delay.total_seconds())
+    await general.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...", channel)
+    print(f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
+    return

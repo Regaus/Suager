@@ -1077,3 +1077,6 @@
 
 ## v7.4.14.3 - 29 December 2021
 - Fixed help command breaking in DMs
+
+## v7.4.14.4 - 31 December 2021
+- Added a New Year script for 2022
