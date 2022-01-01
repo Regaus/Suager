@@ -1080,3 +1080,6 @@
 
 ## v7.4.14.4 - 31 December 2021
 - Added a New Year script for 2022
+
+## v7.4.14.5 - 1 January 2022
+- Fixed colour command

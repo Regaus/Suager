@@ -9,7 +9,7 @@ import pytz
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from utils import arg_parser, bases, bot_data, emotes, general, http, permissions, time, times
+from utils import arg_parser, bases, bot_data, emotes, general, http, permissions, time
 
 
 def custom_role_enabled(ctx):
@@ -267,7 +267,7 @@ class Utility(commands.Cog):
                 return await general.send(language.string("images_colour_invalid", type(e).__name__, str(e)), ctx.channel)
         hex_6 = _colour[:6]
         int_6 = int(_colour[:6], 16)
-        embed = discord.Embed(colour=int_6, base=16)
+        embed = discord.Embed(colour=int_6)
         rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16))
         rgba_1 = tuple(f"{value / 255:.4f}" for value in rgba_255)
         brightness = sum(rgba_255) // 3
