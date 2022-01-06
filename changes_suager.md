@@ -1083,3 +1083,7 @@
 
 ## v7.4.14.5 - 1 January 2022
 - Fixed colour command
+
+## v7.4.14.6 - 6 January 2022
+- This should hopefully stop the error logs being spammed because they managed to delete the on trial role
+- Also tries making trials not send duplicate DMs on success

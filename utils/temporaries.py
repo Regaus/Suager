@@ -770,8 +770,9 @@ async def trials(bot: bot_data.Bot):
                     channel: discord.TextChannel = guild.get_channel(trial["channel_id"])
                     output = "Error: Trial result next not defined"
                     if success:
-                        reason_dm = f"Reason: {action.capitalize()} trial ({trial_id}) has succeeded - Score: {score:+}, {upvotes:.2%} voted yes"
+                        # reason_dm = f"Reason: {action.capitalize()} trial ({trial_id}) has succeeded - Score: {score:+}, {upvotes:.2%} voted yes"
                         trial_success_text = general.reason(guild.me, f"{action.capitalize()} trial {trial_id} has succeeded (Score: {score:+} - {upvotes:.2%} voted yes)")
+                        duration_text = None
                         if action in ["mute", "unmute"]:
                             if member:
                                 _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
@@ -814,16 +815,21 @@ async def trials(bot: bot_data.Bot):
                                                         output = language.string("trials_success_mute", trial_id, user)
                                                         await general.send(output, channel)
                                                 if guild.id == 869975256566210641:  # Nuriki's anarchy server
-                                                    await member.remove_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Remove the Anarchists role
                                                     try:
-                                                        if duration:
-                                                            _duration2 = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
-                                                            _output = f"You've been muted in {guild.name} for {_duration2}.\n{reason_dm}"
-                                                        else:
-                                                            _output = f"You've been muted in {guild.name}.\n{reason_dm}"
-                                                        await user.send(_output)
-                                                    except discord.Forbidden:
-                                                        pass
+                                                        await member.remove_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Remove the Anarchists role
+                                                    except AttributeError:
+                                                        general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
+                                                if duration:
+                                                    duration_text = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
+                                                    # try:
+                                                    #     if duration:
+                                                    #         _duration2 = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
+                                                    #         _output = f"You've been muted in {guild.name} for {_duration2}.\n{reason_dm}"
+                                                    #     else:
+                                                    #         _output = f"You've been muted in {guild.name}.\n{reason_dm}"
+                                                    #     await user.send(_output)
+                                                    # except discord.Forbidden:
+                                                    #     pass
                                             else:
                                                 await member.remove_roles(mute_role, reason=trial_success_text)
                                                 temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
@@ -831,11 +837,14 @@ async def trials(bot: bot_data.Bot):
                                                 if temp_mute_entry:
                                                     bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
                                                 if guild.id == 869975256566210641:  # Nuriki's anarchy server
-                                                    await member.add_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Give back the Anarchists role
                                                     try:
-                                                        await user.send(f"You've been unmuted in {guild.name}.\n{reason_dm}")
-                                                    except discord.Forbidden:
-                                                        pass
+                                                        await member.add_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Give back the Anarchists role
+                                                    except AttributeError:
+                                                        general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
+                                                    # try:
+                                                    #     await user.send(f"You've been unmuted in {guild.name}.\n{reason_dm}")
+                                                    # except discord.Forbidden:
+                                                    #     pass
                                                 if channel:
                                                     output = language.string("trials_success_unmute", trial_id, user)
                                                     await general.send(output, channel)
@@ -846,10 +855,10 @@ async def trials(bot: bot_data.Bot):
                                     await general.send(language.string(string, trial_id), channel)
                         elif action == "kick":
                             if member:
-                                try:
-                                    await user.send(f"You have been kicked from {guild.name}.\n{reason_dm}")
-                                except (discord.HTTPException, discord.Forbidden):
-                                    pass
+                                # try:
+                                #     await user.send(f"You have been kicked from {guild.name}.\n{reason_dm}")
+                                # except (discord.HTTPException, discord.Forbidden):
+                                #     pass
                                 await member.kick(reason=trial_success_text)
                                 if channel:
                                     output = language.string("trials_success_kick", trial_id, user)
@@ -860,30 +869,33 @@ async def trials(bot: bot_data.Bot):
                                     await general.send(language.string("trials_error_member_none_kick", trial_id), channel)
                         elif action == "ban":
                             # I don't have to check if the user exists here, because otherwise it would raise a discord.NotFound while fetching
-                            try:
-                                await user.send(f"You have been banned from {guild.name}.\n{reason_dm}")
-                            except (discord.HTTPException, discord.Forbidden):
-                                pass
+                            # try:
+                            #     await user.send(f"You have been banned from {guild.name}.\n{reason_dm}")
+                            # except (discord.HTTPException, discord.Forbidden):
+                            #     pass
                             await guild.ban(user, reason=trial_success_text, delete_message_days=0)
                             if channel:
                                 output = language.string("trials_success_ban", trial_id, user)
                                 await general.send(output, channel)
                         elif action == "unban":
-                            try:
-                                await user.send(f"You have been unbanned from {guild.name}.\n{reason_dm}")
-                            except (discord.HTTPException, discord.Forbidden):
-                                pass
+                            # try:
+                            #     await user.send(f"You have been unbanned from {guild.name}.\n{reason_dm}")
+                            # except (discord.HTTPException, discord.Forbidden):
+                            #     pass
                             await guild.unban(user, reason=trial_success_text)
                             if channel:
                                 output = language.string("trials_success_unban", trial_id, user)
                                 await general.send(output, channel)
                         else:
                             general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong.")
-                        await send_mod_dm(bot, languages.FakeContext(guild, bot), member, action, "Trial results", None)
+                        await send_mod_dm(bot, languages.FakeContext(guild, bot), member, action, f"Trial results (Score: {score:+}, {upvotes:.2%} voted yes)", duration_text)
                     else:  # The trial has failed, so restore the member's anarchist roles
                         if guild.id == 869975256566210641 and member:  # Nuriki's anarchy server
-                            await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
-                            await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
+                            try:
+                                await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
+                                await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
+                            except AttributeError:
+                                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
                         if channel:
                             fail_text = {
                                 "ban": "trials_failure_ban",
