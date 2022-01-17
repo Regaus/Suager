@@ -16,7 +16,7 @@ class Events(commands.Cog):
         self.db = self.bot.db
         self.local_config = self.bot.local_config
         self.blocked = [667187968145883146, 852695205073125376]
-        self.bad = ["re", "rag", "302851022790066185"]
+        self.bad = ["reg", "rea", "rag", "302851022790066185"]
         self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
         self.blocked_logs = 739183533792297164
         # Ignored channels for Senko Lair and RK message logs
@@ -250,7 +250,10 @@ class Events(commands.Cog):
                             .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
                             .replace("[LENGTH_OF_STAY]", language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
-                        await general.send(message, channel, u=[member])
+                        try:
+                            await general.send(message, channel, u=[member])
+                        except discord.Forbidden:
+                            general.print_error(f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send message for {member} - Forbidden")
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):

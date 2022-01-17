@@ -52,10 +52,14 @@ class BotInformation(commands.Cog):
         version = f"{_version.major}.{_version.minor}.{_version.micro}"
         _discord = discord.version_info
         dis_version = f"{_discord.major}.{_discord.minor}.{_discord.micro}"
+        if _discord.releaselevel != "final":
+            dis_version += _discord.releaselevel[0]
         libs_used = f"**Python v{version}**\n**Discord.py v{dis_version}**"
         if self.bot.name == "cobble":
             _regaus = regaus_version_info
             reg_version = f"{_regaus.major}.{_regaus.minor}.{_regaus.micro}"
+            if _regaus.releaselevel != "final":
+                reg_version += _regaus.releaselevel[0] + str(_regaus.serial)
             libs_used += f"\n**Regaus.py v{reg_version}**"
         embed.add_field(name=language.string("info_stats_used"), inline=True, value=libs_used)
         mv = version_data["version"].split(".")[0]

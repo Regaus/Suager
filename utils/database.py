@@ -43,15 +43,16 @@ class Database:
 
 
 class Column:
-    def __init__(self, name: str, column_type: int, not_null: bool):
+    def __init__(self, name: str, column_type: int, not_null: bool, pk: bool = False):
         self.name = name
         self.type = column_type
         self.not_null = not_null
         self.nn = " NOT NULL" if self.not_null else ""
+        self.pk = " PRIMARY KEY AUTOINCREMENT" if pk else ""
         self.ct = types[self.type]
 
     def __str__(self):
-        return f'\t"{self.name}" {self.ct} {self.nn}'
+        return f'\t"{self.name}" {self.ct}{self.nn}{self.pk}'
 
 
 class Table:
@@ -148,6 +149,18 @@ tables = [
         Column("expiry", 4, True),          # When the poll ends
         Column("anonymous", 3, True),       # Whether the poll is anonymous or not
     ]),
+    Table("punishments", [
+        Column("id", 0, True, True),  # Case ID
+        Column("uid", 0, True),       # User ID, the punished
+        Column("gid", 0, True),       # Guild ID
+        Column("action", 2, True),    # Action taken (warn, mute, unmute, kick, ban, unban)
+        Column("author", 0, True),    # User ID who applied the punishment
+        Column("reason", 2, False),   # Why the punishment was applied
+        Column("temp", 3, True),      # Whether the action is temporary (warns and mutes)
+        Column("expiry", 4, False),   # When the punishment expires
+        Column("handled", 0, True),   # Handled value (0 = Unhandled, 1 = Expired, 2 = Error, 3 = User left, 4 = Pardoned/Manually unmuted)
+        Column("bot", 2, True)        # Bot used for punishment
+    ]),
     Table("reaction_groups", [
         Column("gid", 0, True),      # Guild ID
         Column("message", 0, True),  # Message ID
@@ -158,9 +171,17 @@ tables = [
         Column("reaction", 2, True),  # Reaction Emoji
         Column("role", 0, True)       # Role ID
     ]),
-    Table("reaction_tracking", [      # Track if someone already has a role within Type 2 and 4 groups
+    Table("reaction_tracking", [      # Track if someone already has a role (dType 2 and 4 reaction groups)
         Column("message", 0, True),   # Message ID (Group)
         Column("uid", 0, True),       # User ID
+    ]),
+    Table("reminders", [
+        Column("id", 0, True, True),  # Reminder ID
+        Column("uid", 0, True),       # User ID
+        Column("expiry", 4, True),    # Expiry (as datetime string)
+        Column("message", 2, True),   # Reminder message
+        Column("handled", 0, True),   # Handled value (0 = Unhandled, 1 = Expired, 2 = Error)
+        Column("bot", 2, True)        # Bot used for reminder
     ]),
     Table("settings", [
         Column("gid", 0, True),

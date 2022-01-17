@@ -51,7 +51,7 @@ class Settings(commands.Cog):
     @commands.group(name="settings", aliases=["set"], case_insensitive=True)
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def settings(self, ctx: commands.Context):
         """ Server settings """
         if ctx.invoked_subcommand is None:
@@ -166,8 +166,20 @@ class Settings(commands.Cog):
                 if "mod_dms" in setting:
                     mod_dms = setting["mod_dms"]
                     warn, mute, kick, ban = mod_dms["warn"], mod_dms["mute"], mod_dms["kick"], mod_dms["ban"]
-                    mod_dms_text = language.string("settings_current_mod_dms2", language.yes(warn), language.yes(mute), language.yes(kick), language.yes(ban))
+                    mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
                 embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
+
+                mod_logs_text = language.string("settings_current_mod_logs_disabled", ctx.prefix)
+                if "mod_logs" in setting:
+                    def channel(cid: int):
+                        if cid == 0:
+                            return language.string("settings_current_disabled")
+                        return f"<#{cid}>"
+
+                    mod_logs = setting["mod_logs"]
+                    warn, mute, kick, ban, roles = mod_logs["warn"], mod_logs["mute"], mod_logs["kick"], mod_logs["ban"], mod_logs["roles"]
+                    mod_logs_text = language.string("settings_current_mod_logs2", warn=channel(warn), mute=channel(mute), kick=channel(kick), ban=channel(ban), roles=channel(roles))
+                embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
 
                 return await general.send(None, ctx.channel, embed=embed)
             # return await ctx.send_help(str(ctx.command))
@@ -1590,7 +1602,41 @@ class Settings(commands.Cog):
             else:
                 self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
             text = "enabled" if enable else "disabled"
-            return await general.send(self.bot.language(ctx).string(f"settings_mod_dms_{punishment}_{text}"), ctx.channel)
+            return await general.send(language.string(f"settings_mod_dms_{punishment}_{text}"), ctx.channel)
+
+    @settings.group(name="modlogs", aliases=["ml"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    async def set_mod_logs(self, ctx: commands.Context, punishment: str, channel: discord.TextChannel = None):
+        """ Log all moderation actions taken with this bot
+        Punishment values: warn, mute, kick, ban, roles
+        ("Roles" means logging when a user gains or loses a role)
+
+        To disable, don't specify the channel (Mod logs are disabled by default anyway)
+        To enable, specify a channel where all actions of the given type will be logged.
+        """
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "mod_logs" not in _settings:
+            _settings["mod_logs"] = self.template["mod_logs"].copy()
+        punishment = punishment.lower()
+        if punishment not in ["warn", "mute", "kick", "ban", "roles"]:
+            return await general.send(language.string("settings_mod_logs_invalid", punishment), ctx.channel)
+        if channel is None:
+            _settings["mod_logs"][punishment] = 0
+            text = language.string(f"settings_mod_logs_disable_{punishment}")
+        else:
+            _settings["mod_logs"][punishment] = channel.id
+            text = language.string(f"settings_mod_logs_enable_{punishment}", channel=channel.mention)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await general.send(text, ctx.channel)
 
     @commands.command(name="prefixes", aliases=["prefix"])
     @commands.guild_only()

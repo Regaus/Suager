@@ -282,9 +282,11 @@ class Leveling(commands.Cog):
                                 await ctx.author.remove_roles(role, reason=reason)
             except KeyError:
                 pass  # If no level rewards, don't even bother
+            except AttributeError:  # This means a role was deleted...
+                # FIXME: Try to ignore deleted roles instead of skipping the entire role rewards script
+                pass
             except discord.Forbidden:
-                await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.",
-                                   ctx.channel)
+                await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.", ctx.channel)
             except Exception as e:
                 general.print_error(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
             if lu or ld:

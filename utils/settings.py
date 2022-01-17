@@ -35,17 +35,22 @@ template_mizuki = {
         "message": "[USER] has left [SERVER]..."
     },
     "mod_logs": {  # Note: These will only work if the user is warned/muted/kicked/banned using the bot.
-        "warnings": 0,
-        "mutes": 0,
-        "kicks": 0,
-        "bans": 0,
+        "warn": 0,
+        "mute": 0,
+        "kick": 0,
+        "ban": 0,
         "roles": 0  # Log when the user gets or loses a new role - Try to fetch data from audit logs, just show who got what role if audit logs are not available
     },
     "mod_dms": {  # DM the user affected when they're warned, muted, kicked or bans
-        "warnings": False,
-        "mutes": False,
-        "kicks": False,
-        "bans": False
+        "warn": False,
+        "mute": False,
+        "kick": False,
+        "ban": False
+    },
+    "warnings": {
+        "required_to_mute": 3,  # 3rd warning -> mute
+        "mute_length": "12h",  # Default starting mute length: 12 hours
+        "scaling": 1  # Scaling to apply for mute length (at 2x scaling, 4th warning -> 24h mute, 5th -> 2d, etc.)
     },
     "user_logs": {
         "join": 0,   # Channel ID where users who join are logged (Username, ID, created at, joined at)
@@ -104,10 +109,10 @@ template_suager = {
         "message": "[USER] has left [SERVER]..."
     },
     "mod_logs": {  # Note: These will only work if the user is warned/muted/kicked/banned using the bot.
-        "warnings": 0,
-        "mutes": 0,
-        "kicks": 0,
-        "bans": 0,
+        "warn": 0,
+        "mute": 0,
+        "kick": 0,
+        "ban": 0,
         "roles": 0  # Log when the user gets or loses a new role - Try to fetch data from audit logs, just show who got what role if audit logs are not available
     },
     "mod_dms": {  # DM the user affected when they're warned, muted, kicked or bans
@@ -115,6 +120,11 @@ template_suager = {
         "mute": False,
         "kick": False,
         "ban": False
+    },
+    "warnings": {
+        "required_to_mute": 3,  # 3rd warning -> mute
+        "mute_length": "12h",  # Default starting mute length: 12 hours
+        "scaling": 1  # Scaling to apply for mute length (at 2x scaling, 4th warning -> 24h mute, 5th -> 2d, etc.)
     },
     "user_logs": {
         "join": 0,   # Channel ID where users who join are logged (Username, ID, created at, joined at)

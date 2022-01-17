@@ -1087,3 +1087,9 @@
 ## v7.4.14.6 - 6 January 2022
 - This should hopefully stop the error logs being spammed because they managed to delete the on trial role
 - Also tries making trials not send duplicate DMs on success
+
+## v7.4.15a1 - 16 January 2022
+- `Forbidden` error when a member leaves should now be quietly ignored
+- If a level reward role is deleted, the rewards get skipped instead of breaking the entire script
+- Added settings for mod logs (not yet working)
+- Added new tables for punishments and reminders (not yet used)
