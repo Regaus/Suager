@@ -6,152 +6,144 @@ from datetime import date, timedelta
 import aiohttp
 import discord
 
-from cogs.mod import send_mod_dm
+from cogs.mod import send_mod_dm, send_mod_log
 from utils import bot_data, general, http, languages, lists, logger, places, time
 
 
-async def temporaries(bot: bot_data.Bot):
-    """ Handle reminders and mutes """
-    await bot.wait_until_ready()
-    print(f"{time.time()} > {bot.full_name} > Initialised Temporaries")
-    while True:
-        expired = bot.db.fetch("SELECT * FROM temporary WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
-        bot.db.execute("DELETE FROM temporary WHERE handled=1", ())
-        if expired:
-            # print(expired)
-            for entry in expired:
-                entry_id = entry["entry_id"]
-                handled = 2
-                if entry["type"] == "reminder":
-                    user: discord.User = bot.get_user(entry["uid"])
-                    expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=False)
-                    try:
-                        if user is not None:
-                            await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")  # (for {expiry})
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Successfully sent the user {user} ({user.id}) the reminder for {expiry} ({entry_id})")
-                            handled = 1
-                        else:
-                            general.print_error(f"{time.time()} > Reminder ID {entry_id} - User ID {user} not found!")
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Reminder ID {entry_id} - User not found!")
-                    except Exception as e:
-                        general.print_error(f"{time.time()} > Reminder ID {entry_id} - Error: {e}")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Reminder ID {entry_id} - Error: {e}")
-                elif entry["type"] == "mute":
-                    guild: discord.Guild = bot.get_guild(entry["gid"])
-                    if guild is None:
-                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found!")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found!")
-                    else:
-                        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
-                        if not _data:
-                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found!")
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found!")
-                        else:
-                            data = json.loads(_data["data"])
-                            try:
-                                mute_role_id = data["mute_role"]
-                            except KeyError:
-                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set!")
-                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set!")
-                                # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
-                            else:
-                                mute_role = guild.get_role(mute_role_id)
-                                if not mute_role:
-                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found!")
-                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found!")
-                                    # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
-                                else:
-                                    member: discord.Member = guild.get_member(entry["uid"])
-                                    if not member:
-                                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found!")
-                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found!")
-                                    else:
-                                        try:
-                                            await member.remove_roles(mute_role, reason=f"[Auto-Unmute] Punishment expired")
-                                            if guild.id == 869975256566210641:  # Nuriki's anarchy server
-                                                await member.add_roles(guild.get_role(869975498799845406), reason="Punishment expired")  # Give back the Anarchists role
-                                                # try:
-                                                #     await member.send(f"You have been unmuted in {guild.name}: Your mute has expired.")
-                                                # except discord.Forbidden:
-                                                #     pass
-                                            await send_mod_dm(bot, languages.FakeContext(guild, bot), member, "unmute", "Your punishment has expired", None)
-                                            logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
-                                                                                f"guild {guild} ({entry_id})")
-                                            handled = 1
-                                        except Exception as e:
-                                            general.print_error(f"{time.time()} > Mute ID {entry_id} - Error: {e}")
-                                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute ID {entry_id} - Error: {e}")
-                                            # return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
-                bot.db.execute("UPDATE temporary SET handled=? WHERE entry_id=?", (handled, entry_id,))
+async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
+    entry_id = entry["id"]
+    handled = 2 if not retry else 1
+    user: discord.User = bot.get_user(entry["uid"])
+    if user is None:
+        message = f"{time.time()} > {bot.full_name} > Reminders > Reminder ID {entry_id} - User ID {user} not found!"
+        general.print_error(message)
+        logger.log(bot.name, "reminders", message)
+    else:
+        try:
+            await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")
+            expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=False)
+            logger.log(bot.name, "reminders", f"{time.time()} > {bot.full_name} > Reminders > Successfully sent {user} ({user.id}) the reminder for {expiry} ({entry_id})")
+            handled = 1
+        except Exception as e:
+            message = f"{time.time()} > {bot.full_name} > Reminders > Reminder ID {entry_id} - Error: {type(e).__name__}: {e}"
+            general.print_error(message)
+            logger.log(bot.name, "reminders", message)
+    bot.db.execute("UPDATE reminders SET handled=? WHERE id=?", (handled, entry_id))
 
+
+async def reminders(bot: bot_data.Bot):
+    """ Handle reminders """
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Handler")
+    while True:
+        expired = bot.db.fetch("SELECT * FROM reminders WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
+        bot.db.execute("DELETE FROM reminders WHERE handled=1", ())  # We don't need to keep reminders after they expire and are dealt with
+        if expired:
+            for entry in expired:
+                await handle_reminder(bot, entry, False)
         await asyncio.sleep(1)
 
 
-async def try_error_temps(bot: bot_data.Bot):
-    """ Try to handle temporaries that had an error, else delete them """
-    errors = bot.db.fetch("SELECT * FROM temporary WHERE handled=2 AND bot=?", (bot.name,))
-    if errors:
-        for entry in errors:
-            entry_id = entry["entry_id"]
-            if entry["type"] == "reminder":
-                user: discord.User = bot.get_user(entry["uid"])
-                expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=False)
-                try:
-                    if user is not None:
-                        await user.send(f"There was an error sending this reminder earlier.\n⏰ **Reminder** (for {expiry}):\n\n{entry['message']}")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Successfully sent the user {user} ({user.id}) the "
-                                                            f"reminder for {expiry} ({entry_id}) (previously was an error)")
-                    else:
-                        general.print_error(f"{time.time()} > Reminder ID {entry_id} - User ID {user} not found! Deleting...")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Still could not find user for reminder for {expiry} with Entry ID {entry_id}! "
-                                                            f"Deleting reminder...")
-                except Exception as e:
-                    general.print_error(f"{time.time()} > Reminder ID {entry_id} - Error: {e} | Deleting...")
-                    logger.log(bot.name, "temporaries", f"{time.time()} > Reminder ID {entry_id} - Error: {e} | Deleting reminder...")
-            if entry["type"] == "mute":
-                guild: discord.Guild = bot.get_guild(entry["gid"])
-                if guild is None:
-                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Deleting...")
-                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild not found! Deleting...")
-                else:
-                    _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
-                    if not _data:
-                        general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Deleting...")
-                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild settings not found! Deleting...")
-                    else:
-                        data = json.loads(_data["data"])
-                        try:
-                            mute_role_id = data["mute_role"]
-                        except KeyError:
-                            general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Deleting...")
-                            logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Guild has no mute role set! Deleting...")
-                        else:
-                            mute_role = guild.get_role(mute_role_id)
-                            if not mute_role:
-                                general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Deleting...")
-                                logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Mute role not found! Deleting...")
-                            else:
-                                member: discord.Member = guild.get_member(entry["uid"])
-                                if not member:
-                                    general.print_error(f"{time.time()} > Mute entry ID {entry_id} - Member not found! Deleting...")
-                                    logger.log(bot.name, "temporaries", f"{time.time()} > Mute entry ID {entry_id} - Member not found! Deleting...")
-                                else:
-                                    try:
-                                        await member.remove_roles(mute_role, reason=f"[Auto-Unmute] Punishment expired")
-                                        logger.log(bot.name, "temporaries", f"{time.time()} > Successfully unmuted the user {member} ({member.id}) from "
-                                                                            f"guild {guild} ({entry_id}) (previously was an error)")
-                                    except Exception as e:
-                                        general.print_error(f"{time.time()} > Mute ID {entry_id} - Error: {e}")
-                                        logger.log(bot.name, "temporaries", f"{time.time()} > Mute ID {entry_id} - Error: {e}")
-            bot.db.execute("UPDATE temporary SET handled=1 WHERE entry_id=?", (entry_id,))
+async def reminders_errors(bot: bot_data.Bot):
+    """ Try to send the reminder again... if it doesn't work, ignore it anyways """
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Errors Handler")
+
+    while True:
+        # If it's errored out, it must've expired already...
+        expired = bot.db.fetch("SELECT * FROM reminders WHERE handled=2 AND bot=?", (bot.name,))
+        if expired:
+            for entry in expired:
+                await handle_reminder(bot, entry, True)
+        await asyncio.sleep(3600)
 
 
-# bd_config = {  # Birthday data: {Guild: [BirthdayChannel, BirthdayRole]}
-#     568148147457490954: [568148147457490958, 663661621448802304],  # Senko Lair
-#     706574018928443442: [715620849167761458, 720780796293677109],  # oda-shi
-#     738425418637639775: [738425419325243424, 748647340423905420],  # Regaus'tar Koankadu
-#     693948857939132478: [716144209567940660, 857074383985311755],  # Midnight Dessert
-# }
+async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False):
+    def save_handle(_handled: int, _entry_id: int):
+        bot.db.execute("UPDATE punishments SET handled=? WHERE id=?", (_handled, _entry_id))
+
+    def send_error(message: str, _entry_id: int):
+        general.print_error(message)
+        logger.log(bot.name, "moderation", message)
+        save_handle(2 if not retry else 1, _entry_id)  # If it errors out the second time, just ignore it as "handled" anyways...
+
+    entry_id = entry["id"]
+    # handled = 2
+    if entry["action"] == "warn":
+        save_handle(1, entry_id)
+        return
+    elif entry["action"] != "mute":
+        # Only warns and mutes can possibly be temporary... If it's something else, something went wrong
+        _message = f"{time.time()} > {bot.full_name} > Punishments > Weird action type {entry['action']} expired..."
+        general.print_error(_message)
+        logger.log(bot.name, "moderation", _message)
+        save_handle(1, entry_id)
+        return
+    guild: discord.Guild = bot.get_guild(entry["gid"])
+    if guild is None:
+        send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - Guild not found!", entry_id)
+        return
+    _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (guild.id, bot.name))
+    if not _data:
+        send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - Settings not found!", entry_id)
+        return
+    data = json.loads(_data["data"])
+    try:
+        mute_role_id = data["mute_role"]
+    except KeyError:
+        send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - No mute role set!", entry_id)
+        return
+    mute_role = guild.get_role(mute_role_id)
+    if not mute_role:
+        send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - Mute role not found!", entry_id)
+        return
+    member: discord.Member = guild.get_member(entry["uid"])
+    if not member:
+        send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - Member not found! Have they left?", entry_id)
+        return
+    try:
+        await member.remove_roles(mute_role, reason="[Auto-Unmute] Punishment expired")
+        if guild.id == 869975256566210641:  # Nuriki's anarchy server
+            try:
+                role = guild.get_role(869975498799845406)
+                if role is not None:
+                    await member.add_roles(role, reason="Punishment expired")  # Give back the Anarchists role
+            except (discord.Forbidden, discord.NotFound):
+                pass
+    except Exception as e:
+        send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - Error: {type(e).__name__}: {e}", entry_id)
+        return
+    logger.log(bot.name, "moderation", f"{time.time()} > {bot.full_name} > Punishments > Successfully unmuted the user {member} ({member.id}) from guild {guild} ({entry_id})")
+    save_handle(1, entry_id)
+    await send_mod_dm(bot, languages.FakeContext(guild, bot), member, "unmute", "[Auto-Unmute] Punishment expired", None, True)
+    await send_mod_log(bot, languages.FakeContext(guild, bot), member, bot.user, entry_id, "unmute", "[Auto-Unmute] Punishment expired", None)
+    # bot.db.execute("UPDATE punishments SET handled=? WHERE id=?", (handled, entry_id))
+
+
+async def punishments(bot: bot_data.Bot):
+    """ Handle temporary mutes and stuff """
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Handler")
+
+    while True:
+        expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
+        if expired:
+            for entry in expired:
+                await handle_punishment(bot, entry, False)
+        await asyncio.sleep(1)
+
+
+async def punishments_errors(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Errors Handler")
+
+    while True:
+        # If it's errored out, it must've expired already...
+        expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND handled=2 AND bot=?", (bot.name,))
+        if expired:
+            for entry in expired:
+                await handle_punishment(bot, entry, True)
+        await asyncio.sleep(3600)
 
 
 async def birthdays(bot: bot_data.Bot):
@@ -161,7 +153,7 @@ async def birthdays(bot: bot_data.Bot):
     now = time.now(None)
     then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > {bot.full_name} > Initialised Birthdays")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
     # birthday_message = "birthdays_message2" if bot.name == "kyomi" else "birthdays_message"
     # _guilds, _channels, _roles = [], [], []
@@ -289,7 +281,7 @@ async def city_data_updater(bot: bot_data.Bot):
     # Start this script ahead of the updates to make sure the city time updater and the playing status get accurate data
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 1, None)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
 
     while True:
         for city in ka_cities.keys():
@@ -334,7 +326,7 @@ async def city_time_updater(bot: bot_data.Bot):
     now = time.now(None)
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
 
     while True:
         data = []
@@ -373,7 +365,7 @@ async def playing(bot: bot_data.Bot):
     now = time.now(None)
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > {bot.full_name} > Initialised Playing updater")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     while True:
         try:
@@ -616,7 +608,7 @@ async def avatars(bot: bot_data.Bot):
     now = time.now(None)
     then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)
     await asyncio.sleep((then - now).total_seconds())
-    print(f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
     while True:
         try:
@@ -647,7 +639,7 @@ async def avatars(bot: bot_data.Bot):
 async def polls(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
-    print(f"{time.time()} > {bot.full_name} > Initialised Polls")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Polls")
     while True:
         expired = bot.db.fetch("SELECT * FROM polls WHERE DATETIME(expiry) < DATETIME('now')", ())
         for poll in expired:
@@ -737,7 +729,7 @@ async def polls(bot: bot_data.Bot):
 async def trials(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
-    print(f"{time.time()} > {bot.full_name} > Initialised Trials")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Trials")
     while True:
         expired = bot.db.fetch("SELECT * FROM trials WHERE DATETIME(expiry) < DATETIME('now')", ())
         for trial in expired:
@@ -957,17 +949,17 @@ async def trials(bot: bot_data.Bot):
 async def new_year(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
-    print(f"{time.time()} > {bot.full_name} > Initialised 2022 New Year Script")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised 2022 New Year Script")
     ny = time.dt(2022)
     now = time.now()
     if now > ny:
-        print(f"{time.time()} > {bot.full_name} > New Year script > It is already 2022...")
+        logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > It is already 2022...")
         return
 
     channel = bot.get_channel(572857995852251169)  # 742885168997466196 Secretive-commands | Announcements channel: 572857995852251169
     delay = ny - now
-    print(f"{time.time()} > {bot.full_name} > New Year script > Waiting {delay} until midnight...")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Waiting {delay} until midnight...")
     await asyncio.sleep(delay.total_seconds())
     await general.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...", channel)
-    print(f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
     return

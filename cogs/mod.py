@@ -7,7 +7,7 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 
-from utils import bot_data, general, permissions, time
+from utils import bot_data, general, logger, permissions, time
 from utils.languages import FakeContext
 
 
@@ -54,14 +54,14 @@ class MemberID(commands.Converter):
             return m.id
 
 
-async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, action: str, reason: str, duration: str = None):
+async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member,
+                      action: str, reason: str, duration: str = None, auto: bool = False, original_warning: str = None):
     """ Try to send the user a DM that they've been warned/muted/kicked/banned """
     try:
         _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         data = json.loads(_data["data"])
         mod_dms = data["mod_dms"]
-        key = "warn"  # Default
-        if action == "warn":
+        if action == ["warn", "pardon"]:
             key = "warn"
         elif action in ["mute", "unmute"]:
             key = "mute"
@@ -69,6 +69,8 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
             key = "kick"
         elif action in ["ban", "unban"]:
             key = "ban"
+        else:
+            raise ValueError(f"Invalid action {action} specified")
         enabled = mod_dms[key]
     except (IndexError, KeyError):
         return  # If the settings can't be read, assume it's disabled
@@ -79,16 +81,76 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
     # else:
     #     author = ctx.author
     language = bot.language(ctx)
-    if action == "mute" and duration is not None:
+    if action == "pardon":
+        # When a warning is pardoned manually, it will show the original warning as `[ID] Warning text`
+        text = language.string("mod_dms_pardon", server=ctx.guild, reason=reason, original_warning=original_warning)
+    elif action == "mute" and duration is not None:
         # The duration is already converted into str by the mute command
         text = language.string("mod_dms_mute_temp", server=ctx.guild, reason=reason, duration=duration)
+    elif action == "unmute" and auto:
+        text = language.string("mod_dms_unmute_expired", server=ctx.guild)
     else:
         string = f"mod_dms_{action}"
         text = language.string(string, server=ctx.guild, reason=reason)
     try:
         return await user.send(text)
     except Exception as e:
-        general.print_error(f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}")
+        message = f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}"
+        general.print_error(message)
+        logger.log(bot.name, "moderation", message)
+
+
+async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member,
+                       entry_id: int, action: str, reason: str, duration: str = None, original_warning: str = None):
+    """ Try to send a mod log message about the punishment """
+    try:
+        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        data = json.loads(_data["data"])
+        mod_logs = data["mod_logs"]
+        if action in ["warn", "pardon"]:
+            key = "warn"
+        elif action in ["mute", "unmute"]:
+            key = "mute"
+        elif action == "kick":
+            key = "kick"
+        elif action in ["ban", "unban"]:
+            key = "ban"
+        elif action == "roles":
+            raise ValueError("Roles are not handled by this function")
+        else:
+            raise ValueError(f"Invalid action {action} specified")
+        enabled: int = mod_logs[key]
+    except (IndexError, KeyError):
+        return  # If the settings can't be read, assume it's disabled
+    if not enabled:
+        return  # If the value is zero, then it's disabled
+    channel: discord.TextChannel = bot.get_channel(enabled)
+    language = bot.language(ctx)
+    embed = discord.Embed()
+    embed.title = language.string(f"mod_logs_{action}")
+    colours = {
+        "warn": general.yellow,
+        "pardon": general.green,
+        "mute": general.red2,
+        "unmute": general.green,
+        "kick": general.red,
+        "ban": general.red,
+        "unban": general.green2
+    }
+    embed.colour = colours[action]
+    embed.description = language.string("mod_logs_description", punished=user, responsible=author, reason=reason)
+    if duration:
+        embed.description += language.string("mod_logs_description_duration", duration=duration)
+    if action == "pardon":
+        embed.description += language.string("mod_logs_description_pardon", original_warning=original_warning)
+    embed.set_footer(text=language.string("mod_logs_case", id=entry_id))
+    embed.timestamp = time.now()
+    try:
+        return await general.send(None, channel, embed=embed)
+    except Exception as e:
+        message = f"{time.time()} > {bot.full_name} > Mod Logs > Case ID {entry_id} - Failed to send message to log channel - {type(e).__name__}: {e}"
+        general.print_error(message)
+        logger.log(bot.name, "moderation", message)
 
 
 class Moderation(commands.Cog):
@@ -118,6 +180,12 @@ class Moderation(commands.Cog):
             # TODO: Make sure we can kick the user *before* sending the message, so it wouldn't look stupid if this fails...
             await send_mod_dm(self.bot, ctx, member, "kick", reason, None)
             await member.kick(reason=general.reason(ctx.author, reason))
+            reason_log = general.reason(ctx.author, reason)
+            self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member.id, ctx.guild.id, "kick", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+            entry_id = self.bot.db.db.lastrowid
+            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "kick", reason_log, None)
             return await general.send(language.string("mod_kick", user, reason), ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
@@ -141,9 +209,16 @@ class Moderation(commands.Cog):
             return await general.send(language.string("mod_ban_suager", ctx.author.name), ctx.channel)
         try:
             # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
-            user = await self.bot.fetch_user(member)
+            # TODO: Check if the user is already banned from the server
+            user: discord.User = await self.bot.fetch_user(member)
             await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
             await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
+            reason_log = general.reason(ctx.author, reason)
+            self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member, ctx.guild.id, self.bot.name))
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member, ctx.guild.id, "ban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+            entry_id = self.bot.db.db.lastrowid
+            await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "ban", reason_log, None)
             return await general.send(language.string("mod_ban", member, user, reason), ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
@@ -172,8 +247,16 @@ class Moderation(commands.Cog):
         for member in who:
             try:
                 # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
-                await send_mod_dm(self.bot, ctx, self.bot.get_user(member), "ban", reason, None)
-                await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
+                # TODO: Check if the user is already banned from the server
+                user: discord.User = await self.bot.fetch_user(member)
+                await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
+                await ctx.guild.ban(user, reason=general.reason(ctx.author, reason))
+                reason_log = general.reason(ctx.author, reason)
+                self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member, ctx.guild.id, self.bot.name))
+                self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    (member, ctx.guild.id, "ban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+                entry_id = self.bot.db.db.lastrowid
+                await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "ban", reason_log, None)
                 banned += 1
             except Exception as e:
                 failed += 1
@@ -194,6 +277,11 @@ class Moderation(commands.Cog):
             await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
             user = await self.bot.fetch_user(member)
             await send_mod_dm(self.bot, ctx, user, "unban", reason, None)
+            reason_log = general.reason(ctx.author, reason)
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member, ctx.guild.id, "unban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+            entry_id = self.bot.db.db.lastrowid
+            await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "unban", reason_log, None)
             return await general.send(language.string("mod_unban", member, user, reason), ctx.channel)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
@@ -272,7 +360,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
         out = language.string("mod_mute", member, reason)
-        exists = self.bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'", (member.id, ctx.guild.id, self.bot.name))
+        # exists = self.bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'", (member.id, ctx.guild.id, self.bot.name))
         _duration = reason.split(" ")[0]
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
@@ -280,22 +368,36 @@ class Moderation(commands.Cog):
             await general.send(language.string("mod_mute_limit"), ctx.channel, delete_after=15)
             error = True
         if not error:
-            if exists is not None:
-                self.bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (expiry, exists["entry_id"]))
-            else:
-                random_id = general.random_id()
-                while self.bot.db.fetchrow("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
-                    random_id = general.random_id()
-                self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (member.id, "mute", expiry, ctx.guild.id, None, random_id, 0, self.bot.name))
-            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
+            # if exists is not None:
+            #     self.bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (expiry, exists["entry_id"]))
+            # else:
+            #     random_id = general.random_id()
+            #     while self.bot.db.fetchrow("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
+            #         random_id = general.random_id()
+            #     self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (member.id, "mute", expiry, ctx.guild.id, None, random_id, 0, self.bot.name))
+
+            # Overwrite all older still active mutes as 5 ("Handled Otherwise")
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
+            reason_log = general.reason(ctx.author, reason)
+            self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member.id, ctx.guild.id, "mute", ctx.author.id, reason_log, True, expiry, 0, self.bot.name))
+            entry_id = self.bot.db.db.lastrowid
+            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
             out = language.string("mod_mute_timed", member, duration, reason)
             await send_mod_dm(self.bot, ctx, member, "mute", reason, duration)
+            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "mute", reason_log, duration)
         else:
-            if exists is not None:
-                self.bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (exists['entry_id'],))
+            # if exists is not None:
+            #     self.bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (exists['entry_id'],))
+            reason_log = general.reason(ctx.author, reason)
+            self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member.id, ctx.guild.id, "mute", ctx.author.id, reason_log, False, time.now2(), 0, self.bot.name))
+            entry_id = self.bot.db.db.lastrowid
             await send_mod_dm(self.bot, ctx, member, "mute", reason, None)
+            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "mute", reason_log, None)
         return await general.send(out, ctx.channel)
 
     @commands.command(name="unmute")
@@ -325,12 +427,20 @@ class Moderation(commands.Cog):
         if not mute_role:
             return await general.send(language.string("mod_mute_role"), ctx.channel)
             # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
+        if mute_role not in member.roles:
+            return await general.send(language.string("mod_unmute_already"), ctx.channel)
         try:
             await member.remove_roles(mute_role, reason=_reason)
         except Exception as e:
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
-        self.bot.db.execute("DELETE FROM temporary WHERE uid=? AND type='mute' AND gid=? AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+        # self.bot.db.execute("DELETE FROM temporary WHERE uid=? AND type='mute' AND gid=? AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+        reason_log = general.reason(ctx.author, reason)
+        self.bot.db.execute("UPDATE punishments SET handled=4 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (member.id, ctx.guild.id, "unmute", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
         await send_mod_dm(self.bot, ctx, member, "unmute", reason, None)
+        await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "unmute", reason_log, None)
         return await general.send(language.string("mod_unmute", member, reason), ctx.channel)
         # return await general.send(f"{emotes.Allow} Successfully unmuted **{member}** for **{reason}**", ctx.channel)
 

@@ -153,7 +153,7 @@ tables = [
         Column("id", 0, True, True),  # Case ID
         Column("uid", 0, True),       # User ID, the punished
         Column("gid", 0, True),       # Guild ID
-        Column("action", 2, True),    # Action taken (warn, mute, unmute, kick, ban, unban)
+        Column("action", 2, True),    # Action taken (warn, pardon, mute, unmute, kick, ban, unban)
         Column("author", 0, True),    # User ID who applied the punishment
         Column("reason", 2, False),   # Why the punishment was applied
         Column("temp", 3, True),      # Whether the action is temporary (warns and mutes)
@@ -205,16 +205,6 @@ tables = [
         Column("created", 0, True),
         Column("edited", 0, True),
         Column("usage", 0, True)
-    ]),
-    Table("temporary", [
-        Column("uid", 0, True),       # User ID
-        Column("type", 2, True),      # "mute" or "reminder"
-        Column("expiry", 4, True),    # When the action is due
-        Column("gid", 0, False),      # Guild ID if it's a mute
-        Column("message", 2, False),  # Message if it's a reminder
-        Column("entry_id", 0, True),  # Random ID to later find this entry in the database
-        Column("handled", 0, True),   # Whether the entry has been handled upon expiry
-        Column("bot", 2, True),       # Bot name
     ]),
     Table("timezones", [
         Column("uid", 0, True),

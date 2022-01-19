@@ -1093,3 +1093,11 @@
 - If a level reward role is deleted, the rewards get skipped instead of breaking the entire script
 - Added settings for mod logs (not yet working)
 - Added new tables for punishments and reminders (not yet used)
+
+## v7.4.15 - 19 January 2022
+- Added hidden `suager` command
+- Made temporaries log their initialisation messages instead of printing
+- Reminders are now dealt with separately from temporary punishments
+- Massively improved the way the temporary mutes code looks like
+- Moderation commands should now log their actions to the mod log channels
+- You can no longer unmute a user who is not muted

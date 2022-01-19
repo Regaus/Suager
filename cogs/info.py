@@ -2,10 +2,10 @@ import sys
 from io import BytesIO
 
 import discord
-from regaus import version_info as regaus_version_info
 from discord import Permissions
 from discord.ext import commands
 from discord.utils import oauth_url
+from regaus import version_info as regaus_version_info
 
 from utils import bot_data, general, time
 
@@ -121,6 +121,12 @@ class BotInformation(commands.Cog):
         t3 = int((_time.time() - t2s) * 1000)
         r3 = f"Message Send: {t2:,}ms\nMessage Edit: {t3:,}ms\nWS Latency: {ws:,}ms"
         await msg.edit(content=r3)
+
+    @commands.command(name="suager", hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @commands.check(lambda ctx: ctx.bot.name == "suager")
+    async def suager(self, ctx: commands.Context):
+        return await general.send("<a:SenkoWatch2:801408192785547264>", ctx.channel)
 
 
 def setup(bot: bot_data.Bot):

@@ -93,3 +93,10 @@
 
 ## v0.4.2.1 - 29 December 2021
 - Removed "by x" part from the mod DMs
+
+## v0.5.0 - 19 January 2022
+- Made temporaries log their initialisation messages instead of printing
+- Reminders are now dealt with separately from temporary punishments
+- Massively improved the way the temporary mutes code looks like
+- Moderation commands should now log their actions to the mod log channels
+- You can no longer unmute a user who is not muted

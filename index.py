@@ -72,7 +72,11 @@ for i in range(len(config["bots"])):
         if bot.name == "suager":
             tasks.append(loop.create_task(temporaries.avatars(bot)))
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
-            tasks.append(loop.create_task(temporaries.temporaries(bot)))
+            # tasks.append(loop.create_task(temporaries.temporaries(bot)))
+            tasks.append(loop.create_task(temporaries.reminders(bot)))
+            tasks.append(loop.create_task(temporaries.reminders_errors(bot)))
+            tasks.append(loop.create_task(temporaries.punishments(bot)))
+            tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
             # tasks.append(loop.create_task(temporaries.vote_bans(bot)))
             tasks.append(loop.create_task(temporaries.polls(bot)))
             tasks.append(loop.create_task(temporaries.trials(bot)))
@@ -82,7 +86,11 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.city_time_updater(bot)))
         elif bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
-            tasks.append(loop.create_task(temporaries.temporaries(bot)))
+            # tasks.append(loop.create_task(temporaries.temporaries(bot)))
+            tasks.append(loop.create_task(temporaries.reminders(bot)))
+            tasks.append(loop.create_task(temporaries.reminders_errors(bot)))
+            tasks.append(loop.create_task(temporaries.punishments(bot)))
+            tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
 
 # server_settings = db.fetch("SELECT * FROM settings")
 # for server in server_settings:

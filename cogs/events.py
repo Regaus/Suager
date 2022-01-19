@@ -63,7 +63,7 @@ class Events(commands.Cog):
             error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
             if "2000 or fewer" in str(err) and len(ctx.message.clean_content) > 1900:
                 return await general.send(language.string("events_err_message_too_long"), ctx.channel)
-                # return general.send("You inputted a very long piece of text.. Well, congrats. The command broke.", ctx.channel)
+                # return general.send("You inputted a very long piece of text... Well, congrats. The command broke.", ctx.channel)
             await general.send(language.string("events_err_error", type(err.original).__name__, str(err.original)), ctx.channel)
             # await general.send(f"{emotes.Deny} An error has occurred:\n`{type(err.original).__name__}: {err.original}`", ctx.channel)
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
@@ -258,22 +258,22 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got banned from {guild.name}")
-        message = f"{user} ({user.id}) has been **banned** from {guild.name}"
-        if self.bot.name == "suager":
-            if guild.id == 568148147457490954:
-                await general.send(message, self.bot.get_channel(626028890451869707))
-            if guild.id == 738425418637639775:
-                await general.send(message, self.bot.get_channel(764469594303234078))
+        # message = f"{user} ({user.id}) has been **banned** from {guild.name}"
+        # if self.bot.name == "suager":
+        #     if guild.id == 568148147457490954:
+        #         await general.send(message, self.bot.get_channel(626028890451869707))
+        #     if guild.id == 738425418637639775:
+        #         await general.send(message, self.bot.get_channel(764469594303234078))
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got unbanned from {guild.name}")
-        message = f"{user} ({user.id}) has been **unbanned** from {guild.name}"
-        if self.bot.name == "suager":
-            if guild.id == 568148147457490954:
-                await general.send(message, self.bot.get_channel(626028890451869707))
-            if guild.id == 738425418637639775:
-                await general.send(message, self.bot.get_channel(764469594303234078))
+        # message = f"{user} ({user.id}) has been **unbanned** from {guild.name}"
+        # if self.bot.name == "suager":
+        #     if guild.id == 568148147457490954:
+        #         await general.send(message, self.bot.get_channel(626028890451869707))
+        #     if guild.id == 738425418637639775:
+        #         await general.send(message, self.bot.get_channel(764469594303234078))
 
     @commands.Cog.listener()
     async def on_ready(self):
