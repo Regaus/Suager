@@ -250,7 +250,7 @@ class Moderation(commands.Cog):
                 # TODO: Check if the user is already banned from the server
                 user: discord.User = await self.bot.fetch_user(member)
                 await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
-                await ctx.guild.ban(user, reason=general.reason(ctx.author, reason))
+                await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
                 reason_log = general.reason(ctx.author, reason)
                 self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member, ctx.guild.id, self.bot.name))
                 self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -450,9 +450,12 @@ class Moderation(commands.Cog):
     @permissions.has_permissions(kick_members=True)
     # @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def mute_list(self, ctx: commands.Context):
-        """ See a list of the currently active temporary mutes """
+        """ See a list of the currently active mutes """
         language = self.bot.language(ctx)
-        mutes = self.bot.db.fetch("SELECT * FROM temporary WHERE gid=? AND type='mute' ORDER BY expiry", (ctx.guild.id,))
+        # mutes = self.bot.db.fetch("SELECT * FROM temporary WHERE gid=? AND type='mute' ORDER BY expiry", (ctx.guild.id,))
+
+        # This also has the side effect of showing active permanent mutes first, as their "expiry" value is set to the time the mute was issued, which is in the past.
+        mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE gid=? AND action='mute' AND handled=0 ORDER BY expiry", (ctx.guild.id,))
         if not mutes:
             return await general.send(language.string("mod_mute_list_none", ctx.guild.name), ctx.channel)
         output = language.string("mod_mute_list", ctx.guild.name)
@@ -460,11 +463,14 @@ class Moderation(commands.Cog):
         _mute = 0
         for mute in mutes:
             _mute += 1
+            who = ctx.guild.get_member(mute["uid"])
             expiry = mute["expiry"]
             expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
             expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
-            who = ctx.guild.get_member(mute["uid"])
-            outputs.append(language.string("mod_mute_list_item", language.number(_mute, commas=False), who, expires_on, expires_in))
+            if mute["temp"]:
+                outputs.append(language.string("mod_mute_list_item", i=language.number(_mute, commas=False), who=who, time=expires_on, delta=expires_in))
+            else:
+                outputs.append(language.string("mod_mute_list_item2", i=language.number(_mute, commas=False), who=who, time=expires_on, delta=expires_in))
         output2 = "\n\n".join(outputs)
         if len(output2) > 1900:
             _data = BytesIO(str(output2).encode('utf-8'))

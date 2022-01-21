@@ -1101,3 +1101,9 @@
 - Massively improved the way the temporary mutes code looks like
 - Moderation commands should now log their actions to the mod log channels
 - You can no longer unmute a user who is not muted
+
+## v7.4.16 - 21 January 2022
+- Fix reminders commands still using the old system
+- Fix mute list command still using the old system
+- The mute list command can now also show permanent mutes
+- Removed a few playing statuses

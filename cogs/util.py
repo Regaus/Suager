@@ -724,10 +724,11 @@ class Reminders(Utility, name="Utility"):
             # return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
         diff = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
         when = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
-        random_id = general.random_id()
-        while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
-            random_id = general.random_id()
-        self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False, self.bot.name))
+        # random_id = general.random_id()
+        # while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
+        #     random_id = general.random_id()
+        # self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False, self.bot.name))
+        self.bot.db.execute("INSERT INTO reminders(uid, expiry, message, handled, bot) VALUES (?, ?, ?, ?, ?)", (ctx.author.id, expiry, reminder, 0, self.bot.name))
         return await general.send(language.string("util_reminders_success", ctx.author.name, diff, when), ctx.channel)
         # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
@@ -737,7 +738,8 @@ class Reminders(Utility, name="Utility"):
         """ See a list of your currently active reminders, and modify them """
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
-            reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
+            # reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
+            reminders = self.bot.db.fetch("SELECT * FROM reminders WHERE uid=? AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
             if not reminders:
                 return await general.send(language.string("util_reminders_none", ctx.author.name), ctx.channel)
                 # return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
@@ -750,7 +752,7 @@ class Reminders(Utility, name="Utility"):
                 expiry = reminder["expiry"]
                 expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
                 expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
-                outputs.append(language.string("util_reminders_item", _reminder, reminder["message"], reminder["entry_id"], expires_on, expires_in))
+                outputs.append(language.string("util_reminders_item", _reminder, reminder["message"], reminder["id"], expires_on, expires_in))
                 # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
             output2 = "\n\n".join(outputs)
             try:

@@ -290,8 +290,8 @@ async def city_data_updater(bot: bot_data.Bot):
                 # tebarian = place.time.str(dow=False, era=None, month=False, short=True, seconds=False)
                 # Tricks into changing the month from Genitive to Nominative
                 # english = place.time.str(dow=False, era=None, month=False, short=False, seconds=False).replace("n ", "r ")
-                tebarian = place.time.strftime("%d %b %Y, %H:%M", "tebarian")
-                english = place.time.strftime("%d %B %Y, %H:%M", "english")
+                tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
+                english = place.time.strftime("%d %B %Y, %H:%M", "en")
                 temperature, _, _, rain_out = place.weather()
                 if temperature is not None and rain_out is not None:
                     temp = f"{temperature:.0f}°C"
@@ -531,7 +531,7 @@ async def playing(bot: bot_data.Bot):
                     activities = [
                         {"type": 0, "name": fv},
                         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                        {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+                        # {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                         {"type": 2, "name": "music"},
                         {"type": 5, "name": "a competition"},
@@ -565,8 +565,8 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 3, "name": "something"},
                         # {"type": 3, "name": "nothing"},
                         # {"type": 0, "name": "something"},
-                        {"type": 0, "name": "sentience"},
-                        {"type": 0, "name": "RIP discord.py"},
+                        # {"type": 0, "name": "sentience"},
+                        # {"type": 0, "name": "RIP discord.py"},
                     ]
                     _activity = random.choice(activities)
                     if _activity["type"] == 0:  # Game
