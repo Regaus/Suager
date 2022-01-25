@@ -1107,3 +1107,7 @@
 - Fix mute list command still using the old system
 - The mute list command can now also show permanent mutes
 - Removed a few playing statuses
+
+## v7.4.17 - 25 January 2022
+- Language list now shows how much the language translation is complete
+- Moved countries to one big dict

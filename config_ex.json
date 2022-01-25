@@ -11,7 +11,7 @@
       ],
       "timezone": "Europe/Dublin",
       "error_channel": 738442483591151638,
-      "default_locale": "english"
+      "default_locale": "en"
     },
     {
       "name": "CobbleBot",
@@ -24,7 +24,7 @@
       ],
       "timezone": "Europe/Dublin",
       "error_channel": 738442483591151638,
-      "default_locale": "tebarian"
+      "default_locale": "ka_tb"
     },
     {
       "name": "Kyomi",
@@ -37,7 +37,7 @@
       ],
       "timezone": "CST6CDT",
       "error_channel": 738442483591151638,
-      "default_locale": "english"
+      "default_locale": "en"
     }
   ],
   "owner_prefixes": [

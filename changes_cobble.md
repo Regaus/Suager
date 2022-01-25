@@ -397,3 +397,6 @@
 
 ## v1.4.1 - 25 January 2022
 - Made languages use the Language class from Regaus.py
+
+## v1.4.2 - 25 January 2022
+- Language list now shows how much the language translation is complete

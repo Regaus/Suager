@@ -21,13 +21,28 @@ class Settings(commands.Cog):
     async def languages(self, ctx: commands.Context):
         """ List of all supported languages """
         nat, con, rsl = [], [], []
-        for language in list(languages.languages.keys()):
+        _en = languages.Language("en")
+        for language in list(languages.languages.languages.keys()):
             _language = languages.Language(language)
-            out = f"`{language}`: {_language.string('_name')}"
+            if language == "en":
+                completeness = 1
+            else:
+                strings = 0
+                matching = 0
+                for k in languages.languages.languages["en"].keys():
+                    strings += 1
+                    d1, d2 = _en.data(k), _language.data(k)
+                    if d1 == d2:
+                        matching += 1
+                completeness = 1 - (matching / strings)
+
+            out = f"`{language}`: {_language.string('_self')} ({_language.string('_en')} - {completeness:.1%})"
             conlang = _language.data("_conlang")
-            if conlang is None:
+            if not _language.data("_valid"):
+                continue
+            elif conlang == 2:
                 rsl.append(out)
-            elif conlang:
+            elif conlang == 1:
                 con.append(out)
             else:
                 nat.append(out)
@@ -237,7 +252,9 @@ class Settings(commands.Cog):
         """ Change the bot's language in this server """
         old_language = self.bot.language(ctx)
         new_language = new_language.lower()  # Make it case-insensitive just in case
-        if new_language not in languages.languages.keys():
+        if new_language not in languages.languages.languages.keys():
+            return await general.send(old_language.string("settings_locale_invalid", new_language, ctx.prefix), ctx.channel)
+        elif not languages.Language(new_language).data("_valid"):
             return await general.send(old_language.string("settings_locale_invalid", new_language, ctx.prefix), ctx.channel)
         locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if locale:

@@ -519,7 +519,7 @@ class Leveling(commands.Cog):
     async def rank_language(self, ctx: commands.Context, language: str, *, who: discord.Member = None):
         """ Check your or someone's rank - In a different language """
         _language = self.bot.language2(language)
-        if language not in languages.languages.keys():
+        if language not in languages.languages.languages.keys():
             return await general.send(self.bot.language(ctx).string("settings_locale_invalid", language, ctx.prefix), ctx.channel)
         return await self.level(ctx, who, _language)
 

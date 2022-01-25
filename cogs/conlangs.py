@@ -1,6 +1,7 @@
 from discord.ext import commands
+from regaus import languages
 
-from utils import bases, conlangs, general, languages
+from utils import bases, conlangs, general
 
 
 def is_rsl1_eligible(ctx: commands.Context):
