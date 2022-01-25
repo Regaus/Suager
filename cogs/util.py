@@ -106,7 +106,7 @@ class Utility(commands.Cog):
                 self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
             return await general.send(language.string("util_time_tz", _tz), ctx.channel)
             # return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
-        except pytz.exceptions.UnknownTimeZoneError:
+        except pytz.UnknownTimeZoneError:
             file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
             return await general.send(language.string("util_time_tz_error", tz), ctx.channel, file=file)
             # return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
@@ -516,7 +516,7 @@ class Utility(commands.Cog):
         embed.set_thumbnail(url=user.avatar_url_as(size=1024))
         embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
-        embed.add_field(name=language.string("discord_user_id"), value=user.id, inline=True)
+        embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
         embed.add_field(name=language.string("generic_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=False)
         embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False), inline=False)
         if len(user.roles) < 15:

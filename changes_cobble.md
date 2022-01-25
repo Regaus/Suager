@@ -394,3 +394,6 @@
 - ka-time now shows new places sorted by area/continent, and then by timezone
 - The playing status stays as it used to be, simply updated to show the new places instead of old ones
 - Removed references to old games until I actually make them again (if ever...)
+
+## v1.4.1 - 25 January 2022
+- Made languages use the Language class from Regaus.py

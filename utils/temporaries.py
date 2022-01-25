@@ -291,7 +291,6 @@ ka_places = {
         "Bylkangar":          {"en": None, "weight": 3},
         "Sadegar":            {"en": None, "weight": 2},
         "Vadertebaria":       {"en": None, "weight": 2},
-        "Ella na Sevarddain": {"en": None, "weight": 2},
     },
     "Kaltar Azdall": {
         "Kaltarena":        {"en": None, "weight": 2},
@@ -303,10 +302,16 @@ ka_places = {
 if version_info >= VersionInfo(1, 2, 0, "final"):  # These are not yet available, so only add them if it's v1.2.0 and not the pre-release
     ka_places |= {
         "Nehtivia": {
+            "Kamikava":    {"en": None, "weight": 3},
+            "Leogar":      {"en": None, "weight": 3},
             "Menenvallus": {"en": None, "weight": 2},
         },
+        "Tebaria": {
+            "Istagar":  {"en": None, "weight": 2},
+            "Lervagar": {"en": None, "weight": 2},
+        },
         "Kaltar Azdall": {
-            "Küan Köreldaivus": {"en": None, "weight": 2},
+            "Küangar": {"en": None, "weight": 2},
         },
         "Arnattia": {
             "Vainararna": {"en": None, "weight": 2},
@@ -373,8 +378,8 @@ async def ka_data_updater(bot: bot_data.Bot):
                     english = place.time.strftime("%d %B %Y, %H:%M", "en")
                     if place.weather is not None:
                         temp = f"{place.weather['temperature']:.0f}°C"
-                        weather_en = languages.Language("english").weather_data("weather78")[place.weather['rain']]
-                        weather_tb = languages.Language("tebarian").weather_data("weather78")[place.weather['rain']]
+                        weather_en = languages.Language("en").data("weather78")[place.weather['rain']]
+                        weather_tb = languages.Language("ka_tb").data("weather78")[place.weather['rain']]
                         english += f" | {temp} | {weather_en}"
                         tebarian += f" | {temp} | {weather_tb}"
                     # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}

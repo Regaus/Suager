@@ -12,3 +12,4 @@ requests
 psutil
 numpy
 git+https://github.com/Regaus/Regaus.py.git@stable#egg=regaus.py
+jstyleson
