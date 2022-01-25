@@ -1,6 +1,7 @@
 from discord.ext import commands
+from regaus import conworlds
 
-from utils import bot_data, general, times
+from utils import bot_data, general
 
 
 class Kuastall(commands.Cog):
@@ -23,7 +24,8 @@ class Kuastall(commands.Cog):
     @tbl.command(name="time")
     async def tbl_time(self, ctx: commands.Context):
         """ TBL Time """
-        return await general.send("Time in Sentatebaria: " + times.time_kargadia(tz=-8).str(dow=True, era=None, month=False), ctx.channel)
+        return await general.send("Time in Sentatebaria: " + conworlds.Place("Sentatebaria").time.strftime('%A, %d %B %Y, %H:%M:%S', 'en'), ctx.channel)
+        # return await general.send("Time in Sentatebaria: " + times.time_kargadia(tz=-8).str(dow=True, era=None, month=False), ctx.channel)
         # return await general.send(ss23.date_kargadia(tz=2, tzn="TBT"), ctx.channel)
 
 

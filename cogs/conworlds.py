@@ -1,16 +1,18 @@
 import json
+import re
 from datetime import datetime
 from math import ceil
 
 import discord
 from discord.ext import commands
+from regaus import conworlds, PlaceDoesNotExist
 
-from utils import bot_data, conlangs, general, places, time, times
+from utils import bot_data, conlangs, general, time
 
 longest_city = {
-    "Virkada": 20,
-    "Kargadia": 22,
-    "Qevenerus": 22,
+    "Virkada": 15,
+    "Kargadia": 19,
+    "Qevenerus": 19,
 }
 
 
@@ -20,14 +22,12 @@ class Conworlds(commands.Cog):
 
     @commands.command(name="time78", aliases=["t78"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time78(self, ctx: commands.Context, ss: int, pl: int, _date: str = None, _time: str = None):
+    async def time78(self, ctx: commands.Context, place_name: str, _date: str = None, _time: str = None):
         """ Times for GA-78
         Date format: `YYYY-MM-DD`
         Time format: `hh:mm` or `hh:mm:ss` (24-hour)
 
-        Example: ..time78 23 5 2021-07-18 20:00"""
-        if ss < 1 or ss > 100:
-            return await general.send("The SS number must be between 1 and 100.", ctx.channel)
+        Example: ..time78 Reggar 2021-07-18 20:00"""
         if _date is None:
             dt = time.now(None)
         else:
@@ -43,64 +43,35 @@ class Conworlds(commands.Cog):
             except ValueError:
                 return await general.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)", ctx.channel)
         time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
-        output = f"Earth - English: **{time_earth}**"
-        if ss == 23:
-            if pl == 3:
-                if dt < time.dt(2004, 1, 28):
-                    return await general.send("Time on Virkada is not available before 28th January 2021 AD", ctx.channel)
-                output += f"\nVirkada - All: **{times.time_virkada(dt, 0).str()}**"
-            elif pl == 4:
-                if dt < time.dt(60, 12, 6):
-                    return await general.send("Time on Zeivela is not available before 6th December 60 AD", ctx.channel)
-                output += f"\nZeivela - Local: **{times.time_zeivela(dt, 0).str()}**"
-            elif pl == 5:
-                if dt < time.dt(276, 12, 27):
-                    return await general.send("Time on Kargadia is not available before 27th December 276 AD", ctx.channel)
-                time_earth1k = self.bot.language2("kargadian_west").time(dt, short=0, dow=True, seconds=True, tz=False)
-                time_earth1i = self.bot.language2("tebarian").time(dt, short=0, dow=True, seconds=True, tz=False)
-                time_23_5k = times.time_kargadia(dt, 0, "kargadian_west").str()  # 23.5 Kargadia RSL-1k
-                time_23_5i = times.time_kargadia(dt, 0, "tebarian").str()  # 23.5 Kargadia RSL-1i
-                output += f"\nEarth - W. Kargadian: **{time_earth1k}**" \
-                          f"\nEarth - Tebarian: **{time_earth1i}**\n" \
-                          f"\nKargadia - W. Kargadian: **{time_23_5k}**" \
-                          f"\nKargadia - Tebarian: **{time_23_5i}**"
-            elif pl == 6:
-                if dt < time.dt(1686, 11, 22):
-                    return await general.send("Time on Qevenerus is not available before 22nd November 1686 AD", ctx.channel)
-                time_earth1h = self.bot.language2("kargadian_kaltarena").time(dt, short=0, dow=True, seconds=True, tz=False)
-                output += f"\nEarth - Ka. Kargadian: **{time_earth1h}**\n" \
-                          f"\nQevenerus - Ka. Kargadian: **{times.time_qevenerus_ka(dt, 0).str()}**" \
-                          f"\nQevenerus - Usturian: **{times.time_qevenerus_us(dt, 0).str()}**" \
-                          f"\nQevenerus - Ka. Gestedian: **Placeholder**"
-            else:
-                return await general.send(f"No time is available for {ss}.{pl} right now.", ctx.channel)
-        elif ss == 24:
-            if pl == 4:
-                if dt < time.dt(476, 1, 28):
-                    return await general.send("Time on Sinvimania is not available before 28th January 476 AD", ctx.channel)
-                output += f"\nSinvimania - RLC-10: **{times.time_sinvimania(dt, 0).str()}**"
-            elif pl == 5:
-                if dt < time.dt(171, 7, 2):
-                    return await general.send("Time on Hosvalnerus is not available before 2nd July 171 AD", ctx.channel)
-                output += f"\nHosvalnerus - Local: **{times.time_hosvalnerus(dt, 0).str()}**"
-            elif pl == 11:
-                if dt < time.dt(1742, 1, 28):
-                    return await general.send("Time on Kuastall is not available before 28th January 1742 AD", ctx.channel)
-                output += f"\nKuastall - RSL-1e: **{times.time_kuastall_11(dt).str()}**"
-            else:
-                return await general.send(f"No time is available for {ss}.{pl} right now.", ctx.channel)
+        output = f"Time on Earth: **{time_earth}**"
+        _pre = "on"
+        if place_name == "Kargadia":
+            _name = _id = "Kargadia"
+            place_name = "South Pole Kargadia"
+        elif place_name == "Qevenerus":
+            _name = _id = "Qevenerus"
+            place_name = "Kaltarena Qevenerus"
+        elif place_name == "Virkada":
+            _name = _id = "Virkada"
+            place_name = "Virkada Central"
         else:
-            output += f"\nNo times are available for SS-{ss}."
+            _pre = "in"
+            _name = place_name
+            _id = None
+        place = conworlds.Place(place_name)
+        if _id is None:
+            _id = place.id
+        output += f"\nTime {_pre} {_id}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
         return await general.send(output, ctx.channel)
 
-    @commands.command(name="timelocation", aliases=["tl"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def time_location78(self, ctx: commands.Context, *, where: str):
-        try:
-            place = places.Place(where)
-            return await general.send(place.time_info(), ctx.channel)
-        except places.PlaceDoesNotExist:
-            return await general.send(f"Location {where!r} not found.", ctx.channel)
+    # @commands.command(name="timelocation", aliases=["tl"])
+    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    # async def time_location78(self, ctx: commands.Context, *, where: str):
+    #     try:
+    #         place = conworlds.Place(where)
+    #         return await general.send(place.time_info(), ctx.channel)
+    #     except PlaceDoesNotExist:
+    #         return await general.send(f"Location {where!r} not found.", ctx.channel)
 
     @commands.group(name="weather78", aliases=["data78", "w78", "d78"], case_insensitive=True, invoke_without_command=True)
     # @commands.is_owner()
@@ -109,25 +80,35 @@ class Conworlds(commands.Cog):
         """ Weather for a place in GA78 """
         if ctx.invoked_subcommand is None:
             try:
-                # language = Weather.from_language(self.bot.language(ctx))
-                # language = Weather.get(ctx)
                 language = self.bot.language(ctx)
-                place = places.Place(where)
-                embed = place.status(language)
+                if re.search(r"( -lod[012])$", where):
+                    lod = int(where[-1])  # 0, 1 or 2
+                    where = where[:-6]
+                else:
+                    # LOD 2 Channel Names: hidden-commands,   secretive-commands, secretive-commands-2
+                    if ctx.channel.id in [610482988123422750, 742885168997466196, 753000962297299005]:
+                        lod = 2
+                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10
+                    elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536]:
+                        lod = 1
+                    else:
+                        lod = 0  # All other channels are "untrusted", so default to LOD 0
+                place = conworlds.Place(where)
+                embed = place.status(language, level_of_detail=lod)
                 return await general.send(None, ctx.channel, embed=embed)
-            except places.PlaceDoesNotExist:
+            except PlaceDoesNotExist:
                 return await general.send(f"Location {where!r} not found.", ctx.channel)
 
     @weather78.command(name="list", aliases=["locations", "loc"])
-    async def ga78_locations(self, ctx: commands.Context, *, planet: str):
+    async def ga78_locations(self, ctx: commands.Context, *, planet: str = "Kargadia"):
         """ See the list of all available locations on a planet """
         _places = []
         _longest = longest_city[planet]
         # for city, data in places.places_old.items():
-        for city in places.places:
+        for city in conworlds.places:
             if city["planet"] == planet:
-                place = places.Place(city["name"]["english"])
-                _places.append(f"`{place.name:<{_longest}} - {place.location(True)}`")
+                place = conworlds.Place(city["id"])
+                _places.append(f"`{place.id:<{_longest}} - {conworlds.format_location(place.lat, place.long, True, 'en')}`")
         if len(_places) <= 25:
             return await general.send(f"Locations in {planet}:\n\n" + "\n".join(_places), ctx.channel)
         else:
@@ -141,9 +122,9 @@ class Conworlds(commands.Cog):
     async def location(self, ctx: commands.Context, *, where: str):
         """ See where a place in GA-78 is located """
         try:
-            place = places.Place(where)
-            return await general.send(f"{where} - {place.planet} - {place.location(False)}", ctx.channel)
-        except places.PlaceDoesNotExist:
+            place = conworlds.Place(where)
+            return await general.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}", ctx.channel)
+        except PlaceDoesNotExist:
             return await general.send(f"Location {where!r} not found.", ctx.channel)
 
     @commands.command(name="nlc")

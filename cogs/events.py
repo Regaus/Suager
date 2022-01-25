@@ -16,7 +16,7 @@ class Events(commands.Cog):
         self.db = self.bot.db
         self.local_config = self.bot.local_config
         self.blocked = [667187968145883146, 852695205073125376]
-        self.bad = ["reg", "rea", "rag", "302851022790066185"]
+        self.bad = ["reg", "reag", "302851022790066185"]
         self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
         self.blocked_logs = 739183533792297164
         # Ignored channels for Senko Lair and RK message logs

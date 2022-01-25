@@ -385,3 +385,12 @@
 - Converted `regaus` into its own module
 - Made the sun heading values more accurate
 - Now shows current version of Regaus.py in `..stats`
+
+## v1.4.0 - 25 January 2022
+- Implemented new places and times from Regaus.py v1.2
+- Made the `..time78` use place names instead of indexes (you can also enter a planet name though)
+- Removed `..tl` (replaced by new time78 behaviour)
+- Added support for Levels of Detail for weather78
+- ka-time now shows new places sorted by area/continent, and then by timezone
+- The playing status stays as it used to be, simply updated to show the new places instead of old ones
+- Removed references to old games until I actually make them again (if ever...)

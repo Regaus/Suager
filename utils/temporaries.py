@@ -5,9 +5,10 @@ from datetime import date, timedelta
 
 import aiohttp
 import discord
+from regaus import conworlds, version_info, VersionInfo
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import bot_data, general, http, languages, lists, logger, places, time
+from utils import bot_data, general, http, languages, lists, logger, time
 
 
 async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -256,6 +257,77 @@ ka_cities = {  # List of Kargadian cities to be shown in the ka-time clock, and 
     "Vintelingar":   {"english": None, "tebarian": None, "weight": 2},
     "Virsetgar":     {"english": None, "tebarian": None, "weight": 2},
 }
+ka_places = {
+    "Regaazdall": {
+        "Regavall": {"en": None, "weight": 5},
+        "Reggar":   {"en": None, "weight": 5},
+        "Suvagar":  {"en": None, "weight": 3},
+    },
+    "Nehtivia": {
+        "Leitagar":    {"en": None, "weight": 3},
+        "Orlagar":     {"en": None, "weight": 3},
+        "Pakigar":     {"en": None, "weight": 3},
+        "Runnegar":    {"en": None, "weight": 2},
+        "Shonangar":   {"en": None, "weight": 3},
+        "Steirigar":   {"en": None, "weight": 3},
+        "Sunmagar":    {"en": None, "weight": 2},
+        "Tenmagar":    {"en": None, "weight": 2},
+        "Peaskar":     {"en": None, "weight": 2},
+        "Sulingar":    {"en": None, "weight": 3},
+        "Alyksandris": {"en": None, "weight": 3},
+        "Läkingar":    {"en": None, "weight": 2},
+        "Tevivall":    {"en": None, "weight": 2},
+        "Lailagar":    {"en": None, "weight": 3},
+    },
+    "Nittavia": {
+        "Erdagar":  {"en": None, "weight": 2},
+        "Nuktagar": {"en": None, "weight": 2},
+    },
+    "Tebaria": {
+        "Sentatebaria":       {"en": None, "weight": 3},
+        "Kaivalgard":         {"en": None, "weight": 3},
+        "Harvugar":           {"en": None, "weight": 2},
+        "Vallangar":          {"en": None, "weight": 2},
+        "Bylkangar":          {"en": None, "weight": 3},
+        "Sadegar":            {"en": None, "weight": 2},
+        "Vadertebaria":       {"en": None, "weight": 2},
+        "Ella na Sevarddain": {"en": None, "weight": 2},
+    },
+    "Kaltar Azdall": {
+        "Kaltarena":        {"en": None, "weight": 2},
+    },
+    "Other Areas": {
+        "Vintelingar": {"en": None, "weight": 3},
+    }
+}
+if version_info >= VersionInfo(1, 2, 0, "final"):  # These are not yet available, so only add them if it's v1.2.0 and not the pre-release
+    ka_places |= {
+        "Nehtivia": {
+            "Menenvallus": {"en": None, "weight": 2},
+        },
+        "Kaltar Azdall": {
+            "Küan Köreldaivus": {"en": None, "weight": 2},
+        },
+        "Arnattia": {
+            "Vainararna": {"en": None, "weight": 2},
+            "Avikarna":   {"en": None, "weight": 2},
+            "Kanerarna":  {"en": None, "weight": 2},
+            "Terra Arna": {"en": None, "weight": 2},
+        },
+        "Erellia": {
+            "Raagar": {"en": None, "weight": 2},
+        },
+        "Centeria": {
+            "Kalagar": {"en": None, "weight": 2},
+            "Virsetgar": {"en": None, "weight": 2},
+        }
+    }
+_places = {}  # Since the playing status won't be able to read through a 2-layer dict...
+# ka-time will read the data from ka_places, to show the data with layers
+# Playing will read the data from _places, to show as a simple dict
+# _places will also store the Place instances, so that it wouldn't be necessary to keep calling new ones...
+
+# The ka_time uses Reggar for now, I will either keep it so or change it once Virsetgar is actually added to the places list
 ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
 update_speed = 120  # 150
 ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they occur
@@ -273,66 +345,70 @@ ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they o
 }
 
 
-async def city_data_updater(bot: bot_data.Bot):
+async def wait_until_next_iter(adjustment: int = 0):
+    now = time.now(None)
+    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed + adjustment, None)
+    await asyncio.sleep((then - now).total_seconds())
+
+
+async def ka_data_updater(bot: bot_data.Bot):
     """ Update time and weather data for Kargadian cities """
     await bot.wait_until_ready()
-
-    now = time.now(None)
     # Start this script ahead of the updates to make sure the city time updater and the playing status get accurate data
-    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 1, None)
-    await asyncio.sleep((then - now).total_seconds())
+    await wait_until_next_iter(-1)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
 
     while True:
-        for city in ka_cities.keys():
-            try:
-                place = places.Place(city)
-                # tebarian = place.time.str(dow=False, era=None, month=False, short=True, seconds=False)
-                # Tricks into changing the month from Genitive to Nominative
-                # english = place.time.str(dow=False, era=None, month=False, short=False, seconds=False).replace("n ", "r ")
-                tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
-                english = place.time.strftime("%d %B %Y, %H:%M", "en")
-                temperature, _, _, rain_out = place.weather()
-                if temperature is not None and rain_out is not None:
-                    temp = f"{temperature:.0f}°C"
-                    weather_en = languages.Language("english").weather_data("weather78")[rain_out]
-                    weather_tb = languages.Language("tebarian").weather_data("weather78")[rain_out]
-                    english += f" | {temp} | {weather_en}"
-                    tebarian += f" | {temp} | {weather_tb}"
-                # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
-                ka_cities[city]["english"] = english
-                ka_cities[city]["tebarian"] = tebarian
-                if city == "Virsetgar":
-                    global ka_time
-                    ka_time = place.time
-                # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
-            except Exception as e:
-                general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
-                logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}")
+        for area_name, area in ka_places.items():
+            for city, _data in area.items():
+                try:
+                    if city not in _places.keys():
+                        place: conworlds.Place = conworlds.Place(city)
+                        _places[city] = {"place": place, "text": None, "weight": _data["weight"]}
+                    else:
+                        # It seems this actually does what I want it to, and simply keeps updating the instance, not needing to do any rewriting into the dict
+                        place: conworlds.Place = _places[city]["place"]
+                        place.update_time()
+                    tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
+                    english = place.time.strftime("%d %B %Y, %H:%M", "en")
+                    if place.weather is not None:
+                        temp = f"{place.weather['temperature']:.0f}°C"
+                        weather_en = languages.Language("english").weather_data("weather78")[place.weather['rain']]
+                        weather_tb = languages.Language("tebarian").weather_data("weather78")[place.weather['rain']]
+                        english += f" | {temp} | {weather_en}"
+                        tebarian += f" | {temp} | {weather_tb}"
+                    # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
+                    ka_places[area_name][city]["en"] = english
+                    _places[city]["text"] = tebarian
+                    if city == "Reggar":
+                        global ka_time
+                        ka_time = place.time
+                    # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
+                except Exception as e:
+                    general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
+                    logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}")
         logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities data")
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(2)  # Hopefully prevents it from lagging ahead of itself and hanging
-        now = time.now(None)
-        then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed - 1, None)
-        await asyncio.sleep((then - now).total_seconds())
+        await wait_until_next_iter(-1)
         # await asyncio.sleep(update_speed)
 
 
-async def city_time_updater(bot: bot_data.Bot):
+async def ka_time_updater(bot: bot_data.Bot):
     """ Update the time and weather info for Kargadian cities in Regaus'tar Koankadu """
     await bot.wait_until_ready()
-
-    now = time.now(None)
-    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
-    await asyncio.sleep((then - now).total_seconds())
+    await wait_until_next_iter(0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
 
     while True:
         data = []
-        for city, _data in ka_cities.items():
-            data.append(f"`{city:<13} - {_data['english']}`")
-        out = "\n".join(data)
+        for area_name, area in ka_places.items():
+            area_data = [f"{area_name}:"]
+            for city, _data in area.items():
+                area_data.append(f"`{city:<18} - {_data['en']}`")
+            data.append("\n".join(area_data))
+        out = "\n\n".join(data)
         channel: discord.TextChannel = bot.get_channel(887087307918802964)  # ka-time
         try:
             # message: discord.Message = (await channel.history(limit=1, oldest_first=True).flatten())[0]
@@ -353,18 +429,13 @@ async def city_time_updater(bot: bot_data.Bot):
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        now = time.now(None)
-        then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
-        await asyncio.sleep((then - now).total_seconds())
+        await wait_until_next_iter(0)
         # await asyncio.sleep(update_speed)
 
 
 async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
-
-    now = time.now(None)
-    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
-    await asyncio.sleep((then - now).total_seconds())
+    await wait_until_next_iter(0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     while True:
@@ -420,13 +491,13 @@ async def playing(bot: bot_data.Bot):
                         {"type": 2, "name": "ut penat"},
                         {"type": 3, "name": "na meitan"},
                         {"type": 2, "name": "na deinettat"},
-                        {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
-                        {"type": 0, "name": "na TBL'n"},
-                        {"type": 0, "name": "Akos'an"},
-                        {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
-                        {"type": 0, "name": "na TKP'n"},
+                        # {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
+                        # {"type": 0, "name": "na TBL'n"},
+                        # {"type": 0, "name": "Akos'an"},
+                        # {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
+                        # {"type": 0, "name": "na TKP'n"},
                         {"type": 0, "name": "vaihaga kiinanshavarkan"},
-                        {"type": 0, "name": "Vainar veikidat pahtemar, discord.py"},
+                        # {"type": 0, "name": "Vainar veikidat pahtemar, discord.py"},
                     ]
                     _activity = random.choice(activities)
                     if _activity["type"] == 0:  # Game
@@ -466,12 +537,12 @@ async def playing(bot: bot_data.Bot):
                 else:  # status_type == 4
                     # Original weights list: [2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 5, 5, 2, 3, 2, 2, 3, 2, 2]
                     data, weights = [], []
-                    for city in ka_cities.items():
+                    for city in _places.items():
                         data.append(city)
                         weights.append(city[1]["weight"])
                     # city, city_data = random.choices(list(ka_cities.items()), [v["weight"] for v in ka_cities.values()])[0]
                     city, city_data = random.choices(data, weights)[0]
-                    status = f"{city}: {city_data['tebarian']}"
+                    status = f"{city}: {city_data['text']}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")
             elif bot.name == "kyomi":
@@ -596,10 +667,7 @@ async def playing(bot: bot_data.Bot):
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        now = time.now(None)
-        then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed, None)
-        await asyncio.sleep((then - now).total_seconds())
-        # await asyncio.sleep(update_speed)
+        await wait_until_next_iter(0)
 
 
 async def avatars(bot: bot_data.Bot):

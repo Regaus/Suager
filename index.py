@@ -82,8 +82,8 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.trials(bot)))
             # tasks.append(loop.create_task(temporaries.new_year(bot)))
         elif bot.name == "cobble":
-            tasks.append(loop.create_task(temporaries.city_data_updater(bot)))
-            tasks.append(loop.create_task(temporaries.city_time_updater(bot)))
+            tasks.append(loop.create_task(temporaries.ka_data_updater(bot)))
+            tasks.append(loop.create_task(temporaries.ka_time_updater(bot)))
         elif bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             # tasks.append(loop.create_task(temporaries.temporaries(bot)))

@@ -5,7 +5,7 @@ import discord
 from discord import Permissions
 from discord.ext import commands
 from discord.utils import oauth_url
-from regaus import version_info as regaus_version_info
+from regaus import __version__ as reg_version
 
 from utils import bot_data, general, time
 
@@ -56,10 +56,10 @@ class BotInformation(commands.Cog):
             dis_version += _discord.releaselevel[0]
         libs_used = f"**Python v{version}**\n**Discord.py v{dis_version}**"
         if self.bot.name == "cobble":
-            _regaus = regaus_version_info
-            reg_version = f"{_regaus.major}.{_regaus.minor}.{_regaus.micro}"
-            if _regaus.releaselevel != "final":
-                reg_version += _regaus.releaselevel[0] + str(_regaus.serial)
+            # _regaus = regaus_version_info
+            # reg_version = f"{_regaus.major}.{_regaus.minor}.{_regaus.micro}"
+            # if _regaus.releaselevel != "final":
+            #     reg_version += _regaus.releaselevel[0] + str(_regaus.serial)
             libs_used += f"\n**Regaus.py v{reg_version}**"
         embed.add_field(name=language.string("info_stats_used"), inline=True, value=libs_used)
         mv = version_data["version"].split(".")[0]
