@@ -13,15 +13,24 @@ def is_fucked(something):
 but_why = "https://cdn.discordapp.com/attachments/610482988123422750/673642028357386241/butwhy.gif"
 
 
-def give(u1: str, u2: str, emote: str, language: languages.Language) -> str:
-    return language.string("social_food", u1, u2, emote)
+def give(author: str, target: str, emote: str, language: languages.Language) -> str:
+    return language.string("social_food", author=language.case(author, "nominative"), target=language.case(target, "dative"), item=emote)
 
 
 def get_data(author: discord.Member, target: discord.Member, action: str, language: languages.Language, given: int, received: int):
-    _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
-    title = language.string(f"social_{action}", author.name, target.name)
-    title2 = language.string(f"social_{action}", target.name, author.name)
-    return title, f"{title} {_given}\n{title2} {_received}"
+    # _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+    a1, a2 = language.case(author.name, "nominative"), language.case(target.name, "nominative")
+    t1, t2 = language.case(target.name, "accusative"), language.case(author.name, "accusative")
+    title = language.string(f"social_{action}", author=a1, target=t1)
+    if given > 0:
+        footer1 = language.string(f"social_{action}_frequency", author=a1, target=t1, frequency=language.frequency(given))
+    else:
+        footer1 = language.string(f"social_{action}_never", author=a1, target=t1)
+    if received > 0:
+        footer2 = language.string(f"social_{action}_frequency", author=a2, target=t2, frequency=language.frequency(received))
+    else:
+        footer2 = language.string(f"social_{action}_never", author=a2, target=t2)
+    return title, f"{footer1}\n{footer2}"
 
 
 class Social(commands.Cog):
@@ -188,7 +197,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
             return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.bot:
@@ -210,7 +219,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:  # and ctx.author.id in self.locked:
@@ -262,7 +271,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(language.string("social_alone"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(language.string("social_high_five_suager", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_high_five_suager", author=language.case(ctx.author.name, "high_five")), ctx.channel)
         if user.bot:
             return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
@@ -286,7 +295,7 @@ class Social(commands.Cog):
         if user.id == 302851022790066185 and ctx.author.id in self.locked:
             return await general.send(language.string("social_forbidden"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(language.string("social_poke_suager", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_poke_suager", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.bot:
             return await general.send(language.string("social_bot"), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
@@ -332,7 +341,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(language.string("social_poke_self"), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(language.string("social_tickle_regaus", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_tickle_regaus", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.id == self.bot.user.id:
             return await general.send(language.string("social_tickle_suager"), ctx.channel)
         if user.bot:
@@ -354,11 +363,11 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
             return await general.send(f"{emotes.KannaSpook} How dare you", ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(language.string("social_kill_regaus", ctx.author.id), ctx.channel)
+            return await general.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.bot:
             return await general.send(language.string("social_slap_bot"), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "punch", 16)
@@ -374,7 +383,7 @@ class Social(commands.Cog):
         if is_fucked(self.sleepy):
             self.sleepy = await lists.get_images(self.bot, 's')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_sleepy", ctx.author.name)
+        embed.title = language.string("social_sleepy", author=ctx.author.name)
         embed.set_image(url=random.choice(self.sleepy))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -387,7 +396,7 @@ class Social(commands.Cog):
         if is_fucked(self.cry):
             self.cry = await lists.get_images(self.bot, 'r')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_cry", ctx.author.name)
+        embed.title = language.string("social_cry", author=ctx.author.name)
         embed.set_image(url=random.choice(self.cry))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -400,7 +409,7 @@ class Social(commands.Cog):
         if is_fucked(self.blush):
             self.blush = await lists.get_images(self.bot, 'u')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_blush", ctx.author.name)
+        embed.title = language.string("social_blush", author=ctx.author.name)
         embed.set_image(url=random.choice(self.blush))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -413,7 +422,7 @@ class Social(commands.Cog):
         if is_fucked(self.smile):
             self.smile = await lists.get_images(self.bot, 'm')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_smile", ctx.author.name)
+        embed.title = language.string("social_smile", author=ctx.author.name)
         embed.set_image(url=random.choice(self.smile))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -426,7 +435,7 @@ class Social(commands.Cog):
         if is_fucked(self.laugh):
             self.laugh = await lists.get_images(self.bot, 'L')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_laugh", ctx.author.name) if at is None else language.string("social_laugh_at", ctx.author.name, at.name)
+        embed.title = language.string("social_laugh", author=ctx.author.name) if at is None else language.string("social_laugh_at", author=ctx.author.name, target=language.case(at.name, "at"))
         embed.set_image(url=random.choice(self.laugh))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -439,7 +448,7 @@ class Social(commands.Cog):
         if is_fucked(self.dance):
             self.dance = await lists.get_images(self.bot, 'd')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_dance", ctx.author.name)
+        embed.title = language.string("social_dance", author=ctx.author.name)
         embed.set_image(url=random.choice(self.dance))
         return await general.send(None, ctx.channel, embed=embed)
 
@@ -573,17 +582,18 @@ class SocialSuager(Social, name="Social"):
         if ctx.author == user:
             return await general.send(language.string("social_slap_self"), ctx.channel)
         if user.id == self.bot.user.id:
-            return await general.send(language.string("social_slap_suager", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.id == 302851022790066185 and ctx.author.id not in self.unlocked:
-            return await general.send(language.string("social_kill_regaus", ctx.author.name), ctx.channel)
+            return await general.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")), ctx.channel)
         if user.bot:
             return await general.send(language.string("social_slap_bot"), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "kill", 17)
-        title = language.string("social_kill", ctx.author.name, user.name)
-        base = language.string("social_kill_counter", ctx.author.name, user.name)
-        base2 = language.string("social_kill_counter", user.name, ctx.author.name)
-        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
-        footer = f"{base} {_given}\n{base2} {_received}"
+        title, footer = get_data(ctx.author, user, "kill", language, given, received)
+        # title = language.string("social_kill", ctx.author.name, user.name)
+        # base = language.string("social_kill_counter", ctx.author.name, user.name)
+        # base2 = language.string("social_kill_counter", user.name, ctx.author.name)
+        # _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        # footer = f"{base} {_given}\n{base2} {_received}"
         return await general.send(f"{title}\n{footer}", ctx.channel)
 
     @commands.command(name="bang", aliases=["fuck"])
@@ -601,37 +611,14 @@ class SocialSuager(Social, name="Social"):
             return await general.send(language.string("social_bang_bot"), ctx.channel)
         if user == ctx.author:
             return await general.send(emotes.UmmOK, ctx.channel)
-        lolis = [418151634087182359, 430891116318031872]
-        if ctx.author.id in lolis:
-            return await general.send(f"No futa lolis {emotes.KannaSpook}", ctx.channel)
-        elif user.id in lolis and ctx.channel.id != 671520521174777869:
-            return await general.send(language.string("social_forbidden"), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "bang", 2)
-        t1, t2 = ctx.author.name, user.name
-        out = language.string("social_bang_main", t1, t2)
-        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
-        counter1 = language.string("social_bang_counter", t1, t2, _given)
-        counter2 = language.string("social_bang_counter", t2, t1, _received)
-        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
-
-    @commands.command(name="rape")
-    @commands.guild_only()
-    @commands.check(lambda ctx: ctx.channel.id in [764528556507922442, 753000962297299005])
-    async def rape(self, ctx: commands.Context, user: discord.Member):
-        """ Rape someone """
-        language = self.bot.language(ctx)
-        if user.id == self.bot.user.id:
-            return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
-        if user == ctx.author:
-            return await general.send(emotes.UmmOK, ctx.channel)
-        if user.id == 302851022790066185 and ctx.channel.id != 764528556507922442:
-            return await general.send(language.string('social_forbidden'), ctx.channel)
-        given, received = self.data_update(ctx.author.id, user.id, "r", 19)
-        t1, t2 = ctx.author.name, user.name
-        out = f"**{t1}** is now raping **{t2}**..."
-        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
-        counter1, counter2 = f"{t1} raped {t2} {_given}", f"{t2} raped {t1} {_received}"
-        return await general.send(f"{out}\n{counter1}\n{counter2}", ctx.channel)
+        title, footer = get_data(ctx.author, user, "bang", language, given, received)
+        # t1, t2 = ctx.author.name, user.name
+        # out = language.string("social_bang_main", t1, t2)
+        # _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        # counter1 = language.string("social_bang_counter", t1, t2, _given)
+        # counter2 = language.string("social_bang_counter", t2, t1, _received)
+        return await general.send(f"{title}\n{footer}", ctx.channel)
 
     @commands.command(name="suck", aliases=["succ"])
     @commands.guild_only()
@@ -648,7 +635,7 @@ class SocialSuager(Social, name="Social"):
             return await general.send(emotes.UmmOK, ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "suck", 14)
         t1, t2 = ctx.author.name, user.name
-        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        _given, _received = language.frequency(given), language.frequency(received)
         return await general.send(f"**{t1}** is now sucking **{t2}** off...\n{t1} did that to {t2} {_given}\n{t2} did that to {t1} {_received}", ctx.channel)
 
     @commands.command(name="facefuck", aliases=["ff"])
@@ -668,27 +655,8 @@ class SocialSuager(Social, name="Social"):
             return await general.send(language.string('social_forbidden'), ctx.channel)
         given, received = self.data_update(ctx.author.id, user.id, "ff", 18)
         t1, t2 = ctx.author.name, user.name
-        _given, _received = language.plural(given, "generic_times"), language.plural(received, "generic_times")
+        _given, _received = language.frequency(given), language.frequency(received)
         return await general.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}", ctx.channel)
-
-    @commands.command(name="fc", aliases=["ic"])
-    @commands.check(lambda ctx: ctx.channel.id in [672535025698209821, 764528556507922442, 753000962297299005])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def inside_counter(self, ctx: commands.Context):
-        """ Count how many times you've been inside each other """
-        uid1 = 302851022790066185
-        uid2 = 236884090651934721 if ctx.channel.id == 672535025698209821 else 622735873137573894
-        data1 = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid1, uid2))
-        data2 = self.bot.db.fetchrow("SELECT * FROM counters WHERE uid1=? AND uid2=?", (uid2, uid1))
-        result1, result2 = 0, 0
-        counters = ["bang", "ff", "r"]
-        for counter in counters:
-            result1 += data1[counter]
-            result2 += data2[counter]
-        result2 += data1["suck"]
-        result1 += data2["suck"]
-        name1, name2 = self.bot.get_user(uid1), self.bot.get_user(uid2)
-        return await general.send(f"{name1} has been inside {name2} {result1:,} times\n{name2} has been inside {name1} {result2:,} times", ctx.channel)
 
 
 def setup(bot: bot_data.Bot):

@@ -1111,3 +1111,7 @@
 ## v7.4.17 - 25 January 2022
 - Language list now shows how much the language translation is complete
 - Moved countries to one big dict
+
+## v7.4.18 - 25 January 2022
+- Removed some old social commands that should no longer exist
+- Improved the way the social interaction embeds show up
