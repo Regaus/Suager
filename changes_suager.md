@@ -1118,3 +1118,6 @@
 
 ## v7.4.18.1 - 26 January 2022
 - Improved the way the temporaries update themselves
+
+## v7.4.18.2 - 26 January 2022
+- Fixed `//reminders edit` to use the new database table

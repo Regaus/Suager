@@ -779,7 +779,7 @@ class Reminders(Utility, name="Utility"):
 
         Example: //reminders edit 1048576 --time 2021-06-08 17:00:00 --message Insert something interesting here"""
         language = self.bot.language(ctx)
-        reminder = self.bot.db.fetchrow("SELECT * FROM temporary WHERE entry_id=? AND uid=? AND type='reminder'", (reminder_id, ctx.author.id))
+        reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
         if not reminder:
             return await general.send(language.string("util_reminders_edit_none", reminder_id), ctx.channel)
         parser = arg_parser.Arguments()
@@ -808,7 +808,7 @@ class Reminders(Utility, name="Utility"):
             except ValueError:
                 return await general.send(language.string("util_reminders_edit_time"), ctx.channel)
         expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=False)
-        self.bot.db.execute("UPDATE temporary SET message=?, expiry=? WHERE entry_id=?", (_message, _expiry, reminder_id))
+        self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (_message, _expiry, reminder_id))
         return await general.send(language.string("util_reminders_edit", reminder_id, _message, expiry), ctx.channel)
 
     @reminders.command(name="delete", aliases=["remove", "cancel"])
