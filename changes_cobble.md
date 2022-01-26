@@ -400,3 +400,8 @@
 
 ## v1.4.2 - 25 January 2022
 - Language list now shows how much the language translation is complete
+
+## v1.4.3 - 26 January 2022
+- Added new cities to the ka-time list
+- Made the messages split to avoid hitting the message length limit
+- The ka-time now only updates every 5 minutes

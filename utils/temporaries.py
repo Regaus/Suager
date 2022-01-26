@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import aiohttp
 import discord
-from regaus import conworlds, version_info, VersionInfo
+from regaus import conworlds
 
 from cogs.mod import send_mod_dm, send_mod_log
 from utils import bot_data, general, http, languages, lists, logger, time
@@ -233,30 +233,6 @@ async def birthdays(bot: bot_data.Bot):
         await asyncio.sleep(3600)
 
 
-ka_cities = {  # List of Kargadian cities to be shown in the ka-time clock, and in playing statuses
-    "Akkigar":       {"english": None, "tebarian": None, "weight": 2},
-    "Bylkangar":     {"english": None, "tebarian": None, "weight": 2},
-    "Ekspigar":      {"english": None, "tebarian": None, "weight": 2},
-    "Huntavall":     {"english": None, "tebarian": None, "weight": 3},
-    "Kaivalgar":     {"english": None, "tebarian": None, "weight": 3},
-    "Kanerakainead": {"english": None, "tebarian": None, "weight": 2},
-    "Kiomigar":      {"english": None, "tebarian": None, "weight": 2},
-    "Lailagar":      {"english": None, "tebarian": None, "weight": 2},
-    "Leitagar":      {"english": None, "tebarian": None, "weight": 3},
-    "Nurvutgar":     {"english": None, "tebarian": None, "weight": 2},
-    "Orlagar":       {"english": None, "tebarian": None, "weight": 2},
-    "Pakigar":       {"english": None, "tebarian": None, "weight": 2},
-    "Peaskar":       {"english": None, "tebarian": None, "weight": 2},
-    "Regavall":      {"english": None, "tebarian": None, "weight": 5},
-    "Reggar":        {"english": None, "tebarian": None, "weight": 5},
-    "Sentagar":      {"english": None, "tebarian": None, "weight": 2},
-    "Sentatebaria":  {"english": None, "tebarian": None, "weight": 3},
-    "Shonangar":     {"english": None, "tebarian": None, "weight": 2},
-    "Steirigar":     {"english": None, "tebarian": None, "weight": 2},
-    "Suvagar":       {"english": None, "tebarian": None, "weight": 3},
-    "Vintelingar":   {"english": None, "tebarian": None, "weight": 2},
-    "Virsetgar":     {"english": None, "tebarian": None, "weight": 2},
-}
 ka_places = {
     "Regaazdall": {
         "Regavall": {"en": None, "weight": 5},
@@ -264,6 +240,7 @@ ka_places = {
         "Suvagar":  {"en": None, "weight": 3},
     },
     "Nehtivia": {
+        "Ekspigar":    {"en": None, "weight": 3},
         "Leitagar":    {"en": None, "weight": 3},
         "Orlagar":     {"en": None, "weight": 3},
         "Pakigar":     {"en": None, "weight": 3},
@@ -276,7 +253,11 @@ ka_places = {
         "Sulingar":    {"en": None, "weight": 3},
         "Alyksandris": {"en": None, "weight": 3},
         "Läkingar":    {"en": None, "weight": 2},
+        "Leogar":      {"en": None, "weight": 3},
+        "Menenvallus": {"en": None, "weight": 2},
         "Tevivall":    {"en": None, "weight": 2},
+        "Kamikava":    {"en": None, "weight": 3},
+        "Kiomigar":    {"en": None, "weight": 3},
         "Lailagar":    {"en": None, "weight": 3},
     },
     "Nittavia": {
@@ -284,49 +265,41 @@ ka_places = {
         "Nuktagar": {"en": None, "weight": 2},
     },
     "Tebaria": {
-        "Sentatebaria":       {"en": None, "weight": 3},
-        "Kaivalgard":         {"en": None, "weight": 3},
-        "Harvugar":           {"en": None, "weight": 2},
-        "Vallangar":          {"en": None, "weight": 2},
-        "Bylkangar":          {"en": None, "weight": 3},
-        "Sadegar":            {"en": None, "weight": 2},
-        "Vadertebaria":       {"en": None, "weight": 2},
+        "Sentatebaria": {"en": None, "weight": 3},
+        "Kaivalgard":   {"en": None, "weight": 3},
+        "Harvugar":     {"en": None, "weight": 2},
+        "Vallangar":    {"en": None, "weight": 2},
+        "Bylkangar":    {"en": None, "weight": 3},
+        "Sadegar":      {"en": None, "weight": 2},
+        "Vadertebaria": {"en": None, "weight": 2},
+        "Istagar":      {"en": None, "weight": 2},
+        "Lervagar":     {"en": None, "weight": 2},
     },
     "Kaltar Azdall": {
-        "Kaltarena":        {"en": None, "weight": 2},
+        "Kaltarena": {"en": None, "weight": 2},
+        "Küangar":   {"en": None, "weight": 2},
+    },
+    "Arnattia": {
+        "Vainararna": {"en": None, "weight": 2},
+        "Avikarna":   {"en": None, "weight": 2},
+        "Kanerarna":  {"en": None, "weight": 2},
+        "Terra Arna": {"en": None, "weight": 2},
+    },
+    "Erellia": {
+        "Raagar": {"en": None, "weight": 2},
+    },
+    "Centeria": {
+        "Kalagar": {"en": None, "weight": 2},
+        "Virsetgar": {"en": None, "weight": 2},
+    },
+    "Verlennia": {
+    },
+    "Inhattia": {
     },
     "Other Areas": {
         "Vintelingar": {"en": None, "weight": 3},
     }
 }
-if version_info >= VersionInfo(1, 2, 0, "final"):  # These are not yet available, so only add them if it's v1.2.0 and not the pre-release
-    ka_places |= {
-        "Nehtivia": {
-            "Kamikava":    {"en": None, "weight": 3},
-            "Leogar":      {"en": None, "weight": 3},
-            "Menenvallus": {"en": None, "weight": 2},
-        },
-        "Tebaria": {
-            "Istagar":  {"en": None, "weight": 2},
-            "Lervagar": {"en": None, "weight": 2},
-        },
-        "Kaltar Azdall": {
-            "Küangar": {"en": None, "weight": 2},
-        },
-        "Arnattia": {
-            "Vainararna": {"en": None, "weight": 2},
-            "Avikarna":   {"en": None, "weight": 2},
-            "Kanerarna":  {"en": None, "weight": 2},
-            "Terra Arna": {"en": None, "weight": 2},
-        },
-        "Erellia": {
-            "Raagar": {"en": None, "weight": 2},
-        },
-        "Centeria": {
-            "Kalagar": {"en": None, "weight": 2},
-            "Virsetgar": {"en": None, "weight": 2},
-        }
-    }
 _places = {}  # Since the playing status won't be able to read through a 2-layer dict...
 # ka-time will read the data from ka_places, to show the data with layers
 # Playing will read the data from _places, to show as a simple dict
@@ -334,7 +307,10 @@ _places = {}  # Since the playing status won't be able to read through a 2-layer
 
 # The ka_time uses Reggar for now, I will either keep it so or change it once Virsetgar is actually added to the places list
 ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
-update_speed = 120  # 150
+update_speed_play = 120  # 150
+update_speed_data = 60
+update_speed_time = 300
+update_speed_avatar = 3600
 ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they occur
     1:   ("Nuan Kadan",              "Nuat Kadut"),
     21:  ("Kattansean",              "Kattanseat"),
@@ -350,7 +326,7 @@ ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they o
 }
 
 
-async def wait_until_next_iter(adjustment: int = 0):
+async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0):
     now = time.now(None)
     then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed + adjustment, None)
     await asyncio.sleep((then - now).total_seconds())
@@ -360,7 +336,7 @@ async def ka_data_updater(bot: bot_data.Bot):
     """ Update time and weather data for Kargadian cities """
     await bot.wait_until_ready()
     # Start this script ahead of the updates to make sure the city time updater and the playing status get accurate data
-    await wait_until_next_iter(-1)
+    await wait_until_next_iter(update_speed_data, -1)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
 
     while True:
@@ -396,51 +372,52 @@ async def ka_data_updater(bot: bot_data.Bot):
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(2)  # Hopefully prevents it from lagging ahead of itself and hanging
-        await wait_until_next_iter(-1)
+        await wait_until_next_iter(update_speed_data, -1)
         # await asyncio.sleep(update_speed)
 
 
 async def ka_time_updater(bot: bot_data.Bot):
     """ Update the time and weather info for Kargadian cities in Regaus'tar Koankadu """
     await bot.wait_until_ready()
-    await wait_until_next_iter(0)
+    await wait_until_next_iter(update_speed_time, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
+    channel: discord.TextChannel = bot.get_channel(935982691801780224)  # ka-time | Old channel: 887087307918802964
 
-    while True:
-        data = []
-        for area_name, area in ka_places.items():
-            area_data = [f"{area_name}:"]
-            for city, _data in area.items():
-                area_data.append(f"`{city:<18} - {_data['en']}`")
-            data.append("\n".join(area_data))
-        out = "\n\n".join(data)
-        channel: discord.TextChannel = bot.get_channel(887087307918802964)  # ka-time
+    async def update_message(name: str, content: str):
         try:
             # message: discord.Message = (await channel.history(limit=1, oldest_first=True).flatten())[0]
             message = None
             async for msg in channel.history(limit=None, oldest_first=True):
-                if msg.author.id == bot.user.id:
+                if msg.author.id == bot.user.id and msg.content.startswith(name):
                     message = msg
                     break
             if message is None:
                 raise general.RegausError("City time message not found")
-            await message.edit(content=out)
+            await message.edit(content=content)
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities times message")
         except (IndexError, discord.NotFound, general.RegausError):
-            await channel.send(out)
+            await channel.send(content)
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset Kargadian cities times message")
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
 
+    while True:
+        for area_name, area in ka_places.items():
+            data = [f"{area_name}:"]
+            for city, _data in area.items():
+                data.append(f"`{city:<12} - {_data['en']}`")
+            await update_message(area_name, "\n".join(data))
+        # out = "\n\n".join(data)
+
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(0)
+        await wait_until_next_iter(update_speed_time, 0)
         # await asyncio.sleep(update_speed)
 
 
 async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    await wait_until_next_iter(0)
+    await wait_until_next_iter(update_speed_play, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     while True:
@@ -672,15 +649,16 @@ async def playing(bot: bot_data.Bot):
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(0)
+        await wait_until_next_iter(update_speed_play, 0)
 
 
 async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
-    now = time.now(None)
-    then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)
-    await asyncio.sleep((then - now).total_seconds())
+    # now = time.now(None)
+    # then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)
+    # await asyncio.sleep((then - now).total_seconds())
+    await wait_until_next_iter(update_speed_avatar, 1)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
     while True:
@@ -706,7 +684,8 @@ async def avatars(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
 
-        await asyncio.sleep(3600)
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed_avatar, 1)
 
 
 async def polls(bot: bot_data.Bot):

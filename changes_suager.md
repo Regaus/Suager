@@ -1115,3 +1115,6 @@
 ## v7.4.18 - 25 January 2022
 - Removed some old social commands that should no longer exist
 - Improved the way the social interaction embeds show up
+
+## v7.4.18.1 - 26 January 2022
+- Improved the way the temporaries update themselves
