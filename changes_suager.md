@@ -1125,3 +1125,6 @@
 ## v7.4.18.3 - 27 January 2022
 - Fixed settings language field
 - Improved how language list shows up
+
+## v7.4.19 - 27 January 2022
+- Make it possible to update cases as well as languages

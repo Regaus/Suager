@@ -542,7 +542,8 @@ class Admin(commands.Cog):
     @commands.is_owner()
     @commands.check(lambda ctx: ctx.channel.id == 753000962297299005)  # only secretive-commands-2
     async def config(self, ctx: commands.Context):
-        """ See or update config """
+        """ See or update config
+        Note to self: This command only works in <#753000962297299005>!"""
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
