@@ -94,7 +94,7 @@ class Conworlds(commands.Cog):
                     else:
                         lod = 0  # All other channels are "untrusted", so default to LOD 0
                 place = conworlds.Place(where)
-                embed = place.status(language, level_of_detail=lod)
+                embed = place.status(language.language, level_of_detail=lod)
                 return await general.send(None, ctx.channel, embed=embed)
             except PlaceDoesNotExist:
                 return await general.send(f"Location {where!r} not found.", ctx.channel)
