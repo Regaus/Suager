@@ -1,0 +1,6 @@
+{
+  "^.+": {  // Pattern[number][case]
+    "default": {"default": "<>"},
+    "plural": {"default": "<>s"}
+  }
+}
