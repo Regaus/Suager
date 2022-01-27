@@ -44,7 +44,7 @@ del _languages, _cases, _name, _data, _original, _pattern, _v, _op, _num, _cd
 
 
 class Language(languages.Language):
-    def delta_rd(self, delta: time.relativedelta | relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False) -> str:
+    def delta_rd(self, delta: time.relativedelta | relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False, case: str = "default") -> str:
         if isinstance(delta, relativedelta):
             now = datetime.now()
         else:
