@@ -36,7 +36,7 @@ class Settings(commands.Cog):
                         matching += 1
                 completeness = 1 - (matching / strings)
 
-            out = f"`{language}`: {_language.string('_self')} ({_language.string('_en')} - {completeness:.1%})"
+            out = f"`{language}`: {_language.string('_self')} - {_language.string('_en')} - {completeness:.1%}"
             conlang = _language.data("_conlang")
             if not _language.data("_valid"):
                 continue
@@ -79,7 +79,7 @@ class Settings(commands.Cog):
             embed.title = language.string("settings_current", ctx.guild.name)
             embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
             embed.set_footer(text=language.string("settings_current_footer", ctx.prefix))
-            embed.add_field(name=language.string("settings_current_language"), value=language.string("_name"), inline=False)
+            embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
             dp, cp = self.prefix_list(ctx)
             embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
             if self.bot.name in ["kyomi", "suager"]:

@@ -1121,3 +1121,7 @@
 
 ## v7.4.18.2 - 26 January 2022
 - Fixed `//reminders edit` to use the new database table
+
+## v7.4.18.3 - 27 January 2022
+- Fixed settings language field
+- Improved how language list shows up
