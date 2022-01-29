@@ -405,3 +405,6 @@
 - Added new cities to the ka-time list
 - Made the messages split to avoid hitting the message length limit
 - The ka-time now only updates every 5 minutes
+
+## v1.4.4 - 29 January 2022
+- You can now decline Kargadian nouns

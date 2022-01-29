@@ -5,18 +5,18 @@ from utils import bases, conlangs, general
 
 
 def is_rsl1_eligible(ctx: commands.Context):
-    # Regaus, Leitoxz, Alex Five, HatKid, Potato
-    # Chuck, Mid, Ash, 1337xp, Shawn
-    if ctx.author.id not in [302851022790066185, 291665491221807104, 430891116318031872, 418151634087182359, 374853432168808448,
-                             593736085327314954, 581206591051923466, 499038637631995906, 679819572278198272, 236884090651934721]:
+    # Users:                 Regaus,             Leitoxz,            Alex Five,          Potato,             Chuck,              Mid,
+    # Users:                 Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza
+    if ctx.author.id not in [302851022790066185, 291665491221807104, 430891116318031872, 374853432168808448, 593736085327314954, 581206591051923466,
+                             236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691]:
         return False
     if ctx.guild is None:
         return True
     else:
-        # rsl-1, hidden-commands, secretive-commands, secretive-commands-2
-        # sr2, sr8, sr10, sr11, sr12
-        return ctx.channel.id in [787340111963881472, 610482988123422750, 742885168997466196, 753000962297299005,
-                                  672535025698209821, 725835449502924901, 798513492697153536, 799714065256808469, 841106370203090994]
+        # Channels:               rsl-1,              hidden-commands,    secretive-commands, secretive-commands-2, secret-room-1,
+        # Channels:               secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10,     secret-room-11
+        return ctx.channel.id in [787340111963881472, 610482988123422750, 742885168997466196, 753000962297299005, 671520521174777869,
+                                  672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 799714065256808469]
 
 
 class Conlangs(commands.Cog):
@@ -27,11 +27,7 @@ class Conlangs(commands.Cog):
     @commands.check(is_rsl1_eligible)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def rsl1(self, ctx: commands.Context):
-        """ RSL-1k Documentation
-
-        This command will try to explain to you how RSL-1k works.
-        **Note: Do __not__ share any RSL-1 translations outside of this channel (or DMs with me or others with RSL-1 access) without my permission**
-        **If choco suddenly starts understanding RSL-1, I __will__ kill you**"""
+        """ Some ~~mostly unmaintained~~ tools to interact with RSL-1 """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
@@ -60,6 +56,36 @@ class Conlangs(commands.Cog):
         if base == 16:
             _hex = languages.splits(bases.to_base(number, 16, True), 4, " ")
             return await general.send(f"Base-10: {number:,}\nBase-16: {_hex}\nRSL-{_version.split('-')[1]}: {output}", ctx.channel)
+
+    @rsl1.command(name="decline", aliases=["dec", "d"])
+    async def rsl1_decline(self, ctx: commands.Context, language: str, *, word: str):
+        """ Decline an RSL-1 noun """
+        if word.startswith("debug "):
+            word = word[6:]
+            cases = ["default", "nominative", "vocative", "accusative", "genitive", "dative", "instrumental", "locative", "inessive", "high_five", "at", "for", "in", "ago"]
+        else:
+            case_lists = {
+                "ka_an": ["nominative", "accusative", "genitive", "dative", "instrumental", "comitative", "locative", "ablative", "vocative"],
+                "ka_ow": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative", "ablative"],
+                "ka_mw": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
+                "ka_re": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+                "ka_ne": ["nominative", "accusative", "genitive", "dative", "instrumental"],
+                "ka_ni": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
+                "ka_tb": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
+            }
+            try:
+                cases = case_lists[language]
+            except KeyError:
+                return await general.send("This language is currently not supported.", ctx.channel)
+        numbers = ["singular", "plural"]
+        _language = languages.Language(language)
+        out = []
+        for number in numbers:
+            data = [number.title() + ":"]
+            for case in cases:
+                data.append(f"`{case:<12}` -> {_language.case(word, case, number)}")
+            out.append("\n".join(data))
+        return await general.send("\n\n".join(out), ctx.channel)
 
 
 def setup(bot):
