@@ -7,7 +7,7 @@
   "achievements_goal": "Level {0} Goal: {1} ({2}/{3})",
   "achievements_highest": "Highest achievement level reached!",
   "achievements_leveling_levels": "Levels",
-  "achievements_leveling_levels_desc": "Reach Level {0} in a server",
+  "achievements_leveling_levels_desc": "Reach XP Level {0} in a server",
   "achievements_leveling_xp": "Experience",
   "achievements_leveling_xp_desc": "Collect {0} XP in total",
   "birthdays_birthday_general": "**{0}**'s birthday is on **{1}**",
