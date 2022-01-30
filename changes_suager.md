@@ -1133,3 +1133,6 @@
 - Better check for language completeness (checks inside strings too)
 - Country names are now stored in a separate file from the rest of language data to reduce clutter
 - Fixed weather to actually show the country name again
+
+## v7.4.20.1 - 30 January 2022
+- Moved Language.get() to the bots' subclass of Language, since it doesn't fit with the library
