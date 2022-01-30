@@ -1,220 +1,418 @@
 {  // Pattern[number][case], default ~ singular, default ~ nominative
-  "^(Regaus|Leitoxz)$": {  // s-declensions exceptions go here
+  "^kainead$": {  // kainead - C2
     "default": {
-      "default": "<>",        // Regaus
-      "nominative": "<>",     // Regaus
-      "accusative": "<>an",   // Regausan
-      "genitive": "<>an",     // Regausan
-      "dative": "<>ut",       // Regausut
-      "instrumental": "<>ur", // Regausur
-      "locative": "<>i",      // Regausi
-      "inessive": "<>i",      // Regausi
-      "high_five": "<>ut",    // hittak Regausut un laptan
-      "at": "<>an"            // killa Regausan
+      "default": "<>",             // kainead
+      "nominative": "<>",          // kainead
+      "accusative": "<:-2>dan",    // kainedan
+      "genitive": "<:-2>dan",      // kainedan
+      "dative": "<:-2>dut",        // kainedut
+      "instrumental": "<:-2>dur",  // kainedur
+      "locative": "<:-2>di",       // kainedi
+      "inessive": "<:-2>di",       // kainedi
+      "high_five": "<:-2>dut",     // hittak kainedut un laptan
+      "at": "<:-2>dan",            // killa kainedan
+      "for": "<:-2>dan",           // sa un kainedan
+      "in": "<:-2>dan",            // en un kainedan
+      "ago": "<:-2>dan"            // az un kainedan
     },
     "plural": {
-      "default": "<>at",       // Regausat
-      "nominative": "<>at",    // Regausat
-      "accusative": "<>aan",   // Regausaan
-      "genitive": "<>ain",     // Regausain
-      "dative": "<>aat",       // Regausaat
-      "instrumental": "<>aar", // Regausaar
-      "locative": "<>ai",      // Regausai
-      "inessive": "<>ai",      // Regausai
-      "high_five": "<>aat",    // hittak Regausaat un laptan
-      "at": "<>aan"            // killa Regausaan
+      "default": "<:-2>dat",        // kainedat
+      "nominative": "<:-2>dat",     // kainedat
+      "accusative": "<:-2>daan",    // kainedaan
+      "genitive": "<:-2>dain",      // kainedain
+      "dative": "<:-2>daat",        // kainedaat
+      "instrumental": "<:-2>daar",  // kainedaar
+      "locative": "<:-2>dai",       // kainedai
+      "inessive": "<:-2>dai",       // kainedai
+      "high_five": "<:-2>daat",     // hittak kainedaat un laptan
+      "at": "<:-2>daan",            // killa kainedaan
+      "for": "<:-2>daan",           // sa ein kainedaan
+      "in": "<:-2>dain",            // en ein kainedain
+      "ago": "<:-2>dain"            // az ein kainedain
     }
   },
-  "^(.+)[bcdfghjklmnprtvwxz]$": {  // consonant declension
+  "^(?!(.+)var$)((Regaus|Leitoxz)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
     "default": {
-      "default": "<>",        // kad
-      "nominative": "<>",     // kad
-      "accusative": "<>an",   // kadan
-      "genitive": "<>an",     // kadan
-      "dative": "<>ut",       // kadut
-      "instrumental": "<>ur", // kadur
-      "locative": "<>i",      // kadi
-      "inessive": "<>i",      // kadi
-      "high_five": "<>ut",    // hittak kadut un laptan
-      "at": "<>an",           // killa kadan
-      "for": "<>an",          // sa un kadan
-      "in": "<>an",           // en un kadan
-      "ago": "<>an"           // as un kadan
+      "default": "<>",         // kad
+      "nominative": "<>",      // kad
+      "accusative": "<>an",    // kadan
+      "genitive": "<>an",      // kadan
+      "dative": "<>ut",        // kadut
+      "instrumental": "<>ur",  // kadur
+      "locative": "<>i",       // kadi
+      "inessive": "<>i",       // kadi
+      "high_five": "<>ut",     // hittak kadut un laptan
+      "at": "<>an",            // killa kadan
+      "for": "<>an",           // sa un kadan
+      "in": "<>an",            // en un kadan
+      "ago": "<>an"            // az un kadan
     },
     "plural": {
-      "default": "<>at",       // kadat
-      "nominative": "<>at",    // kadat
-      "accusative": "<>aan",   // kadaan
-      "genitive": "<>ain",     // kadain
-      "dative": "<>aat",       // kadaat
-      "instrumental": "<>aar", // kadaar
-      "locative": "<>ai",      // kadai
-      "inessive": "<>ai",      // kadai
-      "high_five": "<>aat",    // hittak kadaat un laptan
-      "at": "<>aan",           // killa kadaan
-      "for": "<>ain",          // sa ein kadain
-      "in": "<>ain",           // en ein kadain
-      "ago": "<>ain"           // as ein kadain
+      "default": "<>at",        // kadat
+      "nominative": "<>at",     // kadat
+      "accusative": "<>aan",    // kadaan
+      "genitive": "<>ain",      // kadain
+      "dative": "<>aat",        // kadaat
+      "instrumental": "<>aar",  // kadaar
+      "locative": "<>ai",       // kadai
+      "inessive": "<>ai",       // kadai
+      "high_five": "<>aat",     // hittak kadaat un laptan
+      "at": "<>aan",            // killa kadaan
+      "for": "<>aan",           // sa ein kadaan
+      "in": "<>ain",            // en ein kadain
+      "ago": "<>ain"            // az ein kadain
     }
   },
   "^saa$": {  // saa - A2
     "default": {
-      "default": "<>",       // saa
-      "nominative": "<>",    // saa
-      "accusative": "<>n",   // saan
-      "genitive": "<>n",     // saan
-      "dative": "<>t",       // saat
-      "instrumental": "<>r", // saar
-      "locative": "<:-1>i",  // sai
-      "inessive": "<:-1>i",  // sai
-      "high_five": "<>t",    // hittak saat un laptan
-      "at": "<>n",           // killa saan
-      "for": "<>n",          // sa un saan
-      "in": "<>n",           // en un saan
-      "ago": "<>n"           // as un saan
+      "default": "<>",        // saa
+      "nominative": "<>",     // saa
+      "accusative": "<>n",    // saan
+      "genitive": "<>n",      // saan
+      "dative": "<>t",        // saat
+      "instrumental": "<>r",  // saar
+      "locative": "<:-1>i",   // sai
+      "inessive": "<:-1>i",   // sai
+      "high_five": "<>t",     // hittak saat un laptan
+      "at": "<>n",            // killa saan
+      "for": "<>n",           // sa un saan
+      "in": "<>n",            // en un saan
+      "ago": "<>n"            // az un saan
     },
     "plural": {
-      "default": "<>t",       // saat
-      "nominative": "<>t",    // saat
-      "accusative": "<>an",   // saaan
-      "genitive": "<>in",     // saain
-      "dative": "<>at",       // saaat
-      "instrumental": "<>ar", // saaar
-      "locative": "<>i",      // saai
-      "inessive": "<>i",      // saai
-      "high_five": "<>at",    // hittak saaat un laptan
-      "at": "<>an",           // killa saaan
-      "for": "<>in",          // sa ein saain
-      "in": "<>in",           // en ein saain
-      "ago": "<>in"           // as ein saain
+      "default": "<>t",        // saat
+      "nominative": "<>t",     // saat
+      "accusative": "<>an",    // saaan
+      "genitive": "<>in",      // saain
+      "dative": "<>at",        // saaat
+      "instrumental": "<>ar",  // saaar
+      "locative": "<>i",       // saai
+      "inessive": "<>i",       // saai
+      "high_five": "<>at",     // hittak saaat un laptan
+      "at": "<>an",            // killa saaan
+      "for": "<>an",           // sa ein saaan
+      "in": "<>in",            // en ein saain
+      "ago": "<>in"            // az ein saain
     }
   },
-  "^(.+)aa(s?)$": {  // -aa - A3
+  "^(.+)aa$": {  // -aa - A3
     "default": {
-      "default": "<>",       // vahtaa
-      "nominative": "<>",    // vahtaa
-      "accusative": "<>n",   // vahtaan
-      "genitive": "<>n",     // vahtaan
-      "dative": "<>t",       // vahtaat
-      "instrumental": "<>r", // vahtaar
-      "locative": "<:-1>i",  // vahtai
-      "inessive": "<:-1>i",  // vahtai
-      "high_five": "<>t",    // hittak vahtaat un laptan
-      "at": "<>n",           // killa vahtaan
-      "for": "<>n",          // sa un vahtaan
-      "in": "<>n",           // en un vahtaan
-      "ago": "<>n"           // as un vahtaan
-    },
-    "plural": {
-      "default": "<>t",       // vahtaat
-      "nominative": "<>t",    // vahtaat
+      "default": "<>",        // vahtaa
+      "nominative": "<>",     // vahtaa
       "accusative": "<>n",    // vahtaan
-      "genitive": "<:-1>in",  // vahtain
+      "genitive": "<>n",      // vahtaan
       "dative": "<>t",        // vahtaat
       "instrumental": "<>r",  // vahtaar
-      "locative": "<:-1>ji",  // vahtaji
-      "inessive": "<:-1>ji",  // vahtaji
+      "locative": "<:-1>i",   // vahtai
+      "inessive": "<:-1>i",   // vahtai
       "high_five": "<>t",     // hittak vahtaat un laptan
       "at": "<>n",            // killa vahtaan
-      "for": "<:-1>in",       // sa ein vahtain
-      "in": "<:-1>in",        // en ein vahtain
-      "ago": "<:-1>in"        // as ein vahtain
-    }
-  },
-  "^(.+)[aä](s?)$": {  // -a - A1 | -ä - Ä1 (same pattern)
-    "default": {
-      "default": "<>",       // sea
-      "nominative": "<>",    // sea
-      "accusative": "<>n",   // sean
-      "genitive": "<>n",     // sean
-      "dative": "<>t",       // seat
-      "instrumental": "<>r", // sear
-      "locative": "<:-1>i",  // sei
-      "inessive": "<:-1>i",  // sei
-      "high_five": "<>t",    // hittak seat un laptan
-      "at": "<>n",           // killa sean
-      "for": "<>n",          // sa un sean
-      "in": "<>n",           // en un sean
-      "ago": "<>n"           // as un sean
+      "for": "<>n",           // sa un vahtaan
+      "in": "<>n",            // en un vahtaan
+      "ago": "<>n"            // az un vahtaan
     },
     "plural": {
-      "default": "<>t",       // seat
-      "nominative": "<>t",    // seat
-      "accusative": "<>an",   // seaan
-      "genitive": "<>in",     // seain
-      "dative": "<>at",       // seaat
-      "instrumental": "<>ar", // seaar
-      "locative": "<>i",      // seai
-      "inessive": "<>i",      // seai
-      "high_five": "<>at",    // hittak seaat un laptan
-      "at": "<>an",           // killa seaan
-      "for": "<>in",          // sa ein seain
-      "in": "<>in",           // en ein seain
-      "ago": "<>in"           // as ein seain
+      "default": "<>t",        // vahtaat
+      "nominative": "<>t",     // vahtaat
+      "accusative": "<>n",     // vahtaan
+      "genitive": "<:-1>in",   // vahtain
+      "dative": "<>t",         // vahtaat
+      "instrumental": "<>r",   // vahtaar
+      "locative": "<:-1>ji",   // vahtaji
+      "inessive": "<:-1>ji",   // vahtaji
+      "high_five": "<>t",      // hittak vahtaat un laptan
+      "at": "<>n",             // killa vahtaan
+      "for": "<:-1>an",        // sa ein vahtaan
+      "in": "<:-1>in",         // en ein vahtain
+      "ago": "<:-1>in"         // az ein vahtain
     }
   },
-  "^(derge|(.+)[iü](s?))$": {  // derge - E2 | -i - I2 (vintelis) | -ü - Ü1
+  "^(.+)aas$": {  // -aas - A3 with s
     "default": {
-      "default": "<>",       // derge
-      "nominative": "<>",    // derge
-      "accusative": "<>n",   // dergen
-      "genitive": "<>n",     // dergen
-      "dative": "<>t",       // derget
-      "instrumental": "<>r", // derger
-      "locative": "<:-1>i",  // dergi
-      "inessive": "<:-1>i",  // dergi
-      "high_five": "<>t",    // hittak derget un laptan
-      "at": "<>n",           // killa dergen
-      "for": "<>n",          // sa un dergen
-      "in": "<>n",           // en un dergen
-      "ago": "<>n"           // as un dergen
+      "default": "<>",           // Raas
+      "nominative": "<>",        // Raas
+      "accusative": "<:-1>n",    // Raan
+      "genitive": "<:-1>n",      // Raan
+      "dative": "<:-1>t",        // Raat
+      "instrumental": "<:-1>r",  // Raar
+      "locative": "<:-2>i",      // Rai
+      "inessive": "<:-2>i",      // Rai
+      "high_five": "<:-1>t",     // hittak Raat un laptan
+      "at": "<:-1>n",            // killa Raan
+      "for": "<:-1>n",           // sa un Raan
+      "in": "<:-1>n",            // en un Raan
+      "ago": "<:-1>n"            // az un Raan
     },
     "plural": {
-      "default": "<:-1>ät",       // dergät
-      "nominative": "<:-1>ät",    // dergät
-      "accusative": "<:-1>äan",   // dergäan
-      "genitive": "<:-1>äin",     // dergäin
-      "dative": "<:-1>äat",       // dergäat
-      "instrumental": "<:-1>äar", // dergäar
-      "locative": "<:-1>äi",      // dergäi
-      "inessive": "<:-1>äi",      // dergäi
-      "high_five": "<:-1>äat",    // hittak dergäat un laptan
-      "at": "<:-1>äan",           // killa dergäan
-      "for": "<:-1>äin",          // sa ein dergäin
-      "in": "<:-1>äin",           // en ein dergäin
-      "ago": "<:-1>äin"           // as ein dergäin
+      "default": "<:-1>t",        // Raat
+      "nominative": "<:-1>t",     // Raat
+      "accusative": "<:-1>n",     // Raan
+      "genitive": "<:-1>n",       // Raan
+      "dative": "<:-1>t",         // Raat
+      "instrumental": "<:-1>r",   // Raar
+      "locative": "<:-1>ji",      // Raaji
+      "inessive": "<:-1>ji",      // Raaji
+      "high_five": "<:-1>t",      // hittak Raat un laptan
+      "at": "<:-1>n",             // killa Raan
+      "for": "<:-1>n",            // sa ein Raan
+      "in": "<:-1>n",             // en ein Raan
+      "ago": "<:-1>n"             // az ein Raan
     }
   },
-  "^(.+)[eouö](s?))$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1
+  "^(.+)[aä]$": {  // -a - A1 | -ä - Ä1 (same pattern)
     "default": {
-      "default": "<>",       // penteme
-      "nominative": "<>",    // penteme
-      "accusative": "<>n",   // pentemen
-      "genitive": "<>n",     // pentemen
-      "dative": "<>t",       // pentemet
-      "instrumental": "<>r", // pentemer
-      "locative": "<:-1>i",  // pentemi
-      "inessive": "<:-1>i",  // pentemi
-      "high_five": "<>t",    // hittak pentemet un laptan
-      "at": "<>n",           // killa pentemen
-      "for": "<>n",          // sa un pentemen
-      "in": "<>n",           // en un pentemen
-      "ago": "<>n"           // as un pentemen
+      "default": "<>",        // sea
+      "nominative": "<>",     // sea
+      "accusative": "<>n",    // sean
+      "genitive": "<>n",      // sean
+      "dative": "<>t",        // seat
+      "instrumental": "<>r",  // sear
+      "locative": "<:-1>i",   // sei
+      "inessive": "<:-1>i",   // sei
+      "high_five": "<>t",     // hittak seat un laptan
+      "at": "<>n",            // killa sean
+      "for": "<>n",           // sa un sean
+      "in": "<>n",            // en un sean
+      "ago": "<>n"            // az un sean
     },
     "plural": {
-      "default": "<:-1>at",       // pentemat
-      "nominative": "<:-1>at",    // pentemat
-      "accusative": "<:-1>aan",   // pentemaan
-      "genitive": "<:-1>ain",     // pentemain
-      "dative": "<:-1>aat",       // pentemaat
-      "instrumental": "<:-1>aar", // pentemaar
-      "locative": "<:-1>ai",      // pentemai
-      "inessive": "<:-1>ai",      // pentemai
-      "high_five": "<:-1>aat",    // hittak pentemaat un laptan
-      "at": "<:-1>aan",           // killa pentemaan
-      "for": "<:-1>ain",          // sa ein pentemain
-      "in": "<:-1>ain",           // en ein pentemain
-      "ago": "<:-1>ain"           // as ein pentemain
+      "default": "<>t",        // seat
+      "nominative": "<>t",     // seat
+      "accusative": "<>an",    // seaan
+      "genitive": "<>in",      // seain
+      "dative": "<>at",        // seaat
+      "instrumental": "<>ar",  // seaar
+      "locative": "<>i",       // seai
+      "inessive": "<>i",       // seai
+      "high_five": "<>at",     // hittak seaat un laptan
+      "at": "<>an",            // killa seaan
+      "for": "<>an",           // sa ein seaan
+      "in": "<>in",            // en ein seain
+      "ago": "<>in"            // az ein seain
+    }
+  },
+  "^(.+)([aä]s|var)$": {  // -as - A1 | -äs - Ä1 with s | -var - month endings
+    "default": {
+      "default": "<>",           // lias
+      "nominative": "<>",        // lias
+      "accusative": "<:-1>n",    // lian
+      "genitive": "<:-1>n",      // lian
+      "dative": "<:-1>t",        // liat
+      "instrumental": "<:-1>r",  // liar
+      "locative": "<:-2>i",      // lii
+      "inessive": "<:-2>i",      // lii
+      "high_five": "<:-1>t",     // hittak liat un laptan
+      "at": "<:-1>n",            // killa lian
+      "for": "<:-1>n",           // sa un lian
+      "in": "<:-1>n",            // en un lian
+      "ago": "<:-1>n"            // az un lian
+    },
+    "plural": {
+      "default": "<:-1>t",        // liat
+      "nominative": "<:-1>t",     // liat
+      "accusative": "<:-1>an",    // liaan
+      "genitive": "<:-1>in",      // liain
+      "dative": "<:-1>at",        // liaat
+      "instrumental": "<:-1>ar",  // liaar
+      "locative": "<:-1>i",       // liai
+      "inessive": "<:-1>i",       // liai
+      "high_five": "<:-1>at",     // hittak liaat un laptan
+      "at": "<:-1>an",            // killa liaan
+      "for": "<:-1>an",           // sa ein liaan
+      "in": "<:-1>in",            // en ein liain
+      "ago": "<:-1>in"            // az ein liain
+    }
+  },
+  "^(?!derge)((.+)[eouö])$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 | Matches if the value is NOT "derge"
+    "default": {
+      "default": "<>",        // penteme
+      "nominative": "<>",     // penteme
+      "accusative": "<>n",    // pentemen
+      "genitive": "<>n",      // pentemen
+      "dative": "<>t",        // pentemet
+      "instrumental": "<>r",  // pentemer
+      "locative": "<:-1>i",   // pentemi
+      "inessive": "<:-1>i",   // pentemi
+      "high_five": "<>t",     // hittak pentemet un laptan
+      "at": "<>n",            // killa pentemen
+      "for": "<>n",           // sa un pentemen
+      "in": "<>n",            // en un pentemen
+      "ago": "<>n"            // az un pentemen
+    },
+    "plural": {
+      "default": "<:-1>at",        // pentemat
+      "nominative": "<:-1>at",     // pentemat
+      "accusative": "<:-1>aan",    // pentemaan
+      "genitive": "<:-1>ain",      // pentemain
+      "dative": "<:-1>aat",        // pentemaat
+      "instrumental": "<:-1>aar",  // pentemaar
+      "locative": "<:-1>ai",       // pentemai
+      "inessive": "<:-1>ai",       // pentemai
+      "high_five": "<:-1>aat",     // hittak pentemaat un laptan
+      "at": "<:-1>aan",            // killa pentemaan
+      "for": "<:-1>aan",           // sa ein pentemaan
+      "in": "<:-1>ain",            // en ein pentemain
+      "ago": "<:-1>ain"            // az ein pentemain
+    }
+  },
+  "^((.+)[eouö]s|ilatis)$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 with s | ilatis - I1
+    "default": {
+      "default": "<>",           // veises
+      "nominative": "<>",        // veises
+      "accusative": "<:-1>n",    // veisen
+      "genitive": "<:-1>n",      // veisen
+      "dative": "<:-1>t",        // veiset
+      "instrumental": "<:-1>r",  // veiser
+      "locative": "<:-1>i",      // veisei
+      "inessive": "<:-1>i",      // veisei
+      "high_five": "<:-1>t",     // hittak veiset un laptan
+      "at": "<:-1>n",            // killa veisen
+      "for": "<:-1>n",           // sa un veisen
+      "in": "<:-1>n",            // en un veisen
+      "ago": "<:-1>n"            // az un veisen
+    },
+    "plural": {
+      "default": "<:-2>at",        // veisat
+      "nominative": "<:-2>at",     // veisat
+      "accusative": "<:-2>aan",    // veisain
+      "genitive": "<:-2>ain",      // veisain
+      "dative": "<:-2>aat",        // veisaat
+      "instrumental": "<:-2>aar",  // veisaar
+      "locative": "<:-2>ai",       // veisai
+      "inessive": "<:-2>ai",       // veisai
+      "high_five": "<:-2>aat",     // hittak veisaat un laptan
+      "at": "<:-2>aan",            // killa veisaan
+      "for": "<:-2>aan",           // sa ein veisaan
+      "in": "<:-2>ain",            // en ein veisain
+      "ago": "<:-2>ain"            // az ein veisain
+    }
+  },
+  "^leitakis$": {  // leitakis - I3 (-jat plural)
+    "default": {
+      "default": "<>",           // leitakis
+      "nominative": "<>",        // leitakis
+      "accusative": "<:-1>n",    // leitakin
+      "genitive": "<:-1>n",      // leitakin
+      "dative": "<:-1>t",        // leitakit
+      "instrumental": "<:-1>r",  // leitakir
+      "locative": "<:-1>i",      // leitakii
+      "inessive": "<:-1>i",      // leitakii
+      "high_five": "<:-1>t",     // hittak leitakit un laptan
+      "at": "<:-1>n",            // killa leitakin
+      "for": "<:-1>n",           // sa un leitakin
+      "in": "<:-1>n",            // en un leitakin
+      "ago": "<:-1>n"            // az un leitakin
+    },
+    "plural": {
+      "default": "<:-3>jat",        // leitajat
+      "nominative": "<:-3>jat",     // leitajat
+      "accusative": "<:-3>jaan",    // leitajaan
+      "genitive": "<:-3>jain",      // leitajain
+      "dative": "<:-3>jaat",        // leitajaat
+      "instrumental": "<:-3>jaar",  // leitajaar
+      "locative": "<:-3>jai",       // leitajai
+      "inessive": "<:-3>jai",       // leitajai
+      "high_five": "<:-3>jaat",     // hittak leitajaat un laptan
+      "at": "<:-3>jaan",            // killa leitajaan
+      "for": "<:-3>jaan",           // sa ein leitajaan
+      "in": "<:-3>jain",            // en ein leitajain
+      "ago": "<:-3>jain"            // az ein leitajain
+    }
+  },
+  "^(.+)[aeiouäyöü]i$": {  // -Vi - I4 (koi, nei)
+    "default": {
+      "default": "<>",        // nei
+      "nominative": "<>",     // neis
+      "accusative": "<>n",    // nein
+      "genitive": "<>n",      // nein
+      "dative": "<>t",        // neit
+      "instrumental": "<>r",  // neir
+      "locative": "<>ji",     // neiji
+      "inessive": "<>ji",     // neiji
+      "high_five": "<>t",     // hittak neit un laptan
+      "at": "<>n",            // killa nein
+      "for": "<>n",           // sa un nein
+      "in": "<>n",            // en un nein
+      "ago": "<>n"            // az un nein
+    },
+    "plural": {
+      "default": "<>jat",        // neijat
+      "nominative": "<>jat",     // neijat
+      "accusative": "<>jaan",    // neijaan
+      "genitive": "<>jaan",      // neijaan
+      "dative": "<>jaat",        // neijaat
+      "instrumental": "<>jaar",  // neijaar
+      "locative": "<>jai",       // neijai
+      "inessive": "<>jai",       // neijai
+      "high_five": "<>jaat",     // hittak neijaat un laptan
+      "at": "<>jaan",            // killa neijaan
+      "for": "<>jaan",           // sa ein neijaan
+      "in": "<>jaan",            // en ein neijaan
+      "ago": "<>jaan"            // az ein neijaan
+    }
+  },
+  "^(derge|(.+)[iü])$": {  // derge - E2 | -i - I2 (vintelis) | -ü - Ü1
+    "default": {
+      "default": "<>",        // derge
+      "nominative": "<>",     // derge
+      "accusative": "<>n",    // dergen
+      "genitive": "<>n",      // dergen
+      "dative": "<>t",        // derget
+      "instrumental": "<>r",  // derger
+      "locative": "<:-1>i",   // dergi
+      "inessive": "<:-1>i",   // dergi
+      "high_five": "<>t",     // hittak derget un laptan
+      "at": "<>n",            // killa dergen
+      "for": "<>n",           // sa un dergen
+      "in": "<>n",            // en un dergen
+      "ago": "<>n"            // az un dergen
+    },
+    "plural": {
+      "default": "<:-1>ät",        // dergät
+      "nominative": "<:-1>ät",     // dergät
+      "accusative": "<:-1>äan",    // dergäan
+      "genitive": "<:-1>äin",      // dergäin
+      "dative": "<:-1>äat",        // dergäat
+      "instrumental": "<:-1>äar",  // dergäar
+      "locative": "<:-1>äi",       // dergäi
+      "inessive": "<:-1>äi",       // dergäi
+      "high_five": "<:-1>äat",     // hittak dergäat un laptan
+      "at": "<:-1>äan",            // killa dergäan
+      "for": "<:-1>äan",           // sa ein dergäan
+      "in": "<:-1>äin",            // en ein dergäin
+      "ago": "<:-1>äin"            // az ein dergäin
+    }
+  },
+  "^(.+)[iü]s$": {  // -i - I2 (vintelis) | -ü - Ü1 with s
+    "default": {
+      "default": "<>",           // vintelis
+      "nominative": "<>",        // vintelis
+      "accusative": "<:-1>n",    // vintelin
+      "genitive": "<:-1>n",      // vintelin
+      "dative": "<:-1>t",        // vintelit
+      "instrumental": "<:-1>r",  // vintelir
+      "locative": "<:-1>i",      // vintelii
+      "inessive": "<:-1>i",      // vintelii
+      "high_five": "<:-1>t",     // hittak vintelit un laptan
+      "at": "<:-1>n",            // killa vintelin
+      "for": "<:-1>n",           // sa un vintelin
+      "in": "<:-1>n",            // en un vintelin
+      "ago": "<:-1>n"            // az un vintelin
+    },
+    "plural": {
+      "default": "<:-2>ät",        // vintelät
+      "nominative": "<:-2>ät",     // vintelät
+      "accusative": "<:-2>äan",    // vinteläan
+      "genitive": "<:-2>äin",      // vinteläin
+      "dative": "<:-2>äat",        // vinteläat
+      "instrumental": "<:-2>äar",  // vinteläar
+      "locative": "<:-2>äi",       // vinteläi
+      "inessive": "<:-2>äi",       // vinteläi
+      "high_five": "<:-2>äat",     // hittak vinteläat un laptan
+      "at": "<:-2>äan",            // killa vinteläan
+      "for": "<:-2>äan",           // sa ein vinteläan
+      "in": "<:-2>äin",            // en ein vinteläin
+      "ago": "<:-2>äin"            // az ein vinteläin
     }
   },
   "^.+": {  // "Default" in case no pattern matches at all
@@ -244,7 +442,7 @@
       "inessive": "<>'ai",
       "high_five": "<>'aat",
       "at": "<>'aan",
-      "for": "<>'ain",
+      "for": "<>'aan",
       "in": "<>'ain",
       "ago": "<>'ain"
     }

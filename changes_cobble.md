@@ -408,3 +408,6 @@
 
 ## v1.4.4 - 29 January 2022
 - You can now decline Kargadian nouns
+
+## v1.4.4.1 - 30 January 2022
+- Better case update handling
