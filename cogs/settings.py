@@ -22,6 +22,7 @@ class Settings(commands.Cog):
         """ List of all supported languages """
         nat, con, rsl = [], [], []
         _en = languages.Language("en")
+        exclude = ["_self", "_en", "_valid", "_conlang"]
         for language in list(languages.languages.languages.keys()):
             _language = languages.Language(language)
             if language == "en":
@@ -30,22 +31,46 @@ class Settings(commands.Cog):
                 strings = 0
                 matching = 0
                 for k in languages.languages.languages["en"].keys():
-                    strings += 1
+                    if k.startswith("country_") or k in exclude:
+                        continue
                     d1, d2 = _en.data(k), _language.data(k)
-                    if d1 == d2:
-                        matching += 1
+
+                    # Well they should never be different, but better make sure
+                    # Behaviour for when the data is a list
+                    if isinstance(d1, list) and isinstance(d2, list):
+                        if len(d1) == len(d2):
+                            # If the lengths are the same, then check through every single string inside
+                            for i, s1 in enumerate(d1):
+                                strings += 1
+                                s2 = d2[i]
+                                if s1 == s2:
+                                    matching += 1
+                        else:
+                            # If the lengths are somehow different, then we count it all as just one big string
+                            # Don't bother checking if any strings inside there match or not...
+                            strings += 1
+
+                    # Behaviour for when the data is a dict
+                    elif isinstance(d1, dict) and isinstance(d2, dict):
+                        for key, s1 in d1.items():
+                            s2 = d2.get(key)
+                            strings += 1
+                            if s1 == s2:
+                                matching += 1
+
+                    # Behaviour for when the data is something else (so, a string)
+                    else:
+                        strings += 1
+                        if d1 == d2:
+                            matching += 1
                 completeness = 1 - (matching / strings)
 
-            out = f"`{language}`: {_language.string('_self')} - {_language.string('_en')} - {completeness:.1%}"
+            out = f"`{language}`: {_language.string('_self')} - {_language.string('_en')} - {completeness:.1%} translated"
             conlang = _language.data("_conlang")
             if not _language.data("_valid"):
                 continue
-            elif conlang == 2:
-                rsl.append(out)
-            elif conlang == 1:
-                con.append(out)
-            else:
-                nat.append(out)
+            add_list = rsl if conlang == 2 else con if conlang == 1 else nat
+            add_list.append(out)
         # Regaus, Suager, Five, Leitoxz, 1337xp, Potato,
         # Chikin, Karmeck, Kyomi, Shawn, Mid, Aya
         trusted = [302851022790066185, 517012611573743621, 430891116318031872, 291665491221807104, 679819572278198272, 374853432168808448,

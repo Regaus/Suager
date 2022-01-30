@@ -181,10 +181,10 @@ class Utility(commands.Cog):
                 # local_time = languages.gts(time.now(None) + timedelta(seconds=tz), _time_locale)
                 local_time = language.time(time.now(None) + timedelta(seconds=tz), short=1, dow=False, seconds=False, tz=False)
                 if country:
-                    country_name = language.string(f"z_data_country_{country}")
+                    country_name = language.string(f"country_{country}")
                     emote = f":flag_{country}: "
                 else:
-                    country_name = "Not a country"
+                    country_name = "Unknown country"
                     emote = ""
                 embed.title = language.string("util_weather_title", data['name'], country_name, emote=emote)
                 embed.description = language.string("util_weather_desc", local_time)

@@ -1128,3 +1128,8 @@
 
 ## v7.4.19 - 27 January 2022
 - Make it possible to update cases as well as languages
+
+## v7.4.20 - 30 January 2022
+- Better check for language completeness (checks inside strings too)
+- Country names are now stored in a separate file from the rest of language data to reduce clutter
+- Fixed weather to actually show the country name again
