@@ -6,9 +6,11 @@ from utils import bases, conlangs, general
 
 def is_rsl1_eligible(ctx: commands.Context):
     # Users:                 Regaus,             Leitoxz,            Alex Five,          Potato,             Chuck,              Mid,
-    # Users:                 Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza
+    # Users:                 Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza,
+    # Users:                 Karmeck,            Steiri,             PandaBoi
     if ctx.author.id not in [302851022790066185, 291665491221807104, 430891116318031872, 374853432168808448, 593736085327314954, 581206591051923466,
-                             236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691]:
+                             236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691,
+                             857360761135431730, 230313032956248064, 301091858354929674]:
         return False
     if ctx.guild is None:
         return True
@@ -83,7 +85,8 @@ class Conlangs(commands.Cog):
         for number in numbers:
             data = [number.title() + ":"]
             for case in cases:
-                data.append(f"`{case:<12}` -> {_language.case(word, case, number)}")
+                # \u200b = zero width space, makes it also align on mobile
+                data.append(f"`{case:<12}\u200b` -> {_language.case(word, case, number)}")
             out.append("\n".join(data))
         return await general.send("\n\n".join(out), ctx.channel)
 

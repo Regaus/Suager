@@ -411,3 +411,7 @@
 
 ## v1.4.4.1 - 30 January 2022
 - Better case update handling
+
+## v1.4.4.2 - 30 January 2022
+- Fix alignment on mobile
+- Add new people to system
