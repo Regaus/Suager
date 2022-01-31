@@ -415,3 +415,6 @@
 ## v1.4.4.2 - 30 January 2022
 - Fix alignment on mobile
 - Add new people to system
+
+## v1.4.5 - 31 January 2022
+- Added weather icons for weather78

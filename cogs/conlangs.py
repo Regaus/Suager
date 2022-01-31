@@ -64,6 +64,7 @@ class Conlangs(commands.Cog):
         """ Decline an RSL-1 noun """
         if word.startswith("debug "):
             word = word[6:]
+            # This will only test for the cases that Suager will use, so the extra cases (like MWK) will not be shown here.
             cases = ["default", "nominative", "vocative", "accusative", "genitive", "dative", "instrumental", "locative", "inessive", "high_five", "at", "for", "in", "ago"]
         else:
             case_lists = {

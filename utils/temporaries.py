@@ -354,8 +354,11 @@ async def ka_data_updater(bot: bot_data.Bot):
                     english = place.time.strftime("%d %B %Y, %H:%M", "en")
                     if place.weather is not None:
                         temp = f"{place.weather['temperature']:.0f}°C"
-                        weather_en = languages.Language("en").data("weather78")[place.weather['rain']]
-                        weather_tb = languages.Language("ka_tb").data("weather78")[place.weather['rain']]
+                        rain = place.weather['rain']
+                        if rain == "sunny":
+                            rain += "2" if place.sun is not None and place.sun.elevation < 0 else "1"
+                        weather_en = languages.Language("en").data("weather78")[rain]
+                        weather_tb = languages.Language("ka_tb").data("weather78")[rain]
                         english += f" | {temp} | {weather_en}"
                         tebarian += f" | {temp} | {weather_tb}"
                     # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
