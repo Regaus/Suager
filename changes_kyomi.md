@@ -105,3 +105,6 @@
 - Fix reminders commands still using the old system
 - Fix mute list command still using the old system
 - The mute list command can now also show permanent mutes
+
+## v0.5.2 - 2 February 2022
+- Made temporary events handle muted users leaving and rejoining

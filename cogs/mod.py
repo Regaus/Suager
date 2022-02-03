@@ -98,6 +98,7 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         message = f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}"
         general.print_error(message)
         logger.log(bot.name, "moderation", message)
+        logger.log(bot.name, "errors", message)
 
 
 async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member,
@@ -151,6 +152,7 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, u
         message = f"{time.time()} > {bot.full_name} > Mod Logs > Case ID {entry_id} - Failed to send message to log channel - {type(e).__name__}: {e}"
         general.print_error(message)
         logger.log(bot.name, "moderation", message)
+        logger.log(bot.name, "errors", message)
 
 
 class Moderation(commands.Cog):

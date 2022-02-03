@@ -19,6 +19,7 @@ async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
         message = f"{time.time()} > {bot.full_name} > Reminders > Reminder ID {entry_id} - User ID {user} not found!"
         general.print_error(message)
         logger.log(bot.name, "reminders", message)
+        logger.log(bot.name, "errors", message)
     else:
         try:
             await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")
@@ -29,6 +30,7 @@ async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
             message = f"{time.time()} > {bot.full_name} > Reminders > Reminder ID {entry_id} - Error: {type(e).__name__}: {e}"
             general.print_error(message)
             logger.log(bot.name, "reminders", message)
+            logger.log(bot.name, "errors", message)
     bot.db.execute("UPDATE reminders SET handled=? WHERE id=?", (handled, entry_id))
 
 
@@ -66,6 +68,7 @@ async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False)
     def send_error(message: str, _entry_id: int):
         general.print_error(message)
         logger.log(bot.name, "moderation", message)
+        logger.log(bot.name, "errors", message)
         save_handle(2 if not retry else 1, _entry_id)  # If it errors out the second time, just ignore it as "handled" anyways...
 
     entry_id = entry["id"]
@@ -78,6 +81,7 @@ async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False)
         _message = f"{time.time()} > {bot.full_name} > Punishments > Weird action type {entry['action']} expired..."
         general.print_error(_message)
         logger.log(bot.name, "moderation", _message)
+        logger.log(bot.name, "errors", _message)
         save_handle(1, entry_id)
         return
     guild: discord.Guild = bot.get_guild(entry["gid"])
@@ -192,14 +196,18 @@ async def birthdays(bot: bot_data.Bot):
                                     await general.send(message, channel, u=True)
                                     print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
                                 except Exception as e:
-                                    general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Message (Guild {gid}, User {user.id}) > {e}")
+                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed sending birthday message (Guild {gid}, User {user.id}): {e}"
+                                    general.print_error(out)
+                                    logger.log(bot.name, "errors", out)
                             if data[0]:
                                 role: discord.Role = guild.get_role(data[0])
                                 try:
                                     await user.add_roles(role, reason=f"[Birthdays] It is {user}'s birthday")
                                     print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave {user} the birthday role")
                                 except Exception as e:
-                                    general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Role (Guild {gid}, User {user.id}) > {e}")
+                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
+                                    general.print_error(out)
+                                    logger.log(bot.name, "errors", out)
                 # if dm:
                 #     try:
                 #         user = bot.get_user(person["uid"])
@@ -226,7 +234,9 @@ async def birthdays(bot: bot_data.Bot):
                                 await user.remove_roles(role, reason=f"[Birthdays] It is no longer {user}'s birthday")
                                 print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user}")
                             except Exception as e:
-                                general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > Birthday Role End (Guild {gid}, User {user.id}) > {e}")
+                                out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed taking away birthday role (Guild {gid}, User {user.id}): {e}"
+                                general.print_error(out)
+                                logger.log(bot.name, "errors", out)
                 # except Exception as e:
                 #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
 
@@ -370,7 +380,9 @@ async def ka_data_updater(bot: bot_data.Bot):
                     # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
                 except Exception as e:
                     general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
-                    logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}")
+                    log_out = f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}"
+                    logger.log(bot.name, "kargadia", log_out)
+                    logger.log(bot.name, "errors", log_out)
         logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities data")
 
         # This should make it adjust itself for lag caused
@@ -397,12 +409,14 @@ async def ka_time_updater(bot: bot_data.Bot):
             if message is None:
                 raise general.RegausError("City time message not found")
             await message.edit(content=content)
-            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities times message")
         except (IndexError, discord.NotFound, general.RegausError):
             await channel.send(content)
-            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset Kargadian cities times message")
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset Kargadian cities times message for {name}")
         except Exception as e:
-            general.print_error(f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
+            out = f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}"
+            general.print_error(out)
+            logger.log(bot.name, "kargadia", out)
+            logger.log(bot.name, "errors", out)
 
     while True:
         for area_name, area in ka_places.items():
@@ -410,6 +424,7 @@ async def ka_time_updater(bot: bot_data.Bot):
             for city, _data in area.items():
                 data.append(f"`{city:<12} - {_data['en']}`")
             await update_message(area_name, "\n".join(data))
+        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities times messages")
         # out = "\n\n".join(data)
 
         # This should make it adjust itself for lag caused
@@ -422,6 +437,10 @@ async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
     await wait_until_next_iter(update_speed_play, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
+
+    def error(text: str):
+        general.print_error(text)
+        logger.log(bot.name, "errors", text)
 
     while True:
         try:
@@ -644,11 +663,11 @@ async def playing(bot: bot_data.Bot):
             _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
             await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
-            general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
+            error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > The bot tried to do something while disconnected.")
+            error(f"{time.time()} > {bot.full_name} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
-            general.print_error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
+            error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
@@ -664,6 +683,10 @@ async def avatars(bot: bot_data.Bot):
     await wait_until_next_iter(update_speed_avatar, 1)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
+    def error(text: str):
+        general.print_error(text)
+        logger.log(bot.name, "errors", text)
+
     while True:
         try:
             # bot.config = general.get_config()
@@ -672,7 +695,7 @@ async def avatars(bot: bot_data.Bot):
             # avatars = lists.avatars
             avatar = random.choice(lists.avatars)
             e = False
-            s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Didn't change avatar due to an error"]
+            s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
             try:
                 bio = await http.get(avatar, res_method="read")
                 await bot.user.edit(avatar=bio)
@@ -681,11 +704,11 @@ async def avatars(bot: bot_data.Bot):
             send = s2 if e else s1
             logger.log(bot.name, "avatar", send)
         except PermissionError:
-            general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
+            error(f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
         except aiohttp.ClientConnectorError:
-            general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > The bot tried to do something while disconnected.")
+            error(f"{time.time()} > {bot.full_name} > Avatar Changer > The bot tried to do something while disconnected.")
         except Exception as e:
-            general.print_error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+            error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
 
         await asyncio.sleep(1)
         await wait_until_next_iter(update_speed_avatar, 1)
@@ -775,7 +798,9 @@ async def polls(bot: bot_data.Bot):
                         if resend:
                             await general.send(None, channel, embed=embed)
             except Exception as e:
-                general.print_error(f"{time.time()} > {bot.full_name} > Polls > Poll {poll['poll_id']} error: {type(e).__name__}: {e}")
+                out = f"{time.time()} > {bot.full_name} > Polls > Poll {poll['poll_id']} error: {type(e).__name__}: {e}"
+                general.print_error(out)
+                logger.log(bot.name, "errors", out)
             bot.db.execute("DELETE FROM polls WHERE poll_id=?", (poll["poll_id"],))
 
         await asyncio.sleep(1)
@@ -824,48 +849,64 @@ async def trials(bot: bot_data.Bot):
                             if member:
                                 _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
                                 if not _data:
-                                    general.print_error(f"{time.time()} > Trials > Trial {trial_id} > Guild settings not found")
+                                    out = f"{time.time()} > Trials > Trial {trial_id} > Guild settings not found"
+                                    general.print_error(out)
+                                    logger.log(bot.name, "errors", out)
                                 else:
                                     data = json.loads(_data["data"])
                                     try:
                                         mute_role_id = data["mute_role"]
                                     except KeyError:
-                                        general.print_error(f"{time.time()} > Trials > Trial {trial_id} > Guild has no mute role set")
+                                        out = f"{time.time()} > Trials > Trial {trial_id} > Guild has no mute role set"
+                                        general.print_error(out)
+                                        logger.log(bot.name, "errors", out)
                                     else:
                                         mute_role = guild.get_role(mute_role_id)
                                         if not mute_role:
-                                            general.print_error(f"{time.time()} > Trials > Trial {trial_id} > Mute role not found")
+                                            out = f"{time.time()} > Trials > Trial {trial_id} > Mute role not found"
+                                            general.print_error(out)
+                                            logger.log(bot.name, "errors", out)
                                         else:
                                             if action == "mute":
                                                 await member.add_roles(mute_role, reason=trial_success_text)
                                                 duration = trial["mute_length"]
-                                                temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
-                                                                                  (member.id, guild.id, bot.name))
+                                                # temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
+                                                #                                   (member.id, guild.id, bot.name))
+                                                bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?",
+                                                               (member.id, guild.id, bot.name))
                                                 if duration:
                                                     new_mute_end = time.now2() + timedelta(seconds=duration)
-                                                    if temp_mute_entry:
-                                                        bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (new_mute_end, temp_mute_entry["entry_id"]))
-                                                    else:
-                                                        random_id = general.random_id()
-                                                        while bot.db.fetchrow("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
-                                                            random_id = general.random_id()
-                                                        bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                                                       (member.id, "mute", new_mute_end, guild.id, None, random_id, 0, bot.name))
+                                                    # if temp_mute_entry:
+                                                    #     bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (new_mute_end, temp_mute_entry["entry_id"]))
+                                                    # else:
+                                                    #     random_id = general.random_id()
+                                                    #     while bot.db.fetchrow("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
+                                                    #         random_id = general.random_id()
+                                                    #     bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                                    #                    (member.id, "mute", new_mute_end, guild.id, None, random_id, 0, bot.name))
                                                     if channel:
                                                         _duration = language.delta_int(duration, accuracy=3, brief=False, affix=False)
                                                         output = language.string("trials_success_mute_timed", trial_id, user, _duration)
                                                         await general.send(output, channel)
+
+                                                    bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                                                   (member.id, guild.id, "mute", trial["author_id"], trial_success_text, True, new_mute_end, 0, bot.name))
                                                 else:
-                                                    if temp_mute_entry:
-                                                        bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
+                                                    # if temp_mute_entry:
+                                                    #     bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
                                                     if channel:
                                                         output = language.string("trials_success_mute", trial_id, user)
                                                         await general.send(output, channel)
+
+                                                    bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                                                   (member.id, guild.id, "mute", trial["author_id"], trial_success_text, False, time.now2(), 0, bot.name))
                                                 if guild.id == 869975256566210641:  # Nuriki's anarchy server
                                                     try:
                                                         await member.remove_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Remove the Anarchists role
                                                     except AttributeError:
-                                                        general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
+                                                        out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found..."
+                                                        general.print_error(out)
+                                                        logger.log(bot.name, "errors", out)
                                                 if duration:
                                                     duration_text = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
                                                     # try:
@@ -879,15 +920,21 @@ async def trials(bot: bot_data.Bot):
                                                     #     pass
                                             else:
                                                 await member.remove_roles(mute_role, reason=trial_success_text)
-                                                temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
-                                                                                  (member.id, guild.id, bot.name))
-                                                if temp_mute_entry:
-                                                    bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
+                                                # temp_mute_entry = bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'",
+                                                #                                   (member.id, guild.id, bot.name))
+                                                # if temp_mute_entry:
+                                                #     bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
+                                                bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?",
+                                                               (member.id, guild.id, bot.name))
+                                                bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                                               (member.id, guild.id, "unmute", trial["author_id"], trial_success_text, False, time.now2(), 1, bot.name))
                                                 if guild.id == 869975256566210641:  # Nuriki's anarchy server
                                                     try:
                                                         await member.add_roles(guild.get_role(869975498799845406), reason=trial_success_text)  # Give back the Anarchists role
                                                     except AttributeError:
-                                                        general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
+                                                        out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found..."
+                                                        general.print_error(out)
+                                                        logger.log(bot.name, "errors", out)
                                                     # try:
                                                     #     await user.send(f"You've been unmuted in {guild.name}.\n{reason_dm}")
                                                     # except discord.Forbidden:
@@ -896,7 +943,9 @@ async def trials(bot: bot_data.Bot):
                                                     output = language.string("trials_success_unmute", trial_id, user)
                                                     await general.send(output, channel)
                             else:
-                                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't mute")
+                                out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't mute"
+                                general.print_error(out)
+                                logger.log(bot.name, "errors", out)
                                 if channel:
                                     string = "trials_error_member_none_mute" if action == "mute" else "trials_error_member_none_unmute"
                                     await general.send(language.string(string, trial_id), channel)
@@ -911,7 +960,9 @@ async def trials(bot: bot_data.Bot):
                                     output = language.string("trials_success_kick", trial_id, user)
                                     await general.send(output, channel)
                             else:
-                                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't kick")
+                                out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't kick"
+                                general.print_error(out)
+                                logger.log(bot.name, "errors", out)
                                 if channel:
                                     await general.send(language.string("trials_error_member_none_kick", trial_id), channel)
                         elif action == "ban":
@@ -934,7 +985,9 @@ async def trials(bot: bot_data.Bot):
                                 output = language.string("trials_success_unban", trial_id, user)
                                 await general.send(output, channel)
                         else:
-                            general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong.")
+                            out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong."
+                            general.print_error(out)
+                            logger.log(bot.name, "errors", out)
                         await send_mod_dm(bot, languages.FakeContext(guild, bot), member, action, f"Trial results (Score: {score:+}, {upvotes:.2%} voted yes)", duration_text)
                     else:  # The trial has failed, so restore the member's anarchist roles
                         if guild.id == 869975256566210641 and member:  # Nuriki's anarchy server
@@ -942,7 +995,9 @@ async def trials(bot: bot_data.Bot):
                                 await member.remove_roles(guild.get_role(870338399922446336), reason="Trial has ended")  # Remove the On Trial role
                                 await member.add_roles(guild.get_role(869975498799845406), reason="Trial has ended")  # Give the Anarchists role
                             except AttributeError:
-                                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
+                                out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found..."
+                                general.print_error(out)
+                                logger.log(bot.name, "errors", out)
                         if channel:
                             fail_text = {
                                 "ban": "trials_failure_ban",
@@ -993,9 +1048,13 @@ async def trials(bot: bot_data.Bot):
                         if resend:
                             await general.send(None, channel, embed=embed)
                 else:
-                    general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Guild not found")
+                    out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Guild not found"
+                    general.print_error(out)
+                    logger.log(bot.name, "errors", out)
             except Exception as e:
-                general.print_error(f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} error: {type(e).__name__}: {e}")
+                out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} error: {type(e).__name__}: {e}"
+                general.print_error(out)
+                logger.log(bot.name, "errors", out)
             bot.db.execute("DELETE FROM trials WHERE trial_id=?", (trial_id,))
 
         await asyncio.sleep(1)

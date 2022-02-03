@@ -58,7 +58,7 @@ load = {
 
 
 class Bot(AutoShardedBot):
-    def __init__(self, blacklist: list, index: int, lc: dict, config: dict, name: str, db: Database, usages: dict, *args, **kwargs):
+    def __init__(self, blacklist: list, index: int, lc: dict, config: dict, name: str, db: Database, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.blacklist = blacklist
         self.index = index
@@ -67,7 +67,7 @@ class Bot(AutoShardedBot):
         self.name = name
         self.full_name = self.local_config["name"]
         self.db = db
-        self.usages = usages
+        # self.usages = usages
         self.uptime = None
 
     async def on_message(self, msg):

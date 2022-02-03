@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.guild import BanEntry
 
 from cogs.mod import MemberID
-from utils import bot_data, general, time
+from utils import bot_data, general, logger, time
 
 
 class Polls(commands.Cog):
@@ -417,7 +417,9 @@ class Polls(commands.Cog):
                             await _member.remove_roles(ctx.guild.get_role(870338399922446336), reason="Trial in progress")  # Remove the On Trial role
                             await _member.add_roles(ctx.guild.get_role(869975498799845406), reason="Trial in progress")  # Give the Anarchists role
                     except AttributeError:
-                        general.print_error(f"{time.time()} > {self.bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found...")
+                        out = f"{time.time()} > {self.bot.full_name} > Trials > Trial {trial_id} > Trial or Anarchist role not found..."
+                        general.print_error(out)
+                        logger.log(self.bot.name, "errors", out)
             channel: discord.TextChannel = guild.get_channel(channel_id)
             if channel:
                 try:

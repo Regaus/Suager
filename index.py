@@ -53,7 +53,7 @@ for i in range(len(config["bots"])):
     except FileNotFoundError:
         blacklist = []
     name = local_config["internal_name"]
-    bot = bot_data.Bot(blacklist, i, local_config, config, name, db, {},
+    bot = bot_data.Bot(blacklist, i, local_config, config, name, db,
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
                        # connector=aiohttp.TCPConnector(ssl=False),
@@ -64,8 +64,8 @@ for i in range(len(config["bots"])):
     for name in load:
         bot.load_extension(f"cogs.{name}")
     bot.load_extension("jishaku")
-    for command in bot.commands:
-        bot.usages[str(command)] = 0
+    # for command in bot.commands:
+    #     bot.usages[str(command)] = 0
     if "token" in local_config and local_config["token"]:
         tasks.append(loop.create_task(bot.start(local_config["token"])))
         tasks.append(loop.create_task(temporaries.playing(bot)))

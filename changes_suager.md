@@ -1136,3 +1136,8 @@
 
 ## v7.4.20.1 - 30 January 2022
 - Moved Language.get() to the bots' subclass of Language, since it doesn't fit with the library
+
+## v7.4.21 - 2 February 2022
+- Errors should now be properly logged instead of only being printed
+- Removed usages
+- Made temporary events handle muted users leaving and rejoining

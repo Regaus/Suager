@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
-from utils import bot_data, emotes, general, http, languages, settings, time
+from utils import bot_data, emotes, general, http, languages, logger, settings, time
 from utils.leaderboards import leaderboard, leaderboard2
 
 
@@ -288,7 +288,9 @@ class Leveling(commands.Cog):
             except discord.Forbidden:
                 await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.", ctx.channel)
             except Exception as e:
-                general.print_error(f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
+                out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
+                general.print_error(out)
+                logger.log(self.bot.name, "errors", out)
             if lu or ld:
                 try:
                     next_left = next_reward["level"] - level

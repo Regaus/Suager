@@ -44,6 +44,7 @@ class Events(commands.Cog):
             if ctx.channel.id == 742886280911913010:
                 for channel_id in self.updates:
                     channel = self.bot.get_channel(channel_id)
+                    # These don't need to be logged because nobody cares
                     try:
                         if channel is not None:
                             await general.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}", channel)
@@ -119,31 +120,57 @@ class Events(commands.Cog):
         send = f"{time.time()} > {self.bot.full_name} > {g} > {ctx.author} ({ctx.author.id}) > {content}"
         logger.log(self.bot.name, "commands", send)
         print(send)
-        try:
-            self.bot.usages[str(ctx.command)] += 1
-        except KeyError:
-            self.bot.usages[str(ctx.command)] = 1
+        # try:
+        #     self.bot.usages[str(ctx.command)] += 1
+        # except KeyError:
+        #     self.bot.usages[str(ctx.command)] = 1
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just joined {member.guild.name}")
+        # Load settings
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
+        # Push all "User left" status punishments back into normal mode
+        self.bot.db.execute("UPDATE punishments SET handled=0 WHERE uid=? and gid=? AND handled=3 AND bot=?", (member.id, member.guild.id, self.bot.name))
+        active_mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
+        if active_mutes and data:
+            # Check for validity of the mutes: if they are still applicable
+            valid = False
+            for mute in active_mutes:
+                if mute["temp"] and mute["expiry"] > time.now2():
+                    valid = True
+                    break
+                elif not mute["temp"]:
+                    valid = True
+                    break
+
+            if valid:
+                settings = json.loads(data["data"])
+                if "mute_role" in settings:
+                    mute_role: discord.Role = member.guild.get_role(settings["mute_role"])
+                    if mute_role is not None:
+                        try:
+                            await member.add_roles(mute_role, reason="Rejoining while muted")
+                            logger.log(self.bot.name, "moderation", f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Re-muted {member} upon rejoining")
+                        except Exception as e:
+                            out = f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Failed to re-mute {member}: {type(e).__name__}: {e}"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "moderation", out)
+                            logger.log(self.bot.name, "errors", out)
+                    else:
+                        out = f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Failed to re-mute {member}: Mute role not found"
+                        general.print_error(out)
+                        logger.log(self.bot.name, "moderation", out)
+                        logger.log(self.bot.name, "errors", out)
+
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:  # Senko Lair
-                # members = len(member.guild.members)
-                # await general.send(f"Welcome **{member.name}** to Senko Lair!\nThere are now **{members}** members.", self.bot.get_channel(610836120321785869))
-
                 role_ids = {
                     2021: 794699877325471776,
                     2022: 922602168010309732
                 }
                 role_id = role_ids[time.now().year]
                 await member.add_roles(member.guild.get_role(role_id))
-
-                # if time.now() < time.dt(2022):
-                #     role = member.guild.get_role(794699877325471776)
-                #     await member.add_roles(role, reason="Joining Senko Lair during 2021.")
-                # else:
-                #     await general.send("<@302851022790066185> Update the code for 2022 role", self.bot.get_channel(610482988123422750))
 
             if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
                 if time2.datetime.now() - time2.datetime.from_datetime(member.created_at) < time.td(days=30):
@@ -173,7 +200,6 @@ class Events(commands.Cog):
             if member.name[0] < "A":
                 await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
 
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
         if data:
             settings = json.loads(data["data"])
             if "join_roles" in settings:
@@ -186,7 +212,9 @@ class Events(commands.Cog):
                                 try:
                                     await member.add_roles(role, reason=f"[Auto-Roles] Joining the server")
                                 except discord.Forbidden:
-                                    general.print_error(f"{time.time()} > {self.bot.full_name} > {member.guild} > Failed to give {member} join role (Forbidden)")
+                                    out = f"{time.time()} > {self.bot.full_name} > {member.guild} > Failed to give {member} join role (Forbidden)"
+                                    general.print_error(out)
+                                    logger.log(self.bot.name, "errors", out)
                 except KeyError:
                     pass
             if "welcome" in settings:
@@ -203,7 +231,13 @@ class Events(commands.Cog):
                             .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
                             .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
-                        await general.send(message, channel, u=[member])
+                        try:
+                            await general.send(message, channel, u=[member])
+                        except discord.Forbidden:
+                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send message for {member} - Forbidden"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
                 await member.edit(nick=f"✧₊˚🍰⌇{member.name[:23]}🌙⋆｡˚", reason="Joining the server")
@@ -211,6 +245,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just left {member.guild.name}")
+        # Push all unhandled punishments to "User left" status
+        self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? and gid=? AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
         if self.bot.name == "suager":
             # language = self.bot.language2("english")
             # if member.guild.id == 568148147457490954:
@@ -253,7 +289,9 @@ class Events(commands.Cog):
                         try:
                             await general.send(message, channel, u=[member])
                         except discord.Forbidden:
-                            general.print_error(f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send message for {member} - Forbidden")
+                            out = f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send message for {member} - Forbidden"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
@@ -441,11 +479,15 @@ class Events(commands.Cog):
                         avatar = BytesIO(await http.get(str(after.avatar_url_as(static_format="png", size=4096)), res_method="read"))
                         ext = "gif" if after.is_avatar_animated() else "png"
                         if al is None:
-                            general.print_error("No avatar log channel found.")
+                            out = f"{time.time()} > {self.bot.name} > User Update > No avatar log channel found."
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
                         else:
                             await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
                     except (discord.HTTPException, ClientPayloadError) as e:
-                        general.print_error(f"{time.time()} > User Update > Failed to send updated avatar: {e}")
+                        out = f"{time.time()} > {self.bot.name} > User Update > Failed to send updated avatar: {e}"
+                        general.print_error(out)
+                        logger.log(self.bot.name, "errors", out)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
