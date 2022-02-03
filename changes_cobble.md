@@ -418,3 +418,6 @@
 
 ## v1.4.5 - 31 January 2022
 - Added weather icons for weather78
+
+## v1.4.5.1 - 3 February 2022
+- Fix time78 not using the given time

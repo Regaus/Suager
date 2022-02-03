@@ -5,7 +5,7 @@ from math import ceil
 
 import discord
 from discord.ext import commands
-from regaus import conworlds, PlaceDoesNotExist
+from regaus import conworlds, PlaceDoesNotExist, time as time2
 
 from utils import bot_data, conlangs, general, time
 
@@ -58,7 +58,7 @@ class Conworlds(commands.Cog):
             _pre = "in"
             _name = place_name
             _id = None
-        place = conworlds.Place(place_name)
+        place = conworlds.Place(place_name, time2.datetime.from_datetime(dt))
         if _id is None:
             _id = place.id
         output += f"\nTime {_pre} {_id}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
@@ -88,8 +88,8 @@ class Conworlds(commands.Cog):
                     # LOD 2 Channel Names: hidden-commands,   secretive-commands, secretive-commands-2
                     if ctx.channel.id in [610482988123422750, 742885168997466196, 753000962297299005]:
                         lod = 2
-                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10
-                    elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536]:
+                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10      Kargadia commands
+                    elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 938582514166034514]:
                         lod = 1
                     else:
                         lod = 0  # All other channels are "untrusted", so default to LOD 0
@@ -117,10 +117,11 @@ class Conworlds(commands.Cog):
                 j = i * 20
                 await general.send("\n".join(_places[j:j + 20]), ctx.channel)
 
-    @commands.command(name="locations", aliases=["location", "loc"])
+    @commands.command(name="location", aliases=["loc"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def location(self, ctx: commands.Context, *, where: str):
         """ See where a place in GA-78 is located """
+        # TODO: Make this also show the map coordinates (rounded off to 1)
         try:
             place = conworlds.Place(where)
             return await general.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}", ctx.channel)
