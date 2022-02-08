@@ -1141,3 +1141,6 @@
 - Errors should now be properly logged instead of only being printed
 - Removed usages
 - Made temporary events handle muted users leaving and rejoining
+
+## v7.4.21.1 - 8 February 2022
+- Added SR-1 to use Nehtivian, changed SR-8 to also use Nehtivian

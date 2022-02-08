@@ -42,9 +42,11 @@ class Language(languages.Language):
     def get(cls, ctx):
         """ Find the language of the server """
         if hasattr(ctx, "channel"):
-            if ctx.channel.id in [725835449502924901]:  # SR-8
-                return cls("ka_re")
-            elif ctx.channel.id in [787340111963881472, 799714065256808469]:  # RSL-1 channel and SR-11
+            # # Channel:            secret-room-8
+            # if ctx.channel.id in [725835449502924901]:  # SR-8
+            #     return cls("ka_re")
+            # Channels:             rsl-1,              secret-room-11,     secret-room-1,      secret-room-8
+            if ctx.channel.id in [787340111963881472, 799714065256808469, 671520521174777869, 725835449502924901]:
                 return cls("ka_ne")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
         if ctx.guild is not None:
