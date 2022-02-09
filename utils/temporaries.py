@@ -286,8 +286,9 @@ ka_places = {
         "Lervagar":     {"en": None, "weight": 2},
     },
     "Kaltar Azdall": {
-        "Kaltarena": {"en": None, "weight": 2},
-        "Küangar":   {"en": None, "weight": 2},
+        "Kaltar Kainead": {"en": None, "weight": 1},
+        "Kaltarena":      {"en": None, "weight": 2},
+        "Küangar":        {"en": None, "weight": 2},
     },
     "Arnattia": {
         "Vainararna": {"en": None, "weight": 2},
@@ -307,7 +308,8 @@ ka_places = {
     "Inhattia": {
     },
     "Other Areas": {
-        "Vintelingar": {"en": None, "weight": 3},
+        "Vintelingar":    {"en": None, "weight": 3},
+        "Kanerakainedus": {"en": None, "weight": 1},
     }
 }
 _places = {}  # Since the playing status won't be able to read through a 2-layer dict...
