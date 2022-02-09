@@ -363,7 +363,7 @@ async def ka_data_updater(bot: bot_data.Bot):
                         place: conworlds.Place = _places[city]["place"]
                         place.update_time()
                     tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
-                    english = place.time.strftime("%d %B %Y, %H:%M", "en")
+                    english = place.time.strftime("%d %B %Y, %H:%M", "en")  # Note to future self: Consider shortening to %b (eg 14 Kar 2151) to save space
                     if place.weather is not None:
                         temp = f"{place.weather['temperature']:.0f}°C"
                         rain = place.weather['rain']
@@ -424,7 +424,7 @@ async def ka_time_updater(bot: bot_data.Bot):
         for area_name, area in ka_places.items():
             data = [f"{area_name}:"]
             for city, _data in area.items():
-                data.append(f"`{city:<12} - {_data['en']}`")
+                data.append(f"`{city:<14} - {_data['en']}`")
             await update_message(area_name, "\n".join(data))
         logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities times messages")
         # out = "\n\n".join(data)
