@@ -5,6 +5,7 @@ from sqlite3 import OperationalError
 import discord
 
 from utils import bot_data, database, general, temporaries, time
+from utils.help_utils import HelpFormat
 
 boot_time = time.now(None)
 print(f"{time.time()} > Initialisation Started")
@@ -48,7 +49,7 @@ for i in range(len(config["bots"])):
     else:
         intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True)
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db,
-                       command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
+                       command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd, intents=intents)
     load = bot_data.load[name]
     for name in load:

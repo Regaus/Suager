@@ -6,7 +6,7 @@ import discord
 from aiohttp import ClientPayloadError
 from discord.ext import commands
 
-from utils import bot_data, general, http, languages, logger, time
+from utils import bot_data, general, help_utils, http, languages, logger, time
 from regaus import time as time2
 
 
@@ -64,14 +64,14 @@ class Events(commands.Cog):
         if isinstance(err, commands.MissingRequiredArgument):
             # A required argument is missing
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            await general.send(language.string("events_error_missing", param=err.param.name), ctx.channel)
-            await ctx.send_help(helper)
+            # await general.send(language.string("events_error_missing", param=err.param.name), ctx.channel)
+            await help_utils.send_help(ctx, helper, language.string("events_error_missing", param=err.param.name))
 
         elif isinstance(err, commands.TooManyArguments):
             # Too many arguments were specified
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            await general.send(language.string("events_error_extra_argument"), ctx.channel)
-            await ctx.send_help(helper)
+            # await general.send(language.string("events_error_extra_argument"), ctx.channel)
+            await ctx.send_help(ctx, helper, language.string("events_error_extra_argument"))
 
         elif isinstance(err, commands.MemberNotFound):
             # The specified Member was not found

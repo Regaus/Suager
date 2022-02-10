@@ -1160,3 +1160,10 @@
 
 ## v7.4.22.2 - 10 February 2022
 - Made failed permissions check raise MissingPermissions error for the custom error message
+
+## v7.4.23 - 10 February 2022
+- Made the help command work the way it's supposed to
+- Commands that can't be used in the current channel are simply crossed out instead of not showing up at all
+- Made it possible to show some extra text alongside the help embed
+- The help command will no longer send reactions when responding
+- Removed the vote-ban commands, as they were removed back in August

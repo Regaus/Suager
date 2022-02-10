@@ -1,6 +1,4 @@
-import discord
-from discord.ext.commands import AutoShardedBot, MinimalHelpCommand
-from jishaku.paginators import PaginatorEmbedInterface
+from discord.ext.commands import AutoShardedBot
 
 from utils import languages, permissions
 from utils.database import Database
@@ -82,35 +80,3 @@ class Bot(AutoShardedBot):
     @staticmethod
     def language2(name: str):
         return languages.Language(name)
-
-
-# TODO: Figure out how to cross out unavailable commands instead of just removing them (even though this will now only apply to commands executed in guild anyways)
-# Also find, a way to append a message to the output (ie send something as content and then the help embed)
-class HelpFormat(MinimalHelpCommand):
-    def __init__(self):
-        super().__init__(dm_help=False, verify_checks=None, command_attrs={  # , dm_help_threshold=1000
-            "name": "help",
-            "aliases": ["commands"],
-            "help": "I wonder what this command does..."
-        })
-
-    async def send_pages(self):
-        try:
-            destination = self.get_destination()
-            interface = PaginatorEmbedInterface(self.context.bot, self.paginator, owner=self.context.author)
-            await interface.send_to(destination)
-            # for page in self.paginator.pages:
-            #     await destination.send(page)
-            try:
-                if permissions.can_react(self.context):
-                    await self.context.message.add_reaction(chr(0x2709))
-            except discord.Forbidden:
-                pass
-        except discord.Forbidden:
-            destination = self.context.channel
-            try:
-                if permissions.can_react(self.context):
-                    await self.context.message.add_reaction(chr(0x274C))
-            except discord.Forbidden:
-                pass
-            await destination.send("Couldn't send help to you due to blocked DMs or insufficient permissions...")

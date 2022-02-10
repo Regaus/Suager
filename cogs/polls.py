@@ -538,26 +538,6 @@ class Polls(commands.Cog):
                                           ends, ends_in, trial["reason"]))
         return await general.send(language.string("trials_list", ctx.guild.name, "\n\n".join(output)), ctx.channel)
 
-    @commands.command(name="voteban")
-    @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
-    async def vote_ban(self, ctx: commands.Context, user: MemberID, *, reason: str = ""):
-        """ Deprecated command, use //trials """
-        _reason = f" {reason}" if reason else ""
-        return await general.send(f"This command is no longer used.\n"
-                                  f"To start a new trial - `{ctx.prefix}trial <duration> ban {user}{_reason}`\n"
-                                  f"To vote yes if there already is a trial - `{ctx.prefix}trial vote {user} yes`\n"
-                                  f"Note: Yes, you can actually use the user ID instead of the trial ID for voting.", ctx.channel)
-
-    @commands.command(name="downvoteban")
-    @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
-    async def downvote_ban(self, ctx: commands.Context, user: MemberID):
-        """ Deprecated command, use //trials """
-        return await general.send(f"This command is no longer used.\n"
-                                  f"To vote no on a trial, use `{ctx.prefix}trial vote {user} no`\n"
-                                  f"Note: Yes, you can actually use the user ID instead of the trial ID for voting.", ctx.channel)
-
 
 def setup(bot: bot_data.Bot):
     bot.add_cog(Polls(bot))
