@@ -102,7 +102,7 @@ class Settings(commands.Cog):
             setting = json.loads(data["data"])
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_current", ctx.guild.name)
-            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
             embed.set_footer(text=language.string("settings_current_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
             dp, cp = self.prefix_list(ctx)
@@ -369,7 +369,7 @@ class Settings(commands.Cog):
             leveling = setting["leveling"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_leveling", ctx.guild.name)
-            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
             embed.set_footer(text=language.string("settings_leveling_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
             embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
@@ -920,7 +920,7 @@ class Settings(commands.Cog):
             starboard = setting["starboard"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_starboard", ctx.guild.name)
-            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
             embed.set_footer(text=language.string("settings_starboard_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_starboard_enabled2"), value=language.yes(starboard["enabled"]), inline=False)
             channel = f"<#{starboard['channel']}>" if starboard["channel"] != 0 else language.string("settings_starboard_channel_none")
@@ -1023,7 +1023,7 @@ class Settings(commands.Cog):
             birthdays = setting["birthdays"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_birthdays", ctx.guild.name)
-            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
             embed.set_footer(text=language.string("settings_birthdays_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
             if birthdays["channel"] != 0:
@@ -1690,7 +1690,7 @@ class Settings(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("settings_prefixes_title", self.bot.user.name, ctx.guild.name)
         # embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
-        embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
+        embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
         embed.add_field(name=language.string("settings_prefixes_default"), value='\n'.join(dp), inline=True)
         if cp:
             embed.add_field(name=language.string("settings_prefixes_custom"), value='\n'.join(cp), inline=True)

@@ -11,11 +11,11 @@ import aiohttp
 import discord
 from discord.ext import commands
 
-from utils import bot_data, data_io, database, general, http, logger, permissions, time
+from utils import bot_data, data_io, database, general, http, logger, time
 
 
 def insert_returns(body):
-    # insert return statement if the last expression is a expression statement
+    # insert return statement if the last expression is an expression statement
     if isinstance(body[-1], ast.Expr):
         body[-1] = ast.Return(body[-1].value)
         ast.fix_missing_locations(body[-1])
@@ -98,7 +98,7 @@ class Admin(commands.Cog):
         self.config = general.get_config()
 
     @commands.command(name="db")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def db_command(self, ctx: commands.Context, *, query: str):
         """ Database query """
         try:
@@ -108,7 +108,7 @@ class Admin(commands.Cog):
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
     @commands.command(name="fetch", aliases=["select"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def db_fetch(self, ctx: commands.Context, *, query: str):
         """ Fetch data from db """
         try:
@@ -138,7 +138,7 @@ class Admin(commands.Cog):
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
     @commands.group(name="log", aliases=["logs"], invoke_without_command=True)
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def log(self, ctx: commands.Context, log: str, *, search: str = None):
         """ Get logs """
         try:
@@ -191,7 +191,7 @@ class Admin(commands.Cog):
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
     @log.command(name="date")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def log_date(self, ctx: commands.Context, date: str, log_file: str, *, search: str = None):
         """ Get logs """
         try:
@@ -229,20 +229,20 @@ class Admin(commands.Cog):
             return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
 
     @commands.command(name='eval')
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def eval_cmd(self, ctx: commands.Context, *, cmd):
         """ Evaluates input. """
         return await eval_(ctx, cmd)
 
     @commands.command(name="reload", aliases=["re", "r"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def reload(self, ctx: commands.Context, name: str):
         """ Reloads an extension. """
         out = reload_extension(self.bot, name)
         return await general.send(out, ctx.channel)
 
     @commands.command(name="reloadall", aliases=["rall", "ra"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def reload_all(self, ctx: commands.Context):
         """ Reloads all extensions. """
         error_collection = []
@@ -261,14 +261,14 @@ class Admin(commands.Cog):
             return await general.send("Successfully reloaded all extensions", ctx.channel)
 
     @commands.command(name="reloadutil", aliases=["ru"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def reload_utils(self, ctx: commands.Context, name: str):
         """ Reloads a utility module. """
         out = reload_util(name, self.bot)
         return await general.send(out, ctx.channel)
 
     @commands.command(name="reloadtime", aliases=["rt"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def reload_time(self, ctx: commands.Context):
         """ Reloads regaus/time.py """
         # out = reload_util(name, self.bot)
@@ -276,7 +276,7 @@ class Admin(commands.Cog):
         return await general.send(out, ctx.channel)
 
     # @commands.command(name="reloadlangs", aliases=["rl"])
-    # @commands.check(permissions.is_owner)
+    # @commands.is_owner()
     # async def reload_lang(self, ctx: commands.Context):
     #     """ Reloads languages.py """
     #     out = reload_langs(self.bot)
@@ -301,13 +301,13 @@ class Admin(commands.Cog):
         logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.full_name} > {reloaded}")
 
     @commands.command(name="load", aliases=["l"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def load(self, ctx: commands.Context, name: str):
         """ Loads an extension. """
         return await self.load_ext(ctx, name)
 
     @commands.command(name="unload", aliases=["ul"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def unload(self, ctx: commands.Context, name: str):
         """ Unloads an extension. """
         return await self.unload_ext(ctx, name)
@@ -321,14 +321,14 @@ class Admin(commands.Cog):
         return reloaded
 
     @commands.command(name="updateconfig", aliases=["reloadconfig", "uc", "rc"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def update_config(self, ctx: commands.Context):
         """ Reload config """
         reloaded = self.reload_config()
         return await general.send(reloaded, ctx.channel)
 
     @commands.command(name="shutdown")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def shutdown(self, ctx: commands.Context):
         """ Shut down the bot """
         import time as _time
@@ -340,7 +340,7 @@ class Admin(commands.Cog):
         sys.exit(0)
 
     @commands.command(name="execute", aliases=["exec"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def execute(self, ctx: commands.Context, *, text: str):
         """ Do a shell command. """
         message = await general.send("Loading...", ctx.channel)
@@ -377,7 +377,7 @@ class Admin(commands.Cog):
         return await general.send("Tables recreated", ctx.channel)
 
     @commands.command(name="version", aliases=["fversion", "fullversion", "fv", "v"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def change_full_version(self, ctx: commands.Context, new_version: str):
         """ Change version (full) """
         try:
@@ -392,7 +392,7 @@ class Admin(commands.Cog):
         return await general.send(to_send, ctx.channel)
 
     @commands.command(name="sversion", aliases=["shortversion", "sv"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def change_short_version(self, ctx: commands.Context, new_version: str):
         """ Change version (short) """
         try:
@@ -407,14 +407,14 @@ class Admin(commands.Cog):
         return await general.send(to_send, ctx.channel)
 
     @commands.group()
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def change(self, ctx: commands.Context):
         """ Change bot's data """
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
     @change.command(name="username")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def change_username(self, ctx: commands.Context, *, name: str):
         """ Change username. """
         try:
@@ -424,7 +424,7 @@ class Admin(commands.Cog):
             return await general.send(str(err), ctx.channel)
 
     @change.command(name="nickname")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def change_nickname(self, ctx: commands.Context, *, name: str = None):
         """ Change nickname. """
         try:
@@ -437,7 +437,7 @@ class Admin(commands.Cog):
             return await general.send(str(err), ctx.channel)
 
     @change.command(name="avatar")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def change_avatar(self, ctx: commands.Context, url: str = None):
         """ Change avatar. """
         if url is None and len(ctx.message.attachments) == 1:
@@ -458,20 +458,20 @@ class Admin(commands.Cog):
             return await general.send("You need to either provide an image URL or upload one with the command", ctx.channel)
 
     @commands.command(name="gls")
-    @commands.check(permissions.is_owner)
-    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "english"):
+    @commands.is_owner()
+    async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en"):
         """ Test a string """
         return await general.send(self.bot.language2(locale).string(string), ctx.channel)
         # return await general.send(languages.languages.get(locale, languages.languages["english"]).get(string, f"String not found: {string}"), ctx.channel)
 
     @commands.command(name="data")
-    @commands.check(permissions.is_owner)
-    async def get_lang_data(self, ctx: commands.Context, key: str, locale: str = "english"):
+    @commands.is_owner()
+    async def get_lang_data(self, ctx: commands.Context, key: str, locale: str = "en"):
         """ Test a set of data of a language """
         return await general.send(self.bot.language2(locale).data(key), ctx.channel)
 
     @commands.command(name="blacklist")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def blacklist_add(self, ctx: commands.Context, user: discord.User):
         """ Blacklist a user from using the bot """
         try:
@@ -484,7 +484,7 @@ class Admin(commands.Cog):
         return await general.send(f"Added {user.id} ({user}) to the Blacklist", ctx.channel)
 
     @commands.command(name="whitelist")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def blacklist_remove(self, ctx: commands.Context, user: discord.User):
         """ Remove a user from the blacklist """
         try:
@@ -500,7 +500,7 @@ class Admin(commands.Cog):
             return await general.send(f"User {user.id} was not found in the Blacklist", ctx.channel)
 
     # @commands.command(name="usage", aliases=["usages"])
-    # @commands.check(permissions.is_owner)
+    # @commands.is_owner()
     # async def usages(self, ctx: commands.Context):
     #     """ See command usage counters """
     #     data = sorted([f"`{name}`: {usage}" for name, usage in self.bot.usages.items()])
@@ -509,7 +509,7 @@ class Admin(commands.Cog):
     #         await general.send(" | ".join(result), ctx.channel)
 
     @commands.command(name="seedm")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = -0):
         """ Check someone's DMs with Suager """
         try:

@@ -1144,3 +1144,13 @@
 
 ## v7.4.21.1 - 8 February 2022
 - Added SR-1 to use Nehtivian, changed SR-8 to also use Nehtivian
+
+## v7.4.22 - 9 February 2022
+- Updated discord.py to v2.0
+- Improved error handling for commands
+- Updated NSFW commands to use the proper `commands.is_nsfw()` check again
+- The `//guild` command can now show other guilds (if available)
+- The `//reminders` command will no longer send into DMs unless invoked there
+- The help command should no longer send into DMs unless invoked there
+- Commands you don't have perms for should now show up in the help command
+- Changed owner-only commands to use the discord.py is_owner() check

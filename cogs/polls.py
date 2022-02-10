@@ -319,9 +319,9 @@ class Polls(commands.Cog):
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
             _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=False)
             if ctx.guild.id == 869975256566210641:
-                poll_channel: discord.TextChannel = self.bot.get_channel(871811287166898187)
+                poll_channel = self.bot.get_channel(871811287166898187)
             else:
-                poll_channel: discord.TextChannel = ctx.channel
+                poll_channel = ctx.channel
             talked = self.bot.db.fetch("SELECT * FROM leveling WHERE last>? AND gid=?", (int(now_ts) - 21600, ctx.guild.id))  # All users who have talked within the last 6 hours
             required = round(len(talked) * 0.4)  # 40% of the people who've talked in the last 6 hours
             if required < 6:

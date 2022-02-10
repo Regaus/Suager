@@ -23,7 +23,7 @@ class BotInformation(commands.Cog):
         version_data = general.get_version()[self.bot.name]
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("info_stats_about", self.bot.user, version_data["version"])
-        embed.set_thumbnail(url=self.bot.user.avatar_url_as(size=1024))
+        embed.set_thumbnail(url=str(self.bot.user.avatar.replace(size=1024)))
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=language.string("info_stats_developers"), value=f"**{owners}**", inline=True)
         if self.bot.uptime is None:
@@ -95,11 +95,15 @@ class BotInformation(commands.Cog):
         # link = f"\n<https://discordapp.com/oauth2/authorize?permissions={perms}&client_id={self.bot.user.id}&scope=bot>"
         # applications.commands is the scope for slash commands because discord is retarded
         # link = f"<{oauth_url(str(self.bot.user.id), Permissions(perms), scopes=['bot', 'applications.commands'])}>"
-        link1 = oauth_url(str(self.bot.user.id), Permissions(perms), scopes=['bot', 'applications.commands'])
-        link2 = oauth_url(str(self.bot.user.id), Permissions(0), scopes=['bot', 'applications.commands'])
+        link1 = oauth_url(str(self.bot.user.id), permissions=Permissions(perms), scopes=['bot'])
+        link2 = oauth_url(str(self.bot.user.id), permissions=Permissions(0), scopes=['bot'])
+        link3 = oauth_url(str(self.bot.user.id), permissions=Permissions(perms), scopes=['bot', 'applications.commands'])
+        link4 = oauth_url(str(self.bot.user.id), permissions=Permissions(0), scopes=['bot', 'applications.commands'])
         embed = discord.Embed()
         embed.title = language.string("info_invite_bot")
-        embed.description = language.string("info_invite_bot2", link1, link2)
+        # embed.description = language.string("info_invite_bot2", link1, link2)
+        embed.add_field(name=language.string("info_invite_text"), value=language.string("info_invite_bot2", recommended=link1, none=link2), inline=False)
+        embed.add_field(name=language.string("info_invite_slash"), value=language.string("info_invite_bot2", recommended=link3, none=link4), inline=False)
         if self.bot.name in ["cobble", "kyomi"]:
             embed.set_footer(text=language.string("info_invite_private"))
         # return await general.send(self.bot.language(ctx).string("info_invite_bot", ctx.author.name, link), ctx.channel)

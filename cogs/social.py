@@ -598,7 +598,7 @@ class SocialSuager(Social, name="Social"):
 
     @commands.command(name="bang", aliases=["fuck"])
     @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.is_nsfw()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def fuck(self, ctx: commands.Context, user: discord.Member):
         """ Bang someone """
@@ -622,7 +622,7 @@ class SocialSuager(Social, name="Social"):
 
     @commands.command(name="suck", aliases=["succ"])
     @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.is_nsfw()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def suck(self, ctx: commands.Context, user: discord.Member):
         """ Succ someone off """
@@ -640,7 +640,7 @@ class SocialSuager(Social, name="Social"):
 
     @commands.command(name="facefuck", aliases=["ff"])
     @commands.guild_only()
-    @commands.check(lambda ctx: type(ctx.channel) != discord.DMChannel and (ctx.channel.is_nsfw() or ctx.channel.id == 764528556507922442))
+    @commands.is_nsfw()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def face_fuck(self, ctx: commands.Context, user: discord.User):
         """ Face-fuck someone """

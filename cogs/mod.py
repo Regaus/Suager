@@ -101,7 +101,7 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         logger.log(bot.name, "errors", message)
 
 
-async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member,
+async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member | discord.ClientUser,
                        entry_id: int, action: str, reason: str, duration: str = None, original_warning: str = None):
     """ Try to send a mod log message about the punishment """
     try:
@@ -125,7 +125,7 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, u
         return  # If the settings can't be read, assume it's disabled
     if not enabled:
         return  # If the value is zero, then it's disabled
-    channel: discord.TextChannel = bot.get_channel(enabled)
+    channel = bot.get_channel(enabled)
     language = bot.language(ctx)
     embed = discord.Embed()
     embed.title = language.string(f"mod_logs_{action}")

@@ -11,8 +11,6 @@ print(f"{time.time()} > Initialisation Started")
 config = general.get_config()
 general.create_dirs()
 tables = database.creation()
-# loop = asyncio.get_event_loop()
-# loop = asyncio.new_event_loop()
 loop = asyncio.get_event_loop_policy().get_event_loop()
 tasks = []
 db = database.Database()  # The database is the same for all bots anyways, so no point in initialising it thrice...
@@ -40,80 +38,43 @@ async def get_prefix(_bot, ctx):
 
 for i in range(len(config["bots"])):
     local_config = config["bots"][i]
-    # fn = f"data/{_name}/changes.json"
-    # try:
-    #      times = json.loads(open(fn, 'r').read())
-    # except Exception as e:
-    #     print(e)
-    #     times = changes.copy()
-    # times['ad'] = False
-    # open(fn, 'w+').write(json.dumps(times))
     try:
         blacklist = json.loads(open("blacklist.json", "r").read())
     except FileNotFoundError:
         blacklist = []
     name = local_config["internal_name"]
+    if name == "kyomi":
+        intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True, voice_states=True)
+    else:
+        intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True)
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db,
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=bot_data.HelpFormat(),
-                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd,
-                       # connector=aiohttp.TCPConnector(ssl=False),
-                       intents=discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True))
-    # if bot.name == "suager":
-    #     bot.db.execute("UPDATE tbl_clan SET usage=0")
+                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd, intents=intents)
     load = bot_data.load[name]
     for name in load:
         bot.load_extension(f"cogs.{name}")
     bot.load_extension("jishaku")
-    # for command in bot.commands:
-    #     bot.usages[str(command)] = 0
     if "token" in local_config and local_config["token"]:
         tasks.append(loop.create_task(bot.start(local_config["token"])))
         tasks.append(loop.create_task(temporaries.playing(bot)))
         if bot.name == "suager":
             tasks.append(loop.create_task(temporaries.avatars(bot)))
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
-            # tasks.append(loop.create_task(temporaries.temporaries(bot)))
             tasks.append(loop.create_task(temporaries.reminders(bot)))
             tasks.append(loop.create_task(temporaries.reminders_errors(bot)))
             tasks.append(loop.create_task(temporaries.punishments(bot)))
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
-            # tasks.append(loop.create_task(temporaries.vote_bans(bot)))
             tasks.append(loop.create_task(temporaries.polls(bot)))
             tasks.append(loop.create_task(temporaries.trials(bot)))
-            # tasks.append(loop.create_task(temporaries.new_year(bot)))
         elif bot.name == "cobble":
             tasks.append(loop.create_task(temporaries.ka_data_updater(bot)))
             tasks.append(loop.create_task(temporaries.ka_time_updater(bot)))
         elif bot.name == "kyomi":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
-            # tasks.append(loop.create_task(temporaries.temporaries(bot)))
             tasks.append(loop.create_task(temporaries.reminders(bot)))
             tasks.append(loop.create_task(temporaries.reminders_errors(bot)))
             tasks.append(loop.create_task(temporaries.punishments(bot)))
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
-
-# server_settings = db.fetch("SELECT * FROM settings")
-# for server in server_settings:
-#     setting = json.loads(server["data"])
-#     for key in ["audit_logs", "user_logs", "message_logs", "message_ignore"]:
-#         try:
-#             setting.pop(key)
-#         except KeyError:
-#             pass
-#     if "join_roles" in setting:
-#         members = setting["join_roles"]["members"]
-#         if type(members) == int:  # If it is old
-#             if members == 0:
-#                 setting["join_roles"]["members"] = []
-#             else:
-#                 setting["join_roles"]["members"] = [members]
-#         bots = setting["join_roles"]["bots"]
-#         if type(bots) == int:  # If it is old
-#             if bots == 0:
-#                 setting["join_roles"]["bots"] = []
-#             else:
-#                 setting["join_roles"]["bots"] = [bots]
-#     db.execute("UPDATE SETTINGS set data=? WHERE gid=? AND bot=?", (json.dumps(setting), server["gid"], server["bot"]))
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import random
@@ -34,15 +36,16 @@ def make_dir(dir_name):
         pass
 
 
-async def send(text: str or None, channel: discord.TextChannel, *, embed: discord.Embed = None, file: discord.File = None, files: list[discord.File] = None,
-               delete_after: float = None, e: bool = False, u: Union[bool, list] = False, r: Union[bool, list] = False):
+async def send(text: str | None, channel: discord.abc.GuildChannel | discord.Thread | discord.abc.PrivateChannel, *, embed: discord.Embed = None, embeds: list[discord.Embed] = None,
+               file: discord.File = None, files: list[discord.File] = None, delete_after: float = None, e: bool = False, u: Union[bool, list] = False, r: Union[bool, list] = False):
     if text is not None:
         if len(text) > 2000:
             text = f"{text[:1997]}..."
             await channel.send("Message length exceeded 2000 characters...", delete_after=10)
     try:
-        return await channel.send(content=text, embed=embed, file=file, files=files, delete_after=delete_after,
-                                  allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
+        # Yes, it will complain about this "illegal" combination, but what the hell am I going to do?
+        return await channel.send(content=text, embed=embed, embeds=embeds, file=file, files=files,
+                                  delete_after=delete_after, allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
     except discord.Forbidden:
         await channel.send("Failed to send message. Please make sure that I have sufficient permissions (embed links and/or attach files)")
         if text:

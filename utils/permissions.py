@@ -3,6 +3,10 @@ import discord
 from discord.ext import commands
 
 
+def is_owner(ctx):
+    return ctx.author.id in ctx.bot.config["owners"]
+
+
 async def check_permissions(ctx, perms, *, check=all):
     if is_owner(ctx):
         return True
@@ -22,11 +26,3 @@ def can_send(ctx):
 
 def can_react(ctx):
     return isinstance(ctx.channel, discord.DMChannel) or ctx.channel.permissions_for(ctx.guild.me).add_reactions
-
-
-def is_nsfw(ctx):
-    return isinstance(ctx.channel, discord.DMChannel) or ctx.channel.is_nsfw()
-
-
-def is_owner(ctx):
-    return ctx.author.id in ctx.bot.config["owners"]

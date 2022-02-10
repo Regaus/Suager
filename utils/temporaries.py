@@ -398,7 +398,7 @@ async def ka_time_updater(bot: bot_data.Bot):
     await bot.wait_until_ready()
     await wait_until_next_iter(update_speed_time, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
-    channel: discord.TextChannel = bot.get_channel(935982691801780224)  # ka-time | Old channel: 887087307918802964
+    channel = bot.get_channel(935982691801780224)  # ka-time | Old channel: 887087307918802964
 
     async def update_message(name: str, content: str):
         try:

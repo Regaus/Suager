@@ -67,7 +67,7 @@ class Birthdays(commands.Cog):
         return await general.send(language.string("birthdays_clear", ctx.author.name), ctx.channel)
 
     @birthday.command(name="forceset", aliases=["force"])
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def force_set(self, ctx: commands.Context, user: discord.User, *, new_time: str):
         """ Force-set someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
@@ -75,7 +75,7 @@ class Birthdays(commands.Cog):
         return await general.send(data, ctx.channel)
 
     @birthday.command(name="insert")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def insert(self, ctx: commands.Context, user: discord.User, *, new_time: str):
         """ Force-insert someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
@@ -83,7 +83,7 @@ class Birthdays(commands.Cog):
         return await general.send(data, ctx.channel)
 
     @birthday.command(name="forcedelete")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def force_delete(self, ctx: commands.Context, user: discord.User):
         """ Force-delete someone's birthday """
         data = self.bot.db.execute(f"DELETE FROM birthdays WHERE uid=? AND bot=?", (user.id, self.bot.name))

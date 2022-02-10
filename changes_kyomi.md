@@ -108,3 +108,12 @@
 
 ## v0.5.2 - 2 February 2022
 - Made temporary events handle muted users leaving and rejoining
+
+## v0.5.3 - 9 February 2022
+- Updated discord.py to v2.0
+- Improved error handling for commands
+- The `m!guild` command can now show other guilds (if available)
+- The `m!reminders` command will no longer send into DMs unless invoked there
+- The help command should no longer send into DMs unless invoked there
+- Commands you don't have perms for should now show up in the help command
+- Changed owner-only commands to use the discord.py is_owner() check

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import random
 from io import BytesIO
 
@@ -8,11 +10,11 @@ from PIL import Image, UnidentifiedImageError
 from utils import emotes, general, http
 
 
-async def af_image_gen(ctx: commands.Context, user: discord.User or discord.Member, link, filename=None, extra_args=None):
+async def af_image_gen(ctx: commands.Context, user: discord.User | discord.Member, link, filename=None, extra_args=None):
     # async with ctx.typing():
     if filename is None:
         filename = link
-    avatar = user.avatar_url_as(size=2048, format="png")
+    avatar = str(user.avatar.replace(size=2048, format="png"))
     extra = f"&{extra_args}" if extra_args is not None else ''
     return await af_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
 
@@ -129,8 +131,8 @@ class Images(commands.Cog):
             return await general.send(language.string("social_ship_bot"), ctx.channel)
         if user1 == user2:
             return await general.send(language.string("social_alone"), ctx.channel)
-        av1 = str(user1.avatar_url_as(size=512, format="png"))
-        av2 = str(user2.avatar_url_as(size=512, format="png"))
+        av1 = str(user1.avatar.replace(size=512, format="png"))
+        av2 = str(user2.avatar.replace(size=512, format="png"))
         # link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
         __names = [len(user1.name), len(user2.name)]
         _names = [int(x / 2) for x in __names]

@@ -84,9 +84,11 @@ class Bot(AutoShardedBot):
         return languages.Language(name)
 
 
+# TODO: Figure out how to cross out unavailable commands instead of just removing them (even though this will now only apply to commands executed in guild anyways)
+# Also find, a way to append a message to the output (ie send something as content and then the help embed)
 class HelpFormat(MinimalHelpCommand):
     def __init__(self):
-        super().__init__(dm_help=None, dm_help_threshold=1000, command_attrs={
+        super().__init__(dm_help=False, verify_checks=None, command_attrs={  # , dm_help_threshold=1000
             "name": "help",
             "aliases": ["commands"],
             "help": "I wonder what this command does..."

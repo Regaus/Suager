@@ -227,7 +227,7 @@ class Starboard(commands.Cog):
             embed.title = language.string("starboard_stats", ctx.guild.name)
             # embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
             embed.description = language.string("starboard_stats_desc", language.number(stars), language.number(len(data)))
-            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.set_thumbnail(url=str(ctx.guild.icon))
             top_messages = ""
             authors_out = ""
             # Top Starred Posts
@@ -265,7 +265,7 @@ class Starboard(commands.Cog):
             embed.title = language.number("starboard_stats_user", user, ctx.guild.name)
             # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
             embed.description = language.number("starboard_stats_user_desc", language.number(stars), language.number(len(data)))
-            embed.set_thumbnail(url=user.avatar_url)
+            embed.set_thumbnail(url=str(user.avatar))
             for i, _message in enumerate(top, start=1):
                 jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
                 _stars = language.number(_message["stars"])

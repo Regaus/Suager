@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import random
 import re
@@ -345,7 +347,7 @@ class Utility(commands.Cog):
         return await general.send(f"🔁 {ctx.author.name}:\n{reverse}", ctx.channel)
 
     @commands.command(name="dm")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def dm(self, ctx: commands.Context, user_id: int, *, message: str):
         """ DM a user """
         try:
@@ -381,7 +383,7 @@ class Utility(commands.Cog):
         return await general.send(language.string("fun_tell_success", channel.mention), ctx.channel, delete_after=5)
 
     @commands.command(name="atell")
-    @commands.check(permissions.is_owner)
+    @commands.is_owner()
     async def admin_tell(self, ctx: commands.Context, channel_id: int, *, message: str):
         """ Say something to a channel """
         channel = self.bot.get_channel(channel_id)
@@ -429,16 +431,16 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
-        user = who or ctx.author
-        return await general.send(self.bot.language(ctx).string("discord_avatar", user.name, user.avatar_url_as(size=1024, static_format='png')), ctx.channel)
+        user: discord.User | discord.Member = who or ctx.author
+        return await general.send(self.bot.language(ctx).string("discord_avatar", user.name, str(user.avatar.replace(size=1024, static_format='png'))), ctx.channel)
 
-    @commands.command(name="avatar2")
+    @commands.command(name="avatar2", aliases=["ay", "av2"])
     @commands.is_owner()
     async def avatar_fetch(self, ctx: commands.Context, *who: int):
         """ Fetch and yoink avatars """
         for user in who:
             try:
-                await general.send((await self.bot.fetch_user(user)).avatar_url_as(size=1024, static_format="png"), ctx.channel)
+                await general.send(str((await self.bot.fetch_user(user)).avatar.replace(size=1024, static_format="png")), ctx.channel)
             except Exception as e:
                 await general.send(f"{user} -> {type(e).__name__}: {e}", ctx.channel)
 
@@ -458,7 +460,7 @@ class Utility(commands.Cog):
             else:
                 embed = discord.Embed(colour=role.colour)
                 embed.title = language.string("discord_role_about", role.name)
-                embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
                 embed.add_field(name=language.string("discord_role_name"), value=role.name, inline=True)
                 embed.add_field(name=language.string("discord_role_id"), value=str(role.id), inline=True)
                 embed.add_field(name=language.string("generic_members"), value=language.number(len(role.members)), inline=True)
@@ -509,11 +511,11 @@ class Utility(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def user(self, ctx: commands.Context, *, who: discord.Member = None):
         """ Get info about user """
-        user = who or ctx.author
+        user: discord.Member = who or ctx.author
         language = self.bot.language(ctx)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("discord_user_about", user.name)
-        embed.set_thumbnail(url=user.avatar_url_as(size=1024))
+        embed.set_thumbnail(url=str(user.avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
@@ -539,11 +541,11 @@ class Utility(commands.Cog):
         language = self.bot.language(ctx)
         try:
             user = await self.bot.fetch_user(user_id)
-        except discord.NotFound as e:
-            return await general.send(language.string("events_err_error", "NotFound", str(e)), ctx.channel)
+        except discord.NotFound:
+            return await general.send(language.string("events_error_not_found_user", value=user_id), ctx.channel)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("discord_user_about", user.name)
-        embed.set_thumbnail(url=str(user.avatar_url_as(size=1024)))
+        embed.set_thumbnail(url=str(user.avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=str(user), inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
         embed.add_field(name=language.string("generic_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
@@ -562,43 +564,43 @@ class Utility(commands.Cog):
         embed.set_image(url=emoji.url)
         return await general.send(f"{ctx.author.name}:", ctx.channel, embed=embed)
 
-    @commands.group(name="server", aliases=["guild"])
+    @commands.group(name="server", aliases=["guild"], invoke_without_command=True)
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def server(self, ctx: commands.Context):
+    async def server(self, ctx: commands.Context, guild: discord.Guild = None):
         """ Information about the current server """
         if ctx.invoked_subcommand is None:
+            guild: discord.Guild = guild or ctx.guild
             language = self.bot.language(ctx)
-            bots = sum(1 for member in ctx.guild.members if member.bot)
-            bots_amt = bots / ctx.guild.member_count
+            bots = sum(1 for member in guild.members if member.bot)
+            bots_amt = bots / guild.member_count
             embed = discord.Embed(colour=general.random_colour())
-            embed.set_thumbnail(url=ctx.guild.icon_url_as(size=1024))
-            embed.title = language.string("discord_server_about", ctx.guild.name)
-            embed.add_field(name=language.string("discord_server_name"), value=ctx.guild.name, inline=True)
-            embed.add_field(name=language.string("discord_server_id"), value=ctx.guild.id, inline=True)
-            embed.add_field(name=language.string("discord_server_owner"), inline=True, value=f"{ctx.guild.owner}\n({ctx.guild.owner.display_name})")
-            embed.add_field(name=language.string("generic_members"), value=language.number(ctx.guild.member_count), inline=True)
+            embed.set_thumbnail(url=str(guild.icon.replace(size=1024)))
+            embed.title = language.string("discord_server_about", guild.name)
+            embed.add_field(name=language.string("discord_server_name"), value=guild.name, inline=True)
+            embed.add_field(name=language.string("discord_server_id"), value=guild.id, inline=True)
+            embed.add_field(name=language.string("discord_server_owner"), inline=True, value=f"{guild.owner}\n({guild.owner.display_name})")
+            embed.add_field(name=language.string("generic_members"), value=language.number(guild.member_count), inline=True)
             embed.add_field(name=language.string("discord_server_bots"), value=f"{language.number(bots)} ({language.number(bots_amt, percentage=True)})", inline=True)
-            embed.add_field(name=language.string("discord_server_region"), value=ctx.guild.region, inline=True)
-            embed.add_field(name=language.string("discord_server_roles"), value=language.number(len(ctx.guild.roles)), inline=True)
+            embed.add_field(name=language.string("discord_server_region"), value=guild.region, inline=True)
+            embed.add_field(name=language.string("discord_server_roles"), value=language.number(len(guild.roles)), inline=True)
             try:
-                embed.add_field(name=language.string("discord_server_bans"), value=language.number(len(await ctx.guild.bans())), inline=True)
+                embed.add_field(name=language.string("discord_server_bans"), value=language.number(len(await guild.bans())), inline=True)
             except discord.Forbidden:
-                pass  # Just don't show the field at all if it can't be accessed
-                # embed.add_field(name=languages.gls("discord_server_bans", locale), value=languages.gls("discord_server_bans_denied", locale), inline=True)
-            embed.add_field(name=language.string("discord_server_verification"), inline=True, value=str(ctx.guild.verification_level).capitalize())
-            t, c, v = len(ctx.guild.text_channels), len(ctx.guild.categories), len(ctx.guild.voice_channels)
+                embed.add_field(name=language.string("discord_server_bans"), value=language.string("discord_server_bans_denied"), inline=True)
+            embed.add_field(name=language.string("discord_server_verification"), inline=True, value=str(guild.verification_level).capitalize())
+            t, c, v = len(guild.text_channels), len(guild.categories), len(guild.voice_channels)
             tc, cc, vc = language.number(t), language.number(c), language.number(v)
             embed.add_field(name=language.string("discord_server_channels"), value=language.string("discord_server_channels_data", tc, cc, vc), inline=True)
-            b, bl, bc = language.number(ctx.guild.premium_subscription_count), language.number(ctx.guild.premium_tier), language.number(len(ctx.guild.premium_subscribers))
+            b, bl, bc = language.number(guild.premium_subscription_count), language.number(guild.premium_tier), language.number(len(guild.premium_subscribers))
             embed.add_field(name=language.string("discord_server_boosts"), value=language.string("discord_server_boosts_data", b, bl, bc), inline=True)
-            ani = len([emote for emote in ctx.guild.emojis if emote.animated])
-            total_emotes = len(ctx.guild.emojis)
-            el = ctx.guild.emoji_limit
+            ani = len([emote for emote in guild.emojis if emote.animated])
+            total_emotes = len(guild.emojis)
+            el = guild.emoji_limit
             na = total_emotes - ani
             n, a, e, t = language.number(na), language.number(ani), language.number(el), language.number(total_emotes)
             embed.add_field(name=language.string("discord_server_emotes"), value=language.string("discord_server_emotes_data", n, a, e, t), inline=True)
-            ca = ctx.guild.created_at
+            ca = guild.created_at
             ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=False), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
             embed.add_field(name=language.string("generic_created_at"), value=f"{ct}\n{cd}", inline=False)
             return await general.send(None, ctx.channel, embed=embed)
@@ -606,12 +608,12 @@ class Utility(commands.Cog):
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx: commands.Context):
         """ Get server icon """
-        return await general.send(self.bot.language(ctx).string("discord_server_icon", ctx.guild.name, ctx.guild.icon_url_as(size=1024, static_format='png')), ctx.channel)
+        return await general.send(self.bot.language(ctx).string("discord_server_icon", ctx.guild.name, str(ctx.guild.icon.replace(size=1024, static_format='png'))), ctx.channel)
 
     @server.command(name="banner")
     async def server_banner(self, ctx: commands.Context):
         """ Get server banner """
-        link = ctx.guild.banner_url_as(size=4096, format="png")
+        link = str(ctx.guild.banner.replace(size=4096, static_format="png"))
         language = self.bot.language(ctx)
         if link:
             return await general.send(language.string("discord_server_banner", ctx.guild.name, link), ctx.channel)
@@ -621,7 +623,7 @@ class Utility(commands.Cog):
     @server.command(name="invitebg", aliases=["invite", "splash"])
     async def server_invite(self, ctx: commands.Context):
         """ Get server invite splash """
-        link = ctx.guild.splash_url_as(size=4096, format="png")
+        link = str(ctx.guild.splash.replace(size=4096, static_format="png"))
         language = self.bot.language(ctx)
         if link:
             return await general.send(language.string("discord_server_inv_bg", ctx.guild.name, link), ctx.channel)
@@ -755,20 +757,11 @@ class Reminders(Utility, name="Utility"):
                 outputs.append(language.string("util_reminders_item", _reminder, reminder["message"], reminder["id"], expires_on, expires_in))
                 # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
             output2 = "\n\n".join(outputs)
-            try:
-                try:  # Try to tell the user to check DMs
-                    if permissions.can_react(ctx):
-                        await ctx.message.add_reaction(chr(0x2709))
-                except discord.Forbidden:
-                    pass
-                if len(output2) > 1900:
-                    _data = BytesIO(str(output2).encode('utf-8'))
-                    return await ctx.author.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
-                else:
-                    return await ctx.author.send(f"{output}\n\n{output2}")
-            except discord.Forbidden:
-                return await general.send(language.string("util_reminders_dms"), ctx.channel)
-                # return await general.send("You need to have your DMs open for me to be able to send you the list of your reminders.", ctx.channel)
+            if len(output2) > 1900:
+                _data = BytesIO(str(output2).encode('utf-8'))
+                return await general.send(output, ctx.channel, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+            else:
+                return await general.send(f"{output}\n\n{output2}", ctx.channel)
 
     @reminders.command(name="edit")
     async def reminders_edit(self, ctx: commands.Context, reminder_id: int, *, args: str):

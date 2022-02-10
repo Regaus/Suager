@@ -1,6 +1,6 @@
 Pillow
-discord>=1.7
-enhanced-dpy>=1.7,<2.0
+discord
+git+https://github.com/iDevision/enhanced-discord.py@2.0#egg=discord.py
 aiohttp
 python-dateutil
 asyncio

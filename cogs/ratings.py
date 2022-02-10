@@ -141,7 +141,7 @@ class Ratings(commands.Cog):
             output = await general.send(f"{emotes.Loading} Checking friendship levels...", ctx.channel)
             # Checks whose ID I'll need to determine our friendship with me.
             friendships = {}
-            channel: discord.TextChannel = self.bot.get_channel(817733445156732939)  # Load the friendships channel
+            channel = self.bot.get_channel(817733445156732939)  # Load the friendships channel
             async for message in channel.history(limit=None, oldest_first=True):  # Fetch all messages, just in case it's split
                 content: str = message.content
                 lines = content.splitlines()
