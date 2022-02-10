@@ -69,7 +69,7 @@
   "discord_user_username": "Username",
   "events_error_bad_argument": "{emotes.Deny} One of the arguments received an invalid value...",
   "events_error_channel_access": "{emotes.Deny} I cannot access that channel.",
-  "events_error_check": "{emotes.Deny} This command cannot be used here...",
+  "events_error_check": "{emotes.Deny} You can't use this command here...",
   "events_error_concurrency": "{emotes.Deny} Maximum concurrency for command reached ({rate} per {per}). Try again later...",
   "events_error_cooldown": "{emotes.Deny} This command is currently on cooldown ({rate} per {per}s). Retry in {time} seconds...",
   "events_error_error": "{emotes.Deny} An error occurred:\n{0}: {1}",

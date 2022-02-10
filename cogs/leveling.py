@@ -424,7 +424,7 @@ class Leveling(commands.Cog):
             img = Image.new("RGB", (width, 612), color=background_colour)
             dr = ImageDraw.Draw(img)
             try:
-                avatar = BytesIO(await http.get(str(user.avatar_url_as(size=512, format="png")), res_method="read"))
+                avatar = BytesIO(await http.get(str(user.avatar.replace(size=512, format="png")), res_method="read"))
                 avatar_img = Image.open(avatar)
                 avatar_resized = avatar_img.resize((512, 512))
                 img.paste(avatar_resized)
@@ -551,7 +551,7 @@ class Leveling(commands.Cog):
         else:
             sm = 1
         embed = discord.Embed(colour=general.random_colour(), title=r)
-        embed.set_thumbnail(url=user.avatar_url_as(size=512, format="png"))
+        embed.set_thumbnail(url=str(user.avatar.replace(size=512, format="png")))
         # dr.text((text_x, -10), f"{user}", font=font, fill=font_colour)
         try:
             if level >= 0:

@@ -94,7 +94,7 @@ class Starboard(commands.Cog):
             embed = discord.Embed(colour=0xffff00)
             author = _message.author
             author_name = author.name
-            author_url = author.avatar_url_as(size=64, format="png")
+            author_url = str(author.avatar.replace(size=64, format="png"))
             embed.set_author(name=author_name, icon_url=author_url)
             embed.description = _message.content
             if _message.attachments:

@@ -1154,3 +1154,6 @@
 - The help command should no longer send into DMs unless invoked there
 - Commands you don't have perms for should now show up in the help command
 - Changed owner-only commands to use the discord.py is_owner() check
+
+## v7.4.22.1 - 10 February 2022
+- Fixed some commands still using the old url_as() and breaking

@@ -25,7 +25,7 @@ class Tags(commands.Cog):
                     .replace("[USERNAME]", ctx.author.name)\
                     .replace("[USER]", str(ctx.author))\
                     .replace("[USER_ID]", str(ctx.author.id))\
-                    .replace("[AVATAR]", str(ctx.author.avatar_url_as(static_format="png", size=1024)))\
+                    .replace("[AVATAR]", str(ctx.author.avatar.replace(static_format="png", size=1024)))\
                     .replace("[JOINED]", language.time(ctx.author.joined_at, short=0, dow=False, seconds=True, tz=False))\
                     .replace("[USER_CREATED]", language.time(ctx.author.created_at, short=0, dow=False, seconds=True, tz=False))\
                     .replace("[SERVER_CREATED]", language.time(ctx.guild.created_at, short=0, dow=False, seconds=True, tz=False))\
