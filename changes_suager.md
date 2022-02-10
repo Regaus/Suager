@@ -1157,3 +1157,6 @@
 
 ## v7.4.22.1 - 10 February 2022
 - Fixed some commands still using the old url_as() and breaking
+
+## v7.4.22.2 - 10 February 2022
+- Made failed permissions check raise MissingPermissions error for the custom error message

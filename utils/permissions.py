@@ -11,7 +11,11 @@ async def check_permissions(ctx, perms, *, check=all):
     if is_owner(ctx):
         return True
     resolved = ctx.channel.permissions_for(ctx.author)
-    return check(getattr(resolved, name, None) == value for name, value in perms.items())
+    output = check(getattr(resolved, name, None) == value for name, value in perms.items())
+    if output:
+        return True
+    missing = [name for name, value in perms.items() if getattr(resolved, name, None) != value]
+    raise commands.MissingPermissions(missing)
 
 
 def has_permissions(*, check=all, **perms):
