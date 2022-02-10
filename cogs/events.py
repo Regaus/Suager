@@ -57,9 +57,7 @@ class Events(commands.Cog):
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
         """ Triggered when a command fails for any reason """
         guild = getattr(ctx.guild, "name", "Private Message")
-        error_message = f"{time.time()} > {self.bot.name} > {guild} > {ctx.author}"
-        logger.log(self.bot.name, "commands", error_message)
-        logger.log(self.bot.name, "errors", error_message)
+        error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > {type(err).__name__}: {str(err)}"
         language = self.bot.language(ctx)
         if isinstance(err, commands.MissingRequiredArgument):
             # A required argument is missing
@@ -139,11 +137,15 @@ class Events(commands.Cog):
             # An error occurred while invoking the command
             error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
             if "2000 or fewer" in str(err) and len(ctx.message.content) > 1900:
-                return await general.send(language.string("events_error_message_length"), ctx.channel)
-            await general.send(language.string("events_error_error", type(err.original).__name__, str(err.original)), ctx.channel)
-            ec = self.bot.get_channel(self.bot.local_config["error_channel"])
-            if ec is not None:
-                await ec.send(error)
+                await general.send(language.string("events_error_message_length"), ctx.channel)
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
+            else:
+                await general.send(language.string("events_error_error", type(err.original).__name__, str(err.original)), ctx.channel)
+                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
+                if ec is not None:
+                    await ec.send(error)
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > " \
+                                f"{type(err.original).__name__}: {str(err.original)}"
 
         else:
             # Catch-all error statement. This shouldn't ever get called, but who knows...
@@ -152,6 +154,9 @@ class Events(commands.Cog):
             if ec is not None:
                 error = general.traceback_maker(err, ctx.message.content[:750], ctx.guild, ctx.author)
                 await ec.send(error)
+
+        logger.log(self.bot.name, "commands", error_message)
+        logger.log(self.bot.name, "errors", error_message)
 
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):

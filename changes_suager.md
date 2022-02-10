@@ -1167,3 +1167,6 @@
 - Made it possible to show some extra text alongside the help embed
 - The help command will no longer send reactions when responding
 - Removed the vote-ban commands, as they were removed back in August
+
+## v7.4.23.1 - 10 February 2022
+- Fix events errors to actually log what happened
