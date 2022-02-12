@@ -1,6 +1,6 @@
-from discord.ext.commands import AutoShardedBot
+from __future__ import annotations
 
-from utils import languages, permissions
+from utils import commands, languages, permissions
 from utils.database import Database
 
 # List of all cogs each bot needs to load
@@ -55,7 +55,7 @@ load = {
 }
 
 
-class Bot(AutoShardedBot):
+class Bot(commands.AutoShardedBot):
     def __init__(self, blacklist: list, index: int, lc: dict, config: dict, name: str, db: Database, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.blacklist = blacklist
@@ -73,8 +73,11 @@ class Bot(AutoShardedBot):
             return
         await self.process_commands(msg)
 
+    async def get_context(self, message, *, cls=commands.Context):
+        return await super().get_context(message, cls=cls)
+
     @staticmethod
-    def language(ctx):
+    def language(ctx: commands.Context | languages.FakeContext):
         return languages.Language.get(ctx)
 
     @staticmethod

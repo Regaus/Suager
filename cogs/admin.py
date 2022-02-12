@@ -565,7 +565,7 @@ class Admin(commands.Cog):
                 return await ctx.send("This must be a JSON file.")
             try:
                 stuff: bytes = await ma[0].read()
-            except discord.HTTPException or discord.NotFound:
+            except (discord.HTTPException, discord.NotFound):
                 return await ctx.send("There was an error getting the file.")
         else:
             return await ctx.send("There must be exactly one JSON file.")

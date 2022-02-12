@@ -18,7 +18,7 @@
   "birthdays_clear": "**{0}**, your birthday has been deleted from the database.",
   "birthdays_message": "Happy birthday {0}, have a nice one! \uD83C\uDF82\uD83C\uDF89",
   "birthdays_set_already": "**{0}**, your birthday has been changed from **{2}** to **{1}**.",
-  "birthdays_set_invalid": "You need to enter a valid date with the command.\nNote that the format is `DD/MM`.\nFor example, if your birthday is on the 9th of July, enter `09/07`. Yes, these zeros are necessary.",
+  "birthdays_set_invalid": "You need to enter a valid date with the command.\nThe format used is `DD/MM`.\nFor example, if your birthday is on 27th January, enter `{p}birthday set 27/1`.",
   "birthdays_set_set": "**{0}**, your birthday is now saved as **{1}**.",
   "discord_avatar": "ℹ Avatar for **{0}**\n{1}",
   "discord_created_at": "**{0}** created their account on **{1}**",

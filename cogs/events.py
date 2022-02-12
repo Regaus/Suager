@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import json
 from io import BytesIO
 from typing import List
 
 import discord
 from aiohttp import ClientPayloadError
-from discord.ext import commands
 
-from utils import bot_data, general, help_utils, http, languages, logger, time
+from utils import bot_data, commands, general, help_utils, http, languages, logger, time
 from regaus import time as time2
 
 
@@ -58,7 +59,7 @@ class Events(commands.Cog):
         """ Triggered when a command fails for any reason """
         guild = getattr(ctx.guild, "name", "Private Message")
         error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > {type(err).__name__}: {str(err)}"
-        language = self.bot.language(ctx)
+        language = ctx.language()
         if isinstance(err, commands.MissingRequiredArgument):
             # A required argument is missing
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
@@ -365,7 +366,7 @@ class Events(commands.Cog):
                             logger.log(self.bot.name, "errors", out)
 
     @commands.Cog.listener()
-    async def on_member_ban(self, guild: discord.Guild, user: discord.User or discord.Member):
+    async def on_member_ban(self, guild: discord.Guild, user: discord.User | discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got banned from {guild.name}")
         # message = f"{user} ({user.id}) has been **banned** from {guild.name}"
         # if self.bot.name == "suager":
@@ -388,6 +389,9 @@ class Events(commands.Cog):
     async def on_ready(self):
         if not hasattr(self.bot, 'uptime') or self.bot.uptime is None:
             self.bot.uptime = time.now(None)
+
+        # await self.bot.http.bulk_upsert_global_commands(self.bot.application_id, [])
+        # await self.bot.http.bulk_upsert_guild_commands(self.bot.application_id, 738425418637639775, [])
         print(f"{time.time()} > {self.bot.full_name} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
         playing = f"Loading... | v{general.get_version()[self.bot.name]['short_version']}"
         await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
@@ -540,7 +544,7 @@ class Events(commands.Cog):
             send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
             logger.log(self.bot.name, log, send)
         if self.bot.name in ["suager", "kyomi"]:
-            a1, a2 = [before.avatar, after.avatar]
+            a1, a2 = [before.avatar, after.avatar]  # type: discord.Asset, discord.Asset
             al = self.bot.get_channel(745760639955370083)
             if a1 != a2:
                 send = f"{to} > {n2} ({uid}) changed their avatar"
@@ -554,7 +558,7 @@ class Events(commands.Cog):
                             general.print_error(out)
                             logger.log(self.bot.name, "errors", out)
                         else:
-                            await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2}.{ext}"))
+                            await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2.key}.{ext}"))
                     except (discord.HTTPException, ClientPayloadError) as e:
                         out = f"{time.time()} > {self.bot.name} > User Update > Failed to send updated avatar: {e}"
                         general.print_error(out)

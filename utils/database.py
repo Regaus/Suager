@@ -48,7 +48,7 @@ class Column:
         self.type = column_type
         self.not_null = not_null
         self.nn = " NOT NULL" if self.not_null else ""
-        self.pk = " PRIMARY KEY AUTOINCREMENT" if pk else ""
+        self.pk = " PRIMARY KEY" if pk else ""
         self.ct = types[self.type]
 
     def __str__(self):

@@ -2,15 +2,14 @@ import re
 from datetime import datetime
 
 import discord
-from discord.ext import commands
 
-from utils import bot_data, general, permissions
+from utils import bot_data, commands
 
 
 class Birthdays(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
-        self.timestamp_regex = r"^([0-2][0-9]|3[0-1])\/(0[1-9]|1[0-2])"
+        self.timestamp_regex = re.compile(r"^([0-2]?[0-9]|3[0-1])/((1[0-2])|(0?[1-9]))$")
         self.birthday_self = "birthdays_birthday_mizuki" if bot.name == "kyomi" else "birthdays_birthday_suager"
 
     def check_birthday(self, user_id):
@@ -23,48 +22,50 @@ class Birthdays(commands.Cog):
     async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
         """ Check someone's birthday"""
         if ctx.invoked_subcommand is None:
-            language = self.bot.language(ctx)
+            language = ctx.language()
             user = user or ctx.author
             if user.id == self.bot.user.id:
-                return await general.send(language.string(self.birthday_self), ctx.channel)
+                return await ctx.send(language.string(self.birthday_self))
             has_birthday = self.check_birthday(user.id)
             if not has_birthday:
-                return await general.send(language.string("birthdays_birthday_not_saved", user.name), ctx.channel)
+                return await ctx.send(language.string("birthdays_birthday_not_saved", user.name))
             birthday = language.date(has_birthday, short=0, dow=False, year=False)
             if user == ctx.author:
-                return await general.send(language.string("birthdays_birthday_your", birthday), ctx.channel)
-            return await general.send(language.string("birthdays_birthday_general", str(user), birthday), ctx.channel)
+                return await ctx.send(language.string("birthdays_birthday_your", birthday))
+            return await ctx.send(language.string("birthdays_birthday_general", str(user), birthday))
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
         """ Set your birthday
 
         Format: `DD/MM`
-        Example: //birthdays set 27/01"""
-        language = self.bot.language(ctx)
-        if re.compile(self.timestamp_regex).search(date):
+        Example: 27 January -> `//birthdays set 27/01`"""
+        language = ctx.language()
+        if self.timestamp_regex.search(date):
             try:
-                timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
+                d, m = date.split("/", 1)
+                timestamp = datetime(2020, int(m), int(d))
+                # timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
             except ValueError:
-                return await general.send(language.string("birthdays_set_invalid"), ctx.channel)
+                return await ctx.send(language.string("birthdays_set_invalid", p=ctx.clean_prefix))
         else:
-            return await general.send(language.string("birthdays_set_invalid"), ctx.channel)
+            return await ctx.send(language.string("birthdays_set_invalid", p=ctx.clean_prefix))
         date = language.date(timestamp, short=0, dow=False, year=False)
         has_birthday = self.check_birthday(ctx.author.id)
         if has_birthday is not None:
             self.bot.db.execute(f"UPDATE birthdays SET birthday=? WHERE uid=? AND bot=?", (timestamp, ctx.author.id, self.bot.name))
             old_date = language.date(has_birthday, short=0, dow=False, year=False)
-            return await general.send(language.string("birthdays_set_already", ctx.author.name, date, old_date), ctx.channel)
+            return await ctx.send(language.string("birthdays_set_already", ctx.author.name, date, old_date), True)
         else:
             self.bot.db.execute(f"INSERT INTO birthdays VALUES (?, ?, ?, ?)", (ctx.author.id, timestamp, False, self.bot.name))
-            return await general.send(language.string("birthdays_set_set", ctx.author.name, date), ctx.channel)
+            return await ctx.send(language.string("birthdays_set_set", ctx.author.name, date), True)
 
     @birthday.command(name="clear", aliases=["reset", "delete"])
     async def delete(self, ctx: commands.Context):
         """ Delete your birthday """
-        language = self.bot.language(ctx)
+        language = ctx.language()
         self.bot.db.execute(f"DELETE FROM birthdays WHERE uid=? AND bot=?", (ctx.author.id, self.bot.name))
-        return await general.send(language.string("birthdays_clear", ctx.author.name), ctx.channel)
+        return await ctx.send(language.string("birthdays_clear", ctx.author.name))
 
     @birthday.command(name="forceset", aliases=["force"])
     @commands.is_owner()
@@ -72,7 +73,7 @@ class Birthdays(commands.Cog):
         """ Force-set someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
         data = self.bot.db.execute(f"UPDATE birthdays SET birthday=? WHERE uid=? AND bot=?", (timestamp, user.id, self.bot.name))
-        return await general.send(data, ctx.channel)
+        return await ctx.send(data)
 
     @birthday.command(name="insert")
     @commands.is_owner()
@@ -80,14 +81,14 @@ class Birthdays(commands.Cog):
         """ Force-insert someone's birthday """
         timestamp = datetime.strptime(new_time + "/2020", "%d/%m/%Y")
         data = self.bot.db.execute(f"INSERT INTO birthdays VALUES (?, ?, ?, ?)", (user.id, timestamp, False, self.bot.name))
-        return await general.send(data, ctx.channel)
+        return await ctx.send(data)
 
     @birthday.command(name="forcedelete")
     @commands.is_owner()
     async def force_delete(self, ctx: commands.Context, user: discord.User):
         """ Force-delete someone's birthday """
         data = self.bot.db.execute(f"DELETE FROM birthdays WHERE uid=? AND bot=?", (user.id, self.bot.name))
-        return await general.send(data, ctx.channel)
+        return await ctx.send(data)
 
 
 def setup(bot: bot_data.Bot):

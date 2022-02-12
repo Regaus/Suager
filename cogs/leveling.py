@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import random
 from io import BytesIO
@@ -379,7 +381,7 @@ class Leveling(commands.Cog):
         except KeyError:
             return await general.send(language.string("leveling_rewards_none"), ctx.channel)
 
-    async def level(self, ctx: commands.Context, who: discord.Member or None, language: languages.Language):
+    async def level(self, ctx: commands.Context, who: discord.Member | None, language: languages.Language):
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:

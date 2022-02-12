@@ -7,6 +7,12 @@ import discord
 from utils import bot_data, database, general, temporaries, time
 from utils.help_utils import HelpFormat
 
+# import logging
+# log = logging.getLogger("discord")
+# log.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(filename="data/log.log", encoding="utf-8", mode="w")
+# log.addHandler(handler)
+
 boot_time = time.now(None)
 print(f"{time.time()} > Initialisation Started")
 config = general.get_config()
@@ -50,7 +56,8 @@ for i in range(len(config["bots"])):
         intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True)
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db,
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=HelpFormat(),
-                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd, intents=intents)
+                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd, intents=intents,
+                       allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True), message_commands=True, slash_commands=False)
     load = bot_data.load[name]
     for name in load:
         bot.load_extension(f"cogs.{name}")
@@ -79,5 +86,5 @@ for i in range(len(config["bots"])):
 
 try:
     loop.run_until_complete(asyncio.gather(*tasks))
-except KeyboardInterrupt or asyncio.CancelledError:
+except (KeyboardInterrupt, asyncio.CancelledError):
     loop.close()

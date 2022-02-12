@@ -1170,3 +1170,9 @@
 
 ## v7.4.23.1 - 10 February 2022
 - Fix events errors to actually log what happened
+
+## v7.4.24 - 11 February 2022
+- Updated `//birthday set` to no longer require zeros at front
+- Made a custom Context that can be used to load languages instead of relying on the Bot instance
+- Made the "crossed out commands" warning only show up in the help output for the entire bot
+- Removed auto increment from punishments and reminders

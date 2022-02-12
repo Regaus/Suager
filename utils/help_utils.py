@@ -4,11 +4,10 @@ from itertools import groupby
 from typing import Any, Iterable
 
 import discord
-from discord.ext.commands import Command, CommandError, Context, MinimalHelpCommand, NoPrivateMessage, NotOwner, Paginator
 from discord.ext.commands.core import Group, wrap_callback
 from jishaku.shim.paginator_170 import PaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 
-from utils.bot_data import Bot
+from utils.commands import Command, CommandError, Context, MinimalHelpCommand, NoPrivateMessage, NotOwner
 
 
 class PaginatorInterface(PaginatorEmbedInterface):
@@ -52,15 +51,11 @@ class HelpFormat(MinimalHelpCommand):
             "name": "help",
             "aliases": ["commands"],
             "help": "I wonder what this command does..."
-        })
+        }, sort_commands=True, dm_help=False)
 
-        self.sort_commands = True
         self.commands_heading = "Commands"
-        self.dm_help = False
-        self.dm_help_threshold = None
         self.aliases_heading = "Aliases:"
         self.no_category = "No Category"
-        self.paginator = Paginator(suffix=None, prefix=None)
         self.extra_text: str | None = None
 
     @property
@@ -120,16 +115,15 @@ class HelpFormat(MinimalHelpCommand):
         ret = []
         for cmd in iterator:
             valid = await self.predicate(cmd)
-            if valid:
-                ret.append(cmd)
-            elif valid is None:
-                if self.context.guild is None:
-                    cmd.invalid = True
+            if valid is True or valid is None:
                 ret.append(cmd)
 
         if sort:
             ret.sort(key=key)
         return ret
+
+    def add_aliases_formatting(self, aliases):
+        self.paginator.add_line(f'**{self.aliases_heading}** `{"`, `".join(aliases)}`', empty=True)
 
     async def add_command_formatting(self, command: Command):
         if command.description:
@@ -197,6 +191,26 @@ class HelpFormat(MinimalHelpCommand):
 
         await self.send_pages()
 
+    async def send_cog_help(self, cog):
+        bot = self.context.bot
+        if bot.description:
+            self.paginator.add_line(bot.description, empty=True)
+
+        note = self.get_opening_note()
+        if note:
+            self.paginator.add_line(note, empty=True)
+
+        if cog.description:
+            self.paginator.add_line(cog.description, empty=True)
+
+        filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands)
+        if filtered:
+            self.paginator.add_line(f"**{cog.qualified_name} {self.commands_heading}**")
+            for command in filtered:
+                self.add_subcommand_formatting(command)
+
+        await self.send_pages()
+
     async def send_group_help(self, group):
         await self.add_command_formatting(group)
 
@@ -210,11 +224,6 @@ class HelpFormat(MinimalHelpCommand):
             for command in filtered:
                 self.add_subcommand_formatting(command)
 
-            note = self.get_ending_note()
-            if note:
-                self.paginator.add_line()
-                self.paginator.add_line(note)
-
         await self.send_pages()
 
     async def send_command_help(self, command):
@@ -224,7 +233,7 @@ class HelpFormat(MinimalHelpCommand):
 
 
 async def send_help(ctx: Context, command: str | None, extra_text: str = None) -> Any:
-    bot: Bot = ctx.bot
+    bot = ctx.bot  # bot_data.Bot
     cmd: HelpFormat | None = bot.help_command
 
     if cmd is None:
