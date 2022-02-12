@@ -8,10 +8,9 @@ from io import BytesIO
 
 import discord
 import pytz
-from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from utils import arg_parser, bases, bot_data, emotes, general, http, permissions, time
+from utils import arg_parser, bases, bot_data, commands, emotes, general, http, permissions, time
 
 
 def custom_role_enabled(ctx):
@@ -24,14 +23,14 @@ async def time_diff(ctx: commands.Context, string: str, multiplier: int):
         delta = time.interpret_time(string) * multiplier
         then, errors = time.add_time(delta)
         if errors:
-            return await general.send(language.string("util_timediff_error", then), ctx.channel)
+            return await ctx.send(language.string("util_timediff_error", then))
             # return await general.send(f"Error converting time difference: {then}", ctx.channel)
     except (ValueError, OverflowError) as e:
-        return await general.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"), ctx.channel)
+        return await ctx.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"))
     difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
     time_now = language.time(time.now(None), short=0, dow=False, seconds=True, tz=False)
     time_then = language.time(then, short=0, dow=False, seconds=True, tz=False)
-    return await general.send(language.string("util_timediff", time_now, difference, time_then), ctx.channel)
+    return await ctx.send(language.string("util_timediff", time_now, difference, time_then))
     # return await general.send(f"Current time: **{time_now}**\nDifference: **{difference}**\nOutput time: **{time_then}**", ctx.channel)
 
 
@@ -62,7 +61,7 @@ class Utility(commands.Cog):
         if data:
             send += language.string("util_time_custom", language.time(time.set_tz(time.now(None), data['tz']), short=0, dow=True, seconds=True, tz=False))
             # send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, False)}**"
-        return await general.send(send, ctx.channel)
+        return await ctx.send(send)
 
     @commands.command(name="base", aliases=["bases", "bc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -73,23 +72,23 @@ class Utility(commands.Cog):
         Use "from" to convert from the base to decimal (base-10)
         Caps argument is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to decimal."""
         if base > 36:
-            return await general.send(f"{ctx.author.name}, Bases above 36 are not supported", ctx.channel)
+            return await ctx.send(f"{ctx.author.name}, Bases above 36 are not supported")
         elif base < 2:
-            return await general.send(f"{ctx.author.name}, Bases under 2 are not supported", ctx.channel)
+            return await ctx.send(f"{ctx.author.name}, Bases under 2 are not supported")
         conversion = conversion.lower()
         try:
             if conversion == "to":
                 value = float(number)
-                return await general.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})", ctx.channel)
+                return await ctx.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})")
             if conversion == "from":
                 if "." in number:
-                    return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base_float(number, base, 10)} (base 10)", ctx.channel)
-                return await general.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)", ctx.channel)
+                    return await ctx.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base_float(number, base, 10)} (base 10)")
+                return await ctx.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)")
         except ValueError:
-            return await general.send(f"{ctx.author.name}, this number is invalid.", ctx.channel)
+            return await ctx.send(f"{ctx.author.name}, this number is invalid.")
         except OverflowError:
-            return await general.send(f"{ctx.author.name}, the number specified is too large to convert to a proper value.", ctx.channel)
-        return await general.send(f"You need to specify either `to` or `from`.", ctx.channel)
+            return await ctx.send(f"{ctx.author.name}, the number specified is too large to convert to a proper value.")
+        return await ctx.send(f"You need to specify either `to` or `from`.")
 
     @commands.command(name="settz")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -98,7 +97,7 @@ class Utility(commands.Cog):
         language = self.bot.language(ctx)
         if tz is None:
             self.bot.db.execute("DELETE FROM timezones WHERE uid=?", (ctx.author.id,))
-            return await general.send(language.string("util_time_tz_reset"), ctx.channel)
+            return await ctx.send(language.string("util_time_tz_reset"))
         try:
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             _tz = pytz.timezone(tz)
@@ -106,11 +105,11 @@ class Utility(commands.Cog):
                 self.bot.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
             else:
                 self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
-            return await general.send(language.string("util_time_tz", _tz), ctx.channel)
+            return await ctx.send(language.string("util_time_tz", _tz))
             # return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
         except pytz.UnknownTimeZoneError:
             file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
-            return await general.send(language.string("util_time_tz_error", tz), ctx.channel, file=file)
+            return await ctx.send(language.string("util_time_tz_error", tz), file=file)
             # return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
 
     @commands.command(name="timesince", aliases=["timeuntil"])
@@ -140,9 +139,9 @@ class Utility(commands.Cog):
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)  # time.human_timedelta(date, accuracy=7)
             current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)  # time.time_output(now, True, True, True)
             specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)  # time.time_output(date, True, True, True)
-            return await general.send(language.string("util_timesince", current_time, specified_time, difference), ctx.channel)
+            return await ctx.send(language.string("util_timesince", current_time, specified_time, difference))
         except Exception as e:
-            return await general.send(language.string("util_timesince_error", type(e).__name__, str(e)), ctx.channel)
+            return await ctx.send(language.string("util_timesince_error", type(e).__name__, str(e)))
 
     @commands.command(name="timein", aliases=["timeadd"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -162,7 +161,7 @@ class Utility(commands.Cog):
         """ Check weather in a place """
         language = self.bot.language(ctx)
         lang = "en" if language.data("_conlang") is not False else language.string("_short")
-        a = await general.send(f"{emotes.Loading} Loading weather for {place}...", ctx.channel)
+        a = await ctx.send(f"{emotes.Loading} Loading weather for {place}...")
         try:
             token = self.bot.config["weather_api_token"]
             bio = await http.get(f"http://api.openweathermap.org/data/2.5/weather?appid={token}&lang={lang}&q={place}", res_method="read")
@@ -241,10 +240,10 @@ class Utility(commands.Cog):
                     pass
                 embed.timestamp = now
             else:
-                return await general.send(language.string("util_weather_error", place, code, data["message"]), ctx.channel)
+                return await ctx.send(language.string("util_weather_error", place, code, data["message"]))
         except Exception as e:
-            return await general.send(language.string("util_weather_error", place, type(e).__name__, str(e)), ctx.channel)
-        return await general.send(None, ctx.channel, embed=embed)
+            return await ctx.send(language.string("util_weather_error", place, type(e).__name__, str(e)))
+        return await ctx.send(embed=embed)
 
     @commands.command(name="colour", aliases=["color"])
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
@@ -263,10 +262,10 @@ class Utility(commands.Cog):
                     colour = f"{d}{d}{e}{e}{f}{f}"
                     a = 6
                 if a != 6:
-                    return await general.send(language.string("images_colour_invalid_value"), ctx.channel)
+                    return await ctx.send(language.string("images_colour_invalid_value"))
                 _colour = f"{int(colour, 16):06x}"
             except Exception as e:
-                return await general.send(language.string("images_colour_invalid", type(e).__name__, str(e)), ctx.channel)
+                return await ctx.send(language.string("images_colour_invalid", type(e).__name__, str(e)))
         hex_6 = _colour[:6]
         int_6 = int(_colour[:6], 16)
         embed = discord.Embed(colour=int_6)
@@ -291,7 +290,7 @@ class Utility(commands.Cog):
         try:
             font = ImageFont.truetype("assets/font.ttf", size=font_size)
         except ImportError:
-            await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
+            await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font = None
         image2 = Image.new(mode="RGBA", size=(size * 11, size * rows), color=(0, 0, 0, 1))
         up_red, up_green, up_blue = (255 - red) / 10, (255 - green) / 10, (255 - blue) / 10
@@ -324,7 +323,7 @@ class Utility(commands.Cog):
         image2.save(bio2, "PNG")
         bio2.seek(0)
         embed.set_image(url="attachment://gradient.png")
-        return await general.send(None, ctx.channel, embed=embed, files=[discord.File(bio1, "colour.png"), discord.File(bio2, "gradient.png")])
+        return await ctx.send(embed=embed, files=[discord.File(bio1, "colour.png"), discord.File(bio2, "gradient.png")])
 
     @commands.command(name="roll")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -337,14 +336,14 @@ class Utility(commands.Cog):
             v1, v2 = [num1, num2]
         r = random.randint(v1, v2)
         n1, n2, no = language.number(v1), language.number(v2), language.number(r)
-        return await general.send(language.string("fun_roll", ctx.author.name, n1, n2, no), ctx.channel)
+        return await ctx.send(language.string("fun_roll", ctx.author.name, n1, n2, no))
 
     @commands.command(name="reverse")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def reverse_text(self, ctx: commands.Context, *, text: str):
         """ Reverses text """
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
-        return await general.send(f"🔁 {ctx.author.name}:\n{reverse}", ctx.channel)
+        return await ctx.send(f"🔁 {ctx.author.name}:\n{reverse}")
 
     @commands.command(name="dm")
     @commands.is_owner()
@@ -353,15 +352,15 @@ class Utility(commands.Cog):
         try:
             await ctx.message.delete()
         except Exception as e:
-            await general.send(f"Message deletion failed: `{type(e).__name__}: {e}`", ctx.channel, delete_after=5)
+            await ctx.send(f"Message deletion failed: `{type(e).__name__}: {e}`", delete_after=5)
         user = self.bot.get_user(user_id)
         if not user:
-            return await general.send(f"Could not find a user with ID {user_id}", ctx.channel)
+            return await ctx.send(f"Could not find a user with ID {user_id}")
         try:
             await user.send(message)
-            return await general.send(f"✉ Sent DM to {user}", ctx.channel, delete_after=5)
+            return await ctx.send(f"✉ Sent DM to {user}", delete_after=5)
         except discord.Forbidden:
-            return await general.send(f"Failed to send DM - the user might have blocked DMs, or be a bot.", ctx.channel)
+            return await ctx.send(f"Failed to send DM - the user might have blocked DMs, or be a bot.")
 
     @commands.command(name="tell")
     @commands.guild_only()
@@ -373,14 +372,14 @@ class Utility(commands.Cog):
         try:
             await ctx.message.delete()
         except Exception as e:
-            await general.send(language.string("fun_say_delete_fail", type(e).__name__, str(e)), ctx.channel, delete_after=5)
+            await ctx.send(language.string("fun_say_delete_fail", type(e).__name__, str(e)), delete_after=5)
         if channel.guild != ctx.guild:
-            return await general.send(language.string("fun_tell_guilds"), ctx.channel)
+            return await ctx.send(language.string("fun_tell_guilds"))
         try:
-            await general.send(message, channel, u=True, r=True)
+            await channel.send(message)
         except Exception as e:
-            return await general.send(language.string("fun_tell_fail", type(e).__name__, str(e)), ctx.channel)
-        return await general.send(language.string("fun_tell_success", channel.mention), ctx.channel, delete_after=5)
+            return await ctx.send(language.string("fun_tell_fail", type(e).__name__, str(e)))
+        return await ctx.send(language.string("fun_tell_success", channel.mention), delete_after=5)
 
     @commands.command(name="atell")
     @commands.is_owner()
@@ -390,26 +389,12 @@ class Utility(commands.Cog):
         try:
             await ctx.message.delete()
         except Exception as e:
-            await general.send(f"Message deletion failed: `{type(e).__name__}: {e}`", ctx.channel, delete_after=5)
+            await ctx.send(f"Message deletion failed: `{type(e).__name__}: {e}`", delete_after=5)
         try:
-            await general.send(message, channel, u=True, r=True)
+            await channel.send(message)
         except Exception as e:
-            return await general.send(f"{emotes.Deny} Failed to send the message: `{type(e).__name__}: {e}`", ctx.channel)
-        return await general.send(f"{emotes.Allow} Successfully sent the message to {channel.mention}", ctx.channel, delete_after=5)
-
-    # @commands.command(name="say")
-    # @commands.check(lambda ctx: not (ctx.author.id == 667187968145883146 and ctx.guild.id == 568148147457490954))
-    # @commands.guild_only()
-    # @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    # async def say(self, ctx: commands.Context, *, message: str):
-    #     """ Make me speak! """
-    #     language = self.bot.language(ctx)
-    #     try:
-    #         await ctx.message.delete()
-    #     except Exception as e:
-    #         await general.send(language.string("fun_say_delete_fail", type(e).__name__, str(e)), ctx.channel, delete_after=5)
-    #     await general.send(f"**{ctx.author}:**\n{message}", ctx.channel)
-    #     return await general.send(language.string("fun_say_success"), ctx.channel, delete_after=5)
+            return await ctx.send(f"{emotes.Deny} Failed to send the message: `{type(e).__name__}: {e}`")
+        return await ctx.send(f"{emotes.Allow} Successfully sent the message to {channel.mention}", delete_after=5)
 
     @commands.command(name="vote", aliases=["petition"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -419,10 +404,10 @@ class Utility(commands.Cog):
         if self.bot.name == "suager":
             if re.compile(r"^(\d{4}) (yes|neutral|no)$").search(question):  # If the vote question is something like "1337 yes" - checks if someone is trying to vote for a poll
                 if ctx.guild is not None and ctx.guild.id == 869975256566210641:
-                    await general.send(language.string("fun_vote_poll_question2", ctx.prefix, question), ctx.channel)
+                    await ctx.send(language.string("fun_vote_poll_question2", ctx.prefix, question))
                 else:
-                    await general.send(language.string("fun_vote_poll_question", ctx.prefix, question), ctx.channel)
-        message = await general.send(language.string("fun_vote", ctx.author.name, language.string(f"fun_vote_{str(ctx.invoked_with).lower()}"), question), ctx.channel)
+                    await ctx.send(language.string("fun_vote_poll_question", ctx.prefix, question))
+        message = await ctx.send(language.string("fun_vote", ctx.author.name, language.string(f"fun_vote_{str(ctx.invoked_with).lower()}"), question))
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
         await message.add_reaction(emotes.Deny)
@@ -432,17 +417,32 @@ class Utility(commands.Cog):
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
         user: discord.User | discord.Member = who or ctx.author
-        return await general.send(self.bot.language(ctx).string("discord_avatar", user.name, str(user.avatar.replace(size=1024, static_format='png'))), ctx.channel)
+        return await ctx.send(self.bot.language(ctx).string("discord_avatar", user.name, str(user.display_avatar.replace(size=1024, static_format='png'))))
 
-    @commands.command(name="avatar2", aliases=["ay", "av2"])
+    @commands.command(name="avatar2", aliases=["av2", "a2", "ay"])
     @commands.is_owner()
-    async def avatar_fetch(self, ctx: commands.Context, *who: int):
+    async def avatar_fetch(self, ctx: commands.Context, *users: int):
         """ Fetch and yoink avatars """
-        for user in who:
+        for user in users:
             try:
-                await general.send(str((await self.bot.fetch_user(user)).avatar.replace(size=1024, static_format="png")), ctx.channel)
+                await ctx.send(str((await self.bot.fetch_user(user)).display_avatar.replace(size=1024, static_format="png")))
             except Exception as e:
-                await general.send(f"{user} -> {type(e).__name__}: {e}", ctx.channel)
+                await ctx.send(f"{user} -> {type(e).__name__}: {e}")
+
+    @commands.command(name="avatar3", aliases=["av3", "a3", "ag"])
+    @commands.is_owner()
+    async def avatar_guild(self, ctx: commands.Context, user_id: int, guild_id: int):
+        """ Try to get a member's guild avatar """
+        guild: discord.Guild = self.bot.get_guild(guild_id)
+        if not guild:
+            return await ctx.send(f"Guild {guild_id} was not found...")
+        member: discord.Member = guild.get_member(user_id)
+        if not member:
+            return await ctx.send(f"Member {user_id} is not in {guild.name}...")
+        avatar = member.guild_avatar
+        if not avatar:
+            return await ctx.send(f"{member} does not have a guild avatar in {guild.name}...")
+        return ctx.send(f"**{member}**'s avatar in **{guild.name}**:\n{avatar.replace(size=1024, static_format='png')}")
 
     @commands.group(name="role", invoke_without_command=True)
     @commands.guild_only()
@@ -456,7 +456,7 @@ class Utility(commands.Cog):
                 for num, role in enumerate(sorted(ctx.guild.roles, reverse=True), start=1):
                     all_roles += language.string("discord_role_list_item", f"{num:02d}", language.number(len(role.members)), role=role)
                 data = BytesIO(all_roles.encode('utf-8'))
-                return await general.send(language.string("discord_role_list", ctx.guild.name), ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
+                return await ctx.send(language.string("discord_role_list", ctx.guild.name), file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
             else:
                 embed = discord.Embed(colour=role.colour)
                 embed.title = language.string("discord_role_about", role.name)
@@ -470,7 +470,7 @@ class Utility(commands.Cog):
                 embed.add_field(name=language.string("discord_role_position"), value=language.number(role.position), inline=True)
                 embed.add_field(name=language.string("generic_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
                 embed.add_field(name=language.string("discord_role_default"), value=language.yes(role.is_default()), inline=True)
-                return await general.send(None, ctx.channel, embed=embed)
+                return await ctx.send(embed=embed)
 
     @role.command(name="members")
     async def role_members(self, ctx: commands.Context, *, role: discord.Role):
@@ -486,8 +486,8 @@ class Utility(commands.Cog):
         if rl > 1900:
             async with ctx.typing():
                 data = BytesIO(str(m).encode('utf-8'))
-                return await general.send(send, ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Role_Members')}"))
-        return await general.send(f"{send}\n```ini\n{m}```", ctx.channel)
+                return await ctx.send(send, file=discord.File(data, filename=f"{time.file_ts('Role_Members')}"))
+        return await ctx.send(f"{send}\n```ini\n{m}```")
 
     @commands.command(name="joinedat", aliases=["joindate", "jointime"])
     @commands.guild_only()
@@ -496,7 +496,7 @@ class Utility(commands.Cog):
         """ Check when someone joined server """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await general.send(language.string("discord_joined_at", user, ctx.guild.name, language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False)), ctx.channel)
+        return await ctx.send(language.string("discord_joined_at", user, ctx.guild.name, language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False)))
 
     @commands.command(name="createdat")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -504,7 +504,7 @@ class Utility(commands.Cog):
         """ Check when someone created their account """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await general.send(language.string("discord_created_at", user, language.time(user.created_at, short=0, dow=False, seconds=False, tz=False)), ctx.channel)
+        return await ctx.send(language.string("discord_created_at", user, language.time(user.created_at, short=0, dow=False, seconds=False, tz=False)))
 
     @commands.command(name="user")
     @commands.guild_only()
@@ -515,7 +515,7 @@ class Utility(commands.Cog):
         language = self.bot.language(ctx)
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("discord_user_about", user.name)
-        embed.set_thumbnail(url=str(user.avatar.replace(size=1024, static_format="png")))
+        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
@@ -531,7 +531,7 @@ class Utility(commands.Cog):
         else:
             roles = language.string("discord_user_roles_many", language.number(len(user.roles) - 1))
         embed.add_field(name=language.string("discord_user_roles"), value=roles, inline=False)
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command(name="whois")
     @commands.guild_only()
@@ -542,14 +542,14 @@ class Utility(commands.Cog):
         try:
             user = await self.bot.fetch_user(user_id)
         except discord.NotFound:
-            return await general.send(language.string("events_error_not_found_user", value=user_id), ctx.channel)
+            return await ctx.send(language.string("events_error_not_found_user", value=user_id))
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("discord_user_about", user.name)
-        embed.set_thumbnail(url=str(user.avatar.replace(size=1024, static_format="png")))
+        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=str(user), inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
         embed.add_field(name=language.string("generic_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -562,7 +562,7 @@ class Utility(commands.Cog):
         embed.description = language.string("discord_emoji", c, emoji.name, emoji.id, language.yes(emoji.animated), emoji.guild.id,
                                             language.time(emoji.created_at, short=0, dow=False, seconds=False, tz=False), emoji.url)
         embed.set_image(url=emoji.url)
-        return await general.send(f"{ctx.author.name}:", ctx.channel, embed=embed)
+        return await ctx.send(f"{ctx.author.name}:", embed=embed)
 
     @commands.group(name="server", aliases=["guild"], invoke_without_command=True)
     @commands.guild_only()
@@ -603,12 +603,12 @@ class Utility(commands.Cog):
             ca = guild.created_at
             ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=False), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
             embed.add_field(name=language.string("generic_created_at"), value=f"{ct}\n{cd}", inline=False)
-            return await general.send(None, ctx.channel, embed=embed)
+            return await ctx.send(embed=embed)
 
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx: commands.Context):
         """ Get server icon """
-        return await general.send(self.bot.language(ctx).string("discord_server_icon", ctx.guild.name, str(ctx.guild.icon.replace(size=1024, static_format='png'))), ctx.channel)
+        return await ctx.send(self.bot.language(ctx).string("discord_server_icon", ctx.guild.name, str(ctx.guild.icon.replace(size=1024, static_format='png'))))
 
     @server.command(name="banner")
     async def server_banner(self, ctx: commands.Context):
@@ -616,9 +616,9 @@ class Utility(commands.Cog):
         link = str(ctx.guild.banner.replace(size=4096, static_format="png"))
         language = self.bot.language(ctx)
         if link:
-            return await general.send(language.string("discord_server_banner", ctx.guild.name, link), ctx.channel)
+            return await ctx.send(language.string("discord_server_banner", ctx.guild.name, link))
         else:
-            return await general.send(language.string("discord_server_banner_none", ctx.guild.name), ctx.channel)
+            return await ctx.send(language.string("discord_server_banner_none", ctx.guild.name))
 
     @server.command(name="invitebg", aliases=["invite", "splash"])
     async def server_invite(self, ctx: commands.Context):
@@ -626,9 +626,9 @@ class Utility(commands.Cog):
         link = str(ctx.guild.splash.replace(size=4096, static_format="png"))
         language = self.bot.language(ctx)
         if link:
-            return await general.send(language.string("discord_server_inv_bg", ctx.guild.name, link), ctx.channel)
+            return await ctx.send(language.string("discord_server_inv_bg", ctx.guild.name, link))
         else:
-            return await general.send(language.string("discord_server_inv_bg_none", ctx.guild.name), ctx.channel)
+            return await ctx.send(language.string("discord_server_inv_bg_none", ctx.guild.name))
 
     @server.command(name="bots")
     async def server_bots(self, ctx: commands.Context):
@@ -643,8 +643,8 @@ class Utility(commands.Cog):
         if rl > 1900:
             async with ctx.typing():
                 data = BytesIO(str(m).encode('utf-8'))
-                return await general.send(send, ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Bots')}"))
-        return await general.send(f"{send}\n```ini\n{m}```", ctx.channel)
+                return await ctx.send(send, file=discord.File(data, filename=f"{time.file_ts('Bots')}"))
+        return await ctx.send(f"{send}\n```ini\n{m}```")
 
     @commands.command(name="embed")
     @permissions.has_permissions(embed_links=True)
@@ -671,18 +671,18 @@ class Utility(commands.Cog):
         if self.bot.name == "kyomi":
             parser.add_argument('-a', '--author', action='store_true')
         else:
-            embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+            embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
 
         args, valid_check = parser.parse_args(args)
         if not valid_check:
-            return await general.send(args, ctx.channel)
+            return await ctx.send(args)
         if self.bot.name == "kyomi":
             if args.author:
-                embed.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
+                embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
         if args.title:
             embed.title = " ".join(args.title).replace("\\n", "\n")
             if len(embed.title) > 256:
-                return await general.send("Embed title cannot be longer than 256 characters. Blame discord.", ctx.channel)
+                return await ctx.send("Embed title cannot be longer than 256 characters. Blame discord.")
         if args.description:
             embed.description = " ".join(args.description).replace("\\n", "\n")
         if args.footer:
@@ -701,11 +701,11 @@ class Utility(commands.Cog):
                 try:
                     col = int(colour, base=16)
                 except Exception as e:
-                    return await general.send(f"Invalid colour - {type(e).__name__}: {e}", ctx.channel)
+                    return await ctx.send(f"Invalid colour - {type(e).__name__}: {e}")
             else:
-                return await general.send("Colour must be either 3 or 6 HEX digits long.", ctx.channel)
+                return await ctx.send("Colour must be either 3 or 6 HEX digits long.")
             embed.colour = col
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
 
 class Reminders(Utility, name="Utility"):
@@ -718,11 +718,11 @@ class Reminders(Utility, name="Utility"):
         language = self.bot.language(ctx)
         delta = time.interpret_time(duration)
         if time.rd_is_above_5y(delta):
-            return await general.send(language.string("util_reminders_limit"), ctx.channel)
+            return await ctx.send(language.string("util_reminders_limit"))
             # return await general.send("You can't specify a time range above 5 years.", ctx.channel)
         expiry, error = time.add_time(delta)
         if error:
-            return await general.send(language.string("util_reminders_error"), ctx.channel)
+            return await ctx.send(language.string("util_reminders_error"))
             # return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
         diff = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
         when = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
@@ -731,7 +731,7 @@ class Reminders(Utility, name="Utility"):
         #     random_id = general.random_id()
         # self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False, self.bot.name))
         self.bot.db.execute("INSERT INTO reminders(uid, expiry, message, handled, bot) VALUES (?, ?, ?, ?, ?)", (ctx.author.id, expiry, reminder, 0, self.bot.name))
-        return await general.send(language.string("util_reminders_success", ctx.author.name, diff, when), ctx.channel)
+        return await ctx.send(language.string("util_reminders_success", ctx.author.name, diff, when))
         # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
     @commands.group(name="reminders")
@@ -743,7 +743,7 @@ class Reminders(Utility, name="Utility"):
             # reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
             reminders = self.bot.db.fetch("SELECT * FROM reminders WHERE uid=? AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
             if not reminders:
-                return await general.send(language.string("util_reminders_none", ctx.author.name), ctx.channel)
+                return await ctx.send(language.string("util_reminders_none", ctx.author.name))
                 # return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
             output = language.string("util_reminders_list", ctx.author)
             # output = f"**{ctx.author}**, here is the list of your currently active reminders"
@@ -759,9 +759,9 @@ class Reminders(Utility, name="Utility"):
             output2 = "\n\n".join(outputs)
             if len(output2) > 1900:
                 _data = BytesIO(str(output2).encode('utf-8'))
-                return await general.send(output, ctx.channel, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+                return await ctx.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
             else:
-                return await general.send(f"{output}\n\n{output2}", ctx.channel)
+                return await ctx.send(f"{output}\n\n{output2}")
 
     @reminders.command(name="edit")
     async def reminders_edit(self, ctx: commands.Context, reminder_id: int, *, args: str):
@@ -774,13 +774,13 @@ class Reminders(Utility, name="Utility"):
         language = self.bot.language(ctx)
         reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
         if not reminder:
-            return await general.send(language.string("util_reminders_edit_none", reminder_id), ctx.channel)
+            return await ctx.send(language.string("util_reminders_edit_none", reminder_id))
         parser = arg_parser.Arguments()
         parser.add_argument('-m', '--message', '--text', nargs="+")
         parser.add_argument('-t', '--time', '--expiry', nargs="+")
         args, valid_check = parser.parse_args(args)
         if not valid_check:
-            return await general.send(args, ctx.channel)
+            return await ctx.send(args)
         message = args.message
         _message = " ".join(message) if message else reminder["message"]
         _expiry = reminder["expiry"]
@@ -795,14 +795,14 @@ class Reminders(Utility, name="Utility"):
                 if c == 1:
                     _time = f"{_time}:00"
             else:
-                return await general.send(language.string("util_reminders_edit_time2"), ctx.channel)
+                return await ctx.send(language.string("util_reminders_edit_time2"))
             try:
                 _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
             except ValueError:
-                return await general.send(language.string("util_reminders_edit_time"), ctx.channel)
+                return await ctx.send(language.string("util_reminders_edit_time"))
         expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=False)
         self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (_message, _expiry, reminder_id))
-        return await general.send(language.string("util_reminders_edit", reminder_id, _message, expiry), ctx.channel)
+        return await ctx.send(language.string("util_reminders_edit", reminder_id, _message, expiry))
 
     @reminders.command(name="delete", aliases=["remove", "cancel"])
     async def reminders_delete(self, ctx: commands.Context, reminder_id: int):
@@ -810,9 +810,9 @@ class Reminders(Utility, name="Utility"):
         language = self.bot.language(ctx)
         reminder = self.bot.db.fetchrow("SELECT * FROM temporary WHERE entry_id=? AND uid=? AND type='reminder'", (reminder_id, ctx.author.id))
         if not reminder:
-            return await general.send(language.string("util_reminders_edit_none", reminder_id), ctx.channel)
+            return await ctx.send(language.string("util_reminders_edit_none", reminder_id))
         self.bot.db.execute("DELETE FROM temporary WHERE entry_id=? AND uid=?", (reminder_id, ctx.author.id))
-        return await general.send(language.string("util_reminders_delete", reminder_id), ctx.channel)
+        return await ctx.send(language.string("util_reminders_delete", reminder_id))
 
 
 class UtilitySuager(Reminders, name="Utility"):
@@ -828,13 +828,13 @@ class UtilitySuager(Reminders, name="Utility"):
         Example: //customrole --name Role Name --colour ff0057"""
         data = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
-            return await general.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}", ctx.channel)
+            return await ctx.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}")
         parser = arg_parser.Arguments()
         parser.add_argument('-c', '--colour', '--color', nargs=1)
         parser.add_argument('-n', '--name', nargs="+")
         args, valid_check = parser.parse_args(stuff)
         if not valid_check:
-            return await general.send(args, ctx.channel)
+            return await ctx.send(args)
         role = ctx.guild.get_role(data['rid'])
         if args.colour is not None:
             c = args.colour[0]
@@ -849,9 +849,9 @@ class UtilitySuager(Reminders, name="Utility"):
                     try:
                         col = int(c, base=16)
                     except Exception as e:
-                        return await general.send(f"Invalid colour - {type(e).__name__}: {e}", ctx.channel)
+                        return await ctx.send(f"Invalid colour - {type(e).__name__}: {e}")
                 else:
-                    return await general.send("Colour must be either 3 or 6 HEX digits long.", ctx.channel)
+                    return await ctx.send("Colour must be either 3 or 6 HEX digits long.")
             colour = discord.Colour(col)
         else:
             colour = role.colour
@@ -862,8 +862,8 @@ class UtilitySuager(Reminders, name="Utility"):
         try:
             await role.edit(name=name, colour=colour, reason="Custom Role change")
         except Exception as e:
-            return await general.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}", ctx.channel)
-        return await general.send(f"Successfully updated your custom role, {ctx.author.name}", ctx.channel)
+            return await ctx.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}")
+        return await ctx.send(f"Successfully updated your custom role, {ctx.author.name}")
 
     @commands.command(name="grantrole")
     @commands.guild_only()
@@ -876,12 +876,12 @@ class UtilitySuager(Reminders, name="Utility"):
             self.bot.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
             try:
                 await user.add_roles(role, reason="Custom Role grant")
-                return await general.send(f"Granted {role.name} to {user.name}", ctx.channel)
+                return await ctx.send(f"Granted {role.name} to {user.name}")
             except discord.Forbidden:
-                return await general.send(f"{role.name} could not be granted to {user.name}. It has, however, been saved to the database.", ctx.channel)
+                return await ctx.send(f"{role.name} could not be granted to {user.name}. It has, however, been saved to the database.")
         else:
             self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
-            return await general.send(f"Updated custom role of {user.name} to {role.name}", ctx.channel)
+            return await ctx.send(f"Updated custom role of {user.name} to {role.name}")
 
 
 class UtilityCobble(Utility, name="Utility"):
@@ -901,7 +901,7 @@ class UtilityCobble(Utility, name="Utility"):
             else:
                 _time = f"{i['due']} mins"
             trams += f"{i['destination']}: {_time}\n"
-        return await general.send(f"Data for {_place}:\n{status}\n{trams}", ctx.channel)
+        return await ctx.send(f"Data for {_place}:\n{status}\n{trams}")
 
 
 def setup(bot: bot_data.Bot):

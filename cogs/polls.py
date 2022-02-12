@@ -1,11 +1,10 @@
 import json
 
 import discord
-from discord.ext import commands
 from discord.guild import BanEntry
 
 from cogs.mod import MemberID
-from utils import bot_data, general, logger, time
+from utils import bot_data, commands, general, logger, time
 
 
 class Polls(commands.Cog):
@@ -26,12 +25,12 @@ class Polls(commands.Cog):
             delta = time.interpret_time(duration)
             expiry, error = time.add_time(delta)
             if time.rd_is_above_1w(delta):
-                return await general.send(language.string("polls_length_limit"), ctx.channel)
+                return await ctx.send(language.string("polls_length_limit"))
             if ctx.guild.id == 869975256566210641:
                 if time.rd_is_below_1h(delta):
-                    return await general.send(language.string("polls_length_limit2"), ctx.channel)
+                    return await ctx.send(language.string("polls_length_limit2"))
             if error:
-                return await general.send(language.string("polls_length_error", expiry), ctx.channel)
+                return await ctx.send(language.string("polls_length_error", expiry))
             _question = general.reason(ctx.author, question)
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
             _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=False)
@@ -61,10 +60,10 @@ class Polls(commands.Cog):
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_no"), value=language.string("polls_votes_none"), inline=True)
             content = "<@&880091178559737946>" if ctx.guild.id == 869975256566210641 else None
-            message = await general.send(content, poll_channel, embed=embed, r=ctx.guild.id == 869975256566210641)
+            message = await poll_channel.send(content, embed=embed)
             self.bot.db.execute("INSERT INTO polls VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.guild.id, poll_channel.id, message.id, poll_id, _question, "[]", "[]", "[]", expiry, poll_anonymity))
-            return await general.send(language.string("polls_new_success", ctx.author.name), ctx.channel)
+            return await ctx.send(language.string("polls_new_success", ctx.author.name))
 
     @poll.command(name="vote")
     async def poll_vote(self, ctx: commands.Context, poll_id: int, response: str):
@@ -72,25 +71,25 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         response = response.lower()
         if response not in ["yes", "neutral", "no"]:
-            return await general.send(language.string("polls_vote_invalid"), ctx.channel)
+            return await ctx.send(language.string("polls_vote_invalid"))
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
-            return await general.send(language.string("polls_not_found", poll_id), ctx.channel)
+            return await ctx.send(language.string("polls_not_found", poll_id))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
         voted_yes, voted_neutral, voted_no = response == "yes", response == "neutral", response == "no"
         if ctx.author.id in voters_yes:
             if voted_yes:
-                return await general.send(language.string("polls_vote_already_yes"), ctx.channel)
+                return await ctx.send(language.string("polls_vote_already_yes"))
             voters_yes.remove(ctx.author.id)
         if ctx.author.id in voters_neutral:
             if voted_neutral:
-                return await general.send(language.string("polls_vote_already_neutral"), ctx.channel)
+                return await ctx.send(language.string("polls_vote_already_neutral"))
             voters_neutral.remove(ctx.author.id)
         if ctx.author.id in voters_no:
             if voted_no:
-                return await general.send(language.string("polls_vote_already_no"), ctx.channel)
+                return await ctx.send(language.string("polls_vote_already_no"))
             voters_no.remove(ctx.author.id)
         if voted_yes:
             voters_yes.append(ctx.author.id)
@@ -153,7 +152,7 @@ class Polls(commands.Cog):
                         await message.edit(embed=embed)
                 except (discord.NotFound, discord.Forbidden):
                     pass  # The vote was counted anyways, and it's their own fault for not letting the message show up...
-        return await general.send(language.string("polls_vote_success"), ctx.channel)
+        return await ctx.send(language.string("polls_vote_success"))
 
     @poll.command(name="status", aliases=["stats", "info"])
     async def poll_status(self, ctx: commands.Context, poll_id: int):
@@ -161,7 +160,7 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
-            return await general.send(language.string("polls_not_found", poll_id), ctx.channel)
+            return await ctx.send(language.string("polls_not_found", poll_id))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
@@ -190,7 +189,7 @@ class Polls(commands.Cog):
         embed.add_field(name=language.string("polls_votes_current"), inline=False,
                         value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
                                               language.number(total), language.number(score, positives=True), language.number(upvotes, precision=2, percentage=True)))
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @poll.command(name="list")
     async def poll_list(self, ctx: commands.Context):
@@ -198,13 +197,13 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         polls = self.bot.db.fetch("SELECT * FROM polls WHERE guild_id=? ORDER BY expiry", (ctx.guild.id,))
         if not polls:
-            return await general.send(language.string("polls_list_none"), ctx.channel)
+            return await ctx.send(language.string("polls_list_none"))
         output = []
         for i, poll in enumerate(polls, start=1):
             ends = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=False)
             ends_in = language.delta_dt(poll["expiry"], accuracy=3, brief=False, affix=True)
             output.append(language.string("polls_list_entry", language.number(i, commas=False), poll["poll_id"], poll["question"], ends, ends_in))
-        return await general.send(language.string("polls_list", ctx.guild.name, "\n\n".join(output)), ctx.channel)
+        return await ctx.send(language.string("polls_list", ctx.guild.name, "\n\n".join(output)))
 
     @commands.group(name="trial", aliases=["trials"], case_insensitive=True, invoke_without_command=True)
     @commands.guild_only()
@@ -229,14 +228,14 @@ class Polls(commands.Cog):
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
             if user == ctx.author.id:
-                return await general.send(language.string("trials_user_self"), ctx.channel)
+                return await ctx.send(language.string("trials_user_self"))
             try:
                 _user = await self.bot.fetch_user(user)
             except discord.NotFound:
-                return await general.send(language.string("trials_user_none", user), ctx.channel)
+                return await ctx.send(language.string("trials_user_none", user))
             action = action.lower()
             if action not in ["mute", "unmute", "kick", "ban", "unban"]:
-                return await general.send(language.string("trials_action_invalid"), ctx.channel)
+                return await ctx.send(language.string("trials_action_invalid"))
             if action in ["ban", "unban"]:
                 try:
                     bans: list[BanEntry] = await ctx.guild.bans()
@@ -246,9 +245,9 @@ class Polls(commands.Cog):
                             banned = True
                             break
                     if action == "ban" and banned:
-                        return await general.send(language.string("trials_new_fail_ban"), ctx.channel)
+                        return await ctx.send(language.string("trials_new_fail_ban"))
                     if action == "unban" and not banned:
-                        return await general.send(language.string("trials_new_fail_unban"), ctx.channel)
+                        return await ctx.send(language.string("trials_new_fail_unban"))
                 except discord.Forbidden:
                     pass  # Can't check current bans
             poll_anonymity = True
@@ -264,21 +263,21 @@ class Polls(commands.Cog):
                         mute_role: discord.Role = ctx.guild.get_role(settings["mute_role"])
                         if not mute_role:
                             if action in ["mute", "unmute"]:
-                                return await general.send(language.string("trials_new_fail_mute2"), ctx.channel)
+                                return await ctx.send(language.string("trials_new_fail_mute2"))
             if action in ["kick", "mute", "unmute"]:
                 member: discord.Member = ctx.guild.get_member(user)
                 if not member:
-                    return await general.send(language.string("trials_new_fail_kick"), ctx.channel)
+                    return await ctx.send(language.string("trials_new_fail_kick"))
                 muted = mute_role in member.roles
                 if action == "mute" and muted:
-                    await general.send(language.string("trials_new_fail_mute"), ctx.channel, delete_after=30)
+                    await ctx.send(language.string("trials_new_fail_mute"), delete_after=30)
                 if action == "unmute" and not muted:
-                    return await general.send(language.string("trials_new_fail_unmute"), ctx.channel)
+                    return await ctx.send(language.string("trials_new_fail_unmute"))
             now_ts = time.now_ts()
             recent = self.bot.db.fetchrow("SELECT * FROM trials WHERE author_id=? AND start_time>?", (ctx.author.id, now_ts - 300))
             if recent:
                 wait = language.delta_ts(recent["start_time"] + 300, accuracy=3, brief=False, affix=False)
-                return await general.send(language.string("trials_already_recent", wait), ctx.channel)
+                return await ctx.send(language.string("trials_already_recent", wait))
             action_text = {
                 "ban": "trials_action_ban",
                 "kick": "trials_action_kick",
@@ -288,15 +287,15 @@ class Polls(commands.Cog):
             }.get(action, "generic_unknown")
             already = self.bot.db.fetchrow("SELECT * FROM trials WHERE user_id=? AND type=?", (user, action))
             if already:
-                return await general.send(language.string("trials_already", language.string(action_text, _user), ctx.prefix, already["trial_id"]), ctx.channel)
+                return await ctx.send(language.string("trials_already", language.string(action_text, _user), ctx.prefix, already["trial_id"]))
             delta = time.interpret_time(duration)
             expiry, error = time.add_time(delta)
             if time.rd_is_above_1w(delta):
-                return await general.send(language.string("trials_length_limit_max"), ctx.channel)
+                return await ctx.send(language.string("trials_length_limit_max"))
             if time.rd_is_below_15m(delta):
-                return await general.send(language.string("trials_length_limit_min"), ctx.channel)
+                return await ctx.send(language.string("trials_length_limit_min"))
             if error:
-                return await general.send(language.string("trials_length_error", expiry), ctx.channel)
+                return await ctx.send(language.string("trials_length_error", expiry))
             mute_duration = 0
             _duration2 = ""
             if action == "mute":
@@ -304,7 +303,7 @@ class Polls(commands.Cog):
                 _delta = time.interpret_time(_mute_duration)
                 _expiry, _error = time.add_time(_delta)
                 if time.rd_is_above_30d(_delta):
-                    return await general.send(language.string("trials_length_limit_mute"), ctx.channel)
+                    return await ctx.send(language.string("trials_length_limit_mute"))
                 # if _error:
                 #    return await general.send(language.string("trials_length_error2", _expiry), ctx.channel)
                 if not _error:
@@ -313,7 +312,7 @@ class Polls(commands.Cog):
                     _duration2 = language.delta_rd(_delta, accuracy=6, brief=False, affix=False)
                 else:
                     mute_duration = 0
-                    await general.send(language.string("trials_length_error2"), ctx.channel, delete_after=30)
+                    await ctx.send(language.string("trials_length_error2"), delete_after=30)
             reason = reason or language.string("mod_reason_none")
             _reason = general.reason(ctx.author, reason)
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
@@ -348,11 +347,11 @@ class Polls(commands.Cog):
                 embed.add_field(name=language.string("polls_votes_no"), value=language.string("polls_votes_none"), inline=True)
             # message = await general.send(None, poll_channel, embed=embed)
             content = "<@&884408145756164116>" if ctx.guild.id == 869975256566210641 else None
-            message = await general.send(content, poll_channel, embed=embed, r=ctx.guild.id == 869975256566210641)
+            message = await poll_channel.send(content, embed=embed)
             self.bot.db.execute(f"INSERT INTO trials VALUES ({'?, ' * 15}?)",
                                 (ctx.guild.id, poll_channel.id, message.id, trial_id, ctx.author.id, user, action, mute_duration, _reason,
                                  f"[{ctx.author.id}]", "[]", "[]", now_ts, expiry, poll_anonymity, required))
-            return await general.send(language.string("trials_new_success"), ctx.channel)
+            return await ctx.send(language.string("trials_new_success"))
 
     @trial.command(name="vote")
     async def trial_vote(self, ctx: commands.Context, trial_id: int, response: str):
@@ -360,27 +359,27 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         response = response.lower()
         if response not in ["yes", "neutral", "no"]:
-            return await general.send(language.string("polls_vote_invalid"), ctx.channel)
+            return await ctx.send(language.string("polls_vote_invalid"))
         data = self.bot.db.fetchrow("SELECT * FROM trials WHERE trial_id=? OR message_id=? OR user_id=?", (trial_id, trial_id, trial_id))
         if not data:
-            return await general.send(language.string("trials_not_found", trial_id), ctx.channel)
+            return await ctx.send(language.string("trials_not_found", trial_id))
         if data["user_id"] == ctx.author.id:
-            return await general.send(language.string("trials_user_self2"), ctx.channel)
+            return await ctx.send(language.string("trials_user_self2"))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
         voted_yes, voted_neutral, voted_no = response == "yes", response == "neutral", response == "no"
         if ctx.author.id in voters_yes:
             if voted_yes:
-                return await general.send(language.string("polls_vote_already_yes"), ctx.channel)
+                return await ctx.send(language.string("polls_vote_already_yes"))
             voters_yes.remove(ctx.author.id)
         if ctx.author.id in voters_neutral:
             if voted_neutral:
-                return await general.send(language.string("polls_vote_already_neutral"), ctx.channel)
+                return await ctx.send(language.string("polls_vote_already_neutral"))
             voters_neutral.remove(ctx.author.id)
         if ctx.author.id in voters_no:
             if voted_no:
-                return await general.send(language.string("polls_vote_already_no"), ctx.channel)
+                return await ctx.send(language.string("polls_vote_already_no"))
             voters_no.remove(ctx.author.id)
         if voted_yes:
             voters_yes.append(ctx.author.id)
@@ -462,7 +461,7 @@ class Polls(commands.Cog):
                         await message.edit(embed=embed)
                 except (discord.NotFound, discord.Forbidden):
                     pass  # The vote was counted anyways, and it's their own fault for not letting the message show up...
-        return await general.send(language.string("polls_vote_success"), ctx.channel)
+        return await ctx.send(language.string("polls_vote_success"))
 
     @trial.command(name="status", aliases=["stats", "info"])
     async def trial_status(self, ctx: commands.Context, trial_id: int):
@@ -470,7 +469,7 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         data = self.bot.db.fetchrow("SELECT * FROM trials WHERE trial_id=? OR message_id=? OR user_id=?", (trial_id, trial_id, trial_id))
         if not data:
-            return await general.send(language.string("trials_not_found", trial_id), ctx.channel)
+            return await ctx.send(language.string("trials_not_found", trial_id))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
@@ -513,7 +512,7 @@ class Polls(commands.Cog):
                         value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
                                               language.number(total), language.number(score, positives=True),
                                               language.number(upvotes, precision=2, percentage=True), language.number(required)))
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @trial.command(name="list")
     async def trial_list(self, ctx: commands.Context):
@@ -521,7 +520,7 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? ORDER BY expiry", (ctx.guild.id,))
         if not trials:
-            return await general.send(language.string("trials_list_none"), ctx.channel)
+            return await ctx.send(language.string("trials_list_none"))
         output = []
         for i, trial in enumerate(trials, start=1):
             ends = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=False)
@@ -536,7 +535,7 @@ class Polls(commands.Cog):
             user = await self.bot.fetch_user(trial["user_id"])
             output.append(language.string("trials_list_entry", language.number(i, commas=False), trial["trial_id"], language.string(action_text, user),
                                           ends, ends_in, trial["reason"]))
-        return await general.send(language.string("trials_list", ctx.guild.name, "\n\n".join(output)), ctx.channel)
+        return await ctx.send(language.string("trials_list", ctx.guild.name, "\n\n".join(output)))
 
 
 def setup(bot: bot_data.Bot):

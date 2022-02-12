@@ -1,6 +1,4 @@
-from discord.ext import commands
-
-from utils import bot_data, general
+from utils import bot_data, commands
 
 
 class Placeholder(commands.Cog):
@@ -12,7 +10,7 @@ class Placeholder(commands.Cog):
     async def placeholder(self, ctx: commands.Context):
         """ Placeholder """
         language = self.bot.language(ctx)
-        return await general.send(language.string("placeholder"), ctx.channel)
+        return await ctx.send(language.string("placeholder"))
 
 
 def setup(bot: bot_data.Bot):

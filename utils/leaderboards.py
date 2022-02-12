@@ -8,8 +8,8 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
     data = self.bot.db.fetch(query, statement)
     if not data:
         if key.isnumeric():
-            return await general.send(language.string("leveling_rank_yearly_no", key), ctx.channel)
-        return await general.send(language.string("leaderboards_no_data"), ctx.channel)
+            return await ctx.send(language.string("leveling_rank_yearly_no", key))
+        return await ctx.send(language.string("leaderboards_no_data"))
     block = "```fix\n"
     un = []   # User names
     xp = []   # XP
@@ -22,7 +22,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
             xp.append(val)
             xpl.append(len(val))
     except KeyError:
-        return await general.send(language.string("leveling_rank_yearly_no", key), ctx.channel)
+        return await ctx.send(language.string("leveling_rank_yearly_no", key))
     total = len(xp)
     place = language.string("generic_unknown")
     n = 0
@@ -71,7 +71,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
         cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
         if ctx.guild.id not in cobble_servers:
             output += language.string("leveling_rank_yearly21", ctx.guild.name)
-    return await general.send(output, ctx.channel)
+    return await ctx.send(output)
 
 
 async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, key: str, guild: str = None):
@@ -135,4 +135,4 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     s, e, t = language.number(start), language.number(start + 9), language.number(total)
     args = [guild] if guild else []
     args += [place, s, e, t, block]
-    return await general.send(language.string(string, *args), ctx.channel)
+    return await ctx.send(language.string(string, *args))

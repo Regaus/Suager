@@ -1176,3 +1176,11 @@
 - Made a custom Context that can be used to load languages instead of relying on the Bot instance
 - Made the "crossed out commands" warning only show up in the help output for the entire bot
 - Removed auto increment from punishments and reminders
+
+## v7.4.25 - 12 February 2022
+- Fixes certain commands and events breaking because v2.0 decided to have avatar only return non-default avatars
+- Improved error message for on_user_update() avatar change
+- on_member_update() now also tracks guild avatar changes
+- Added owner-only `//avatar3` to see someone's guild avatar for a specific guild
+- `//eval` now shows traceback of the message (although it can only get the line number out...)
+- Removed general.send()

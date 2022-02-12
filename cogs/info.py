@@ -3,11 +3,10 @@ from io import BytesIO
 
 import discord
 from discord import Permissions
-from discord.ext import commands
 from discord.utils import oauth_url
 from regaus import __version__ as reg_version
 
-from utils import bot_data, general, time
+from utils import bot_data, commands, general, time
 
 
 class BotInformation(commands.Cog):
@@ -23,7 +22,7 @@ class BotInformation(commands.Cog):
         version_data = general.get_version()[self.bot.name]
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("info_stats_about", self.bot.user, version_data["version"])
-        embed.set_thumbnail(url=str(self.bot.user.avatar.replace(size=1024)))
+        embed.set_thumbnail(url=str(self.bot.user.display_avatar.replace(size=1024)))
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=language.string("info_stats_developers"), value=f"**{owners}**", inline=True)
         if self.bot.uptime is None:
@@ -67,7 +66,7 @@ class BotInformation(commands.Cog):
         mr = language.time(time.from_ts(version_data["major_release"], None), short=1, dow=False, seconds=False, tz=False)
         lu = language.time(time.from_ts(version_data["last_update"], None), short=1, dow=False, seconds=False, tz=False)
         embed.add_field(name=language.string("info_stats_dates"), value=language.string("info_stats_dates_data", fv, mr, lu, mv), inline=True)
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command(name="servers", aliases=["guilds"])
     @commands.is_owner()
@@ -83,8 +82,8 @@ class BotInformation(commands.Cog):
         if rl > 1900:
             async with ctx.typing():
                 data = BytesIO(str(message).encode('utf-8'))
-                return await general.send(send, ctx.channel, file=discord.File(data, filename=f"{time.file_ts('Servers')}"))
-        return await general.send(f"{send}\n```fix\n{message}```", ctx.channel)
+                return await ctx.send(send, file=discord.File(data, filename=f"{time.file_ts('Servers')}"))
+        return await ctx.send(f"{send}\n```fix\n{message}```")
 
     @commands.command(name="invite")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -107,7 +106,7 @@ class BotInformation(commands.Cog):
         if self.bot.name in ["cobble", "kyomi"]:
             embed.set_footer(text=language.string("info_invite_private"))
         # return await general.send(self.bot.language(ctx).string("info_invite_bot", ctx.author.name, link), ctx.channel)
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command(name="ping")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -117,7 +116,7 @@ class BotInformation(commands.Cog):
         ws = int(self.bot.latency * 1000)
         t1 = _time.time()
         r1 = f"Message Send: unknown\nMessage Edit: unknown\nWS Latency: {ws:,}ms"
-        msg = await general.send(r1, ctx.channel, u=[ctx.author])
+        msg = await ctx.send(r1)  # u=[ctx.author] - I have no idea why it wanted to allow user mentions... Oh well
         t2 = int((_time.time() - t1) * 1000)
         r2 = f"Message Send: {t2:,}ms\nMessage Edit: unknown\nWS Latency: {ws:,}ms"
         t2s = _time.time()
@@ -130,7 +129,7 @@ class BotInformation(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def suager(self, ctx: commands.Context):
-        return await general.send("<a:SenkoWatch2:801408192785547264>", ctx.channel)
+        return await ctx.send("<a:SenkoWatch2:801408192785547264>")
 
 
 def setup(bot: bot_data.Bot):

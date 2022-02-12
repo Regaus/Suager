@@ -4,44 +4,43 @@ import random
 from io import BytesIO
 
 import discord
-from discord.ext import commands
 from PIL import Image, UnidentifiedImageError
 
-from utils import emotes, general, http
+from utils import commands, emotes, http
 
 
 async def af_image_gen(ctx: commands.Context, user: discord.User | discord.Member, link, filename=None, extra_args=None):
     # async with ctx.typing():
     if filename is None:
         filename = link
-    avatar = str(user.avatar.replace(size=2048, format="png"))
+    avatar = str(user.display_avatar.replace(size=2048, format="png"))
     extra = f"&{extra_args}" if extra_args is not None else ''
     return await af_img_creator(ctx, f"https://api.alexflipnote.dev/{link}?image={avatar}{extra}", f"{filename}.png", None)
 
 
 async def af_img_creator(ctx: commands.Context, url, filename, content=None):
     token = ctx.bot.config["alex_api_token"]
-    lag = await general.send(f"{emotes.Loading} Getting response from the API... This may sometimes take a while...", ctx.channel)
+    lag = await ctx.send(f"{emotes.Loading} Getting response from the API... This may sometimes take a while...")
     req = await http.get(url, headers={"Authorization": token}, res_method="read")
     # req = await http.get(url)
     await lag.delete()
     if req is None:
-        return await general.send("No response was received, try again later.", ctx.channel)
+        return await ctx.send("No response was received, try again later.")
     if type(req) == str:
         bio = BytesIO(req.encode("utf-8"))
         filename = filename[:-3] + "json"
     else:
         bio = BytesIO(req)
     bio.seek(0)
-    return await general.send(content, ctx.channel, file=discord.File(bio, filename=filename))
+    return await ctx.send(content, file=discord.File(bio, filename=filename))
 
 
 async def api_img_creator(ctx: commands.Context, url, filename, content=None):
     filename += filename  # This is so that it won't complain about "filename" arg not being used for now
     embed = discord.Embed()
     embed.set_image(url=url)
-    embed.set_footer(icon_url=ctx.author.avatar_url, text=f"Rendered by: {ctx.author}")
-    return await general.send(content, ctx.channel, embed=embed)
+    embed.set_footer(icon_url=ctx.author.display_avatar.url, text=f"Rendered by: {ctx.author}")
+    return await ctx.send(content, embed=embed)
 
 
 async def vac_api(ctx: commands.Context, link, filename=None, content=None):
@@ -70,14 +69,14 @@ class Images(commands.Cog):
         try:
             int(c, base=16)
         except ValueError:
-            await general.send(y, ctx.channel)
+            await ctx.send(y)
             c, a = z, 6
         g = colour2
         if g is not None:
             try:
                 int(g, base=16)
             except ValueError:
-                await general.send(y, ctx.channel)
+                await ctx.send(y)
                 g, h = None, 0
         if a == 3:
             d, e, f = c
@@ -85,7 +84,7 @@ class Images(commands.Cog):
         elif a == 6:
             b = c
         else:
-            await general.send(y, ctx.channel)
+            await ctx.send(y)
             b = z
         if h == 3:
             k, l, m = g
@@ -95,7 +94,7 @@ class Images(commands.Cog):
         elif h == 0:
             i = None
         else:
-            await general.send(y, ctx.channel)
+            await ctx.send(y)
             i = None
         j = f"&b={i}" if i is not None else ""
         return await af_image_gen(ctx, user, x, f"{x}_{b}", f"c={b}{j}")
@@ -113,7 +112,7 @@ class Images(commands.Cog):
         if _filter == "random":
             _filter = random.choice(filters)
         elif _filter not in filters or _filter == "help":
-            return await general.send(self.bot.language(ctx).string("images_filter_filters", "`, `".join(filters)), ctx.channel)
+            return await ctx.send(self.bot.language(ctx).string("images_filter_filters", "`, `".join(filters)))
         return await af_image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="ship")
@@ -125,14 +124,14 @@ class Images(commands.Cog):
         pr = False
         if user1.id == self.bot.user.id or user2.id == self.bot.user.id:
             if user1.id != 302851022790066185 and user2.id != 302851022790066185:
-                return await general.send(f"{emotes.Deny} {language.string('generic_no')}.", ctx.channel)
+                return await ctx.send(f"{emotes.Deny} {language.string('generic_no')}.")
             pr = True
         if (user1.bot ^ user2.bot) and not pr:
-            return await general.send(language.string("social_ship_bot"), ctx.channel)
+            return await ctx.send(language.string("social_ship_bot"))
         if user1 == user2:
-            return await general.send(language.string("social_alone"), ctx.channel)
-        av1 = str(user1.avatar.replace(size=512, format="png"))
-        av2 = str(user2.avatar.replace(size=512, format="png"))
+            return await ctx.send(language.string("social_alone"))
+        av1 = str(user1.display_avatar.replace(size=512, format="png"))
+        av2 = str(user2.display_avatar.replace(size=512, format="png"))
         # link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
         __names = [len(user1.name), len(user2.name)]
         _names = [int(x / 2) for x in __names]
@@ -168,7 +167,7 @@ class Images(commands.Cog):
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
-            return await general.send(message, ctx.channel, file=discord.File(bio, filename="ship.png"))
+            return await ctx.send(message, file=discord.File(bio, filename="ship.png"))
         # return await af_img_creator(ctx, link, "ship.png", message)
 
 

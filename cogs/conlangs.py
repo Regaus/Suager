@@ -1,7 +1,6 @@
-from discord.ext import commands
 from regaus import languages
 
-from utils import bases, conlangs, general
+from utils import bases, commands, conlangs
 
 
 def is_rsl1_eligible(ctx: commands.Context):
@@ -37,27 +36,26 @@ class Conlangs(commands.Cog):
     async def rsl1_numbers(self, ctx: commands.Context, number: int = None, *, _base: str = "10"):
         """ Translate a number to RSL-1 """
         if number is None:
-            return await general.send(f"This command can translate a number to RSL-1. For example, `{ctx.prefix}rsl1 {ctx.invoked_with} 1` "
-                                      f"will translate the number 1 to RSL-1.", ctx.channel)
+            return await ctx.send(f"This command can translate a number to RSL-1. For example, `{ctx.prefix}rsl1 {ctx.invoked_with} 1` will translate the number 1 to RSL-1.")
         _split = _base.split(" ", 1)
         try:
             base = int(_split[0])
         except ValueError:
-            return await general.send("Base must be either `10` or `16`.", ctx.channel)
+            return await ctx.send("Base must be either `10` or `16`.")
         if base not in [10, 16]:
-            return await general.send("RSL-1 only supports decimal (base-10) and hexadecimal (base-16).", ctx.channel)
+            return await ctx.send("RSL-1 only supports decimal (base-10) and hexadecimal (base-16).")
         _version = "rsl-1k"
         if len(_split) > 1:
             if _split[1] in ["rsl-1i", "1i", "i"]:
                 _version = "rsl-1i"
         output = conlangs.rsl_number(number, base, _version)
         if "Error: " in output:
-            return await general.send(output, ctx.channel)
+            return await ctx.send(output)
         if base == 10:
-            return await general.send(f"{number:,} = {output}", ctx.channel)
+            return await ctx.send(f"{number:,} = {output}")
         if base == 16:
             _hex = languages.splits(bases.to_base(number, 16, True), 4, " ")
-            return await general.send(f"Base-10: {number:,}\nBase-16: {_hex}\nRSL-{_version.split('-')[1]}: {output}", ctx.channel)
+            return await ctx.send(f"Base-10: {number:,}\nBase-16: {_hex}\nRSL-{_version.split('-')[1]}: {output}")
 
     @rsl1.command(name="decline", aliases=["dec", "d"])
     async def rsl1_decline(self, ctx: commands.Context, language: str, *, word: str):
@@ -79,9 +77,9 @@ class Conlangs(commands.Cog):
             try:
                 cases = case_lists[language]
             except KeyError:
-                return await general.send("This language is currently not supported.", ctx.channel)
+                return await ctx.send("This language is currently not supported.")
         numbers = ["singular", "plural"]
-        _language = languages.Language(language)
+        _language = ctx.language2(language)
         out = []
         for number in numbers:
             data = [number.title() + ":"]
@@ -89,7 +87,7 @@ class Conlangs(commands.Cog):
                 # \u200b = zero width space, makes it also align on mobile
                 data.append(f"`{case:<12}\u200b` -> {_language.case(word, case, number)}")
             out.append("\n".join(data))
-        return await general.send("\n\n".join(out), ctx.channel)
+        return await ctx.send("\n\n".join(out))
 
 
 def setup(bot):

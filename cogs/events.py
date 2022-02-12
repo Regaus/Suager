@@ -6,9 +6,9 @@ from typing import List
 
 import discord
 from aiohttp import ClientPayloadError
-
-from utils import bot_data, commands, general, help_utils, http, languages, logger, time
 from regaus import time as time2
+
+from utils import bot_data, commands, general, http, languages, logger, time
 
 
 class Events(commands.Cog):
@@ -32,14 +32,14 @@ class Events(commands.Cog):
     async def on_message(self, ctx: discord.Message):
         if ctx.guild is None:  # it's a DM
             if ctx.author.id != self.bot.user.id:  # isn't Suager himself
-                await general.send(f"{ctx.author} ({ctx.author.id}) | {time.time()}\n{ctx.content}", self.bot.get_channel(self.dm_logger))
+                channel = self.bot.get_channel(self.dm_logger)
+                await channel.send(f"{ctx.author} ({ctx.author.id}) | {time.time()}\n{ctx.content}")
         if ctx.author.id in self.blocked:
             for word in self.bad:
                 if word in ctx.content.lower():
                     channel = self.bot.get_channel(self.blocked_logs)
                     gid = ctx.guild.id if ctx.guild is not None else "not a guild"
-                    await general.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - "
-                                       f"{ctx.channel.id}) | {time.time()}\n{ctx.content}", channel)
+                    await channel.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id}) | {time.time()}\n{ctx.content}")
                     break
         if self.bot.name == "suager":
             if ctx.channel.id == 742886280911913010:
@@ -48,7 +48,7 @@ class Events(commands.Cog):
                     # These don't need to be logged because nobody cares
                     try:
                         if channel is not None:
-                            await general.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}", channel)
+                            await channel.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}")
                         else:
                             general.print_error(f"on_message > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
@@ -63,85 +63,84 @@ class Events(commands.Cog):
         if isinstance(err, commands.MissingRequiredArgument):
             # A required argument is missing
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            # await general.send(language.string("events_error_missing", param=err.param.name), ctx.channel)
-            await help_utils.send_help(ctx, helper, language.string("events_error_missing", param=err.param.name))
+            await ctx.send_help(helper, language.string("events_error_missing", param=err.param.name))
 
         elif isinstance(err, commands.TooManyArguments):
             # Too many arguments were specified
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            # await general.send(language.string("events_error_extra_argument"), ctx.channel)
-            await ctx.send_help(ctx, helper, language.string("events_error_extra_argument"))
+            await ctx.send_help(helper, language.string("events_error_extra_argument"))
 
         elif isinstance(err, commands.MemberNotFound):
             # The specified Member was not found
-            await general.send(language.string("events_error_not_found_member", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_member", value=err.argument))
         elif isinstance(err, commands.UserNotFound):
             # The specified User was not found
-            await general.send(language.string("events_error_not_found_user", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_user", value=err.argument))
         elif isinstance(err, commands.GuildNotFound):
             # The specified Guild was not found
-            await general.send(language.string("events_error_not_found_guild", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_guild", value=err.argument))
         elif isinstance(err, commands.ChannelNotFound):
             # The specified Channel was not found
-            await general.send(language.string("events_error_not_found_channel", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_channel", value=err.argument))
         elif isinstance(err, commands.ThreadNotFound):
             # The specified Thread was not found
-            await general.send(language.string("events_error_not_found_thread", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_thread", value=err.argument))
         elif isinstance(err, commands.MessageNotFound):
             # The specified Message was not found
-            await general.send(language.string("events_error_not_found_message", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_message", value=err.argument))
         elif isinstance(err, commands.RoleNotFound):
             # The specified Role was not found
-            await general.send(language.string("events_error_not_found_role", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_not_found_role", value=err.argument))
         elif isinstance(err, commands.ChannelNotReadable):
             # The specified Channel or Thread cannot be read by the bot
-            await general.send(language.string("events_error_channel_access", value=err.argument), ctx.channel)
+            await ctx.send(language.string("events_error_channel_access", value=err.argument))
         elif isinstance(err, (commands.ConversionError, commands.UserInputError)):
             # This is a generic condition for other bad argument and parsing/conversion errors
             # We will handle all these errors the same, and just tell the user that an argument is invalid
             helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            await general.send(language.string("events_error_bad_argument"), ctx.channel)
-            await ctx.send_help(helper)
+            await ctx.send_help(helper, language.string("events_error_bad_argument"))
 
         elif isinstance(err, commands.NoPrivateMessage):
             # The command cannot be used in DMs
-            await general.send(language.string("events_error_guild_only"), ctx.channel)
+            await ctx.send(language.string("events_error_guild_only"))
         elif isinstance(err, commands.NotOwner):
             # The command can only be used by the bot owner
-            await general.send(language.string("events_error_owner"), ctx.channel)
+            await ctx.send(language.string("events_error_owner"))
         elif isinstance(err, commands.MissingPermissions):
             # The author does not have sufficient permissions to run the command
-            await general.send(language.string("events_error_permissions", perms=language.join([f"`{perm}`" for perm in err.missing_permissions])), ctx.channel)
+            await ctx.send(language.string("events_error_permissions", perms=language.join([f"`{perm}`" for perm in err.missing_permissions])))
         elif isinstance(err, commands.BotMissingPermissions):
             # The bot does not have sufficient permissions to run the command
-            await general.send(language.string("events_error_permissions_bot", perms=language.join([f"`{perm}`" for perm in err.missing_permissions])), ctx.channel)
+            await ctx.send(language.string("events_error_permissions_bot", perms=language.join([f"`{perm}`" for perm in err.missing_permissions])))
         elif isinstance(err, commands.NSFWChannelRequired):
             # The command can only be used in NSFW channel
-            await general.send(language.string("events_error_nsfw"), ctx.channel)
+            await ctx.send(language.string("events_error_nsfw"))
         elif isinstance(err, commands.CheckFailure):
             # This handles any other remaining check failure errors, if there are any...
-            await general.send(language.string("events_error_check"), ctx.channel)
+            await ctx.send(language.string("events_error_check"))
 
         elif isinstance(err, commands.CommandOnCooldown):
             # The command is currently on cooldown and cannot be used
-            await general.send(language.string("events_error_cooldown", time=language.number(err.retry_after, precision=2),
-                                               rate=language.number(err.cooldown.rate), per=language.number(err.cooldown.per, precision=1)),
-                               ctx.channel, delete_after=err.retry_after + 5)
+            await ctx.send(language.string("events_error_cooldown", time=language.number(err.retry_after, precision=2),
+                                           rate=language.number(err.cooldown.rate), per=language.number(err.cooldown.per, precision=1)),
+                           delete_after=err.retry_after + 5)
         elif isinstance(err, commands.MaxConcurrencyReached):
             # I think this might show `per` as some funny value instead of the name, but this isn't going to matter for Suager so...
-            await general.send(language.string("events_error_concurrency", rate=language.number(err.number), per=err.per), ctx.channel, delete_after=15)
+            await ctx.send(language.string("events_error_concurrency", rate=language.number(err.number), per=err.per), delete_after=15)
 
         elif isinstance(err, (commands.CommandNotFound, commands.DisabledCommand)):
-            pass  # We will not respond at all if no such command exists, or it is disabled...
+            # We will not respond at all if no such command exists, or it is disabled...
+            # Use `return` instead of `pass` here because this isn't worthy of getting logged at all
+            return
 
         elif isinstance(err, commands.CommandInvokeError):
             # An error occurred while invoking the command
             error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
             if "2000 or fewer" in str(err) and len(ctx.message.content) > 1900:
-                await general.send(language.string("events_error_message_length"), ctx.channel)
+                await ctx.send(language.string("events_error_message_length"))
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
             else:
-                await general.send(language.string("events_error_error", type(err.original).__name__, str(err.original)), ctx.channel)
+                await ctx.send(language.string("events_error_error", type(err.original).__name__, str(err.original)))
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
                     await ec.send(error)
@@ -150,7 +149,7 @@ class Events(commands.Cog):
 
         else:
             # Catch-all error statement. This shouldn't ever get called, but who knows...
-            await general.send(language.string("events_error_error", type(err).__name__), ctx.channel)
+            await ctx.send(language.string("events_error_error", type(err).__name__))
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:
                 error = general.traceback_maker(err, ctx.message.content[:750], ctx.guild, ctx.author)
@@ -188,14 +187,6 @@ class Events(commands.Cog):
         send = f"{time.time()} > {self.bot.full_name} > Left {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
-        # At this point I think it's easier to just let it all stay, since Suager barely ever leaves servers, and they probably don't have that much data anyways
-        # if self.bot.name == "suager":
-        #     self.db.execute("DELETE FROM leveling WHERE gid=?", (guild.id,))
-        #     self.db.execute("DELETE FROM locales WHERE gid=?", (guild.id,))
-        #     self.db.execute("DELETE FROM settings WHERE gid=? AND bot=?", (guild.id, self.bot.name))
-        #     self.db.execute("DELETE FROM starboard WHERE gid=?", (guild.id,))
-        #     self.db.execute("DELETE FROM tags WHERE gid=?", (guild.id,))
-        #     # self.db.execute("DELETE FROM tbl_guild WHERE gid=?", (guild.id,))
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -304,7 +295,7 @@ class Events(commands.Cog):
                             .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
                         try:
-                            await general.send(message, channel, u=[member])
+                            await channel.send(message, allowed_mentions=discord.AllowedMentions(users=[member]))
                         except discord.Forbidden:
                             out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send message for {member} - Forbidden"
                             general.print_error(out)
@@ -320,17 +311,7 @@ class Events(commands.Cog):
         # Push all unhandled punishments to "User left" status
         self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? and gid=? AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
         if self.bot.name == "suager":
-            # language = self.bot.language2("english")
-            # if member.guild.id == 568148147457490954:
-            #     survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
-            #     remaining = len(member.guild.members)
-            #     await general.send(f"**{member.name}** just abandoned Senko Lair after surviving for {survival}...\n"
-            #                        f"{remaining} Senkoists remaining.", self.bot.get_channel(610836120321785869))
-            # if member.guild.id == 738425418637639775:
-            #     survival = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
-            #     await general.send(f"{member.name} just abandoned Regaus' Playground after surviving for {survival}...", self.bot.get_channel(754425619336396851))
             uid, gid = member.id, member.guild.id
-            # self.db.execute("DELETE FROM economy WHERE uid=? AND gid=?", (uid, gid))
             sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
             if sel:
                 if sel["xp"] < 0:
@@ -359,7 +340,7 @@ class Events(commands.Cog):
                             .replace("[LENGTH_OF_STAY]", language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
                         try:
-                            await general.send(message, channel, u=[member])
+                            await channel.send(message, allowed_mentions=discord.AllowedMentions(users=[member]))
                         except discord.Forbidden:
                             out = f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send message for {member} - Forbidden"
                             general.print_error(out)
@@ -368,30 +349,16 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User | discord.Member):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got banned from {guild.name}")
-        # message = f"{user} ({user.id}) has been **banned** from {guild.name}"
-        # if self.bot.name == "suager":
-        #     if guild.id == 568148147457490954:
-        #         await general.send(message, self.bot.get_channel(626028890451869707))
-        #     if guild.id == 738425418637639775:
-        #         await general.send(message, self.bot.get_channel(764469594303234078))
 
     @commands.Cog.listener()
     async def on_member_unban(self, guild: discord.Guild, user: discord.User):
         logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got unbanned from {guild.name}")
-        # message = f"{user} ({user.id}) has been **unbanned** from {guild.name}"
-        # if self.bot.name == "suager":
-        #     if guild.id == 568148147457490954:
-        #         await general.send(message, self.bot.get_channel(626028890451869707))
-        #     if guild.id == 738425418637639775:
-        #         await general.send(message, self.bot.get_channel(764469594303234078))
 
     @commands.Cog.listener()
     async def on_ready(self):
         if not hasattr(self.bot, 'uptime') or self.bot.uptime is None:
             self.bot.uptime = time.now(None)
 
-        # await self.bot.http.bulk_upsert_global_commands(self.bot.application_id, [])
-        # await self.bot.http.bulk_upsert_guild_commands(self.bot.application_id, 738425418637639775, [])
         print(f"{time.time()} > {self.bot.full_name} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
         playing = f"Loading... | v{general.get_version()[self.bot.name]['short_version']}"
         await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
@@ -413,7 +380,7 @@ class Events(commands.Cog):
                     pass
                 files.append(discord.File(file, filename=attachment.filename))
             # embed = message.embeds[0] if message.embeds else None
-            await general.send(None, self.bot.get_channel(cid), embed=embed, files=files)
+            await self.bot.get_channel(cid).send(embed=embed, files=files)
 
         if self.bot.name in ["suager", "kyomi"]:
             if message.guild is not None:
@@ -437,10 +404,6 @@ class Events(commands.Cog):
                     if message.channel.id in ignored_channels:
                         return
                     return await process_msg(delete_id)
-            # if message.guild is not None and message.guild.id in [568148147457490954, 738425418637639775]:
-            #     if message.channel.id not in self.message_ignore:
-            #         if not message.author.bot:
-            #             await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, messages: List[discord.Message]):
@@ -458,13 +421,8 @@ class Events(commands.Cog):
                     pass
                 files.append(discord.File(file, filename=attachment.filename))
             # embed = message.embeds[0] if message.embeds else None
-            await general.send(None, self.bot.get_channel(cid), embed=embed, files=files)
-        # if self.bot.name == "suager":
-        #     for message in messages:
-        #         if message.guild.id in [568148147457490954, 738425418637639775]:
-        #             if message.channel.id not in self.message_ignore:
-        #                 if not message.author.bot:
-        #                     await process_msg(764473671090831430 if message.guild.id == 568148147457490954 else 764494075663351858)
+            await self.bot.get_channel(cid).send(embed=embed, files=files)
+
         if self.bot.name in ["suager", "kyomi"]:
             for message in messages:
                 if message.guild is not None:
@@ -480,7 +438,6 @@ class Events(commands.Cog):
                         delete_id: int = logs_settings.get("delete", 0)
                         if delete_id == 0:
                             return
-                        # delete_channel: discord.TextChannel = message.guild.get_channel(delete_id)
                         ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
                         if ignore_bots and message.author.bot:
                             return
@@ -491,6 +448,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        # TODO: Try to track removal of files here
         async def process_msg(cid: int):
             embed = discord.Embed(title="Message Edited",
                                   description=f"Channel: {after.channel.mention} ({after.channel.id})\n"
@@ -499,14 +457,8 @@ class Events(commands.Cog):
                                               f"Message edited: {after.edited_at:%Y-%m-%d %H:%M:%S}")
             embed.add_field(name="Content Before", value=before.content[:1024], inline=False)
             embed.add_field(name="Content After", value=after.content[:1024], inline=False)
-            await general.send(None, self.bot.get_channel(cid), embed=embed)
+            await self.bot.get_channel(cid).send(embed=embed)
 
-        # if self.bot.name == "suager":
-        #     if after.guild is not None and after.guild.id in [568148147457490954, 738425418637639775]:
-        #         if after.channel.id not in self.message_ignore:
-        #             if not after.author.bot:
-        #                 if after.content != before.content:
-        #                     await process_msg(764473671090831430 if after.guild.id == 568148147457490954 else 764494075663351858)
         if self.bot.name in ["suager", "kyomi"]:
             if after.guild is not None and after.content != before.content:
                 data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (after.guild.id, self.bot.name))
@@ -521,7 +473,6 @@ class Events(commands.Cog):
                     delete_id: int = logs_settings.get("delete", 0)
                     if delete_id == 0:
                         return
-                    # delete_channel: discord.TextChannel = message.guild.get_channel(delete_id)
                     ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
                     if ignore_bots and after.author.bot:
                         return
@@ -532,58 +483,62 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User):
-        to = time.time()
-        log = "names"
+        now = time.time()
         uid = after.id
+
+        # Username
         n1, n2 = [before.name, after.name]
         if n1 != n2:
-            send = f"{to} > {n1} ({uid}) is now known as {n2}"
-            logger.log(self.bot.name, log, send)
+            send = f"{now} > {n1} ({uid}) is now known as {n2}"
+            logger.log(self.bot.name, "names", send)
+
+        # Discriminator
         d1, d2 = [before.discriminator, after.discriminator]
         if d1 != d2:
-            send = f"{to} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
-            logger.log(self.bot.name, log, send)
+            send = f"{now} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
+            logger.log(self.bot.name, "names", send)
+
+        # Avatar
         if self.bot.name in ["suager", "kyomi"]:
-            a1, a2 = [before.avatar, after.avatar]  # type: discord.Asset, discord.Asset
-            al = self.bot.get_channel(745760639955370083)
+            a1, a2 = [before.display_avatar, after.display_avatar]  # type: discord.Asset, discord.Asset
+            avatar_channel = self.bot.get_channel(745760639955370083)
             if a1 != a2:
-                send = f"{to} > {n2} ({uid}) changed their avatar"
+                send = f"{now} > {n2} ({uid}) changed their avatar"
                 logger.log(self.bot.name, "user_avatars", send)
                 if uid not in self.self:
                     try:
-                        avatar = BytesIO(await http.get(str(after.avatar.replace(static_format="png", size=4096)), res_method="read"))
-                        ext = "gif" if after.avatar.is_animated() else "png"
-                        if al is None:
-                            out = f"{time.time()} > {self.bot.name} > User Update > No avatar log channel found."
+                        avatar = BytesIO(await http.get(str(after.display_avatar.replace(static_format="png", size=4096)), res_method="read"))
+                        ext = "gif" if after.display_avatar.is_animated() else "png"
+                        if avatar_channel is None:
+                            out = f"{time.time()} > {self.bot.name} > User Update > {n2} ({uid}) > No avatar log channel found."
                             general.print_error(out)
                             logger.log(self.bot.name, "errors", out)
                         else:
-                            await al.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2.key}.{ext}"))
+                            await avatar_channel.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2.key}.{ext}"))
                     except (discord.HTTPException, ClientPayloadError) as e:
-                        out = f"{time.time()} > {self.bot.name} > User Update > Failed to send updated avatar: {e}"
+                        out = f"{time.time()} > {self.bot.name} > User Update > {n2} ({uid}) > Failed to send updated avatar: {e}"
                         general.print_error(out)
                         logger.log(self.bot.name, "errors", out)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        to = time.time()
-        log = "member_roles"
+        now = time.time()
         guild = after.guild.name
-        n = after.name
+        name = after.name
         uid = after.id
+
         if after.guild.id in [568148147457490954, 738425418637639775] and uid not in [302851022790066185]:
             if after.display_name[0] < "A":
                 await after.edit(reason="De-hoist", nick=f"\u17b5{after.display_name[:31]}")
             if "spoingus" in after.display_name.lower():
                 await after.edit(nick=None)
-        # if after.guild.id in [430945139142426634] and uid == self.bot.user.id:
-        #     await after.guild.me.edit(nick=None)
-        # if after.guild.id == 784357864482537473 and uid == 517012611573743621:
-        #     if after.nick is not None:
-        #        await after.edit(nick=None, reason="Don't you dare")
+
+        # Nickname
         n1, n2 = before.nick, after.nick
         if n1 != n2:
-            logger.log(self.bot.name, "names", f"{to} > {guild} > {n}'s ({uid}) nickname is now {n2} (from {n1})")
+            logger.log(self.bot.name, "names", f"{now} > {guild} > {name}'s ({uid}) nickname is now {n2} (from {n1})")
+
+        # Roles
         r1, r2 = before.roles, after.roles
         if r1 != r2:
             roles_lost = []
@@ -595,9 +550,9 @@ class Events(commands.Cog):
                 if role not in r1:
                     roles_gained.append(role.name)
             for role in roles_lost:
-                logger.log(self.bot.name, log, f"{to} > {guild} > {n} ({uid}) lost role {role}")
+                logger.log(self.bot.name, "member_roles", f"{now} > {guild} > {name} ({uid}) lost role {role}")
             for role in roles_gained:
-                logger.log(self.bot.name, log, f"{to} > {guild} > {n} ({uid}) got role {role}")
+                logger.log(self.bot.name, "member_roles", f"{now} > {guild} > {name} ({uid}) got role {role}")
             if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
                 booster_role = after.guild.get_role(716324385119535168)
                 if booster_role in roles_gained:  # User started boosting MD
@@ -605,6 +560,31 @@ class Events(commands.Cog):
                 if booster_role in roles_lost:  # User no longer boosts MD
                     if "⁀➷Booster!🧁 ☆" in after.nick:  # If they still have "Booster" in their nickname
                         await after.edit(nick=f"✧₊˚🍰⌇{after.name[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
+
+        # Guild Avatar
+        if self.bot.name in ["suager", "kyomi"]:
+            a1, a2 = [before.guild_avatar, after.guild_avatar]  # type: discord.Asset | None, discord.Asset | None
+            avatar_channel = self.bot.get_channel(745760639955370083)
+            if not a2:  # User removed their guild avatar
+                send = f"{now} > {guild} > {name} ({uid}) removed their guild avatar"
+                logger.log(self.bot.name, "user_avatars", send)
+            elif a1 != a2:
+                send = f"{now} > {guild} > {name} ({uid}) changed their guild avatar"
+                logger.log(self.bot.name, "user_avatars", send)
+                if uid not in self.self:
+                    try:
+                        avatar = BytesIO(await http.get(str(after.guild_avatar.replace(static_format="png", size=4096)), res_method="read"))
+                        ext = "gif" if after.guild_avatar.is_animated() else "png"
+                        if avatar_channel is None:
+                            out = f"{now} > {self.bot.name} > {guild} > Member Update > {name} ({uid}) > No avatar log channel found."
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+                        else:
+                            await avatar_channel.send(f"{now} > {guild} > {n2} ({uid}) changed their guild avatar", file=discord.File(avatar, filename=f"{a2.key}.{ext}"))
+                    except (discord.HTTPException, ClientPayloadError) as e:
+                        out = f"{now} > {self.bot.name} > {guild} > Member Update > {name} ({uid}) > Failed to send updated avatar: {e}"
+                        general.print_error(out)
+                        logger.log(self.bot.name, "errors", out)
 
 
 def setup(bot: bot_data.Bot):

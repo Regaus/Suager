@@ -6,7 +6,6 @@ import random
 import sys
 import traceback
 from io import BytesIO
-from typing import Union
 
 import discord
 from numpy.random import Generator, PCG64
@@ -36,28 +35,12 @@ def make_dir(dir_name):
         pass
 
 
-async def send(text: str | None, channel: discord.abc.GuildChannel | discord.Thread | discord.abc.PrivateChannel, *, embed: discord.Embed = None, embeds: list[discord.Embed] = None,
-               file: discord.File = None, files: list[discord.File] = None, delete_after: float = None, e: bool = False, u: Union[bool, list] = False, r: Union[bool, list] = False):
-    if text is not None:
-        if len(text) > 2000:
-            text = f"{text[:1997]}..."
-            await channel.send("Message length exceeded 2000 characters...", delete_after=10)
-    try:
-        # Yes, it will complain about this "illegal" combination, but what the hell am I going to do?
-        return await channel.send(content=text, embed=embed, embeds=embeds, file=file, files=files,
-                                  delete_after=delete_after, allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
-    except discord.Forbidden:
-        await channel.send("Failed to send message. Please make sure that I have sufficient permissions (embed links and/or attach files)")
-        if text:
-            return await channel.send(content=text, delete_after=delete_after, allowed_mentions=discord.AllowedMentions(everyone=e, users=u, roles=r))
-
-
 def traceback_maker(err, text: str = None, guild=None, author=None):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
-    n = "\n"
-    g = f'Guild: {guild.name}\n' if guild is not None else ''
-    a = f'User: {author.name}\n' if author is not None else ''
-    error = f'{g}{a}{f"Command: {text}{n}" if text is not None else ""}```py\n{_traceback}{type(err).__name__}: {err}\n```'
+    t = f"Command: {text}\n" if text is not None else ""
+    g = f"Guild: {guild.name}\n" if guild is not None else ""
+    a = f"User: {author.name}\n" if author is not None else ""
+    error = f"{g}{a}{t}```py\n{_traceback}{type(err).__name__}: {err}\n```"
     return error
 
 
@@ -76,13 +59,14 @@ def reason(who, why=None) -> str:
 
 
 async def pretty_results(ctx, filename: str = "Results", result: str = "Here are the results:", loop=None):
+    # ctx = commands.Context
     if not loop:
-        return await send("The result was empty...", ctx.channel)
+        return await ctx.send("The result was empty...")
     pretty = "\r\n".join([f"[{str(num).zfill(2)}] {data}" for num, data in enumerate(loop, start=1)])
     if len(loop) < 15:
-        return await send(f"{result} ```ini\n{pretty}```", ctx.channel)
+        return await ctx.send(f"{result} ```ini\n{pretty}```")
     data = BytesIO(pretty.encode('utf-8'))
-    return await send(result, ctx.channel, file=discord.File(data, filename=time.file_ts(filename.title())))
+    return await ctx.send(result, file=discord.File(data, filename=time.file_ts(filename.title())))
 
 
 def round_value(value):
@@ -110,6 +94,7 @@ def bold(string: str) -> str:
     return f"**{string}**"
 
 
+# TODO: Just replace these with regaus.RegausError instead...
 class RegausError(Exception):
     def __init__(self, text):
         super().__init__(text)

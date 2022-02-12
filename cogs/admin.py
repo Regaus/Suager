@@ -9,9 +9,8 @@ from io import BytesIO
 
 import aiohttp
 import discord
-from discord.ext import commands
 
-from utils import bot_data, data_io, database, general, http, logger, time
+from utils import bot_data, commands, data_io, database, general, http, logger, time
 
 
 def insert_returns(body):
@@ -45,21 +44,21 @@ async def eval_(ctx: commands.Context, cmd):
         else:
             limit = int(ctx.guild.filesize_limit / 1.05)
         if len(str(result)) == 0 or result is None:
-            return await general.send("Code has completed. No result was returned.", ctx.channel)
-        elif len(str(result)) in range(2001, limit + 1):
+            return await ctx.send("Code has completed. No result was returned.")
+        elif 2000 < len(str(result)) <= limit:
             async with ctx.typing():
                 data = BytesIO(str(result).encode('utf-8'))
-                return await general.send(f"Result was a bit too long... ({len(str(result)):,} chars)", ctx.channel,
-                                          file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
+                return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)", file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
         elif len(str(result)) > limit:
             async with ctx.typing():
                 data = BytesIO(str(result)[-limit:].encode('utf-8'))
-                return await general.send(f"Result was a bit too long... ({len(str(result)):,} chars)\nSending last {limit:,} chars", ctx.channel,
-                                          file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
+                return await ctx.send(f"Result was a bit too long... ({len(str(result)):,} chars)\nSending last {limit:,} chars",
+                                      file=discord.File(data, filename=f"{time.file_ts('Eval')}"))
         else:
-            return await general.send(str(result), ctx.channel)
+            return await ctx.send(str(result))
     except Exception as e:
-        return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+        # TODO: Try to attach the breaking line of code out of <ast>
+        return await ctx.send(general.traceback_maker(e))
 
 
 def reload_util(name: str, bot: bot_data.Bot):
@@ -103,9 +102,9 @@ class Admin(commands.Cog):
         """ Database query """
         try:
             data = self.bot.db.execute(query)
-            return await general.send(data, ctx.channel)
+            return await ctx.send(data)
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="fetch", aliases=["select"])
     @commands.is_owner()
@@ -121,21 +120,20 @@ class Admin(commands.Cog):
             # return await ctx.send(result)
             rl = len(str(result))
             if rl == 0 or result is None:
-                return await general.send("No result was returned.", ctx.channel)
+                return await ctx.send("No result was returned.")
             elif rl in range(2001, limit + 1):
                 async with ctx.typing():
                     data = BytesIO(str(result).encode('utf-8'))
-                    return await general.send(f"Result was a bit too long... ({rl:,} chars)", ctx.channel,
-                                              file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
+                    return await ctx.send(f"Result was a bit too long... ({rl:,} chars)", file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
             elif rl > limit:
                 async with ctx.typing():
                     data = BytesIO(str(result)[-limit:].encode('utf-8'))
-                    return await general.send(f"Result was a bit too long... ({rl:,} chars)\nSending last {limit:,} chars", ctx.channel,
-                                              file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
+                    return await ctx.send(f"Result was a bit too long... ({rl:,} chars)\nSending last {limit:,} chars",
+                                          file=discord.File(data, filename=f"{time.file_ts('Fetch')}"))
             else:
-                return await general.send(str(result), ctx.channel)
+                return await ctx.send(str(result))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.group(name="log", aliases=["logs"], invoke_without_command=True)
     @commands.is_owner()
@@ -158,7 +156,7 @@ class Admin(commands.Cog):
                             result = file.read()
                             data += f"{result}"  # Put a newline in the end, just in case
                         except UnicodeDecodeError as e:
-                            await general.send(f"`{filename}`: Encoding broke - `{e}`", ctx.channel)
+                            await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
                     else:
                         try:
                             stuff = file.readlines()
@@ -168,27 +166,27 @@ class Admin(commands.Cog):
                                     result += line
                             data += f"{result}"
                         except UnicodeDecodeError as e:
-                            await general.send(f"`{filename}`: Encoding broke - `{e}`", ctx.channel)
+                            await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
             if ctx.guild is None:
                 limit = 8000000
             else:
                 limit = int(ctx.guild.filesize_limit / 1.05)
             rl = len(str(data))
             if rl == 0 or data is None:
-                return await general.send("Nothing was found...", ctx.channel)
+                return await ctx.send("Nothing was found...")
             elif 0 < rl <= limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
-                    return await general.send(f"Results for {log}.rsf - search term `{search}` - {lines:,} lines, {rl:,} chars", ctx.channel,
-                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+                    return await ctx.send(f"Results for {log}.rsf - search term `{search}` - {lines:,} lines, {rl:,} chars",
+                                          file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data)[-limit:].encode('utf-8'))
-                    return await general.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest", ctx.channel,
-                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+                    return await ctx.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest",
+                                          file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @log.command(name="date")
     @commands.is_owner()
@@ -213,20 +211,20 @@ class Admin(commands.Cog):
                 limit = int(ctx.guild.filesize_limit / 1.05)
             rl = len(str(data))
             if rl == 0 or data is None:
-                return await general.send("Nothing was found...", ctx.channel)
+                return await ctx.send("Nothing was found...")
             elif 0 < rl <= limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
-                    return await general.send(f"Results for {log_file}.rsf - search term `{search}` - {lines:,} lines, {rl:,} chars", ctx.channel,
-                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+                    return await ctx.send(f"Results for {log_file}.rsf - search term `{search}` - {lines:,} lines, {rl:,} chars",
+                                          file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data)[-limit:].encode('utf-8'))
-                    return await general.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest", ctx.channel,
-                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+                    return await ctx.send(f"Result was a bit too long... ({rl:,} chars) - search term `{search}`\nSending latest",
+                                          file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name='eval')
     @commands.is_owner()
@@ -238,8 +236,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, name: str):
         """ Reloads an extension. """
-        out = reload_extension(self.bot, name)
-        return await general.send(out, ctx.channel)
+        return await ctx.send(reload_extension(self.bot, name))
 
     @commands.command(name="reloadall", aliases=["rall", "ra"])
     @commands.is_owner()
@@ -255,25 +252,22 @@ class Admin(commands.Cog):
         if error_collection:
             output = "\n".join([f"**{error[0]}** - `{error[1]}`" for error in error_collection])
             logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.full_name} > Unsuccessfully reloaded all extensions")
-            return await general.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}", ctx.channel)
+            return await ctx.send(f"Attempted to reload all extensions.\nThe following failed:\n\n{output}")
         else:
             logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.full_name} > Successfully reloaded all extensions")
-            return await general.send("Successfully reloaded all extensions", ctx.channel)
+            return await ctx.send("Successfully reloaded all extensions")
 
     @commands.command(name="reloadutil", aliases=["ru"])
     @commands.is_owner()
     async def reload_utils(self, ctx: commands.Context, name: str):
         """ Reloads a utility module. """
-        out = reload_util(name, self.bot)
-        return await general.send(out, ctx.channel)
+        return await ctx.send(reload_util(name, self.bot))
 
-    @commands.command(name="reloadtime", aliases=["rt"])
+    @commands.command(name="reloadregaus", aliases=["rt"])  # `rr` is already taken by reaction roles...
     @commands.is_owner()
     async def reload_time(self, ctx: commands.Context):
-        """ Reloads regaus/time.py """
-        # out = reload_util(name, self.bot)
-        out = reload_module(f"**regaus/time.py**", "regaus.time", self.bot)
-        return await general.send(out, ctx.channel)
+        """ Reloads regaus.py """
+        return await ctx.send(reload_module(f"**regaus.py**", "regaus", self.bot))
 
     # @commands.command(name="reloadlangs", aliases=["rl"])
     # @commands.is_owner()
@@ -282,22 +276,22 @@ class Admin(commands.Cog):
     #     out = reload_langs(self.bot)
     #     return await general.send(out, ctx.channel)
 
-    async def load_ext(self, ctx, name2: str):
+    async def load_ext(self, ctx: commands.Context, name2: str):
         try:
             self.bot.load_extension(f"cogs.{name2}")
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
         reloaded = f"Loaded extension **cogs/{name2}.py**"
-        await general.send(reloaded, ctx.channel)
+        await ctx.send(reloaded)
         logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.full_name} > {reloaded}")
 
-    async def unload_ext(self, ctx, name2: str):
+    async def unload_ext(self, ctx: commands.Context, name2: str):
         try:
             self.bot.unload_extension(f"cogs.{name2}")
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
         reloaded = f"Unloaded extension **cogs/{name2}.py**"
-        await general.send(reloaded, ctx.channel)
+        await ctx.send(reloaded)
         logger.log(self.bot.name, "changes", f"{time.time()} > {self.bot.full_name} > {reloaded}")
 
     @commands.command(name="load", aliases=["l"])
@@ -324,8 +318,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def update_config(self, ctx: commands.Context):
         """ Reload config """
-        reloaded = self.reload_config()
-        return await general.send(reloaded, ctx.channel)
+        return await ctx.send(self.reload_config())
 
     @commands.command(name="shutdown")
     @commands.is_owner()
@@ -333,7 +326,7 @@ class Admin(commands.Cog):
         """ Shut down the bot """
         import time as _time
         import sys
-        await general.send("Shutting down...", ctx.channel)
+        await ctx.send("Shutting down...")
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.full_name} > Shutting down...")
         _time.sleep(1)
         sys.stderr.close()
@@ -343,7 +336,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def execute(self, ctx: commands.Context, *, text: str):
         """ Do a shell command. """
-        message = await general.send("Loading...", ctx.channel)
+        message = await ctx.send("Loading...")
         proc = await asyncio.create_subprocess_shell(text, stdin=None, stderr=PIPE, stdout=PIPE)
         out = (await proc.stdout.read()).decode('utf-8').strip()
         err = (await proc.stderr.read()).decode('utf-8').strip()
@@ -355,15 +348,14 @@ class Admin(commands.Cog):
             content += f"Error:\r\n{err}\r\n{'-' * 30}\r\n"
         if out:
             content += out
-        if len(content) > 1500:
+        if len(content) > 1900:
             try:
                 data = BytesIO(content.encode('utf-8'))
-                await message.delete()
-                await general.send("The result was a bit too long, so here is a text file instead", ctx.channel,
-                                   file=discord.File(data, filename=time.file_ts('Execute')))
+                await message.edit(content="The result was a bit too long, so here is a text file instead", file=discord.File(data, filename=time.file_ts('Execute')))
             except asyncio.TimeoutError as e:
+                # I have no idea when or why this could occur, but whatever...
                 await message.delete()
-                return await general.send(str(e), ctx.channel)
+                return await ctx.send(str(e))
         else:
             await message.edit(content=f"```fix\n{content}\n```")
 
@@ -374,7 +366,7 @@ class Admin(commands.Cog):
         module_name = importlib.import_module("utils.database")
         importlib.reload(module_name)
         database.creation()
-        return await general.send("Tables recreated", ctx.channel)
+        return await ctx.send("Tables recreated")
 
     @commands.command(name="version", aliases=["fversion", "fullversion", "fv", "v"])
     @commands.is_owner()
@@ -385,11 +377,11 @@ class Admin(commands.Cog):
             old_version = general.get_version()[self.bot.name]["version"]
             data_io.change_version("version", new_version, self.bot.name)
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
         self.reload_config()
         to_send = f"Changed full version from **{old_version}** to **{new_version}**"
         logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.full_name} > {to_send}")
-        return await general.send(to_send, ctx.channel)
+        return await ctx.send(to_send)
 
     @commands.command(name="sversion", aliases=["shortversion", "sv"])
     @commands.is_owner()
@@ -400,11 +392,11 @@ class Admin(commands.Cog):
             old_version = general.get_version()[self.bot.name]["short_version"]
             data_io.change_version("short_version", new_version, self.bot.name)
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
         self.reload_config()
         to_send = f"Changed short version from **{old_version}** to **{new_version}**"
         logger.log(self.bot.name, "version_changes", f"{time.time()} > {self.bot.full_name} > {to_send}")
-        return await general.send(to_send, ctx.channel)
+        return await ctx.send(to_send)
 
     @commands.group()
     @commands.is_owner()
@@ -419,9 +411,9 @@ class Admin(commands.Cog):
         """ Change username. """
         try:
             await self.bot.user.edit(username=name)
-            return await general.send(f"Successfully changed username to **{name}**", ctx.channel)
+            return await ctx.send(f"Successfully changed username to **{name}**")
         except discord.HTTPException as err:
-            return await general.send(str(err), ctx.channel)
+            return await ctx.send(str(err))
 
     @change.command(name="nickname")
     @commands.is_owner()
@@ -430,11 +422,11 @@ class Admin(commands.Cog):
         try:
             await ctx.guild.me.edit(nick=name)
             if name:
-                return await general.send(f"Successfully changed nickname to **{name}**", ctx.channel)
+                return await ctx.send(f"Successfully changed nickname to **{name}**")
             else:
-                return await general.send("Successfully removed nickname", ctx.channel)
+                return await ctx.send("Successfully removed nickname")
         except Exception as err:
-            return await general.send(str(err), ctx.channel)
+            return await ctx.send(str(err))
 
     @change.command(name="avatar")
     @commands.is_owner()
@@ -447,28 +439,27 @@ class Admin(commands.Cog):
         try:
             bio = await http.get(url, res_method="read")
             await self.bot.user.edit(avatar=bio)
-            return await general.send(f"Successfully changed the avatar. Currently using:\n{url}", ctx.channel)
+            return await ctx.send(f"Successfully changed the avatar. Currently using:\n{url}")
         except aiohttp.InvalidURL:
-            return await general.send("The URL is invalid...", ctx.channel)
+            return await ctx.send("The URL is invalid...")
         except discord.InvalidArgument:
-            return await general.send("This URL does not contain a usable image", ctx.channel)
+            return await ctx.send("This URL does not contain a usable image")
         except discord.HTTPException as err:
-            return await general.send(str(err), ctx.channel)
+            return await ctx.send(str(err))
         except TypeError:
-            return await general.send("You need to either provide an image URL or upload one with the command", ctx.channel)
+            return await ctx.send("You need to either provide an image URL or upload one with the command")
 
     @commands.command(name="gls")
     @commands.is_owner()
     async def get_lang_string(self, ctx: commands.Context, string: str, locale: str = "en"):
         """ Test a string """
-        return await general.send(self.bot.language2(locale).string(string), ctx.channel)
-        # return await general.send(languages.languages.get(locale, languages.languages["english"]).get(string, f"String not found: {string}"), ctx.channel)
+        return await ctx.send(ctx.language2(locale).string(string))
 
     @commands.command(name="data")
     @commands.is_owner()
     async def get_lang_data(self, ctx: commands.Context, key: str, locale: str = "en"):
         """ Test a set of data of a language """
-        return await general.send(self.bot.language2(locale).data(key), ctx.channel)
+        return await ctx.send(str(ctx.language2(locale).data(key)))
 
     @commands.command(name="blacklist")
     @commands.is_owner()
@@ -481,7 +472,7 @@ class Admin(commands.Cog):
         blacklist.append(user.id)
         self.bot.blacklist = blacklist
         open("blacklist.json", "w+").write(json.dumps(blacklist))
-        return await general.send(f"Added {user.id} ({user}) to the Blacklist", ctx.channel)
+        return await ctx.send(f"Added {user.id} ({user}) to the Blacklist")
 
     @commands.command(name="whitelist")
     @commands.is_owner()
@@ -495,24 +486,16 @@ class Admin(commands.Cog):
             blacklist.remove(user.id)
             self.bot.blacklist = blacklist
             open("blacklist.json", "w+").write(json.dumps(blacklist))
-            return await general.send(f"Removed {user.id} ({user}) from the Blacklist", ctx.channel)
+            return await ctx.send(f"Removed {user.id} ({user}) from the Blacklist")
         except ValueError:
-            return await general.send(f"User {user.id} was not found in the Blacklist", ctx.channel)
-
-    # @commands.command(name="usage", aliases=["usages"])
-    # @commands.is_owner()
-    # async def usages(self, ctx: commands.Context):
-    #     """ See command usage counters """
-    #     data = sorted([f"`{name}`: {usage}" for name, usage in self.bot.usages.items()])
-    #     send = [data[i:i + 80] for i in range(0, len(data), 80)]
-    #     for result in send:
-    #         await general.send(" | ".join(result), ctx.channel)
+            return await ctx.send(f"User {user.id} was not found in the Blacklist")
 
     @commands.command(name="seedm")
     @commands.is_owner()
-    async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = -0):
+    async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = 0):
         """ Check someone's DMs with Suager """
         try:
+            # TODO: Track embeds and files here
             data = "\n\n".join([f"{message.author} - {self.bot.language2('english').time(message.created_at, seconds=True)}\n{message.content}" for message in (await
                                 (await user.create_dm()).history(limit=None, oldest_first=True).flatten())[-limit:]])
             if ctx.guild is None:
@@ -521,22 +504,21 @@ class Admin(commands.Cog):
                 _limit = int(ctx.guild.filesize_limit / 1.05)
             rl = len(str(data))
             if rl == 0 or not data:
-                return await general.send("Nothing was found...", ctx.channel)
+                return await ctx.send("Nothing was found...")
             elif 0 < rl <= 1900:
-                return await general.send(f"DMs with {user} - {rl:,} chars (Last {limit} messages)\n\n{data}", ctx.channel)
+                return await ctx.send(f"DMs with {user} - {rl:,} chars (Last {limit} messages)\n\n{data}")
             elif 1900 < rl <= _limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
-                    return await general.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars (last {limit} message)", ctx.channel,
-                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+                    return await ctx.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars (last {limit} message)",
+                                          file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > _limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data)[-_limit:].encode('utf-8'))
-                    return await general.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", ctx.channel,
-                                              file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
+                    return await ctx.send(f"Result was a bit too long... ({rl:,} chars)\nSending latest", file=discord.File(_data, filename=f"{time.file_ts('DMs')}"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.group(name="config")
     @commands.is_owner()
@@ -550,10 +532,7 @@ class Admin(commands.Cog):
     @config.command(name="current")
     async def config_current(self, ctx: commands.Context):
         """ Current config (in JSON) """
-        return await general.send("Current config:", ctx.channel, file=discord.File("config.json"))
-        # stuff = json.dumps(json.loads(data["data"]), indent=2)
-        # bio = BytesIO(stuff.encode("utf-8"))
-        # return await general.send(f"Current settings for {ctx.guild.name}", ctx.channel, file=discord.File(bio, time.file_ts("settings", "json")))
+        return await ctx.send("Current config:", file=discord.File("config.json"))
 
     @config.command(name="upload", aliases=["update"])
     async def config_upload(self, ctx: commands.Context):
@@ -575,7 +554,7 @@ class Admin(commands.Cog):
             return await ctx.send(f"Error loading file:\n{type(e).__name__}: {e}")
         # stuff = json.dumps(json.loads(stuff), indent=0)
         open("config.json", "w").write(stuff_str)
-        return await general.send("Config file updated.", ctx.channel)
+        return await ctx.send("Config file updated.")
 
 
 def setup(bot: bot_data.Bot):

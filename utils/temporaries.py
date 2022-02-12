@@ -193,7 +193,7 @@ async def birthdays(bot: bot_data.Bot):
                                 channel: discord.TextChannel = guild.get_channel(data[1])
                                 message = data[2].replace("[MENTION]", user.mention).replace("[USER]", user.name)
                                 try:
-                                    await general.send(message, channel, u=True)
+                                    await channel.send(message)
                                     print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
                                 except Exception as e:
                                     out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed sending birthday message (Guild {gid}, User {user.id}): {e}"
@@ -691,10 +691,6 @@ async def avatars(bot: bot_data.Bot):
 
     while True:
         try:
-            # bot.config = general.get_config()
-            # bot.local_config = bot.config["bots"][bot.index]
-            # log = bot.local_config["logs"]
-            # avatars = lists.avatars
             avatar = random.choice(lists.avatars)
             e = False
             s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
@@ -798,7 +794,7 @@ async def polls(bot: bot_data.Bot):
                             except discord.NotFound:
                                 resend = True
                         if resend:
-                            await general.send(None, channel, embed=embed)
+                            await channel.send(embed=embed)
             except Exception as e:
                 out = f"{time.time()} > {bot.full_name} > Polls > Poll {poll['poll_id']} error: {type(e).__name__}: {e}"
                 general.print_error(out)
@@ -889,7 +885,7 @@ async def trials(bot: bot_data.Bot):
                                                     if channel:
                                                         _duration = language.delta_int(duration, accuracy=3, brief=False, affix=False)
                                                         output = language.string("trials_success_mute_timed", trial_id, user, _duration)
-                                                        await general.send(output, channel)
+                                                        await channel.send(output)
 
                                                     bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                                                    (member.id, guild.id, "mute", trial["author_id"], trial_success_text, True, new_mute_end, 0, bot.name))
@@ -898,7 +894,7 @@ async def trials(bot: bot_data.Bot):
                                                     #     bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
                                                     if channel:
                                                         output = language.string("trials_success_mute", trial_id, user)
-                                                        await general.send(output, channel)
+                                                        await channel.send(output)
 
                                                     bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                                                    (member.id, guild.id, "mute", trial["author_id"], trial_success_text, False, time.now2(), 0, bot.name))
@@ -943,14 +939,14 @@ async def trials(bot: bot_data.Bot):
                                                     #     pass
                                                 if channel:
                                                     output = language.string("trials_success_unmute", trial_id, user)
-                                                    await general.send(output, channel)
+                                                    await channel.send(output)
                             else:
                                 out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't mute"
                                 general.print_error(out)
                                 logger.log(bot.name, "errors", out)
                                 if channel:
                                     string = "trials_error_member_none_mute" if action == "mute" else "trials_error_member_none_unmute"
-                                    await general.send(language.string(string, trial_id), channel)
+                                    await channel.send(language.string(string, trial_id))
                         elif action == "kick":
                             if member:
                                 # try:
@@ -960,13 +956,13 @@ async def trials(bot: bot_data.Bot):
                                 await member.kick(reason=trial_success_text)
                                 if channel:
                                     output = language.string("trials_success_kick", trial_id, user)
-                                    await general.send(output, channel)
+                                    await channel.send(output)
                             else:
                                 out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't kick"
                                 general.print_error(out)
                                 logger.log(bot.name, "errors", out)
                                 if channel:
-                                    await general.send(language.string("trials_error_member_none_kick", trial_id), channel)
+                                    await channel.send(language.string("trials_error_member_none_kick", trial_id))
                         elif action == "ban":
                             # I don't have to check if the user exists here, because otherwise it would raise a discord.NotFound while fetching
                             # try:
@@ -976,7 +972,7 @@ async def trials(bot: bot_data.Bot):
                             await guild.ban(user, reason=trial_success_text, delete_message_days=0)
                             if channel:
                                 output = language.string("trials_success_ban", trial_id, user)
-                                await general.send(output, channel)
+                                await channel.send(output)
                         elif action == "unban":
                             # try:
                             #     await user.send(f"You have been unbanned from {guild.name}.\n{reason_dm}")
@@ -985,7 +981,7 @@ async def trials(bot: bot_data.Bot):
                             await guild.unban(user, reason=trial_success_text)
                             if channel:
                                 output = language.string("trials_success_unban", trial_id, user)
-                                await general.send(output, channel)
+                                await channel.send(output)
                         else:
                             out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong."
                             general.print_error(out)
@@ -1009,7 +1005,7 @@ async def trials(bot: bot_data.Bot):
                                 "unmute": "trials_failure_unmute",
                             }.get(action)
                             output = language.string(fail_text, trial_id, user)
-                            await general.send(output, channel)
+                            await channel.send(output)
                     if channel:
                         embed = discord.Embed(colour=colour)
                         embed.title = language.string("trials_end_title")
@@ -1048,7 +1044,7 @@ async def trials(bot: bot_data.Bot):
                         except discord.NotFound:
                             resend = True
                         if resend:
-                            await general.send(None, channel, embed=embed)
+                            await channel.send(embed=embed)
                 else:
                     out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Guild not found"
                     general.print_error(out)
@@ -1076,6 +1072,6 @@ async def new_year(bot: bot_data.Bot):
     delay = ny - now
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Waiting {delay} until midnight...")
     await asyncio.sleep(delay.total_seconds())
-    await general.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...", channel)
+    await channel.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...")
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
     return

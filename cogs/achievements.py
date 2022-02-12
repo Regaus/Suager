@@ -1,10 +1,9 @@
 from io import BytesIO
 
 import discord
-from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont
 
-from utils import bot_data, emotes, general
+from utils import bot_data, commands, emotes
 
 achievement_colours = [
     (96, 96, 96),     # Tier 0
@@ -60,7 +59,7 @@ class Achievements(commands.Cog):
             font_med = ImageFont.truetype(font_dir, size=64)
             font_small = ImageFont.truetype(font_dir, size=32)
         except ImportError:
-            await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
+            await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font, font_med, font_small = None, None, None
         w, _ = dr.textsize(str(user), font=font)
         max_description = language.string("achievements_highest")
@@ -157,7 +156,7 @@ class Achievements(commands.Cog):
         img.save(bio, "PNG")
         bio.seek(0)
         # f"This is what **{user}** has accomplished so far."
-        return await general.send(language.string("achievements_achievements", str(user)), ctx.channel, file=discord.File(bio, filename="achievements.png"))
+        return await ctx.send(language.string("achievements_achievements", str(user)), file=discord.File(bio, filename="achievements.png"))
 
     @commands.command(name="tiers")
     @commands.is_owner()
@@ -175,7 +174,7 @@ class Achievements(commands.Cog):
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
-        return await general.send(None, ctx.channel, file=discord.File(bio, filename="test.png"))
+        return await ctx.send(file=discord.File(bio, filename="test.png"))
 
 
 def setup(bot: bot_data.Bot):

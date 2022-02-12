@@ -5,16 +5,15 @@ import re
 from io import BytesIO
 
 import discord
-from discord.ext import commands
 
-from utils import bot_data, general, logger, permissions, time
+from utils import bot_data, commands, general, logger, permissions, time
 from utils.languages import FakeContext
 
 
 async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: int = None, after: int = None, message: bool = True):
     language = ctx.bot.language(ctx)
     if limit > 2000:
-        return await general.send(language.string("mod_purge_max"), ctx.channel)
+        return await ctx.send(language.string("mod_purge_max"))
         # return await general.send(f"Too many messages to search given ({limit:,}/2,000)", ctx.channel)
     if before is None:
         before = ctx.message
@@ -24,24 +23,25 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         after = discord.Object(id=after)
     _message = None  # if message = False
     if message is True:
-        _message = await general.send(language.string("mod_purge_loading"), ctx.channel)
+        _message = await ctx.send(language.string("mod_purge_loading"))
     try:
         deleted = await ctx.channel.purge(limit=limit, before=before, after=after, check=predicate)
     except discord.Forbidden:
-        return await general.send(language.string("mod_purge_forbidden"), ctx.channel)
+        return await ctx.send(language.string("mod_purge_forbidden"))
         # return await general.send("I don't have the permissions to delete messages", ctx.channel)
     # except discord.HTTPException as e:
     except Exception as e:
-        return await general.send(language.string("mod_purge_error", type(e).__name__, str(e)), ctx.channel)
+        return await ctx.send(language.string("mod_purge_error", type(e).__name__, str(e)))
         # return await general.send(f"An error has occurred: `{type(e).__name__}: {e}`\nTry a smaller search?", ctx.channel)
     _deleted = len(deleted)
     if message is True:
         await _message.delete()
-        return await general.send(language.string("mod_purge", language.number(_deleted)), ctx.channel, delete_after=10)
+        return await ctx.send(language.string("mod_purge", language.number(_deleted)), delete_after=10)
         # await general.send(f"🚮 Successfully removed {_deleted:,} messages", ctx.channel, delete_after=10)
 
 
 class MemberID(commands.Converter):
+    # TODO: Try to make this possible to convert to ID
     async def convert(self, ctx, argument):
         try:
             m = await commands.MemberConverter().convert(ctx, argument)
@@ -147,7 +147,7 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, u
     embed.set_footer(text=language.string("mod_logs_case", id=entry_id))
     embed.timestamp = time.now()
     try:
-        return await general.send(None, channel, embed=embed)
+        return await channel.send(embed=embed)
     except Exception as e:
         message = f"{time.time()} > {bot.full_name} > Mod Logs > Case ID {entry_id} - Failed to send message to log channel - {type(e).__name__}: {e}"
         general.print_error(message)
@@ -170,13 +170,13 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         if member == ctx.author:
-            return await general.send(language.string("mod_kick_self"), ctx.channel)
+            return await ctx.send(language.string("mod_kick_self"))
         elif member.id == ctx.guild.owner.id:
-            return await general.send(language.string("mod_kick_owner"), ctx.channel)
+            return await ctx.send(language.string("mod_kick_owner"))
         elif (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-            return await general.send(language.string("mod_kick_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_kick_forbidden"))
         elif member.id == self.bot.user.id:
-            return await general.send(language.string("mod_ban_suager", ctx.author.name), ctx.channel)
+            return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
         try:
             user = str(member)
             # TODO: Make sure we can kick the user *before* sending the message, so it wouldn't look stupid if this fails...
@@ -188,9 +188,9 @@ class Moderation(commands.Cog):
                                 (member.id, ctx.guild.id, "kick", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
             entry_id = self.bot.db.db.lastrowid
             await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "kick", reason_log, None)
-            return await general.send(language.string("mod_kick", user, reason), ctx.channel)
+            return await ctx.send(language.string("mod_kick", user, reason))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="ban")
     @commands.guild_only()
@@ -202,13 +202,13 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         if member == ctx.author.id:
-            return await general.send(language.string("mod_ban_self"), ctx.channel)
+            return await ctx.send(language.string("mod_ban_self"))
         elif member == ctx.guild.owner.id:
-            return await general.send(language.string("mod_ban_owner"), ctx.channel)
+            return await ctx.send(language.string("mod_ban_owner"))
         elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-            return await general.send(language.string("mod_ban_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_ban_forbidden"))
         elif member == self.bot.user.id:
-            return await general.send(language.string("mod_ban_suager", ctx.author.name), ctx.channel)
+            return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
         try:
             # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
             # TODO: Check if the user is already banned from the server
@@ -221,9 +221,9 @@ class Moderation(commands.Cog):
                                 (member, ctx.guild.id, "ban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
             entry_id = self.bot.db.db.lastrowid
             await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "ban", reason_log, None)
-            return await general.send(language.string("mod_ban", member, user, reason), ctx.channel)
+            return await ctx.send(language.string("mod_ban", member, user, reason))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="massban")
     @commands.guild_only()
@@ -235,15 +235,15 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         if ctx.author.id in who:
-            return await general.send(language.string("mod_ban_self"), ctx.channel)
+            return await ctx.send(language.string("mod_ban_self"))
         else:
             for member in who:
                 if member == self.bot.user.id:
-                    return await general.send(language.string("mod_ban_suager", ctx.author.name), ctx.channel)
+                    return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
                 if member == ctx.guild.owner.id:
-                    return await general.send(language.string("mod_ban_owner"), ctx.channel)
+                    return await ctx.send(language.string("mod_ban_owner"))
                 elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-                    return await general.send(language.string("mod_ban_forbidden"), ctx.channel)
+                    return await ctx.send(language.string("mod_ban_forbidden"))
         banned = 0
         failed = 0
         for member in who:
@@ -262,9 +262,9 @@ class Moderation(commands.Cog):
                 banned += 1
             except Exception as e:
                 failed += 1
-                await general.send(f"`{member}` - {type(e).__name__}: {e}", ctx.channel)
+                await ctx.send(f"`{member}` - {type(e).__name__}: {e}")
         total = banned + failed
-        return await general.send(language.string("mod_ban_mass", reason, language.number(total), language.number(banned), language.number(failed)), ctx.channel)
+        return await ctx.send(language.string("mod_ban_mass", reason, language.number(total), language.number(banned), language.number(failed)))
 
     @commands.command(name="unban")
     @commands.guild_only()
@@ -284,9 +284,9 @@ class Moderation(commands.Cog):
                                 (member, ctx.guild.id, "unban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
             entry_id = self.bot.db.db.lastrowid
             await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "unban", reason_log, None)
-            return await general.send(language.string("mod_unban", member, user, reason), ctx.channel)
+            return await ctx.send(language.string("mod_unban", member, user, reason))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
@@ -297,19 +297,19 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         try:
             if member.id == ctx.guild.owner.id:
-                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_owner"))
             if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
-                return await general.send(language.string("mod_nick_forbidden2"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_forbidden2"))
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             if name is None:
                 message = language.string("mod_nick_reset", member)
             else:
                 message = language.string("mod_nick", member, name)
-            return await general.send(message, ctx.channel)
+            return await ctx.send(message)
         except discord.Forbidden:
-            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_nick_forbidden"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
@@ -320,17 +320,17 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         try:
             if ctx.author.id == ctx.guild.owner.id:
-                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_owner"))
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             if name is None:
                 message = language.string("mod_nick_self_reset")
             else:
                 message = language.string("mod_nick_self", name)
-            return await general.send(message, ctx.channel)
+            return await ctx.send(message)
         except discord.Forbidden:
-            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_nick_forbidden"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="mute")
     @commands.guild_only()
@@ -342,32 +342,32 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         if member.id == self.bot.user.id:
-            return await general.send(language.string("mod_mute_suager"), ctx.channel)
+            return await ctx.send(language.string("mod_mute_suager"))
         if member == ctx.author:
-            return await general.send(language.string("mod_mute_self"), ctx.channel)
+            return await ctx.send(language.string("mod_mute_self"))
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
-            return await general.send(language.string("mod_mute_role2", ctx.prefix), ctx.channel)
+            return await ctx.send(language.string("mod_mute_role2", ctx.prefix))
         data = json.loads(_data["data"])
         try:
             mute_role_id = data["mute_role"]
         except KeyError:
-            return await general.send(language.string("mod_mute_role"), ctx.channel)
+            return await ctx.send(language.string("mod_mute_role"))
         mute_role = ctx.guild.get_role(mute_role_id)
         if not mute_role:
-            return await general.send(language.string("mod_mute_role"), ctx.channel)
+            return await ctx.send(language.string("mod_mute_role"))
         try:
             await member.add_roles(mute_role, reason=_reason)
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
         out = language.string("mod_mute", member, reason)
         # exists = self.bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'", (member.id, ctx.guild.id, self.bot.name))
         _duration = reason.split(" ")[0]
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
         if time.rd_is_above_5y(delta):
-            await general.send(language.string("mod_mute_limit"), ctx.channel, delete_after=15)
+            await ctx.send(language.string("mod_mute_limit"), delete_after=15)
             error = True
         if not error:
             # if exists is not None:
@@ -400,7 +400,7 @@ class Moderation(commands.Cog):
             entry_id = self.bot.db.db.lastrowid
             await send_mod_dm(self.bot, ctx, member, "mute", reason, None)
             await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "mute", reason_log, None)
-        return await general.send(out, ctx.channel)
+        return await ctx.send(out)
 
     @commands.command(name="unmute")
     @commands.guild_only()
@@ -412,29 +412,29 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         if member == ctx.author:
-            return await general.send(language.string("mod_unmute_self"), ctx.channel)
+            return await ctx.send(language.string("mod_unmute_self"))
             # return await general.send(f"Imagine trying to unmute yourself {emotes.BlobCatPolice}", ctx.channel)
         _reason = general.reason(ctx.author, reason)
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
-            return await general.send(language.string("mod_mute_role2", ctx.prefix), ctx.channel)
+            return await ctx.send(language.string("mod_mute_role2", ctx.prefix))
             # return await general.send(f"This server does not seem to have a mute role set. Use `{ctx.prefix}settings` to set one.", ctx.channel)
         data = json.loads(_data["data"])
         try:
             mute_role_id = data["mute_role"]
         except KeyError:
-            return await general.send(language.string("mod_mute_role"), ctx.channel)
+            return await ctx.send(language.string("mod_mute_role"))
             # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
         mute_role = ctx.guild.get_role(mute_role_id)
         if not mute_role:
-            return await general.send(language.string("mod_mute_role"), ctx.channel)
+            return await ctx.send(language.string("mod_mute_role"))
             # return await general.send("This server has no mute role set, or it no longer exists.", ctx.channel)
         if mute_role not in member.roles:
-            return await general.send(language.string("mod_unmute_already"), ctx.channel)
+            return await ctx.send(language.string("mod_unmute_already"))
         try:
             await member.remove_roles(mute_role, reason=_reason)
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
         # self.bot.db.execute("DELETE FROM temporary WHERE uid=? AND type='mute' AND gid=? AND bot=?", (member.id, ctx.guild.id, self.bot.name))
         reason_log = general.reason(ctx.author, reason)
         self.bot.db.execute("UPDATE punishments SET handled=4 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
@@ -443,7 +443,7 @@ class Moderation(commands.Cog):
         entry_id = self.bot.db.db.lastrowid
         await send_mod_dm(self.bot, ctx, member, "unmute", reason, None)
         await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "unmute", reason_log, None)
-        return await general.send(language.string("mod_unmute", member, reason), ctx.channel)
+        return await ctx.send(language.string("mod_unmute", member, reason))
         # return await general.send(f"{emotes.Allow} Successfully unmuted **{member}** for **{reason}**", ctx.channel)
 
     @commands.command(name="mutes", aliases=["punishments"])
@@ -459,7 +459,7 @@ class Moderation(commands.Cog):
         # This also has the side effect of showing active permanent mutes first, as their "expiry" value is set to the time the mute was issued, which is in the past.
         mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE gid=? AND action='mute' AND handled=0 ORDER BY expiry", (ctx.guild.id,))
         if not mutes:
-            return await general.send(language.string("mod_mute_list_none", ctx.guild.name), ctx.channel)
+            return await ctx.send(language.string("mod_mute_list_none", ctx.guild.name))
         output = language.string("mod_mute_list", ctx.guild.name)
         outputs = []
         _mute = 0
@@ -476,9 +476,9 @@ class Moderation(commands.Cog):
         output2 = "\n\n".join(outputs)
         if len(output2) > 1900:
             _data = BytesIO(str(output2).encode('utf-8'))
-            return await general.send(output, ctx.channel, file=discord.File(_data, filename=time.file_ts('Mutes')))
+            return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Mutes')))
         else:
-            return await general.send(f"{output}\n{output2}", ctx.channel)
+            return await ctx.send(f"{output}\n{output2}")
 
     @commands.group(name="find")
     @commands.guild_only()
@@ -513,7 +513,7 @@ class Moderation(commands.Cog):
         """Finds members whose discriminator is the same as the search"""
         language = self.bot.language(ctx)
         if len(search) != 4 or not re.compile("^[0-9]*$").search(search):
-            return await general.send(language.string("mod_find_disc"), ctx.channel)
+            return await ctx.send(language.string("mod_find_disc"))
         loop = [f"{i} ({i.id})" for i in ctx.guild.members if search == i.discriminator]
         await general.pretty_results(ctx, "discriminator", language.string("mod_find", language.number(len(loop)), search), loop)
 
@@ -555,7 +555,7 @@ class Moderation(commands.Cog):
     async def prune_user(self, ctx: commands.Context, user: discord.User = None, search: int = 100):
         """Removes all messages by the member."""
         if user is None:
-            return await general.send(self.bot.language(ctx).string("mod_purge_user"), ctx.channel)
+            return await ctx.send(self.bot.language(ctx).string("mod_purge_user"))
         await do_removal(ctx, search, lambda e: e.author == user)
 
     @prune.command(name="contains")
@@ -563,7 +563,7 @@ class Moderation(commands.Cog):
         """Removes all messages containing a substring.
         The substring must be at least 3 characters long."""
         if substring is None or len(substring) < 3:
-            return await general.send(self.bot.language(ctx).string("mod_purge_substring"), ctx.channel)
+            return await ctx.send(self.bot.language(ctx).string("mod_purge_substring"))
             # await ctx.send('The substring length must be at least 3 characters.')
         else:
             await do_removal(ctx, search, lambda e: substring in e.content)
@@ -604,14 +604,14 @@ class Moderation(commands.Cog):
         """Removes all reactions from messages that have them."""
         language = self.bot.language(ctx)
         if search > 2000:
-            return await general.send(language.string("mod_purge_max", language.number(search)), ctx.channel)
+            return await ctx.send(language.string("mod_purge_max", language.number(search)))
             # return await ctx.send(f'Too many messages to search for ({search:,}/2000)')
         total_reactions = 0
         async for message in ctx.history(limit=search, before=ctx.message):
             if len(message.reactions):
                 total_reactions += sum(r.count for r in message.reactions)
                 await message.clear_reactions()
-        return await general.send(language.string("mod_purge_reactions", language.number(total_reactions)), ctx.channel)
+        return await ctx.send(language.string("mod_purge_reactions", language.number(total_reactions)))
         # await general.send(f"🚮 Successfully removed {total_reactions:,} reactions.", ctx.channel)
 
 
@@ -639,19 +639,19 @@ class ModerationKyomi(Moderation, name="Moderation"):
         language = self.bot.language(ctx)
         try:
             if member.id == ctx.guild.owner.id:
-                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_owner"))
             if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
-                return await general.send(language.string("mod_nick_forbidden2"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_forbidden2"))
             name = name or member.name
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             message = language.string("mod_nick", member, name)
-            return await general.send(message, ctx.channel)
+            return await ctx.send(message)
         except discord.Forbidden:
-            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_nick_forbidden"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
@@ -662,19 +662,19 @@ class ModerationKyomi(Moderation, name="Moderation"):
         language = self.bot.language(ctx)
         try:
             if ctx.author.id == ctx.guild.owner.id:
-                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_owner"))
             name = name or ctx.author.name
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             message = language.string("mod_nick_self", name)
-            return await general.send(message, ctx.channel)
+            return await ctx.send(message)
         except IndexError:
-            return await general.send(f"Nickname design {design} is not available.", ctx.channel)
+            return await ctx.send(f"Nickname design {design} is not available.")
         except discord.Forbidden:
-            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_nick_forbidden"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="nicknamedesign", aliases=["nickdesign", "design"])
     @commands.guild_only()
@@ -685,18 +685,18 @@ class ModerationKyomi(Moderation, name="Moderation"):
         language = self.bot.language(ctx)
         try:
             if ctx.author.id == ctx.guild.owner.id:
-                return await general.send(language.string("mod_nick_owner"), ctx.channel)
+                return await ctx.send(language.string("mod_nick_owner"))
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', ctx.author.name[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             message = language.string("mod_nick_self", name)
-            return await general.send(message, ctx.channel)
+            return await ctx.send(message)
         except IndexError:
-            return await general.send(f"Nickname design {design} is not available.", ctx.channel)
+            return await ctx.send(f"Nickname design {design} is not available.")
         except discord.Forbidden:
-            return await general.send(language.string("mod_nick_forbidden"), ctx.channel)
+            return await ctx.send(language.string("mod_nick_forbidden"))
         except Exception as e:
-            return await general.send(f"{type(e).__name__}: {e}", ctx.channel)
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.command(name="nicknamedesigns", aliases=["nickdesigns", "designs"])
     async def nickname_designs(self, ctx: commands.Context):
@@ -717,7 +717,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
                   "\nNote: If you boost this server, you will get a special nickname design. It is not included here, " \
                   "so if you change it, only the admins will be able to change it back.\n" \
                   "\nWarning: these designs are NF2U, you may not copy these for your own servers."
-        return await general.send(output, ctx.channel)
+        return await ctx.send(output)
 
 
 def setup(bot: bot_data.Bot):

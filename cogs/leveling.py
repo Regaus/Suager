@@ -5,18 +5,17 @@ import random
 from io import BytesIO
 
 import discord
-from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
-from utils import bot_data, emotes, general, http, languages, logger, settings, time
+from utils import bot_data, commands, emotes, general, http, languages, logger, settings, time
 from utils.leaderboards import leaderboard, leaderboard2
 
 
 async def catch_colour(ctx: commands.Context, c: int):
     if c == -1:
-        await general.send("Value must be either 3 or 6 digits long", ctx.channel)
+        await ctx.send("Value must be either 3 or 6 digits long")
     if c == -2:
-        await general.send("An error occurred. Are you sure the value is HEX (0-9 and A-F)?", ctx.channel)
+        await ctx.send("An error occurred. Are you sure the value is HEX (0-9 and A-F)?")
     return c >= 0
 
 
@@ -112,7 +111,7 @@ class Leveling(commands.Cog):
             diff = lv1 - int(levels[_level - 1]) if level > 1 else lv1
             outputs.append(f"Level {level:>3} | Req {lv1:>9,} | Diff {diff:>6,}")
         output = "\n".join(outputs)
-        return await general.send(f"```fix\n{output}```", ctx.channel)
+        return await ctx.send(f"```fix\n{output}```")
 
     @commands.command(name="oldlevels", aliases=["levelhistory"])
     @commands.guild_only()
@@ -122,11 +121,11 @@ class Leveling(commands.Cog):
         names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6": "Suager v6", "v7": "Suager v7"}
         if level is not None:
             if level > max_level:
-                return await general.send(f"The max level is {max_level:,}", ctx.channel)
+                return await ctx.send(f"The max level is {max_level:,}")
             output = ""
             for key, name in names.items():
                 output += f"\n`{name:<9} -> {level_history[key][level - 1]:>9,.0f} XP`"
-            return await general.send(f"{ctx.author.name}, for **level {level}** you would've needed:{output}", ctx.channel)
+            return await ctx.send(f"{ctx.author.name}, for **level {level}** you would've needed:{output}")
         else:
             xp_ = self.bot.db.fetchrow(f"SELECT xp FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
             xp = xp_["xp"] if xp_ else 0
@@ -139,8 +138,7 @@ class Leveling(commands.Cog):
                     else:
                         break
                 output += f"\n`{name:<9} -> Level {level:>3}`"
-            return await general.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you would have been on "
-                                      f"in the older leveling systems:{output}", ctx.channel)
+            return await ctx.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you would have been on in the older leveling systems:{output}")
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -288,7 +286,7 @@ class Leveling(commands.Cog):
                 # FIXME: Try to ignore deleted roles instead of skipping the entire role rewards script
                 pass
             except discord.Forbidden:
-                await general.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.", ctx.channel)
+                await ctx.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.")
             except Exception as e:
                 out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
                 general.print_error(out)
@@ -336,7 +334,7 @@ class Leveling(commands.Cog):
                     ch = ctx.channel
                 try:
                     if ch is not None:
-                        await general.send(send, ch, u=[ctx.author])
+                        await ch.send(send)
                 except discord.Forbidden:
                     pass  # Well, if it can't send it there, too bad.
             # _last = last if dc else now
@@ -361,7 +359,7 @@ class Leveling(commands.Cog):
         language = self.bot.language(ctx)
         _settings = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
-            return await general.send(language.string("leveling_rewards_none"), ctx.channel)
+            return await ctx.send(language.string("leveling_rewards_none"))
         else:
             data = json.loads(_settings['data'])
         try:
@@ -377,15 +375,15 @@ class Leveling(commands.Cog):
                 embed.description = d
             else:
                 embed.description = language.string("leveling_rewards_none")
-            return await general.send(None, ctx.channel, embed=embed)
+            return await ctx.send(embed=embed)
         except KeyError:
-            return await general.send(language.string("leveling_rewards_none"), ctx.channel)
+            return await ctx.send(language.string("leveling_rewards_none"))
 
     async def level(self, ctx: commands.Context, who: discord.Member | None, language: languages.Language):
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
-            return await general.send(language.string("leveling_rank_bot"), ctx.channel)
+            return await ctx.send(language.string("leveling_rank_bot"))
         async with ctx.typing():
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
             # if key.isnumeric():
@@ -426,7 +424,7 @@ class Leveling(commands.Cog):
             img = Image.new("RGB", (width, 612), color=background_colour)
             dr = ImageDraw.Draw(img)
             try:
-                avatar = BytesIO(await http.get(str(user.avatar.replace(size=512, format="png")), res_method="read"))
+                avatar = BytesIO(await http.get(str(user.display_avatar.replace(size=512, format="png")), res_method="read"))
                 avatar_img = Image.open(avatar)
                 avatar_resized = avatar_img.resize((512, 512))
                 img.paste(avatar_resized)
@@ -438,7 +436,7 @@ class Leveling(commands.Cog):
                 font = ImageFont.truetype(font_dir, size=128)
                 font_small = ImageFont.truetype(font_dir, size=64)
             except ImportError:
-                await general.send(f"{emotes.Deny} It seems that image generation does not work properly here...", ctx.channel)
+                await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
                 font, font_small = None, None
             text_x = 542
             dr.text((text_x, -10), f"{user}", font=font, fill=font_colour)
@@ -507,7 +505,7 @@ class Leveling(commands.Cog):
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
-            return await general.send(r, ctx.channel, file=discord.File(bio, filename="rank.png"))
+            return await ctx.send(r, file=discord.File(bio, filename="rank.png"))
 
     @commands.command(name="rank", aliases=["level", "xp"])
     @commands.guild_only()
@@ -524,7 +522,7 @@ class Leveling(commands.Cog):
         """ Check your or someone's rank - In a different language """
         _language = self.bot.language2(language)
         if language not in languages.languages.languages.keys():
-            return await general.send(self.bot.language(ctx).string("settings_locale_invalid", language, ctx.prefix), ctx.channel)
+            return await ctx.send(self.bot.language(ctx).string("settings_locale_invalid", language, ctx.prefix))
         return await self.level(ctx, who, _language)
 
     @commands.command(name="rankembed", aliases=["rank2", "ranke"])
@@ -536,7 +534,7 @@ class Leveling(commands.Cog):
         user = who or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
-            return await general.send(language.string("leveling_rank_bot"), ctx.channel)
+            return await ctx.send(language.string("leveling_rank_bot"))
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         r = language.string("leveling_rank", user, ctx.guild.name)
         if data:
@@ -553,7 +551,7 @@ class Leveling(commands.Cog):
         else:
             sm = 1
         embed = discord.Embed(colour=general.random_colour(), title=r)
-        embed.set_thumbnail(url=str(user.avatar.replace(size=512, format="png")))
+        embed.set_thumbnail(url=str(user.display_avatar.replace(size=512, format="png")))
         # dr.text((text_x, -10), f"{user}", font=font, fill=font_colour)
         try:
             if level >= 0:
@@ -605,7 +603,7 @@ class Leveling(commands.Cog):
         x1, x2 = [val * sm for val in xp_amounts]
         o1, o2 = int(x1), int(x2)
         embed.add_field(name=language.string("leveling_rank_embed_rate"), value=f"{o1}-{o2}", inline=False)
-        return await general.send(None, ctx.channel, embed=embed)
+        return await ctx.send(embed=embed)
 
     @commands.command(name="rankyearly", aliases=["rank3", "ranky", "rankyear"])
     @commands.guild_only()
@@ -618,13 +616,13 @@ class Leveling(commands.Cog):
         # return await self.level(ctx, who, locale, str(year))
         user = who or ctx.author
         if user.bot:
-            return await general.send(language.string("leveling_rank_bot"), ctx.channel)
+            return await ctx.send(language.string("leveling_rank_bot"))
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (user.id, ctx.guild.id))
         if data:
             try:
                 xp = data[str(year)]
             except KeyError:
-                return await general.send(language.string("leveling_rank_yearly_no", year), ctx.channel)
+                return await ctx.send(language.string("leveling_rank_yearly_no", year))
             level = 0
             for lvl in levels:
                 if xp >= lvl:
@@ -632,7 +630,7 @@ class Leveling(commands.Cog):
                 else:
                     break
         else:
-            return await general.send(language.string("leveling_rank_none", ctx.author, year), ctx.channel)
+            return await ctx.send(language.string("leveling_rank_none", ctx.author, year))
         _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? ORDER BY \"{year}\" DESC", (ctx.guild.id,))
         place = language.string("generic_unknown")
         for x in range(len(_data)):
@@ -647,7 +645,7 @@ class Leveling(commands.Cog):
             cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
             if ctx.guild.id not in cobble_servers:
                 output += language.string("leveling_rank_yearly21", ctx.guild.name)
-        return await general.send(output, ctx.channel)
+        return await ctx.send(output)
 
     @commands.command(name="rankglobal", aliases=["rankg", "grank"])
     @commands.guild_only()
@@ -658,7 +656,7 @@ class Leveling(commands.Cog):
         user = who or ctx.author
         # is_self = user.id == self.bot.user.id
         if user.bot:
-            return await general.send(language.string("leveling_rank_bot"), ctx.channel)
+            return await ctx.send(language.string("leveling_rank_bot"))
         _data = self.bot.db.fetch(f"SELECT * FROM leveling")
         coll = {}
         for i in _data:
@@ -685,7 +683,7 @@ class Leveling(commands.Cog):
             else:
                 break
         # __xp = int(_xp)
-        return await general.send(language.string("leveling_rank_global", user, language.number(xp, precision=0), place, language.number(level)), ctx.channel)
+        return await ctx.send(language.string("leveling_rank_global", user, language.number(xp, precision=0), place, language.number(level)))
 
     @commands.group(name="customrank", aliases=["crank"])
     # @commands.check(lambda ctx: ctx.author.id not in custom_rank_blacklist)
@@ -706,7 +704,7 @@ class Leveling(commands.Cog):
                 self.bot.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
             else:
                 self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
-            return await general.send(f"Set your font colour to #{colour}", ctx.channel)
+            return await ctx.send(f"Set your font colour to #{colour}")
 
     @custom_rank.command(name="progress")
     async def crank_progress(self, ctx: commands.Context, colour: str):
@@ -719,7 +717,7 @@ class Leveling(commands.Cog):
                 self.bot.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
             else:
                 self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
-            return await general.send(f"Set your progress bar colour to #{colour}", ctx.channel)
+            return await ctx.send(f"Set your progress bar colour to #{colour}")
 
     @custom_rank.command(name="background", aliases=["bg"])
     async def crank_bg(self, ctx: commands.Context, colour: str):
@@ -732,7 +730,7 @@ class Leveling(commands.Cog):
                 self.bot.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
             else:
                 self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
-            return await general.send(f"Set your background colour to #{colour}", ctx.channel)
+            return await ctx.send(f"Set your background colour to #{colour}")
 
     @commands.command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -740,7 +738,7 @@ class Leveling(commands.Cog):
         """ XP required to achieve a level """
         language = self.bot.language(ctx)
         if level > max_level or level < max_level * -1 + 1:
-            return await general.send(language.string("leveling_xplevel_max", language.number(max_level)), ctx.channel)
+            return await ctx.send(language.string("leveling_xplevel_max", language.number(max_level)))
         try:
             if level > 0:
                 r = int(levels[level - 1])
@@ -749,7 +747,7 @@ class Leveling(commands.Cog):
             else:
                 r = -int(levels[(-level) - 1])
         except IndexError:
-            return await general.send(language.string("leveling_xplevel_max", language.number(max_level)), ctx.channel)
+            return await ctx.send(language.string("leveling_xplevel_max", language.number(max_level)))
         if ctx.guild is not None:
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         else:
@@ -778,7 +776,7 @@ class Leveling(commands.Cog):
                 error = "Never"
                 t1, t2 = [error, error]
             extra = language.string("leveling_xplevel_extra", language.number(r - xp, precision=0), t1, t2)
-        return await general.send(f"{base}{extra}", ctx.channel)
+        return await ctx.send(f"{base}{extra}")
 
     @commands.command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()
@@ -788,7 +786,7 @@ class Leveling(commands.Cog):
         language = self.bot.language(ctx)
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
-            return await general.send(language.string("leveling_next_level_none"), ctx.channel)
+            return await ctx.send(language.string("leveling_next_level_none"))
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
             dm = 1
@@ -800,7 +798,7 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         if level == max_level:
-            return await general.send(language.string("leveling_next_level_max", ctx.author.name), ctx.channel)
+            return await ctx.send(language.string("leveling_next_level_max", ctx.author.name))
         r1 = language.number(xp, precision=0)
         try:
             if level >= 0:
@@ -832,7 +830,7 @@ class Leveling(commands.Cog):
         except (OverflowError, OSError):
             error = "Never"
             t1, t2 = [error, error]
-        return await general.send(language.string("leveling_next_level", ctx.author.name, r1, r2, r3, r5, r4, t1, t2), ctx.channel)
+        return await ctx.send(language.string("leveling_next_level", ctx.author.name, r1, r2, r3, r5, r4, t1, t2))
 
     @commands.command(name="levels", aliases=["ranks", "lb"])
     @commands.guild_only()

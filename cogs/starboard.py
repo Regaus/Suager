@@ -1,9 +1,8 @@
 import json
 
 import discord
-from discord.ext import commands
 
-from utils import general, languages, logger, time
+from utils import commands, general, languages, logger, time
 
 
 class Starboard(commands.Cog):
@@ -45,7 +44,7 @@ class Starboard(commands.Cog):
         if "channel" not in __settings["starboard"] or not __settings["starboard"]["channel"]:
             starboard_channel = None
             try:
-                await general.send(language.string("starboard_error_channel"), _channel)
+                await _channel.send(language.string("starboard_error_channel"))
             except discord.Forbidden:
                 pass
             # return await general.send("Starboard will not be able to function - there is no channel set up.", _channel)
@@ -53,7 +52,7 @@ class Starboard(commands.Cog):
             starboard_channel = self.bot.get_channel(__settings["starboard"]["channel"])
             if not starboard_channel:
                 try:
-                    await general.send(language.string("starboard_error_channel2"), _channel)
+                    await _channel.send(language.string("starboard_error_channel2"))
                 except discord.Forbidden:
                     pass
                 # return await general.send("Starboard channel could not be accessed. Starboard will not be able to function.", _channel)
@@ -94,7 +93,7 @@ class Starboard(commands.Cog):
             embed = discord.Embed(colour=0xffff00)
             author = _message.author
             author_name = author.name
-            author_url = str(author.avatar.replace(size=64, format="png"))
+            author_url = str(author.display_avatar.replace(size=64, format="png"))
             embed.set_author(name=author_name, icon_url=author_url)
             embed.description = _message.content
             if _message.attachments:
@@ -105,12 +104,12 @@ class Starboard(commands.Cog):
             embed.set_footer(text=f"Message ID {message}")
             embed.timestamp = _message.created_at
             try:
-                _starboard_message = await general.send(star_message, starboard_channel, embed=embed)
+                _starboard_message = await starboard_channel.send(star_message, embed=embed)
                 self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=?", (_starboard_message.id, message))
                 logger.log(self.bot.name, "starboard", f"{time.time()} > Saved Message ID {message} to starboard channel")
             except discord.Forbidden:
                 try:
-                    await general.send(language.string("starboard_error_message"), _channel)
+                    await _channel.send(language.string("starboard_error_message"))
                 except discord.Forbidden:
                     pass
                 # await general.send("Imagine not being able to send messages to the starboard channel", _channel)
@@ -129,7 +128,7 @@ class Starboard(commands.Cog):
                         await send_starboard_message()
                     except discord.Forbidden:
                         try:
-                            await general.send(language.string("starboard_error_fetch"), _channel)
+                            await _channel.send(language.string("starboard_error_fetch"))
                         except discord.Forbidden:
                             pass
                         # await general.send(f"Starboard update failed for message {message} - Not allowed to fetch messages from starboard channel.\n"
@@ -209,7 +208,7 @@ class Starboard(commands.Cog):
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? ORDER BY stars DESC", (ctx.guild.id,))
             if not data:
-                return await general.send(language.string("starboard_stats_none"), ctx.channel)
+                return await ctx.send(language.string("starboard_stats_none"))
             stars = 0
             authors = {}
             top = []
@@ -248,12 +247,12 @@ class Starboard(commands.Cog):
                 embed.add_field(name=language.string("starboard_stats_messages"), value=top_messages, inline=False)
             if authors_out:
                 embed.add_field(name=language.string("starboard_stats_authors"), value=authors_out, inline=False)
-            return await general.send(None, ctx.channel, embed=embed)
+            return await ctx.send(embed=embed)
         else:
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? ORDER BY stars DESC", (ctx.guild.id, user.id))
             if not data:
-                return await general.send(language.number("starboard_stats_none2", user.name), ctx.channel)
+                return await ctx.send(language.number("starboard_stats_none2", user.name))
             stars = 0
             top = []
             for i, message in enumerate(data):
@@ -265,12 +264,12 @@ class Starboard(commands.Cog):
             embed.title = language.number("starboard_stats_user", user, ctx.guild.name)
             # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
             embed.description = language.number("starboard_stats_user_desc", language.number(stars), language.number(len(data)))
-            embed.set_thumbnail(url=str(user.avatar))
+            embed.set_thumbnail(url=str(user.display_avatar))
             for i, _message in enumerate(top, start=1):
                 jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
                 _stars = language.number(_message["stars"])
                 embed.description += f"\n{i}) ⭐ {_stars} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
-            return await general.send(None, ctx.channel, embed=embed)
+            return await ctx.send(embed=embed)
 
 
 def setup(bot):

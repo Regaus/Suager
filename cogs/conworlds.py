@@ -4,10 +4,9 @@ from datetime import datetime
 from math import ceil
 
 import discord
-from discord.ext import commands
 from regaus import conworlds, PlaceDoesNotExist, time as time2
 
-from utils import bot_data, conlangs, general, time
+from utils import bot_data, commands, conlangs, time
 
 longest_city = {
     "Virkada": 15,
@@ -41,7 +40,7 @@ class Conworlds(commands.Cog):
                         _time = f"{_time}:00"
                 dt = time.set_tz(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S"), "UTC")
             except ValueError:
-                return await general.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)", ctx.channel)
+                return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
         time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
         output = f"Time on Earth: **{time_earth}**"
         _pre = "on"
@@ -62,19 +61,9 @@ class Conworlds(commands.Cog):
         if _id is None:
             _id = place.id
         output += f"\nTime {_pre} {_id}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
-        return await general.send(output, ctx.channel)
-
-    # @commands.command(name="timelocation", aliases=["tl"])
-    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    # async def time_location78(self, ctx: commands.Context, *, where: str):
-    #     try:
-    #         place = conworlds.Place(where)
-    #         return await general.send(place.time_info(), ctx.channel)
-    #     except PlaceDoesNotExist:
-    #         return await general.send(f"Location {where!r} not found.", ctx.channel)
+        return await ctx.send(output)
 
     @commands.group(name="weather78", aliases=["data78", "w78", "d78"], case_insensitive=True, invoke_without_command=True)
-    # @commands.is_owner()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def weather78(self, ctx: commands.Context, *, where: str):
         """ Weather for a place in GA78 """
@@ -95,9 +84,9 @@ class Conworlds(commands.Cog):
                         lod = 0  # All other channels are "untrusted", so default to LOD 0
                 place = conworlds.Place(where)
                 embed, icon = place.status(language.language, level_of_detail=lod)
-                return await general.send(None, ctx.channel, embed=embed, file=icon)
+                return await ctx.send(embed=embed, file=icon)
             except PlaceDoesNotExist:
-                return await general.send(f"Location {where!r} not found.", ctx.channel)
+                return await ctx.send(f"Location {where!r} not found.")
 
     @weather78.command(name="list", aliases=["locations", "loc"])
     async def ga78_locations(self, ctx: commands.Context, *, planet: str = "Kargadia"):
@@ -110,12 +99,12 @@ class Conworlds(commands.Cog):
                 place = conworlds.Place(city["id"])
                 _places.append(f"`{place.id:<{_longest}} - {conworlds.format_location(place.lat, place.long, True, 'en')}`")
         if len(_places) <= 25:
-            return await general.send(f"Locations in {planet}:\n\n" + "\n".join(_places), ctx.channel)
+            return await ctx.send(f"Locations in {planet}:\n\n" + "\n".join(_places))
         else:
-            await general.send(f"Locations in {planet}:", ctx.channel)
+            await ctx.send(f"Locations in {planet}:")
             for i in range(ceil(len(_places) / 20)):
                 j = i * 20
-                await general.send("\n".join(_places[j:j + 20]), ctx.channel)
+                await ctx.send("\n".join(_places[j:j + 20]))
 
     @commands.command(name="location", aliases=["loc"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -124,9 +113,9 @@ class Conworlds(commands.Cog):
         # TODO: Make this also show the map coordinates (rounded off to 1)
         try:
             place = conworlds.Place(where)
-            return await general.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}", ctx.channel)
+            return await ctx.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}")
         except PlaceDoesNotExist:
-            return await general.send(f"Location {where!r} not found.", ctx.channel)
+            return await ctx.send(f"Location {where!r} not found.")
 
     @commands.command(name="nlc")
     @commands.is_owner()
@@ -138,14 +127,14 @@ class Conworlds(commands.Cog):
         # tz = round(long / tzl)
         tz = round(long / (360 / 24))
         tzo = (tz * (360 / 24) - long) * -1  # Local Offset
-        return await general.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLongitude: {long:.3f} | Local Offset: {tzo:.3f}", ctx.channel)
+        return await ctx.send(f"At {x=:,} and {z=:,} (World Border at {border:,}):\nLatitude: {lat:.3f}\nLongitude: {long:.3f} | Local Offset: {tzo:.3f}")
 
     @commands.command("rslt")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
         if not (1 <= s <= 8700):
-            return await general.send("De dejava edea, no maikal, ir te ean kihterasva.", ctx.channel)
+            return await ctx.send("De tuava eden, var te en de kihteral.")
         shift = s * 128
         _code = "--code" in t
         code = ""
@@ -156,15 +145,15 @@ class Conworlds(commands.Cog):
         try:
             text = "".join([chr(ord(letter) + shift) for letter in t])
         except ValueError:
-            return await general.send(f"Si valse, alteknaar ka un kudalsan kihteran", ctx.channel)
-        return await general.send(f"{code} {text}", ctx.channel)
+            return await ctx.send(f"Si valse, alteknaar ka un kudalsan kihteran")
+        return await ctx.send(f"{code} {text}")
 
     @commands.command("rslf")
     @commands.check(lambda ctx: ctx.author.id in [302851022790066185, 236884090651934721, 291665491221807104])
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
         if not (1 <= s <= 8700):
-            return await general.send("De dejava edea, no maikal, ir te ean kihterasva.", ctx.channel)
+            return await ctx.send("De tuava eden, var te en de kihteral.")
         shift = s * 128
         text = ""
         for letter in t:
@@ -173,7 +162,7 @@ class Conworlds(commands.Cog):
             except ValueError:
                 a = chr(0)
             text += a
-        return await general.send(text, ctx.channel)
+        return await ctx.send(text)
 
     @commands.command(name="ga78")
     @commands.is_owner()
@@ -185,12 +174,12 @@ class Conworlds(commands.Cog):
             systems = []
             for number, system in data.items():
                 systems.append(f"SS-{number}: {system['name']}")
-            return await general.send(f"Here is the list of all solar systems. For details on a specific one, enter `{ctx.prefix}{ctx.invoked_with} x` "
-                                      f"(replace x with system number)", ctx.channel, embed=discord.Embed(colour=0xff0057, description="\n".join(systems)))
+            return await ctx.send(f"Here is the list of all solar systems. For details on a specific one, enter `{ctx.prefix}{ctx.invoked_with} x` "
+                                  f"(replace x with system number)", embed=discord.Embed(colour=0xff0057, description="\n".join(systems)))
         try:
             system = data[str(ss)]
         except KeyError:
-            return await general.send(f"No data is available for SS-{ss}.", ctx.channel)
+            return await ctx.send(f"No data is available for SS-{ss}.")
         if p is None:
             sun = system["sun"]
             output = f"Sun:\nName in RSL-1: {sun['name']}\n"
@@ -205,13 +194,13 @@ class Conworlds(commands.Cog):
             for number, planet in system["planets"].items():
                 planets.append(f"{number}) {planet['name']}")
             output += "\n".join(planets)
-            return await general.send(f"Here is the data on SS-{ss}. For details on a specific planet, use `{ctx.prefix}{ctx.invoked_with} {ss} x`\n"
-                                      f"__Note: Yes, planet numbers start from 2. That is because the star was counted as the number 1.__",
-                                      ctx.channel, embed=discord.Embed(colour=0xff0057, description=output))
+            return await ctx.send(f"Here is the data on SS-{ss}. For details on a specific planet, use `{ctx.prefix}{ctx.invoked_with} {ss} x`\n"
+                                  f"__Note: Yes, planet numbers start from 2. That is because the star was counted as the number 1.__",
+                                  embed=discord.Embed(colour=0xff0057, description=output))
         try:
             planet = system["planets"][str(p)]
         except KeyError:
-            return await general.send(f"No data is available for planet {p} of SS-{ss}.", ctx.channel)
+            return await ctx.send(f"No data is available for planet {p} of SS-{ss}.")
         output = f"Name in RSL-1: {planet['name']}\nLocal name(s): {planet['local']}\n"
         output += f"Distance from sun: {planet['distance']:.2f} AU\nAverage temperature: {planet['temp']:.2f}°C\n"
         day = planet["day"]
@@ -221,7 +210,7 @@ class Conworlds(commands.Cog):
         local = year / days
         output += f"Day length: {day:,.2f} Earth hours ({days:,.2f} Earth days)\n"
         output += f"Year length: {year:,.2f} Earth days ({years:,.2f} Earth years) | {local:,.2f} local solar days"
-        return await general.send(f"Information on planet `87.78.{ss}.{p}`:", ctx.channel, embed=discord.Embed(colour=0xff0057, description=output))
+        return await ctx.send(f"Information on planet `87.78.{ss}.{p}`:", embed=discord.Embed(colour=0xff0057, description=output))
 
 
 def setup(bot: bot_data.Bot):
