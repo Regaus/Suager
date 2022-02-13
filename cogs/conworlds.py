@@ -110,7 +110,6 @@ class Conworlds(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def location(self, ctx: commands.Context, *, where: str):
         """ See where a place in GA-78 is located """
-        # TODO: Make this also show the map coordinates (rounded off to 1)
         try:
             place = conworlds.Place(where)
             if int(version_info) >= 4329072128:  # v1.2.8

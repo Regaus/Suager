@@ -424,3 +424,6 @@
 
 ## v1.4.6 - 13 February 2022
 - The location command can now show the place's location on the map
+
+## v1.4.7 - 13 February 2022
+- Moved time channel to the Kargadia server

@@ -34,7 +34,7 @@ def make_dir(dir_name):
         pass
 
 
-def traceback_maker(err, text: str = None, guild=None, author=None):
+def traceback_maker(err: BaseException, text: str = None, guild=None, author=None):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
     t = f"Command: {text}\n" if text is not None else ""
     g = f"Guild: {guild.name}\n" if guild is not None else ""

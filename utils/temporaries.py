@@ -398,7 +398,8 @@ async def ka_time_updater(bot: bot_data.Bot):
     await bot.wait_until_ready()
     await wait_until_next_iter(update_speed_time, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
-    channel = bot.get_channel(935982691801780224)  # ka-time | Old channel: 887087307918802964
+    # TODO: Allow to update ka-time channels in both the Kargadia server and the RK server
+    channel = bot.get_channel(942476819892961290)  # Kargadia server | Old RK channel: 887087307918802964 | Newer RK channel: 935982691801780224
 
     async def update_message(name: str, content: str):
         try:
