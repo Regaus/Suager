@@ -1184,3 +1184,7 @@
 - Added owner-only `//avatar3` to see someone's guild avatar for a specific guild
 - `//eval` now shows traceback of the message (although it can only get the line number out...)
 - Removed general.send()
+
+## v7.4.26 - 12 February 2022
+- Make it possible to see what files were sent to the bots' DMs
+- Removed unused functions from `utils.general`

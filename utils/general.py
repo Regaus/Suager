@@ -8,7 +8,6 @@ import traceback
 from io import BytesIO
 
 import discord
-from numpy.random import Generator, PCG64
 
 from utils import time
 
@@ -69,48 +68,12 @@ async def pretty_results(ctx, filename: str = "Results", result: str = "Here are
     return await ctx.send(result, file=discord.File(data, filename=time.file_ts(filename.title())))
 
 
-def round_value(value):
-    try:
-        if value < 10:
-            rounded = round(value, 2)
-        elif 10 <= value < 100:
-            rounded = round(value, 1)
-        else:
-            rounded = int(value)
-        return rounded
-    except Exception as e:
-        return e
-
-
-def random_id() -> int:
-    return random.randint(1, 9999999)
-
-
 def random_id2() -> int:
     return random.randint(1000, 9999)
 
 
 def bold(string: str) -> str:
     return f"**{string}**"
-
-
-# TODO: Just replace these with regaus.RegausError instead...
-class RegausError(Exception):
-    def __init__(self, text):
-        super().__init__(text)
-        self.text = text
-
-
-def random1(low: float = 0.0, high: float = 1.0, seed: int = 0) -> float:
-    # state = RandomState(seed)
-    state = Generator(PCG64(seed))
-    return state.uniform(low, high, None)
-
-
-# def random2(mean: float, sd: float, seed: int = 0) -> float:
-#     # state = RandomState(seed)
-#     state = Generator(PCG64(seed))
-#     return state.normal(mean, sd, None)
 
 
 red, red2, yellow, green2, green = 0xff0000, 0xff4000, 0xffc000, 0xc0ff00, 0x00ff00

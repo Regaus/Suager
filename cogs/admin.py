@@ -492,12 +492,27 @@ class Admin(commands.Cog):
 
     @commands.command(name="seedm")
     @commands.is_owner()
-    async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = 0):
+    async def see_dm(self, ctx: commands.Context, user: discord.User, limit: int = None):
         """ Check someone's DMs with Suager """
         try:
-            # TODO: Track embeds and files here
-            data = "\n\n".join([f"{message.author} - {self.bot.language2('english').time(message.created_at, seconds=True)}\n{message.content}" for message in (await
-                                (await user.create_dm()).history(limit=None, oldest_first=True).flatten())[-limit:]])
+            language = self.bot.language2('en')
+
+            def convert(msg: discord.Message):
+                base = f"{msg.author} - {language.time(msg.created_at, short=1, seconds=True)}\n"
+                lmt = 1900
+                extra = ""
+                if msg.embeds:
+                    extra += f"\nEmbeds: {len(msg.embeds)}"
+                if msg.attachments:
+                    file_links = [att.url + f" ({language.bytes(att.size)})" for att in msg.attachments]
+                    lmt -= len(file_links) * 100
+                    extra += f"\nAttachments: {len(file_links)}\n" + "\n".join(file_links)
+                return base + msg.content[:lmt] + extra
+
+            # We fetch the latest n messages, and then invert the order to "oldest first"
+            _data = [convert(message) for message in (await (await user.create_dm()).history(limit=limit, oldest_first=False).flatten())[::-1]]
+            messages = len(_data)
+            data = "\n\n".join(_data)
             if ctx.guild is None:
                 _limit = 8000000
             else:
@@ -506,12 +521,12 @@ class Admin(commands.Cog):
             if rl == 0 or not data:
                 return await ctx.send("Nothing was found...")
             elif 0 < rl <= 1900:
-                return await ctx.send(f"DMs with {user} - {rl:,} chars (Last {limit} messages)\n\n{data}")
+                return await ctx.send(f"DMs with {user} - {rl:,} chars (Last {messages} messages)\n\n{data}")
             elif 1900 < rl <= _limit:
                 async with ctx.typing():
                     _data = BytesIO(str(data).encode('utf-8'))
                     lines = len(str(data).splitlines())
-                    return await ctx.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars (last {limit} message)",
+                    return await ctx.send(f"Results for {user} DMs - {lines:,} lines, {rl:,} chars (last {messages} messages)",
                                           file=discord.File(_data, filename=f"{time.file_ts('Logs')}"))
             elif rl > _limit:
                 async with ctx.typing():

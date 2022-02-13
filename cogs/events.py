@@ -33,7 +33,29 @@ class Events(commands.Cog):
         if ctx.guild is None:  # it's a DM
             if ctx.author.id != self.bot.user.id:  # isn't Suager himself
                 channel = self.bot.get_channel(self.dm_logger)
-                await channel.send(f"{ctx.author} ({ctx.author.id}) | {time.time()}\n{ctx.content}")
+                language = self.bot.language2("en")
+                now = language.time(ctx.created_at, short=1, dow=False, seconds=True, tz=False, at=True)
+                limit = 1900
+                extra = []
+
+                embeds = [embed for embed in ctx.embeds if embed.type == "rich"]
+                files = [await att.to_file() for att in ctx.attachments if att.size <= 8388608]  # has to be under 8 MB because discord is too afraid of big files by bots
+                file_links = [att.url for att in ctx.attachments if att.size > 8388608]
+
+                if ctx.embeds:
+                    extra.append(f"{len(ctx.embeds)} embeds ({len(embeds)} rich)")
+
+                if ctx.attachments:
+                    size = sum(att.size for att in ctx.attachments)
+                    file_size = language.bytes(size, precision=2)
+                    extra.append(f"{len(ctx.attachments)} files ({len(files)} uploadable) - Total file size {file_size}")
+                    if file_links:
+                        limit -= len(file_links) * 100  # Discord links are extremely fat, so they would use up the space for other message content.
+                        extra.append("\nOther attachment links:")
+                        extra.extend(file_links)
+                extra_str = "\n\n" + "\n".join(extra) if extra else ""
+
+                await channel.send(f"{ctx.author} ({ctx.author.id}) | {now}\n{ctx.content[:limit]}{extra_str}", embeds=embeds, files=files)
         if ctx.author.id in self.blocked:
             for word in self.bad:
                 if word in ctx.content.lower():

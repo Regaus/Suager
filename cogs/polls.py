@@ -48,6 +48,7 @@ class Polls(commands.Cog):
                     poll_anonymity = polls["voter_anonymity"]
             embed = discord.Embed(colour=general.yellow)
             embed.title = language.string("polls_new_title")
+            # TODO: Rewrite this to just use PRIMARY KEY instead...
             poll_id = general.random_id2()
             while self.bot.db.fetchrow("SELECT poll_id FROM polls WHERE poll_id=?", (poll_id,)):
                 poll_id = general.random_id2()
@@ -328,6 +329,7 @@ class Polls(commands.Cog):
             _required = language.number(required)
             embed = discord.Embed(colour=general.yellow)
             embed.title = language.string("trials_new_title")
+            # TODO: Rewrite this to just use PRIMARY KEY instead...
             trial_id = general.random_id2()
             while self.bot.db.fetchrow("SELECT trial_id FROM trials WHERE trial_id=?", (trial_id,)):
                 trial_id = general.random_id2()

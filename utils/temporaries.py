@@ -5,7 +5,7 @@ from datetime import date, timedelta
 
 import aiohttp
 import discord
-from regaus import conworlds
+from regaus import conworlds, RegausError
 
 from cogs.mod import send_mod_dm, send_mod_log
 from utils import bot_data, general, http, languages, lists, logger, time
@@ -409,9 +409,9 @@ async def ka_time_updater(bot: bot_data.Bot):
                     message = msg
                     break
             if message is None:
-                raise general.RegausError("City time message not found")
+                raise RegausError("City time message not found")
             await message.edit(content=content)
-        except (IndexError, discord.NotFound, general.RegausError):
+        except (IndexError, discord.NotFound, RegausError):
             await channel.send(content)
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset Kargadian cities times message for {name}")
         except Exception as e:
