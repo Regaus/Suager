@@ -27,13 +27,14 @@ def insert_returns(body):
         insert_returns(body[-1].body)
 
 
-async def eval_(ctx: commands.Context, cmd):
+async def eval_fn(ctx: commands.Context, cmd):
     try:
-        fn_name = "_eval_expr"
+        fn_name = "eval_expr"
         cmd = cmd.strip("` ")
         cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
         body = f"async def {fn_name}():\n{cmd}"
         parsed = ast.parse(body)
+        # noinspection PyUnresolvedReferences
         body = parsed.body[0].body
         insert_returns(body)
         env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': ctx.bot.db, 'time': time, '__import__': __import__}
@@ -57,8 +58,19 @@ async def eval_(ctx: commands.Context, cmd):
         else:
             return await ctx.send(str(result))
     except Exception as e:
-        # TODO: Try to attach the breaking line of code out of <ast>
-        return await ctx.send(general.traceback_maker(e))
+        tb = general.traceback_maker(e).splitlines()
+        # At this point: -3 is the "File <ast>" line, -2 is the exception raised, -1 is the closing ```
+        # "  File "<ast>", line x, in eval_expr"
+        line = tb[-3].split(", ", 2)  # We split this into three parts: file name, line number, and function name
+        value = int(line[1][5:])  # Extracts the line number from the line number string
+        code_line = cmd.splitlines()[value - 2]  # The `cmd` variable is the code input, while the function itself inserts `async def` first
+        if code_line[0] == " ":  # if the block of code starts with a whitespace
+            code_start = len(re.match(r"\s*", code_line).group(0))  # Find the first index that is not a whitespace
+        else:
+            code_start = 0
+        code = code_line[code_start:]  # Extract the code without the indentation
+        tb.insert(-2, "    " + code)  # We insert a line before the exception, which shows the code actually run, indented properly
+        return await ctx.send("\n".join(tb))
 
 
 def reload_util(name: str, bot: bot_data.Bot):
@@ -230,7 +242,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def eval_cmd(self, ctx: commands.Context, *, cmd):
         """ Evaluates input. """
-        return await eval_(ctx, cmd)
+        return await eval_fn(ctx, cmd)
 
     @commands.command(name="reload", aliases=["re", "r"])
     @commands.is_owner()

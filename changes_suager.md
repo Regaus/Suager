@@ -1188,3 +1188,6 @@
 ## v7.4.26 - 12 February 2022
 - Make it possible to see what files were sent to the bots' DMs
 - Removed unused functions from `utils.general`
+
+## v7.4.27 - 13 February 2022
+- Better error traceback for eval command
