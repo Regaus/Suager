@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import random
@@ -347,7 +349,7 @@ async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0):
 async def ka_data_updater(bot: bot_data.Bot):
     """ Update time and weather data for Kargadian cities """
     await bot.wait_until_ready()
-    # Start this script ahead of the updates to make sure the city time updater and the playing status get accurate data
+    # Start this script a second ahead of the updates to make sure the city time updater and the playing status get accurate data
     await wait_until_next_iter(update_speed_data, -1)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
 
@@ -385,7 +387,7 @@ async def ka_data_updater(bot: bot_data.Bot):
                     log_out = f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}"
                     logger.log(bot.name, "kargadia", log_out)
                     logger.log(bot.name, "errors", log_out)
-        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities data")
+        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Data Updater > Updated Kargadian cities data")
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(2)  # Hopefully prevents it from lagging ahead of itself and hanging
@@ -394,32 +396,50 @@ async def ka_data_updater(bot: bot_data.Bot):
 
 
 async def ka_time_updater(bot: bot_data.Bot):
-    """ Update the time and weather info for Kargadian cities in Regaus'tar Koankadu """
+    """ Update the time and weather info for Kargadian cities in Kargadia and Regaus'tar Koankadu """
     await bot.wait_until_ready()
     await wait_until_next_iter(update_speed_time, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
-    # TODO: Allow to update ka-time channels in both the Kargadia server and the RK server
-    channel = bot.get_channel(942476819892961290)  # Kargadia server | Old RK channel: 887087307918802964 | Newer RK channel: 935982691801780224
+
+    channel_ka = bot.get_channel(942476819892961290)  # Kargadia server
+    channel_rk = bot.get_channel(935982691801780224)  # Old RK channel: 887087307918802964
+
+    # This is so that I wouldn't have to continuously ask the discord API for the message. Their instances can be stored here, and if they magically disappear, they will be recreated.
+    async def get_data(channel: discord.abc.Messageable) -> dict[str, discord.Message | None]:
+        messages = {}
+        # Load all areas currently available, initialise them with a None
+        for key in ka_places.keys():
+            messages[key] = None
+            messages[key] = None
+        # Store the messages for the appropriate channel
+        # Now, if the message exists, it will be stored in its appropriate area, and if not, it will remain null
+        async for msg in channel.history(limit=None, oldest_first=True):
+            if msg.author.id == bot.user.id:  # Make sure the message is sent by us
+                line = msg.content.splitlines()[0]  # Get the message's header (eg "Regaazdall:")
+                messages[line[:-1]] = msg  # The message's instance is then stored into its appropriate dict
+        return messages
+    messages_ka = await get_data(channel_ka)
+    messages_rk = await get_data(channel_rk)
 
     async def update_message(name: str, content: str):
-        try:
-            # message: discord.Message = (await channel.history(limit=1, oldest_first=True).flatten())[0]
-            message = None
-            async for msg in channel.history(limit=None, oldest_first=True):
-                if msg.author.id == bot.user.id and msg.content.startswith(name):
-                    message = msg
-                    break
-            if message is None:
-                raise RegausError("City time message not found")
-            await message.edit(content=content)
-        except (IndexError, discord.NotFound, RegausError):
-            await channel.send(content)
-            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Reset Kargadian cities times message for {name}")
-        except Exception as e:
-            out = f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}"
-            general.print_error(out)
-            logger.log(bot.name, "kargadia", out)
-            logger.log(bot.name, "errors", out)
+        async def edit_message(messages_dict: dict, channel: discord.abc.Messageable):
+            try:
+                message = messages_dict[name]
+                if message is None:  # Only edit the message if it actually exists
+                    raise RegausError(f"Message for {name} does not exist")
+                await message.edit(content=content)
+            except (KeyError, discord.NotFound, RegausError):  # Message not found
+                message = await channel.send(content)  # Send a new message
+                messages_dict[name] = message  # Store the new message
+                logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > Message not found, sending new one")
+            except Exception as e:  # Any other error
+                out = f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > {type(e).__name__}: {e}"
+                general.print_error(out)
+                logger.log(bot.name, "kargadia", out)
+                logger.log(bot.name, "errors", out)
+
+        await edit_message(messages_ka, channel_ka)
+        await edit_message(messages_rk, channel_rk)
 
     while True:
         for area_name, area in ka_places.items():
@@ -427,8 +447,7 @@ async def ka_time_updater(bot: bot_data.Bot):
             for city, _data in area.items():
                 data.append(f"`{city:<14} - {_data['en']}`")
             await update_message(area_name, "\n".join(data))
-        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated Kargadian cities times messages")
-        # out = "\n\n".join(data)
+        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself

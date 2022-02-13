@@ -427,3 +427,6 @@
 
 ## v1.4.7 - 13 February 2022
 - Moved time channel to the Kargadia server
+
+## v1.4.7.1 - 13 February 2022
+- Now Kargadian time is shown in both servers instead
