@@ -4,7 +4,7 @@ from datetime import datetime
 from math import ceil
 
 import discord
-from regaus import conworlds, PlaceDoesNotExist, time as time2
+from regaus import conworlds, PlaceDoesNotExist, time as time2, version_info
 
 from utils import bot_data, commands, conlangs, time
 
@@ -113,7 +113,11 @@ class Conworlds(commands.Cog):
         # TODO: Make this also show the map coordinates (rounded off to 1)
         try:
             place = conworlds.Place(where)
-            return await ctx.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}")
+            if int(version_info) >= 4329072128:  # v1.2.8
+                coords = f" ({place.x:.0f}, {place.y:.0f})"
+            else:
+                coords = ""
+            return await ctx.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}{coords}")
         except PlaceDoesNotExist:
             return await ctx.send(f"Location {where!r} not found.")
 

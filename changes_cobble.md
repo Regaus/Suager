@@ -421,3 +421,6 @@
 
 ## v1.4.5.1 - 3 February 2022
 - Fix time78 not using the given time
+
+## v1.4.6 - 13 February 2022
+- The location command can now show the place's location on the map
