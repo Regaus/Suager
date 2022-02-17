@@ -1191,3 +1191,7 @@
 
 ## v7.4.27 - 13 February 2022
 - Better error traceback for eval command
+
+## v7.4.28 - 17 February 2022
+- Allow `//timesince` to go beyond the 0-9999 year range
+- Fixed admin eval error traceback breaking

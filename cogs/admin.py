@@ -61,15 +61,22 @@ async def eval_fn(ctx: commands.Context, cmd):
         tb = general.traceback_maker(e).splitlines()
         # At this point: -3 is the "File <ast>" line, -2 is the exception raised, -1 is the closing ```
         # "  File "<ast>", line x, in eval_expr"
-        line = tb[-3].split(", ", 2)  # We split this into three parts: file name, line number, and function name
-        value = int(line[1][5:])  # Extracts the line number from the line number string
-        code_line = cmd.splitlines()[value - 2]  # The `cmd` variable is the code input, while the function itself inserts `async def` first
-        if code_line[0] == " ":  # if the block of code starts with a whitespace
-            code_start = len(re.match(r"\s*", code_line).group(0))  # Find the first index that is not a whitespace
+        i, data = 0, None
+        for i, line in enumerate(tb):
+            if re.match(r'(\s*)File "<ast>", line (\d+), in eval_expr', line):
+                data = line.split(", ", 2)  # We split this into three parts: file name, line number, and function name
+                break
+        if data is not None:
+            value = int(data[1][5:])  # Extracts the line number from the line number string
+            code_line = cmd.splitlines()[value - 2]  # The `cmd` variable is the code input, while the function itself inserts `async def` first
+            if code_line[0] == " ":  # if the block of code starts with a whitespace
+                code_start = len(re.match(r"\s*", code_line).group(0))  # Find the first index that is not a whitespace
+            else:
+                code_start = 0
+            code = code_line[code_start:]  # Extract the code without the indentation
+            tb.insert(i + 1, "    " + code)  # We insert a line before the exception, which shows the code actually run, indented properly
         else:
-            code_start = 0
-        code = code_line[code_start:]  # Extract the code without the indentation
-        tb.insert(-2, "    " + code)  # We insert a line before the exception, which shows the code actually run, indented properly
+            await ctx.send("Error line number not found...")
         return await ctx.send("\n".join(tb))
 
 

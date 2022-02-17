@@ -9,6 +9,7 @@ from io import BytesIO
 import discord
 import pytz
 from PIL import Image, ImageDraw, ImageFont
+from regaus import time as time2
 
 from utils import arg_parser, bases, bot_data, commands, emotes, general, http, permissions, time
 
@@ -44,14 +45,6 @@ class Utility(commands.Cog):
         """ Current time """
         language = self.bot.language(ctx)
         send = ""
-        # if language.language in ["kargadian_west", "tebarian"]:
-        #     a = times.time_kargadia(time.now(None)).str(dow=True, era=False, month=False)
-        #     b = language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)
-        #     d = language.time(time.now_k(), short=0, dow=True, seconds=True, tz=False)
-        #     send += f"Zymlä: **{b}**\n" \
-        #             f"S. Laikadu: **{d}**\n" \
-        #             f"Kargadia: **{a}**"
-        # else:
         send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
         send += f"UTC/GMT: **{language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)}**"
         if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
@@ -118,24 +111,21 @@ class Utility(commands.Cog):
         """ Time difference
         If you don't specify any time, it will simply default to an arbitrary date within the near future"""
         language = self.bot.language(ctx)
-        # if locale in ["rsl-1d", "rsl-5"]:
-        #     if year is not None and year < 277:
-        #         return await general.send(f"In RSL-1d and RSL-5 locales, this command breaks with dates before **1 January 277 AD**.", ctx.channel)
         try:
-            now = time.now(None)
-            date = datetime(now.year, 1, 1)
+            now = time2.datetime.now()
+            date = time2.datetime(now.year, 1, 1)
             if year is None:
                 def dt(_month, _day):
-                    return datetime(now.year, _month, _day, tzinfo=timezone.utc)
+                    return time2.datetime(now.year, _month, _day)
                 dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25), dt(7, 27),
                          dt(8, 8), dt(9, 27), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
-                         datetime(now.year + 1, 1, 1, tzinfo=timezone.utc)]
+                         time2.datetime(now.year + 1, 1, 1)]
                 for _date in dates:
                     if now < _date:
                         date = _date
                         break
             else:
-                date = datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+                date = time2.datetime(year, month, day, hour, minute, second, tz=timezone.utc)
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)  # time.human_timedelta(date, accuracy=7)
             current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)  # time.time_output(now, True, True, True)
             specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)  # time.time_output(date, True, True, True)
