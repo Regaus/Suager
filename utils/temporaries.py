@@ -3,14 +3,24 @@ from __future__ import annotations
 import asyncio
 import json
 import random
-from datetime import date, timedelta
+from typing import Type
 
 import aiohttp
 import discord
-from regaus import conworlds, RegausError
+from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
 from utils import bot_data, general, http, languages, lists, logger, time
+
+
+async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
+    now = time2.datetime.now(time_class=time_class)
+    then = time2.datetime.from_timestamp(((now.timestamp // update_speed) + 1) * update_speed + adjustment, time2.timezone.utc, time_class)
+    await asyncio.sleep((then.to_earth_time() - now.to_earth_time()).total_seconds())
+
+
+def can_send(channel: discord.TextChannel | discord.DMChannel | discord.Thread):
+    return isinstance(channel, discord.DMChannel) or channel.permissions_for(channel.guild.me).send_messages
 
 
 async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -52,6 +62,8 @@ async def reminders(bot: bot_data.Bot):
 async def reminders_errors(bot: bot_data.Bot):
     """ Try to send the reminder again... if it doesn't work, ignore it anyways """
     await bot.wait_until_ready()
+    update_speed = 3600
+    await wait_until_next_iter(update_speed, 0)  # This only needs to run once an hour
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Errors Handler")
 
     while True:
@@ -60,7 +72,8 @@ async def reminders_errors(bot: bot_data.Bot):
         if expired:
             for entry in expired:
                 await handle_reminder(bot, entry, True)
-        await asyncio.sleep(3600)
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 0)
 
 
 async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -142,6 +155,8 @@ async def punishments(bot: bot_data.Bot):
 
 async def punishments_errors(bot: bot_data.Bot):
     await bot.wait_until_ready()
+    update_speed = 3600
+    await wait_until_next_iter(update_speed, 0)  # This only needs to run once an hour
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Errors Handler")
 
     while True:
@@ -150,27 +165,17 @@ async def punishments_errors(bot: bot_data.Bot):
         if expired:
             for entry in expired:
                 await handle_punishment(bot, entry, True)
-        await asyncio.sleep(3600)
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 0)
 
 
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
     await bot.wait_until_ready()
-
-    now = time.now(None)
-    then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
-    await asyncio.sleep((then - now).total_seconds())
+    update_speed = 3600
+    await wait_until_next_iter(update_speed, 1)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
-    # birthday_message = "birthdays_message2" if bot.name == "kyomi" else "birthdays_message"
-    # _guilds, _channels, _roles = [], [], []
-    # for guild, data in bd_config.items():
-    #     _guilds.append(guild)
-    #     _channels.append(data[0])
-    #     _roles.append(data[1])
-    # guilds = [bot.get_guild(guild) for guild in _guilds]
-    # channels = [bot.get_channel(cid) for cid in _channels]
-    # roles = [discord.Object(id=rid) for rid in _roles]
     while True:
         guilds = {}
         settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
@@ -210,16 +215,6 @@ async def birthdays(bot: bot_data.Bot):
                                     out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
                                     general.print_error(out)
                                     logger.log(bot.name, "errors", out)
-                # if dm:
-                #     try:
-                #         user = bot.get_user(person["uid"])
-                #         if user is not None:
-                #             await user.send(bot.language2("english").string("birthdays_message", user.name))
-                #             print(f"{time.time()} > {bot.full_name} > Told {user.name} happy birthday in DMs")
-                #         else:
-                #             general.print_error(f"{time.time()} > {bot.full_name} > User {person['uid']} was not found")
-                #     except Exception as e:
-                #         general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
                 bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
         birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         for person in birthday_over:
@@ -242,7 +237,7 @@ async def birthdays(bot: bot_data.Bot):
                 # except Exception as e:
                 #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
 
-        await asyncio.sleep(3600)
+        await asyncio.sleep(update_speed)
 
 
 ka_places = {
@@ -321,84 +316,129 @@ _places = {}  # Since the playing status won't be able to read through a 2-layer
 
 # The ka_time uses Reggar for now, I will either keep it so or change it once Virsetgar is actually added to the places list
 ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
-update_speed_play = 120  # 150
-update_speed_data = 60
-update_speed_time = 300
-update_speed_avatar = 3600
-ka_holidays = {  # List of Kargadian holidays, sorted by day of year when they occur
-    1:   ("Nuan Kadan",              "Nuat Kadut"),
-    21:  ("Kattansean",              "Kattanseat"),
-    55:  ("Sean Tebarian",           "Seat Tebarian"),
-    60:  ("Sean na Liidenvirkalten", "Seat na Liidenvirkalten"),
-    97:  ("Semiansean",              "Semianseat"),
-    105: ("Sean Kaivallun",          "Seat Kaivallun"),
-    119: ("Sean Suvakyn",            "Seat Suvakyn"),
-    162: ("Sean Regaus'an",          "Seat Regaus'an"),
-    193: ("Tentasean",               "Tentaseat"),
-    209: ("Sean na Sevarddain",      "Seat na Sevarddain"),
-    220: ("Sean Leitakin",           "Seat Leitakin")
+
+# The key is the timestamp as mm-dd, the value is the date instance | Defaults to 2151/2022 if somehow not overwritten
+ka_holidays: dict[str, time2.date] = {
+    "01-01": time2.date(2151,  1,  1, time2.Kargadia),
+    "01-06": time2.date(2151,  1,  6, time2.Kargadia),
+    "02-09": time2.date(2151,  2,  9, time2.Kargadia),
+    "02-14": time2.date(2151,  2, 14, time2.Kargadia),
+    "02-15": time2.date(2151,  2, 15, time2.Kargadia),
+    "03-07": time2.date(2151,  3,  7, time2.Kargadia),
+    "03-12": time2.date(2151,  3, 12, time2.Kargadia),
+    "04-08": time2.date(2151,  4,  8, time2.Kargadia),
+    "05-07": time2.date(2151,  5,  7, time2.Kargadia),
+    "06-02": time2.date(2151,  6,  2, time2.Kargadia),
+    "06-08": time2.date(2151,  6,  8, time2.Kargadia),
+    "07-01": time2.date(2151,  7,  1, time2.Kargadia),
+    "07-09": time2.date(2151,  7,  9, time2.Kargadia),
+    "08-11": time2.date(2151,  8, 11, time2.Kargadia),
+    "09-09": time2.date(2151,  9,  9, time2.Kargadia),
+    "10-01": time2.date(2151, 10,  1, time2.Kargadia),
+    "11-02": time2.date(2151, 11,  2, time2.Kargadia),
+    "11-03": time2.date(2151, 11,  3, time2.Kargadia),
+    "12-05": time2.date(2151, 12,  5, time2.Kargadia),
+    "12-11": time2.date(2151, 12, 11, time2.Kargadia),
+    "13-01": time2.date(2151, 13,  1, time2.Kargadia),
+    "13-03": time2.date(2151, 13,  3, time2.Kargadia),
+    "14-01": time2.date(2151, 14,  1, time2.Kargadia),
+    "15-07": time2.date(2151, 15,  7, time2.Kargadia),
+    "15-15": time2.date(2151, 15, 15, time2.Kargadia),
+    "15-16": time2.date(2151, 15, 16, time2.Kargadia),
+    "16-01": time2.date(2151, 16,  1, time2.Kargadia),
+    "16-05": time2.date(2151, 16,  5, time2.Kargadia),
+}
+sl_holidays: dict[str, time2.date] = {
+    "01-01": time2.date(2022,  1,  1),
+    "01-27": time2.date(2022,  1, 27),
+    "02-14": time2.date(2022,  2, 14),
+    "03-17": time2.date(2022,  3, 17),
+    "04-17": time2.date(2022,  4, 17),
+    "05-13": time2.date(2022,  5, 13),
+    "06-20": time2.date(2022,  6, 20),
+    "06-25": time2.date(2022,  6, 25),
+    "07-27": time2.date(2022,  7, 27),
+    "08-08": time2.date(2022,  8,  8),
+    "09-01": time2.date(2022,  9,  1),
+    "10-03": time2.date(2022, 10,  3),
+    "10-22": time2.date(2022, 10, 22),
+    "10-30": time2.date(2022, 10, 30),
+    "11-19": time2.date(2022, 11, 19),
+    "12-05": time2.date(2022, 12,  5),
 }
 
 
-async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0):
-    now = time.now(None)
-    then = time.from_ts(((time.get_ts(now) // update_speed) + 1) * update_speed + adjustment, None)
-    await asyncio.sleep((then - now).total_seconds())
+def get_time_ka():
+    now = time2.date.today(time2.Kargadia)
+    year = now.year
+    for key in ka_holidays.keys():
+        month, day = key.split("-", 1)
+        holiday_time = time2.date(year, int(month), int(day), time2.Kargadia)
+        if now > holiday_time:  # if the holiday already passed this year, skip to next year
+            holiday_time = (holiday_time + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
+        ka_holidays[key] = holiday_time
 
 
-async def ka_data_updater(bot: bot_data.Bot):
+def get_time_sl():
+    now = time2.date.today(time2.Earth)
+    year = now.year
+    for key in sl_holidays.keys():
+        month, day = key.split("-", 1)
+        holiday_time = time2.date(year, int(month), int(day), time2.Earth)
+        if now > holiday_time:  # if the holiday already passed this year, skip to next year
+            holiday_time = (holiday_time + time2.relativedelta(years=1)).date()
+        sl_holidays[key] = holiday_time
+
+
+get_time_ka()
+get_time_sl()
+
+
+# Instead of running itself all the time, this function will now simply run itself when showing Kargadian times or loading holidays
+def ka_data_updater(bot: bot_data.Bot):
     """ Update time and weather data for Kargadian cities """
-    await bot.wait_until_ready()
-    # Start this script a second ahead of the updates to make sure the city time updater and the playing status get accurate data
-    await wait_until_next_iter(update_speed_data, -1)
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
-
-    while True:
-        for area_name, area in ka_places.items():
-            for city, _data in area.items():
-                try:
-                    if city not in _places.keys():
-                        place: conworlds.Place = conworlds.Place(city)
-                        _places[city] = {"place": place, "text": None, "weight": _data["weight"]}
-                    else:
-                        # It seems this actually does what I want it to, and simply keeps updating the instance, not needing to do any rewriting into the dict
-                        place: conworlds.Place = _places[city]["place"]
-                        place.update_time()
-                    tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
-                    english = place.time.strftime("%d %B %Y, %H:%M", "en")  # Note to future self: Consider shortening to %b (eg 14 Kar 2151) to save space
-                    if place.weather is not None:
-                        temp = f"{place.weather['temperature']:.0f}°C"
-                        rain = place.weather['rain']
-                        if rain == "sunny":
-                            rain += "2" if place.sun is not None and place.sun.elevation < 0 else "1"
-                        weather_en = languages.Language("en").data("weather78")[rain]
-                        weather_tb = languages.Language("ka_tb").data("weather78")[rain]
-                        english += f" | {temp} | {weather_en}"
-                        tebarian += f" | {temp} | {weather_tb}"
-                    # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
-                    ka_places[area_name][city]["en"] = english
-                    _places[city]["text"] = tebarian
-                    if city == "Reggar":
-                        global ka_time
-                        ka_time = place.time
-                    # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
-                except Exception as e:
-                    general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
-                    log_out = f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}"
-                    logger.log(bot.name, "kargadia", log_out)
-                    logger.log(bot.name, "errors", log_out)
-        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Data Updater > Updated Kargadian cities data")
-
-        # This should make it adjust itself for lag caused
-        await asyncio.sleep(2)  # Hopefully prevents it from lagging ahead of itself and hanging
-        await wait_until_next_iter(update_speed_data, -1)
-        # await asyncio.sleep(update_speed)
+    # logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised City Data Updater")
+    for area_name, area in ka_places.items():
+        for city, _data in area.items():
+            try:
+                if city not in _places.keys():
+                    place: conworlds.Place = conworlds.Place(city)
+                    _places[city] = {"place": place, "text": None, "weight": _data["weight"]}
+                else:
+                    # It seems this actually does what I want it to, and simply keeps updating the instance, not needing to do any rewriting into the dict
+                    place: conworlds.Place = _places[city]["place"]
+                    place.update_time()
+                tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
+                english = place.time.strftime("%d %B %Y, %H:%M", "en")  # Note to future self: Consider shortening to %b (eg 14 Kar 2151) to save space
+                if place.weather is not None:
+                    temp = f"{place.weather['temperature']:.0f}°C"
+                    rain = place.weather['rain']
+                    if rain == "sunny":
+                        rain += "2" if place.sun is not None and place.sun.elevation < 0 else "1"
+                    weather_en = languages.Language("en").data("weather78")[rain]
+                    weather_tb = languages.Language("ka_tb").data("weather78")[rain]
+                    english += f" | {temp} | {weather_en}"
+                    tebarian += f" | {temp} | {weather_tb}"
+                # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
+                ka_places[area_name][city]["en"] = english
+                _places[city]["text"] = tebarian
+                if city == "Virsetgar":  # Since, after all, Virsetgar is currently the UTC base, so the dates and times are based off of that...
+                    global ka_time
+                    ka_time = place.time
+                # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
+            except Exception as e:
+                general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
+                log_out = f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}"
+                logger.log(bot.name, "kargadia", log_out)
+                logger.log(bot.name, "errors", log_out)
+    logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Data Updater > Updated Kargadian cities data")
 
 
 async def ka_time_updater(bot: bot_data.Bot):
     """ Update the time and weather info for Kargadian cities in Kargadia and Regaus'tar Koankadu """
     await bot.wait_until_ready()
-    await wait_until_next_iter(update_speed_time, 0)
+    update_speed = 300
+    await wait_until_next_iter(update_speed, 0, time2.Kargadia)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
 
     channel_ka = bot.get_channel(942476819892961290)  # Kargadia server
@@ -442,6 +482,8 @@ async def ka_time_updater(bot: bot_data.Bot):
         await edit_message(messages_rk, channel_rk)
 
     while True:
+        ka_data_updater(bot)
+
         for area_name, area in ka_places.items():
             data = [f"{area_name}:"]
             for city, _data in area.items():
@@ -451,55 +493,58 @@ async def ka_time_updater(bot: bot_data.Bot):
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(update_speed_time, 0)
+        await wait_until_next_iter(update_speed, 0, time2.Kargadia)
         # await asyncio.sleep(update_speed)
 
 
 async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    await wait_until_next_iter(update_speed_play, 0)
+    update_speed = 120
+    await wait_until_next_iter(update_speed, 0)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     def error(text: str):
         general.print_error(text)
         logger.log(bot.name, "errors", text)
 
+    language = bot.language2("ka_tb")
+    holiday_names_ka = language.data("data_holidays_ka")
+    holiday_names_sl = language.data("data_holidays_sl")
+
+    def get_date(month, day):
+        _date = time2.date(year, month, day)
+        if today > _date:
+            return time2.date(year + 1, month, day)
+        return _date
+
+    def until(when: time2.date, rsl: bool = False):
+        days = (when - time2.date.today(when.time_class)).days
+        if rsl:
+            s = "in" if days != 1 else ""
+            v = "at" if days == 1 else "in"
+            return f"{days} sea{s} astall{v}"
+        else:
+            s = "s" if days != 1 else ""
+            return f"{days} day{s}"
+
     while True:
         try:
-            # log = bot.local_config["logs"]
-            # plays = self.local_config["playing"]
             version = general.get_version()[bot.name]
             fv, sv = f"v{version['version']}", f"v{version['short_version']}"
-            today = date.today()
+            today = time2.date.today()
             year = today.year
-
-            def get_date(month, day):
-                _date = date(year, month, day)
-                if today > _date:
-                    return date(year + 1, month, day)
-                return _date
-
-            def until(when: date, rsl: bool = False):
-                days = (when - today).days
-                if rsl:
-                    s = "in" if days != 1 else ""
-                    v = "t" if days == 1 else "n"
-                    return f"{days} sea{s} astalla{v}"
-                else:
-                    s = "s" if days != 1 else ""
-                    return f"{days} day{s}"
 
             regaus = get_date(1, 27)
             is_regaus = today == regaus
             status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus, False)} until Regaus's birthday"
             if bot.name == "cobble":
-                status_type = random.choices([1, 2, 3, 4], [15, 40, 15, 30])[0]
-                # 1 = birthdays, 2 = playing, 3 = holidays, 4 = time and weather
+                status_type = random.choices([1, 2, 3, 4, 5], [15, 40, 10, 10, 25])[0]
+                # 1 = birthdays, 2 = playing, 3 = WK holidays, 4 = SL holidays, 5 = time and weather
                 if status_type == 1:
                     cobble = get_date(12, 5)
                     is_cobble = today == cobble
-                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat an Zymlä'n"
-                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat an Zymlä'n"
+                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat"
+                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat"
                     status = random.choice([status_cobble, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
@@ -542,35 +587,44 @@ async def playing(bot: bot_data.Bot):
                         5: "Aara sen"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
-                elif status_type == 3:
-                    year_day, holiday = random.choice(list(ka_holidays.items()))
-                    now_day = ka_time.year_day
-                    if ka_time.year % 16 == 0:
-                        now_day -= 1
-                    if now_day > year_day:
-                        year_day += 256
-                        if (ka_time.year + 1) % 16 == 0:
-                            year_day += 1
-                    days_left = year_day - now_day
-                    if days_left == 0:
-                        status = f"Kovanan {holiday[0]}!"
-                    elif days_left == 1:
-                        status = f"1 sea astallat {holiday[1]} an Kargadian"
-                    else:
-                        status = f"{days_left} seain astallan {holiday[1]} an Kargadian"
+                elif status_type == 3:  # Kargadian holidays
+                    ka_data_updater(bot)
+                    ka_day: time2.date = ka_time.date()
+                    status = None
+                    for key, holiday in ka_holidays.items():
+                        if holiday == ka_day:
+                            name = language.case(holiday_names_ka.get(key), "genitive", "singular")
+                            status = f"Kovanan {name}!"
+                            break
+                    if status is None:  # if no holidays are on, so the status hasn't yet been determined
+                        key, holiday = random.choice(list(ka_holidays.items()))
+                        name = language.case(holiday_names_ka.get(key), "dative", "singular")
+                        status = f"ZK: {until(holiday, True)} {name}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 3)")
-                else:  # status_type == 4
-                    # Original weights list: [2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 5, 5, 2, 3, 2, 2, 3, 2, 2]
+                elif status_type == 4:  # SL holidays
+                    status = None
+                    for key, holiday in sl_holidays.items():
+                        if holiday == today:
+                            name = language.case(holiday_names_sl.get(key), "genitive", "singular")
+                            status = f"Kovanan {name}!"
+                            break
+                    if status is None:  # if the status still hasn't been decided, meaning no holidays are on
+                        key, holiday = random.choice(list(sl_holidays.items()))
+                        name = language.case(holiday_names_sl.get(key), "dative", "singular")
+                        status = f"SL: {until(holiday, True)} {name}"
+                    activity = discord.Game(name=status)
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")
+                else:  # status_type == 5
+                    ka_data_updater(bot)
                     data, weights = [], []
                     for city in _places.items():
                         data.append(city)
                         weights.append(city[1]["weight"])
-                    # city, city_data = random.choices(list(ka_cities.items()), [v["weight"] for v in ka_cities.values()])[0]
                     city, city_data = random.choices(data, weights)[0]
                     status = f"{city}: {city_data['text']}"
                     activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")
+                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 5)")
             elif bot.name == "kyomi":
                 status_type = random.random()
                 if status_type <= 0.2:  # 20% chance of being a birthday status
@@ -690,19 +744,17 @@ async def playing(bot: bot_data.Bot):
             error(f"{time.time()} > {bot.full_name} > Playing Changer > The bot tried to do something while disconnected.")
         except Exception as e:
             error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
+            print(general.traceback_maker(e))
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(update_speed_play, 0)
+        await wait_until_next_iter(update_speed, 0)
 
 
 async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
 
-    # now = time.now(None)
-    # then = (now + timedelta(hours=1)).replace(minute=0, second=1, microsecond=0)
-    # await asyncio.sleep((then - now).total_seconds())
-    await wait_until_next_iter(update_speed_avatar, 1)
+    await wait_until_next_iter(3600, 1)
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
     def error(text: str):
@@ -729,7 +781,7 @@ async def avatars(bot: bot_data.Bot):
             error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
 
         await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed_avatar, 1)
+        await wait_until_next_iter(3600, 1)
 
 
 async def polls(bot: bot_data.Bot):
@@ -893,7 +945,7 @@ async def trials(bot: bot_data.Bot):
                                                 bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?",
                                                                (member.id, guild.id, bot.name))
                                                 if duration:
-                                                    new_mute_end = time.now2() + timedelta(seconds=duration)
+                                                    new_mute_end = time.now2() + time.td(seconds=duration)
                                                     # if temp_mute_entry:
                                                     #     bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (new_mute_end, temp_mute_entry["entry_id"]))
                                                     # else:
@@ -1095,3 +1147,74 @@ async def new_year(bot: bot_data.Bot):
     await channel.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...")
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
     return
+
+
+async def sl_holidays_updater(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+    update_speed = 86400
+    await wait_until_next_iter(update_speed, 1)  # Wait until midnight of the next day, to prevent sending holidays twice when restarting
+
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Senko Lair Holidays")
+    # Servers:  Senko Lair general, Kargadia general,   RK general
+    channels = [568148147457490958, 928745963877720147, 738425419325243424]
+    # Kargadia server temporarily excluded to not look weird while I test this stuff
+    for ch in channels:
+        channel = bot.get_channel(ch)
+        if channel is None or not can_send(channel):
+            general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > Channel {ch} can't be accessed")
+            channels.remove(ch)  # Remove channels we can't access from the list
+
+    language = bot.language2("en")
+    holiday_names = language.data("data_holidays_sl")
+
+    while True:
+        try:
+            today = time2.date.today()
+            for key, holiday in sl_holidays.items():
+                if holiday == today:
+                    for ch in channels:
+                        channel = bot.get_channel(ch)
+                        await channel.send(f"Happy {holiday_names.get(key)}!")
+                    break
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
+            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
+
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 1)
+
+
+async def ka_holidays_updater(bot: bot_data.Bot):
+    await bot.wait_until_ready()
+    update_speed = 86400
+    await wait_until_next_iter(update_speed, 1, time2.Kargadia)  # Update this every Kargadian midnight
+
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Kargadian Holidays")
+    # I don't think Kargadian holidays need to be sent into SL
+    # Servers:  Kargadia general,   RK general
+    channels = [928745963877720147, 738425419325243424]
+    for ch in channels:
+        channel = bot.get_channel(ch)
+        if channel is None or not can_send(channel):
+            general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > Channel {ch} can't be accessed")
+            channels.remove(ch)  # Remove channels we can't access from the list
+
+    language = bot.language2("en")
+    holiday_names = language.data("data_holidays_ka")
+
+    while True:
+        ka_data_updater(bot)
+        try:
+            ka_day: time2.date = ka_time.date()
+            for key, holiday in ka_holidays.items():
+                if holiday == ka_day:
+                    for ch in channels:
+                        channel = bot.get_channel(ch)
+                        await channel.send(f"Happy {holiday_names.get(key)}!")
+                    break
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
+            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
+
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 1, time2.Kargadia)
