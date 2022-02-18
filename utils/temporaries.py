@@ -1175,6 +1175,7 @@ async def sl_holidays_updater(bot: bot_data.Bot):
                     for ch in channels:
                         channel = bot.get_channel(ch)
                         await channel.send(f"Happy {holiday_names.get(key)}!")
+                    logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
@@ -1211,6 +1212,7 @@ async def ka_holidays_updater(bot: bot_data.Bot):
                     for ch in channels:
                         channel = bot.get_channel(ch)
                         await channel.send(f"Happy {holiday_names.get(key)}!")
+                    logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")

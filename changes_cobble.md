@@ -431,7 +431,10 @@
 ## v1.4.7.1 - 13 February 2022
 - Now Kargadian time is shown in both servers instead
 
-## v1.4.8 - 19 February 2022
+## v1.4.8 - 17 February 2022
 - Added support for Senko Lair holidays in CobbleBot's status
 - The bot will now celebrate Kargadian and Senko Lair holidays
 - Kargadian time data is now only updated when something involving Kargadia happens (checking for holidays, updating the time channels, Kargadian statuses)
+
+## v1.4.8.1 - 18 February 2022
+- Holidays are now logged as they occur
