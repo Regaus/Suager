@@ -1,9 +1,9 @@
 # Changelog for CobbleBot
 
-## v0.1 - 6 December 2020
+## v0.1.0 - 6 December 2020
 - Added Cobble XP and transferred Economy and SS23 from Suager
 
-## v0.2 - 7 December 2020
+## v0.2.0 - 7 December 2020
 - Achievements, currently only for Cobble XP and levels.
 
 ## v0.2.1 - 8 December 2020
@@ -441,3 +441,7 @@
 
 ## v1.4.9 - 18 February 2022
 - Added a command to calculate your current age on Kargadia
+
+## v1.4.10 - 18 February 2022
+- `..timesince` now uses proper `YYYY-MM-DD hh:mm:ss` format for specifying time
+- `..timesince`, `..timeago` and `..timein` now support non-Earth time classes

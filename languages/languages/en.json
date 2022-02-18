@@ -139,8 +139,6 @@
   "fun_vote": "{0} starts a {1}: ```fix\n{2}```",
   "fun_vote_vote": "vote",
   "fun_vote_petition": "petition",
-  "fun_vote_poll_question": "If you are trying to vote on a poll, use `{0}poll vote {1}`.",
-  "fun_vote_poll_question2": "If you are trying to vote on a poll, use `{0}poll vote {1}`.\nIf you are trying to vote on a trial, use `{0}trial vote {1}`.",
   "images_colour_brightness": "Brightness",
   "images_colour_font": "Font colour",
   "images_colour_hex": "HEX value",

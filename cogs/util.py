@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import json
 import random
-import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from io import BytesIO
 
 import discord
@@ -16,23 +15,6 @@ from utils import arg_parser, bases, bot_data, commands, emotes, general, http, 
 
 def custom_role_enabled(ctx):
     return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473, 759095477979054081]
-
-
-async def time_diff(ctx: commands.Context, string: str, multiplier: int):
-    language = ctx.bot.language(ctx)
-    try:
-        delta = time.interpret_time(string) * multiplier
-        then, errors = time.add_time(delta)
-        if errors:
-            return await ctx.send(language.string("util_timediff_error", then))
-            # return await general.send(f"Error converting time difference: {then}", ctx.channel)
-    except (ValueError, OverflowError) as e:
-        return await ctx.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"))
-    difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
-    time_now = language.time(time.now(None), short=0, dow=False, seconds=True, tz=False)
-    time_then = language.time(then, short=0, dow=False, seconds=True, tz=False)
-    return await ctx.send(language.string("util_timediff", time_now, difference, time_then))
-    # return await general.send(f"Current time: **{time_now}**\nDifference: **{difference}**\nOutput time: **{time_then}**", ctx.channel)
 
 
 class Utility(commands.Cog):
@@ -107,43 +89,72 @@ class Utility(commands.Cog):
 
     @commands.command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_since(self, ctx: commands.Context, year: int = None, month: int = 1, day: int = 1, hour: int = 0, minute: int = 0, second: int = 0):
+    async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None):
         """ Time difference
         If you don't specify any time, it will simply default to an arbitrary date within the near future"""
         language = self.bot.language(ctx)
         try:
             now = time2.datetime.now()
             date = time2.datetime(now.year, 1, 1)
-            if year is None:
+            if _date is None:
                 def dt(_month, _day):
                     return time2.datetime(now.year, _month, _day)
-                dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25), dt(7, 27),
-                         dt(8, 8), dt(9, 27), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
+                dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25),
+                         dt(7, 27), dt(8, 8), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
                          time2.datetime(now.year + 1, 1, 1)]
                 for _date in dates:
                     if now < _date:
                         date = _date
                         break
             else:
-                date = time2.datetime(year, month, day, hour, minute, second, tz=timezone.utc)
-            difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)  # time.human_timedelta(date, accuracy=7)
-            current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)  # time.time_output(now, True, True, True)
-            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)  # time.time_output(date, True, True, True)
+                try:
+                    if not _time:
+                        time_part = time2.time()  # 0:00:00
+                    else:
+                        _h, _m, *_s = _time.split(":")
+                        h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+                        time_part = time2.time(h, m, s, 0, time2.utc)
+                    _y, _m, _d = _date.split("-")
+                    y, m, d = int(_y), int(_m), int(_d)
+                    date_part = time2.date(y, m, d, time2.Earth)
+                    date = time2.datetime.combine(date_part, time_part)
+                except AttributeError:
+                    return await ctx.send("Time class not found")
+                except ValueError:
+                    return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
+            difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
+            current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)
+            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)
             return await ctx.send(language.string("util_timesince", current_time, specified_time, difference))
         except Exception as e:
             return await ctx.send(language.string("util_timesince_error", type(e).__name__, str(e)))
 
-    @commands.command(name="timein", aliases=["timeadd"])
+    @staticmethod
+    async def time_diff(ctx: commands.Context, string: str, multiplier: int):
+        language = ctx.language()
+        try:
+            _delta = time.interpret_time(string) * multiplier
+            delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds)
+            now = time2.datetime.now()
+            then = now + delta
+        except (ValueError, OverflowError) as e:
+            return await ctx.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"))
+        difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
+        time_now = language.time(now, short=0, dow=False, seconds=True, tz=False)
+        time_then = language.time(then, short=0, dow=False, seconds=True, tz=False)
+        return await ctx.send(language.string("util_timediff", time_now, difference, time_then))
+
+    @commands.command(name="timein")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def time_in(self, ctx: commands.Context, time_period: str):
         """ Check what time it'll be in a specified period """
-        return await time_diff(ctx, time_period, 1)
+        return await self.time_diff(ctx, time_period, 1)
 
-    @commands.command(name="timeago", aliases=["timeremove"])
+    @commands.command(name="timeago")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_ago(self, ctx: commands.Context, time_period: str):
+    async def time_ago(self, ctx: commands.Context, time_period: str, time_class: str = None):
         """ Check what time it was a specified period ago """
-        return await time_diff(ctx, time_period, -1)
+        return await self.time_diff(ctx, time_period, -1)
 
     @commands.command(name="weather")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -391,12 +402,6 @@ class Utility(commands.Cog):
     async def vote(self, ctx: commands.Context, *, question: str):
         """ Start a vote """
         language = self.bot.language(ctx)
-        if self.bot.name == "suager":
-            if re.compile(r"^(\d{4}) (yes|neutral|no)$").search(question):  # If the vote question is something like "1337 yes" - checks if someone is trying to vote for a poll
-                if ctx.guild is not None and ctx.guild.id == 869975256566210641:
-                    await ctx.send(language.string("fun_vote_poll_question2", ctx.prefix, question))
-                else:
-                    await ctx.send(language.string("fun_vote_poll_question", ctx.prefix, question))
         message = await ctx.send(language.string("fun_vote", ctx.author.name, language.string(f"fun_vote_{str(ctx.invoked_with).lower()}"), question))
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
@@ -892,6 +897,94 @@ class UtilityCobble(Utility, name="Utility"):
                 _time = f"{i['due']} mins"
             trams += f"{i['destination']}: {_time}\n"
         return await ctx.send(f"Data for {_place}:\n{status}\n{trams}")
+
+    @commands.command(name="timesince", aliases=["timeuntil"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None, _time_class: str = None):
+        """ Time difference
+        If you don't specify any time, it will simply default to an arbitrary date within the near future"""
+        language = self.bot.language(ctx)
+        try:
+            if not _time_class:
+                time_class = time2.Earth
+            else:
+                try:
+                    time_class = getattr(time2, _time_class)
+                except AttributeError:
+                    return await ctx.send("Time class not found...")
+                else:
+                    if not issubclass(time_class, time2.Earth):
+                        return await ctx.send("Invalid time class specified...")
+            now = time2.datetime.now(time_class=time_class)
+            date = time2.datetime(now.year, 1, 1)
+            if _date is None and str(time_class) != time2.Earth:
+                def dt(_month, _day):
+                    return time2.datetime(now.year, _month, _day)
+                dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25),
+                         dt(7, 27), dt(8, 8), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
+                         time2.datetime(now.year + 1, 1, 1)]
+                for _date in dates:
+                    if now < _date:
+                        date = _date
+                        break
+            else:
+                try:
+                    if not _time:
+                        time_part = time2.time()  # 0:00:00
+                    else:
+                        _h, _m, *_s = _time.split(":")
+                        h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+                        time_part = time2.time(h, m, s, 0, time2.utc)
+                    _y, _m, _d = _date.split("-")
+                    y, m, d = int(_y), int(_m), int(_d)
+                    date_part = time2.date(y, m, d, time_class)
+                    date = time2.datetime.combine(date_part, time_part)
+                except ValueError:
+                    return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
+            difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
+            current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)
+            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)
+            return await ctx.send(language.string("util_timesince", current_time, specified_time, difference))
+        except Exception as e:
+            return await ctx.send(language.string("util_timesince_error", type(e).__name__, str(e)))
+
+    @staticmethod
+    async def time_diff(ctx: commands.Context, string: str, multiplier: int, _time_class: str = None):
+        language = ctx.language()
+        if not _time_class:
+            time_class = time2.Earth
+        else:
+            try:
+                time_class = getattr(time2, _time_class)
+            except AttributeError:
+                return await ctx.send("Time class not found")
+            else:
+                if not issubclass(time_class, time2.Earth):
+                    return await ctx.send("Invalid time class specified")
+        try:
+            # FIXME: Fix the relative delta interpreter to use `regaus.time.relativedelta` and correctly count days and months for non-Earth calendars
+            _delta = time.interpret_time(string) * multiplier
+            delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds, time_class=time_class)
+            now = time2.datetime.now(time_class=time_class)
+            then = now + delta
+        except (ValueError, OverflowError) as e:
+            return await ctx.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"))
+        difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
+        time_now = language.time(now, short=0, dow=False, seconds=True, tz=False)
+        time_then = language.time(then, short=0, dow=False, seconds=True, tz=False)
+        return await ctx.send(language.string("util_timediff", time_now, difference, time_then))
+
+    @commands.command(name="timein")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def time_in(self, ctx: commands.Context, time_period: str, time_class: str = None):
+        """ Check what time it'll be in a specified period """
+        return await self.time_diff(ctx, time_period, 1, time_class)
+
+    @commands.command(name="timeago")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def time_ago(self, ctx: commands.Context, time_period: str, time_class: str = None):
+        """ Check what time it was a specified period ago """
+        return await self.time_diff(ctx, time_period, -1, time_class)
 
 
 def setup(bot: bot_data.Bot):

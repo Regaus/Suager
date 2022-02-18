@@ -1201,3 +1201,7 @@
 
 ## v7.4.28.2 - 18 February 2022
 - Command errors are now printed (CommandInvokeError)
+
+## v7.4.29 - 18 February 2022
+- `//vote` no longer asks if you're trying to vote on a poll
+- `//timesince` now uses proper `YYYY-MM-DD hh:mm:ss` format for specifying time
