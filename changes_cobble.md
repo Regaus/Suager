@@ -438,3 +438,6 @@
 
 ## v1.4.8.1 - 18 February 2022
 - Holidays are now logged as they occur
+
+## v1.4.9 - 18 February 2022
+- Added a command to calculate your current age on Kargadia

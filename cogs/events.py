@@ -143,9 +143,8 @@ class Events(commands.Cog):
 
         elif isinstance(err, commands.CommandOnCooldown):
             # The command is currently on cooldown and cannot be used
-            await ctx.send(language.string("events_error_cooldown", time=language.number(err.retry_after, precision=2),
-                                           rate=language.number(err.cooldown.rate), per=language.number(err.cooldown.per, precision=1)),
-                           delete_after=err.retry_after + 5)
+            await ctx.send(language.string("events_error_cooldown", time=language.number(err.retry_after, precision=2), rate=language.number(err.cooldown.rate),
+                                           per=language.number(err.cooldown.per, precision=1)), delete_after=err.retry_after + 5)
         elif isinstance(err, commands.MaxConcurrencyReached):
             # I think this might show `per` as some funny value instead of the name, but this isn't going to matter for Suager so...
             await ctx.send(language.string("events_error_concurrency", rate=language.number(err.number), per=err.per), delete_after=15)
@@ -168,9 +167,11 @@ class Events(commands.Cog):
                     await ec.send(error)
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > " \
                                 f"{type(err.original).__name__}: {str(err.original)}"
+                general.print_error(error_message)
 
         else:
             # Catch-all error statement. This shouldn't ever get called, but who knows...
+            general.print_error(error_message)
             await ctx.send(language.string("events_error_error", type(err).__name__))
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:

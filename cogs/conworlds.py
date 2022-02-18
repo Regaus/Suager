@@ -1,12 +1,11 @@
 import json
 import re
-from datetime import datetime
 from math import ceil
 
 import discord
-from regaus import conworlds, PlaceDoesNotExist, time as time2, version_info
+from regaus import conworlds, PlaceDoesNotExist, time, version_info
 
-from utils import bot_data, commands, conlangs, time
+from utils import bot_data, commands, conlangs
 
 longest_city = {
     "Virkada": 15,
@@ -28,20 +27,23 @@ class Conworlds(commands.Cog):
 
         Example: ..time78 Reggar 2021-07-18 20:00"""
         if _date is None:
-            dt = time.now(None)
+            dt = time.datetime.now()
         else:
             try:
                 if not _time:
-                    _time = "00:00:00"
+                    time_part = time.time()  # 0:00:00
                 else:
-                    _time = _time.replace(".", ":")
-                    c = _time.count(":")
-                    if c == 1:
-                        _time = f"{_time}:00"
-                dt = time.set_tz(datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S"), "UTC")
+                    _h, _m, *_s = _time.split(":")
+                    h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+                    time_part = time.time(h, m, s, 0, time.utc)
+                _y, _m, _d = _date.split("-")
+                y, m, d = int(_y), int(_m), int(_d)
+                date_part = time.date(y, m, d, time.Earth)
+                dt = time.datetime.combine(date_part, time_part)
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
-        time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
+        # time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
+        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S", "en")
         output = f"Time on Earth: **{time_earth}**"
         _pre = "on"
         if place_name == "Kargadia":
@@ -57,11 +59,27 @@ class Conworlds(commands.Cog):
             _pre = "in"
             _name = place_name
             _id = None
-        place = conworlds.Place(place_name, time2.datetime.from_datetime(dt))
+        place = conworlds.Place(place_name, dt)
         if _id is None:
             _id = place.id
         output += f"\nTime {_pre} {_id}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
         return await ctx.send(output)
+
+    @commands.command(name="kaage", aliases=["age"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def ka_age(self, ctx: commands.Context, _date: str):
+        """ Get your Kargadian birthday and age """
+        language = ctx.language2("en")
+        _y, _m, _d = _date.split("-")
+        y, m, d = int(_y), int(_m), int(_d)
+        birthday_earth = time.date(y, m, d, time_class=time.Earth)
+        birthday_ka = birthday_earth.convert_time_class(time.Kargadia)
+        now_ka = time.date.today(time.Kargadia)
+        age_rd = time.relativedelta(now_ka, birthday_ka)
+        bd1 = language.date(birthday_earth, short=0, dow=False, year=True)
+        bd2 = language.date(birthday_ka, short=0, dow=False, year=True)
+        age = language.delta_rd(age_rd, accuracy=3, brief=False, affix=False)
+        return await ctx.send(f"Your Earth birthday is: **{bd1}**\nYour Kargadian birthday is: **{bd2}**\nYou would be **{age}** old on Kargadia")
 
     @commands.group(name="weather78", aliases=["data78", "w78", "d78"], case_insensitive=True, invoke_without_command=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

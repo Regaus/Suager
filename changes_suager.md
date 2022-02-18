@@ -1198,3 +1198,6 @@
 
 ## v7.4.28.1 - 18 February 2022
 - Locked polls to only be available in Nuriki's server, since they are not used anywhere else
+
+## v7.4.28.2 - 18 February 2022
+- Command errors are now printed (CommandInvokeError)
