@@ -546,7 +546,7 @@
   "social_kill_regaus": "{emotes.KannaSpook} How dare you {author}",
   "social_kiss": "{author} kissed {target}",
   "social_kiss_frequency": "{author} has kissed {target} {frequency}",
-  "social_kiss_never": "{author} has never kissed {target}",
+  "social_kiss_never": "{author} has never kissed {target} back",
   "social_kiss_bot": "Bots weren't programmed to feel love...",
   "social_kiss_suager": "I am not programmed to feel love...",
   "social_laugh": "{author} is laughing",

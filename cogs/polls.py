@@ -13,6 +13,7 @@ class Polls(commands.Cog):
 
     @commands.group(name="poll", aliases=["polls"], case_insensitive=True, invoke_without_command=True)
     @commands.guild_only()
+    @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def poll(self, ctx: commands.Context, duration: str, *, question: str):
         """ Start a new poll or interact with existing ones

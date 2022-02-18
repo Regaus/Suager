@@ -1195,3 +1195,6 @@
 ## v7.4.28 - 17 February 2022
 - Allow `//timesince` to go beyond the 0-9999 year range
 - Fixed admin eval error traceback breaking
+
+## v7.4.28.1 - 18 February 2022
+- Locked polls to only be available in Nuriki's server, since they are not used anywhere else

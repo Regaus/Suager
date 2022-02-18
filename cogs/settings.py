@@ -112,26 +112,7 @@ class Settings(commands.Cog):
                     if setting["mute_role"] != 0:
                         mute_role = f"<@&{setting['mute_role']}>"
                 embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
-                # if ctx.guild.id in [568148147457490954, 738425418637639775]:
-                #     mod, users, messages = language.string("settings_current_disabled"), language.string("settings_current_disabled"), language.string("settings_current_disabled")
-                #     message_ignore = False
-                #     if "audit_logs" in setting:
-                #         if setting["audit_logs"]:
-                #             mod = f"<#{setting['audit_logs']}>"
-                #     if "user_logs" in setting:
-                #         if setting["user_logs"]:
-                #             users = f"<#{setting['user_logs']}>"
-                #     if "message_logs" in setting:
-                #         if setting["message_logs"]:
-                #             messages = f"<#{setting['message_logs']}>"
-                #             message_ignore = True
-                #     embed.add_field(name=language.string("settings_current_logs"), value=language.string("settings_current_logs2", mod, users, messages), inline=False)
-                #     if message_ignore:
-                #         ignore = language.string("generic_none")
-                #         if "message_ignore" in setting:
-                #             if setting["message_ignore"]:
-                #                 ignore = ", ".join([f"<#{channel}>" for channel in setting["message_ignore"]])
-                #         embed.add_field(name=language.string("settings_current_messages_ignore"), value=ignore, inline=False)
+
                 sb = language.string("settings_current_disabled")
                 if "starboard" in setting:
                     starboard = setting["starboard"]
@@ -152,7 +133,7 @@ class Settings(commands.Cog):
                         bd = language.string("settings_current_birthdays", ctx.prefix)
                 embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
 
-                if self.bot.name in ["suager"]:
+                if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
                     polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
                     if "polls" in setting:
                         polls = setting["polls"]
@@ -165,7 +146,6 @@ class Settings(commands.Cog):
                 if "join_roles" in setting:
                     join_roles = setting["join_roles"]
                     if join_roles["members"]:
-                        # members = f"<@&{join_roles['members']}>"
                         members = language.join([f"<@&{role}>" for role in join_roles["members"]])
                     else:
                         members = language.string("generic_none")
@@ -1284,7 +1264,7 @@ class Settings(commands.Cog):
         return await ctx.send(language.string("settings_messages_bots_enable" if action == "enable" else "settings_messages_bots_disable"))
 
     @settings.group(name="polls", case_insensitive=True)
-    @commands.check(lambda ctx: ctx.bot.name in ["suager"])
+    @commands.check(lambda ctx: ctx.bot.name in ["suager"] and ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     async def set_polls(self, ctx: commands.Context):
         """ Polls settings """
         if ctx.invoked_subcommand is None:
