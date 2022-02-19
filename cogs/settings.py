@@ -97,22 +97,32 @@ class Settings(commands.Cog):
             language = self.bot.language(ctx)
             data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
             if not data:
-                return await ctx.send_help(str(ctx.command))
-            setting = json.loads(data["data"])
+                # return await ctx.send_help(str(ctx.command))
+                setting = self.template.copy()
+            else:
+                setting = json.loads(data["data"])
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_current", ctx.guild.name)
-            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             embed.set_footer(text=language.string("settings_current_footer", ctx.prefix))
+
+            # Language
             embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
+
+            # Prefix
             dp, cp = self.prefix_list(ctx)
             embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
+
             if self.bot.name in ["kyomi", "suager"]:
+                # Mute role
                 mute_role = language.string("generic_none")
                 if "mute_role" in setting:
                     if setting["mute_role"] != 0:
                         mute_role = f"<@&{setting['mute_role']}>"
                 embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
 
+                # Starboard
                 sb = language.string("settings_current_disabled")
                 if "starboard" in setting:
                     starboard = setting["starboard"]
@@ -120,6 +130,7 @@ class Settings(commands.Cog):
                         sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
                 embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
 
+                # Levels
                 if self.bot.name in ["suager"]:
                     lvl = language.string("settings_current_disabled")
                     if "leveling" in setting:
@@ -127,12 +138,14 @@ class Settings(commands.Cog):
                             lvl = language.string("settings_current_leveling", ctx.prefix)
                     embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
 
+                # Birthdays
                 bd = language.string("settings_current_disabled")
                 if "birthdays" in setting:
                     if setting["birthdays"]["enabled"]:
                         bd = language.string("settings_current_birthdays", ctx.prefix)
                 embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
 
+                # Polls
                 if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
                     polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
                     if "polls" in setting:
@@ -142,6 +155,7 @@ class Settings(commands.Cog):
                         polls_anonymity = language.yes(polls["voter_anonymity"])
                     embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
 
+                # Join roles
                 members, bots = language.string("generic_none"), language.string("generic_none")
                 if "join_roles" in setting:
                     join_roles = setting["join_roles"]
@@ -155,6 +169,7 @@ class Settings(commands.Cog):
                         bots = language.string("generic_none")
                 embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
 
+                # Welcomes
                 welcome_channel, welcome_message = language.string("settings_current_disabled"), None
                 if "welcome" in setting:
                     welcome = setting["welcome"]
@@ -165,6 +180,7 @@ class Settings(commands.Cog):
                 if welcome_message:
                     embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
 
+                # Goodbyes
                 goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
                 if "goodbye" in setting:
                     goodbye = setting["goodbye"]
@@ -175,12 +191,14 @@ class Settings(commands.Cog):
                 if goodbye_message:
                     embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
 
+                # Message Logs
                 msg = language.string("settings_current_disabled")
                 if "message_logs" in setting:
                     if setting["message_logs"]["enabled"]:
                         msg = language.string("settings_current_messages", ctx.prefix)
                 embed.add_field(name=language.string("settings_messages"), value=msg, inline=False)
 
+                # Mod DMs
                 mod_dms_text = language.string("settings_current_mod_dms_disabled", ctx.prefix)
                 if "mod_dms" in setting:
                     mod_dms = setting["mod_dms"]
@@ -188,6 +206,7 @@ class Settings(commands.Cog):
                     mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
                 embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
 
+                # Mod Logs
                 mod_logs_text = language.string("settings_current_mod_logs_disabled", ctx.prefix)
                 if "mod_logs" in setting:
                     def channel(cid: int):
@@ -200,8 +219,7 @@ class Settings(commands.Cog):
                     mod_logs_text = language.string("settings_current_mod_logs2", warn=channel(warn), mute=channel(mute), kick=channel(kick), ban=channel(ban), roles=channel(roles))
                 embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
 
-                return await ctx.send(embed=embed)
-            # return await ctx.send_help(str(ctx.command))
+            return await ctx.send(embed=embed)
 
     @settings.command(name="current")
     @commands.is_owner()
@@ -348,7 +366,8 @@ class Settings(commands.Cog):
             leveling = setting["leveling"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_leveling", ctx.guild.name)
-            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             embed.set_footer(text=language.string("settings_leveling_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
             embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
@@ -899,7 +918,8 @@ class Settings(commands.Cog):
             starboard = setting["starboard"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_starboard", ctx.guild.name)
-            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             embed.set_footer(text=language.string("settings_starboard_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_starboard_enabled2"), value=language.yes(starboard["enabled"]), inline=False)
             channel = f"<#{starboard['channel']}>" if starboard["channel"] != 0 else language.string("settings_starboard_channel_none")
@@ -1001,7 +1021,8 @@ class Settings(commands.Cog):
             birthdays = setting["birthdays"]
             embed = discord.Embed(colour=general.random_colour())
             embed.title = language.string("settings_birthdays", ctx.guild.name)
-            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             embed.set_footer(text=language.string("settings_birthdays_footer", ctx.prefix))
             embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
             if birthdays["channel"] != 0:
@@ -1668,7 +1689,8 @@ class Settings(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("settings_prefixes_title", self.bot.user.name, ctx.guild.name)
         # embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
-        embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024)))
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("settings_prefixes_default"), value='\n'.join(dp), inline=True)
         if cp:
             embed.add_field(name=language.string("settings_prefixes_custom"), value='\n'.join(cp), inline=True)

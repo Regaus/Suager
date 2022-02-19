@@ -226,7 +226,8 @@ class Starboard(commands.Cog):
             embed.title = language.string("starboard_stats", ctx.guild.name)
             # embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
             embed.description = language.string("starboard_stats_desc", language.number(stars), language.number(len(data)))
-            embed.set_thumbnail(url=str(ctx.guild.icon))
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             top_messages = ""
             authors_out = ""
             # Top Starred Posts

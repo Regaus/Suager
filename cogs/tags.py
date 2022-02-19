@@ -34,7 +34,7 @@ class Tags(commands.Cog):
                     .replace("[SERVER_ID]", str(ctx.guild.id))\
                     .replace("[MEMBERS]", str(len(ctx.guild.members)))\
                     .replace("[OWNER]", str(ctx.guild.owner))\
-                    .replace("[SERVER_ICON]", str(ctx.guild.icon.replace(static_format="png", size=1024)))\
+                    .replace("[SERVER_ICON]", str(ctx.guild.icon.replace(static_format="png", size=1024)) if ctx.guild.icon else "No server icon")\
                     .replace("[USAGE]", str(tag["usage"] + 1))
                 return await ctx.send(content, allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=False))
             else:

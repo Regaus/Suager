@@ -51,6 +51,7 @@
   "discord_server_emotes": "Emotes",
   "discord_server_emotes_data": "{0}/{2} Non-animated\n{1}/{2} Animated\n{3} Total",
   "discord_server_icon": "**{0}** server icon\n{1}",
+  "discord_server_icon_none": "**{0}** has no server icon",
   "discord_server_id": "Server ID",
   "discord_server_inv_bg": "**{0}** invite background\n{1}",
   "discord_server_inv_bg_none": "**{0}** has no invite background",

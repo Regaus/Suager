@@ -1205,3 +1205,8 @@
 ## v7.4.29 - 18 February 2022
 - `//vote` no longer asks if you're trying to vote on a poll
 - `//timesince` now uses proper `YYYY-MM-DD hh:mm:ss` format for specifying time
+
+## v7.4.30 - 18 February 2022
+- `//settings` no longer sends the help command when no data is available
+- Reverted the `//invite` command to no longer show options of text-only and slash commands
+- Fixed commands breaking when no server icon is available

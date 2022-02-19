@@ -455,7 +455,8 @@ class Utility(commands.Cog):
             else:
                 embed = discord.Embed(colour=role.colour)
                 embed.title = language.string("discord_role_about", role.name)
-                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+                if ctx.guild.icon:
+                    embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
                 embed.add_field(name=language.string("discord_role_name"), value=role.name, inline=True)
                 embed.add_field(name=language.string("discord_role_id"), value=str(role.id), inline=True)
                 embed.add_field(name=language.string("generic_members"), value=language.number(len(role.members)), inline=True)
@@ -570,7 +571,8 @@ class Utility(commands.Cog):
             bots = sum(1 for member in guild.members if member.bot)
             bots_amt = bots / guild.member_count
             embed = discord.Embed(colour=general.random_colour())
-            embed.set_thumbnail(url=str(guild.icon.replace(size=1024)))
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             embed.title = language.string("discord_server_about", guild.name)
             embed.add_field(name=language.string("discord_server_name"), value=guild.name, inline=True)
             embed.add_field(name=language.string("discord_server_id"), value=guild.id, inline=True)
@@ -603,25 +605,27 @@ class Utility(commands.Cog):
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx: commands.Context):
         """ Get server icon """
-        return await ctx.send(self.bot.language(ctx).string("discord_server_icon", ctx.guild.name, str(ctx.guild.icon.replace(size=1024, static_format='png'))))
+        language = ctx.language()
+        if ctx.guild.icon:
+            return await ctx.send(language.string("discord_server_icon", ctx.guild.name, str(ctx.guild.icon.replace(size=4096, static_format='png'))))
+        else:
+            return await ctx.send(language.string("discord_server_icon_none", ctx.guild.name))
 
     @server.command(name="banner")
     async def server_banner(self, ctx: commands.Context):
         """ Get server banner """
-        link = str(ctx.guild.banner.replace(size=4096, static_format="png"))
         language = self.bot.language(ctx)
-        if link:
-            return await ctx.send(language.string("discord_server_banner", ctx.guild.name, link))
+        if ctx.guild.banner:
+            return await ctx.send(language.string("discord_server_banner", ctx.guild.name, str(ctx.guild.banner.replace(size=4096, static_format="png"))))
         else:
             return await ctx.send(language.string("discord_server_banner_none", ctx.guild.name))
 
     @server.command(name="invitebg", aliases=["invite", "splash"])
     async def server_invite(self, ctx: commands.Context):
         """ Get server invite splash """
-        link = str(ctx.guild.splash.replace(size=4096, static_format="png"))
         language = self.bot.language(ctx)
-        if link:
-            return await ctx.send(language.string("discord_server_inv_bg", ctx.guild.name, link))
+        if ctx.guild.splash:
+            return await ctx.send(language.string("discord_server_inv_bg", ctx.guild.name, str(ctx.guild.splash.replace(size=4096, static_format="png"))))
         else:
             return await ctx.send(language.string("discord_server_inv_bg_none", ctx.guild.name))
 
