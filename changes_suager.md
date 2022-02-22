@@ -1217,3 +1217,6 @@
 
 ## v7.4.31.1 - 22 February 2022
 - Fix invite command
+
+## v7.4.32 - 22 February 2022
+- Made it possible to only generate the image of the colour using `//colour xxxxxx -i`

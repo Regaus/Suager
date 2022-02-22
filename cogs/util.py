@@ -251,9 +251,15 @@ class Utility(commands.Cog):
 
     @commands.command(name="colour", aliases=["color"])
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
-    async def colour(self, ctx: commands.Context, colour: str = "random"):
+    async def colour(self, ctx: commands.Context, *, colour: str = "random"):
         """ Information on a colour """
         language = self.bot.language(ctx)
+        if colour.endswith(" -i"):
+            colour = colour[:-3]
+            image_only = True
+        else:
+            image_only = False
+
         if colour.lower() == "random":
             _colour = f"{random.randint(0, 0xffffff):06x}"
         else:
@@ -270,6 +276,15 @@ class Utility(commands.Cog):
                 _colour = f"{int(colour, 16):06x}"
             except Exception as e:
                 return await ctx.send(language.string("images_colour_invalid", type(e).__name__, str(e)))
+
+        if image_only:
+            rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16))
+            image1 = Image.new(mode="RGBA", size=(512, 512), color=rgba_255)
+            bio1 = BytesIO()
+            image1.save(bio1, "PNG")
+            bio1.seek(0)
+            return await ctx.send(file=discord.File(bio1, "colour.png"))
+
         hex_6 = _colour[:6]
         int_6 = int(_colour[:6], 16)
         embed = discord.Embed(colour=int_6)
@@ -302,6 +317,7 @@ class Utility(commands.Cog):
 
         def _hex(value: int):
             return f"{value:02X}"
+
         for i in range(11):
             start2a = (size * i, 0)
             start2b = (size * i, size)
@@ -323,6 +339,7 @@ class Utility(commands.Cog):
             draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
             image2.paste(image2a, start2a)
             image2.paste(image2b, start2b)
+
         bio2 = BytesIO()
         image2.save(bio2, "PNG")
         bio2.seek(0)
