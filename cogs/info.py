@@ -9,7 +9,7 @@ from regaus import __version__ as reg_version
 from utils import bot_data, commands, general, time
 
 
-class BotInformation(commands.Cog):
+class BotInformation(commands.Cog, name="Bot Information"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
 
@@ -55,10 +55,6 @@ class BotInformation(commands.Cog):
             dis_version += _discord.releaselevel[0]
         libs_used = f"**Python v{version}**\n**Discord.py v{dis_version}**"
         if self.bot.name == "cobble":
-            # _regaus = regaus_version_info
-            # reg_version = f"{_regaus.major}.{_regaus.minor}.{_regaus.micro}"
-            # if _regaus.releaselevel != "final":
-            #     reg_version += _regaus.releaselevel[0] + str(_regaus.serial)
             libs_used += f"\n**Regaus.py v{reg_version}**"
         embed.add_field(name=language.string("info_stats_used"), inline=True, value=libs_used)
         mv = version_data["version"].split(".")[0]
@@ -122,12 +118,25 @@ class BotInformation(commands.Cog):
         r3 = f"Message Send: {t2:,}ms\nMessage Edit: {t3:,}ms\nWS Latency: {ws:,}ms"
         await msg.edit(content=r3)
 
+
+class SuagerInformation(BotInformation, name="Bot Information"):
     @commands.command(name="suager", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def suager(self, ctx: commands.Context):
         return await ctx.send("<a:SenkoWatch2:801408192785547264>")
 
 
+class CobbleInformation(BotInformation, name="Bot Information"):
+    @commands.command(name="cobble", aliases=["kaivallus"], hidden=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def cobble(self, ctx: commands.Context):
+        return await ctx.send("Vuu Käivallus. Vu ju zäide, via te av Kaagadian kuvalsen zäivan mäikah <:SenkoWatch:739242217666904165>")
+
+
 def setup(bot: bot_data.Bot):
-    bot.add_cog(BotInformation(bot))
+    if bot.name == "suager":
+        bot.add_cog(SuagerInformation(bot))
+    elif bot.name == "cobble":
+        bot.add_cog(CobbleInformation(bot))
+    else:
+        bot.add_cog(BotInformation(bot))

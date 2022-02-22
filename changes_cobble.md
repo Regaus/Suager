@@ -449,3 +449,6 @@
 ## v1.4.11 - 21 February 2022
 - Updated Kargadian cases
 - Added Kargadian unit conversions for length, speed and temperature
+
+## v1.4.12 - 22 February 2022
+- Added command where CobbleBot briefly tells about himself in Tebarian
