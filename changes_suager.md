@@ -1210,3 +1210,7 @@
 - `//settings` no longer sends the help command when no data is available
 - Reverted the `//invite` command to no longer show options of text-only and slash commands
 - Fixed commands breaking when no server icon is available
+
+## v7.4.31 - 21 February 2022
+- Added the database table for user logs
+- Slightly improved how the weather command looks

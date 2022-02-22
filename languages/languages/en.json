@@ -326,7 +326,7 @@
   "ratings_love_calc": "Love level between **{0}** and **{1}** is **{2}**.",
   "ratings_love_calc_bots": "Bots can't feel love to normal users.",
   "ratings_love_calc_suager": "I was never programmed to feel love...",
-  "ratings_pickle": "**{0}**'s pickle size is **{1}cm** ({2}in)",
+  "ratings_pickle": "**{0}**'s pickle size is **{1}**",
   "ratings_rate": "I think \"{0}\" is **{1}/{2}**",
   "ratings_rate_user": "I rate {0} as **{1}/{2}**",
   "settings_audit_none": "Mod logs will now be disabled.",
@@ -715,7 +715,6 @@
   "util_weather_title": "{emote}Weather in **{0}, {1}**",
   "util_weather_weather": "Current weather",
   "util_weather_wind": "Wind speed",
-  "util_weather_wind_data": "**{0} m/s** | **{1} km/h** | {2} mph",
   "data_holidays_ka": {
     "01-01": "New Year",
     "01-06": "Senko Day",

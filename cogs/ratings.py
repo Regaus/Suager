@@ -22,7 +22,8 @@ class Ratings(commands.Cog):
             302851022790066185: 30.0,
         }
         result = custom.get(user.id, _result)
-        return await ctx.send(language.string("ratings_pickle", user.name, language.number(result, precision=2), language.number(result / 2.54, precision=2)))
+        # return await ctx.send(language.string("ratings_pickle", user.name, language.number(result, precision=2), language.number(result / 2.54, precision=2)))
+        return await ctx.send(language.string("ratings_pickle", user.name, language.length(result / 100, precision=2, force_size=1)))  # The Length converter uses the value in metres
 
     @commands.command(name="rate")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

@@ -228,4 +228,16 @@ tables = [
         Column("anonymous", 3, True),       # Whether the poll is anonymous or not
         Column("required_score", 0, True),  # Score required for the trial to pass
     ]),
+    Table("user_roles", [         # We should only need to log people who left with roles, so we only need this much data
+        Column("gid", 0, True),   # Guild ID
+        Column("uid", 0, True),   # User ID
+        Column("roles", 2, True)  # The role IDs the user had
+    ]),
+    # Table("user_logs", [
+    #     Column("gid", 0, True),        # Guild ID
+    #     Column("uid", 0, True),        # User ID
+    #     Column("action", 2, True),     # "join" or "leave"
+    #     Column("timestamp", 4, True),  # When the user left
+    #     Column("roles", 2, False),     # JSON [] of role IDs the user had when leaving (ignored if joining, or if role retention is disabled)
+    # ])
 ]

@@ -434,7 +434,7 @@ class Social(commands.Cog):
         if is_fucked(self.laugh):
             self.laugh = await lists.get_images(self.bot, 'L')
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_laugh", author=ctx.author.name) if at is None else language.string("social_laugh_at", author=ctx.author.name, target=language.case(at.name, "at"))
+        embed.title = language.string("social_laugh", author=ctx.author.name) if at is None else language.string("social_laugh_at", author=ctx.author.name, target=language.case(at.name, "laugh_at"))
         embed.set_image(url=random.choice(self.laugh))
         return await ctx.send(embed=embed)
 

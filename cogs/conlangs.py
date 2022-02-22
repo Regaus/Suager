@@ -63,7 +63,7 @@ class Conlangs(commands.Cog):
         if word.startswith("debug "):
             word = word[6:]
             # This will only test for the cases that Suager will use, so the extra cases (like MWK) will not be shown here.
-            cases = ["default", "nominative", "vocative", "accusative", "genitive", "dative", "instrumental", "locative", "inessive", "high_five", "at", "for", "in", "ago"]
+            cases = ["default", "nominative", "vocative", "accusative", "genitive", "dative", "high_five", "laugh_at", "for", "in", "ago"]  # , "instrumental", "locative", "inessive"
         else:
             case_lists = {
                 "ka_an": ["nominative", "accusative", "genitive", "dative", "instrumental", "comitative", "locative", "ablative", "vocative"],
@@ -73,6 +73,7 @@ class Conlangs(commands.Cog):
                 "ka_ne": ["nominative", "accusative", "genitive", "dative", "instrumental"],
                 "ka_ni": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
                 "ka_tb": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
+                "ka_ka": ["subjective", "objective"]
             }
             try:
                 cases = case_lists[language]
@@ -85,7 +86,8 @@ class Conlangs(commands.Cog):
             data = [number.title() + ":"]
             for case in cases:
                 # \u200b = zero width space, makes it also align on mobile
-                data.append(f"`{case:<12}\u200b` -> {_language.case(word, case, number)}")
+                max_len = len(max(cases, key=len))  # Length of the longest string
+                data.append(f"`{case:<{max_len}}\u200b` -> {_language.case(word, case, number)}")
             out.append("\n".join(data))
         return await ctx.send("\n\n".join(out))
 

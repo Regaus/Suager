@@ -445,3 +445,7 @@
 ## v1.4.10 - 18 February 2022
 - `..timesince` now uses proper `YYYY-MM-DD hh:mm:ss` format for specifying time
 - `..timesince`, `..timeago` and `..timein` now support non-Earth time classes
+
+## v1.4.11 - 21 February 2022
+- Updated Kargadian cases
+- Added Kargadian unit conversions for length, speed and temperature

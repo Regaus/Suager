@@ -64,6 +64,7 @@ class Language(languages.Language):
 
 
 class FakeContext:
+    """ Build a fake Context instead of commands.Context to pass on to Language.get() """
     def __init__(self, guild, bot):
         self.guild = guild
         self.bot = bot

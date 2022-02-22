@@ -167,16 +167,16 @@ class Utility(commands.Cog):
             token = self.bot.config["weather_api_token"]
             bio = await http.get(f"http://api.openweathermap.org/data/2.5/weather?appid={token}&lang={lang}&q={place}", res_method="read")
             await a.delete()
-            data = json.loads(str(bio.decode('utf-8')))
-            code = data['cod']
+            data = json.loads(str(bio.decode("utf-8")))
+            code = data["cod"]
             if code == 200:
                 embed = discord.Embed(colour=random.randint(0, 0xffffff))
                 try:
-                    country = data['sys']['country'].lower()
+                    country = data["sys"]["country"].lower()
                 except KeyError:
                     country = ""
                 try:
-                    tz = data['timezone']
+                    tz = data["timezone"]
                 except KeyError:
                     tz = 0
                 # _time_locale = locale if locale not in ["rsl-1d", "rsl-5"] else "english"
@@ -188,38 +188,41 @@ class Utility(commands.Cog):
                 else:
                     country_name = "Unknown country"
                     emote = ""
-                embed.title = language.string("util_weather_title", data['name'], country_name, emote=emote)
+                embed.title = language.string("util_weather_title", data["name"], country_name, emote=emote)
                 embed.description = language.string("util_weather_desc", local_time)
-                weather_icon = data['weather'][0]['icon']
+                weather_icon = data["weather"][0]["icon"]
                 embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
                 embed.add_field(name=language.string("util_weather_weather"), value=data['weather'][0]['description'].capitalize(), inline=False)
-                _tk = data['main']['temp']
-                _tc = _tk - 273.15
-                _tf = _tc * 1.8 + 32
-                tk, tc, tf = language.number(_tk, precision=1), language.number(_tc, precision=1), language.number(_tf, precision=1)
-                embed.add_field(name=language.string("util_weather_temperature"), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=False)
+                # _tk = data['main']['temp']
+                # _tc = _tk - 273.15
+                # _tf = _tc * 1.8 + 32
+                # tk, tc, tf = language.number(_tk, precision=1), language.number(_tc, precision=1), language.number(_tf, precision=1)
+                # embed.add_field(name=language.string("util_weather_temperature"), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=False)
+                embed.add_field(name=language.string("util_weather_temperature"), value=general.bold(language.temperature(data["main"]["temp"] - 273.15, precision=1)), inline=False)
                 try:
-                    _tk = data['main']['feels_like']
-                    _tc = _tk - 273.15
-                    _tf = _tc * 1.8 + 32
-                    tk, tc, tf = language.number(_tk, precision=1), language.number(_tc, precision=1), language.number(_tf, precision=1)
-                    embed.add_field(name=language.string("util_weather_temperature2"), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=False)
+                    # _tk = data["main"]["feels_like"]
+                    # _tc = _tk - 273.15
+                    # _tf = _tc * 1.8 + 32
+                    # tk, tc, tf = language.number(_tk, precision=1), language.number(_tc, precision=1), language.number(_tf, precision=1)
+                    # embed.add_field(name=language.string("util_weather_temperature2"), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=False)
+                    embed.add_field(name=language.string("util_weather_temperature2"), value=language.temperature(data["main"]["feels_like"] - 273.15, precision=1), inline=False)
                 except KeyError:
                     pass
                 try:
-                    pressure = data['main']['grnd_level']
+                    pressure = data["main"]["grnd_level"]
                 except KeyError:
-                    pressure = data['main']['pressure']
-                embed.add_field(name=language.string("util_weather_pressure"), value=f"{language.number(pressure)} hPa", inline=False)
-                embed.add_field(name=language.string("util_weather_humidity"), value=language.number(data['main']['humidity'] / 100, precision=0, percentage=True), inline=False)
-                _sm = data['wind']['speed']
-                _sk = _sm * 3.6
-                _sb = _sk / 1.609  # imperial system bad
-                sm, sk, sb = language.number(_sm, precision=2), language.number(_sk, precision=2), language.number(_sb, precision=2)
-                embed.add_field(name=language.string("util_weather_wind"), value=language.string("util_weather_wind_data", sm, sk, sb), inline=False)
-                embed.add_field(name=language.string("util_weather_clouds"), value=language.number(data['clouds']['all'] / 100, precision=0, percentage=True), inline=False)
-                sr = data['sys']['sunrise']
-                ss = data['sys']['sunset']
+                    pressure = data["main"]["pressure"]
+                embed.add_field(name=language.string("util_weather_pressure"), value=general.bold(f"{language.number(pressure)} hPa"), inline=False)
+                embed.add_field(name=language.string("util_weather_humidity"), value=general.bold(language.number(data["main"]["humidity"] / 100, precision=0, percentage=True)), inline=False)
+                # _sm = data["wind"]["speed"]
+                # _sk = _sm * 3.6
+                # _sb = _sk / 1.609  # imperial system bad
+                # sm, sk, sb = language.number(_sm, precision=2), language.number(_sk, precision=2), language.number(_sb, precision=2)
+                # embed.add_field(name=language.string("util_weather_wind"), value=language.string("util_weather_wind_data", sm, sk, sb), inline=False)
+                embed.add_field(name=language.string("util_weather_wind"), value=general.bold(language.speed(data["wind"]["speed"] * 3.6, precision=2)), inline=False)
+                embed.add_field(name=language.string("util_weather_clouds"), value=general.bold(language.number(data["clouds"]["all"] / 100, precision=0, percentage=True)), inline=False)
+                sr = data["sys"]["sunrise"]
+                ss = data["sys"]["sunset"]
                 now = time.now(None)
                 now_l = now + timedelta(seconds=tz)
                 if sr != 0 and ss != 0:
@@ -227,16 +230,16 @@ class Utility(commands.Cog):
                     sst = time.from_ts(ss + tz, None)
                     sr, tr = language.time2(srt, seconds=False, tz=False), language.delta_dt(srt, source=now_l, accuracy=2, brief=True, affix=True)
                     ss, ts = language.time2(sst, seconds=False, tz=False), language.delta_dt(sst, source=now_l, accuracy=2, brief=True, affix=True)
-                    embed.add_field(name=language.string("util_weather_sunrise"), value=f"{sr} | {tr}", inline=False)
-                    embed.add_field(name=language.string("util_weather_sunset"), value=f"{ss} | {ts}", inline=False)
+                    embed.add_field(name=language.string("util_weather_sunrise"), value=f"**{sr}** | {tr}", inline=False)
+                    embed.add_field(name=language.string("util_weather_sunset"), value=f"**{ss}** | {ts}", inline=False)
                 try:
-                    lat, long = data['coord']['lat'], data['coord']['lon']
+                    lat, long = data["coord"]["lat"], data["coord"]["lon"]
                     n, e = "N" if lat >= 0 else "S", "E" if long >= 0 else "W"
                     if lat < 0:
                         lat *= -1
                     if long < 0:
                         long *= -1
-                    embed.add_field(name=language.string("util_weather_location"), value=f"{language.number(lat)}°{n}, {language.number(long)}°{e}", inline=False)
+                    embed.add_field(name=language.string("util_weather_location"), value=f"{language.number(lat, precision=2)}°{n}, {language.number(long, precision=2)}°{e}", inline=False)
                 except KeyError:
                     pass
                 embed.timestamp = now
