@@ -97,7 +97,7 @@ class BotInformation(commands.Cog):
         link4 = oauth_url(str(self.bot.user.id), permissions=Permissions(0), scopes=['bot', 'applications.commands'])
         embed = discord.Embed()
         embed.title = language.string("info_invite_bot")
-        embed.description = language.string("info_invite_bot2", link3, link4)  # We will add new servers with slash support by default, in case I do ever add them
+        embed.description = language.string("info_invite_bot2", recommended=link3, none=link4)  # We will add new servers with slash support by default, in case I do ever add them
         # embed.add_field(name=language.string("info_invite_text"), value=language.string("info_invite_bot2", recommended=link1, none=link2), inline=False)
         # embed.add_field(name=language.string("info_invite_slash"), value=language.string("info_invite_bot2", recommended=link3, none=link4), inline=False)
         if self.bot.name in ["cobble", "kyomi"]:

@@ -1214,3 +1214,6 @@
 ## v7.4.31 - 21 February 2022
 - Added the database table for user logs
 - Slightly improved how the weather command looks
+
+## v7.4.31.1 - 22 February 2022
+- Fix invite command
