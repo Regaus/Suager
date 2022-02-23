@@ -252,9 +252,10 @@ async def send_help(ctx: Context, command: str | None, extra_text: str = None) -
             await cmd.on_help_command_error(ctx, e)
             return None
 
-    entity = None
     if isinstance(command, str):
         entity = bot.get_cog(command) or bot.get_command(command)
+    else:
+        entity = command
 
     if entity is None:
         return None

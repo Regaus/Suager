@@ -436,6 +436,8 @@
   "settings_locale_set": "I will now speak English in this server.",
   "settings_none": "There are no settings saved for this server.",
   "settings_messages": "Message Logs settings",
+  "settings_messages_bots_disable": "Bot messages will no longer be ignored",
+  "settings_messages_bots_enable": "Bot messages will now be ignored",
   "settings_messages_disable": "Edited and deleted messages will no longer be logged.",
   "settings_messages_enable": "Edited and deleted messages will now be logged.",
   "settings_messages_ignore_add": "Edited and deleted messages from {0} will now be ignored.",

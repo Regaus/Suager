@@ -1220,3 +1220,9 @@
 
 ## v7.4.32 - 22 February 2022
 - Made it possible to only generate the image of the colour using `//colour xxxxxx -i`
+
+## v7.4.33 - 23 February 2022
+- Fixed help command not doing anything in some cases
+- Made it possible to catch attachments being added/removed in an edited message
+- Fixed messages edits breaking if the content was empty
+- Fixed "ignore bots" setting of message logs showing incorrect command output

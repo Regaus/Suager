@@ -471,19 +471,47 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        # TODO: Try to track removal of files here
         async def process_msg(cid: int):
             embed = discord.Embed(title="Message Edited",
                                   description=f"Channel: {after.channel.mention} ({after.channel.id})\n"
                                               f"Author: {after.author}\n"
                                               f"Message sent: {after.created_at:%Y-%m-%d %H:%M:%S}\n"
-                                              f"Message edited: {after.edited_at:%Y-%m-%d %H:%M:%S}")
-            embed.add_field(name="Content Before", value=before.content[:1024], inline=False)
-            embed.add_field(name="Content After", value=after.content[:1024], inline=False)
-            await self.bot.get_channel(cid).send(embed=embed)
+                                              f"Message edited: {after.edited_at:%Y-%m-%d %H:%M:%S}\n")
+            embed.add_field(name="Content Before", value=before.content[:1024] or "None", inline=False)
+            embed.add_field(name="Content After", value=after.content[:1024] or "None", inline=False)
+            files = []
+            att_removed = 0
+            att_added = 0
+
+            async def add_file(att: discord.Attachment):
+                file = BytesIO()
+                try:
+                    await att.save(file)
+                except (discord.NotFound, discord.HTTPException):
+                    pass
+                files.append(discord.File(file, filename=att.filename))
+
+            # This checks if any new attachments have been added
+            for attachment in after.attachments:
+                if attachment not in before.attachments:
+                    await add_file(attachment)
+                    att_added += 1
+
+            # This checks if any old attachments have been removed
+            for attachment in before.attachments:
+                if attachment not in after.attachments:
+                    await add_file(attachment)
+                    att_removed += 1
+
+            if att_added:
+                embed.description += f"\nAttachments added: {att_added}"
+            if att_removed:
+                embed.description += f"\nAttachments removed: {att_removed}"
+            await self.bot.get_channel(cid).send(embed=embed, files=files)
 
         if self.bot.name in ["suager", "kyomi"]:
-            if after.guild is not None and after.content != before.content:
+            # We only do anything if either the content or attachments of the message were changed
+            if after.guild is not None and (after.content != before.content or after.attachments != before.attachments):
                 data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (after.guild.id, self.bot.name))
                 if not data:
                     return

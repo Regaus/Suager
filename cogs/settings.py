@@ -1265,7 +1265,9 @@ class Settings(commands.Cog):
 
     @set_messages.command(name="ignorebots", aliases=["bots"])
     async def prefix_default(self, ctx: commands.Context, action: str):
-        """ Ignore bots' messages """
+        """ Ignore bots' messages
+
+        Enter "enable" to ignore bots, "disable" to treat them like any other message """
         language = self.bot.language(ctx)
         if action not in ["enable", "disable"]:
             return await ctx.send(language.string("settings_prefix_default_invalid"))
