@@ -249,6 +249,85 @@ class Events(commands.Cog):
                         logger.log(self.bot.name, "moderation", out)
                         logger.log(self.bot.name, "errors", out)
 
+        if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
+            if member.name[0] < "A":
+                await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
+
+        if data:
+            settings = json.loads(data["data"])
+            if "join_roles" in settings:
+                try:
+                    _roles = settings["join_roles"]["bots"] if member.bot else settings["join_roles"]["members"]
+                    if _roles:
+                        # for _role in _roles:
+                        #     role: discord.Role = member.guild.get_role(_role)
+                        #     if role:
+                        roles = [member.guild.get_role(role) for role in _roles]
+                        roles = [role for role in roles if role is not None]  # Remove any roles that don't exist anymore
+                        try:
+                            await member.add_roles(*roles, reason=f"[Auto-Roles] Joining the server")
+                        except discord.Forbidden:
+                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Failed to give {member} join role"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+                except KeyError:
+                    pass
+
+            if "welcome" in settings:
+                welcome = settings["welcome"]
+                if welcome["channel"]:
+                    channel = self.bot.get_channel(welcome["channel"])
+                    if channel:
+                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        message = welcome["message"] \
+                            .replace("[MENTION]", member.mention)\
+                            .replace("[USER]", member.name)\
+                            .replace("[SERVER]", member.guild.name)\
+                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
+                            .replace("[MEMBERS]", language.number(member.guild.member_count))
+                        try:
+                            await channel.send(message, allowed_mentions=discord.AllowedMentions(users=[member]))
+                        except (discord.Forbidden, discord.NotFound):
+                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send message for {member} - Forbidden"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+
+            if "user_logs" in settings:
+                user_logs = settings["user_logs"]
+                if user_logs["join"]:
+                    channel = self.bot.get_channel(user_logs["join"])
+                    if channel:
+                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        embed = discord.Embed(title=language.string("events_user_joined"), colour=general.green2)
+                        embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
+                        embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
+                        embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True), inline=False)
+                        embed.set_thumbnail(url=str(member.display_avatar.replace(size=1024, static_format="png")))
+                        embed.timestamp = member.joined_at
+                        try:
+                            await channel.send(embed=embed)
+                        except discord.Forbidden:
+                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send user log message for {member} - Forbidden"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+
+                if user_logs["preserve_roles"]:
+                    data = self.bot.db.fetchrow("SELECT * FROM user_roles WHERE gid=? AND uid=?", (member.guild.id, member.id))
+                    if data:
+                        role_ids = json.loads(data["roles"])
+                        roles = [member.guild.get_role(role) for role in role_ids]
+                        roles = [role for role in roles if role is not None]  # Remove any roles that don't exist anymore
+                        try:
+                            await member.add_roles(*roles, reason=f"[Saved Roles] Coming back to the server")
+                        except (discord.Forbidden, discord.NotFound):
+                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Failed to give {member} preserved roles"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+                        # Remove the entry as their roles have now been handled
+                        self.bot.db.execute("DELETE FROM user_roles WHERE gid=? AND uid=?", (member.guild.id, member.id))
+
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:  # Senko Lair
                 role_ids = {
@@ -281,48 +360,6 @@ class Events(commands.Cog):
                                 await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
                                 await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
                                 break
-
-        if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
-            if member.name[0] < "A":
-                await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
-
-        if data:
-            settings = json.loads(data["data"])
-            if "join_roles" in settings:
-                try:
-                    _roles = settings["join_roles"]["bots"] if member.bot else settings["join_roles"]["members"]
-                    if _roles:
-                        for _role in _roles:
-                            role: discord.Role = member.guild.get_role(_role)
-                            if role:
-                                try:
-                                    await member.add_roles(role, reason=f"[Auto-Roles] Joining the server")
-                                except discord.Forbidden:
-                                    out = f"{time.time()} > {self.bot.full_name} > {member.guild} > Failed to give {member} join role (Forbidden)"
-                                    general.print_error(out)
-                                    logger.log(self.bot.name, "errors", out)
-                except KeyError:
-                    pass
-            if "welcome" in settings:
-                welcome = settings["welcome"]
-                if welcome["channel"]:
-                    channel = self.bot.get_channel(welcome["channel"])
-                    if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
-                        message = welcome["message"] \
-                            .replace("[MENTION]", member.mention)\
-                            .replace("[USER]", member.name)\
-                            .replace("[SERVER]", member.guild.name)\
-                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=False))\
-                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
-                            .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
-                            .replace("[MEMBERS]", language.number(member.guild.member_count))
-                        try:
-                            await channel.send(message, allowed_mentions=discord.AllowedMentions(users=[member]))
-                        except discord.Forbidden:
-                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send message for {member} - Forbidden"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
 
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
@@ -368,6 +405,31 @@ class Events(commands.Cog):
                             out = f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send message for {member} - Forbidden"
                             general.print_error(out)
                             logger.log(self.bot.name, "errors", out)
+
+            if "user_logs" in settings:
+                user_logs = settings["user_logs"]
+                if user_logs["leave"]:
+                    channel = self.bot.get_channel(user_logs["leave"])
+                    if channel:
+                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        embed = discord.Embed(title=language.string("events_user_left"), colour=general.red3)
+                        embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
+                        embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
+                        embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True), inline=False)
+                        joined = language.time(member.joined_at, short=0, dow=False, seconds=True)
+                        stayed = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
+                        embed.add_field(name=language.string("discord_length_of_stay"), value=f"{joined}\n{stayed}", inline=False)
+                        embed.set_thumbnail(url=str(member.display_avatar.replace(size=1024, static_format="png")))
+                        embed.timestamp = time.now(None)
+                        try:
+                            await channel.send(embed=embed)
+                        except discord.Forbidden:
+                            out = f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send user log message for {member} - Forbidden"
+                            general.print_error(out)
+                            logger.log(self.bot.name, "errors", out)
+
+                if user_logs["preserve_roles"]:
+                    self.bot.db.execute("INSERT INTO user_roles VALUES (?, ?, ?)", (member.guild.id, member.id, json.dumps([r.id for r in member.roles if not r.is_default()])))
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild: discord.Guild, user: discord.User | discord.Member):

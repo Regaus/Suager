@@ -231,7 +231,7 @@ tables = [
     Table("user_roles", [         # We should only need to log people who left with roles, so we only need this much data
         Column("gid", 0, True),   # Guild ID
         Column("uid", 0, True),   # User ID
-        Column("roles", 2, True)  # The role IDs the user had
+        Column("roles", 2, True)  # JSON list of role IDs the user had
     ]),
     # Table("user_logs", [
     #     Column("gid", 0, True),        # Guild ID

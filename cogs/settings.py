@@ -206,18 +206,26 @@ class Settings(commands.Cog):
                     mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
                 embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
 
+                def channel(cid: int):
+                    if cid == 0:
+                        return language.string("settings_current_disabled")
+                    return f"<#{cid}>"
+
                 # Mod Logs
                 mod_logs_text = language.string("settings_current_mod_logs_disabled", ctx.prefix)
                 if "mod_logs" in setting:
-                    def channel(cid: int):
-                        if cid == 0:
-                            return language.string("settings_current_disabled")
-                        return f"<#{cid}>"
-
                     mod_logs = setting["mod_logs"]
                     warn, mute, kick, ban, roles = mod_logs["warn"], mod_logs["mute"], mod_logs["kick"], mod_logs["ban"], mod_logs["roles"]
                     mod_logs_text = language.string("settings_current_mod_logs2", warn=channel(warn), mute=channel(mute), kick=channel(kick), ban=channel(ban), roles=channel(roles))
                 embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
+
+                # User Logs
+                user_logs_text = language.string("settings_current_user_logs_disabled", ctx.prefix)
+                if "user_logs" in setting:
+                    user_logs = setting["user_logs"]
+                    join, leave, roles = user_logs["join"], user_logs["leave"], user_logs["preserve_roles"]
+                    user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave), roles=language.yes(roles))
+                embed.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
 
             return await ctx.send(embed=embed)
 
@@ -1264,7 +1272,7 @@ class Settings(commands.Cog):
         return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_remove", channel.mention))
 
     @set_messages.command(name="ignorebots", aliases=["bots"])
-    async def prefix_default(self, ctx: commands.Context, action: str):
+    async def message_ignore_bots(self, ctx: commands.Context, action: str):
         """ Ignore bots' messages
 
         Enter "enable" to ignore bots, "disable" to treat them like any other message """
@@ -1608,7 +1616,7 @@ class Settings(commands.Cog):
         """ Goodbye message variables """
         return await ctx.send(self.bot.language(ctx).string("settings_goodbye_message_variables"))
 
-    @settings.group(name="moddm", aliases=["moddms", "dmonmod", "dms"], case_insensitive=True)
+    @settings.command(name="moddm", aliases=["moddms", "dmonmod", "dms"])
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_mod_dms(self, ctx: commands.Context, punishment: str, action: str = None):
         """ Send a DM to the user when a punishment is applied against them
@@ -1647,7 +1655,7 @@ class Settings(commands.Cog):
             text = "enabled" if enable else "disabled"
             return await ctx.send(language.string(f"settings_mod_dms_{punishment}_{text}"))
 
-    @settings.group(name="modlogs", aliases=["ml"], case_insensitive=True)
+    @settings.command(name="modlogs", aliases=["ml"])
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_mod_logs(self, ctx: commands.Context, punishment: str, channel: discord.TextChannel = None):
         """ Log all moderation actions taken with this bot
@@ -1680,6 +1688,84 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         return await ctx.send(text)
+
+    @settings.group(name="userlogs", aliases=["users"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    async def set_user_logs(self, ctx: commands.Context):
+        """ Settings for user logs """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @set_user_logs.command(name="join")
+    async def set_join_logs_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Set the channel for logging people who join the server """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "user_logs" not in _settings:
+            _settings["user_logs"] = self.template["user_logs"].copy()
+        if channel is None:
+            _settings["user_logs"]["join"] = 0
+        else:
+            _settings["user_logs"]["join"] = channel.id
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        if channel is not None:
+            return await ctx.send(self.bot.language(ctx).string("settings_users_join_set", channel.mention))
+        else:
+            return await ctx.send(self.bot.language(ctx).string("settings_users_join_none"))
+
+    @set_user_logs.command(name="leave")
+    async def set_leave_logs_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Set the channel for logging people who leave the server """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "user_logs" not in _settings:
+            _settings["user_logs"] = self.template["user_logs"].copy()
+        if channel is None:
+            _settings["user_logs"]["leave"] = 0
+        else:
+            _settings["user_logs"]["leave"] = channel.id
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        if channel is not None:
+            return await ctx.send(self.bot.language(ctx).string("settings_users_leave_set", channel.mention))
+        else:
+            return await ctx.send(self.bot.language(ctx).string("settings_users_leave_none"))
+
+    @set_user_logs.command(name="roles")
+    async def set_role_preservation(self, ctx: commands.Context, action: str):
+        """ Keep the roles the user had when they left if they ever rejoin """
+        language = ctx.language()
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "user_logs" not in _settings:
+            _settings["user_logs"] = self.template["user_logs"].copy()
+        action = action.lower()
+        if action not in ["enable", "disable"]:
+            return await ctx.send(language.string("settings_users_roles_action", action))
+        enable = action == "enable"
+        _settings["user_logs"]["preserve_roles"] = enable
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_users_roles_enable" if enable else "settings_users_roles_disable"))
 
     @commands.command(name="prefixes", aliases=["prefix"])
     @commands.guild_only()

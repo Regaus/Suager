@@ -484,7 +484,7 @@ class Utility(commands.Cog):
                 embed.add_field(name=language.string("discord_role_mentionable"), value=language.yes(role.mentionable), inline=True)
                 embed.add_field(name=language.string("discord_role_hoisted"), value=language.yes(role.hoist), inline=True)
                 embed.add_field(name=language.string("discord_role_position"), value=language.number(role.position), inline=True)
-                embed.add_field(name=language.string("generic_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
+                embed.add_field(name=language.string("discord_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
                 embed.add_field(name=language.string("discord_role_default"), value=language.yes(role.is_default()), inline=True)
                 return await ctx.send(embed=embed)
 
@@ -512,7 +512,7 @@ class Utility(commands.Cog):
         """ Check when someone joined server """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_joined_at", user, ctx.guild.name, language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False)))
+        return await ctx.send(language.string("discord_command_joined_at", user, ctx.guild.name, language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False)))
 
     @commands.command(name="createdat")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -520,7 +520,7 @@ class Utility(commands.Cog):
         """ Check when someone created their account """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_created_at", user, language.time(user.created_at, short=0, dow=False, seconds=False, tz=False)))
+        return await ctx.send(language.string("discord_command_created_at", user, language.time(user.created_at, short=0, dow=False, seconds=False, tz=False)))
 
     @commands.command(name="user")
     @commands.guild_only()
@@ -535,7 +535,7 @@ class Utility(commands.Cog):
         embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("generic_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=False)
+        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=False)
         embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False), inline=False)
         if len(user.roles) < 15:
             r = user.roles
@@ -564,7 +564,7 @@ class Utility(commands.Cog):
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=str(user), inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("generic_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
+        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
         return await ctx.send(embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
@@ -619,7 +619,7 @@ class Utility(commands.Cog):
             embed.add_field(name=language.string("discord_server_emotes"), value=language.string("discord_server_emotes_data", n, a, e, t), inline=True)
             ca = guild.created_at
             ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=False), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
-            embed.add_field(name=language.string("generic_created_at"), value=f"{ct}\n{cd}", inline=False)
+            embed.add_field(name=language.string("discord_created_at"), value=f"{ct}\n{cd}", inline=False)
             return await ctx.send(embed=embed)
 
     @server.command(name="icon", aliases=["avatar"])

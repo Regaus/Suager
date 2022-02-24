@@ -1226,3 +1226,6 @@
 - Made it possible to catch attachments being added/removed in an edited message
 - Fixed messages edits breaking if the content was empty
 - Fixed "ignore bots" setting of message logs showing incorrect command output
+
+## v7.4.34 - 24 February 2022
+- Added user logs

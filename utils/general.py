@@ -77,3 +77,4 @@ def bold(string: str) -> str:
 
 
 red, red2, yellow, green2, green = 0xff0000, 0xff4000, 0xffc000, 0xc0ff00, 0x00ff00
+red3 = 0xff4040
