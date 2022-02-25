@@ -12,7 +12,7 @@
 
 ## v5.0.2.1 - 2 June 2020
 - Improved readme
-- Updated license
+- Updated licence
 
 ## v5.1.0 - 2 June 2020
 - Major change in how the Infidel List works
@@ -225,7 +225,7 @@
 - RSL-1 translations for birthdays and discord cogs
 
 ## v6.0-beta8 - 8 August 2020
-- Updated cooldowns to be a little bit less strict
+- Updated cooldowns to be slightly less strict
 - RSL-1 translation for DLRAM and economy
 - The list of languages can now be accessed as a separate command
 
@@ -386,7 +386,7 @@
 - TBL now speeds up at further rounds
 - TBL now updates every 1 second instead of 1.5
 - TBL now caps out at 250,000 people activity
-- TBL location now automatically updates on levelup
+- TBL location now automatically updates on level up
 - TBL now has a small chance to boost your rewards
 - Fixed TBL stats next shaman level XP requirement output
 - Removed meme command
@@ -700,7 +700,7 @@
 - Made timezone output slightly less retarded
 
 ## v7.2.13.1 - 7 February 2021
-- Reminders command will now try show a reaction to signify it worked
+- Reminders command will now try to show a reaction to signify it worked
 
 ## v7.2.13.2 - 11 February 2021
 - Better customisation for ratings
@@ -1229,3 +1229,6 @@
 
 ## v7.4.34 - 24 February 2022
 - Added user logs
+
+## v7.4.34.1 - 25 February 2022
+- When leaving, the user log will now also show the roles you had

@@ -419,6 +419,7 @@ class Events(commands.Cog):
                         joined = language.time(member.joined_at, short=0, dow=False, seconds=True)
                         stayed = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
                         embed.add_field(name=language.string("discord_length_of_stay"), value=f"{joined}\n{stayed}", inline=False)
+                        embed.add_field(name=language.string("discord_user_roles"), value=", ".join([r.mention for r in member.roles if not r.is_default()]))
                         embed.set_thumbnail(url=str(member.display_avatar.replace(size=1024, static_format="png")))
                         embed.timestamp = time.now(None)
                         try:
