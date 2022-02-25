@@ -171,5 +171,27 @@ class Images(commands.Cog):
         # return await af_img_creator(ctx, link, "ship.png", message)
 
 
+class ImagesSuager(Images, name="Images"):
+    @commands.command(name="russia")
+    async def russia(self, ctx: commands.Context, user: discord.User = None):
+        """ Put a Russian flag over your avatar """
+        user = user or ctx.author
+        try:
+            avatar_bio = BytesIO(await http.get(str(user.display_avatar.replace(format="png", size=512)), res_method="read"))
+            avatar_img = Image.open(avatar_bio)
+            avatar = avatar_img.resize((512, 512))
+        except UnidentifiedImageError:  # Failed to get image
+            avatar = Image.open("assets/error.png")
+        russia = Image.open("assets/russia.png")
+        avatar.paste(russia, (0, 0), mask=russia)
+        bio = BytesIO()
+        avatar.save(bio, "PNG")
+        bio.seek(0)
+        return await ctx.send(file=discord.File(bio, filename="russia.png"))
+
+
 def setup(bot):
-    bot.add_cog(Images(bot))
+    if bot.name == "suager":
+        bot.add_cog(ImagesSuager(bot))
+    else:
+        bot.add_cog(Images(bot))

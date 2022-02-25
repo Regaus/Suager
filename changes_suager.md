@@ -1232,3 +1232,6 @@
 
 ## v7.4.34.1 - 25 February 2022
 - When leaving, the user log will now also show the roles you had
+
+## v7.4.35 - 25 February 2022
+- Added command to overlay your avatar with the Russian flag
