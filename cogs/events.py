@@ -679,7 +679,7 @@ class Events(commands.Cog):
         if self.bot.name in ["suager", "kyomi"]:
             a1, a2 = [before.guild_avatar, after.guild_avatar]  # type: discord.Asset | None, discord.Asset | None
             avatar_channel = self.bot.get_channel(745760639955370083)
-            if not a2:  # User removed their guild avatar
+            if a1 and not a2:  # User removed their guild avatar
                 send = f"{now} > {guild} > {name} ({uid}) removed their guild avatar"
                 logger.log(self.bot.name, "user_avatars", send)
             elif a1 != a2:

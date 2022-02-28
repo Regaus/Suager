@@ -115,13 +115,6 @@ class Settings(commands.Cog):
             embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
 
             if self.bot.name in ["kyomi", "suager"]:
-                # Mute role
-                mute_role = language.string("generic_none")
-                if "mute_role" in setting:
-                    if setting["mute_role"] != 0:
-                        mute_role = f"<@&{setting['mute_role']}>"
-                embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
-
                 # Starboard
                 sb = language.string("settings_current_disabled")
                 if "starboard" in setting:
@@ -190,6 +183,13 @@ class Settings(commands.Cog):
                 embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
                 if goodbye_message:
                     embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
+
+                # Mute role
+                mute_role = language.string("generic_none")
+                if "mute_role" in setting:
+                    if setting["mute_role"] != 0:
+                        mute_role = f"<@&{setting['mute_role']}>"
+                embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
 
                 # Message Logs
                 msg = language.string("settings_current_disabled")

@@ -1235,3 +1235,7 @@
 
 ## v7.4.35 - 25 February 2022
 - Added command to overlay your avatar with the Russian flag
+
+## v7.4.35.1 - 28 February 2022
+- Slightly rearranged settings
+- Fixed avatar logs spam when a member had no guild avatar
