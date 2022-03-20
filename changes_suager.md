@@ -1246,3 +1246,7 @@
 - Ban and massban now check if the user has already been banned from the server
 - Massban command now checks for members first and then the reason as the last argument
 - Improved the way the massban command works
+
+## v7.5.0a2 - 20 March 2022
+- Improved output for massban command
+- Added massunban and masskick commands

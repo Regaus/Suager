@@ -160,38 +160,82 @@ class Moderation(commands.Cog):
         self.bot = bot
         # self.admins = self.bot.config["owners"]
 
+    def kick_check(self, ctx: commands.Context, member: discord.Member, language: Language):
+        if member == ctx.author:
+            return language.string("mod_kick_self")
+        elif member.id == ctx.guild.owner.id:
+            return language.string("mod_kick_owner")
+        elif (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
+            return language.string("mod_kick_forbidden", member=member)
+        elif member.top_role.position >= ctx.guild.me.top_role.position:  # The bot can't bypass this unless it's the guild owner, which is unlikely
+            return language.string("mod_kick_forbidden2", member=member)
+        elif member.id == self.bot.user.id:
+            return language.string("mod_ban_suager", ctx.author.name)
+        return True
+
+    async def kick_user(self, ctx: commands.Context, member: discord.Member, reason: str):
+        await send_mod_dm(self.bot, ctx, member, "kick", reason, None)
+        await member.kick(reason=general.reason(ctx.author, reason))
+        reason_log = general.reason(ctx.author, reason)
+        self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (member.id, ctx.guild.id, "kick", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "kick", reason_log, None)
+
     @commands.command(name="kick")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(kick_members=True)
-    async def kick_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+    async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Kick a user from the server """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
-        if member == ctx.author:
-            return await ctx.send(language.string("mod_kick_self"))
-        elif member.id == ctx.guild.owner.id:
-            return await ctx.send(language.string("mod_kick_owner"))
-        elif (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-            return await ctx.send(language.string("mod_kick_forbidden", member=member))
-        elif (member.top_role.position >= ctx.guild.me.top_role.position) and ctx.author != ctx.guild.owner:
-            return await ctx.send(language.string("mod_kick_forbidden2", member=member))
-        elif member.id == self.bot.user.id:
-            return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
         try:
-            user = str(member)
-            await send_mod_dm(self.bot, ctx, member, "kick", reason, None)
-            await member.kick(reason=general.reason(ctx.author, reason))
-            reason_log = general.reason(ctx.author, reason)
-            self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
-            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                (member.id, ctx.guild.id, "kick", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
-            entry_id = self.bot.db.db.lastrowid
-            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "kick", reason_log, None)
-            return await ctx.send(language.string("mod_kick", user, reason))
+            kick_check = self.kick_check(ctx, member, language)
+            if kick_check is not True:
+                return await ctx.send(kick_check)
+            await self.kick_user(ctx, member, reason)
+            return await ctx.send(language.string("mod_kick", member, reason))
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
+
+    @commands.command(name="masskick")
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
+    @permissions.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def mass_kick(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+        """ Mass kick users from the server """
+        language = self.bot.language(ctx)
+        reason = reason[:400] if reason else language.string("mod_reason_none")
+        kicked = 0
+        failed = 0
+        for member_id in members:
+            success = False
+            try:
+                member: discord.Member = ctx.guild.get_member(member_id)  # type: ignore
+                if member is None:
+                    await ctx.send(language.string("mod_kick_none", id=member_id))
+                    continue
+                kick_check = self.kick_check(ctx, member, language)
+                if kick_check is not True:
+                    return await ctx.send(kick_check)
+                await self.kick_user(ctx, member, reason)
+                kicked += 1
+                success = True
+            except Exception as e:
+                await ctx.send(f"`{member_id}` - {type(e).__name__}: {e}")
+            finally:
+                if not success:
+                    failed += 1
+        total = kicked + failed
+        if failed:
+            output = language.string("mod_kick_mass2", reason=reason, total=language.number(total), banned=language.number(kicked), failed=language.number(failed))
+        else:
+            output = language.string("mod_kick_mass", reason=reason, total=language.number(total))
+        return await ctx.send(output)
 
     def ban_check(self, ctx: commands.Context, user: MemberID, language: Language):
         member = ctx.guild.get_member(user)  # type: ignore
@@ -201,7 +245,7 @@ class Moderation(commands.Cog):
             return language.string("mod_ban_owner")
         elif member is not None and (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
             return language.string("mod_ban_forbidden", member=member)
-        elif member is not None and (member.top_role.position >= ctx.guild.me.top_role.position) and ctx.author != ctx.guild.owner:
+        elif member is not None and (member.top_role.position >= ctx.guild.me.top_role.position):  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_ban_forbidden2", member=member)
         elif user == self.bot.user.id:
             return language.string("mod_ban_suager", ctx.author.name)
@@ -230,7 +274,7 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def ban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
+    async def ban(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Ban a user from the server """
         language = ctx.language()
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -285,29 +329,76 @@ class Moderation(commands.Cog):
                     if not success:
                         failed += 1
         total = banned + failed
-        return await ctx.send(language.string("mod_ban_mass", reason=reason, total=language.number(total), banned=language.number(banned), failed=language.number(failed)))
+        if failed:
+            output = language.string("mod_ban_mass2", reason=reason, total=language.number(total), banned=language.number(banned), failed=language.number(failed))
+        else:
+            output = language.string("mod_ban_mass", reason=reason, total=language.number(total))
+        return await ctx.send(output)
+
+    async def unban_user(self, ctx: commands.Context, user: discord.User, reason: str):
+        await ctx.guild.unban(user, reason=general.reason(ctx.author, reason))  # type: ignore
+        await send_mod_dm(self.bot, ctx, user, "unban", reason, None)
+        reason_log = general.reason(ctx.author, reason)
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (user.id, ctx.guild.id, "unban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "unban", reason_log, None)
 
     @commands.command(name="unban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def unban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
+    async def unban(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Unban a user """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         try:
-            await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))  # type: ignore
             user = await self.bot.fetch_user(member)  # type: ignore
-            await send_mod_dm(self.bot, ctx, user, "unban", reason, None)
-            reason_log = general.reason(ctx.author, reason)
-            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                (member, ctx.guild.id, "unban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
-            entry_id = self.bot.db.db.lastrowid
-            await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "unban", reason_log, None)
+            if user is None:
+                return await ctx.send(language.string("mod_ban_none", id=member))
+            if not await self.is_already_banned(ctx, user):
+                return await ctx.send(language.string("mod_unban_already", member=user))
+            await self.unban_user(ctx, user, reason)
             return await ctx.send(language.string("mod_unban", member, user, reason))
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
+
+    @commands.command(name="massunban")
+    @commands.guild_only()
+    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
+    @permissions.has_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def mass_unban(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+        """ Mass unban users from the server """
+        language = self.bot.language(ctx)
+        reason = reason[:400] if reason else language.string("mod_reason_none")
+        banned = 0
+        failed = 0
+        for member in members:
+            success = False
+            try:
+                user: discord.User = await self.bot.fetch_user(member)  # type: ignore
+                if user is None:
+                    await ctx.send(language.string("mod_ban_none", id=member))
+                    continue
+                if not await self.is_already_banned(ctx, user):
+                    await ctx.send(language.string("mod_unban_already", member=user))
+                    continue
+                await self.unban_user(ctx, user, reason)
+                banned += 1
+                success = True
+            except Exception as e:
+                await ctx.send(f"`{member}` - {type(e).__name__}: {e}")
+            finally:
+                if not success:
+                    failed += 1
+        total = banned + failed
+        if failed:
+            output = language.string("mod_unban_mass2", reason=reason, total=language.number(total), banned=language.number(banned), failed=language.number(failed))
+        else:
+            output = language.string("mod_unban_mass", reason=reason, total=language.number(total))
+        return await ctx.send(output)
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
