@@ -7,7 +7,7 @@ from io import BytesIO
 import discord
 
 from utils import bot_data, commands, general, logger, permissions, time
-from utils.languages import FakeContext
+from utils.languages import FakeContext, Language
 
 
 async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: int = None, after: int = None, message: bool = True):
@@ -41,7 +41,7 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
 
 
 class MemberID(commands.Converter):
-    # TODO: Try to make this possible to convert to ID
+    # The solution to the warnings is just using "type: ignore"
     async def convert(self, ctx, argument):
         try:
             m = await commands.MemberConverter().convert(ctx, argument)
@@ -174,12 +174,13 @@ class Moderation(commands.Cog):
         elif member.id == ctx.guild.owner.id:
             return await ctx.send(language.string("mod_kick_owner"))
         elif (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-            return await ctx.send(language.string("mod_kick_forbidden"))
+            return await ctx.send(language.string("mod_kick_forbidden", member=member))
+        elif (member.top_role.position >= ctx.guild.me.top_role.position) and ctx.author != ctx.guild.owner:
+            return await ctx.send(language.string("mod_kick_forbidden2", member=member))
         elif member.id == self.bot.user.id:
             return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
         try:
             user = str(member)
-            # TODO: Make sure we can kick the user *before* sending the message, so it wouldn't look stupid if this fails...
             await send_mod_dm(self.bot, ctx, member, "kick", reason, None)
             await member.kick(reason=general.reason(ctx.author, reason))
             reason_log = general.reason(ctx.author, reason)
@@ -192,6 +193,38 @@ class Moderation(commands.Cog):
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
 
+    def ban_check(self, ctx: commands.Context, user: MemberID, language: Language):
+        member = ctx.guild.get_member(user)  # type: ignore
+        if user == ctx.author.id:
+            return language.string("mod_ban_self")
+        elif user == ctx.guild.owner.id:
+            return language.string("mod_ban_owner")
+        elif member is not None and (member.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
+            return language.string("mod_ban_forbidden", member=member)
+        elif member is not None and (member.top_role.position >= ctx.guild.me.top_role.position) and ctx.author != ctx.guild.owner:
+            return language.string("mod_ban_forbidden2", member=member)
+        elif user == self.bot.user.id:
+            return language.string("mod_ban_suager", ctx.author.name)
+        return True
+
+    @staticmethod
+    async def is_already_banned(ctx: commands.Context, user: discord.User):
+        try:
+            await ctx.guild.fetch_ban(user)
+            return True
+        except discord.NotFound:
+            return False
+
+    async def ban_user(self, ctx: commands.Context, user: discord.User, reason: str):
+        await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
+        await ctx.guild.ban(user, reason=general.reason(ctx.author, reason))
+        reason_log = general.reason(ctx.author, reason)
+        self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (user.id, ctx.guild.id, self.bot.name))
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (user.id, ctx.guild.id, "ban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "ban", reason_log, None)
+
     @commands.command(name="ban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
@@ -199,28 +232,18 @@ class Moderation(commands.Cog):
     @commands.bot_has_permissions(ban_members=True)
     async def ban_user(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
         """ Ban a user from the server """
-        language = self.bot.language(ctx)
+        language = ctx.language()
         reason = reason[:400] if reason else language.string("mod_reason_none")
-        if member == ctx.author.id:
-            return await ctx.send(language.string("mod_ban_self"))
-        elif member == ctx.guild.owner.id:
-            return await ctx.send(language.string("mod_ban_owner"))
-        elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-            return await ctx.send(language.string("mod_ban_forbidden"))
-        elif member == self.bot.user.id:
-            return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
         try:
-            # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
-            # TODO: Check if the user is already banned from the server
-            user: discord.User = await self.bot.fetch_user(member)
-            await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
-            await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
-            reason_log = general.reason(ctx.author, reason)
-            self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member, ctx.guild.id, self.bot.name))
-            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                (member, ctx.guild.id, "ban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
-            entry_id = self.bot.db.db.lastrowid
-            await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "ban", reason_log, None)
+            ban_check = self.ban_check(ctx, member, language)
+            if ban_check is not True:
+                return await ctx.send(ban_check)
+            user: discord.User = await self.bot.fetch_user(member)  # type: ignore
+            if user is None:
+                return await ctx.send(language.string("mod_ban_none", id=member))
+            if await self.is_already_banned(ctx, user):
+                return await ctx.send(language.string("mod_ban_already", member=user))
+            await self.ban_user(ctx, user, reason)
             return await ctx.send(language.string("mod_ban", member, user, reason))
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
@@ -230,41 +253,39 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def mass_ban(self, ctx: commands.Context, reason: str, *who: MemberID):
+    async def mass_ban(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
         """ Mass ban users from the server """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
-        if ctx.author.id in who:
+        if ctx.author.id in members:
             return await ctx.send(language.string("mod_ban_self"))
         else:
-            for member in who:
-                if member == self.bot.user.id:
-                    return await ctx.send(language.string("mod_ban_suager", ctx.author.name))
-                if member == ctx.guild.owner.id:
-                    return await ctx.send(language.string("mod_ban_owner"))
-                elif (them := ctx.guild.get_member(member)) is not None and (them.top_role.position >= ctx.author.top_role.position) and ctx.author != ctx.guild.owner:
-                    return await ctx.send(language.string("mod_ban_forbidden"))
-        banned = 0
-        failed = 0
-        for member in who:
-            try:
-                # TODO: Make sure we can ban the user *before* sending the message, so it wouldn't look stupid if this fails...
-                # TODO: Check if the user is already banned from the server
-                user: discord.User = await self.bot.fetch_user(member)
-                await send_mod_dm(self.bot, ctx, user, "ban", reason, None)
-                await ctx.guild.ban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
-                reason_log = general.reason(ctx.author, reason)
-                self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member, ctx.guild.id, self.bot.name))
-                self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                    (member, ctx.guild.id, "ban", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
-                entry_id = self.bot.db.db.lastrowid
-                await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "ban", reason_log, None)
-                banned += 1
-            except Exception as e:
-                failed += 1
-                await ctx.send(f"`{member}` - {type(e).__name__}: {e}")
+            banned = 0
+            failed = 0
+            for member in members:
+                success = False
+                try:
+                    ban_check = self.ban_check(ctx, member, language)
+                    if ban_check is not True:
+                        await ctx.send(ban_check)
+                        continue
+                    user: discord.User = await self.bot.fetch_user(member)  # type: ignore
+                    if user is None:
+                        await ctx.send(language.string("mod_ban_none", id=member))
+                        continue
+                    if await self.is_already_banned(ctx, user):
+                        await ctx.send(language.string("mod_ban_already", member=user))
+                        continue
+                    await self.ban_user(ctx, user, reason)
+                    banned += 1
+                    success = True
+                except Exception as e:
+                    await ctx.send(f"`{member}` - {type(e).__name__}: {e}")
+                finally:
+                    if not success:
+                        failed += 1
         total = banned + failed
-        return await ctx.send(language.string("mod_ban_mass", reason, language.number(total), language.number(banned), language.number(failed)))
+        return await ctx.send(language.string("mod_ban_mass", reason=reason, total=language.number(total), banned=language.number(banned), failed=language.number(failed)))
 
     @commands.command(name="unban")
     @commands.guild_only()
@@ -276,8 +297,8 @@ class Moderation(commands.Cog):
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
         try:
-            await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))
-            user = await self.bot.fetch_user(member)
+            await ctx.guild.unban(discord.Object(id=member), reason=general.reason(ctx.author, reason))  # type: ignore
+            user = await self.bot.fetch_user(member)  # type: ignore
             await send_mod_dm(self.bot, ctx, user, "unban", reason, None)
             reason_log = general.reason(ctx.author, reason)
             self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",

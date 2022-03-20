@@ -1239,3 +1239,10 @@
 ## v7.4.35.1 - 28 February 2022
 - Slightly rearranged settings
 - Fixed avatar logs spam when a member had no guild avatar
+
+## v7.5.0a1 - 18-20 March 2022
+- Added warning settings
+- Kick and ban now try to make sure the user can be kicked/banned before doing so
+- Ban and massban now check if the user has already been banned from the server
+- Massban command now checks for members first and then the reason as the last argument
+- Improved the way the massban command works

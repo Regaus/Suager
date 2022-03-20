@@ -89,6 +89,7 @@ def file_ts(name: str, ext: str = "txt") -> str:
 
 
 def interpret_time(period: str) -> relativedelta:
+    """Convert str to relativedelta"""
     matches = re.findall(r"(\d+(y|mo|w|d|h|m|s))", period)
     if not matches:
         return relativedelta(seconds=0)  # Because fuck you

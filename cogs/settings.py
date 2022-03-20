@@ -191,6 +191,16 @@ class Settings(commands.Cog):
                         mute_role = f"<@&{setting['mute_role']}>"
                 embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
 
+                # Warnings
+                warnings = language.string("settings_current_warnings_disabled", ctx.prefix)
+                if "warnings" in setting:
+                    warning = setting["warnings"]
+                    mute_requirement = warning["required_to_mute"]  # Warnings required to mute
+                    mute_length = warning["mute_length"]  # Starting mute length
+                    scaling = warning["scaling"]  # The multiplier for mute length
+                    warnings = language.string("settings_current_warnings2", mute_req=mute_requirement, mute_len=mute_length, scaling=language.number(scaling))
+                embed.add_field(name=language.string("settings_current_warnings"), value=warnings, inline=False)
+
                 # Message Logs
                 msg = language.string("settings_current_disabled")
                 if "message_logs" in setting:
@@ -1766,6 +1776,88 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         return await ctx.send(language.string("settings_users_roles_enable" if enable else "settings_users_roles_disable"))
+
+    @settings.group(name="warnings", aliases=["warns", "warn"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    async def set_warnings(self, ctx: commands.Context):
+        """ Settings for warnings """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @set_warnings.command(name="requirement")
+    async def set_warning_requirement(self, ctx: commands.Context, warnings: int):
+        """ Set the amount of warnings to be reached before the user is muted
+
+         Default value: 3
+         This means that the user would get muted when they get the 3rd warning"""
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "warnings" not in _settings:
+            _settings["warnings"] = self.template["warnings"].copy()
+        _settings["warnings"]["required_to_mute"] = warnings
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(self.bot.language(ctx).string("settings_warnings_requirement", warnings=warnings))
+
+    @set_warnings.command(name="length")
+    async def set_warning_length(self, ctx: commands.Context, mute_length: str):
+        """ Set the starting mute length when reaching the mute requirement
+
+        Default value: 12h
+        This works together with the scaling value:
+        If the requirement is 3 warnings, the mute length is 12 hours and the scaling is x2,
+        then the person is muted for 12 hours on 3rd warning, then for 1 day on 4th warning, etc...
+
+        Note that if the mute length value is specified using months or years, the scaling might not work correctly.
+        If the mute length exceeds 5 years, the resulting mute will be permanent."""
+        language = ctx.language()
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "warnings" not in _settings:
+            _settings["warnings"] = self.template["warnings"].copy()
+        value = time.interpret_time(mute_length)
+        if time.rd_is_zero(value):
+            return await ctx.send(language.string("settings_warnings_length_invalid"))
+        _settings["warnings"]["mute_length"] = mute_length
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_warnings_length", length=language.delta_rd(value, accuracy=7, brief=True, affix=False)))
+
+    @set_warnings.command(name="scaling", aliases=["scale", "multiplier"])
+    async def set_warning_scaling(self, ctx: commands.Context, scaling: float):
+        """ Set the scaling to apply to mute length
+
+        Default value: 1
+        At x2 scaling, the 3rd warning would result in a 12-hour mute, the 4th in a 1-day mute, etc.
+        Note that if the mute length value is specified using months or years, the scaling might not work correctly.
+        If the mute length exceeds 5 years, the resulting mute will be permanent."""
+        language = ctx.language()
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "warnings" not in _settings:
+            _settings["warnings"] = self.template["warnings"].copy()
+        _settings["warnings"]["scaling"] = scaling
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_warnings_scaling", scaling=language.number(scaling)))
 
     @commands.command(name="prefixes", aliases=["prefix"])
     @commands.guild_only()
