@@ -1250,3 +1250,8 @@
 ## v7.5.0a2 - 20 March 2022
 - Improved output for massban command
 - Added massunban and masskick commands
+
+## v7.5.0a3 - 21 March 2022
+- Made the time-based functions wait for their next iteration cycle and only then wait_until_ready if needed
+- Fixed guild avatar command being broken
+- Made the bot send a message when a user is kicked for being too young in Nuriki's server

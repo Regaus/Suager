@@ -344,6 +344,7 @@ class Events(commands.Cog):
                     except (discord.HTTPException, discord.Forbidden):
                         pass
                     await member.kick(reason="Users must be at least 30 days old to join the server.")
+                    await member.guild.get_channel(870015339142996079).send(f"{member} has been kicked - account less than 30 days old...")
                 trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
                 if trials:
                     for trial in trials:

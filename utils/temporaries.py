@@ -61,9 +61,9 @@ async def reminders(bot: bot_data.Bot):
 
 async def reminders_errors(bot: bot_data.Bot):
     """ Try to send the reminder again... if it doesn't work, ignore it anyways """
-    await bot.wait_until_ready()
     update_speed = 3600
     await wait_until_next_iter(update_speed, 0)  # This only needs to run once an hour
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Errors Handler")
 
     while True:
@@ -154,9 +154,9 @@ async def punishments(bot: bot_data.Bot):
 
 
 async def punishments_errors(bot: bot_data.Bot):
-    await bot.wait_until_ready()
     update_speed = 3600
     await wait_until_next_iter(update_speed, 0)  # This only needs to run once an hour
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Errors Handler")
 
     while True:
@@ -171,9 +171,9 @@ async def punishments_errors(bot: bot_data.Bot):
 
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
-    await bot.wait_until_ready()
     update_speed = 3600
     await wait_until_next_iter(update_speed, 1)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
     while True:
@@ -436,9 +436,9 @@ def ka_data_updater(bot: bot_data.Bot):
 
 async def ka_time_updater(bot: bot_data.Bot):
     """ Update the time and weather info for Kargadian cities in Kargadia and Regaus'tar Koankadu """
-    await bot.wait_until_ready()
     update_speed = 300
     await wait_until_next_iter(update_speed, 0, time2.Kargadia)
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
 
     channel_ka = bot.get_channel(942476819892961290)  # Kargadia server
@@ -498,9 +498,9 @@ async def ka_time_updater(bot: bot_data.Bot):
 
 
 async def playing(bot: bot_data.Bot):
-    await bot.wait_until_ready()
     update_speed = 120
     await wait_until_next_iter(update_speed, 0)
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     def error(text: str):
@@ -752,9 +752,8 @@ async def playing(bot: bot_data.Bot):
 
 
 async def avatars(bot: bot_data.Bot):
-    await bot.wait_until_ready()
-
     await wait_until_next_iter(3600, 1)
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
     def error(text: str):
@@ -786,7 +785,6 @@ async def avatars(bot: bot_data.Bot):
 
 async def polls(bot: bot_data.Bot):
     await bot.wait_until_ready()
-
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Polls")
     while True:
         expired = bot.db.fetch("SELECT * FROM polls WHERE DATETIME(expiry) < DATETIME('now')", ())
@@ -878,7 +876,6 @@ async def polls(bot: bot_data.Bot):
 
 async def trials(bot: bot_data.Bot):
     await bot.wait_until_ready()
-
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Trials")
     while True:
         expired = bot.db.fetch("SELECT * FROM trials WHERE DATETIME(expiry) < DATETIME('now')", ())
@@ -1132,7 +1129,6 @@ async def trials(bot: bot_data.Bot):
 
 async def new_year(bot: bot_data.Bot):
     await bot.wait_until_ready()
-
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised 2022 New Year Script")
     ny = time.dt(2022)
     now = time.now()
@@ -1150,10 +1146,9 @@ async def new_year(bot: bot_data.Bot):
 
 
 async def sl_holidays_updater(bot: bot_data.Bot):
-    await bot.wait_until_ready()
     update_speed = 86400
     await wait_until_next_iter(update_speed, 1)  # Wait until midnight of the next day, to prevent sending holidays twice when restarting
-
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Senko Lair Holidays")
     # Servers:  Senko Lair general, Kargadia general,   RK general
     channels = [568148147457490958, 928745963877720147, 738425419325243424]
@@ -1186,10 +1181,9 @@ async def sl_holidays_updater(bot: bot_data.Bot):
 
 
 async def ka_holidays_updater(bot: bot_data.Bot):
-    await bot.wait_until_ready()
     update_speed = 86400
     await wait_until_next_iter(update_speed, 1, time2.Kargadia)  # Update this every Kargadian midnight
-
+    await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Kargadian Holidays")
     # I don't think Kargadian holidays need to be sent into SL
     # Servers:  Kargadia general,   RK general

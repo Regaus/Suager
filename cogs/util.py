@@ -457,7 +457,7 @@ class Utility(commands.Cog):
         avatar = member.guild_avatar
         if not avatar:
             return await ctx.send(f"{member} does not have a guild avatar in {guild.name}...")
-        return ctx.send(f"**{member}**'s avatar in **{guild.name}**:\n{avatar.replace(size=1024, static_format='png')}")
+        return await ctx.send(f"**{member}**'s avatar in **{guild.name}**:\n{avatar.replace(size=1024, static_format='png')}")
 
     @commands.group(name="role", invoke_without_command=True)
     @commands.guild_only()
