@@ -647,6 +647,8 @@ class Events(commands.Cog):
                 await after.edit(reason="De-hoist", nick=f"\u17b5{after.display_name[:31]}")
             if "spoingus" in after.display_name.lower():
                 await after.edit(nick=None)
+            if uid == 910941637742592000 and after.display_name != "Niki":  # Nuriki
+                await after.edit(nick="Niki")
 
         # Nickname
         n1, n2 = before.nick, after.nick
