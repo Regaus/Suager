@@ -592,7 +592,7 @@ class Utility(commands.Cog):
             bots_amt = bots / guild.member_count
             embed = discord.Embed(colour=general.random_colour())
             if ctx.guild.icon:
-                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+                embed.set_thumbnail(url=str(guild.icon.replace(size=1024, static_format="png")))
             embed.title = language.string("discord_server_about", guild.name)
             embed.add_field(name=language.string("discord_server_name"), value=guild.name, inline=True)
             embed.add_field(name=language.string("discord_server_id"), value=guild.id, inline=True)
