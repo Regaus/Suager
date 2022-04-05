@@ -1255,3 +1255,6 @@
 - Made the time-based functions wait for their next iteration cycle and only then wait_until_ready if needed
 - Fixed guild avatar command being broken
 - Made the bot send a message when a user is kicked for being too young in Nuriki's server
+
+## v7.5.0a4 - 3-5 April 2022
+- Mass-mute command

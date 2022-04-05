@@ -400,125 +400,139 @@ class Moderation(commands.Cog):
             output = language.string("mod_unban_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
 
-    @commands.command(name="nickname", aliases=["nick"])
-    @commands.guild_only()
-    @permissions.has_permissions(manage_nicknames=True)
-    @commands.bot_has_permissions(manage_nicknames=True)
-    async def nickname_user(self, ctx: commands.Context, member: discord.Member, *, name: str = None):
-        """ Sets a user's nickname """
-        language = self.bot.language(ctx)
-        try:
-            if member.id == ctx.guild.owner.id:
-                return await ctx.send(language.string("mod_nick_owner"))
-            if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
-                return await ctx.send(language.string("mod_nick_forbidden2"))
-            await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
-            if name is None:
-                message = language.string("mod_nick_reset", member)
-            else:
-                message = language.string("mod_nick", member, name)
-            return await ctx.send(message)
-        except discord.Forbidden:
-            return await ctx.send(language.string("mod_nick_forbidden"))
-        except Exception as e:
-            return await ctx.send(f"{type(e).__name__}: {e}")
-
-    @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
-    @commands.guild_only()
-    @permissions.has_permissions(change_nickname=True)
-    @commands.bot_has_permissions(manage_nicknames=True)
-    async def nickname_self(self, ctx: commands.Context, *, name: str = None):
-        """ Change your own nickname """
-        language = self.bot.language(ctx)
-        try:
-            if ctx.author.id == ctx.guild.owner.id:
-                return await ctx.send(language.string("mod_nick_owner"))
-            await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
-            if name is None:
-                message = language.string("mod_nick_self_reset")
-            else:
-                message = language.string("mod_nick_self", name)
-            return await ctx.send(message)
-        except discord.Forbidden:
-            return await ctx.send(language.string("mod_nick_forbidden"))
-        except Exception as e:
-            return await ctx.send(f"{type(e).__name__}: {e}")
-
-    @commands.command(name="mute")
-    @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
-    @commands.bot_has_permissions(manage_roles=True)
-    # @commands.check(lambda ctx: ctx.bot.name == "suager")
-    async def mute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
-        """ Mute a user """
-        language = self.bot.language(ctx)
-        reason = reason[:400] if reason else language.string("mod_reason_none")
-        if member.id == self.bot.user.id:
-            return await ctx.send(language.string("mod_mute_suager"))
-        if member == ctx.author:
-            return await ctx.send(language.string("mod_mute_self"))
-        _reason = general.reason(ctx.author, reason)
+    def mute_role(self, ctx: commands.Context, language: Language):
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
-            return await ctx.send(language.string("mod_mute_role2", ctx.prefix))
+            return language.string("mod_mute_role2", ctx.prefix)
         data = json.loads(_data["data"])
         try:
             mute_role_id = data["mute_role"]
         except KeyError:
-            return await ctx.send(language.string("mod_mute_role"))
+            return language.string("mod_mute_role")
         mute_role = ctx.guild.get_role(mute_role_id)
         if not mute_role:
-            return await ctx.send(language.string("mod_mute_role"))
-        try:
-            await member.add_roles(mute_role, reason=_reason)
-        except Exception as e:
-            return await ctx.send(f"{type(e).__name__}: {e}")
-        out = language.string("mod_mute", member, reason)
-        # exists = self.bot.db.fetchrow("SELECT * FROM temporary WHERE uid=? AND gid=? AND bot=? AND type='mute'", (member.id, ctx.guild.id, self.bot.name))
+            return language.string("mod_mute_role")
+        return mute_role
+
+    def mute_check(self, ctx: commands.Context, user: discord.Member, language: Language):
+        if user == ctx.author.id:
+            return language.string("mod_mute_self")
+        elif user == self.bot.user.id:
+            return language.string("mod_mute_suager", ctx.author.name)
+        return True
+
+    @staticmethod
+    async def get_duration(ctx: commands.Context, reason: str, language: Language):
+        reason = reason[:400] if reason else language.string("mod_reason_none")
         _duration = reason.split(" ")[0]
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
         if time.rd_is_above_5y(delta):
             await ctx.send(language.string("mod_mute_limit"), delete_after=15)
             error = True
-        if not error:
-            # if exists is not None:
-            #     self.bot.db.execute("UPDATE temporary SET expiry=? WHERE entry_id=?", (expiry, exists["entry_id"]))
-            # else:
-            #     random_id = general.random_id()
-            #     while self.bot.db.fetchrow("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
-            #         random_id = general.random_id()
-            #     self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (member.id, "mute", expiry, ctx.guild.id, None, random_id, 0, self.bot.name))
+        return reason, delta, expiry, error
 
-            # Overwrite all older still active mutes as 5 ("Handled Otherwise")
-            reason = " ".join(reason.split(" ")[1:])
-            reason = reason or language.string("mod_reason_none")
-            reason_log = general.reason(ctx.author, reason)
-            self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
-            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                (member.id, ctx.guild.id, "mute", ctx.author.id, reason_log, True, expiry, 0, self.bot.name))
-            entry_id = self.bot.db.db.lastrowid
+    async def mute_user_generic(self, ctx: commands.Context, user: discord.Member, mute_role: discord.Role, reason: str):
+        try:
+            await user.add_roles(mute_role, reason=reason)
+        except Exception as e:
+            await ctx.send(f"{type(e).__name__}: {e}")
+            raise e
+        # Overwrite all older still active mutes as 5 ("Handled Otherwise")
+        self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (user.id, ctx.guild.id, self.bot.name))
+
+    async def mute_user_temporary(self, ctx: commands.Context, user: discord.Member, mute_role: discord.Role, reason: str, language: Language, expiry: time.datetime, duration: str):
+        reason = " ".join(reason.split(" ")[1:])
+        reason = reason or language.string("mod_reason_none")
+        reason_log = general.reason(ctx.author, reason)
+        await self.mute_user_generic(ctx, user, mute_role, reason_log)
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (user.id, ctx.guild.id, "mute", ctx.author.id, reason_log, True, expiry, 0, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_dm(self.bot, ctx, user, "mute", reason, duration)
+        await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "mute", reason_log, duration)
+
+    async def mute_user_permanent(self, ctx: commands.Context, user: discord.Member, mute_role: discord.Role, reason: str):
+        reason_log = general.reason(ctx.author, reason)
+        await self.mute_user_generic(ctx, user, mute_role, reason_log)
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (user.id, ctx.guild.id, "mute", ctx.author.id, reason_log, False, time.now2(), 0, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_dm(self.bot, ctx, user, "mute", reason, None)
+        await send_mod_log(self.bot, ctx, user, ctx.author, entry_id, "mute", reason_log, None)
+
+    @commands.command(name="mute")
+    @commands.guild_only()
+    @permissions.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def mute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+        """ Mute a user """
+        language = self.bot.language(ctx)
+        mute_role = self.mute_role(ctx, language)
+        if not isinstance(mute_role, discord.Role):
+            return await ctx.send(mute_role)
+        mute_check = self.mute_check(ctx, member, language)
+        if mute_check is not True:
+            return await ctx.send(mute_check)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        if not error:
             duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
             out = language.string("mod_mute_timed", member, duration, reason)
-            await send_mod_dm(self.bot, ctx, member, "mute", reason, duration)
-            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "mute", reason_log, duration)
+            await self.mute_user_temporary(ctx, member, mute_role, reason, language, expiry, duration)
         else:
-            # if exists is not None:
-            #     self.bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (exists['entry_id'],))
-            reason_log = general.reason(ctx.author, reason)
-            self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
-            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                (member.id, ctx.guild.id, "mute", ctx.author.id, reason_log, False, time.now2(), 0, self.bot.name))
-            entry_id = self.bot.db.db.lastrowid
-            await send_mod_dm(self.bot, ctx, member, "mute", reason, None)
-            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "mute", reason_log, None)
+            out = language.string("mod_mute", member, reason)
+            await self.mute_user_permanent(ctx, member, mute_role, reason)
         return await ctx.send(out)
+
+    @commands.command(name="massmute")
+    @commands.guild_only()
+    @permissions.has_permissions(kick_members=True)
+    @commands.bot_has_permissions(manage_roles=True)
+    async def mass_mute(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+        """ Mass-mute multiple users """
+        language = self.bot.language(ctx)
+        mute_role = self.mute_role(ctx, language)
+        if not isinstance(mute_role, discord.Role):
+            return await ctx.send(mute_role)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        duration = None
+        if not error:
+            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
+        muted, failed = 0, 0
+        for member_id in members:
+            success = False
+            try:
+                member: discord.Member = ctx.guild.get_member(member_id)  # type: ignore
+                if member is None:
+                    await ctx.send(language.string("mod_kick_none", id=member_id))
+                    continue
+                mute_check = self.mute_check(ctx, member, language)
+                if mute_check is not True:
+                    await ctx.send(mute_check)
+                    continue
+                if not error:
+                    await self.mute_user_temporary(ctx, member, mute_role, reason, language, expiry, duration)
+                else:
+                    await self.mute_user_permanent(ctx, member, mute_role, reason)
+                muted += 1
+                success = True
+            except Exception as e:
+                await ctx.send(f"`{member_id}` - {type(e).__name__}: {e}")
+            finally:
+                if not success:
+                    failed += 1
+        total = muted + failed
+        timed = "_timed" if not error else ""
+        if failed:
+            output = language.string("mod_mute_mass2" + timed, reason=reason, total=language.number(total), banned=language.number(muted), failed=language.number(failed), duration=duration)
+        else:
+            output = language.string("mod_mute_mass" + timed, reason=reason, total=language.number(total), duration=duration)
+        return await ctx.send(output)
 
     @commands.command(name="unmute")
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
-    # @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def unmute_user(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Unmute a user """
         language = self.bot.language(ctx)
@@ -591,6 +605,50 @@ class Moderation(commands.Cog):
             return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Mutes')))
         else:
             return await ctx.send(f"{output}\n{output2}")
+
+    @commands.command(name="nickname", aliases=["nick"])
+    @commands.guild_only()
+    @permissions.has_permissions(manage_nicknames=True)
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nickname_user(self, ctx: commands.Context, member: discord.Member, *, name: str = None):
+        """ Sets a user's nickname """
+        language = self.bot.language(ctx)
+        try:
+            if member.id == ctx.guild.owner.id:
+                return await ctx.send(language.string("mod_nick_owner"))
+            if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
+                return await ctx.send(language.string("mod_nick_forbidden2"))
+            await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
+            if name is None:
+                message = language.string("mod_nick_reset", member)
+            else:
+                message = language.string("mod_nick", member, name)
+            return await ctx.send(message)
+        except discord.Forbidden:
+            return await ctx.send(language.string("mod_nick_forbidden"))
+        except Exception as e:
+            return await ctx.send(f"{type(e).__name__}: {e}")
+
+    @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
+    @commands.guild_only()
+    @permissions.has_permissions(change_nickname=True)
+    @commands.bot_has_permissions(manage_nicknames=True)
+    async def nickname_self(self, ctx: commands.Context, *, name: str = None):
+        """ Change your own nickname """
+        language = self.bot.language(ctx)
+        try:
+            if ctx.author.id == ctx.guild.owner.id:
+                return await ctx.send(language.string("mod_nick_owner"))
+            await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
+            if name is None:
+                message = language.string("mod_nick_self_reset")
+            else:
+                message = language.string("mod_nick_self", name)
+            return await ctx.send(message)
+        except discord.Forbidden:
+            return await ctx.send(language.string("mod_nick_forbidden"))
+        except Exception as e:
+            return await ctx.send(f"{type(e).__name__}: {e}")
 
     @commands.group(name="find")
     @commands.guild_only()
