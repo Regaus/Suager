@@ -441,9 +441,7 @@ class Moderation(commands.Cog):
         # Overwrite all older still active mutes as 5 ("Handled Otherwise")
         self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (user.id, ctx.guild.id, self.bot.name))
 
-    async def mute_user_temporary(self, ctx: commands.Context, user: discord.Member, mute_role: discord.Role, reason: str, language: Language, expiry: time.datetime, duration: str):
-        reason = " ".join(reason.split(" ")[1:])
-        reason = reason or language.string("mod_reason_none")
+    async def mute_user_temporary(self, ctx: commands.Context, user: discord.Member, mute_role: discord.Role, reason: str, expiry: time.datetime, duration: str):
         reason_log = general.reason(ctx.author, reason)
         await self.mute_user_generic(ctx, user, mute_role, reason_log)
         self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -476,9 +474,11 @@ class Moderation(commands.Cog):
             return await ctx.send(mute_check)
         reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
         if not error:
+            reason = " ".join(reason.split(" ")[1:])
+            reason = reason or language.string("mod_reason_none")
             duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
             out = language.string("mod_mute_timed", member, duration, reason)
-            await self.mute_user_temporary(ctx, member, mute_role, reason, language, expiry, duration)
+            await self.mute_user_temporary(ctx, member, mute_role, reason, expiry, duration)
         else:
             out = language.string("mod_mute", member, reason)
             await self.mute_user_permanent(ctx, member, mute_role, reason)
@@ -497,6 +497,8 @@ class Moderation(commands.Cog):
         reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
         duration = None
         if not error:
+            reason = " ".join(reason.split(" ")[1:])
+            reason = reason or language.string("mod_reason_none")
             duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
         muted, failed = 0, 0
         for member_id in members:
@@ -511,7 +513,7 @@ class Moderation(commands.Cog):
                     await ctx.send(mute_check)
                     continue
                 if not error:
-                    await self.mute_user_temporary(ctx, member, mute_role, reason, language, expiry, duration)
+                    await self.mute_user_temporary(ctx, member, mute_role, reason, expiry, duration)
                 else:
                     await self.mute_user_permanent(ctx, member, mute_role, reason)
                 muted += 1
