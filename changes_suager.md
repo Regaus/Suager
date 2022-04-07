@@ -1258,3 +1258,8 @@
 
 ## v7.5.0a4 - 3-5 April 2022
 - Mass-mute command
+
+## v7.5.0a5 - 7 April 2022
+- Made the mute list command show the Case ID
+- Improved the output of the mute list command
+- Try to prevent Suager from spamming logs over updating its avatar

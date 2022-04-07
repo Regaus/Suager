@@ -20,13 +20,9 @@ class Events(commands.Cog):
         self.bad = ["reg", "reag", "302851022790066185"]
         self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
         self.blocked_logs = 739183533792297164
-        # Ignored channels for Senko Lair and RK message logs
-        # self.message_ignore = [671520521174777869, 672535025698209821, 681647810357362786, 705947617779253328, 721705731937665104, 725835449502924901,
-        #                        571025667265658881, 571025667265658881, 571278954523000842, 573636220622471168, 571030189451247618, 582598504233304075,
-        #                        571031080908357633, 674342275421175818, 764528556507922442, 742885168997466196, 798513492697153536, 799714065256808469]
         self.dm_logger = 806884278037643264  # DM logs channel
-        # Suager, Suager Dev, Suager Original
-        self.self = [609423646347231282, 568149836927467542, 520042197391769610]
+        #                       Suager,             Suager Dev,         Suager Original,    xelA
+        self.ignored_avatars = [609423646347231282, 568149836927467542, 520042197391769610, 267941509272174592]
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -619,8 +615,8 @@ class Events(commands.Cog):
             avatar_channel = self.bot.get_channel(745760639955370083)
             if a1 != a2:
                 send = f"{now} > {n2} ({uid}) changed their avatar"
-                logger.log(self.bot.name, "user_avatars", send)
-                if uid not in self.self:
+                if uid not in self.ignored_avatars:
+                    logger.log(self.bot.name, "user_avatars", send)
                     try:
                         avatar = BytesIO(await http.get(str(after.display_avatar.replace(static_format="png", size=4096)), res_method="read"))
                         ext = "gif" if after.display_avatar.is_animated() else "png"
@@ -688,7 +684,7 @@ class Events(commands.Cog):
             elif a1 != a2:
                 send = f"{now} > {guild} > {name} ({uid}) changed their guild avatar"
                 logger.log(self.bot.name, "user_avatars", send)
-                if uid not in self.self:
+                if uid not in self.ignored_avatars:
                     try:
                         avatar = BytesIO(await http.get(str(after.guild_avatar.replace(static_format="png", size=4096)), res_method="read"))
                         ext = "gif" if after.guild_avatar.is_animated() else "png"

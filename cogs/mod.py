@@ -595,12 +595,15 @@ class Moderation(commands.Cog):
             _mute += 1
             who = ctx.guild.get_member(mute["uid"])
             expiry = mute["expiry"]
-            expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
-            expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
+            i = language.number(_mute, commas=False)
+            case_id = language.number(mute["id"], commas=False)
             if mute["temp"]:
-                outputs.append(language.string("mod_mute_list_item", i=language.number(_mute, commas=False), who=who, time=expires_on, delta=expires_in))
+                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=True)
+                expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
+                outputs.append(language.string("mod_mute_list_item", i=i, id=case_id, who=who, time=expires_on, delta=expires_in))
             else:
-                outputs.append(language.string("mod_mute_list_item2", i=language.number(_mute, commas=False), who=who, time=expires_on, delta=expires_in))
+                delta = language.delta_dt(expiry, accuracy=3, brief=False, affix=False, case="for")
+                outputs.append(language.string("mod_mute_list_item2", i=i, id=case_id, who=who, delta=delta))
         output2 = "\n\n".join(outputs)
         if len(output2) > 1900:
             _data = BytesIO(str(output2).encode('utf-8'))
