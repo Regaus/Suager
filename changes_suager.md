@@ -1263,3 +1263,9 @@
 - Made the mute list command show the Case ID
 - Improved the output of the mute list command
 - Try to prevent Suager from spamming logs over updating its avatar
+
+## v7.5.0a6 - 12-13 April 2022
+- The author is no longer appended to the reason shown in mod logs and database (since the author is stated anyways)
+- The mod log messages will now state the user IDs
+- Mass-unmute command
+- Set the avatar commands to output in size=4096

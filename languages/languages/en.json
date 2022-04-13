@@ -299,6 +299,8 @@
   "mod_unban_mass2": "Mass-unbanned **{total} users** for {reason}:\n{emotes.Allow} Successful: **{banned}**\n{emotes.Deny} Failed: **{failed}**",
   "mod_unmute": "{emotes.Allow} Successfully unmuted **{0}** for **{1}**.",
   "mod_unmute_already": "This user is not muted...",
+  "mod_unmute_mass": "{emotes.Allow} Mass-unmuted **{total} users** for {reason}.",
+  "mod_unmute_mass2": "Mass-unmuted **{total} users** for {reason}:\n{emotes.Allow} Successful: **{banned}**\n{emotes.Deny} Failed: **{failed}**",
   "mod_unmute_self": "Imagine trying to unmute yourself {emotes.BlobCatPolice}",
   "placeholder": "Placeholder",
   "polls_end_description": "Poll Result: {2}\nPoll Question: {0}\nPoll ended {1} UTC",

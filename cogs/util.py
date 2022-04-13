@@ -432,7 +432,7 @@ class Utility(commands.Cog):
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
         user: discord.User | discord.Member = who or ctx.author
-        return await ctx.send(self.bot.language(ctx).string("discord_avatar", user.name, str(user.display_avatar.replace(size=1024, static_format='png'))))
+        return await ctx.send(self.bot.language(ctx).string("discord_avatar", user.name, str(user.display_avatar.replace(size=4096, static_format='png'))))
 
     @commands.command(name="avatar2", aliases=["av2", "a2", "ay"])
     @commands.is_owner()
@@ -440,7 +440,7 @@ class Utility(commands.Cog):
         """ Fetch and yoink avatars """
         for user in users:
             try:
-                await ctx.send(str((await self.bot.fetch_user(user)).display_avatar.replace(size=1024, static_format="png")))
+                await ctx.send(str((await self.bot.fetch_user(user)).display_avatar.replace(size=4096, static_format="png")))
             except Exception as e:
                 await ctx.send(f"{user} -> {type(e).__name__}: {e}")
 
@@ -457,7 +457,7 @@ class Utility(commands.Cog):
         avatar = member.guild_avatar
         if not avatar:
             return await ctx.send(f"{member} does not have a guild avatar in {guild.name}...")
-        return await ctx.send(f"**{member}**'s avatar in **{guild.name}**:\n{avatar.replace(size=1024, static_format='png')}")
+        return await ctx.send(f"**{member}**'s avatar in **{guild.name}**:\n{avatar.replace(size=4096, static_format='png')}")
 
     @commands.group(name="role", invoke_without_command=True)
     @commands.guild_only()
