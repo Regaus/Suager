@@ -71,8 +71,10 @@ class Events(commands.Cog):
                             general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
                         general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > {channel_id} > {type(e).__name__}: {e}")
-            if ctx.guild.id == 568148147457490954:
-                if "\U0001F629" in ctx.content:  # weary emoji
+            if ctx.channel.id == 568148147457490958:  # generic-general
+                # Emojis: weary,        tired,        hot face,     DX/"dizzy",   pleading,     "confounded", "persevering"
+                emojis = ["\U0001F629", "\U0001F62B", "\U0001F975", "\U0001F635", "\U0001F97A", "\U0001F616", "\U0001F623"]
+                if any(e in ctx.content for e in emojis):  # if any of the emojis are found in the message content
                     await ctx.delete()  # Fuck you ryan and aya :)
 
     @commands.Cog.listener()
