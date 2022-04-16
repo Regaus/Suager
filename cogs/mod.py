@@ -607,11 +607,9 @@ class Moderation(commands.Cog):
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
-    # @commands.check(lambda ctx: ctx.bot.name == "suager")
     async def mute_list(self, ctx: commands.Context):
         """ See a list of the currently active mutes """
         language = self.bot.language(ctx)
-        # mutes = self.bot.db.fetch("SELECT * FROM temporary WHERE gid=? AND type='mute' ORDER BY expiry", (ctx.guild.id,))
 
         # This also has the side effect of showing active permanent mutes first, as their "expiry" value is set to the time the mute was issued, which is in the past.
         mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE gid=? AND action='mute' AND handled=0 ORDER BY expiry", (ctx.guild.id,))

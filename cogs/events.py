@@ -71,6 +71,9 @@ class Events(commands.Cog):
                             general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
                         general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > {channel_id} > {type(e).__name__}: {e}")
+            if ctx.guild.id == 568148147457490954:
+                if "\U0001F629" in ctx.content:  # weary emoji
+                    await ctx.delete()  # Fuck you ryan and aya :)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
