@@ -1269,3 +1269,7 @@
 - The mod log messages will now state the user IDs
 - Mass-unmute command
 - Set the avatar commands to output in size=4096
+
+## v7.5.0a7 - 19 April 2022
+- Warning command
+- Make the auto-unmute string translatable

@@ -135,8 +135,11 @@ async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False)
         return
     logger.log(bot.name, "moderation", f"{time.time()} > {bot.full_name} > Punishments > Successfully unmuted the user {member} ({member.id}) from guild {guild} ({entry_id})")
     save_handle(1, entry_id)
-    await send_mod_dm(bot, languages.FakeContext(guild, bot), member, "unmute", "[Auto-Unmute] Punishment expired", None, True)
-    await send_mod_log(bot, languages.FakeContext(guild, bot), member, bot.user, entry_id, "unmute", "[Auto-Unmute] Punishment expired", None)
+    fake_ctx = languages.FakeContext(guild, bot)
+    language = bot.language(fake_ctx)
+    reason = language.string("mod_unmute_auto_reason")
+    await send_mod_dm(bot, fake_ctx, member, "unmute", reason, None, True)
+    await send_mod_log(bot, fake_ctx, member, bot.user, entry_id, "unmute", reason, None)
     # bot.db.execute("UPDATE punishments SET handled=? WHERE id=?", (handled, entry_id))
 
 

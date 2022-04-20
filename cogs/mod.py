@@ -6,7 +6,7 @@ from io import BytesIO
 
 import discord
 
-from utils import bot_data, commands, general, logger, permissions, time
+from utils import bot_data, commands, general, logger, permissions, settings, time
 from utils.languages import FakeContext, Language
 
 
@@ -89,6 +89,12 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         text = language.string("mod_dms_mute_temp", server=ctx.guild, reason=reason, duration=duration)
     elif action == "unmute" and auto:
         text = language.string("mod_dms_unmute_expired", server=ctx.guild)
+    elif action == "mute" and auto:  # This happens if the person reached enough warnings
+        # The "reason" parameter will carry the amount of warnings reached as a prepared string
+        if duration is None:
+            text = language.string("mod_dms_warn_muted2", server=ctx.guild, warnings=reason)
+        else:
+            text = language.string("mod_dms_warn_muted", server=ctx.guild, warnings=reason, duration=duration)
     else:
         string = f"mod_dms_{action}"
         text = language.string(string, server=ctx.guild, reason=reason)
@@ -435,7 +441,7 @@ class Moderation(commands.Cog):
         try:
             await member.add_roles(mute_role, reason=reason)
         except Exception as e:
-            await ctx.send(f"{type(e).__name__}: {e}")
+            await ctx.send(ctx.language().string("mod_mute_error", error=f"{type(e).__name__}: {e}"))
             raise e
         # Overwrite all older still active mutes as 5 ("Handled Otherwise")
         self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
@@ -461,7 +467,11 @@ class Moderation(commands.Cog):
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
-        """ Mute someone """
+        """ Mute someone
+
+        You can specify the duration of the mute before the reason
+        `//mute @someone 7d This will be a temporary mute`
+        `//mute @someone This will be a permanent mute`"""
         language = self.bot.language(ctx)
         mute_role = self.mute_role(ctx, language)
         if not isinstance(mute_role, discord.Role):
@@ -473,7 +483,7 @@ class Moderation(commands.Cog):
         if not error:
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
-            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
+            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
             out = language.string("mod_mute_timed", member, duration, reason)
             await self.mute_user_temporary(ctx, member, mute_role, reason, expiry, duration)
         else:
@@ -496,7 +506,7 @@ class Moderation(commands.Cog):
         if not error:
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
-            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
+            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
         muted, failed = 0, 0
         for member_id in members:
             success = False
@@ -637,6 +647,108 @@ class Moderation(commands.Cog):
             return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Mutes')))
         else:
             return await ctx.send(f"{output}\n{output2}")
+
+    @property
+    def settings_template(self) -> dict:
+        return {
+            "suager": settings.template_suager,
+            "cobble": settings.template_cobble,
+            "kyomi":  settings.template_mizuki,
+        }.get(self.bot.name)
+
+    def get_warn_settings(self, ctx: commands.Context, language: Language):
+        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not _data:
+            return self.settings_template["warnings"], language.string("mod_warn_settings", ctx.prefix)
+        data = json.loads(_data["data"])
+        try:
+            return data["warnings"], None
+        except KeyError:
+            return self.settings_template["warnings"], language.string("mod_warn_settings", ctx.prefix)
+
+    @staticmethod
+    def warn_check(ctx: commands.Context, member: discord.Member, language: Language):
+        if member.id == ctx.author.id:
+            return language.string("mod_warn_self")
+        # I think they should be allowed to warn the bot if they so wish, it wouldn't really affect much...
+        return True
+
+    def get_warn_count(self, uid: int, gid: int):
+        """ Return the total amount of non-expire warnings against this user """
+        return len(self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND bot=? AND action='warn' AND handled=0", (uid, gid, self.bot.name)))
+
+    async def warn_user(self, ctx: commands.Context, member: discord.Member, warn_settings: dict, reason: str, language: Language, expiry: time.datetime = None, duration: str = None):
+        if expiry and duration:
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member.id, ctx.guild.id, "warn", ctx.author.id, reason, True, expiry, 0, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (member.id, ctx.guild.id, "warn", ctx.author.id, reason, False, time.now2(), 0, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_dm(self.bot, ctx, member, "warn", reason, duration)
+        await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "warn", reason, duration)
+        required_warnings = warn_settings["required_to_mute"]  # How many warnings the user has to achieve to get muted
+        current_warnings = self.get_warn_count(member.id, ctx.guild.id)  # How many warnings the user now has
+        if current_warnings >= required_warnings:  # The user will now be muted
+            scaling_power = current_warnings - required_warnings  # 3rd warn at 3 required = scaling ** 0 == length * 1
+            delta = time.interpret_time(warn_settings["mute_length"])
+            delta *= warn_settings["scaling"] ** scaling_power
+            expiry, error = time.add_time(delta)
+            if time.rd_is_above_5y(delta):
+                error = True  # If the mute length exceeds 5 years, we will warn the user, but I don't think we need to notify that since it's not too likely to ever happen anyways
+            mute_role = self.mute_role(ctx, language)
+            try:
+                await self.mute_user_generic(ctx, member, mute_role, reason)
+            except Exception as _:  # Couldn't mute the user, so no point in continuing on with the DM and logs
+                type(_)  # Makes pycharm think that the exception is actually used somewhere
+                return  # Anyone with enough braincells should be able to guess that the muting is related to the person getting too many warnings...
+            warnings = language.plural(current_warnings, "mod_warn_word", precision=0, commas=True, case="accusative")
+            mute_reason = language.string("mod_mute_auto_reason", warnings=warnings)
+            if not error:
+                mute_duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
+                self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    (member.id, ctx.guild.id, "mute", self.bot.user.id, mute_reason, True, expiry, 0, self.bot.name))
+            else:
+                mute_duration = None
+                self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    (member.id, ctx.guild.id, "mute", self.bot.user.id, mute_reason, False, time.now2(), 0, self.bot.name))
+            entry_id = self.bot.db.db.lastrowid
+            await send_mod_dm(self.bot, ctx, member, "mute", warnings, mute_duration, True)
+            await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "mute", mute_reason, mute_duration)
+
+    @commands.command(name="warn", aliases=["warning"])
+    @commands.guild_only()
+    @permissions.has_permissions(kick_members=True)
+    async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
+        """ Warn a user
+
+        You can specify the duration of the warning before the reason
+        `//warn @someone 7d This will be a temporary warning`
+        `//warn @someone This will be a permanent warning`"""
+        language = ctx.language()
+        warn_settings, missing = self.get_warn_settings(ctx, language)
+        if missing:
+            await ctx.send(missing)
+        warn_check = self.warn_check(ctx, member, language)
+        if warn_check is not True:
+            return await ctx.send(warn_check)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        if not error:
+            reason = " ".join(reason.split(" ")[1:])
+            reason = reason or language.string("mod_reason_none")
+            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
+            out = language.string("mod_warn_timed", member=member, duration=duration, reason=reason)
+            await self.warn_user(ctx, member, warn_settings, reason, language, expiry, duration)
+        else:
+            out = language.string("mod_warn", member=member, reason=reason)
+            await self.warn_user(ctx, member, warn_settings, reason, language, None, None)
+        return await ctx.send(out)
+
+    @commands.command(name="masswarn")
+    @commands.guild_only()
+    @permissions.has_permissions(kick_members=True)
+    async def mass_warn(self, ctx: commands.Context, member: commands.Greedy[MemberID], *, reason: str = None):
+        """ Mass-warn multiple users """
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
