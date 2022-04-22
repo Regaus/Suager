@@ -61,7 +61,7 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         data = json.loads(_data["data"])
         mod_dms = data["mod_dms"]
-        if action == ["warn", "pardon"]:
+        if action in ["warn", "pardon"]:
             key = "warn"
         elif action in ["mute", "unmute"]:
             key = "mute"
@@ -84,17 +84,18 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
     if action == "pardon":
         # When a warning is pardoned manually, it will show the original warning as `[ID] Warning text`
         text = language.string("mod_dms_pardon", server=ctx.guild, reason=reason, original_warning=original_warning)
-    elif action == "mute" and duration is not None:
-        # The duration is already converted into str by the mute command
-        text = language.string("mod_dms_mute_temp", server=ctx.guild, reason=reason, duration=duration)
-    elif action == "unmute" and auto:
-        text = language.string("mod_dms_unmute_expired", server=ctx.guild)
     elif action == "mute" and auto:  # This happens if the person reached enough warnings
         # The "reason" parameter will carry the amount of warnings reached as a prepared string
         if duration is None:
             text = language.string("mod_dms_warn_muted2", server=ctx.guild, warnings=reason)
         else:
             text = language.string("mod_dms_warn_muted", server=ctx.guild, warnings=reason, duration=duration)
+    elif action == "warn" and duration is not None:
+        text = language.string("mod_dms_warn_temp", server=ctx.guild, reason=reason, duration=duration)
+    elif action == "mute" and duration is not None:
+        text = language.string("mod_dms_mute_temp", server=ctx.guild, reason=reason, duration=duration)  # The duration is already converted into str by the mute command
+    elif action == "unmute" and auto:
+        text = language.string("mod_dms_unmute_expired", server=ctx.guild)
     else:
         string = f"mod_dms_{action}"
         text = language.string(string, server=ctx.guild, reason=reason)
@@ -692,7 +693,8 @@ class Moderation(commands.Cog):
         if current_warnings >= required_warnings:  # The user will now be muted
             scaling_power = current_warnings - required_warnings  # 3rd warn at 3 required = scaling ** 0 == length * 1
             delta = time.interpret_time(warn_settings["mute_length"])
-            delta *= warn_settings["scaling"] ** scaling_power
+            delta = time.relativedelta(seconds=((time.dt.min + delta) - time.dt.min).total_seconds() * warn_settings["scaling"] ** scaling_power)  # type: ignore
+            # delta *= warn_settings["scaling"] ** scaling_power
             expiry, error = time.add_time(delta)
             if time.rd_is_above_5y(delta):
                 error = True  # If the mute length exceeds 5 years, we will warn the user, but I don't think we need to notify that since it's not too likely to ever happen anyways
@@ -747,8 +749,75 @@ class Moderation(commands.Cog):
     @commands.command(name="masswarn")
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
-    async def mass_warn(self, ctx: commands.Context, member: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_warn(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
         """ Mass-warn multiple users """
+        language = self.bot.language(ctx)
+        warn_settings, missing = self.get_warn_settings(ctx, language)
+        if missing:
+            await ctx.send(missing)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        duration = None
+        if not error:
+            reason = " ".join(reason.split(" ")[1:])
+            reason = reason or language.string("mod_reason_none")
+            duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False)
+        warned, failed = 0, 0
+        for member_id in members:
+            success = False
+            try:
+                member: discord.Member = ctx.guild.get_member(member_id)  # type: ignore
+                if member is None:
+                    await ctx.send(language.string("mod_kick_none", id=member_id))
+                    continue
+                warn_check = self.warn_check(ctx, member, language)
+                if warn_check is not True:
+                    return await ctx.send(warn_check)
+                await self.warn_user(ctx, member, warn_settings, reason, language, expiry, duration)
+                warned += 1
+                success = True
+            except Exception as e:
+                await ctx.send(f"`{member_id}` - {type(e).__name__}: {e}")
+            finally:
+                if not success:
+                    failed += 1
+        total = warned + failed
+        timed = "_timed" if not error else ""
+        if failed:
+            output = language.string("mod_warn_mass2" + timed, reason=reason, total=language.number(total), banned=language.number(warned), failed=language.number(failed), duration=duration)
+        else:
+            output = language.string("mod_warn_mass" + timed, reason=reason, total=language.number(total), duration=duration)
+        return await ctx.send(output)
+
+    @commands.command(name="warns", aliases=["warnings"])
+    @commands.guild_only()
+    async def warns_list(self, ctx: commands.Context, *, member: discord.Member = None):
+        """ See your or someone else's list of currently active warnings """
+        member = member or ctx.author
+        language = self.bot.language(ctx)
+        # This also has the side effect of showing active permanent warnings first, as their "expiry" value is set to the time the mute was issued, which is in the past.
+        warns = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='warn' AND handled=0 ORDER BY expiry", (member.id, ctx.guild.id))
+        if not warns:
+            return await ctx.send(language.string("mod_warn_list_none", user=member.name))
+        output = language.string("mod_warn_list", user=member.name, server=ctx.guild.name)
+        outputs = []
+        for item, warning in enumerate(warns, start=1):
+            text = general.reason(ctx.guild.get_member(warning["author"]), warning["reason"])
+            expiry = warning["expiry"]
+            i = language.number(item, commas=False)
+            case_id = language.number(warning["id"], commas=False)
+            if warning["temp"]:
+                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=False)
+                expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
+                outputs.append(language.string("mod_warn_list_item", i=i, id=case_id, text=text, time=expires_on, delta=expires_in))
+            else:
+                delta = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
+                outputs.append(language.string("mod_warn_list_item2", i=i, id=case_id, text=text, delta=delta))
+        output2 = "\n\n".join(outputs)
+        if len(output2) > 1900:
+            _data = BytesIO(str(output2).encode('utf-8'))
+            return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Warnings')))
+        else:
+            return await ctx.send(f"{output}\n{output2}")
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()

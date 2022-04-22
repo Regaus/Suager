@@ -1273,3 +1273,8 @@
 ## v7.5.0a7 - 19 April 2022
 - Warning command
 - Make the auto-unmute string translatable
+
+## v7.5.0a8 - 20 April 2022
+- Mass-warn command
+- Made the mute length when reaching too many warnings scale properly
+- Warns list command
