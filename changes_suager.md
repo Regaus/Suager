@@ -1278,3 +1278,6 @@
 - Mass-warn command
 - Made the mute length when reaching too many warnings scale properly
 - Warns list command
+
+## v7.5.0a9 - 29 April 2022
+- Fixed reminders not deleting

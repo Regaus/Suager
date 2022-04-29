@@ -452,3 +452,6 @@
 
 ## v1.4.12 - 22 February 2022
 - Added command where CobbleBot briefly tells about himself in Tebarian
+
+# v1.4.12.1 - 29 April 2022
+- Added SR-14 and SR-15 to LOD 1 list

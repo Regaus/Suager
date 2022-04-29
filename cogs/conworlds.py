@@ -95,8 +95,10 @@ class Conworlds(commands.Cog):
                     # LOD 2 Channel Names: hidden-commands,   secretive-commands, secretive-commands-2
                     if ctx.channel.id in [610482988123422750, 742885168997466196, 753000962297299005]:
                         lod = 2
-                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10      secret-room-13      Kargadia commands
-                    elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 958489459672891452, 938582514166034514]:
+                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10      secret-room-13      Kargadia commands,
+                    #                       secret-room-14,     secret-room-15
+                    elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 958489459672891452, 938582514166034514,
+                                            965801985716666428, 969720792457822219]:
                         lod = 1
                     else:
                         lod = 0  # All other channels are "untrusted", so default to LOD 0

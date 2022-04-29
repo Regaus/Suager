@@ -823,14 +823,14 @@ class Reminders(Utility, name="Utility"):
         self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (_message, _expiry, reminder_id))
         return await ctx.send(language.string("util_reminders_edit", reminder_id, _message, expiry))
 
-    @reminders.command(name="delete", aliases=["remove", "cancel"])
+    @reminders.command(name="delete", aliases=["del", "remove", "cancel"])
     async def reminders_delete(self, ctx: commands.Context, reminder_id: int):
         """ Delete a reminder """
         language = self.bot.language(ctx)
-        reminder = self.bot.db.fetchrow("SELECT * FROM temporary WHERE entry_id=? AND uid=? AND type='reminder'", (reminder_id, ctx.author.id))
+        reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
         if not reminder:
             return await ctx.send(language.string("util_reminders_edit_none", reminder_id))
-        self.bot.db.execute("DELETE FROM temporary WHERE entry_id=? AND uid=?", (reminder_id, ctx.author.id))
+        self.bot.db.execute("DELETE FROM reminders WHERE id=? AND uid=?", (reminder_id, ctx.author.id))
         return await ctx.send(language.string("util_reminders_delete", reminder_id))
 
 
