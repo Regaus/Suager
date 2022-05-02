@@ -117,3 +117,65 @@
 - The help command should no longer send into DMs unless invoked there
 - Commands you don't have perms for should now show up in the help command
 - Changed owner-only commands to use the discord.py is_owner() check
+
+## v0.5.3.1 - 10 February 2022
+- Made failed permissions check raise MissingPermissions error for the custom error message
+
+## v0.5.4 - 10 February 2022
+- Made the help command work the way it's supposed to
+- Commands that can't be used in the current channel are simply crossed out instead of not showing up at all
+- Made it possible to show some extra text alongside the help embed
+- The help command will no longer send reactions when responding
+
+## v0.5.4.1 - 10 February 2022
+- Fix events errors to actually log what happened
+
+## v0.5.5 - 11 February 2022
+- Updated `//birthday set` to no longer require zeros at front
+- Made the "crossed out commands" warning only show up in the help output for the entire bot
+
+## v0.5.6 - 12 February 2022
+- Make it possible to see what files were sent to the bots' DMs
+
+## v0.5.7 - 17 February 2022
+- Allow `//timesince` to go beyond the 0-9999 year range
+- Fixed admin eval error traceback breaking
+
+## v0.5.8 - 18 February 2022
+- `//timesince` now uses proper `YYYY-MM-DD hh:mm:ss` format for specifying time
+
+## v0.6.0 - 18-20 March 2022
+- Added warning settings
+- Kick and ban now try to make sure the user can be kicked/banned before doing so
+- Ban and massban now check if the user has already been banned from the server
+- Massban command now checks for members first and then the reason as the last argument
+- Improved the way the massban command works
+
+## v0.6.1 - 20 March 2022
+- Improved output for massban command
+- Added massunban and masskick commands
+
+## v0.6.2 - 3-5 April 2022
+- Mass-mute command
+
+## v0.6.3 - 7 April 2022
+- Made the mute list command show the Case ID
+- Improved the output of the mute list command
+
+## v0.6.4 - 12-13 April 2022
+- The author is no longer appended to the reason shown in mod logs and database (since the author is stated anyways)
+- The mod log messages will now state the user IDs
+- Mass-unmute command
+- Set the avatar commands to output in size=4096
+
+## v0.6.5 - 19 April 2022
+- Warning command
+
+## v0.6.6 - 20 April 2022
+- Mass-warn command
+- Made the mute length when reaching too many warnings scale properly
+- Warns list command
+
+## v0.6.7 - 29 April 2022
+- Fixed reminders not deleting
+- Pardon command
