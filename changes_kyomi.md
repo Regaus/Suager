@@ -179,3 +179,6 @@
 ## v0.6.7 - 29 April 2022
 - Fixed reminders not deleting
 - Pardon command
+
+## v0.7.0 - 2 May 2022
+- Mod log command

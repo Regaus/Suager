@@ -1283,3 +1283,6 @@
 - Fixed reminders not deleting
 - Hide NSFW commands from help when the command is run in an SFW channel
 - Pardon command
+
+## v7.5.0 - 2 May 2022
+- Mod log command

@@ -624,7 +624,7 @@ class Moderation(commands.Cog):
             output = language.string("mod_unmute_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
 
-    @commands.command(name="mutes", aliases=["punishments"])
+    @commands.command(name="mutes")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
@@ -870,6 +870,48 @@ class Moderation(commands.Cog):
         if len(output2) > 1900:
             _data = BytesIO(str(output2).encode('utf-8'))
             return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Warnings')))
+        else:
+            return await ctx.send(f"{output}\n{output2}")
+
+    @commands.command(name="modlog", aliases=["punishments", "infractions"])
+    @commands.guild_only()
+    @permissions.has_permissions(kick_members=True)
+    async def mod_log(self, ctx: commands.Context, *, member: discord.Member = None):
+        """ See the log of all punishments ever applied against the user in this server """
+        member = member or ctx.author
+        language = self.bot.language(ctx)
+        # Show all actions taken against the user, in chronological order (ie. sorted by punishment ID)
+        punishments = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? ORDER BY id", (member.id, ctx.guild.id))
+        if not punishments:
+            return await ctx.send(language.string("mod_log_none", user=member.name))
+        output = language.string("mod_log", user=member.name, server=ctx.guild.name)
+        outputs = []
+        for item, entry in enumerate(punishments, start=1):
+            author = ctx.guild.get_member(entry["author"])
+            if entry["action"] == "pardon":
+                warning_s, reason = entry["reason"].split(" ", 1)
+                try:
+                    warning_id = int(warning_s[1:-1])
+                    warning = self.bot.db.fetchrow("SELECT reason FROM punishments WHERE id=?", (warning_id,))
+                    original_warning = f"[{warning_id}] {warning['reason']}"
+                    text = language.string("mod_log_pardon", author=author, reason=reason, warning=original_warning)
+                except ValueError:
+                    text = language.string("mod_log_pardon_all", author=author, reason=entry["reason"])
+            else:
+                text = language.string(f"mod_log_{entry['action']}", author=author, reason=entry["reason"])
+            i = language.number(item, commas=False)
+            case_id = language.number(entry["id"], commas=False)
+            expiry = language.time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, at=True)
+            delta = language.delta_dt(entry["expiry"], accuracy=3, brief=False, affix=True)
+            if entry["temp"]:
+                key = "mod_log_item2" if time.now2() > entry["expiry"] else "mod_log_item3"
+            else:
+                key = "mod_log_item"
+            outputs.append(language.string(key, i=i, id=case_id, text=text, time=expiry, delta=delta))
+        output2 = "\n\n".join(outputs)
+        if len(output2) > 1900:
+            _data = BytesIO(str(output2).encode('utf-8'))
+            return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Punishments')))
         else:
             return await ctx.send(f"{output}\n{output2}")
 
