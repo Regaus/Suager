@@ -888,13 +888,15 @@ class Moderation(commands.Cog):
         outputs = []
         for item, entry in enumerate(punishments, start=1):
             author = ctx.guild.get_member(entry["author"])
+            extra = ""
             if entry["action"] == "pardon":
                 warning_s, reason = entry["reason"].split(" ", 1)
                 try:
                     warning_id = int(warning_s[1:-1])
                     warning = self.bot.db.fetchrow("SELECT reason FROM punishments WHERE id=?", (warning_id,))
                     original_warning = f"[{warning_id}] {warning['reason']}"
-                    text = language.string("mod_log_pardon", author=author, reason=reason, warning=original_warning)
+                    text = language.string("mod_log_pardon", author=author, reason=reason)
+                    extra = language.string("mod_log_item_pardon", warning=original_warning)
                 except ValueError:
                     text = language.string("mod_log_pardon_all", author=author, reason=entry["reason"])
             else:
@@ -904,10 +906,12 @@ class Moderation(commands.Cog):
             expiry = language.time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, at=True)
             delta = language.delta_dt(entry["expiry"], accuracy=3, brief=False, affix=True)
             if entry["temp"]:
-                key = "mod_log_item2" if time.now2() > entry["expiry"] else "mod_log_item3"
+                key = "mod_log_item_time2" if time.now2() > entry["expiry"] else "mod_log_item_time3"
             else:
-                key = "mod_log_item"
-            outputs.append(language.string(key, i=i, id=case_id, text=text, time=expiry, delta=delta))
+                key = "mod_log_item_time"
+            base = language.string("mod_log_item_base", i=i, id=case_id, text=text)
+            times = language.string(key, time=expiry, delta=delta)
+            outputs.append(base + extra + times)
         output2 = "\n\n".join(outputs)
         if len(output2) > 1900:
             _data = BytesIO(str(output2).encode('utf-8'))

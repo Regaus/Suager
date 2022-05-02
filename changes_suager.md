@@ -1286,3 +1286,6 @@
 
 ## v7.5.0 - 2 May 2022
 - Mod log command
+
+## v7.5.0.1 - 2 May 2022
+- Improved the way pardoned warnings are shown in the mod log command
