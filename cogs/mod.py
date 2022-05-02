@@ -949,7 +949,7 @@ class Moderation(commands.Cog):
     async def find_discriminator(self, ctx: commands.Context, *, search: str):
         """Finds members whose discriminator is the same as the search"""
         language = self.bot.language(ctx)
-        if len(search) != 4 or not re.compile("^[0-9]*$").search(search):
+        if len(search) != 4 or not re.compile(r"^\d*$").search(search):
             return await ctx.send(language.string("mod_find_disc"))
         loop = [f"{i} ({i.id})" for i in ctx.guild.members if search == i.discriminator]
         await general.pretty_results(ctx, "discriminator", language.string("mod_find", language.number(len(loop)), search), loop)
