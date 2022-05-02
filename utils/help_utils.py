@@ -4,6 +4,7 @@ from itertools import groupby
 from typing import Any, Iterable
 
 import discord
+from discord.ext.commands import NSFWChannelRequired
 from discord.ext.commands.core import Group, wrap_callback
 from jishaku.shim.paginator_170 import PaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 
@@ -57,6 +58,7 @@ class HelpFormat(MinimalHelpCommand):
         self.aliases_heading = "Aliases:"
         self.no_category = "No Category"
         self.extra_text: str | None = None
+        self.nsfw = 0
 
     @property
     def prefix(self):
@@ -69,29 +71,26 @@ class HelpFormat(MinimalHelpCommand):
             return True
         except NotOwner:  # completely hide if owner-only
             return False
-        except CommandError:  # any other error
+        except NSFWChannelRequired:  # hide if NSFW command in a SFW channel
+            self.nsfw += 1  # Add to counter, at the end show as "x nsfw commands hidden"
+            return False
+        except CommandError:  # any other error, eg permissions -> cross out
             return None
 
     async def send_pages(self):
         destination: discord.User | discord.TextChannel = self.get_destination()
+        if self.nsfw:
+            self.paginator.add_line()
+            self.paginator.add_line(f"⚠ {self.nsfw:,} NSFW commands hidden")
         interface = PaginatorInterface(self.context.bot, self.paginator, owner=self.context.author)
         try:
             await interface.send_to(destination, extra_text=self.extra_text)
-            # try:
-            #     if permissions.can_react(self.context):
-            #         await self.context.message.add_reaction(chr(0x2709))  # mail icon
-            # except discord.Forbidden:
-            #     pass
         except discord.Forbidden:
             pass
-            # try:
-            #     if permissions.can_react(self.context):
-            #         await self.context.message.add_reaction(chr(0x274C))  # x
-            # except discord.Forbidden:
-            #     pass
         finally:
             # Reset self.extra_text so that the next time the command is called, it wouldn't suddenly appear
             self.extra_text = None
+            self.nsfw = 0
 
     def get_opening_note(self):
         command_name = self.invoked_with
@@ -144,7 +143,7 @@ class HelpFormat(MinimalHelpCommand):
                     self.paginator.add_line(line)
                 self.paginator.add_line()
 
-        if (await self.predicate(command)) is None:
+        if not (await self.predicate(command)):  # This also includes cases where the user is not the owner and stuff
             self.paginator.add_line()
             self.paginator.add_line("You cannot use this command in this channel.")
 

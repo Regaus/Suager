@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Literal, Union
 from io import BytesIO
 
 import discord
@@ -82,8 +83,12 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
     #     author = ctx.author
     language = bot.language(ctx)
     if action == "pardon":
-        # When a warning is pardoned manually, it will show the original warning as `[ID] Warning text`
-        text = language.string("mod_dms_pardon", server=ctx.guild, reason=reason, original_warning=original_warning)
+        if original_warning is not None:
+            # When a warning is pardoned manually, it will show the original warning as `[ID] Warning text`
+            text = language.string("mod_dms_pardon", server=ctx.guild, reason=reason, original_warning=original_warning)
+        else:
+            # If no "original warning" is provided, that is treated as all warnings being pardoned
+            text = language.string("mod_dms_pardon_all", server=ctx.guild, reason=reason)
     elif action == "mute" and auto:  # This happens if the person reached enough warnings
         # The "reason" parameter will carry the amount of warnings reached as a prepared string
         if duration is None:
@@ -152,7 +157,12 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, u
     if duration:
         embed.description += language.string("mod_logs_description_duration", duration=duration)
     if action == "pardon":
-        embed.description += language.string("mod_logs_description_pardon", original_warning=original_warning)
+        if original_warning is not None:
+            # When a warning is pardoned manually, it will show the original warning as `[ID] Warning text`
+            embed.description += language.string("mod_logs_description_pardon", original_warning=original_warning)
+        else:
+            # If no "original warning" is provided, that is treated as all warnings being pardoned
+            embed.title = language.string("mod_logs_pardon_all")
     embed.set_footer(text=language.string("mod_logs_case", id=entry_id))
     embed.timestamp = time.now()
     try:
@@ -693,13 +703,13 @@ class Moderation(commands.Cog):
         if current_warnings >= required_warnings:  # The user will now be muted
             scaling_power = current_warnings - required_warnings  # 3rd warn at 3 required = scaling ** 0 == length * 1
             delta = time.interpret_time(warn_settings["mute_length"])
-            delta = time.relativedelta(seconds=((time.dt.min + delta) - time.dt.min).total_seconds() * warn_settings["scaling"] ** scaling_power)  # type: ignore
+            delta = time.relativedelta(seconds=((time.datetime.min + delta) - time.datetime.min).total_seconds() * warn_settings["scaling"] ** scaling_power)  # type: ignore
             # delta *= warn_settings["scaling"] ** scaling_power
             expiry, error = time.add_time(delta)
             if time.rd_is_above_5y(delta):
                 error = True  # If the mute length exceeds 5 years, we will warn the user, but I don't think we need to notify that since it's not too likely to ever happen anyways
             mute_role = self.mute_role(ctx, language)
-            try:
+            try:  # Mute the user
                 await self.mute_user_generic(ctx, member, mute_role, reason)
             except Exception as _:  # Couldn't mute the user, so no point in continuing on with the DM and logs
                 type(_)  # Makes pycharm think that the exception is actually used somewhere
@@ -787,6 +797,50 @@ class Moderation(commands.Cog):
         else:
             output = language.string("mod_warn_mass" + timed, reason=reason, total=language.number(total), duration=duration)
         return await ctx.send(output)
+
+    @staticmethod
+    def pardon_check(ctx: commands.Context, member: discord.Member, language: Language):
+        if member.id == ctx.author.id:
+            return language.string("mod_pardon_self")
+        return True
+
+    async def pardon_user(self, ctx: commands.Context, member: discord.Member, warning_id: Union[int, Literal["all"]], reason: str, language: Language):
+        if warning_id == "all":
+            self.bot.db.execute("UPDATE punishments SET handled=4 WHERE uid=? AND gid=? AND action='warn' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
+            reason_log = reason  # No reason to attach
+            original_warning = None
+        else:
+            output = self.bot.db.execute("UPDATE punishments SET handled=4 WHERE uid=? AND gid=? AND action='warn' AND id=? AND handled=0 AND bot=?",
+                                         (member.id, ctx.guild.id, warning_id, self.bot.name))
+            if output == "UPDATE 0":  # nothing was changed, meaning the warning was not pardoned
+                return await ctx.send(language.string("mod_pardon_fail", warning=warning_id))
+            reason_log = f"[{warning_id}] {reason}"
+            warning = self.bot.db.fetchrow("SELECT reason FROM punishments WHERE id=?", (warning_id,))
+            original_warning = f"[{warning_id}] {warning['reason']}"
+        self.bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (member.id, ctx.guild.id, "pardon", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
+        entry_id = self.bot.db.db.lastrowid
+        await send_mod_dm(self.bot, ctx, member, "pardon", reason, original_warning=original_warning)
+        await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "warn", reason, original_warning=original_warning)
+
+    @commands.command(name="pardon", aliases=["forgive", "unwarn"])
+    @commands.guild_only()
+    @permissions.has_permissions(kick_members=True)
+    async def pardon(self, ctx: commands.Context, member: discord.Member, warning_id: Union[int, Literal["all"]], *, reason: str = None):
+        """ Remove someone's warning
+
+        Specific warning: `//pardon @someone 7 Reason here`
+        Remove all warnings: `//pardon @someone all Reason here`"""
+        language = ctx.language()
+        reason = reason or language.string("mod_reason_none")
+        pardon_check = self.pardon_check(ctx, member, language)
+        if pardon_check is not True:
+            return await ctx.send(pardon_check)
+        ret = await self.pardon_user(ctx, member, warning_id, reason, language)
+        if ret is None:  # Since the function "returns" the await ctx.send() of the error message, we can test if that did not happen
+            if warning_id == "all":
+                return await ctx.send(language.string("mod_pardon_all", member=member, reason=reason))
+            return await ctx.send(language.string("mod_pardon", member=member, warning=warning_id, reason=reason))
 
     @commands.command(name="warns", aliases=["warnings"])
     @commands.guild_only()

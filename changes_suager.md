@@ -1281,3 +1281,5 @@
 
 ## v7.5.0a9 - 29 April 2022
 - Fixed reminders not deleting
+- Hide NSFW commands from help when the command is run in an SFW channel
+- Pardon command
