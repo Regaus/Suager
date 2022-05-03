@@ -1,0 +1,103 @@
+{  // Pattern[number][case], default ~ singular, default ~ nominative
+  "^год$": {
+    "default": {
+      "default": "год",
+      "nominative": "год",
+      "accusative": "год",
+      "genitive": "года",
+      "dative": "году",
+      "instrumental": "годом",
+      "prepositional": "годе",
+      "locative": "году"
+    },
+    "paucal": {
+      "general": "года"
+    },
+    "plural": {
+      "default": "года",
+      "nominative": "года",
+      "genitive": "лет"
+    }
+  },
+  "^месяц$": {
+    "default": {
+      "default": "месяц",
+      "nominative": "месяц",
+      "accusative": "месяц",
+      "genitive": "месяца",
+      "dative": "месяцу",
+      "instrumental": "месяцем",
+      "prepositional": "месяце"
+    },
+    "paucal": {
+      "general": "месяца"
+    },
+    "plural": {
+      "default": "месяцы",
+      "nominative": "месяцы",
+      "genitive": "месяцев"
+    }
+  },
+  "^день$": {
+    "default": {
+      "default": "день",
+      "nominative": "день",
+      "accusative": "день",
+      "genitive": "дня",
+      "dative": "дню",
+      "instrumental": "днём",
+      "prepositional": "дне"
+    },
+    "paucal": {
+      "general": "дня"
+    },
+    "plural": {
+      "default": "дни",
+      "nominative": "дни",
+      "genitive": "дней"
+    }
+  },
+  "^час$": {
+    "default": {
+      "default": "час",
+      "nominative": "час",
+      "accusative": "час",
+      "genitive": "часа",
+      "dative": "часу",
+      "instrumental": "часом",
+      "prepositional": "часе",
+      "locative": "часу"
+    },
+    "paucal": {
+      "general": "часа"
+    },
+    "plural": {
+      "default": "часы",
+      "nominative": "часы",
+      "genitive": "часов"
+    }
+  },
+  "^(минута|секунда)$": {  // They have the same declension so why bother
+    "default": {
+      "default": "<>",            // минута
+      "nominative": "<>",         // минута
+      "accusative": "<:-1>у",     // минуту
+      "genitive": "<:-1>ы",       // минуты
+      "dative": "<:-1>е",         // минуте
+      "instrumental": "<:-1>ой",  // минутой
+      "prepositional": "<:-1>е"   // минуте
+    },
+    "paucal": {
+      "general": "<:-1>ы"         // минуты
+    },
+    "plural": {
+      "default": "<:-1>ы",        // минуты
+      "nominative": "<:-1>ы",     // минуты
+      "genitive": "<:-1>"         // минут
+    }
+  },
+  "^.+": {  // Russian has weird declensions so there is no "default"
+    "default": {"default": "<>"},
+    "plural": {"default": "<>"}
+  }
+}
