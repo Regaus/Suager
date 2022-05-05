@@ -458,3 +458,7 @@
 
 ## v1.4.12.2 - 4 May 2022
 - Added SR-16 to LOD 1 list
+
+## v1.4.13 - 6 May 2022
+- Added Kargadia db table (not yet used)
+- Added new cities to Nittavia time display

@@ -271,8 +271,10 @@ ka_places = {
         "Lailagar":    {"en": None, "weight": 3},
     },
     "Nittavia": {
-        "Erdagar":  {"en": None, "weight": 2},
-        "Nuktagar": {"en": None, "weight": 2},
+        "Erdagar":     {"en": None, "weight": 2},
+        "Körevallus":  {"en": None, "weight": 2},
+        "Nuktagar":    {"en": None, "weight": 2},
+        "Saikovallus": {"en": None, "weight": 2},
     },
     "Tebaria": {
         "Sentatebaria": {"en": None, "weight": 3},
@@ -300,7 +302,7 @@ ka_places = {
         "Raagar": {"en": None, "weight": 2},
     },
     "Centeria": {
-        "Kalagar": {"en": None, "weight": 2},
+        "Kalagar":   {"en": None, "weight": 2},
         "Virsetgar": {"en": None, "weight": 2},
     },
     "Verlennia": {
@@ -308,8 +310,9 @@ ka_places = {
     "Inhattia": {
     },
     "Other Areas": {
-        "Vintelingar":    {"en": None, "weight": 3},
-        "Kanerakainedus": {"en": None, "weight": 1},
+        "Vintelingar":     {"en": None, "weight": 3},
+        "Rakka's Volcano": {"en": None, "weight": 3},
+        "Kanerakainedus":  {"en": None, "weight": 1},
     }
 }
 _places = {}  # Since the playing status won't be able to read through a 2-layer dict...
