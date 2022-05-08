@@ -186,3 +186,6 @@
 ## v0.7.1 - 7-8 May 2022
 - Class-based birthdays structure
 - Support for timezones in birthdays
+
+## v0.7.1.1 - 9 May 2022
+- Fixed the birthdays incorrectly switching themselves between UTC and their actual timezone

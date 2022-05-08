@@ -465,3 +465,7 @@
 
 ## v1.5.0 - 7-8 May 2022
 - Added a system of birthdays for Kargadia
+
+## v1.5.0.1 - 9 May 2022
+- Fixed the birthdays incorrectly switching themselves between UTC and their actual timezone
+- Added SR-17 to LOD 1 list
