@@ -14,7 +14,7 @@ from utils.languages import FakeContext, Language
 async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: int = None, after: int = None, message: bool = True):
     language = ctx.bot.language(ctx)
     if limit > 2000:
-        return await ctx.send(language.string("mod_purge_max"))
+        return await ctx.send(language.string("mod_purge_max", given=limit))
         # return await general.send(f"Too many messages to search given ({limit:,}/2,000)", ctx.channel)
     if before is None:
         before = ctx.message
