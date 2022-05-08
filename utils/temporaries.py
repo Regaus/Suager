@@ -227,7 +227,7 @@ def prep_birthdays(bot: bot_data.Bot):
                     tz_entry = bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (uid,))
                     if tz_entry and tz_entry["tz"] != str(data[uid].tz):
                         data[uid].tz = pytz.timezone(tz_entry["tz"])
-                    else:
+                    elif tz_entry is None:
                         data[uid].tz = time2.timezone.utc
                 data[uid].push_birthday()  # Force the birthday to go ahead of itself if it gets stuck
                 # if data[uid].breaking < 2:  # Regenerate the data if a breaking change is hit and the old pickle won't work anymore
@@ -242,7 +242,7 @@ def prep_birthdays(bot: bot_data.Bot):
 
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
-    update_speed = 3600
+    update_speed = 1  # 3600
     time_class = time2.Kargadia if bot.name == "cobble" else time2.Earth
     prep_birthdays(bot)
     # birthday.save()
