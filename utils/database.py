@@ -125,7 +125,8 @@ tables = [
         Column("name", 2, True),       # First name
         Column("name2", 2, False),     # Vaaraninema
         Column("gender", 2, True),     # m/f
-        Column("birthday", 2, False),  # Kargadian birthday - timestamp
+        Column("birthday", 2, False),  # Kargadian birthday - iso date string
+        Column("has_role", 3, True),   # Is it currently the person's Kargadian birthday?
         Column("location", 2, False),  # Kargadian location - can also be used to determine timezone
         Column("joined", 2, True),     # When the user joined as an Earth date
     ]),

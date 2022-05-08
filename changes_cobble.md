@@ -462,3 +462,6 @@
 ## v1.4.13 - 6 May 2022
 - Added Kargadia db table (not yet used)
 - Added new cities to Nittavia time display
+
+## v1.5.0 - 7-8 May 2022
+- Added a system of birthdays for Kargadia

@@ -182,3 +182,7 @@
 
 ## v0.7.0 - 2 May 2022
 - Mod log command
+
+## v0.7.1 - 7-8 May 2022
+- Class-based birthdays structure
+- Support for timezones in birthdays

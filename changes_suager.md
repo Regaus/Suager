@@ -1289,3 +1289,7 @@
 
 ## v7.5.0.1 - 2 May 2022
 - Improved the way pardoned warnings are shown in the mod log command
+
+## v7.5.1 - 7-8 May 2022
+- Class-based birthdays structure
+- Support for timezones in birthdays

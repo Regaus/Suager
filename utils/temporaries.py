@@ -7,10 +7,11 @@ from typing import Type
 
 import aiohttp
 import discord
+import pytz
 from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import bot_data, general, http, languages, lists, logger, time
+from utils import birthday, bot_data, general, http, languages, lists, logger, time
 
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
@@ -172,12 +173,83 @@ async def punishments_errors(bot: bot_data.Bot):
         await wait_until_next_iter(update_speed, 0)
 
 
+def process_birthday(bot: bot_data.Bot, entry: dict) -> birthday.Birthday:
+    uid = entry["uid"]
+    if bot.name == "cobble":
+        date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
+        if entry["location"]:
+            tz = conworlds.Place(entry["location"]).tz
+        else:
+            tz = time2.timezone.utc
+    else:
+        date = time2.date.from_datetime(entry["birthday"])  # although the birthday is stored as a datetime, the converter only takes in the date part
+        tz_entry = bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (uid,))
+        if tz_entry:
+            tz = pytz.timezone(tz_entry["tz"])
+        else:
+            tz = time2.timezone.utc
+    return birthday.Birthday(uid, date, tz, bot.name, entry["has_role"])
+
+
+def prep_birthdays(bot: bot_data.Bot):
+    # Load all birthdays
+    if bot.name == "cobble":
+        all_birthdays = bot.db.fetch("SELECT uid, birthday, has_role, location FROM kargadia WHERE birthday IS NOT NULL")
+    else:
+        all_birthdays = bot.db.fetch("SELECT * FROM birthdays WHERE bot=?", (bot.name,))
+
+    # Check if the bot has not yet saved its birthdays into the class system
+    if bot.name not in birthday.birthdays:
+        data = {}
+        for entry in all_birthdays:
+            uid = entry["uid"]
+            data[uid] = process_birthday(bot, entry)
+        birthday.birthdays[bot.name] = data
+    # If the birthdays are present, check the validity of the data
+    else:
+        data = birthday.birthdays[bot.name]
+        mentioned = []  # If someone's entry is removed from the databases, we should remove it from the class system too
+        # Go through all birthdays to see if there are any new ones
+        for entry in all_birthdays:
+            uid = entry["uid"]
+            mentioned.append(uid)
+            if uid not in data:  # This would happen if there's a new entry to the database that we haven't yet treated
+                data[uid] = process_birthday(bot, entry)
+            else:
+                if bot.name == "cobble":
+                    if data[uid].birthday_date.iso() != entry["birthday"]:
+                        data[uid].birthday_date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
+                    if str(data[uid].tz) != entry["location"]:
+                        data[uid].tz = conworlds.Place(entry["location"]).tz
+                else:
+                    if data[uid].birthday_date.iso() != entry["birthday"].strftime("%Y-%m-%d"):
+                        data[uid].birthday_date = time2.date.from_datetime(entry["birthday"])
+                    tz_entry = bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (uid,))
+                    if tz_entry and tz_entry["tz"] != str(data[uid].tz):
+                        data[uid].tz = pytz.timezone(tz_entry["tz"])
+                    else:
+                        data[uid].tz = time2.timezone.utc
+                data[uid].push_birthday()  # Force the birthday to go ahead of itself if it gets stuck
+                # if data[uid].breaking < 2:  # Regenerate the data if a breaking change is hit and the old pickle won't work anymore
+                #     current = data[uid]
+                #     data[uid] = birthday.Birthday(current.uid, current.birthday_date, current.tz, current.bot)
+        # Go through the data entries to see if there are any old entries that don't exist in the db anymore
+        for uid in data:
+            if uid not in mentioned:  # not an entry in the db
+                data.pop(uid)  # removes the entry
+        birthday.birthdays[bot.name] = data
+
+
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
     update_speed = 3600
-    await wait_until_next_iter(update_speed, 1)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
+    time_class = time2.Kargadia if bot.name == "cobble" else time2.Earth
+    prep_birthdays(bot)
+    # birthday.save()
+    await wait_until_next_iter(update_speed, 1, time_class)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
+    table = "kargadia" if bot.name == "cobble" else "birthdays"
 
     while True:
         guilds = {}
@@ -188,7 +260,10 @@ async def birthdays(bot: bot_data.Bot):
                 if data["birthdays"]["enabled"]:
                     out = [data["birthdays"]["role"], data["birthdays"]["channel"], data["birthdays"]["message"]]
                     guilds[entry["gid"]] = out
-        birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+
+        prep_birthdays(bot)
+        # birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+        birthday_today = birthday.birthdays_today(bot.name)
         if birthday_today:
             for person in birthday_today:
                 # dm = True
@@ -196,7 +271,7 @@ async def birthdays(bot: bot_data.Bot):
                     # guild = guilds[i]
                     guild: discord.Guild = bot.get_guild(gid)
                     if guild is not None:
-                        user: discord.Member = guild.get_member(person["uid"])
+                        user: discord.Member = guild.get_member(person.uid)
                         if user is not None:
                             # dm = False
                             if data[1] and data[2]:
@@ -218,15 +293,20 @@ async def birthdays(bot: bot_data.Bot):
                                     out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
                                     general.print_error(out)
                                     logger.log(bot.name, "errors", out)
-                bot.db.execute("UPDATE birthdays SET has_role=1 WHERE uid=?", (person["uid"],))
-        birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+                person.has_role = True
+                bot.db.execute(f"UPDATE {table} SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
+
+        # birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+        birthday_over = birthday.birthdays_ended(bot.name)
         for person in birthday_over:
-            bot.db.execute("UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person["uid"], bot.name))
+            bot.db.execute(f"UPDATE {table} SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
+            person.has_role = False
+            person.push_birthday()
             for gid, data in guilds.items():
                 # guild = guilds[i]
                 guild: discord.Guild = bot.get_guild(gid)
                 if guild is not None:
-                    user: discord.Member = guild.get_member(person["uid"])
+                    user: discord.Member = guild.get_member(person.uid)
                     if user is not None:
                         if data[0]:
                             role: discord.Role = guild.get_role(data[0])
@@ -240,7 +320,9 @@ async def birthdays(bot: bot_data.Bot):
                 # except Exception as e:
                 #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
 
-        await asyncio.sleep(update_speed)
+        # birthday.save()
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 1, time_class)
 
 
 ka_places = {
