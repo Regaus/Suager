@@ -88,11 +88,11 @@ def file_ts(name: str, ext: str = "txt") -> str:
     return f"{name}_{int(now_ts())}.{ext}"
 
 
-def interpret_time(period: str) -> relativedelta:
-    """Convert str to relativedelta"""
+def interpret_time(period: str, cls=relativedelta, time_class=None) -> relativedelta:
+    """Convert str to relativedelta - may be changed to use another class, eg r.py delta"""
     matches = re.findall(r"(\d+(y|mo|w|d|h|m|s))", period)
     if not matches:
-        return relativedelta(seconds=0)  # Because fuck you
+        return cls(seconds=0)  # Because fuck you
     else:
         try:
             _td = {}
@@ -105,10 +105,12 @@ def interpret_time(period: str) -> relativedelta:
                     _td[key] += length
                 else:
                     _td[key] = length
-            return relativedelta(**_td)
+            if time_class:
+                _td["time_class"] = time_class
+            return cls(**_td)
         except Exception as e:
             type(e)  # ignore haha yes
-            return relativedelta(seconds=0)
+            return cls(seconds=0)
 
 
 def add_time(delta: relativedelta):

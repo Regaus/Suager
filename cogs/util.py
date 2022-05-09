@@ -961,7 +961,7 @@ class UtilityCobble(Utility, name="Utility"):
                         return await ctx.send("Invalid time class specified...")
             now = time2.datetime.now(time_class=time_class)
             date = time2.datetime(now.year, 1, 1)
-            if _date is None and str(time_class) != time2.Earth:
+            if _date is None and str(time_class) == "Earth":
                 def dt(_month, _day):
                     return time2.datetime(now.year, _month, _day)
                 dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25),
@@ -1006,9 +1006,8 @@ class UtilityCobble(Utility, name="Utility"):
                 if not issubclass(time_class, time2.Earth):
                     return await ctx.send("Invalid time class specified")
         try:
-            # FIXME: Fix the relative delta interpreter to use `regaus.time.relativedelta` and correctly count days and months for non-Earth calendars
-            _delta = time.interpret_time(string) * multiplier
-            delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds, time_class=time_class)
+            delta = time.interpret_time(string, time2.relativedelta, time_class) * multiplier
+            # delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds, time_class=time_class)
             now = time2.datetime.now(time_class=time_class)
             then = now + delta
         except (ValueError, OverflowError) as e:
