@@ -485,3 +485,6 @@
 
 ## v1.5.4 - 9 May 2022
 - CobbleBot now shows Kargadian time on `..time`
+
+## v1.5.4.1 - 9 May 2022
+- Fixed Kargadian birthdays not saving "has_role" status

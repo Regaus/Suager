@@ -249,7 +249,6 @@ async def birthdays(bot: bot_data.Bot):
     await wait_until_next_iter(update_speed, 1, time_class)  # Start at xx:00:01 to avoid starting at 59:59 and breaking everything
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
-    table = "kargadia" if bot.name == "cobble" else "birthdays"
 
     while True:
         guilds = {}
@@ -294,12 +293,18 @@ async def birthdays(bot: bot_data.Bot):
                                     general.print_error(out)
                                     logger.log(bot.name, "errors", out)
                 person.has_role = True
-                bot.db.execute(f"UPDATE {table} SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
+                if bot.name == "cobble":
+                    bot.db.execute("UPDATE kargadia SET has_role=1 WHERE uid=?", (person.uid,))
+                else:
+                    bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
 
         # birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
         birthday_over = birthday.birthdays_ended(bot.name)
         for person in birthday_over:
-            bot.db.execute(f"UPDATE {table} SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
+            if bot.name == "cobble":
+                bot.db.execute("UPDATE kargadia SET has_role=0 WHERE uid=?", (person.uid,))
+            else:
+                bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
             person.has_role = False
             person.push_birthday()
             for gid, data in guilds.items():
