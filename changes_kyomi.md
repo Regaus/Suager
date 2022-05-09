@@ -189,3 +189,6 @@
 
 ## v0.7.1.1 - 9 May 2022
 - Fixed the birthdays incorrectly switching themselves between UTC and their actual timezone
+
+## v0.7.2 - 9 May 2022
+- Massively improved the way the command to set your timezone works

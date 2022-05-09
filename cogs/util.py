@@ -65,14 +65,33 @@ class Utility(commands.Cog):
             return await ctx.send(f"{ctx.author.name}, the number specified is too large to convert to a proper value.")
         return await ctx.send(f"You need to specify either `to` or `from`.")
 
-    @commands.command(name="settz")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.command(name="settz", aliases=["tz", "settimezone", "timezone"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def set_timezone(self, ctx: commands.Context, tz: str = None):
-        """ Set your timezone """
+        """ Set your timezone - Use "reset" to reset your timezone """
         language = self.bot.language(ctx)
-        if tz is None:
+        if tz is None or tz.lower() == "help":
+            return await ctx.send(language.string("util_time_tz_help", command=ctx.clean_prefix + ctx.invoked_with))
+        elif tz.lower() == "reset":
             self.bot.db.execute("DELETE FROM timezones WHERE uid=?", (ctx.author.id,))
             return await ctx.send(language.string("util_time_tz_reset"))
+        elif tz.lower() == "list":
+            file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
+            return await ctx.send(language.string("util_time_tz_list"), file=file)
+        elif len(tz) == 2:
+            def human_offset(_zone):
+                return time2.format_offset(offset(_zone))
+
+            def offset(_zone):
+                return pytz.timezone(_zone).utcoffset(now)
+
+            try:
+                country = language.string(f"country_{tz}")
+                now = time.now2()
+                timezones = "\n".join([f"`{human_offset(zone)} {zone}`" for zone in sorted(pytz.country_timezones[tz.upper()], key=offset, reverse=True)])
+                return await ctx.send(language.string("util_time_tz_country", country=country, timezones=timezones, command=ctx.clean_prefix + ctx.invoked_with))
+            except KeyError:
+                return await ctx.send(language.string("util_time_tz_country_none", country=tz))
         try:
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
             _tz = pytz.timezone(tz)
@@ -80,11 +99,12 @@ class Utility(commands.Cog):
                 self.bot.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
             else:
                 self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
-            return await ctx.send(language.string("util_time_tz", _tz))
+            return await ctx.send(language.string("util_time_tz", tz=str(_tz), command=ctx.clean_prefix + ctx.invoked_with))
             # return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
         except pytz.UnknownTimeZoneError:
-            file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
-            return await ctx.send(language.string("util_time_tz_error", tz), file=file)
+            return await ctx.send(language.string("util_time_tz_error", tz=tz, command=ctx.clean_prefix + ctx.invoked_with))
+            # file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
+            # return await ctx.send(language.string("util_time_tz_error", tz=tz), file=file)
             # return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
 
     @commands.command(name="timesince", aliases=["timeuntil"])

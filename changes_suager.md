@@ -1297,3 +1297,6 @@
 ## v7.5.1.1 - 9 May 2022
 - Fixed the birthdays incorrectly switching themselves between UTC and their actual timezone
 - Fixed //purge not showing the given limit when the value exceeds 2000
+
+## v7.5.2 - 9 May 2022
+- Massively improved the way the command to set your timezone works
