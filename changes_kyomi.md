@@ -192,3 +192,6 @@
 
 ## v0.7.2 - 9 May 2022
 - Massively improved the way the command to set your timezone works
+
+## v0.7.3 - 9 May 2022
+- Timezone support for input and output

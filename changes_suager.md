@@ -1303,3 +1303,6 @@
 
 ## v7.5.2.1 - 9 May 2022
 - The timezone code for pytz isn't needed in Birthdays anymore
+
+## v7.5.3 - 9 May 2022
+- Timezone support for input and output

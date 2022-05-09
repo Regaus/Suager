@@ -34,7 +34,7 @@ class Polls(commands.Cog):
                 return await ctx.send(language.string("polls_length_error", expiry))
             _question = general.reason(ctx.author, question)
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
-            _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=False)
+            _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=True)
             poll_channel: discord.TextChannel = ctx.channel
             poll_anonymity = True
             data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
@@ -185,7 +185,7 @@ class Polls(commands.Cog):
             colour = general.yellow
         embed = discord.Embed(colour=colour)
         embed.title = language.string("polls_status_title", data["poll_id"])
-        ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=False)
+        ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         ends_in = language.delta_dt(data["expiry"], accuracy=3, brief=False, affix=True)
         embed.description = language.string("polls_status_description", data["question"], ends, ends_in)
         embed.add_field(name=language.string("polls_votes_current"), inline=False,
@@ -202,7 +202,7 @@ class Polls(commands.Cog):
             return await ctx.send(language.string("polls_list_none"))
         output = []
         for i, poll in enumerate(polls, start=1):
-            ends = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=False)
+            ends = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
             ends_in = language.delta_dt(poll["expiry"], accuracy=3, brief=False, affix=True)
             output.append(language.string("polls_list_entry", language.number(i, commas=False), poll["poll_id"], poll["question"], ends, ends_in))
         return await ctx.send(language.string("polls_list", ctx.guild.name, "\n\n".join(output)))
@@ -318,7 +318,7 @@ class Polls(commands.Cog):
             reason = reason or language.string("mod_reason_none")
             _reason = general.reason(ctx.author, reason)
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
-            _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=False)
+            _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=True)
             if ctx.guild.id == 869975256566210641:
                 poll_channel = self.bot.get_channel(871811287166898187)
             else:
@@ -496,7 +496,7 @@ class Polls(commands.Cog):
             colour = general.yellow
         embed = discord.Embed(colour=colour)
         embed.title = language.string("trials_status_title", data["trial_id"])
-        ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=False)
+        ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         ends_in = language.delta_dt(data["expiry"], accuracy=3, brief=False, affix=True)
         action_text = {
             "ban": "trials_action_ban",
@@ -526,7 +526,7 @@ class Polls(commands.Cog):
             return await ctx.send(language.string("trials_list_none"))
         output = []
         for i, trial in enumerate(trials, start=1):
-            ends = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=False)
+            ends = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
             ends_in = language.delta_dt(trial["expiry"], accuracy=3, brief=False, affix=True)
             action_text = {
                 "ban": "trials_action_ban",

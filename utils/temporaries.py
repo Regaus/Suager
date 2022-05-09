@@ -36,7 +36,7 @@ async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
     else:
         try:
             await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")
-            expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=False)
+            expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, uid=user.id)
             logger.log(bot.name, "reminders", f"{time.time()} > {bot.full_name} > Reminders > Successfully sent {user} ({user.id}) the reminder for {expiry} ({entry_id})")
             handled = 1
         except Exception as e:
@@ -917,7 +917,7 @@ async def polls(bot: bot_data.Bot):
                             embed.colour = general.yellow
                             result = language.string("polls_end_neutral")
                         embed.title = language.string("polls_end_title")
-                        ended = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=False)
+                        ended = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=True)
                         embed.description = language.string("polls_end_description", poll["question"], ended, result)
                         embed.add_field(name=language.string("polls_votes_result"), inline=False,
                                         value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
@@ -1166,7 +1166,7 @@ async def trials(bot: bot_data.Bot):
                     if channel:
                         embed = discord.Embed(colour=colour)
                         embed.title = language.string("trials_end_title")
-                        _expiry = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=False)
+                        _expiry = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=True)
                         embed.description = language.string("trials_end_description", output, trial["reason"], _expiry)
                         embed.add_field(name=language.string("trials_votes_result"), inline=False,
                                         value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),

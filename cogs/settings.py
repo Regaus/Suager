@@ -1544,8 +1544,8 @@ class Settings(commands.Cog):
                 .replace("[MENTION]", ctx.author.mention)\
                 .replace("[USER]", ctx.author.name)\
                 .replace("[SERVER]", ctx.guild.name)\
-                .replace("[CREATED_AT]", language.time(ctx.author.created_at, short=1, dow=False, seconds=False, tz=False))\
-                .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                .replace("[CREATED_AT]", language.time(ctx.author.created_at, short=1, dow=False, seconds=False, tz=True))\
+                .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=True))\
                 .replace("[ACCOUNT_AGE]", language.delta_dt(ctx.author.created_at, accuracy=3, brief=False, affix=False))\
                 .replace("[MEMBERS]", language.number(ctx.guild.member_count))
             stuff = json.dumps(_settings)
@@ -1609,8 +1609,8 @@ class Settings(commands.Cog):
                 .replace("[MENTION]", ctx.author.mention)\
                 .replace("[USER]", ctx.author.name)\
                 .replace("[SERVER]", ctx.guild.name)\
-                .replace("[CREATED_AT]", language.time(ctx.author.created_at, short=1, dow=False, seconds=False, tz=False))\
-                .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                .replace("[CREATED_AT]", language.time(ctx.author.created_at, short=1, dow=False, seconds=False, tz=True))\
+                .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=True))\
                 .replace("[ACCOUNT_AGE]", language.delta_dt(ctx.author.created_at, accuracy=3, brief=False, affix=False))\
                 .replace("[LENGTH_OF_STAY]", language.delta_dt(ctx.author.joined_at, accuracy=3, brief=False, affix=False))\
                 .replace("[MEMBERS]", language.number(ctx.guild.member_count))

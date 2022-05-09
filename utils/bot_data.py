@@ -83,3 +83,7 @@ class Bot(commands.AutoShardedBot):
     @staticmethod
     def language2(name: str):
         return languages.Language(name)
+
+    @staticmethod
+    def timezone(uid: int, time_class: str = "Earth"):
+        return languages.Language.get_timezone(uid, time_class)

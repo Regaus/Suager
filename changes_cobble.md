@@ -472,3 +472,6 @@
 
 ## v1.5.1 - 9 May 2022
 - Better relativedelta conversion for timein/timeago commands
+
+## v1.5.2 - 9 May 2022
+- Timezone support for input and output

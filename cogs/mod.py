@@ -646,7 +646,7 @@ class Moderation(commands.Cog):
             i = language.number(_mute, commas=False)
             case_id = language.number(mute["id"], commas=False)
             if mute["temp"]:
-                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=True)
+                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
                 expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
                 outputs.append(language.string("mod_mute_list_item", i=i, id=case_id, who=who, time=expires_on, delta=expires_in))
             else:
@@ -860,7 +860,7 @@ class Moderation(commands.Cog):
             i = language.number(item, commas=False)
             case_id = language.number(warning["id"], commas=False)
             if warning["temp"]:
-                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=False)
+                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=False, uid=ctx.author.id)
                 expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
                 outputs.append(language.string("mod_warn_list_item", i=i, id=case_id, text=text, time=expires_on, delta=expires_in))
             else:
@@ -903,7 +903,7 @@ class Moderation(commands.Cog):
                 text = language.string(f"mod_log_{entry['action']}", author=author, reason=entry["reason"])
             i = language.number(item, commas=False)
             case_id = language.number(entry["id"], commas=False)
-            expiry = language.time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, at=True)
+            expiry = language.time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
             delta = language.delta_dt(entry["expiry"], accuracy=3, brief=False, affix=True)
             if entry["temp"]:
                 key = "mod_log_item_time2" if time.now2() > entry["expiry"] else "mod_log_item_time3"

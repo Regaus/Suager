@@ -58,9 +58,9 @@ class BotInformation(commands.Cog, name="Bot Information"):
             libs_used += f"\n**Regaus.py v{reg_version}**"
         embed.add_field(name=language.string("info_stats_used"), inline=True, value=libs_used)
         mv = version_data["version"].split(".")[0]
-        fv = language.time(time.from_ts(version_data["first_version"], None), short=1, dow=False, seconds=False, tz=False)
-        mr = language.time(time.from_ts(version_data["major_release"], None), short=1, dow=False, seconds=False, tz=False)
-        lu = language.time(time.from_ts(version_data["last_update"], None), short=1, dow=False, seconds=False, tz=False)
+        fv = language.time(time.from_ts(version_data["first_version"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
+        mr = language.time(time.from_ts(version_data["major_release"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
+        lu = language.time(time.from_ts(version_data["last_update"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         embed.add_field(name=language.string("info_stats_dates"), value=language.string("info_stats_dates_data", fv, mr, lu, mv), inline=True)
         return await ctx.send(embed=embed)
 

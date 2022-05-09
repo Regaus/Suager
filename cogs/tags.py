@@ -25,9 +25,9 @@ class Tags(commands.Cog):
                     .replace("[USER]", str(ctx.author))\
                     .replace("[USER_ID]", str(ctx.author.id))\
                     .replace("[AVATAR]", str(ctx.author.display_avatar.replace(static_format="png", size=1024)))\
-                    .replace("[JOINED]", language.time(ctx.author.joined_at, short=0, dow=False, seconds=True, tz=False))\
-                    .replace("[USER_CREATED]", language.time(ctx.author.created_at, short=0, dow=False, seconds=True, tz=False))\
-                    .replace("[SERVER_CREATED]", language.time(ctx.guild.created_at, short=0, dow=False, seconds=True, tz=False))\
+                    .replace("[JOINED]", language.time(ctx.author.joined_at, short=0, dow=False, seconds=True, tz=True))\
+                    .replace("[USER_CREATED]", language.time(ctx.author.created_at, short=0, dow=False, seconds=True, tz=True))\
+                    .replace("[SERVER_CREATED]", language.time(ctx.guild.created_at, short=0, dow=False, seconds=True, tz=True))\
                     .replace("[CHANNEL]", ctx.channel.mention)\
                     .replace("[CHANNEL_NAME]", ctx.channel.name)\
                     .replace("[SERVER]", ctx.guild.name)\
@@ -94,8 +94,9 @@ class Tags(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         g = ctx.guild
         embed.description = language.string("tags_info_data", tag["name"], language.number(tag["usage"]), await self.get_user(g, tag["owner"], language),
-                                            await self.get_user(g, tag["creator"], language), language.time(time.from_ts(tag["created"])),
-                                            language.time(time.from_ts(tag["edited"])))
+                                            await self.get_user(g, tag["creator"], language),
+                                            language.time(time.from_ts(tag["created"]), tz=True, uid=ctx.author.id),
+                                            language.time(time.from_ts(tag["edited"]), tz=True, uid=ctx.author.id))
         c = tag["content"]
         if len(c) > 1024:
             c = f"{c[:1021]}..."

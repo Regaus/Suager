@@ -27,15 +27,16 @@ class Utility(commands.Cog):
         """ Current time """
         language = self.bot.language(ctx)
         send = ""
-        send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
-        send += f"UTC/GMT: **{language.time(time.now(None), short=0, dow=True, seconds=True, tz=False)}**"
-        if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
-            send += f"\nSenko Lair: **{language.time(time.now_sl(), short=0, dow=True, seconds=True, tz=False)}**"  # \n" \
-            # f"Senko Lair Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, False)}**"
-        data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
-        if data:
-            send += language.string("util_time_custom", language.time(time.set_tz(time.now(None), data['tz']), short=0, dow=True, seconds=True, tz=False))
-            # send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, False)}**"
+        # send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
+        now = time.now(None)
+        send += f"UTC/GMT: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
+        # if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
+        #     send += f"\nSenko Lair: **{language.time(time.now_sl(), short=0, dow=True, seconds=True, tz=False)}**"  # \n" \
+        #     # f"Senko Lair Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, False)}**"
+        # data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
+        # if data:
+        send += language.string("util_time_custom", language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
+        # send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, False)}**"
         return await ctx.send(send)
 
     @commands.command(name="base", aliases=["bases", "bc"])
@@ -137,14 +138,14 @@ class Utility(commands.Cog):
                     _y, _m, _d = _date.split("-")
                     y, m, d = int(_y), int(_m), int(_d)
                     date_part = time2.date(y, m, d, time2.Earth)
-                    date = time2.datetime.combine(date_part, time_part)
+                    date = time2.datetime.combine(date_part, time_part, self.bot.timezone(ctx.author.id))
                 except AttributeError:
                     return await ctx.send("Time class not found")
                 except ValueError:
                     return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
-            current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)
-            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)
+            current_time = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
+            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
             return await ctx.send(language.string("util_timesince", current_time, specified_time, difference))
         except Exception as e:
             return await ctx.send(language.string("util_timesince_error", type(e).__name__, str(e)))
@@ -160,8 +161,8 @@ class Utility(commands.Cog):
         except (ValueError, OverflowError) as e:
             return await ctx.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"))
         difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
-        time_now = language.time(now, short=0, dow=False, seconds=True, tz=False)
-        time_then = language.time(then, short=0, dow=False, seconds=True, tz=False)
+        time_now = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
+        time_then = language.time(then, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
         return await ctx.send(language.string("util_timediff", time_now, difference, time_then))
 
     @commands.command(name="timein")
@@ -504,7 +505,7 @@ class Utility(commands.Cog):
                 embed.add_field(name=language.string("discord_role_mentionable"), value=language.yes(role.mentionable), inline=True)
                 embed.add_field(name=language.string("discord_role_hoisted"), value=language.yes(role.hoist), inline=True)
                 embed.add_field(name=language.string("discord_role_position"), value=language.number(role.position), inline=True)
-                embed.add_field(name=language.string("discord_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
+                embed.add_field(name=language.string("discord_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=True)
                 embed.add_field(name=language.string("discord_role_default"), value=language.yes(role.is_default()), inline=True)
                 return await ctx.send(embed=embed)
 
@@ -532,7 +533,7 @@ class Utility(commands.Cog):
         """ Check when someone joined server """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_command_joined_at", user, ctx.guild.name, language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False)))
+        return await ctx.send(language.string("discord_command_joined_at", user, ctx.guild.name, language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id)))
 
     @commands.command(name="createdat")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -540,7 +541,7 @@ class Utility(commands.Cog):
         """ Check when someone created their account """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_command_created_at", user, language.time(user.created_at, short=0, dow=False, seconds=False, tz=False)))
+        return await ctx.send(language.string("discord_command_created_at", user, language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id)))
 
     @commands.command(name="user")
     @commands.guild_only()
@@ -555,8 +556,8 @@ class Utility(commands.Cog):
         embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=False)
-        embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=False), inline=False)
+        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=False)
+        embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=False)
         if len(user.roles) < 15:
             r = user.roles
             r.sort(key=lambda x: x.position, reverse=True)
@@ -584,7 +585,7 @@ class Utility(commands.Cog):
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=str(user), inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=False), inline=True)
+        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=True)
         return await ctx.send(embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
@@ -596,7 +597,7 @@ class Utility(commands.Cog):
         c = language.string(f"discord_emoji_{e}")
         embed = discord.Embed(colour=general.random_colour())
         embed.description = language.string("discord_emoji", c, emoji.name, emoji.id, language.yes(emoji.animated), emoji.guild.id,
-                                            language.time(emoji.created_at, short=0, dow=False, seconds=False, tz=False), emoji.url)
+                                            language.time(emoji.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), emoji.url)
         embed.set_image(url=emoji.url)
         return await ctx.send(f"{ctx.author.name}:", embed=embed)
 
@@ -638,7 +639,7 @@ class Utility(commands.Cog):
             n, a, e, t = language.number(na), language.number(ani), language.number(el), language.number(total_emotes)
             embed.add_field(name=language.string("discord_server_emotes"), value=language.string("discord_server_emotes_data", n, a, e, t), inline=True)
             ca = guild.created_at
-            ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=False), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
+            ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
             embed.add_field(name=language.string("discord_created_at"), value=f"{ct}\n{cd}", inline=False)
             return await ctx.send(embed=embed)
 
@@ -764,7 +765,7 @@ class Reminders(Utility, name="Utility"):
             return await ctx.send(language.string("util_reminders_error"))
             # return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
         diff = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
-        when = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
+        when = language.time(expiry, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id)
         # random_id = general.random_id()
         # while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
         #     random_id = general.random_id()
@@ -773,7 +774,7 @@ class Reminders(Utility, name="Utility"):
         return await ctx.send(language.string("util_reminders_success", ctx.author.name, diff, when))
         # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
-    @commands.group(name="reminders")
+    @commands.group(name="reminders", aliases=["reminder"])
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     async def reminders(self, ctx: commands.Context):
         """ See a list of your currently active reminders, and modify them """
@@ -791,7 +792,7 @@ class Reminders(Utility, name="Utility"):
             for reminder in reminders:
                 _reminder += 1
                 expiry = reminder["expiry"]
-                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=False)
+                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id)
                 expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
                 outputs.append(language.string("util_reminders_item", _reminder, reminder["message"], reminder["id"], expires_on, expires_in))
                 # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
@@ -837,9 +838,10 @@ class Reminders(Utility, name="Utility"):
                 return await ctx.send(language.string("util_reminders_edit_time2"))
             try:
                 _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
+                _expiry = _expiry.replace(tzinfo=self.bot.timezone(ctx.author.id)).astimezone(time2.timezone.utc).replace(tzinfo=None)
             except ValueError:
                 return await ctx.send(language.string("util_reminders_edit_time"))
-        expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=False)
+        expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id)
         self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (_message, _expiry, reminder_id))
         return await ctx.send(language.string("util_reminders_edit", reminder_id, _message, expiry))
 
@@ -982,12 +984,12 @@ class UtilityCobble(Utility, name="Utility"):
                     _y, _m, _d = _date.split("-")
                     y, m, d = int(_y), int(_m), int(_d)
                     date_part = time2.date(y, m, d, time_class)
-                    date = time2.datetime.combine(date_part, time_part)
+                    date = time2.datetime.combine(date_part, time_part, self.bot.timezone(ctx.author.id, str(time_class)))
                 except ValueError:
                     return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
-            current_time = language.time(now, short=0, dow=False, seconds=True, tz=False)
-            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=False)
+            current_time = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
+            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
             return await ctx.send(language.string("util_timesince", current_time, specified_time, difference))
         except Exception as e:
             return await ctx.send(language.string("util_timesince_error", type(e).__name__, str(e)))
@@ -1013,8 +1015,8 @@ class UtilityCobble(Utility, name="Utility"):
         except (ValueError, OverflowError) as e:
             return await ctx.send(language.string("util_timediff_error", f"{type(e).__name__}: {str(e)}"))
         difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
-        time_now = language.time(now, short=0, dow=False, seconds=True, tz=False)
-        time_then = language.time(then, short=0, dow=False, seconds=True, tz=False)
+        time_now = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
+        time_then = language.time(then, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
         return await ctx.send(language.string("util_timediff", time_now, difference, time_then))
 
     @commands.command(name="timein")

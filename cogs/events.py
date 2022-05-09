@@ -30,7 +30,7 @@ class Events(commands.Cog):
             if ctx.author.id != self.bot.user.id:  # isn't Suager himself
                 channel = self.bot.get_channel(self.dm_logger)
                 language = self.bot.language2("en")
-                now = language.time(ctx.created_at, short=1, dow=False, seconds=True, tz=False, at=True)
+                now = language.time(ctx.created_at, short=1, dow=False, seconds=True, tz=True, at=True)
                 limit = 1900
                 extra = []
 
@@ -284,8 +284,8 @@ class Events(commands.Cog):
                             .replace("[MENTION]", member.mention)\
                             .replace("[USER]", member.name)\
                             .replace("[SERVER]", member.guild.name)\
-                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=False))\
-                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=True))\
+                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=True))\
                             .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
                         try:
@@ -304,7 +304,7 @@ class Events(commands.Cog):
                         embed = discord.Embed(title=language.string("events_user_joined"), colour=general.green2)
                         embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
-                        embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True), inline=False)
+                        embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True, tz=True), inline=False)
                         embed.set_thumbnail(url=str(member.display_avatar.replace(size=1024, static_format="png")))
                         embed.timestamp = member.joined_at
                         try:
@@ -396,8 +396,8 @@ class Events(commands.Cog):
                             .replace("[MENTION]", member.mention)\
                             .replace("[USER]", member.name)\
                             .replace("[SERVER]", member.guild.name)\
-                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=False))\
-                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=False))\
+                            .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=True))\
+                            .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=True))\
                             .replace("[ACCOUNT_AGE]", language.delta_dt(member.created_at, accuracy=3, brief=False, affix=False))\
                             .replace("[LENGTH_OF_STAY]", language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False))\
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
@@ -417,8 +417,8 @@ class Events(commands.Cog):
                         embed = discord.Embed(title=language.string("events_user_left"), colour=general.red3)
                         embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
-                        embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True), inline=False)
-                        joined = language.time(member.joined_at, short=0, dow=False, seconds=True)
+                        embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True, tz=True), inline=False)
+                        joined = language.time(member.joined_at, short=0, dow=False, seconds=True, tz=True)
                         stayed = language.delta_dt(member.joined_at, accuracy=3, brief=False, affix=False)
                         embed.add_field(name=language.string("discord_length_of_stay"), value=f"{joined}\n{stayed}", inline=False)
                         embed.add_field(name=language.string("discord_user_roles"), value=", ".join([r.mention for r in member.roles if not r.is_default()]))
