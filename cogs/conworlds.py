@@ -3,7 +3,7 @@ import re
 from math import ceil
 
 import discord
-from regaus import conworlds, PlaceDoesNotExist, time, version_info
+from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
 
 from utils import bot_data, commands, conlangs
 
@@ -234,6 +234,63 @@ class Conworlds(commands.Cog):
         output += f"Day length: {day:,.2f} Earth hours ({days:,.2f} Earth days)\n"
         output += f"Year length: {year:,.2f} Earth days ({years:,.2f} Earth years) | {local:,.2f} local solar days"
         return await ctx.send(f"Information on planet `87.78.{ss}.{p}`:", embed=discord.Embed(colour=0xff0057, description=output))
+
+    @commands.group(name="citizenship", aliases=["citizen", "kaprofile", "kargadia"], case_insensitive=True)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def ka_citizenship(self, ctx: commands.Context):
+        """ Your Kargadian citizen ID """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @ka_citizenship.command(name="add")
+    @commands.is_owner()
+    async def ka_citizen_add(self, ctx: commands.Context, _id: int, uid: int, name: str = None, name2: str = None, gender: str = None, birthday: str = None, location: str = None, joined: str = None):
+        """ Add a new Kargadian citizen to the database """
+        output = self.bot.db.execute("INSERT INTO kargadia(id, uid, name, name2, gender, birthday, has_role, location, joined) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                     (_id, uid, name, name2, gender, birthday, False, location, joined))
+        return await ctx.send(output)
+
+    @ka_citizenship.command(name="edit", aliases=["update"])
+    @commands.is_owner()
+    async def ka_citizen_edit(self, ctx: commands.Context, _id: int, key: str, value: str):
+        """ Edit a Kargadian citizen's profile """
+        output = self.bot.db.execute("UPDATE kargadia SET ?=? WHERE id=?", (key, value, _id))
+        return await ctx.send(output)
+
+    @ka_citizenship.command(name="delete", aliases=["del", "remove"])
+    @commands.is_owner()
+    async def ka_citizen_delete(self, ctx: commands.Context, _id: int):
+        """ Delete a Kargadian citizen's profile """
+        output = self.bot.db.execute("DELETE FROM kargadia WHERE id=?", (_id,))
+        return await ctx.send(output)
+
+    @ka_citizenship.command(name="see", aliases=["profile", "id"])
+    async def ka_citizen_profile(self, ctx: commands.Context, user: discord.User = None):
+        """ See your or someone else's profile """
+        language = ctx.language2("en")
+        user = user or ctx.author
+        uid = user.id
+        data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=?", (uid,))
+        embed = discord.Embed(colour=random_colour())
+        embed.title = f"{user.name}'s Kargadian citizen ID"
+        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
+        embed.add_field(name="Citizen ID", value=data["id"], inline=True)
+        embed.add_field(name="User ID", value=data["uid"], inline=True)
+        if data["name"]:
+            name = data["name"]
+            if data["name2"]:
+                name += f" {data['name2']}"
+        else:
+            name = "Unavailable"
+        genders = {"m": "Male", "f": "Female"}
+        embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
+        embed.add_field(name="Kargadian Name", value=name, inline=False)
+        birthday = time.date.from_iso(data["birthday"], time.Kargadia)
+        embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
+        embed.add_field(name="Location", value=data["location"], inline=False)
+        joined = time.date.from_iso(data["joined"], time.Earth)
+        embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
+        return await ctx.send(embed=embed)
 
 
 def setup(bot: bot_data.Bot):

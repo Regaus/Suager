@@ -3,7 +3,13 @@ from utils import emotes
 
 template_cobble = {
     "prefixes": [],
-    "use_default": True
+    "use_default": True,
+    "birthdays": {
+        "enabled": False,
+        "role": 0,
+        "channel": 0,
+        "message": "It is now [MENTION]'s Kargadian birthday! 🎂🎉"
+    },
 }
 
 

@@ -131,13 +131,14 @@ class Settings(commands.Cog):
                             lvl = language.string("settings_current_leveling", ctx.prefix)
                     embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
 
-                # Birthdays
-                bd = language.string("settings_current_disabled")
-                if "birthdays" in setting:
-                    if setting["birthdays"]["enabled"]:
-                        bd = language.string("settings_current_birthdays", ctx.prefix)
-                embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
+            # Birthdays
+            bd = language.string("settings_current_disabled")
+            if "birthdays" in setting:
+                if setting["birthdays"]["enabled"]:
+                    bd = language.string("settings_current_birthdays", ctx.prefix)
+            embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
 
+            if self.bot.name in ["kyomi", "suager"]:
                 # Polls
                 if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
                     polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
@@ -1025,7 +1026,7 @@ class Settings(commands.Cog):
         return await ctx.send(language.string("settings_starboard_requirement_set", language.number(requirement)))
 
     @settings.group(name="birthdays", aliases=["birthday", "bd", "b"], case_insensitive=True)
-    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_birthday(self, ctx: commands.Context):
         """ Birthday settings """
         if ctx.invoked_subcommand is None:

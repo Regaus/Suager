@@ -478,3 +478,7 @@
 
 ## v1.5.2.1 - 9 May 2022
 - Add a Citizen ID field to the Kargadia database table
+
+## v1.5.3 - 9 May 2022
+- Kargadia citizen profiles
+- CobbleBot can now actually process people's birthdays
