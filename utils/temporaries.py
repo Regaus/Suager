@@ -242,7 +242,7 @@ def prep_birthdays(bot: bot_data.Bot):
 
 async def birthdays(bot: bot_data.Bot):
     """ Handle birthdays """
-    update_speed = 1  # 3600
+    update_speed = 1800  # 3600
     time_class = time2.Kargadia if bot.name == "cobble" else time2.Earth
     prep_birthdays(bot)
     # birthday.save()
