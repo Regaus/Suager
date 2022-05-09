@@ -482,3 +482,6 @@
 ## v1.5.3 - 9 May 2022
 - Kargadia citizen profiles
 - CobbleBot can now actually process people's birthdays
+
+## v1.5.4 - 9 May 2022
+- CobbleBot now shows Kargadian time on `..time`

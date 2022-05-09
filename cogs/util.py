@@ -28,7 +28,8 @@ class Utility(commands.Cog):
         language = self.bot.language(ctx)
         send = ""
         # send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
-        now = time.now(None)
+        # now = time.now(None)
+        now = time2.datetime.now(time_class=time2.Kargadia if self.bot.name == "cobble" else time2.Earth)
         send += f"UTC/GMT: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
         # if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
         #     send += f"\nSenko Lair: **{language.time(time.now_sl(), short=0, dow=True, seconds=True, tz=False)}**"  # \n" \
