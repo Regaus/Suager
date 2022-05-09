@@ -20,7 +20,7 @@ class Birthday:
         self.uid: int = uid
         self.birthday_date: time.date = birthday
         self.tz: time.tzinfo = tz
-        self.pain: bool = self.tz.__class__.__module__.startswith("pytz")  # pytz timezones cause pain because they can't handle my superior datetime
+        # self.pain: bool = self.tz.__class__.__module__.startswith("pytz")  # pytz timezones cause pain because they can't handle my superior datetime
         self.time_class: time.Earth = self.birthday_date.time_class
         self.has_role: bool = has_role  # This is only used to store whether the person's birthday has been noticed by the bots, so it's False by default
         # self._year = time.relativedelta(years=1, time_class=self.time_class)
@@ -37,10 +37,10 @@ class Birthday:
 
     @property
     def birthday_utc(self) -> time.datetime:
-        if self.pain:  # whoever developed pytz needs to get their hands cut off
-            output = self.birthday - self.tz.utcoffset(self.birthday.to_earth_time().to_datetime().replace(tzinfo=None))
-            output.replace(tz=time.timezone.utc)
-            return output
+        # if self.pain:  # whoever developed pytz needs to get their hands cut off
+        #     output = self.birthday - self.tz.utcoffset(self.birthday.to_earth_time().to_datetime().replace(tzinfo=None))
+        #     output.replace(tz=time.timezone.utc)
+        #     return output
         return self.birthday.as_tz(time.timezone.utc)
 
     @property
