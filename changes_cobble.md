@@ -475,3 +475,6 @@
 
 ## v1.5.2 - 9 May 2022
 - Timezone support for input and output
+
+## v1.5.2.1 - 9 May 2022
+- Add a Citizen ID field to the Kargadia database table

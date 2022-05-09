@@ -121,6 +121,7 @@ tables = [
         Column("gid", 0, True)
     ]),
     Table("kargadia", [
+        Column("id", 0, True, True),   # Citizen ID
         Column("uid", 0, True),        # Discord User ID
         Column("name", 2, True),       # First name
         Column("name2", 2, False),     # Vaaraninema
