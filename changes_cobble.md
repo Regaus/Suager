@@ -488,3 +488,6 @@
 
 ## v1.5.4.1 - 9 May 2022
 - Fixed Kargadian birthdays not saving "has_role" status
+
+## v1.5.4.2 - 10 May 2022
+- Fixed the bot crashing when no Kargadian location is set for birthday

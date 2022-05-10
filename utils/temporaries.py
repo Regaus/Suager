@@ -219,8 +219,10 @@ def prep_birthdays(bot: bot_data.Bot):
                 if bot.name == "cobble":
                     if data[uid].birthday_date.iso() != entry["birthday"]:
                         data[uid].birthday_date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
-                    if str(data[uid].tz) != entry["location"]:
+                    if entry["location"] and str(data[uid].tz) != entry["location"]:
                         data[uid].tz = conworlds.Place(entry["location"]).tz
+                    else:
+                        data[uid].tz = time2.timezone.utc
                 else:
                     if data[uid].birthday_date.iso() != entry["birthday"].strftime("%Y-%m-%d"):
                         data[uid].birthday_date = time2.date.from_datetime(entry["birthday"])
