@@ -264,30 +264,40 @@ class Conworlds(commands.Cog):
         output = self.bot.db.execute("DELETE FROM kargadia WHERE id=?", (_id,))
         return await ctx.send(output)
 
-    @ka_citizenship.command(name="see", aliases=["profile", "id"])
+    @ka_citizenship.command(name="see", aliases=["view", "profile", "id"])
     async def ka_citizen_profile(self, ctx: commands.Context, user: discord.User = None):
         """ See your or someone else's profile """
         language = ctx.language2("en")
         user = user or ctx.author
+        if not ctx.bot.is_owner(ctx.author) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
+            return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
         uid = user.id
         data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=?", (uid,))
         embed = discord.Embed(colour=random_colour())
         embed.title = f"{user.name}'s Kargadian citizen ID"
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
         embed.add_field(name="Citizen ID", value=data["id"], inline=True)
-        embed.add_field(name="User ID", value=data["uid"], inline=True)
-        if data["name"]:
-            name = data["name"]
-            if data["name2"]:
-                name += f" {data['name2']}"
-        else:
-            name = "Unavailable"
+        # embed.add_field(name="User ID", value=data["uid"], inline=True)
+
         genders = {"m": "Male", "f": "Female"}
         embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
+
+        name = data["name"]
+        if data["name2"]:
+            name += f" {data['name2']}"
         embed.add_field(name="Kargadian Name", value=name, inline=False)
-        birthday = time.date.from_iso(data["birthday"], time.Kargadia)
-        embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
-        embed.add_field(name="Location", value=data["location"], inline=False)
+
+        if data["birthday"]:
+            birthday = time.date.from_iso(data["birthday"], time.Kargadia)
+            embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
+        else:
+            embed.add_field(name="Birthday", value="Unavailable", inline=False)
+
+        if data["location"]:
+            embed.add_field(name="Location", value=data["location"], inline=False)
+        else:
+            embed.add_field(name="Location", value="Unavailable", inline=False)
+
         joined = time.date.from_iso(data["joined"], time.Earth)
         embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
         return await ctx.send(embed=embed)

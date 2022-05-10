@@ -491,3 +491,8 @@
 
 ## v1.5.4.2 - 10 May 2022
 - Fixed the bot crashing when no Kargadian location is set for birthday
+
+## v1.5.5 - 10 May 2022
+- You can now only access your own citizen ID, mine, and the bots'
+- The User ID is no longer shown
+- Better showing for null birthday or location
