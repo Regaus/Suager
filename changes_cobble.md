@@ -499,3 +499,6 @@
 
 ## v1.5.6 - 11 May 2022
 - Made it possible to see a user's local time
+
+## v1.5.7 - 11 May 2022
+- Command to show someone's Kargadian birthday

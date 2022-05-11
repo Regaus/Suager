@@ -302,6 +302,27 @@ class Conworlds(commands.Cog):
         embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
         return await ctx.send(embed=embed)
 
+    def check_birthday(self, user_id):
+        data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=?", (user_id,))
+        return data["birthday"] if data else None
+
+    @commands.command(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
+        """ Check out someone's Kargadian birthday"""
+        language = ctx.language()
+        user = user or ctx.author
+        if user.id == self.bot.user.id:
+            return await ctx.send(language.string("birthdays_birthday_cobble"))
+        has_birthday = self.check_birthday(user.id)
+        if not has_birthday:
+            return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
+        birthday_date = time.date.from_iso(has_birthday, time.Kargadia)
+        birthday = language.date(birthday_date, short=0, dow=False, year=False)
+        if user == ctx.author:
+            return await ctx.send(language.string("birthdays_birthday_your", date=birthday))
+        return await ctx.send(language.string("birthdays_birthday_general", user=str(user), date=birthday))
+
 
 def setup(bot: bot_data.Bot):
     bot.add_cog(Conworlds(bot))

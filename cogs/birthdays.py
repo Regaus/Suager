@@ -28,11 +28,11 @@ class Birthdays(commands.Cog):
                 return await ctx.send(language.string(self.birthday_self))
             has_birthday = self.check_birthday(user.id)
             if not has_birthday:
-                return await ctx.send(language.string("birthdays_birthday_not_saved", user.name))
+                return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
             birthday = language.date(has_birthday, short=0, dow=False, year=False)
             if user == ctx.author:
-                return await ctx.send(language.string("birthdays_birthday_your", birthday))
-            return await ctx.send(language.string("birthdays_birthday_general", str(user), birthday))
+                return await ctx.send(language.string("birthdays_birthday_your", date=birthday))
+            return await ctx.send(language.string("birthdays_birthday_general", user=str(user), date=birthday))
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
