@@ -254,7 +254,7 @@ class Conworlds(commands.Cog):
     @commands.is_owner()
     async def ka_citizen_edit(self, ctx: commands.Context, _id: int, key: str, value: str):
         """ Edit a Kargadian citizen's profile """
-        output = self.bot.db.execute("UPDATE kargadia SET ?=? WHERE id=?", (key, value, _id))
+        output = self.bot.db.execute(f"UPDATE kargadia SET {key}=? WHERE id=? OR uid=?", (value, _id, _id))
         return await ctx.send(output)
 
     @ka_citizenship.command(name="delete", aliases=["del", "remove"])
