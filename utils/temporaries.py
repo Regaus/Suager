@@ -1245,8 +1245,8 @@ async def sl_holidays_updater(bot: bot_data.Bot):
     await wait_until_next_iter(update_speed, 1)  # Wait until midnight of the next day, to prevent sending holidays twice when restarting
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Senko Lair Holidays")
-    # Servers:  Senko Lair general, Kargadia general,   RK general
-    channels = [568148147457490958, 928745963877720147, 738425419325243424]
+    # Servers:  Senko Lair general, Kargadia BD & Hols, RK general
+    channels = [568148147457490958, 974071578918785024, 738425419325243424]
     # Kargadia server temporarily excluded to not look weird while I test this stuff
     for ch in channels:
         channel = bot.get_channel(ch)
@@ -1281,8 +1281,8 @@ async def ka_holidays_updater(bot: bot_data.Bot):
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Kargadian Holidays")
     # I don't think Kargadian holidays need to be sent into SL
-    # Servers:  Kargadia general,   RK general
-    channels = [928745963877720147, 738425419325243424]
+    # Servers:  Kargadia BD & Hols, RK general
+    channels = [974071578918785024, 738425419325243424]
     for ch in channels:
         channel = bot.get_channel(ch)
         if channel is None or not can_send(channel):

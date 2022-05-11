@@ -502,3 +502,6 @@
 
 ## v1.5.7 - 11 May 2022
 - Command to show someone's Kargadian birthday
+
+## v1.5.7.1 - 11 May 2022
+- Added a separate channel for holidays and birthdays on the Kargadia server
