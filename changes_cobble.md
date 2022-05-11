@@ -496,3 +496,6 @@
 - You can now only access your own citizen ID, mine, and the bots'
 - The User ID is no longer shown
 - Better showing for null birthday or location
+
+## v1.5.6 - 11 May 2022
+- Made it possible to see a user's local time

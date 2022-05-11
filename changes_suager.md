@@ -1306,3 +1306,6 @@
 
 ## v7.5.3 - 9 May 2022
 - Timezone support for input and output
+
+## v7.5.4 - 11 May 2022
+- Made it possible to see a user's local time

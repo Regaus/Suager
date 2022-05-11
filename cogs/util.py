@@ -23,21 +23,16 @@ class Utility(commands.Cog):
 
     @commands.command(name="time")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def current_time(self, ctx: commands.Context):
-        """ Current time """
+    async def current_time(self, ctx: commands.Context, *, user: discord.User = None):
+        """ Current time - input another user to see their local time """
         language = self.bot.language(ctx)
-        send = ""
-        # send += language.string("util_time_bot", language.time(time.now(self.bot.local_config["timezone"]), short=0, dow=True, seconds=True, tz=False))
-        # now = time.now(None)
+        user = user or ctx.author
         now = time2.datetime.now(time_class=time2.Kargadia if self.bot.name == "cobble" else time2.Earth)
-        send += f"UTC/GMT: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
-        # if ctx.guild is not None and ctx.guild.id in [568148147457490954, 738425418637639775]:
-        #     send += f"\nSenko Lair: **{language.time(time.now_sl(), short=0, dow=True, seconds=True, tz=False)}**"  # \n" \
-        #     # f"Senko Lair Time (NE): **{langs.gts(time.now_k(), locale, True, False, False, True, False)}**"
-        # data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
-        # if data:
-        send += language.string("util_time_custom", language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
-        # send += f"\nYour time: **{langs.gts(time.set_tz(time.now(None), data['tz']), locale, True, False, True, True, False)}**"
+        send = f"UTC/GMT: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
+        if user.id == ctx.author.id:
+            send += language.string("util_time_custom", time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
+        else:
+            send += language.string("util_time_custom2", user=user.name, time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id))
         return await ctx.send(send)
 
     @commands.command(name="base", aliases=["bases", "bc"])
