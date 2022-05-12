@@ -582,7 +582,7 @@ async def ka_time_updater(bot: bot_data.Bot):
         for area_name, area in ka_places.items():
             data = [f"{area_name}:"]
             for city, _data in area.items():
-                data.append(f"`{city:<14} - {_data['en']}`")
+                data.append(f"`{city:<15} - {_data['en']}`")
             await update_message(area_name, "\n".join(data))
         logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
 
