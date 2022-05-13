@@ -148,12 +148,6 @@ class Leveling(commands.Cog):
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
-        # if time.now(None) < time.dt(2021, 5, 21):
-        #     return
-        # elif time.dt(2022) > time.now(None) > time.dt(2021, 5, 21):
-        #     year = "2021"
-        # else:
-        #     year = "2022"
         year = str(time.now(None).year)
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         xp_disabled = False
@@ -167,10 +161,12 @@ class Leveling(commands.Cog):
                     xp_disabled = True
                     # return
             except KeyError:
-                pass
+                xp_disabled = True  # If the settings are somehow broken, do nothing
         else:
             __settings = settings.template_suager.copy()
             xp_disabled = True
+        if xp_disabled:
+            return  # Why did we even need to execute any of the previous code if leveling is disabled???
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if data:
             level, xp, last, ls, yearly = data['level'], data['xp'], data['last'], data['last_sent'], data[year]
@@ -197,15 +193,12 @@ class Leveling(commands.Cog):
         except KeyError:
             sm = 1
         c = 1
-        # c = 0.87 if ctx.author.id in [561164743562493952] else 1
+        # SL Muted role
         if ctx.guild.id == 568148147457490954:
             if 571034926107852801 in [role.id for role in ctx.author.roles]:
-                c *= 0.33
-        # c = 0.91 if ctx.author.id in [377467233401831424] else c
-        # c *= 0.9 if 796009343539347496 in [role.id for role in ctx.author.roles] and ctx.author.id != 593736085327314954 else 1
-        # "Feminist" role on chill crew
+                c *= 0.25
         new = int(random.uniform(x1, x2) * sm * mult * c)
-        if ctx.author.id == 592345932062916619:
+        if ctx.author.id == 592345932062916619:  # Egzorcysta
             new = 0
         if not xp_disabled:
             xp += new
