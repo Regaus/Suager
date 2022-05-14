@@ -269,7 +269,7 @@ class Conworlds(commands.Cog):
         """ See your or someone else's profile """
         language = ctx.language2("en")
         user = user or ctx.author
-        if not ctx.bot.is_owner(ctx.author) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
+        if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
             return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
         uid = user.id
         data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=?", (uid,))
