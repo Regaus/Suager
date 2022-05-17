@@ -319,9 +319,18 @@ class Conworlds(commands.Cog):
             return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
         birthday_date = time.date.from_iso(has_birthday, time.Kargadia)
         birthday = language.date(birthday_date, short=0, dow=False, year=False)
+        tz = language.get_timezone(user.id, "Kargadia")
+        now = time.datetime.now(tz, time.Kargadia)
+        if now.day == birthday_date.day and now.month == birthday_date.month:
+            today = "_today"
+            delta = None
+        else:
+            today = ""
+            year = now.year + 1 if (now.day > birthday_date.day and now.month == birthday_date.month) or now.month > birthday_date.month else now.year
+            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(), tz).replace(year=year), accuracy=2, brief=False, affix=True)
         if user == ctx.author:
-            return await ctx.send(language.string("birthdays_birthday_your", date=birthday))
-        return await ctx.send(language.string("birthdays_birthday_general", user=str(user), date=birthday))
+            return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
+        return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=str(user), date=birthday, delta=delta))
 
 
 def setup(bot: bot_data.Bot):

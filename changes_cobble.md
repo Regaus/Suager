@@ -509,3 +509,6 @@
 ## v1.5.7.2 - 17 May 2022
 - Made the city shown in the bot's playing statuses more random
 - Better weights system for the Kargadian cities list
+
+## v1.5.8 - 17 May 2022
+- `..birthday` now shows how long is left until the user's next birthday

@@ -9,7 +9,7 @@ from utils import bot_data, commands
 class Birthdays(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
-        self.timestamp_regex = re.compile(r"^([0-2]?[0-9]|3[0-1])/((1[0-2])|(0?[1-9]))$")
+        self.timestamp_regex = re.compile(r"^([0-2]?\d|3[0-1])/((1[0-2])|(0?[1-9]))$")
         self.birthday_self = "birthdays_birthday_mizuki" if bot.name == "kyomi" else "birthdays_birthday_suager"
 
     def check_birthday(self, user_id):
@@ -26,13 +26,22 @@ class Birthdays(commands.Cog):
             user = user or ctx.author
             if user.id == self.bot.user.id:
                 return await ctx.send(language.string(self.birthday_self))
-            has_birthday = self.check_birthday(user.id)
-            if not has_birthday:
+            birthday_date = self.check_birthday(user.id)
+            if not birthday_date:
                 return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
-            birthday = language.date(has_birthday, short=0, dow=False, year=False)
+            birthday = language.date(birthday_date, short=0, dow=False, year=False)
+            tz = language.get_timezone(user.id, "Earth")
+            now = datetime.now(tz=tz)
+            if now.day == birthday_date.day and now.month == birthday_date.month:
+                today = "_today"
+                delta = False
+            else:
+                today = ""
+                year = now.year + 1 if (now.day > birthday_date.day and now.month == birthday_date.month) or now.month > birthday_date.month else now.year
+                delta = language.delta_dt(birthday_date.replace(year=year, tzinfo=tz), accuracy=2, brief=False, affix=True)
             if user == ctx.author:
-                return await ctx.send(language.string("birthdays_birthday_your", date=birthday))
-            return await ctx.send(language.string("birthdays_birthday_general", user=str(user), date=birthday))
+                return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
+            return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=str(user), date=birthday, delta=delta))
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):

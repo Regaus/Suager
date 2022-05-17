@@ -1309,3 +1309,6 @@
 
 ## v7.5.4 - 11 May 2022
 - Made it possible to see a user's local time
+
+## v7.5.5 - 17 May 2022
+- `//birthday` now shows how long is left until the user's next birthday
