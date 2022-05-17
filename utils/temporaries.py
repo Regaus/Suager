@@ -716,6 +716,7 @@ async def playing(bot: bot_data.Bot):
                     for city in _places.items():
                         data.append(city)
                         weights.append(city[1]["weight"])
+                    random.seed()
                     city, city_data = random.choices(data, weights)[0]
                     status = f"{city}: {city_data['text']}"
                     activity = discord.Game(name=status)
