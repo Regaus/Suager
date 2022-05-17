@@ -20,5 +20,19 @@
     "major_release": 1642621994,
     "last_update": 1652824044
   },
+  "kyomi2": {
+    "short_version": "1.0",
+    "version": "1.0",
+    "first_version": 1652828637,
+    "major_release": 1652828637,
+    "last_update": 1652828637
+  },
+  "kyomi3": {
+    "short_version": "1.0",
+    "version": "1.0",
+    "first_version": 1652828637,
+    "major_release": 1652828637,
+    "last_update": 1652828637
+  },
   "version": "v7.0.0-fuck-off-pycharm"
 }
