@@ -512,3 +512,8 @@
 
 ## v1.5.8 - 17 May 2022
 - `..birthday` now shows how long is left until the user's next birthday
+
+## v1.5.9 - 17 May 2022
+- Made the relative time commands use Kargadia time by default
+- The `..timesince` command will default to certain Kargadian dates if no date is specified
+- Fixed `..timesince` ignoring the user's timezone in the default values

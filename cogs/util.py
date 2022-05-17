@@ -124,12 +124,12 @@ class Utility(commands.Cog):
         try:
             now = time2.datetime.now()
             date = time2.datetime(now.year, 1, 1)
+            tz = self.bot.timezone(ctx.author.id, "Earth")
             if _date is None:
                 def dt(_month, _day):
-                    return time2.datetime(now.year, _month, _day)
-                dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25),
-                         dt(7, 27), dt(8, 8), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
-                         time2.datetime(now.year + 1, 1, 1)]
+                    return time2.datetime(now.year, _month, _day, tz=tz)
+                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(7, 27), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
+                         time2.datetime(now.year + 1, 1, 1, tz=tz)]
                 for _date in dates:
                     if now < _date:
                         date = _date
@@ -145,9 +145,7 @@ class Utility(commands.Cog):
                     _y, _m, _d = _date.split("-")
                     y, m, d = int(_y), int(_m), int(_d)
                     date_part = time2.date(y, m, d, time2.Earth)
-                    date = time2.datetime.combine(date_part, time_part, self.bot.timezone(ctx.author.id))
-                except AttributeError:
-                    return await ctx.send("Time class not found")
+                    date = time2.datetime.combine(date_part, time_part, tz)
                 except ValueError:
                     return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
@@ -953,29 +951,29 @@ class UtilityCobble(Utility, name="Utility"):
 
     @commands.command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None, _time_class: str = None):
+    async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None, _time_class: str = "Kargadia"):
         """ Time difference
         If you don't specify any time, it will simply default to an arbitrary date within the near future"""
         language = self.bot.language(ctx)
         try:
-            if not _time_class:
-                time_class = time2.Earth
+            # if not _time_class:
+            #     time_class = time2.Earth
+            # else:
+            try:
+                time_class = getattr(time2, _time_class)
+            except AttributeError:
+                return await ctx.send("Time class not found...")
             else:
-                try:
-                    time_class = getattr(time2, _time_class)
-                except AttributeError:
-                    return await ctx.send("Time class not found...")
-                else:
-                    if not issubclass(time_class, time2.Earth):
-                        return await ctx.send("Invalid time class specified...")
+                if not issubclass(time_class, time2.Earth):
+                    return await ctx.send("Invalid time class specified...")
             now = time2.datetime.now(time_class=time_class)
-            date = time2.datetime(now.year, 1, 1)
-            if _date is None and str(time_class) == "Earth":
+            date = time2.datetime(now.year, 1, 1, time_class=time_class)
+            tz = self.bot.timezone(ctx.author.id, _time_class)
+            if _date is None and _time_class == "Kargadia":
                 def dt(_month, _day):
-                    return time2.datetime(now.year, _month, _day)
-                dates = [dt(1, 3), dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 11), dt(4, 17), dt(5, 13), dt(6, 20), dt(6, 25),
-                         dt(7, 27), dt(8, 8), dt(10, 3), dt(10, 22), dt(10, 31), dt(11, 19), dt(12, 5), dt(12, 25),
-                         time2.datetime(now.year + 1, 1, 1)]
+                    return time2.datetime(now.year, _month, _day, tz=tz, time_class=time_class)
+                dates = [dt(1, 6), dt(3, 12), dt(4, 8), dt(7, 9), dt(8, 11), dt(11, 2), dt(14, 1), dt(16, 5),
+                         time2.datetime(now.year + 1, 1, 1, tz=tz, time_class=time_class)]
                 for _date in dates:
                     if now < _date:
                         date = _date
@@ -991,7 +989,7 @@ class UtilityCobble(Utility, name="Utility"):
                     _y, _m, _d = _date.split("-")
                     y, m, d = int(_y), int(_m), int(_d)
                     date_part = time2.date(y, m, d, time_class)
-                    date = time2.datetime.combine(date_part, time_part, self.bot.timezone(ctx.author.id, str(time_class)))
+                    date = time2.datetime.combine(date_part, time_part, tz)
                 except ValueError:
                     return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
@@ -999,13 +997,14 @@ class UtilityCobble(Utility, name="Utility"):
             specified_time = language.time(date, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
             return await ctx.send(language.string("util_timesince", current_time, specified_time, difference))
         except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
             return await ctx.send(language.string("util_timesince_error", type(e).__name__, str(e)))
 
     @staticmethod
     async def time_diff(ctx: commands.Context, string: str, multiplier: int, _time_class: str = None):
         language = ctx.language()
         if not _time_class:
-            time_class = time2.Earth
+            time_class = time2.Kargadia
         else:
             try:
                 time_class = getattr(time2, _time_class)
@@ -1028,13 +1027,13 @@ class UtilityCobble(Utility, name="Utility"):
 
     @commands.command(name="timein")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_in(self, ctx: commands.Context, time_period: str, time_class: str = None):
+    async def time_in(self, ctx: commands.Context, time_period: str, time_class: str = "Kargadia"):
         """ Check what time it'll be in a specified period """
         return await self.time_diff(ctx, time_period, 1, time_class)
 
     @commands.command(name="timeago")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_ago(self, ctx: commands.Context, time_period: str, time_class: str = None):
+    async def time_ago(self, ctx: commands.Context, time_period: str, time_class: str = "Kargadia"):
         """ Check what time it was a specified period ago """
         return await self.time_diff(ctx, time_period, -1, time_class)
 

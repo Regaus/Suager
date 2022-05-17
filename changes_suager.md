@@ -1296,7 +1296,7 @@
 
 ## v7.5.1.1 - 9 May 2022
 - Fixed the birthdays incorrectly switching themselves between UTC and their actual timezone
-- Fixed //purge not showing the given limit when the value exceeds 2000
+- Fixed `//purge` not showing the given limit when the value exceeds 2000
 
 ## v7.5.2 - 9 May 2022
 - Massively improved the way the command to set your timezone works
@@ -1315,3 +1315,7 @@
 
 ## v7.5.6 - 17 May 2022
 - Better base conversion command syntax
+
+## v7.5.7 - 17 May 2022
+- Greatly reduced the amount of default values for `//timesince`
+- Fixed `//timesince` ignoring the user's timezone in the default values

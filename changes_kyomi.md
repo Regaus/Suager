@@ -202,3 +202,10 @@
 ## v1.2.5 - 17 May 2022
 - `m!birthday` now shows how long is left until the user's next birthday
 - Bumped versions to v1 since all the main requested features are present
+
+## v1.2.6 - 17 May 2022
+- Better base conversion command syntax
+
+## v1.2.7 - 17 May 2022
+- Greatly reduced the amount of default values for `m!timesince`
+- Fixed `m!timesince` ignoring the user's timezone in the default values
