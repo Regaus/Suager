@@ -33,6 +33,8 @@ load = {
         "starboard",
         "util"
     ],
+    "kyomi2": [],
+    "kyomi3": [],
     "suager": [
         "achievements",
         "admin",
