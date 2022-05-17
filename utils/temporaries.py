@@ -596,6 +596,7 @@ async def playing(bot: bot_data.Bot):
     update_speed = 120
     await wait_until_next_iter(update_speed, 0)
     await bot.wait_until_ready()
+    await asyncio.sleep(1)  # So that the new status isn't immediately overwritten with the "Loading..." status if the status change time is hit during loading
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
     def error(text: str):
