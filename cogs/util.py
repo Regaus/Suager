@@ -37,30 +37,41 @@ class Utility(commands.Cog):
 
     @commands.command(name="base", aliases=["bases", "bc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def base_conversions(self, ctx: commands.Context, number: str, conversion: str, base: int, caps: bool = False):
+    # async def base_conversions(self, ctx: commands.Context, number: str, conversion: str, base: int, caps: bool = False):
+    async def base_conversions(self, ctx: commands.Context, base_from: int, base_to: int, number: str, float_precision: int = 5, caps: str = ""):
         """ Convert numbers between bases
 
-        Use "to" to convert decimal (base-10) to a base
-        Use "from" to convert from the base to decimal (base-10)
-        Caps argument is optional (use True if you want output to look like "1AA" instead of "1aa") and is ignored for conversions to decimal."""
-        if base > 36:
-            return await ctx.send(f"{ctx.author.name}, Bases above 36 are not supported")
-        elif base < 2:
-            return await ctx.send(f"{ctx.author.name}, Bases under 2 are not supported")
-        conversion = conversion.lower()
+        The float precision argument controls how many places after the dot will be shown
+        Write `"caps"` after the number if you want letters outputted in uppercase (ie. "1AA" instead of "1aa" for bases 11 and up)
+        Usage example: `//base 10 16 420.69 5 caps` will convert 420.69 from decimal to hexadecimal with precision of 5 places (420.69 -> 1A4.B0A3D)"""
+        if not (2 <= base_from <= 36):
+            return await ctx.send("The base value must be between 2 and 36...")
+        if not (2 <= base_to <= 36):
+            return await ctx.send("The base value must be between 2 and 36...")
+        if not (0 <= float_precision <= 100):
+            return await ctx.send("The precision must be between 0 and 100...")
+        # conversion = conversion.lower()
+        # try:
+        #     if conversion == "to":
+        #         value = float(number)
+        #         return await ctx.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})")
+        #     if conversion == "from":
+        #         if "." in number:
+        #             return await ctx.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base_float(number, base, 10)} (base 10)")
+        #         return await ctx.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)")
         try:
-            if conversion == "to":
-                value = float(number)
-                return await ctx.send(f"{ctx.author.name}: {number} (base 10) -> {bases.to_base_float(value, base, 10, caps)} (base {base})")
-            if conversion == "from":
-                if "." in number:
-                    return await ctx.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base_float(number, base, 10)} (base 10)")
-                return await ctx.send(f"{ctx.author.name}: {number} (base {base}) -> {bases.from_base(number, base)} (base 10)")
+            float_conv = "." in number
+            if base_from == 10:
+                mid = float(number) if float_conv else int(number, base=10)
+            else:
+                mid = bases.from_base_float(number, base_from, 160) if float_conv else bases.from_base(number, base_from)
+            caps = caps.lower() == "caps"
+            end = bases.to_base_float(mid, base_to, float_precision, caps) if float_conv else bases.to_base(mid, base_to, caps)
+            return await ctx.send(f"{ctx.author.name}: {number} (base {base_from}) -> {end} (base {base_to})")
         except ValueError:
             return await ctx.send(f"{ctx.author.name}, this number is invalid.")
         except OverflowError:
             return await ctx.send(f"{ctx.author.name}, the number specified is too large to convert to a proper value.")
-        return await ctx.send(f"You need to specify either `to` or `from`.")
 
     @commands.command(name="settz", aliases=["tz", "settimezone", "timezone"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

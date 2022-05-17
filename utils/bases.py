@@ -1,10 +1,6 @@
 import string
 
 
-def base_6(value: int) -> str:
-    return to_base(value, 6, False)
-
-
 def from_base(value: str, base: int) -> int:
     return int(value, base=base)
 
@@ -54,8 +50,11 @@ def from_base_float(value: str, base: int, precision: int = 2):
         return "Bases above 36 are not supported."
     if value.startswith("-"):
         return from_base_float(value[1:], base, precision) * -1
-    if "." not in value or precision < 1:
+    if "." not in value:
         return from_base(value, base)
+    elif precision < 1:
+        split = value.split(".", 1)
+        return from_base(split[0], base)
     else:
         val1, val2 = value.split(".")
         out = from_base(val1, base)

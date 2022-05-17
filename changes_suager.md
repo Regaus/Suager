@@ -1312,3 +1312,6 @@
 
 ## v7.5.5 - 17 May 2022
 - `//birthday` now shows how long is left until the user's next birthday
+
+## v7.5.6 - 17 May 2022
+- Better base conversion command syntax
