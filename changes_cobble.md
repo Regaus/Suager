@@ -505,3 +505,7 @@
 
 ## v1.5.7.1 - 11 May 2022
 - Added a separate channel for holidays and birthdays on the Kargadia server
+
+## v1.5.7.2 - 17 May 2022
+- Made the city shown in the bot's playing statuses more random
+- Better weights system for the Kargadian cities list
