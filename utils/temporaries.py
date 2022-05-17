@@ -726,6 +726,7 @@ async def playing(bot: bot_data.Bot):
                     status = f"{city}: {city_data['text']}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 5)")
+
             elif bot.name == "kyomi":
                 status_type = random.random()
                 if status_type <= 0.2:  # 20% chance of being a birthday status
@@ -747,6 +748,9 @@ async def playing(bot: bot_data.Bot):
                         {"type": 0, "name": "Snuggling with Mochi"},
                         {"type": 0, "name": "Feeding Mochi"},
                         {"type": 0, "name": "Petting Mochi"},
+                        {"type": 0, "name": "Snuggling with Matsu"},
+                        {"type": 0, "name": "Feeding Matsu"},
+                        {"type": 0, "name": "Petting Matsu"},
                         {"type": 0, "name": "Eating pineapples"},
                         {"type": 0, "name": "Eating pineapple pizza"},
                         {"type": 0, "name": "Stealing pineapples"},
@@ -772,6 +776,39 @@ async def playing(bot: bot_data.Bot):
                         5: "Competing in"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+
+            elif bot.name == "kyomi2":  # Mochi
+                activities = [
+                    {"type": 0, "name": "Looking for cookies"},
+                    {"type": 0, "name": "Snuggling with Mizuki"},
+                    {"type": 0, "name": "Stealing cookies from Mizuki"},
+                    {"type": 0, "name": "Eating cookies"},
+                ]
+                random.seed()
+                _activity = random.choice(activities)
+                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                name = _activity["name"]
+                status = {
+                    0: "Playing",
+                }.get(_activity["type"], "Undefined")
+                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+
+            elif bot.name == "kyomi3":  # Matsu
+                activities = [
+                    {"type": 0, "name": "Looking for cheese"},
+                    {"type": 0, "name": "Snuggling with Mizuki"},
+                    {"type": 0, "name": "Stealing cheese from Mizuki"},
+                    {"type": 0, "name": "Eating cheese"},
+                ]
+                random.seed()
+                _activity = random.choice(activities)
+                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                name = _activity["name"]
+                status = {
+                    0: "Playing",
+                }.get(_activity["type"], "Undefined")
+                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+
             else:  # Suager
                 status_type = random.random()
                 if status_type <= 0.2:  # 20% chance of being a birthday status

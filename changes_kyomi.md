@@ -209,3 +209,6 @@
 ## v1.2.7 - 17 May 2022
 - Greatly reduced the amount of default values for `m!timesince`
 - Fixed `m!timesince` ignoring the user's timezone in the default values
+
+## v1.2.7.1 - 17 May 2022
+- Added Kyomi's useless bots
