@@ -517,3 +517,7 @@
 - Made the relative time commands use Kargadia time by default
 - The `..timesince` command will default to certain Kargadian dates if no date is specified
 - Fixed `..timesince` ignoring the user's timezone in the default values
+
+## v1.5.10 - 17 May 2022
+- Arnattia time class now also uses the Kargadian citizen database for timezones (since it's the same calendar)
+- Added a command to convert between different time classes

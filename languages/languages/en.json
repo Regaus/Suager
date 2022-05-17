@@ -773,7 +773,6 @@
   "util_reminders_list": "**{0}**, these are your current reminders:",
   "util_reminders_none": "You have no active reminders, {0}.",
   "util_reminders_success": "Okay **{0}**, I will remind you about this **{1}** (**{2}** UTC).",
-  "util_time_bot": "Local time: **{time}**\n",
   "util_time_custom": "\nYour time: **{time}**",
   "util_time_custom2": "\n{user}'s time: **{time}**",
   "util_time_tz": "Your timezone has been set to `{tz}`.\nUse `{command} reset` to reset your timezone.",

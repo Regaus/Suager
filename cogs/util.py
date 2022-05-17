@@ -1037,6 +1037,52 @@ class UtilityCobble(Utility, name="Utility"):
         """ Check what time it was a specified period ago """
         return await self.time_diff(ctx, time_period, -1, time_class)
 
+    @commands.command(name="times", aliases=["time2", "timeconvert"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def time_convert(self, ctx: commands.Context, _time_class1: str = "Earth", _time_class2: str = "Kargadia", _date: str = None, _time: str = None):
+        """ Convert times between different calendars
+
+        Example: `..times Kargadia Earth 2152-08-11 12:00:00` would output 10 August 2022 18:59:58
+        Leave the command empty to convert to the current time on Kargadia
+        Only specify the two calendars if you want to see the current time in a specific time class """
+        language = ctx.language()
+        try:
+            time_class1 = getattr(time2, _time_class1)
+        except AttributeError:
+            return await ctx.send("Time class 1 not found")
+        else:
+            if not issubclass(time_class1, time2.Earth):
+                return await ctx.send("Invalid time class 1 specified")
+
+        try:
+            time_class2 = getattr(time2, _time_class2)
+        except AttributeError:
+            return await ctx.send("Time class 2 not found")
+        else:
+            if not issubclass(time_class2, time2.Earth):
+                return await ctx.send("Invalid time class 2 specified")
+
+        if not _date:
+            date1 = time2.datetime.now(time2.timezone.utc, time_class1)
+        else:
+            try:
+                if not _time:
+                    time_part = time2.time()  # 0:00:00
+                else:
+                    _h, _m, *_s = _time.split(":")
+                    h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+                    time_part = time2.time(h, m, s, 0, time2.utc)
+                _y, _m, _d = _date.split("-")
+                y, m, d = int(_y), int(_m), int(_d)
+                date_part = time2.date(y, m, d, time_class1)
+                date1 = time2.datetime.combine(date_part, time_part, language.get_timezone(ctx.author.id, _time_class1)).to_timezone(time2.timezone.utc)
+            except ValueError:
+                return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
+        date2 = date1.convert_time_class(time_class2, False)
+        out1 = language.time(date1, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id)
+        out2 = language.time(date2, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id)
+        return await ctx.send(f"{_time_class1}: **{out1}**\n{_time_class2}: **{out2}**")
+
 
 def setup(bot: bot_data.Bot):
     if bot.name == "suager":
