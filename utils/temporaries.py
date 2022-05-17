@@ -640,6 +640,7 @@ async def playing(bot: bot_data.Bot):
                     is_cobble = today == cobble
                     status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat"
                     status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat"
+                    random.seed()
                     status = random.choice([status_cobble, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
@@ -665,6 +666,7 @@ async def playing(bot: bot_data.Bot):
                         {"type": 0, "name": "vaihaga kiinanshavarkan"},
                         # {"type": 0, "name": "Vainar veikidat pahtemar, discord.py"},
                     ]
+                    random.seed()
                     _activity = random.choice(activities)
                     if _activity["type"] == 0:  # Game
                         activity = discord.Game(name=_activity["name"])
@@ -692,6 +694,7 @@ async def playing(bot: bot_data.Bot):
                             status = f"Kovanan {name}!"
                             break
                     if status is None:  # if no holidays are on, so the status hasn't yet been determined
+                        random.seed()
                         key, holiday = random.choice(list(ka_holidays.items()))
                         name = language.case(holiday_names_ka.get(key), "dative", "singular")
                         status = f"ZK: {until(holiday, True)} {name}"
@@ -705,6 +708,7 @@ async def playing(bot: bot_data.Bot):
                             status = f"Kovanan {name}!"
                             break
                     if status is None:  # if the status still hasn't been decided, meaning no holidays are on
+                        random.seed()
                         key, holiday = random.choice(list(sl_holidays.items()))
                         name = language.case(holiday_names_sl.get(key), "dative", "singular")
                         status = f"SL: {until(holiday, True)} {name}"
@@ -731,6 +735,7 @@ async def playing(bot: bot_data.Bot):
                     status_kyomi = f"🎉 Today is Kyomi's birthday!" if is_kyomi else f"{until(kyomi, False)} until Kyomi's birthday"
                     status_blucy = f"🎉 Today is Blucy's birthday!" if is_blucy else f"{until(blucy, False)} until Blucy's birthday"
                     status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki, False)} until my birthday"
+                    random.seed()
                     status = random.choice([status_mizuki, status_regaus, status_kyomi, status_blucy])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
@@ -748,6 +753,7 @@ async def playing(bot: bot_data.Bot):
                         {"type": 0, "name": "Praying to the Pineapple God"},
                         {"type": 3, "name": "you"},
                     ]
+                    random.seed()
                     _activity = random.choice(activities)
                     if _activity["type"] == 0:  # Game
                         activity = discord.Game(name=_activity["name"])
@@ -771,6 +777,7 @@ async def playing(bot: bot_data.Bot):
                     suager = get_date(5, 13)
                     is_suager = today == suager
                     status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager, False)} until my birthday"
+                    random.seed()
                     status = random.choice([status_suager, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
@@ -815,6 +822,7 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 0, "name": "sentience"},
                         # {"type": 0, "name": "RIP discord.py"},
                     ]
+                    random.seed()
                     _activity = random.choice(activities)
                     if _activity["type"] == 0:  # Game
                         activity = discord.Game(name=_activity["name"])
