@@ -148,8 +148,7 @@ class Leveling(commands.Cog):
             return
         if ctx.content == "" and ctx.type != discord.MessageType.default:
             return
-        year = str(time.now(None).year)
-        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         xp_disabled = False
         if _settings:
             __settings = json.loads(_settings['data'])
@@ -165,15 +164,20 @@ class Leveling(commands.Cog):
         else:
             __settings = settings.template_suager.copy()
             xp_disabled = True
-        if xp_disabled:
-            return  # Why did we even need to execute any of the previous code if leveling is disabled???
-        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
+
+        if xp_disabled:  # Why did we even need to execute any of the previous code if leveling is disabled???
+            return
+
+        # Load current data, or set everything to zeros
+        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (ctx.author.id, ctx.guild.id, self.bot.name))
         if data:
-            level, xp, last, ls, yearly = data['level'], data['xp'], data['last'], data['last_sent'], data[year]
+            level, xp, last, ls = data['level'], data['xp'], data['last'], data['last_sent']
         else:
-            level, xp, last, ls, yearly = 0, 0, 0, 0, 0
+            level, xp, last, ls = 0, 0, 0, 0
         if ls is None:
             ls = 0
+
+        # Determine time multiplier
         now = time.now_ts()
         td = now - last
         _td = now - ls
@@ -187,162 +191,168 @@ class Leveling(commands.Cog):
             mult = 1
         full = mult == 1
         dc = mult == 0  # didn't count
-        x1, x2 = xp_amounts
+
+        # Server multiplier
         try:
-            sm = float(__settings['leveling']['xp_multiplier'])
+            server_mult = float(__settings['leveling']['xp_multiplier'])
         except KeyError:
-            sm = 1
-        c = 1
-        # SL Muted role
-        if ctx.guild.id == 568148147457490954:
-            if 571034926107852801 in [role.id for role in ctx.author.roles]:
-                c *= 0.25
-        new = int(random.uniform(x1, x2) * sm * mult * c)
-        if ctx.author.id == 592345932062916619:  # Egzorcysta
-            new = 0
-        if not xp_disabled:
-            xp += new
-            yearly += new
-            # old_level = level
+            server_mult = 1
+        # Extra multipliers
+        extra = 1
+        if ctx.guild.id == 568148147457490954:  # Senko Lair
+            if 571034926107852801 in [role.id for role in ctx.author.roles]:  # if muted
+                extra *= 0.25
+        elif ctx.author.id == 592345932062916619:  # Egzorcysta
+            extra = 0
+
+        x1, x2 = xp_amounts
+        new = int(random.uniform(x1, x2) * server_mult * mult * extra)
+
+        xp += new
+        # yearly += new
+        # old_level = level
+
+        # Level up/down
+        lu, ld = False, False
+        if level >= 0:
+            while level < max_level and xp >= levels[level]:
+                level += 1
+                lu = True
+            while level > 0 and xp < levels[level - 1]:
+                level -= 1
+                ld = True
+            if level == 0 and xp < 0:
+                level = -1
+                ld = True
+        elif level == -1:
+            if xp >= 0:
+                level = 0
+                lu = True
+            if xp < -levels[0]:
+                level -= 1
+                ld = True
+        else:
+            while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
+                level += 1
+                lu = True
+            while level >= -max_level and xp < -levels[(-level) - 1]:
+                level -= 1
+                ld = True
+
+        if ctx.author.id == 430891116318031872 and level >= 5:  # Alex five stays on level 5
             lu, ld = False, False
-            if level >= 0:
-                while level < max_level and xp >= levels[level]:
-                    level += 1
-                    lu = True
-                while level > 0 and xp < levels[level - 1]:
-                    level -= 1
-                    ld = True
-                if level == 0 and xp < 0:
-                    level = -1
-                    ld = True
-            elif level == -1:
-                if xp >= 0:
-                    level = 0
-                    lu = True
-                if xp < -levels[0]:
-                    level -= 1
-                    ld = True
-            else:
-                while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
-                    level += 1
-                    lu = True
-                while level >= -max_level and xp < -levels[(-level) - 1]:
-                    level -= 1
-                    ld = True
-            if ctx.author.id == 430891116318031872 and level >= 5:
-                lu, ld = False, False
-                level = 5
-            reason = f"Level Rewards - Level {level}"
-            language = self.bot.language(languages.FakeContext(ctx.guild, self.bot))
-            current_reward, next_reward = {"role": language.string("generic_none"), "level": 0}, {"role": language.string("generic_unknown"), "level": 0}
-            top_role = False
-            new_role = False
-            try:
-                rewards = __settings['leveling']['rewards']
-                if rewards:  # Don't bother if they're empty
-                    # l1, l2 = [], []
-                    rewards.sort(key=lambda x: x['level'])
-                    next_reward = {"role": ctx.guild.get_role(rewards[0]["role"]).name, "level": rewards[0]["level"]}
-                    # for i in range(len(rewards)):
-                    #     l1.append(rewards[i]['level'])
-                    #     l2.append(rewards[i]['role'])
-                    roles = [r.id for r in ctx.author.roles]
-                    # for i in range(len(rewards)):
-                    for i, reward in enumerate(rewards):
-                        role: discord.Role = ctx.guild.get_role(reward["role"])  # discord.Object(id=l2[i])
-                        has_role = reward["role"] in roles
-                        if level >= reward["level"]:
-                            if i < len(rewards) - 1:
-                                next_role = rewards[i + 1]
-                                if level < next_role["level"]:
-                                    current_reward = {"role": role.name, "level": reward["level"]}
-                                    next_reward = {"role": ctx.guild.get_role(next_role["role"]).name, "level": next_role["level"]}
-                                    if not has_role:
-                                        await ctx.author.add_roles(role, reason=reason)
-                                        new_role = True
-                                else:
-                                    if has_role:
-                                        await ctx.author.remove_roles(role, reason=reason)
-                            else:
+            level = 5
+
+        # Handle level rewards
+        reason = f"Level Rewards - Level {level}"
+        language = self.bot.language(languages.FakeContext(ctx.guild, self.bot))
+        current_reward, next_reward = {"role": language.string("generic_none"), "level": 0}, {"role": language.string("generic_unknown"), "level": 0}
+        top_role = False
+        new_role = False
+        try:
+            rewards = __settings['leveling']['rewards']
+            if rewards:  # Don't bother if they're empty
+                rewards.sort(key=lambda x: x['level'])
+                nr: discord.Role = ctx.guild.get_role(rewards[0]["role"])
+                next_reward = {"role": nr.name if nr is not None else language.string("generic_unknown"), "level": rewards[0]["level"]}
+                roles = [r.id for r in ctx.author.roles]
+                for i, reward in enumerate(rewards):
+                    role: discord.Role = ctx.guild.get_role(reward["role"])  # discord.Object(id=l2[i])
+                    if role is None:
+                        continue  # Skip the role
+                    has_role = reward["role"] in roles
+                    if level >= reward["level"]:
+                        if i < len(rewards) - 1:
+                            next_role = rewards[i + 1]
+                            if level < next_role["level"]:
                                 current_reward = {"role": role.name, "level": reward["level"]}
-                                next_reward = {"role": language.string("leveling_rewards_max"), "level": max_level}
-                                top_role = True
+                                nr = ctx.guild.get_role(next_role["role"])
+                                next_reward = {"role": nr.name if nr is not None else language.string("generic_unknown"), "level": next_role["level"]}
                                 if not has_role:
                                     await ctx.author.add_roles(role, reason=reason)
                                     new_role = True
+                            else:
+                                if has_role:
+                                    await ctx.author.remove_roles(role, reason=reason)
                         else:
-                            if has_role:
-                                await ctx.author.remove_roles(role, reason=reason)
-            except KeyError:
-                pass  # If no level rewards, don't even bother
-            except AttributeError:  # This means a role was deleted...
-                # FIXME: Try to ignore deleted roles instead of skipping the entire role rewards script
-                pass
-            except discord.Forbidden:
-                await ctx.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.")
-            except Exception as e:
-                out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
-                general.print_error(out)
-                logger.log(self.bot.name, "errors", out)
-            if lu or ld:
-                try:
-                    next_left = next_reward["level"] - level
-                    level_up_message: str = __settings["leveling"]["level_up_message"]
-                    if new_role:
-                        if "level_up_role" in __settings["leveling"]:
-                            if __settings["leveling"]["level_up_role"]:
-                                level_up_message = __settings["leveling"]["level_up_role"]
-                    if top_role:
-                        if "level_up_highest" in __settings["leveling"]:
-                            if __settings["leveling"]["level_up_highest"]:
-                                level_up_message = __settings["leveling"]["level_up_highest"]
-                    if level == max_level:
-                        if "level_up_max" in __settings["leveling"]:
-                            if __settings["leveling"]["level_up_max"]:
-                                level_up_message = __settings["leveling"]["level_up_max"]
-                    # This allows to fall back to the default level up message if the highest/max one isn't available
-                    send = level_up_message\
-                        .replace("[MENTION]", ctx.author.mention)\
-                        .replace("[USER]", ctx.author.name)\
-                        .replace("[LEVEL]", language.number(level))\
-                        .replace("[CURRENT_REWARD]", current_reward["role"])\
-                        .replace("[CURRENT_REWARD_LEVEL]", language.number(current_reward["level"]))\
-                        .replace("[NEXT_REWARD]", next_reward["role"])\
-                        .replace("[NEXT_REWARD_LEVEL]", language.number(next_reward["level"]))\
-                        .replace("[NEXT_REWARD_PROGRESS]", language.number(next_left))\
-                        .replace("[MAX_LEVEL]", language.number(max_level))
-                except KeyError:
-                    send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
-                try:
-                    ac = __settings["leveling"]["announce_channel"]
-                    if ac == -1:  # -1 means level up announcements are disabled
-                        ch = None
-                    elif ac != 0:
-                        ch = self.bot.get_channel(ac)
-                        if ch is None or ch.guild.id != ctx.guild.id:
-                            ch = ctx.channel
+                            current_reward = {"role": role.name, "level": reward["level"]}
+                            next_reward = {"role": language.string("leveling_rewards_max"), "level": max_level}
+                            top_role = True
+                            if not has_role:
+                                await ctx.author.add_roles(role, reason=reason)
+                                new_role = True
                     else:
+                        if has_role:
+                            await ctx.author.remove_roles(role, reason=reason)
+        except KeyError:
+            pass  # If no level rewards, don't even bother
+        except AttributeError:  # This means a role was deleted and somehow didn't get skipped...
+            pass
+        except discord.Forbidden:
+            await ctx.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.")
+        except Exception as e:
+            out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
+            general.print_error(out)
+            logger.log(self.bot.name, "errors", out)
+
+        # Handle level ups
+        if lu or ld:
+            try:
+                next_left = next_reward["level"] - level
+                level_up_message: str = __settings["leveling"]["level_up_message"]
+                if new_role:
+                    if "level_up_role" in __settings["leveling"]:
+                        if __settings["leveling"]["level_up_role"]:
+                            level_up_message = __settings["leveling"]["level_up_role"]
+                if top_role:
+                    if "level_up_highest" in __settings["leveling"]:
+                        if __settings["leveling"]["level_up_highest"]:
+                            level_up_message = __settings["leveling"]["level_up_highest"]
+                if level == max_level:
+                    if "level_up_max" in __settings["leveling"]:
+                        if __settings["leveling"]["level_up_max"]:
+                            level_up_message = __settings["leveling"]["level_up_max"]
+                # This allows to fall back to the default level up message if the highest/max one isn't available
+                send = level_up_message\
+                    .replace("[MENTION]", ctx.author.mention)\
+                    .replace("[USER]", ctx.author.name)\
+                    .replace("[LEVEL]", language.number(level))\
+                    .replace("[CURRENT_REWARD]", current_reward["role"])\
+                    .replace("[CURRENT_REWARD_LEVEL]", language.number(current_reward["level"]))\
+                    .replace("[NEXT_REWARD]", next_reward["role"])\
+                    .replace("[NEXT_REWARD_LEVEL]", language.number(next_reward["level"]))\
+                    .replace("[NEXT_REWARD_PROGRESS]", language.number(next_left))\
+                    .replace("[MAX_LEVEL]", language.number(max_level))
+            except KeyError:
+                send = f"{ctx.author.mention} has reached **level {level:,}**! {emotes.ForsenDiscoSnake}"
+            try:
+                ac = __settings["leveling"]["announce_channel"]
+                if ac == -1:  # -1 means level up announcements are disabled
+                    ch = None
+                elif ac != 0:
+                    ch = self.bot.get_channel(ac)
+                    if ch is None or ch.guild.id != ctx.guild.id:
                         ch = ctx.channel
-                except KeyError:
+                else:
                     ch = ctx.channel
-                try:
-                    if ch is not None:
-                        await ch.send(send)
-                except discord.Forbidden:
-                    pass  # Well, if it can't send it there, too bad.
-            # _last = last if dc else now
-            last_send = last if dc else now
-            minute = now if full else ls
-            if data:
-                self.bot.db.execute(f"UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=?, {year!r}=? WHERE uid=? AND gid=?",
-                                    (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, yearly, ctx.author.id, ctx.guild.id))
-            else:
-                if xp != 0:
-                    _2021, _2022 = yearly if year == "2021" else 0, yearly if year == "2022" else 0
-                    self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                        (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator, _2021, _2022))
-                # No point in saving data if XP is zero anyways...
-            # No point in saving data if XP system is not enabled in the first place...
+            except KeyError:
+                ch = ctx.channel
+            try:
+                if ch is not None:
+                    await ch.send(send)
+            except discord.Forbidden:
+                pass  # Well, if it can't send it there, too bad.
+
+        # Save data
+        last_send = last if dc else now
+        minute = now if full else ls
+        if data:
+            self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=?, WHERE uid=? AND gid=? AND bot=?",
+                                (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id, self.bot.name))
+        else:
+            if xp != 0:  # No point in saving data if XP is zero...
+                self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator, self.bot.name))
 
     @commands.command(name="rewards")
     @commands.guild_only()

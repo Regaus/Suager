@@ -1319,3 +1319,8 @@
 ## v7.5.7 - 17 May 2022
 - Greatly reduced the amount of default values for `//timesince`
 - Fixed `//timesince` ignoring the user's timezone in the default values
+
+## v7.5.8 - 18 May 2022
+- Leveling is now per bot
+- Removed yearly leveling
+- Leveling now tries to ignore deleted roles
