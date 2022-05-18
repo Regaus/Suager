@@ -1324,3 +1324,7 @@
 - Leveling is now per bot
 - Removed yearly leveling
 - Leveling now tries to ignore deleted roles
+
+## v7.5.8.1 - 18 May 2022
+- Removed yearly ranking commands
+- Updated the old leveling commands to use the bot field - make sure they're using the correct data
