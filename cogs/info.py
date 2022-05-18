@@ -16,7 +16,7 @@ class BotInformation(commands.Cog, name="Bot Information"):
     @commands.command(name="stats", aliases=["info", "about", "status"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def stats(self, ctx: commands.Context):
-        """ Bot stats"""
+        """ Stats and information about the bot """
         language = self.bot.language(ctx)
         config = self.bot.config
         version_data = general.get_version()[self.bot.name]

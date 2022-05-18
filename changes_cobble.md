@@ -525,6 +525,6 @@
 ## v1.5.10.1 - 18 May 2022
 - Added LOD 3 support (Regaus.py v1.2.19)
 
-## v1.5.10.2 - 18 May 2022
+## v1.5.11 - 18 May 2022
 - Hide P2 places from place list
-- Added "place" and "status" as aliases to `..weather78`
+- Added "place" as aliases to `..weather78`

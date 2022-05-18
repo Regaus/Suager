@@ -81,7 +81,7 @@ class Conworlds(commands.Cog):
         age = language.delta_rd(age_rd, accuracy=3, brief=False, affix=False)
         return await ctx.send(f"Your Earth birthday is: **{bd1}**\nYour Kargadian birthday is: **{bd2}**\nYou would be **{age}** old on Kargadia")
 
-    @commands.group(name="weather78", aliases=["data78", "w78", "d78", "place", "status"], case_insensitive=True, invoke_without_command=True)
+    @commands.group(name="weather78", aliases=["data78", "w78", "d78", "place"], case_insensitive=True, invoke_without_command=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def weather78(self, ctx: commands.Context, *, where: str):
         """ Weather for a place in GA78 """
