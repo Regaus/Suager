@@ -347,7 +347,7 @@ class Leveling(commands.Cog):
         last_send = last if dc else now
         minute = now if full else ls
         if data:
-            self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=?, WHERE uid=? AND gid=? AND bot=?",
+            self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=? AND bot=?",
                                 (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id, self.bot.name))
         else:
             if xp != 0:  # No point in saving data if XP is zero...
