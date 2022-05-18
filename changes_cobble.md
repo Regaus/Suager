@@ -521,3 +521,6 @@
 ## v1.5.10 - 17 May 2022
 - Arnattia time class now also uses the Kargadian citizen database for timezones (since it's the same calendar)
 - Added a command to convert between different time classes
+
+## v1.5.10.1 - 18 May 2022
+- Added LOD 3 support (Regaus.py v1.2.19)

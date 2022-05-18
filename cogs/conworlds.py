@@ -88,12 +88,15 @@ class Conworlds(commands.Cog):
         if ctx.invoked_subcommand is None:
             try:
                 language = self.bot.language(ctx)
-                if re.search(r"( -lod[012])$", where):
-                    lod = int(where[-1])  # 0, 1 or 2
+                if re.search(r"( -lod[0-3])$", where):
+                    lod = int(where[-1])  # one of: 0, 1, 2, 3
                     where = where[:-6]
                 else:
-                    # LOD 2 Channel Names: hidden-commands,   secretive-commands, secretive-commands-2
-                    if ctx.channel.id in [610482988123422750, 742885168997466196, 753000962297299005]:
+                    # LOD 3 Channel Names: secretive-commands
+                    if ctx.channel.id in [742885168997466196]:
+                        lod = 3
+                    # LOD 2 Channel Names:  hidden-commands,  secretive-commands-2
+                    elif ctx.channel.id in [610482988123422750, 753000962297299005]:
                         lod = 2
                     # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10      secret-room-13      Kargadia commands,
                     #                       secret-room-14,     secret-room-15,     secret-room-16,     secret-room-17
