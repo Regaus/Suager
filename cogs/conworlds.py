@@ -81,7 +81,7 @@ class Conworlds(commands.Cog):
         age = language.delta_rd(age_rd, accuracy=3, brief=False, affix=False)
         return await ctx.send(f"Your Earth birthday is: **{bd1}**\nYour Kargadian birthday is: **{bd2}**\nYou would be **{age}** old on Kargadia")
 
-    @commands.group(name="weather78", aliases=["data78", "w78", "d78"], case_insensitive=True, invoke_without_command=True)
+    @commands.group(name="weather78", aliases=["data78", "w78", "d78", "place", "status"], case_insensitive=True, invoke_without_command=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def weather78(self, ctx: commands.Context, *, where: str):
         """ Weather for a place in GA78 """
@@ -119,12 +119,13 @@ class Conworlds(commands.Cog):
         # for city, data in places.places_old.items():
         for city in conworlds.places:
             if city["planet"] == planet:
-                place = conworlds.Place(city["id"])
-                _places.append(f"`{place.id:<{_longest}} - {conworlds.format_location(place.lat, place.long, True, 'en')}`")
+                if city["priority"] < 2:
+                    place = conworlds.Place(city["id"])
+                    _places.append(f"`{place.id:<{_longest}} - {conworlds.format_location(place.lat, place.long, True, 'en')}`")
         if len(_places) <= 25:
-            return await ctx.send(f"Locations in {planet}:\n\n" + "\n".join(_places))
+            return await ctx.send(f"Locations on {planet}:\n\n" + "\n".join(_places))
         else:
-            await ctx.send(f"Locations in {planet}:")
+            await ctx.send(f"Locations on {planet}:")
             for i in range(ceil(len(_places) / 20)):
                 j = i * 20
                 await ctx.send("\n".join(_places[j:j + 20]))
