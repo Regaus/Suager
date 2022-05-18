@@ -374,14 +374,14 @@ class Events(commands.Cog):
         self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? and gid=? AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
         if self.bot.name == "suager":
             uid, gid = member.id, member.guild.id
-            sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+            sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
             if sel:
                 if sel["xp"] < 0:
                     return
                 elif sel["level"] < 0:
-                    self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=?", (uid, gid))
+                    self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
                 else:
-                    self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=?", (uid, gid))
+                    self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
 
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
         if data:
