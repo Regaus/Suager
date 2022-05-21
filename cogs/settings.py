@@ -30,7 +30,7 @@ class Settings(commands.Cog):
                 strings = 0
                 matching = 0
                 for k in languages.languages.languages["en"].keys():
-                    if k.startswith("country_") or k in exclude:
+                    if k.startswith("country_") or k.startswith("data_holidays_") or k in exclude:
                         continue
                     d1, d2 = _en.data(k), _language.data(k)
 
@@ -70,16 +70,20 @@ class Settings(commands.Cog):
                 continue
             add_list = rsl if conlang == 2 else con if conlang == 1 else nat
             add_list.append(out)
-        # Regaus, Suager, Five, Leitoxz, 1337xp, Potato,
-        # Chikin, Karmeck, Kyomi, Shawn, Mid, Aya
+
+        #          Regaus,             Suager,             Five,               Leitoxz,            1337xp,             Potato,
+        #          Karmeck,            Shawn,              Mid,                Aya,                Mary,               Wight
+        #          HatKid,             Ash,                Back,               Noodle,             Steir
         trusted = [302851022790066185, 517012611573743621, 430891116318031872, 291665491221807104, 679819572278198272, 374853432168808448,
-                   441028310789783563, 857360761135431730, 417390734690484224, 236884090651934721, 581206591051923466, 527729196688998415]
-        # wanderer, neppkun, dragon, bowser
-        no_conlangs = [411996407642456076, 350199484246130690, 443363116504580117,  94762492923748352]
-        # Senko Lair, RK, 3tk4
-        trusted_servers = [568148147457490954, 738425418637639775, 430945139142426634]
-        # List of trusted people and servers last updated 27/06/2021 AD
+                   857360761135431730, 236884090651934721, 581206591051923466, 527729196688998415, 660639108674224158, 505486500314611717,
+                   418151634087182359, 690895816914763866, 454599329232191488, 411925326780825602, 230313032956248064]
+        #              neppkun,            szymon,              bowser
+        no_conlangs = [350199484246130690, 443363116504580117,  94762492923748352]
+        #                  Senko Lair,         Regaus'tar Koankadu, Kargadia,          3tk4,              Imperium
+        trusted_servers = [568148147457490954, 738425418637639775, 928745963877720144, 430945139142426634, 853385632813678643]
+        # List of trusted people and servers last updated 21/05/2022 AD
         output = "__List of supported languages:__\n" + "\n".join(nat)
+
         # If the person is in a trusted server while not being in the No Conlangs list, or if the person is in a DM while they're trusted
         if ((ctx.guild is not None and ctx.guild.id in trusted_servers) and ctx.author.id not in no_conlangs) or (ctx.guild is None and ctx.author.id in trusted):
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)

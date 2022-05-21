@@ -1328,3 +1328,6 @@
 ## v7.5.8.1 - 18 May 2022
 - Removed yearly ranking commands
 - Updated the old leveling commands to use the bot field - make sure they're using the correct data
+
+## v7.5.8.2 - 21 May 2022
+- Holiday name translations are no longer counted towards language translation completion, as they are not actually used anywhere
