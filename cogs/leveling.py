@@ -423,7 +423,7 @@ class Leveling(commands.Cog):
                 await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
                 font, font_small = None, None
             text_x = 542
-            dr.text((text_x, -10), f"{user}", font=font, fill=font_colour)
+            dr.text((text_x, -10), str(user), font=font, fill=font_colour)
             try:
                 if level >= 0:
                     req = int(levels[level])  # Requirement to next level
@@ -448,7 +448,7 @@ class Leveling(commands.Cog):
             place = language.string("leveling_rank_unknown")
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
-                    place = language.string("leveling_rank_rank", language.string("leaderboards_place", language.number(x + 1)))
+                    place = language.string("leveling_rank_rank", place=language.string("leaderboards_place", language.number(x + 1)), total=language.number(len(_data)))
                     break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
@@ -468,7 +468,7 @@ class Leveling(commands.Cog):
             else:
                 progress = 1  # 0.5
                 place = language.string("leaderboards_place", 1)
-                _rank = language.string("leveling_rank_rank", place)
+                _rank = language.string("leveling_rank_rank2", place=place)
                 _level = language.string("leveling_rank_level", language.number(69420))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
                 dr.text((text_x, 357), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour)  # 426
@@ -560,7 +560,7 @@ class Leveling(commands.Cog):
         place = language.string("leveling_rank_unknown")
         for x in range(len(_data)):
             if _data[x]['uid'] == user.id:
-                place = language.string("leveling_rank_rank", language.string("leaderboards_place", general.bold(language.number(x + 1))))
+                place = language.string("leveling_rank_rank", place=general.bold(language.string("leaderboards_place", language.number(x + 1))), total=language.number(len(_data)))
                 break
         if not is_self:
             progress = (xp - prev) / (req - prev)
@@ -574,7 +574,7 @@ class Leveling(commands.Cog):
             if level < max_level:
                 embed.add_field(name=language.string("leveling_rank_embed_progress"), value=f"**{r3}**{r4}", inline=False)
         else:
-            _rank = language.string("leveling_rank_rank", language.string("leaderboards_place", "**1**"))
+            _rank = language.string("leveling_rank_rank2", place=general.bold(language.string("leaderboards_place", "1")))
             _level = language.string("leveling_rank_level", language.number(69420))
             embed.add_field(name=language.string("leveling_rank_embed_xp"), value=language.string("leveling_rank_xp_self"), inline=False)
             embed.add_field(name=language.string("leveling_rank_embed_level"), value=_level, inline=False)

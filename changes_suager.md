@@ -1337,3 +1337,6 @@
 - Added `//smug`, `//nibble`, and `//feed`
 - Made the images load up when the bot is ready
 - Made the counters separate per bot
+
+## v7.5.10 - 22 May 2022
+- Rank now shows your place out of all members
