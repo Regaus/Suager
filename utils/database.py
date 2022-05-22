@@ -88,9 +88,9 @@ tables = [
         Column("bot", 2, True),
     ]),
     Table("counters", [
-        Column("uid1", 0, True),       # 00
-        Column("uid2", 0, True),       # 01
-        Column("bang", 0, True),       # 02
+        Column("uid1", 0, True),       # 00 - Author
+        Column("uid2", 0, True),       # 01 - Target
+        Column("bot", 2, True),        # 02 - Bot Name
         Column("bite", 0, True),       # 03
         Column("cuddle", 0, True),     # 04
         Column("high_five", 0, True),  # 05
@@ -102,12 +102,15 @@ tables = [
         Column("sniff", 0, True),      # 11
         Column("poke", 0, True),       # 12
         Column("boop", 0, True),       # 13
-        Column("suck", 0, True),       # 14
-        Column("tickle", 0, True),     # 15
-        Column("punch", 0, True),      # 16
-        Column("kill", 0, True),       # 17
-        Column("ff", 0, True),         # 18
-        Column("r", 0, True),          # 19
+        Column("tickle", 0, True),     # 14
+        Column("punch", 0, True),      # 15
+        Column("bang", 0, True),       # 16
+        Column("suck", 0, True),       # 17
+        Column("kill", 0, True),       # 18
+        Column("ff", 0, True),         # 19
+        Column("r", 0, True),          # 20
+        Column("nibble", 0, True),     # 21
+        Column("feed", 0, True),       # 22
     ]),
     Table("custom_rank", [
         Column("uid", 0, True),

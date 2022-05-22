@@ -1331,3 +1331,9 @@
 
 ## v7.5.8.2 - 21 May 2022
 - Holiday name translations are no longer counted towards language translation completion, as they are not actually used anywhere
+
+## v7.5.9 - 22 May 2022
+- Updated some social commands' responses when Suager or another bot is the target
+- Added `//smug`, `//nibble`, and `//feed`
+- Made the images load up when the bot is ready
+- Made the counters separate per bot

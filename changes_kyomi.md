@@ -212,3 +212,10 @@
 
 ## v1.2.7.1 - 17 May 2022
 - Added Kyomi's useless bots
+
+## v1.2.8 - 22 May 2022
+- Updated some social commands' responses when Mizuki or another bot is the target
+- Added `m!smug`, `m!nibble`, and `m!feed`
+- Made the images load up when the bot is ready
+- Made the counters separate per bot
+- As a result, Mizuki's social counters have been reset
