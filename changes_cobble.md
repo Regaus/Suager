@@ -528,3 +528,8 @@
 ## v1.5.11 - 18 May 2022
 - Hide P2 places from place list
 - Added "place" as aliases to `..weather78`
+
+## v1.5.12 - 23 May 2022
+- Updated syntax for RSL-1 commands
+- Updated the number translator to use up-to-date number systems
+- Updated list of trusted people and channels for the RSL-1 command

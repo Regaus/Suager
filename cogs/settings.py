@@ -71,17 +71,19 @@ class Settings(commands.Cog):
             add_list = rsl if conlang == 2 else con if conlang == 1 else nat
             add_list.append(out)
 
-        #          Regaus,             Suager,             Five,               Leitoxz,            1337xp,             Potato,
-        #          Karmeck,            Shawn,              Mid,                Aya,                Mary,               Wight
-        #          HatKid,             Ash,                Back,               Noodle,             Steir
-        trusted = [302851022790066185, 517012611573743621, 430891116318031872, 291665491221807104, 679819572278198272, 374853432168808448,
-                   857360761135431730, 236884090651934721, 581206591051923466, 527729196688998415, 660639108674224158, 505486500314611717,
-                   418151634087182359, 690895816914763866, 454599329232191488, 411925326780825602, 230313032956248064]
-        #              neppkun,            szymon,              bowser
+        # Users:   Regaus,             Leitoxz,            Alex Five,          Potato,             Chuck,              Mid,                Noodle
+        # Users:   Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza,               HatKid
+        # Users:   Karmeck,            Steir,              PandaBoi,           Suager,             Mary,               Wight,              Back,
+        # Users:   Ash/Kollu,          Drip
+        trusted = [302851022790066185, 291665491221807104, 430891116318031872, 374853432168808448, 593736085327314954, 581206591051923466, 411925326780825602,
+                   236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691, 418151634087182359,
+                   857360761135431730, 230313032956248064, 301091858354929674, 517012611573743621, 660639108674224158, 505486500314611717, 454599329232191488,
+                   690895816914763866, 381870347814830081]
+        # Bad Users:   neppkun,            szymon,              bowser
         no_conlangs = [350199484246130690, 443363116504580117,  94762492923748352]
-        #                  Senko Lair,         Regaus'tar Koankadu, Kargadia,          3tk4,              Imperium
+        # Servers:         Senko Lair,         Regaus'tar Koankadu, Kargadia,          3tk4,               Imperium
         trusted_servers = [568148147457490954, 738425418637639775, 928745963877720144, 430945139142426634, 853385632813678643]
-        # List of trusted people and servers last updated 21/05/2022 AD
+        # List of trusted people and servers last updated 23/05/2022 AD
         output = "__List of supported languages:__\n" + "\n".join(nat)
 
         # If the person is in a trusted server while not being in the No Conlangs list, or if the person is in a DM while they're trusted
