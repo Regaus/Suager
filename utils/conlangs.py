@@ -13,6 +13,19 @@ def rsl_number(value: int, language: str):
     if value == 0:
         return "inti"
     numbers = {
+        "ka_re": {
+            1:  {1: "ukka", 2: "devi", 3: "teri", 4: "segi", 5: "paki", 6: "senki", 7: "eki", 8: "oni", 9: "zeki", 10: "veri"},
+            21: {1: "ukku", 2: "devu", 3: "teru", 4: "segu", 5: "paku", 6: "senku", 7: "eku", 8: "onu", 9: "zeku"},
+            11: {11: "uveri", 12: "deveri", 13: "teveri", 14: "severi", 15: "paveri", 16: "seneri", 17: "everi", 18: "overi", 19: "zeveri"},
+
+            10: {2: "devere", 3: "tevere", 4: "segere", 5: "pavere", 6: "senere", 7: "evere", 8: "onere", 9: "zevere"},
+            20: {2: "devere", 3: "tevere", 4: "segere", 5: "pavere", 6: "senere", 7: "evere", 8: "onere", 9: "zevere"},
+
+            100:  ["arja",  "arjain"],
+            1000: ["kirraa", "kirrain"],
+            1000000: ["ukkaristu",   "devaristu",   "teraristu",   "segaristu",   "pakaristu",   "senkaristu",   "ekaristu",   "onaristu",   "zekaristu",   "veraristu"],
+            2000000: ["ukkaristain", "devaristain", "teraristain", "segaristain", "pakaristain", "senkaristain", "ekaristain", "onaristain", "zekaristain", "veraristain"]
+        },
         "ka_ne": {
             1:  {1: "ukka", 2: "devi", 3: "teri", 4: "segi", 5: "paki", 6: "senki", 7: "eki", 8: "oni", 9: "zeki", 10: "veri"},
             21: {1: "ukku", 2: "devu", 3: "teru", 4: "segu", 5: "paku", 6: "senku", 7: "eku", 8: "onu", 9: "zeku"},
