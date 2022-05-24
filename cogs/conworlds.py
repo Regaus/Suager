@@ -167,7 +167,7 @@ class Conworlds(commands.Cog):
         code = ""
         # code = rsl_number(s)
         if _code:
-            code = conlangs.rsl_number(s, 10, "rsl-1i")
+            code = conlangs.rsl_number(s, "ka_re")
             t = t.replace(" --code", "").replace("--code ", "")
         try:
             text = "".join([chr(ord(letter) + shift) for letter in t])

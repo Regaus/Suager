@@ -533,3 +533,6 @@
 - Updated syntax for RSL-1 commands
 - Updated the number translator to use up-to-date number systems
 - Updated list of trusted people and channels for the RSL-1 command
+
+## v1.5.12.1 - 24 May 2022
+- Try to fix the holiday scripts showing negative days remaining after a holiday passes
