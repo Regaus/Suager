@@ -200,7 +200,7 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(choice))
         return await ctx.send(embed=embed)
 
-    @commands.command(name="handhold", aliases=["hold", "hand", "hh"])
+    @commands.command(name="handhold", aliases=["holdhand", "hold", "hand", "hh"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def handhold(self, ctx: commands.Context, user: discord.Member):
