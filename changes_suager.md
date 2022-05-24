@@ -1339,7 +1339,7 @@
 - Made the counters separate per bot
 
 ## v7.5.10 - 22 May 2022
-- Rank now shows your place out of all members
+- `//rank` now shows how many members have spoken at all (so you would see e.g. "Rank #24 of 79")
 
 ## v7.5.11 - 24 May 2022
 - `//handhold` command
