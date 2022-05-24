@@ -111,6 +111,7 @@ tables = [
         Column("r", 0, True),          # 20
         Column("nibble", 0, True),     # 21
         Column("feed", 0, True),       # 22
+        Column("handhold", 0, True),   # 23
     ]),
     Table("custom_rank", [
         Column("uid", 0, True),

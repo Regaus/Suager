@@ -219,3 +219,6 @@
 - Made the images load up when the bot is ready
 - Made the counters separate per bot
 - As a result, Mizuki's social counters have been reset
+
+## v1.2.9 - 24 May 2022
+- `m!handhold` command

@@ -1340,3 +1340,6 @@
 
 ## v7.5.10 - 22 May 2022
 - Rank now shows your place out of all members
+
+## v7.5.11 - 24 May 2022
+- `//handhold` command

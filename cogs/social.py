@@ -44,8 +44,8 @@ class Social(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.high_five, \
-            self.poke, self.boop, self.tickle, self.laugh, self.dance, self.smug, self.nibble, self.feed = [lists.error] * 21
-        db_columns = 23
+            self.poke, self.boop, self.tickle, self.laugh, self.dance, self.smug, self.nibble, self.feed, self.handhold = [lists.error] * 22
+        db_columns = 24
         self.insert = f"INSERT INTO counters VALUES ({'?, ' * (db_columns - 1)}?)"
         self.empty = [0, 0, self.bot.name] + [0] * (db_columns - 3)
         # Locked:      chocolatt,          racc
@@ -198,6 +198,30 @@ class Social(commands.Cog):
         embed.title = title
         embed.set_footer(text=footer)
         embed.set_image(url=random.choice(choice))
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="handhold", aliases=["hold", "hand", "hh"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def handhold(self, ctx: commands.Context, user: discord.Member):
+        """ Hold someone's hands """
+        language = self.bot.language(ctx)
+        if is_fucked(self.handhold):
+            self.handhold = await lists.get_images(self.bot, "handhold")
+        if ctx.author == user:
+            return await ctx.send(language.string("social_handhold_self"))
+        if user.id == self.bot.user.id:
+            return await ctx.send(language.string("social_handhold_suager"))
+        if user.id == 302851022790066185 and ctx.author.id in self.locked:
+            return await ctx.send(language.string("social_forbidden"))
+        if user.bot:
+            return await ctx.send(language.string("social_handhold_bot"))
+        embed = discord.Embed(colour=general.random_colour())
+        given, received = self.data_update(ctx.author.id, user.id, "handhold", 23)
+        title, footer = get_data(ctx.author, user, "handhold", language, given, received)
+        embed.title = title
+        embed.set_footer(text=footer)
+        embed.set_image(url=random.choice(self.handhold))
         return await ctx.send(embed=embed)
 
     @commands.command(name="bite")
@@ -632,6 +656,7 @@ class Social(commands.Cog):
         self.smile     = await lists.get_images(self.bot, "smile")     # noqa: E221
         self.smug      = await lists.get_images(self.bot, "smug")      # noqa: E221
         self.tickle    = await lists.get_images(self.bot, "tickle")    # noqa: E221
+        self.handhold  = await lists.get_images(self.bot, "handhold")  # noqa: E221
 
     @commands.command(name="reloadimages", aliases=["ri"])
     @commands.is_owner()

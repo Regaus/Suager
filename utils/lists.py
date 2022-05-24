@@ -49,6 +49,7 @@ image_channels = {
     "tickle":   746167543290527764,  # images-2-15
     "laugh":    777697466287259679,  # images-2-16
     "dance":    856636461101482014,  # images-2-17
+    "handhold": 978747000948408371,  # images-2-18
 }
 
 
