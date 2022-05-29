@@ -50,8 +50,8 @@ class Social(commands.Cog):
         self.empty = [0, 0, self.bot.name] + [0] * (db_columns - 3)
         # Locked:      chocolatt,          racc
         self.locked = [667187968145883146, 746173049174229142]
-        # Unlocked:      Leitoxz
-        self.unlocked = [291665491221807104]
+        # Unlocked:      Leitoxz,            Wight
+        self.unlocked = [291665491221807104, 505486500314611717]
 
     @commands.Cog.listener()
     async def on_ready(self):
