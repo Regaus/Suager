@@ -30,8 +30,8 @@ class Polls(commands.Cog):
             if ctx.guild.id == 869975256566210641:  # Nuriki server
                 if time.rd_is_below_1h(delta):
                     return await ctx.send(language.string("polls_length_limit2"))
-                if 929035370623037500 not in [role.id for role in ctx.author.roles]:  # Anarchist
-                    return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
+                # if 929035370623037500 not in [role.id for role in ctx.author.roles]:  # Anarchist
+                #     return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
             if error:
                 return await ctx.send(language.string("polls_length_error", err=expiry))
             _question = general.reason(ctx.author, question)
@@ -79,7 +79,7 @@ class Polls(commands.Cog):
 
         # Nuriki server - Anarchist role
         if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
-            return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
+            return await ctx.send("You need the Anarchist role to vote in polls.")
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
             return await ctx.send(language.string("polls_not_found", id=poll_id))
