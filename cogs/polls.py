@@ -27,9 +27,11 @@ class Polls(commands.Cog):
             expiry, error = time.add_time(delta)
             if time.rd_is_above_1w(delta):
                 return await ctx.send(language.string("polls_length_limit"))
-            if ctx.guild.id == 869975256566210641:
+            if ctx.guild.id == 869975256566210641:  # Nuriki server
                 if time.rd_is_below_1h(delta):
                     return await ctx.send(language.string("polls_length_limit2"))
+                if 929035370623037500 not in [role.id for role in ctx.author.roles]:  # Anarchist
+                    return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
             if error:
                 return await ctx.send(language.string("polls_length_error", err=expiry))
             _question = general.reason(ctx.author, question)
@@ -74,6 +76,10 @@ class Polls(commands.Cog):
         response = response.lower()
         if response not in ["yes", "neutral", "no"]:
             return await ctx.send(language.string("polls_vote_invalid"))
+
+        # Nuriki server - Anarchist role
+        if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
+            return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
             return await ctx.send(language.string("polls_not_found", id=poll_id))
@@ -230,6 +236,11 @@ class Polls(commands.Cog):
         You can only start a new trial once every 5 minutes."""
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
+
+            # Nuriki server - Anarchist role
+            if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
+                return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
+
             if user == ctx.author.id:
                 return await ctx.send(language.string("trials_user_self"))
             try:
@@ -366,6 +377,11 @@ class Polls(commands.Cog):
         response = response.lower()
         if response not in ["yes", "neutral", "no"]:
             return await ctx.send(language.string("polls_vote_invalid"))
+
+        # Nuriki server - Anarchist role
+        if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
+            return await ctx.send("You need the Anarchist role to start new trials or vote in existing ones.")
+
         data = self.bot.db.fetchrow("SELECT * FROM trials WHERE trial_id=? OR message_id=? OR user_id=?", (trial_id, trial_id, trial_id))
         if not data:
             return await ctx.send(language.string("trials_not_found", id=trial_id))
