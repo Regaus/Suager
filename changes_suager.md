@@ -1343,3 +1343,9 @@
 
 ## v7.5.11 - 24 May 2022
 - `//handhold` command
+
+## v7.5.12 - 26 May, 4-6 June, 10-12 June 2022
+- Language strings now use keywords for better understandability
+- Added Wight to the Unlocked list for social commands
+- Ship now only shows one name (chosen randomly)
+- Removed some old unused strings

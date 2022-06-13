@@ -162,7 +162,7 @@ class Events(commands.Cog):
                 await ctx.send(language.string("events_error_message_length"))
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
             else:
-                await ctx.send(language.string("events_error_error", type(err.original).__name__, str(err.original)))
+                await ctx.send(language.string("events_error_error", err=f"{type(err.original).__name__}: {str(err.original)}"))
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
                     await ec.send(error)

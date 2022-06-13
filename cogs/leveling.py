@@ -371,10 +371,10 @@ class Leveling(commands.Cog):
             embed = discord.Embed(colour=general.random_colour())
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.title = language.string("leveling_rewards_title", ctx.guild.name)
+            embed.title = language.string("leveling_rewards_title", server=ctx.guild.name)
             d = ''
             for role in rewards:
-                d += language.string("leveling_rewards_role", language.number(role["level"]), role["role"])
+                d += language.string("leveling_rewards_role", level=language.number(role["level"]), role_id=role["role"])
             if d:
                 embed.description = d
             else:
@@ -392,7 +392,7 @@ class Leveling(commands.Cog):
 
         async with ctx.typing():
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
-            r = language.string("leveling_rank", user, ctx.guild.name)
+            r = language.string("leveling_rank", user=user, server=ctx.guild.name)
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if custom:
                 font_colour, progress_colour, background_colour = \
@@ -448,28 +448,27 @@ class Leveling(commands.Cog):
             place = language.string("leveling_rank_unknown")
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
-                    place = language.string("leveling_rank_rank", place=language.string("leaderboards_place", language.number(x + 1)), total=language.number(len(_data)))
+                    place = language.string("leveling_rank_rank", place=language.string("leaderboards_place", val=language.number(x + 1)), total=language.number(len(_data)))
                     break
             if not is_self:
                 progress = (xp - prev) / (req - prev)
-                _level = language.string("leveling_rank_level", language.number(level))
-                dr.text((text_x, 130), f"{place} | {_level} ", font=font_small, fill=font_colour)
+                _level = language.string("leveling_rank_level", level=language.number(level))
+                dr.text((text_x, 130), f"{place} | {_level}", font=font_small, fill=font_colour)
                 r1 = language.number(xp, precision=0)
+                y = 288
                 if level < max_level:
-                    r3 = language.string("leveling_rank_progress", language.number(progress, precision=2, percentage=True))
-                    r4 = language.string("leveling_rank_xp_left", language.number((req - xp), precision=0))
-                    y = 288
+                    r3 = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True))
+                    r4 = language.string("leveling_rank_xp_left", left=language.number((req - xp), precision=0))
                 else:
                     progress = 1
                     r3, r4 = language.string("leveling_rank_max_1"), random.choice(language.data("leveling_rank_max_2"))
-                    y = 288
                     # y = 426
-                dr.text((text_x, y), language.string("leveling_rank_xp", r1, r2, r3, r4), font=font_small, fill=font_colour)
+                dr.text((text_x, y), language.string("leveling_rank_xp", xp=r1, next=r2, progress=r3, left=r4), font=font_small, fill=font_colour)
             else:
                 progress = 1  # 0.5
-                place = language.string("leaderboards_place", 1)
+                place = language.string("leaderboards_place", val=1)
                 _rank = language.string("leveling_rank_rank2", place=place)
-                _level = language.string("leveling_rank_level", language.number(69420))
+                _level = language.string("leveling_rank_level", level=language.number(69420))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
                 dr.text((text_x, 357), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour)  # 426
             full = width - 20
@@ -520,7 +519,7 @@ class Leveling(commands.Cog):
         if user.bot and not is_self:
             return await ctx.send(language.string("leveling_rank_bot"))
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
-        r = language.string("leveling_rank", user, ctx.guild.name)
+        r = language.string("leveling_rank", user=user, server=ctx.guild.name)
         if data:
             level, xp = [data['level'], data['xp']]
         else:
@@ -560,22 +559,22 @@ class Leveling(commands.Cog):
         place = language.string("leveling_rank_unknown")
         for x in range(len(_data)):
             if _data[x]['uid'] == user.id:
-                place = language.string("leveling_rank_rank", place=general.bold(language.string("leaderboards_place", language.number(x + 1))), total=language.number(len(_data)))
+                place = language.string("leveling_rank_rank", place=general.bold(language.string("leaderboards_place", val=language.number(x + 1))), total=language.number(len(_data)))
                 break
         if not is_self:
             progress = (xp - prev) / (req - prev)
-            _level = language.string("leveling_rank_level", general.bold(language.number(level)))
+            _level = language.string("leveling_rank_level", level=general.bold(language.number(level)))
             r1 = language.number(xp, precision=0)
             r3 = language.number(progress, precision=2, percentage=True)
-            r4 = language.string("leveling_rank_xp_left", language.number((req - xp)))
+            r4 = language.string("leveling_rank_xp_left", left=language.number((req - xp)))
             embed.add_field(name=language.string("leveling_rank_embed_xp"), value=f"**{r1}**/{r2}", inline=False)
             embed.add_field(name=language.string("leveling_rank_embed_level"), value=_level, inline=False)
             embed.add_field(name=language.string("leveling_rank_embed_rank"), value=place, inline=False)
             if level < max_level:
-                embed.add_field(name=language.string("leveling_rank_embed_progress"), value=f"**{r3}**{r4}", inline=False)
+                embed.add_field(name=language.string("leveling_rank_embed_progress"), value=f"**{r3}**\n{r4}", inline=False)
         else:
-            _rank = language.string("leveling_rank_rank2", place=general.bold(language.string("leaderboards_place", "1")))
-            _level = language.string("leveling_rank_level", language.number(69420))
+            _rank = language.string("leveling_rank_rank2", place=general.bold(language.string("leaderboards_place", val="1")))
+            _level = language.string("leveling_rank_level", level=language.number(69420))
             embed.add_field(name=language.string("leveling_rank_embed_xp"), value=language.string("leveling_rank_xp_self"), inline=False)
             embed.add_field(name=language.string("leveling_rank_embed_level"), value=_level, inline=False)
             embed.add_field(name=language.string("leveling_rank_embed_rank"), value=_rank, inline=False)
@@ -605,7 +604,7 @@ class Leveling(commands.Cog):
         for i, _user in enumerate(sl):
             uid, _xp = _user
             if uid == user.id:
-                place = language.string("leaderboards_place", language.number(i + 1))
+                place = language.string("leaderboards_place", val=language.number(i + 1))
                 xp = _xp
                 break
         level = 0
@@ -614,13 +613,14 @@ class Leveling(commands.Cog):
                 level += 1
             else:
                 break
-        return await ctx.send(language.string("leveling_rank_global", user, language.number(xp, precision=0), place, language.number(level)))
+        return await ctx.send(language.string("leveling_rank_global", user=user, xp=language.number(xp, precision=0), place=place, level=language.number(level)))
 
     @commands.group(name="customrank", aliases=["crank"])
     # @commands.check(lambda ctx: ctx.author.id not in custom_rank_blacklist)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
-        """ Customise your rank card """
+        """ Customise your rank card
+        Change the colour of the font, the background, or the progress bar"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
@@ -669,7 +669,7 @@ class Leveling(commands.Cog):
         """ XP required to achieve a level """
         language = self.bot.language(ctx)
         if level > max_level or level < max_level * -1 + 1:
-            return await ctx.send(language.string("leveling_xplevel_max", language.number(max_level)))
+            return await ctx.send(language.string("leveling_xplevel_max", level=language.number(max_level)))
         try:
             if level > 0:
                 r = int(levels[level - 1])
@@ -678,7 +678,7 @@ class Leveling(commands.Cog):
             else:
                 r = -int(levels[(-level) - 1])
         except IndexError:
-            return await ctx.send(language.string("leveling_xplevel_max", language.number(max_level)))
+            return await ctx.send(language.string("leveling_xplevel_max", level=language.number(max_level)))
         if ctx.guild is not None:
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (ctx.author.id, ctx.guild.id, self.bot.name))
         else:
@@ -696,7 +696,7 @@ class Leveling(commands.Cog):
                 dm = __settings['leveling']['xp_multiplier']
             except KeyError:
                 dm = 1
-        base = language.string("leveling_xplevel_main", language.number(r, precision=0), language.number(level))
+        base = language.string("leveling_xplevel_main", xp=language.number(r, precision=0), level=language.number(level))
         extra = ""
         if xp < r:
             x1, x2 = [val * dm for val in xp_amounts]
@@ -706,7 +706,7 @@ class Leveling(commands.Cog):
             except (OverflowError, OSError):
                 error = "Never"
                 t1, t2 = [error, error]
-            extra = language.string("leveling_xplevel_extra", language.number(r - xp, precision=0), t1, t2)
+            extra = language.string("leveling_xplevel_extra", left=language.number(r - xp, precision=0), min=t1, max=t2)
         return await ctx.send(f"{base}{extra}")
 
     @commands.command(name="nextlevel", aliases=["nl"])
@@ -729,7 +729,7 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         if level == max_level:
-            return await ctx.send(language.string("leveling_next_level_max", ctx.author.name))
+            return await ctx.send(language.string("leveling_next_level_max", user=ctx.author.name))
         r1 = language.number(xp, precision=0)
         try:
             if level >= 0:
@@ -761,7 +761,7 @@ class Leveling(commands.Cog):
         except (OverflowError, OSError):
             error = "Never"
             t1, t2 = [error, error]
-        return await ctx.send(language.string("leveling_next_level", ctx.author.name, r1, r2, r3, r5, r4, t1, t2))
+        return await ctx.send(language.string("leveling_next_level", user=ctx.author.name, xp=r1, next=r2, left=r3, level=r5, prog=r4, min=t1, max=t2))
 
     @commands.command(name="levels", aliases=["ranks", "lb"])
     @commands.guild_only()
@@ -770,14 +770,14 @@ class Leveling(commands.Cog):
         """ Server's XP Leaderboard """
         language = self.bot.language(ctx)
         return await leaderboard(self, ctx, f"SELECT * FROM leveling WHERE gid=? AND bot=? ORDER BY xp DESC", (ctx.guild.id, self.bot.name),
-                                 top, "leaderboards_levels", language, "xp", ctx.guild.name)
+                                 top, "leaderboards_levels", language, ctx.guild.name)
 
     @commands.command(name="levelsglobal", aliases=["levelsg", "glevels"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def global_levels(self, ctx: commands.Context, top: str = ""):
         """ Global XP Leaderboard """
         language = self.bot.language(ctx)
-        return await leaderboard2(self, ctx, f"SELECT * FROM leveling WHERE bot=?", (self.bot.name,), top, "leaderboards_levels_global", language, "xp")
+        return await leaderboard2(self, ctx, f"SELECT * FROM leveling WHERE bot=?", (self.bot.name,), top, "leaderboards_levels_global", language)
 
 
 def setup(bot: bot_data.Bot):

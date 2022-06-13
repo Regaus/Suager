@@ -9,7 +9,6 @@
         "s/",
         "S/"
       ],
-      "timezone": "Europe/Dublin",
       "error_channel": 738442483591151638,
       "default_locale": "en"
     },
@@ -22,9 +21,8 @@
         "c.",
         "C."
       ],
-      "timezone": "Europe/Dublin",
       "error_channel": 738442483591151638,
-      "default_locale": "ka_tb"
+      "default_locale": "ka_tx"
     },
     {
       "name": "Kyomi",
@@ -35,7 +33,6 @@
         "m!",
         "M!"
       ],
-      "timezone": "CST6CDT",
       "error_channel": 738442483591151638,
       "default_locale": "en"
     }

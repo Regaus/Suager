@@ -49,11 +49,11 @@ class Language(languages.Language):
     def get(cls, ctx):
         """ Find the language of the server """
         if hasattr(ctx, "channel"):
-            # # Channel:            secret-room-8
-            # if ctx.channel.id in [725835449502924901]:  # SR-8
-            #     return cls("ka_re")
-            # Channels:             rsl-1,              secret-room-11,     secret-room-1,      secret-room-8
-            if ctx.channel.id in [787340111963881472, 799714065256808469, 671520521174777869, 725835449502924901]:
+            # Channel:            secret-room-8,      secret-room-15
+            if ctx.channel.id in [725835449502924901, 969720792457822219]:
+                return cls("ka_re")
+            # Channels:             rsl-1,              secret-room-11,     secret-room-1
+            elif ctx.channel.id in [787340111963881472, 799714065256808469, 671520521174777869]:
                 return cls("ka_ne")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
         if ctx.guild is not None:
@@ -73,8 +73,9 @@ class Language(languages.Language):
             if data:
                 try:
                     return Place(data["location"]).tz
-                except ValueError:  # Place does not exist
-                    return time.timezone.utc
+                except (ValueError, AttributeError):  # Place does not exist or is not specified (null -> AttError)
+                    return time.KargadianTimezone(time.timedelta(), "Virsetgar", "VSG")  # Since they have Virsetgar instead of UTC
+            return time.KargadianTimezone(time.timedelta(), "Virsetgar", "VSG")
         return time.timezone.utc
 
     def delta_rd(self, delta: time.relativedelta | relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False, case: str = "default") -> str:

@@ -182,7 +182,7 @@ class Social(commands.Cog):
         language = self.bot.language(ctx)
         if is_fucked(self.kiss):
             self.kiss = await lists.get_images(self.bot, "kiss")
-        if ctx.channel.id == 725835449502924901:
+        if ctx.channel.id in [725835449502924901, 969720792457822219]:
             choice = lists.kl
         else:
             choice = self.kiss

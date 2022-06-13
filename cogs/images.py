@@ -112,7 +112,7 @@ class Images(commands.Cog):
         if _filter == "random":
             _filter = random.choice(filters)
         elif _filter not in filters or _filter == "help":
-            return await ctx.send(self.bot.language(ctx).string("images_filter_filters", "`, `".join(filters)))
+            return await ctx.send(self.bot.language(ctx).string("images_filter_filters", filters="`, `".join(filters)))
         return await af_image_gen(ctx, user, f"filter/{_filter}", f"{_filter}_filter")
 
     @commands.command(name="ship")
@@ -140,9 +140,9 @@ class Images(commands.Cog):
         n3 = user2.name[:_names[1]]
         n4 = user2.name[_names[1]:]
         names = [f"{n1}{n3}", f"{n1}{n4}", f"{n2}{n3}", f"{n2}{n4}", f"{n3}{n1}", f"{n4}{n1}", f"{n3}{n2}", f"{n4}{n2}"]
-        message = language.string("social_ship")
-        for i, j in enumerate(names, start=1):
-            message += f"\n{i}) **{j}**"
+        message = language.string("social_ship", name=random.choice(names))
+        # for i, j in enumerate(names, start=1):
+        #     message += f"\n{i}) **{j}**"
         # img = Image.new("RGB", (1536, 512), color=(0, 0, 0))
         async with ctx.typing():
             img = Image.open("assets/ship.png")

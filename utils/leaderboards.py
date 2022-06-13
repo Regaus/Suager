@@ -1,34 +1,29 @@
 from discord.ext import commands
 
-from utils import general, languages
+from utils import languages
 
 
-async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, key: str, guild: str = None):
+async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, guild: str = None):
     """ Generate Leaderboard """
     data = self.bot.db.fetch(query, statement)
     if not data:
-        if key.isnumeric():
-            return await ctx.send(language.string("leveling_rank_yearly_no", key))
         return await ctx.send(language.string("leaderboards_no_data"))
     block = "```fix\n"
     un = []   # User names
     xp = []   # XP
     xpl = []  # XP string lengths
-    try:
-        for user in data:
-            name = f"{user['name']}#{user['disc']:04d}"
-            un.append(name)
-            val = language.number(user[key], precision=0)
-            xp.append(val)
-            xpl.append(len(val))
-    except KeyError:
-        return await ctx.send(language.string("leveling_rank_yearly_no", key))
+    for user in data:
+        name = f"{user['name']}#{user['disc']:04d}"
+        un.append(name)
+        val = language.number(user["xp"], precision=0)
+        xp.append(val)
+        xpl.append(len(val))
     total = len(xp)
     place = language.string("generic_unknown")
     n = 0
     for x in range(len(data)):
         if data[x]['uid'] == ctx.author.id:
-            place = language.string("leaderboards_place", language.number(x + 1))
+            place = language.string("leaderboards_place", val=language.number(x + 1))
             n = x + 1
             break
     try:
@@ -62,25 +57,17 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
     except (ValueError, IndexError):
         block += "No data available"
     s, e, t = language.number(start), language.number(start + 9), language.number(total)
-    args = [guild] if guild else []
-    args += [place, s, e, t, block]
-    if key.isnumeric():
-        args.append(key)
-    output = language.string(string, *args)
-    if str(key) == "2021":
-        cobble_servers = [568148147457490954, 738425418637639775, 58221533031156941, 662845241207947264]
-        if ctx.guild.id not in cobble_servers:
-            output += language.string("leveling_rank_yearly21", ctx.guild.name)
+    output = language.string(string, server=guild, place=place, start=s, end=e, total=t, data=block)
     return await ctx.send(output)
 
 
-async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, key: str, guild: str = None):
+async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, guild: str = None):
     data = self.bot.db.fetch(query, statement)
     coll = {}
     for i in data:
         if i['uid'] not in coll:
             coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}"]
-        coll[i['uid']][0] += i[key]
+        coll[i['uid']][0] += i["xp"]
     sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
     r = len(sl)
     block = "```fix\n"
@@ -96,7 +83,7 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     n = 0
     for someone in range(len(sl)):
         if sl[someone][0] == ctx.author.id:
-            place = language.string("leaderboards_place", language.number(someone + 1))
+            place = language.string("leaderboards_place", val=language.number(someone + 1))
             n = someone + 1
             break
     s = ' '
@@ -133,6 +120,4 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     except (ValueError, IndexError):
         block += "No data available"
     s, e, t = language.number(start), language.number(start + 9), language.number(total)
-    args = [guild] if guild else []
-    args += [place, s, e, t, block]
-    return await ctx.send(language.string(string, *args))
+    return await ctx.send(language.string(string, server=guild, place=place, start=s, end=e, total=t, data=block))

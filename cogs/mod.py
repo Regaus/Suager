@@ -32,12 +32,12 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         # return await general.send("I don't have the permissions to delete messages", ctx.channel)
     # except discord.HTTPException as e:
     except Exception as e:
-        return await ctx.send(language.string("mod_purge_error", type(e).__name__, str(e)))
+        return await ctx.send(language.string("mod_purge_error", err=f"{type(e).__name__}: {str(e)}"))
         # return await general.send(f"An error has occurred: `{type(e).__name__}: {e}`\nTry a smaller search?", ctx.channel)
     _deleted = len(deleted)
     if message is True:
         await _message.delete()
-        return await ctx.send(language.string("mod_purge", language.number(_deleted)), delete_after=10)
+        return await ctx.send(language.string("mod_purge", total=language.number(_deleted)), delete_after=10)
         # await general.send(f"🚮 Successfully removed {_deleted:,} messages", ctx.channel, delete_after=10)
 
 
@@ -189,7 +189,7 @@ class Moderation(commands.Cog):
         elif member.top_role.position >= ctx.guild.me.top_role.position:  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_kick_forbidden2", member=member)
         elif member.id == self.bot.user.id:
-            return language.string("mod_ban_suager", ctx.author.name)
+            return language.string("mod_ban_suager", author=ctx.author.name)
         return True
 
     async def kick_user(self, ctx: commands.Context, member: discord.Member, reason: str):
@@ -215,7 +215,7 @@ class Moderation(commands.Cog):
             if kick_check is not True:
                 return await ctx.send(kick_check)
             await self.kick_user(ctx, member, reason)
-            return await ctx.send(language.string("mod_kick", member, reason))
+            return await ctx.send(language.string("mod_kick", user=member, reason=reason))
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
 
@@ -266,7 +266,7 @@ class Moderation(commands.Cog):
         elif member is not None and (member.top_role.position >= ctx.guild.me.top_role.position):  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_ban_forbidden2", member=member)
         elif user == self.bot.user.id:
-            return language.string("mod_ban_suager", ctx.author.name)
+            return language.string("mod_ban_suager", author=ctx.author.name)
         return True
 
     @staticmethod
@@ -305,7 +305,7 @@ class Moderation(commands.Cog):
             if await self.is_already_banned(ctx, user):
                 return await ctx.send(language.string("mod_ban_already", member=user))
             await self.ban_user(ctx, user, reason)
-            return await ctx.send(language.string("mod_ban", member, user, reason))
+            return await ctx.send(language.string("mod_ban", user=member, id=user, reason=reason))
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
 
@@ -376,7 +376,7 @@ class Moderation(commands.Cog):
             if not await self.is_already_banned(ctx, user):
                 return await ctx.send(language.string("mod_unban_already", member=user))
             await self.unban_user(ctx, user, reason)
-            return await ctx.send(language.string("mod_unban", member, user, reason))
+            return await ctx.send(language.string("mod_unban", user=member, id=user, reason=reason))
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
 
@@ -419,7 +419,7 @@ class Moderation(commands.Cog):
     def mute_role(self, ctx: commands.Context, language: Language):
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _data:
-            return language.string("mod_mute_role2", ctx.prefix)
+            return language.string("mod_mute_role2", p=ctx.prefix)
         data = json.loads(_data["data"])
         try:
             mute_role_id = data["mute_role"]
@@ -434,7 +434,7 @@ class Moderation(commands.Cog):
         if member.id == ctx.author.id:
             return language.string("mod_mute_self")
         elif member.id == self.bot.user.id:
-            return language.string("mod_mute_suager", ctx.author.name)
+            return language.string("mod_mute_suager")
         return True
 
     @staticmethod
@@ -495,10 +495,10 @@ class Moderation(commands.Cog):
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
             duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
-            out = language.string("mod_mute_timed", member, duration, reason)
+            out = language.string("mod_mute_timed", user=member, duration=duration, reason=reason)
             await self.mute_user_temporary(ctx, member, mute_role, reason, expiry, duration)
         else:
-            out = language.string("mod_mute", member, reason)
+            out = language.string("mod_mute", user=member, reason=reason)
             await self.mute_user_permanent(ctx, member, mute_role, reason)
         return await ctx.send(out)
 
@@ -584,7 +584,7 @@ class Moderation(commands.Cog):
         if mute_check is not True:
             return await ctx.send(mute_check)
         await self.unmute_user(ctx, member, mute_role, reason)
-        return await ctx.send(language.string("mod_unmute", member, reason))
+        return await ctx.send(language.string("mod_unmute", user=member, reason=reason))
 
     @commands.command(name="massunmute")
     @commands.guild_only()
@@ -749,10 +749,10 @@ class Moderation(commands.Cog):
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
             duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
-            out = language.string("mod_warn_timed", member=member, duration=duration, reason=reason)
+            out = language.string("mod_warn_timed", user=member, duration=duration, reason=reason)
             await self.warn_user(ctx, member, warn_settings, reason, language, expiry, duration)
         else:
-            out = language.string("mod_warn", member=member, reason=reason)
+            out = language.string("mod_warn", user=member, reason=reason)
             await self.warn_user(ctx, member, warn_settings, reason, language, None, None)
         return await ctx.send(out)
 
@@ -839,8 +839,8 @@ class Moderation(commands.Cog):
         ret = await self.pardon_user(ctx, member, warning_id, reason, language)
         if ret is None:  # Since the function "returns" the await ctx.send() of the error message, we can test if that did not happen
             if warning_id == "all":
-                return await ctx.send(language.string("mod_pardon_all", member=member, reason=reason))
-            return await ctx.send(language.string("mod_pardon", member=member, warning=warning_id, reason=reason))
+                return await ctx.send(language.string("mod_pardon_all", user=member, reason=reason))
+            return await ctx.send(language.string("mod_pardon", user=member, warning=warning_id, reason=reason))
 
     @commands.command(name="warns", aliases=["warnings"])
     @commands.guild_only()
@@ -933,9 +933,9 @@ class Moderation(commands.Cog):
                 return await ctx.send(language.string("mod_nick_forbidden2"))
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             if name is None:
-                message = language.string("mod_nick_reset", member)
+                message = language.string("mod_nick_reset", user=member)
             else:
-                message = language.string("mod_nick", member, name)
+                message = language.string("mod_nick", user=member, name=name)
             return await ctx.send(message)
         except discord.Forbidden:
             return await ctx.send(language.string("mod_nick_forbidden"))
@@ -956,7 +956,7 @@ class Moderation(commands.Cog):
             if name is None:
                 message = language.string("mod_nick_self_reset")
             else:
-                message = language.string("mod_nick_self", name)
+                message = language.string("mod_nick_self", name=name)
             return await ctx.send(message)
         except discord.Forbidden:
             return await ctx.send(language.string("mod_nick_forbidden"))
@@ -971,25 +971,19 @@ class Moderation(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
-    # @find.command(name="playing")
-    # async def find_playing(self, ctx: commands.Context, *, search: str):
-    #     loop = [f"{i} | {i.activity.name} ({i.id})" for i in ctx.guild.members if i.activity if (search.lower() in i.activity.name.lower()) and (not i.bot)]
-    #     await general.pretty_results(ctx, "playing", f"Found **{len(loop)}** on your search for **{search}**", loop)
-
     @find.command(name="username", aliases=["name"])
     async def find_name(self, ctx: commands.Context, *, search: str):
         """Finds members whose username fits the search string"""
         language = self.bot.language(ctx)
         loop = [f"{i} ({i.id})" for i in ctx.guild.members if search.lower() in i.name.lower()]  # and not i.bot
-        await general.pretty_results(ctx, "name", language.string("mod_find", language.number(len(loop)), search), loop)
-        # f"Found **{len(loop)}** on your search for **{search}**"
+        await general.pretty_results(ctx, "name", language.string("mod_find", results=language.number(len(loop)), search=search), loop)
 
     @find.command(name="nickname", aliases=["nick"])
     async def find_nickname(self, ctx: commands.Context, *, search: str):
         """Finds members whose nickname fits the search string"""
         language = self.bot.language(ctx)
         loop = [f"{i.nick} | {i} ({i.id})" for i in ctx.guild.members if i.nick if (search.lower() in i.nick.lower())]  # and not i.bot
-        await general.pretty_results(ctx, "name", language.string("mod_find", language.number(len(loop)), search), loop)
+        await general.pretty_results(ctx, "name", language.string("mod_find", results=language.number(len(loop)), search=search), loop)
 
     @find.command(name="discriminator", aliases=["disc"])
     async def find_discriminator(self, ctx: commands.Context, *, search: str):
@@ -998,7 +992,7 @@ class Moderation(commands.Cog):
         if len(search) != 4 or not re.compile(r"^\d*$").search(search):
             return await ctx.send(language.string("mod_find_disc"))
         loop = [f"{i} ({i.id})" for i in ctx.guild.members if search == i.discriminator]
-        await general.pretty_results(ctx, "discriminator", language.string("mod_find", language.number(len(loop)), search), loop)
+        await general.pretty_results(ctx, "discriminator", language.string("mod_find", results=language.number(len(loop)), search=search), loop)
 
     @commands.group(name="purge", aliases=["prune", "delete"])
     @commands.guild_only()
@@ -1087,14 +1081,14 @@ class Moderation(commands.Cog):
         """Removes all reactions from messages that have them."""
         language = self.bot.language(ctx)
         if search > 2000:
-            return await ctx.send(language.string("mod_purge_max", language.number(search)))
+            return await ctx.send(language.string("mod_purge_max", given=language.number(search)))
             # return await ctx.send(f'Too many messages to search for ({search:,}/2000)')
         total_reactions = 0
         async for message in ctx.history(limit=search, before=ctx.message):
             if len(message.reactions):
                 total_reactions += sum(r.count for r in message.reactions)
                 await message.clear_reactions()
-        return await ctx.send(language.string("mod_purge_reactions", language.number(total_reactions)))
+        return await ctx.send(language.string("mod_purge_reactions", total=language.number(total_reactions)))
         # await general.send(f"🚮 Successfully removed {total_reactions:,} reactions.", ctx.channel)
 
 
@@ -1129,7 +1123,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
-            message = language.string("mod_nick", member, name)
+            message = language.string("mod_nick", user=member, name=name)
             return await ctx.send(message)
         except discord.Forbidden:
             return await ctx.send(language.string("mod_nick_forbidden"))
@@ -1150,7 +1144,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
-            message = language.string("mod_nick_self", name)
+            message = language.string("mod_nick_self", name=name)
             return await ctx.send(message)
         except IndexError:
             return await ctx.send(f"Nickname design {design} is not available.")
@@ -1172,7 +1166,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', ctx.author.name[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
-            message = language.string("mod_nick_self", name)
+            message = language.string("mod_nick_self", name=name)
             return await ctx.send(message)
         except IndexError:
             return await ctx.send(f"Nickname design {design} is not available.")

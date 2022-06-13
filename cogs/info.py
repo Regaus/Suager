@@ -21,7 +21,7 @@ class BotInformation(commands.Cog, name="Bot Information"):
         config = self.bot.config
         version_data = general.get_version()[self.bot.name]
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("info_stats_about", self.bot.user, version_data["version"])
+        embed.title = language.string("info_stats_about", bot=self.bot.user, version=version_data["version"])
         embed.set_thumbnail(url=str(self.bot.user.display_avatar.replace(size=1024)))
         owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=language.string("info_stats_developers"), value=f"**{owners}**", inline=True)
@@ -42,11 +42,11 @@ class BotInformation(commands.Cog, name="Bot Information"):
         servers = len(self.bot.guilds)
         lm, lu, la = language.number(tm), language.number(users), language.number(avg_members, precision=1)
         if self.bot.name == "kyomi":
-            embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data2", lm, lu), inline=True)
+            embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data2", members=lm, users=lu), inline=True)
         else:
-            embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data", lm, lu, la), inline=True)
+            embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data", members=lm, users=lu, avg=la), inline=True)
         ls, lt, lc, lv = language.number(servers), language.number(tc), language.number(cc), language.number(vc)
-        embed.add_field(name=language.string("info_stats_servers"), value=language.string("info_stats_servers_data", ls, lt, lc, lv), inline=True)
+        embed.add_field(name=language.string("info_stats_servers"), value=language.string("info_stats_servers_data", servers=ls, text=lt, cats=lc, voice=lv), inline=True)
         _version = sys.version_info
         version = f"{_version.major}.{_version.minor}.{_version.micro}"
         _discord = discord.version_info
@@ -61,7 +61,8 @@ class BotInformation(commands.Cog, name="Bot Information"):
         fv = language.time(time.from_ts(version_data["first_version"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         mr = language.time(time.from_ts(version_data["major_release"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         lu = language.time(time.from_ts(version_data["last_update"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
-        embed.add_field(name=language.string("info_stats_dates"), value=language.string("info_stats_dates_data", fv, mr, lu, mv), inline=True)
+        major = f"v{mv}.0"
+        embed.add_field(name=language.string("info_stats_dates"), value=language.string("info_stats_dates_data", first=fv, major=mr, last=lu, mjr=major), inline=True)
         return await ctx.send(embed=embed)
 
     @commands.command(name="servers", aliases=["guilds"])
@@ -109,7 +110,7 @@ class BotInformation(commands.Cog, name="Bot Information"):
         ws = int(self.bot.latency * 1000)
         t1 = _time.time()
         r1 = f"Message Send: unknown\nMessage Edit: unknown\nWS Latency: {ws:,}ms"
-        msg = await ctx.send(r1)  # u=[ctx.author] - I have no idea why it wanted to allow user mentions... Oh well
+        msg = await ctx.send(r1)
         t2 = int((_time.time() - t1) * 1000)
         r2 = f"Message Send: {t2:,}ms\nMessage Edit: unknown\nWS Latency: {ws:,}ms"
         t2s = _time.time()

@@ -31,7 +31,7 @@ class Polls(commands.Cog):
                 if time.rd_is_below_1h(delta):
                     return await ctx.send(language.string("polls_length_limit2"))
             if error:
-                return await ctx.send(language.string("polls_length_error", expiry))
+                return await ctx.send(language.string("polls_length_error", err=expiry))
             _question = general.reason(ctx.author, question)
             _duration = language.delta_rd(delta, accuracy=4, brief=False, affix=False)
             _expiry = language.time(expiry, short=1, dow=False, seconds=False, tz=True)
@@ -53,10 +53,10 @@ class Polls(commands.Cog):
             poll_id = general.random_id2()
             while self.bot.db.fetchrow("SELECT poll_id FROM polls WHERE poll_id=?", (poll_id,)):
                 poll_id = general.random_id2()
-            embed.description = language.string("polls_new_description", poll_id, _question, _duration, _expiry)
-            embed.set_footer(text=language.string("polls_new_footer", ctx.prefix, poll_id))
+            embed.description = language.string("polls_new_description", id=poll_id, question=_question, duration=_duration, time=_expiry)
+            embed.set_footer(text=language.string("polls_new_footer", p=ctx.prefix, id=poll_id))
             embed.add_field(name=language.string("polls_votes_current"), inline=False,
-                            value=language.string("polls_votes_current2", 0, 0, 0, 0, 0, language.number(0, precision=2, percentage=True)))
+                            value=language.string("polls_votes_current2", yes=0, neutral=0, no=0, total=0, score=0, percentage=language.number(0, precision=2, percentage=True)))
             if not poll_anonymity:
                 embed.add_field(name=language.string("polls_votes_yes"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
@@ -65,7 +65,7 @@ class Polls(commands.Cog):
             message = await poll_channel.send(content, embed=embed)
             self.bot.db.execute("INSERT INTO polls VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.guild.id, poll_channel.id, message.id, poll_id, _question, "[]", "[]", "[]", expiry, poll_anonymity))
-            return await ctx.send(language.string("polls_new_success", ctx.author.name))
+            return await ctx.send(language.string("polls_new_success", author=ctx.author.name))
 
     @poll.command(name="vote")
     async def poll_vote(self, ctx: commands.Context, poll_id: int, response: str):
@@ -76,7 +76,7 @@ class Polls(commands.Cog):
             return await ctx.send(language.string("polls_vote_invalid"))
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
-            return await ctx.send(language.string("polls_not_found", poll_id))
+            return await ctx.send(language.string("polls_not_found", id=poll_id))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
@@ -119,9 +119,9 @@ class Polls(commands.Cog):
                         except ZeroDivisionError:
                             upvotes = 0
                         embed.set_field_at(0, name=language.string("polls_votes_current"), inline=False,
-                                           value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                                                 language.number(total), language.number(score, positives=True),
-                                                                 language.number(upvotes, precision=2, percentage=True)))
+                                           value=language.string("polls_votes_current2", yes=language.number(yes), neutral=language.number(neutral), no=language.number(no),
+                                                                 total=language.number(total), score=language.number(score, positives=True),
+                                                                 percentage=language.number(upvotes, precision=2, percentage=True)))
                         if 3 >= score > 0:
                             embed.colour = general.green2
                         elif score > 3:
@@ -135,19 +135,19 @@ class Polls(commands.Cog):
                         if not anonymous:
                             _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
                             if yes >= 45:
-                                _yes += language.string("polls_votes_many", language.number(yes - 45))
+                                _yes += language.string("polls_votes_many", val=language.number(yes - 45))
                             if not _yes:
                                 _yes = language.string("polls_votes_none")
                             embed.set_field_at(1, name=language.string("polls_votes_yes"), value=_yes, inline=True)
                             _neutral = "\n".join([f"<@{voter}>" for voter in voters_neutral[:45]])
                             if neutral >= 45:
-                                _neutral += language.string("polls_votes_many", language.number(neutral - 45))
+                                _neutral += language.string("polls_votes_many", val=language.number(neutral - 45))
                             if not _neutral:
                                 _neutral = language.string("polls_votes_none")
                             embed.set_field_at(2, name=language.string("polls_votes_neutral"), value=_neutral, inline=True)
                             _no = "\n".join([f"<@{voter}>" for voter in voters_no[:45]])
                             if no >= 45:
-                                _no += language.string("polls_votes_many", language.number(no - 45))
+                                _no += language.string("polls_votes_many", val=language.number(no - 45))
                             if not _no:
                                 _no = language.string("polls_votes_none")
                             embed.set_field_at(3, name=language.string("polls_votes_no"), value=_no, inline=True)
@@ -162,7 +162,7 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
-            return await ctx.send(language.string("polls_not_found", poll_id))
+            return await ctx.send(language.string("polls_not_found", id=poll_id))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
@@ -184,13 +184,14 @@ class Polls(commands.Cog):
         else:
             colour = general.yellow
         embed = discord.Embed(colour=colour)
-        embed.title = language.string("polls_status_title", data["poll_id"])
+        embed.title = language.string("polls_status_title", id=data["poll_id"])
         ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         ends_in = language.delta_dt(data["expiry"], accuracy=3, brief=False, affix=True)
-        embed.description = language.string("polls_status_description", data["question"], ends, ends_in)
+        embed.description = language.string("polls_status_description", question=data["question"], time=ends, delta=ends_in)
         embed.add_field(name=language.string("polls_votes_current"), inline=False,
-                        value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                              language.number(total), language.number(score, positives=True), language.number(upvotes, precision=2, percentage=True)))
+                        value=language.string("polls_votes_current2", yes=language.number(yes), neutral=language.number(neutral), no=language.number(no),
+                                              total=language.number(total), score=language.number(score, positives=True),
+                                              percentage=language.number(upvotes, precision=2, percentage=True)))
         return await ctx.send(embed=embed)
 
     @poll.command(name="list")
@@ -204,8 +205,8 @@ class Polls(commands.Cog):
         for i, poll in enumerate(polls, start=1):
             ends = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
             ends_in = language.delta_dt(poll["expiry"], accuracy=3, brief=False, affix=True)
-            output.append(language.string("polls_list_entry", language.number(i, commas=False), poll["poll_id"], poll["question"], ends, ends_in))
-        return await ctx.send(language.string("polls_list", ctx.guild.name, "\n\n".join(output)))
+            output.append(language.string("polls_list_entry", i=language.number(i, commas=False), id=poll["poll_id"], question=poll["question"], time=ends, delta=ends_in))
+        return await ctx.send(language.string("polls_list", server=ctx.guild.name, data="\n\n".join(output)))
 
     @commands.group(name="trial", aliases=["trials"], case_insensitive=True, invoke_without_command=True)
     @commands.guild_only()
@@ -232,9 +233,9 @@ class Polls(commands.Cog):
             if user == ctx.author.id:
                 return await ctx.send(language.string("trials_user_self"))
             try:
-                _user = await self.bot.fetch_user(user)
+                _user = await self.bot.fetch_user(user)  # type: ignore
             except discord.NotFound:
-                return await ctx.send(language.string("trials_user_none", user))
+                return await ctx.send(language.string("trials_user_none", user=user))
             action = action.lower()
             if action not in ["mute", "unmute", "kick", "ban", "unban"]:
                 return await ctx.send(language.string("trials_action_invalid"))
@@ -267,7 +268,7 @@ class Polls(commands.Cog):
                             if action in ["mute", "unmute"]:
                                 return await ctx.send(language.string("trials_new_fail_mute2"))
             if action in ["kick", "mute", "unmute"]:
-                member: discord.Member = ctx.guild.get_member(user)
+                member: discord.Member = ctx.guild.get_member(user)  # type: ignore
                 if not member:
                     return await ctx.send(language.string("trials_new_fail_kick"))
                 muted = mute_role in member.roles
@@ -278,8 +279,8 @@ class Polls(commands.Cog):
             now_ts = time.now_ts()
             recent = self.bot.db.fetchrow("SELECT * FROM trials WHERE author_id=? AND start_time>?", (ctx.author.id, now_ts - 300))
             if recent:
-                wait = language.delta_ts(recent["start_time"] + 300, accuracy=3, brief=False, affix=False)
-                return await ctx.send(language.string("trials_already_recent", wait))
+                wait = language.delta_ts(recent["start_time"] + 300, accuracy=3, brief=False, affix=False, case="for")
+                return await ctx.send(language.string("trials_already_recent", time=wait))
             action_text = {
                 "ban": "trials_action_ban",
                 "kick": "trials_action_kick",
@@ -289,7 +290,7 @@ class Polls(commands.Cog):
             }.get(action, "generic_unknown")
             already = self.bot.db.fetchrow("SELECT * FROM trials WHERE user_id=? AND type=?", (user, action))
             if already:
-                return await ctx.send(language.string("trials_already", language.string(action_text, _user), ctx.prefix, already["trial_id"]))
+                return await ctx.send(language.string("trials_already", action=language.string(action_text, user=_user), p=ctx.prefix, id=already["trial_id"]))
             delta = time.interpret_time(duration)
             expiry, error = time.add_time(delta)
             if time.rd_is_above_1w(delta):
@@ -297,7 +298,7 @@ class Polls(commands.Cog):
             if time.rd_is_below_15m(delta):
                 return await ctx.send(language.string("trials_length_limit_min"))
             if error:
-                return await ctx.send(language.string("trials_length_error", expiry))
+                return await ctx.send(language.string("trials_length_error", err=expiry))
             mute_duration = 0
             _duration2 = ""
             if action == "mute":
@@ -335,15 +336,17 @@ class Polls(commands.Cog):
             while self.bot.db.fetchrow("SELECT trial_id FROM trials WHERE trial_id=?", (trial_id,)):
                 trial_id = general.random_id2()
             if mute_duration:
-                embed.description = language.string("trials_new_description2", trial_id, language.string(action_text, _user), _reason, _duration, _expiry, _duration2)
+                embed.description = language.string("trials_new_description2", id=trial_id, action=language.string(action_text, user=_user), reason=_reason, duration=_duration, time=_expiry,
+                                                    mute_length=_duration2)
             else:
-                embed.description = language.string("trials_new_description", trial_id, language.string(action_text, _user), _reason, _duration, _expiry)
-            embed.set_footer(text=language.string("trials_new_footer", ctx.prefix, trial_id))
+                embed.description = language.string("trials_new_description", id=trial_id, action=language.string(action_text, user=_user), reason=_reason, duration=_duration, time=_expiry)
+            embed.set_footer(text=language.string("trials_new_footer", p=ctx.prefix, id=trial_id))
             zero = language.number(0)
             one = language.number(1)
             one2 = language.number(1, positives=True)
+            perc = language.number(1, precision=2, percentage=True)
             embed.add_field(name=language.string("trials_votes_current"), inline=False,
-                            value=language.string("trials_votes_current2", one, zero, zero, one, one2, language.number(1, precision=2, percentage=True), _required))
+                            value=language.string("trials_votes_current2", yes=one, neutral=zero, no=zero, total=one, score=one2, percentage=perc, required=_required))
             if not poll_anonymity:
                 embed.add_field(name=language.string("polls_votes_yes"), value=ctx.author.mention, inline=True)
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
@@ -365,7 +368,7 @@ class Polls(commands.Cog):
             return await ctx.send(language.string("polls_vote_invalid"))
         data = self.bot.db.fetchrow("SELECT * FROM trials WHERE trial_id=? OR message_id=? OR user_id=?", (trial_id, trial_id, trial_id))
         if not data:
-            return await ctx.send(language.string("trials_not_found", trial_id))
+            return await ctx.send(language.string("trials_not_found", id=trial_id))
         if data["user_id"] == ctx.author.id:
             return await ctx.send(language.string("trials_user_self2"))
         voters_yes: list = json.loads(data["voters_yes"])
@@ -429,9 +432,9 @@ class Polls(commands.Cog):
                     if message.embeds:
                         embed = message.embeds[0]
                         embed.set_field_at(0, name=language.string("trials_votes_current"), inline=False,
-                                           value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                                                 language.number(total), language.number(score, positives=True),
-                                                                 language.number(upvotes, precision=2, percentage=True), language.number(required)))
+                                           value=language.string("trials_votes_current2", yes=language.number(yes), neutral=language.number(neutral), no=language.number(no),
+                                                                 total=language.number(total), score=language.number(score, positives=True),
+                                                                 percentage=language.number(upvotes, precision=2, percentage=True), required=language.number(required)))
                         if score > 0 and total >= required:
                             embed.colour = general.green
                         elif score > 0:
@@ -472,7 +475,7 @@ class Polls(commands.Cog):
         language = self.bot.language(ctx)
         data = self.bot.db.fetchrow("SELECT * FROM trials WHERE trial_id=? OR message_id=? OR user_id=?", (trial_id, trial_id, trial_id))
         if not data:
-            return await ctx.send(language.string("trials_not_found", trial_id))
+            return await ctx.send(language.string("trials_not_found", id=trial_id))
         voters_yes: list = json.loads(data["voters_yes"])
         voters_neutral: list = json.loads(data["voters_neutral"])
         voters_no: list = json.loads(data["voters_no"])
@@ -495,7 +498,7 @@ class Polls(commands.Cog):
         else:
             colour = general.yellow
         embed = discord.Embed(colour=colour)
-        embed.title = language.string("trials_status_title", data["trial_id"])
+        embed.title = language.string("trials_status_title", id=data["trial_id"])
         ends = language.time(data["expiry"], short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         ends_in = language.delta_dt(data["expiry"], accuracy=3, brief=False, affix=True)
         action_text = {
@@ -508,13 +511,13 @@ class Polls(commands.Cog):
         user = await self.bot.fetch_user(data["user_id"])
         if data["type"] == "mute" and data["mute_length"]:
             _duration = language.delta_int(data["mute_length"], accuracy=3, brief=False, affix=False)
-            embed.description = language.string("trials_status_description2", language.string(action_text, user), data["reason"], ends, ends_in, _duration)
+            embed.description = language.string("trials_status_description2", action=language.string(action_text, user=user), reason=data["reason"], time=ends, delta=ends_in, mute_length=_duration)
         else:
-            embed.description = language.string("trials_status_description", language.string(action_text, user), data["reason"], ends, ends_in)
+            embed.description = language.string("trials_status_description", action=language.string(action_text, user=user), reason=data["reason"], time=ends, delta=ends_in)
         embed.add_field(name=language.string("trials_votes_current"), inline=False,
-                        value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                              language.number(total), language.number(score, positives=True),
-                                              language.number(upvotes, precision=2, percentage=True), language.number(required)))
+                        value=language.string("trials_votes_current2", yes=language.number(yes), neutral=language.number(neutral), no=language.number(no),
+                                              total=language.number(total), score=language.number(score, positives=True),
+                                              percentage=language.number(upvotes, precision=2, percentage=True), required=language.number(required)))
         return await ctx.send(embed=embed)
 
     @trial.command(name="list")
@@ -536,9 +539,9 @@ class Polls(commands.Cog):
                 "unmute": "trials_action_unmute"
             }.get(trial["type"], "generic_unknown")
             user = await self.bot.fetch_user(trial["user_id"])
-            output.append(language.string("trials_list_entry", language.number(i, commas=False), trial["trial_id"], language.string(action_text, user),
-                                          ends, ends_in, trial["reason"]))
-        return await ctx.send(language.string("trials_list", ctx.guild.name, "\n\n".join(output)))
+            output.append(language.string("trials_list_entry", i=language.number(i, commas=False), id=trial["trial_id"], action=language.string(action_text, user=user),
+                                          time=ends, delta=ends_in, reason=trial["reason"]))
+        return await ctx.send(language.string("trials_list", server=ctx.guild.name, data="\n\n".join(output)))
 
 
 def setup(bot: bot_data.Bot):

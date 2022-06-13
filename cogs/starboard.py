@@ -99,7 +99,7 @@ class Starboard(commands.Cog):
             if _message.attachments:
                 att = _message.attachments[0]
                 embed.set_image(url=att.url)
-            embed.add_field(name=language.string("starboard_message_jump"), value=language.string("starboard_message_jump2", _message.jump_url), inline=False)
+            embed.add_field(name=language.string("starboard_message_jump"), value=language.string("starboard_message_jump2", url=_message.jump_url), inline=False)
             # embed.add_field(name="Jump to message", value=f"[Click here]({_message.jump_url})", inline=False)
             embed.set_footer(text=f"Message ID {message}")
             embed.timestamp = _message.created_at
@@ -223,9 +223,9 @@ class Starboard(commands.Cog):
                     authors[message["author"]] = message["stars"]
             authors_sorted = dict(sorted(authors.items(), key=lambda x: x[1], reverse=True))
             # embed.title = f"Starboard stats for {ctx.guild.name}"
-            embed.title = language.string("starboard_stats", ctx.guild.name)
+            embed.title = language.string("starboard_stats", server=ctx.guild.name)
             # embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
-            embed.description = language.string("starboard_stats_desc", language.number(stars), language.number(len(data)))
+            embed.description = language.string("starboard_stats_desc", stars=language.number(stars), messages=language.number(len(data)))
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             top_messages = ""
@@ -253,7 +253,7 @@ class Starboard(commands.Cog):
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? ORDER BY stars DESC", (ctx.guild.id, user.id))
             if not data:
-                return await ctx.send(language.number("starboard_stats_none2", user.name))
+                return await ctx.send(language.number("starboard_stats_none2", user=user.name))
             stars = 0
             top = []
             for i, message in enumerate(data):
@@ -262,9 +262,9 @@ class Starboard(commands.Cog):
                     top.append(message)
                 stars += message["stars"]
             # embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
-            embed.title = language.number("starboard_stats_user", user, ctx.guild.name)
+            embed.title = language.string("starboard_stats_user", user=user, server=ctx.guild.name)
             # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
-            embed.description = language.number("starboard_stats_user_desc", language.number(stars), language.number(len(data)))
+            embed.description = language.string("starboard_stats_user_desc", stars=language.number(stars), messages=language.number(len(data)))
             embed.set_thumbnail(url=str(user.display_avatar))
             for i, _message in enumerate(top, start=1):
                 jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"

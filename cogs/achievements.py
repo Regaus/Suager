@@ -92,10 +92,10 @@ class Achievements(commands.Cog):
             except ZeroDivisionError:
                 progress = 1
             # These values are 1-2 digit numbers, so there isn't really a point in translating them, but oh well
-            dr.text((x + text_x, y + 96), language.string("achievements_current", language.number(level), language.number(tier_count)), font=font_small, fill=colour)
+            dr.text((x + text_x, y + 96), language.string("achievements_current", current=language.number(level), max=language.number(tier_count)), font=font_small, fill=colour)
             # dr.text((x + text_x, y + 96), f"Current Tier: {level} of {tier_count}", font=font_small, fill=colour)
             r1, r3, r4 = language.number(level + 1), language.number(current, precision=0), language.number(requirement, precision=0)
-            desc = language.string("achievements_goal", r1, details, r3, r4) if requirement > current else max_description
+            desc = language.string("achievements_goal", level=r1, goal=details, current=r3, target=r4) if requirement > current else max_description
             # desc = f"Tier {level + 1} Goal: {details} ({current:,}/{requirement:,})" if requirement > current else max_description
             dr.text((x + text_x, y + 128), desc, font=font_small, fill=colour)
             fill = width - 192
@@ -114,7 +114,7 @@ class Achievements(commands.Cog):
             dr.text((x + text_x + fill + 30, y + 170), language.number(progress, percentage=True, precision=0), font=font_small, fill=colour)
 
         tiers = []
-        user_xp = self.bot.db.fetch(f"SELECT * FROM leveling WHERE uid=? ORDER BY xp DESC", (user.id,))
+        user_xp = self.bot.db.fetch(f"SELECT * FROM leveling WHERE uid=? AND bot=? ORDER BY xp DESC", (user.id, self.bot.name))
         try:
             max_level = user_xp[0]["level"]
         except IndexError:
@@ -127,7 +127,7 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(tier)
-        generate_box(0, 0, tier, 12, language.string("achievements_leveling_levels"), language.string("achievements_leveling_levels_desc", language.number(req)),
+        generate_box(0, 0, tier, 12, language.string("achievements_leveling_levels"), language.string("achievements_leveling_levels_desc", target=language.number(req)),
                      max_level, req, prev)
         total_xp = sum(part["xp"] for part in user_xp)
         req, prev, tier = 0, 0, 0
@@ -138,7 +138,7 @@ class Achievements(commands.Cog):
             else:
                 break
         tiers.append(round(tier * 0.75))
-        generate_box(0, 1, tier, 16, language.string("achievements_leveling_xp"), language.string("achievements_leveling_xp_desc", language.number(req)),
+        generate_box(0, 1, tier, 16, language.string("achievements_leveling_xp"), language.string("achievements_leveling_xp_desc", target=language.number(req)),
                      total_xp, req, prev)
         # After TBL v2 is done - Remove Leveling achievements from Cobble's version of the command, only show them with Suager
         # TBL v2 achievements - Shelf 1
@@ -156,7 +156,7 @@ class Achievements(commands.Cog):
         img.save(bio, "PNG")
         bio.seek(0)
         # f"This is what **{user}** has accomplished so far."
-        return await ctx.send(language.string("achievements_achievements", str(user)), file=discord.File(bio, filename="achievements.png"))
+        return await ctx.send(language.string("achievements_achievements", user=str(user)), file=discord.File(bio, filename="achievements.png"))
 
     @commands.command(name="tiers")
     @commands.is_owner()

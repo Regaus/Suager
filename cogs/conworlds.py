@@ -277,6 +277,8 @@ class Conworlds(commands.Cog):
             return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
         uid = user.id
         data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=?", (uid,))
+        if not data:
+            return await ctx.send("A citizen profile is not available for this user.")
         embed = discord.Embed(colour=random_colour())
         embed.title = f"{user.name}'s Kargadian citizen ID"
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))

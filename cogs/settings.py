@@ -108,10 +108,10 @@ class Settings(commands.Cog):
             else:
                 setting = json.loads(data["data"])
             embed = discord.Embed(colour=general.random_colour())
-            embed.title = language.string("settings_current", ctx.guild.name)
+            embed.title = language.string("settings_current", server=ctx.guild.name)
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.set_footer(text=language.string("settings_current_footer", ctx.prefix))
+            embed.set_footer(text=language.string("settings_current_footer", p=ctx.prefix))
 
             # Language
             embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
@@ -126,7 +126,7 @@ class Settings(commands.Cog):
                 if "starboard" in setting:
                     starboard = setting["starboard"]
                     if starboard["enabled"]:
-                        sb = language.string("settings_current_starboard", language.number(starboard["minimum"]), starboard["channel"])
+                        sb = language.string("settings_current_starboard", stars=language.number(starboard["minimum"]), channel=starboard["channel"])
                 embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
 
                 # Levels
@@ -134,14 +134,14 @@ class Settings(commands.Cog):
                     lvl = language.string("settings_current_disabled")
                     if "leveling" in setting:
                         if setting["leveling"]["enabled"]:
-                            lvl = language.string("settings_current_leveling", ctx.prefix)
+                            lvl = language.string("settings_current_leveling", p=ctx.prefix)
                     embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
 
             # Birthdays
             bd = language.string("settings_current_disabled")
             if "birthdays" in setting:
                 if setting["birthdays"]["enabled"]:
-                    bd = language.string("settings_current_birthdays", ctx.prefix)
+                    bd = language.string("settings_current_birthdays", p=ctx.prefix)
             embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
 
             if self.bot.name in ["kyomi", "suager"]:
@@ -153,7 +153,8 @@ class Settings(commands.Cog):
                         if polls["channel"]:
                             polls_channel = f"<#{polls['channel']}>"
                         polls_anonymity = language.yes(polls["voter_anonymity"])
-                    embed.add_field(name=language.string("settings_current_polls"), value=language.string("settings_current_polls2", polls_channel, polls_anonymity), inline=False)
+                    embed.add_field(name=language.string("settings_current_polls"), inline=False,
+                                    value=language.string("settings_current_polls2", channel=polls_channel, anon=polls_anonymity))
 
                 # Join roles
                 members, bots = language.string("generic_none"), language.string("generic_none")
@@ -167,14 +168,14 @@ class Settings(commands.Cog):
                         bots = language.join([f"<@&{role}>" for role in join_roles["bots"]])
                     else:
                         bots = language.string("generic_none")
-                embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", members, bots), inline=False)
+                embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", humans=members, bots=bots), inline=False)
 
                 # Welcomes
                 welcome_channel, welcome_message = language.string("settings_current_disabled"), None
                 if "welcome" in setting:
                     welcome = setting["welcome"]
                     if welcome["channel"]:
-                        welcome_channel = language.string("settings_current_welcome_channel", welcome["channel"])
+                        welcome_channel = language.string("settings_current_welcome_channel", channel=welcome["channel"])
                         welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
                 embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
                 if welcome_message:
@@ -185,7 +186,7 @@ class Settings(commands.Cog):
                 if "goodbye" in setting:
                     goodbye = setting["goodbye"]
                     if goodbye["channel"]:
-                        goodbye_channel = language.string("settings_current_goodbye_channel", goodbye["channel"])
+                        goodbye_channel = language.string("settings_current_goodbye_channel", channel=goodbye["channel"])
                         goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
                 embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
                 if goodbye_message:
@@ -199,7 +200,7 @@ class Settings(commands.Cog):
                 embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
 
                 # Warnings
-                warnings = language.string("settings_current_warnings_disabled", ctx.prefix)
+                warnings = language.string("settings_current_warnings_disabled", p=ctx.prefix)
                 if "warnings" in setting:
                     warning = setting["warnings"]
                     mute_requirement = warning["required_to_mute"]  # Warnings required to mute
@@ -212,11 +213,11 @@ class Settings(commands.Cog):
                 msg = language.string("settings_current_disabled")
                 if "message_logs" in setting:
                     if setting["message_logs"]["enabled"]:
-                        msg = language.string("settings_current_messages", ctx.prefix)
+                        msg = language.string("settings_current_messages", p=ctx.prefix)
                 embed.add_field(name=language.string("settings_messages"), value=msg, inline=False)
 
                 # Mod DMs
-                mod_dms_text = language.string("settings_current_mod_dms_disabled", ctx.prefix)
+                mod_dms_text = language.string("settings_current_mod_dms_disabled", p=ctx.prefix)
                 if "mod_dms" in setting:
                     mod_dms = setting["mod_dms"]
                     warn, mute, kick, ban = mod_dms["warn"], mod_dms["mute"], mod_dms["kick"], mod_dms["ban"]
@@ -229,7 +230,7 @@ class Settings(commands.Cog):
                     return f"<#{cid}>"
 
                 # Mod Logs
-                mod_logs_text = language.string("settings_current_mod_logs_disabled", ctx.prefix)
+                mod_logs_text = language.string("settings_current_mod_logs_disabled", p=ctx.prefix)
                 if "mod_logs" in setting:
                     mod_logs = setting["mod_logs"]
                     warn, mute, kick, ban, roles = mod_logs["warn"], mod_logs["mute"], mod_logs["kick"], mod_logs["ban"], mod_logs["roles"]
@@ -237,7 +238,7 @@ class Settings(commands.Cog):
                 embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
 
                 # User Logs
-                user_logs_text = language.string("settings_current_user_logs_disabled", ctx.prefix)
+                user_logs_text = language.string("settings_current_user_logs_disabled", p=ctx.prefix)
                 if "user_logs" in setting:
                     user_logs = setting["user_logs"]
                     join, leave, roles = user_logs["join"], user_logs["leave"], user_logs["preserve_roles"]
@@ -300,9 +301,9 @@ class Settings(commands.Cog):
         old_language = self.bot.language(ctx)
         new_language = new_language.lower()  # Make it case-insensitive just in case
         if new_language not in languages.languages.languages.keys():
-            return await ctx.send(old_language.string("settings_locale_invalid", new_language, ctx.prefix))
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
         elif not languages.Language(new_language).data("_valid"):
-            return await ctx.send(old_language.string("settings_locale_invalid", new_language, ctx.prefix))
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
         locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if locale:
             self.bot.db.execute("UPDATE locales SET locale=? WHERE gid=? AND bot=?", (new_language, ctx.guild.id, self.bot.name))
@@ -332,7 +333,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_prefix_add", prefix))
+        return await ctx.send(self.bot.language(ctx).string("settings_prefix_add", prefix=prefix))
         # return await general.send(f"Added {prefix} to the custom prefix list", ctx.channel)
 
     @set_prefixes.command(name="remove")
@@ -346,14 +347,14 @@ class Settings(commands.Cog):
         try:
             _settings["prefixes"].remove(prefix)
         except ValueError:
-            return await ctx.send(self.bot.language(ctx).string("settings_prefix_remove_none", prefix))
+            return await ctx.send(self.bot.language(ctx).string("settings_prefix_remove_none", prefix=prefix))
             # return await general.send(f"{prefix} is not a prefix in this server", ctx.channel)
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_prefix_remove", prefix))
+        return await ctx.send(self.bot.language(ctx).string("settings_prefix_remove", prefix=prefix))
         # return await general.send(f"Removed {prefix} from the prefix list", ctx.channel)
 
     @set_prefixes.command(name="default")
@@ -393,7 +394,7 @@ class Settings(commands.Cog):
             embed.title = language.string("settings_leveling", ctx.guild.name)
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.set_footer(text=language.string("settings_leveling_footer", ctx.prefix))
+            embed.set_footer(text=language.string("settings_leveling_footer", p=ctx.prefix))
             embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
             embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
             ac = leveling["announce_channel"]
@@ -426,9 +427,9 @@ class Settings(commands.Cog):
                     ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"])
                 else:
                     ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"][:45])
-                    ignored += language.string("settings_leveling_ignored_many", language.number(length - 45))
+                    ignored += language.string("settings_leveling_ignored_many", val=language.number(length - 45))
             embed.add_field(name=language.string("settings_leveling_ignored"), value=ignored, inline=False)
-            embed.add_field(name=language.string("settings_leveling_rewards"), value=language.string("settings_leveling_rewards2", ctx.prefix), inline=False)
+            embed.add_field(name=language.string("settings_leveling_rewards"), value=language.string("settings_leveling_rewards2", p=ctx.prefix), inline=False)
             return await ctx.send(embed=embed)
 
     @set_lvl.command(name="enable")
@@ -495,7 +496,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_leveling_multiplier_set", language.number(value, precision=2)))
+        return await ctx.send(language.string("settings_leveling_multiplier_set", value=language.number(value, precision=2)))
         # return await general.send(f"The XP multiplier is now {value}", ctx.channel)
 
     @set_lvl.group(name="message", aliases=["msg"], invoke_without_command=True, case_insensitive=True)
@@ -582,7 +583,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string(variables["output"], value, message2))
+        return await ctx.send(language.string(variables["output"], message=value, formatted=message2))
 
     @lvl_message.command(name="variables", aliases=["vars"])
     async def level_up_message_variables(self, ctx: commands.Context):
@@ -608,7 +609,7 @@ class Settings(commands.Cog):
             _settings["leveling"] = self.template["leveling"].copy()
             _settings["leveling"]["rewards"] = []
         if channel.id in _settings["leveling"]["ignored_channels"]:
-            return await ctx.send(language.string("settings_leveling_ignored_already", channel.mention))
+            return await ctx.send(language.string("settings_leveling_ignored_already", channel=channel.mention))
             # return await general.send(f"Leveling is already disabled in {channel.mention}", ctx.channel)
         _settings["leveling"]["ignored_channels"].append(channel.id)
         stuff = json.dumps(_settings)
@@ -616,7 +617,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_leveling_ignored_add", channel.mention))
+        return await ctx.send(language.string("settings_leveling_ignored_add", channel=channel.mention))
         # return await general.send(f"Leveling will now be disabled in {channel.mention}", ctx.channel)
 
     @lvl_ignored.command(name="remove")
@@ -634,14 +635,14 @@ class Settings(commands.Cog):
         try:
             _settings["leveling"]["ignored_channels"].remove(channel.id)
         except ValueError:
-            return await ctx.send(language.string("settings_leveling_ignored_already2", channel.mention))
+            return await ctx.send(language.string("settings_leveling_ignored_already2", channel=channel.mention))
             # return await general.send(f"Leveling is already enabled in {channel.mention}", ctx.channel)
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_leveling_ignored_remove", channel.mention))
+        return await ctx.send(language.string("settings_leveling_ignored_remove", channel=channel.mention))
         # return await general.send(f"Leveling is now enabled in {channel.mention}", ctx.channel)
 
     @set_lvl.group(name="announcements", aliases=["announcement", "ac"], invoke_without_command=True, case_insensitive=True)
@@ -670,7 +671,7 @@ class Settings(commands.Cog):
             else:
                 self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
             if channel is not None:
-                return await ctx.send(self.bot.language(ctx).string("settings_leveling_announcements_set", channel.mention))
+                return await ctx.send(self.bot.language(ctx).string("settings_leveling_announcements_set", channel=channel.mention))
                 # return await general.send(f"Level ups will now be announced in {channel.mention}", ctx.channel)
             else:
                 return await ctx.send(self.bot.language(ctx).string("settings_leveling_announcements_none"))
@@ -707,7 +708,7 @@ class Settings(commands.Cog):
         """ Add a level reward """
         language = self.bot.language(ctx)
         if level > max_level or level <= -max_level:
-            return await ctx.send(language.string("settings_leveling_rewards_max", language.number(max_level)))
+            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
             # return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
         if role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
@@ -728,10 +729,10 @@ class Settings(commands.Cog):
         # if role.id in roles:
         for reward in rr:
             if role.id == reward["role"]:
-                return await ctx.send(language.string("settings_leveling_rewards_already_role", language.number(reward["level"]), ctx.prefix))
+                return await ctx.send(language.string("settings_leveling_rewards_already_role", level=language.number(reward["level"]), p=ctx.prefix))
             if level == reward["level"]:
                 role = ctx.guild.get_role(reward["role"])
-                return await ctx.send(language.string("settings_leveling_rewards_already_level", role, ctx.prefix))
+                return await ctx.send(language.string("settings_leveling_rewards_already_level", role=role, p=ctx.prefix))
             # return await general.send("This role is already rewarded", ctx.channel)
         # levels = [i["level"] for i in rr]
         # if level in levels:
@@ -743,7 +744,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_leveling_rewards_add", role.name, language.number(level)))
+        return await ctx.send(language.string("settings_leveling_rewards_add", role=role.name, level=language.number(level)))
         # return await general.send(f"The role {role.name} will now be rewarded at level {level:,}", ctx.channel)
 
     @lvl_rewards.command(name="remove", aliases=["r", "-"])
@@ -776,10 +777,10 @@ class Settings(commands.Cog):
                 self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
             else:
                 self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            return await ctx.send(language.string("settings_leveling_rewards_remove", role.name))
+            return await ctx.send(language.string("settings_leveling_rewards_remove", role=role.name))
             # return await general.send(f"The role {role.name} will no longer be rewarded", ctx.channel)
         else:
-            return await ctx.send(language.string("settings_leveling_rewards_not_found", role.name))
+            return await ctx.send(language.string("settings_leveling_rewards_not_found", role=role.name))
             # return await general.send(f"The role {role.name} was not removed from the level rewards list.", ctx.channel)
 
     @lvl_rewards.command(name="deleted", aliases=["del", "d"])
@@ -812,7 +813,7 @@ class Settings(commands.Cog):
                 self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
             else:
                 self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            return await ctx.send(language.string("settings_leveling_rewards_deleted", language.number(removed)))
+            return await ctx.send(language.string("settings_leveling_rewards_deleted", value=language.number(removed)))
             # return await general.send(f"Removed {removed} roles from the level rewards list.", ctx.channel)
         else:
             return await ctx.send(language.string("settings_leveling_rewards_deleted_none"))
@@ -823,7 +824,7 @@ class Settings(commands.Cog):
         """ Change what role is awarded at a certain level """
         language = self.bot.language(ctx)
         if level > max_level or level <= -max_level:
-            return await ctx.send(language.string("settings_leveling_rewards_max", language.number(max_level)))
+            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
             # return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
         if new_role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
@@ -846,7 +847,7 @@ class Settings(commands.Cog):
             rr = []
         roles = [i["role"] for i in rr]
         if new_role.id in roles:
-            return await ctx.send(language.string("settings_leveling_rewards_already_role2", ctx.prefix))
+            return await ctx.send(language.string("settings_leveling_rewards_already_role2", p=ctx.prefix))
             # return await general.send("This role is already rewarded", ctx.channel)
         u = False
         for i, reward in enumerate(rr):
@@ -858,10 +859,10 @@ class Settings(commands.Cog):
             _settings["leveling"]["rewards"] = rr
             stuff = json.dumps(_settings)
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-            return await ctx.send(language.string("settings_leveling_rewards_edit", new_role.name, language.number(level)))
+            return await ctx.send(language.string("settings_leveling_rewards_edit", role=new_role.name, level=language.number(level)))
             # return await general.send(f"The role {new_role.name} will now be rewarded at level {level:,}", ctx.channel)
         else:
-            return await ctx.send(language.string("settings_leveling_rewards_edit_fail", language.number(level)))
+            return await ctx.send(language.string("settings_leveling_rewards_edit_fail", level=language.number(level)))
             # return await general.send("I don't think that worked... There might be no reward at the specified level.", ctx.channel)
 
     @lvl_rewards.command(name="editlevel", aliases=["el"])
@@ -869,7 +870,7 @@ class Settings(commands.Cog):
         """ Change at which level the role is awarded """
         language = self.bot.language(ctx)
         if new_level > max_level or new_level <= -max_level:
-            return await ctx.send(language.string("settings_leveling_rewards_max", language.number(max_level)))
+            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
             # return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
         if role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
@@ -892,7 +893,7 @@ class Settings(commands.Cog):
             rr = []
         levels = [i["level"] for i in rr]
         if new_level in levels:
-            return await ctx.send(language.string("settings_leveling_rewards_already_level2", ctx.prefix))
+            return await ctx.send(language.string("settings_leveling_rewards_already_level2", p=ctx.prefix))
             # return await general.send("There is already a reward for this level", ctx.channel)
         u = False
         for i, r in enumerate(rr):
@@ -904,10 +905,10 @@ class Settings(commands.Cog):
             _settings["leveling"]["rewards"] = rr
             stuff = json.dumps(_settings)
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-            return await ctx.send(language.string("settings_leveling_rewards_edit", role.name, language.number(new_level)))
+            return await ctx.send(language.string("settings_leveling_rewards_edit", role=role.name, level=language.number(new_level)))
             # return await general.send(f"The role {role.name} will now be rewarded at level {new_level:,}", ctx.channel)
         else:
-            return await ctx.send(language.string("settings_leveling_rewards_edit_fail2", role.name))
+            return await ctx.send(language.string("settings_leveling_rewards_edit_fail2", role=role.name))
             # return await general.send("I don't think that worked... Maybe the role is not awarded at all.", ctx.channel)
 
     @settings.command(name="muterole", aliases=["mutedrole", "muted", "mute"])
@@ -925,7 +926,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_mute_role", role.name))
+        return await ctx.send(self.bot.language(ctx).string("settings_mute_role", role=role.name))
         # return await general.send(f"The muted role has been set to {role.name}", ctx.channel)
 
     @settings.group(name="starboard", aliases=["stars", "sb"], case_insensitive=True)
@@ -945,7 +946,7 @@ class Settings(commands.Cog):
             embed.title = language.string("settings_starboard", ctx.guild.name)
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.set_footer(text=language.string("settings_starboard_footer", ctx.prefix))
+            embed.set_footer(text=language.string("settings_starboard_footer", p=ctx.prefix))
             embed.add_field(name=language.string("settings_starboard_enabled2"), value=language.yes(starboard["enabled"]), inline=False)
             channel = f"<#{starboard['channel']}>" if starboard["channel"] != 0 else language.string("settings_starboard_channel_none")
             embed.add_field(name=language.string("settings_starboard_channel"), value=channel, inline=False)
@@ -1006,7 +1007,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_starboard_channel_set", channel.mention))
+        return await ctx.send(self.bot.language(ctx).string("settings_starboard_channel_set", channel=channel.mention))
         # return await general.send(f"Starboard messages will now be sent to {channel.mention}.", ctx.channel)
 
     @set_starboard.command(name="minimum", aliases=["requirement", "min", "req"])
@@ -1029,7 +1030,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_starboard_requirement_set", language.number(requirement)))
+        return await ctx.send(language.string("settings_starboard_requirement_set", value=language.number(requirement)))
 
     @settings.group(name="birthdays", aliases=["birthday", "bd", "b"], case_insensitive=True)
     # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
@@ -1048,7 +1049,7 @@ class Settings(commands.Cog):
             embed.title = language.string("settings_birthdays", ctx.guild.name)
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.set_footer(text=language.string("settings_birthdays_footer", ctx.prefix))
+            embed.set_footer(text=language.string("settings_birthdays_footer", p=ctx.prefix))
             embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
             if birthdays["channel"] != 0:
                 embed.add_field(name=language.string("settings_birthdays_channel"), value=f"<#{birthdays['channel']}>", inline=False)
@@ -1099,7 +1100,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_birthdays_disabled", ctx.prefix))
+        return await ctx.send(language.string("settings_birthdays_disabled", p=ctx.prefix))
 
     @set_birthday.command(name="channel")
     async def birthday_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
@@ -1121,7 +1122,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_set", channel.mention))
+            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_set", channel=channel.mention))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_none2"))
 
@@ -1145,7 +1146,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if role is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_role_set", role.name))
+            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_role_set", role=role.name))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_birthdays_role_none2"))
 
@@ -1172,7 +1173,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if text:
             filled = text.replace("[MENTION]", ctx.author.mention).replace("[USER]", ctx.author.name)
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_message_set", text, filled))
+            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_message_set", message=text, formatted=filled))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_none2"))
 
@@ -1243,7 +1244,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         output = "settings_messages_set_edit" if log_type == "edit" else "settings_messages_set_delete"
-        return await ctx.send(language.string(output, channel.mention, ctx.prefix))
+        return await ctx.send(language.string(output, channel=channel.mention, p=ctx.prefix))
 
     @set_messages.group(name="ignore", aliases=["ignoredchannels", "ignorechannels", "ic"], case_insensitive=True)
     async def set_message_ignore(self, ctx: commands.Context):
@@ -1267,7 +1268,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_add", channel.mention))
+        return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_add", channel=channel.mention))
 
     @set_message_ignore.command(name="remove", aliases=["-"])
     async def message_ignore_remove(self, ctx: commands.Context, channel: discord.TextChannel):
@@ -1286,7 +1287,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_remove", channel.mention))
+        return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_remove", channel=channel.mention))
 
     @set_messages.command(name="ignorebots", aliases=["bots"])
     async def message_ignore_bots(self, ctx: commands.Context, action: str):
@@ -1338,7 +1339,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_poll_channel_set", channel.mention))
+            return await ctx.send(self.bot.language(ctx).string("settings_poll_channel_set", channel=channel.mention))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_poll_channel_none"))
 
@@ -1405,7 +1406,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         # if role is not None:
-        return await ctx.send(self.bot.language(ctx).string("settings_join_members_add", role.name))
+        return await ctx.send(self.bot.language(ctx).string("settings_join_members_add", role=role.name))
         # else:
         #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
 
@@ -1428,14 +1429,14 @@ class Settings(commands.Cog):
         try:
             _settings["join_roles"]["members"].remove(role.id)
         except (IndexError, ValueError):
-            return await ctx.send(self.bot.language(ctx).string("settings_join_members_error", role.name))
+            return await ctx.send(self.bot.language(ctx).string("settings_join_members_error", role=role.name))
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         # if role is not None:
-        return await ctx.send(self.bot.language(ctx).string("settings_join_members_remove", role.name))
+        return await ctx.send(self.bot.language(ctx).string("settings_join_members_remove", role=role.name))
         # else:
         #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
 
@@ -1468,7 +1469,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         # if role is not None:
-        return await ctx.send(ctx.language().string("settings_join_bots_add", role.name))
+        return await ctx.send(ctx.language().string("settings_join_bots_add", role=role.name))
         # else:
         #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
 
@@ -1491,14 +1492,14 @@ class Settings(commands.Cog):
         try:
             _settings["join_roles"]["bots"].remove(role.id)
         except (IndexError, ValueError):
-            return await ctx.send(self.bot.language(ctx).string("settings_join_bots_error", role.name))
+            return await ctx.send(self.bot.language(ctx).string("settings_join_bots_error", role=role.name))
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         # if role is not None:
-        return await ctx.send(self.bot.language(ctx).string("settings_join_bots_remove", role.name))
+        return await ctx.send(self.bot.language(ctx).string("settings_join_bots_remove", role=role.name))
         # else:
         #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
 
@@ -1529,7 +1530,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_welcome_channel_set", channel.mention))
+            return await ctx.send(self.bot.language(ctx).string("settings_welcome_channel_set", channel=channel.mention))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_welcome_channel_none"))
 
@@ -1560,7 +1561,7 @@ class Settings(commands.Cog):
                 self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
             else:
                 self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            return await ctx.send(language.string("settings_welcome_message", value, message2))
+            return await ctx.send(language.string("settings_welcome_message", message=value, formatted=message2))
 
     @welcome_message.command(name="variables", aliases=["vars"])
     async def welcome_message_vars(self, ctx: commands.Context):
@@ -1594,7 +1595,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_goodbye_channel_set", channel.mention))
+            return await ctx.send(self.bot.language(ctx).string("settings_goodbye_channel_set", channel=channel.mention))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_goodbye_channel_none"))
 
@@ -1626,7 +1627,7 @@ class Settings(commands.Cog):
                 self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
             else:
                 self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            return await ctx.send(language.string("settings_goodbye_message", value, message2))
+            return await ctx.send(language.string("settings_goodbye_message", message=value, formatted=message2))
 
     @goodbye_message.command(name="variables", aliases=["vars"])
     async def goodbye_message_vars(self, ctx: commands.Context):
@@ -1649,7 +1650,7 @@ class Settings(commands.Cog):
             _settings["mod_dms"] = self.template["mod_dms"].copy()
         punishment = punishment.lower()
         if punishment not in ["warn", "mute", "kick", "ban"]:
-            return await ctx.send(language.string("settings_mod_dms_invalid", punishment))
+            return await ctx.send(language.string("settings_mod_dms_invalid", value=punishment))
         if action is None:
             try:
                 enabled = _settings["mod_dms"][punishment]
@@ -1657,11 +1658,11 @@ class Settings(commands.Cog):
                 return await ctx.send(language.string(f"settings_mod_dms_{punishment}_{text}"))
             except KeyError:
                 # return await general.send(language.string(f"settings_mod_dms_{punishment}_disabled2"), ctx.channel)
-                return await ctx.send(language.string("settings_mod_dms_invalid", punishment))
+                return await ctx.send(language.string("settings_mod_dms_invalid", value=punishment))
         else:
             action = action.lower()
             if action not in ["enable", "disable"]:
-                return await ctx.send(language.string("settings_mod_dms_invalid2", action))
+                return await ctx.send(language.string("settings_mod_dms_invalid2", value=action))
             enable = action == "enable"
             _settings["mod_dms"][punishment] = enable
             stuff = json.dumps(_settings)
@@ -1692,7 +1693,7 @@ class Settings(commands.Cog):
             _settings["mod_logs"] = self.template["mod_logs"].copy()
         punishment = punishment.lower()
         if punishment not in ["warn", "mute", "kick", "ban", "roles"]:
-            return await ctx.send(language.string("settings_mod_logs_invalid", punishment))
+            return await ctx.send(language.string("settings_mod_logs_invalid", value=punishment))
         if channel is None:
             _settings["mod_logs"][punishment] = 0
             text = language.string(f"settings_mod_logs_disable_{punishment}")
@@ -1733,7 +1734,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_users_join_set", channel.mention))
+            return await ctx.send(self.bot.language(ctx).string("settings_users_join_set", channel=channel.mention))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_users_join_none"))
 
@@ -1757,7 +1758,7 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_users_leave_set", channel.mention))
+            return await ctx.send(self.bot.language(ctx).string("settings_users_leave_set", channel=channel.mention))
         else:
             return await ctx.send(self.bot.language(ctx).string("settings_users_leave_none"))
 
@@ -1874,7 +1875,7 @@ class Settings(commands.Cog):
         language = self.bot.language(ctx)
         dp, cp = self.prefix_list(ctx)
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("settings_prefixes_title", self.bot.user.name, ctx.guild.name)
+        embed.title = language.string("settings_prefixes_title", bot=self.bot.user.name, server=ctx.guild.name)
         # embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
         if ctx.guild.icon:
             embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))

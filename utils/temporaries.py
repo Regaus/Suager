@@ -972,27 +972,27 @@ async def polls(bot: bot_data.Bot):
                             result = language.string("polls_end_neutral")
                         embed.title = language.string("polls_end_title")
                         ended = language.time(poll["expiry"], short=1, dow=False, seconds=False, tz=True)
-                        embed.description = language.string("polls_end_description", poll["question"], ended, result)
+                        embed.description = language.string("polls_end_description", question=poll["question"], time=ended, result=result)
                         embed.add_field(name=language.string("polls_votes_result"), inline=False,
-                                        value=language.string("polls_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                                              language.number(total), language.number(score, positives=True),
-                                                              language.number(upvotes, precision=2, percentage=True)))
+                                        value=language.string("polls_votes_current2", yes=language.number(yes), neutral=language.number(neutral), no=language.number(no),
+                                                              total=language.number(total), score=language.number(score, positives=True),
+                                                              percentage=language.number(upvotes, precision=2, percentage=True)))
                         if not poll["anonymous"]:
                             _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
                             if yes >= 45:
-                                _yes += language.string("polls_votes_many", language.number(yes - 45))
+                                _yes += language.string("polls_votes_many", val=language.number(yes - 45))
                             if not _yes:
                                 _yes = language.string("polls_votes_none2")
                             embed.add_field(name=language.string("polls_votes_yes"), value=_yes, inline=True)
                             _neutral = "\n".join([f"<@{voter}>" for voter in voters_neutral[:45]])
                             if neutral >= 45:
-                                _neutral += language.string("polls_votes_many", language.number(neutral - 45))
+                                _neutral += language.string("polls_votes_many", val=language.number(neutral - 45))
                             if not _neutral:
                                 _neutral = language.string("polls_votes_none2")
                             embed.add_field(name=language.string("polls_votes_neutral"), value=_neutral, inline=True)
                             _no = "\n".join([f"<@{voter}>" for voter in voters_no[:45]])
                             if no >= 45:
-                                _no += language.string("polls_votes_many", language.number(no - 45))
+                                _no += language.string("polls_votes_many", val=language.number(no - 45))
                             if not _no:
                                 _no = language.string("polls_votes_none2")
                             embed.add_field(name=language.string("polls_votes_no"), value=_no, inline=True)
@@ -1095,7 +1095,7 @@ async def trials(bot: bot_data.Bot):
                                                     #                    (member.id, "mute", new_mute_end, guild.id, None, random_id, 0, bot.name))
                                                     if channel:
                                                         _duration = language.delta_int(duration, accuracy=3, brief=False, affix=False)
-                                                        output = language.string("trials_success_mute_timed", trial_id, user, _duration)
+                                                        output = language.string("trials_success_mute_timed", id=trial_id, user=user, duration=_duration)
                                                         await channel.send(output)
 
                                                     bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -1104,7 +1104,7 @@ async def trials(bot: bot_data.Bot):
                                                     # if temp_mute_entry:
                                                     #     bot.db.execute("DELETE FROM temporary WHERE entry_id=?", (temp_mute_entry["entry_id"],))
                                                     if channel:
-                                                        output = language.string("trials_success_mute", trial_id, user)
+                                                        output = language.string("trials_success_mute", id=trial_id, user=user)
                                                         await channel.send(output)
 
                                                     bot.db.execute("INSERT INTO punishments(uid, gid, action, author, reason, temp, expiry, handled, bot) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -1149,7 +1149,7 @@ async def trials(bot: bot_data.Bot):
                                                     # except discord.Forbidden:
                                                     #     pass
                                                 if channel:
-                                                    output = language.string("trials_success_unmute", trial_id, user)
+                                                    output = language.string("trials_success_unmute", id=trial_id, user=user)
                                                     await channel.send(output)
                             else:
                                 out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't mute"
@@ -1157,7 +1157,7 @@ async def trials(bot: bot_data.Bot):
                                 logger.log(bot.name, "errors", out)
                                 if channel:
                                     string = "trials_error_member_none_mute" if action == "mute" else "trials_error_member_none_unmute"
-                                    await channel.send(language.string(string, trial_id))
+                                    await channel.send(language.string(string, id=trial_id))
                         elif action == "kick":
                             if member:
                                 # try:
@@ -1166,14 +1166,14 @@ async def trials(bot: bot_data.Bot):
                                 #     pass
                                 await member.kick(reason=trial_success_text)
                                 if channel:
-                                    output = language.string("trials_success_kick", trial_id, user)
+                                    output = language.string("trials_success_kick", id=trial_id, user=user)
                                     await channel.send(output)
                             else:
                                 out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Member not found - can't kick"
                                 general.print_error(out)
                                 logger.log(bot.name, "errors", out)
                                 if channel:
-                                    await channel.send(language.string("trials_error_member_none_kick", trial_id))
+                                    await channel.send(language.string("trials_error_member_none_kick", id=trial_id))
                         elif action == "ban":
                             # I don't have to check if the user exists here, because otherwise it would raise a discord.NotFound while fetching
                             # try:
@@ -1182,7 +1182,7 @@ async def trials(bot: bot_data.Bot):
                             #     pass
                             await guild.ban(user, reason=trial_success_text, delete_message_days=0)
                             if channel:
-                                output = language.string("trials_success_ban", trial_id, user)
+                                output = language.string("trials_success_ban", id=trial_id, user=user)
                                 await channel.send(output)
                         elif action == "unban":
                             # try:
@@ -1191,7 +1191,7 @@ async def trials(bot: bot_data.Bot):
                             #     pass
                             await guild.unban(user, reason=trial_success_text)
                             if channel:
-                                output = language.string("trials_success_unban", trial_id, user)
+                                output = language.string("trials_success_unban", id=trial_id, user=user)
                                 await channel.send(output)
                         else:
                             out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong."
@@ -1215,17 +1215,17 @@ async def trials(bot: bot_data.Bot):
                                 "unban": "trials_failure_unban",
                                 "unmute": "trials_failure_unmute",
                             }.get(action)
-                            output = language.string(fail_text, trial_id, user)
+                            output = language.string(fail_text, id=trial_id, user=user)
                             await channel.send(output)
                     if channel:
                         embed = discord.Embed(colour=colour)
                         embed.title = language.string("trials_end_title")
                         _expiry = language.time(trial["expiry"], short=1, dow=False, seconds=False, tz=True)
-                        embed.description = language.string("trials_end_description", output, trial["reason"], _expiry)
+                        embed.description = language.string("trials_end_description", result=output, reason=trial["reason"], time=_expiry)
                         embed.add_field(name=language.string("trials_votes_result"), inline=False,
-                                        value=language.string("trials_votes_current2", language.number(yes), language.number(neutral), language.number(no),
-                                                              language.number(total), language.number(score, positives=True),
-                                                              language.number(upvotes, precision=2, percentage=True), language.number(required, positives=True)))
+                                        value=language.string("trials_votes_current2", yes=language.number(yes), neutral=language.number(neutral), no=language.number(no),
+                                                              total=language.number(total), score=language.number(score, positives=True),
+                                                              percentage=language.number(upvotes, precision=2, percentage=True), required=language.number(required)))
                         if not trial["anonymous"]:
                             _yes = "\n".join([f"<@{voter}>" for voter in voters_yes[:45]])
                             if yes >= 45:

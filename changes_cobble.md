@@ -536,3 +536,9 @@
 
 ## v1.5.12.1 - 24 May 2022
 - Try to fix the holiday scripts showing negative days remaining after a holiday passes
+
+## v1.5.13 - 4 June 2022
+- Fixed timezone finder crashing when a user's Kargadian place is unavailable
+- Changed the UTC field name in `..time` to Virsetgar
+- The UTC timezone in Kargadia is now replaced with Virsetgar
+- Fixed citizen profile crashing when the user has no profile
