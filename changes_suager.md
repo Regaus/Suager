@@ -1349,3 +1349,6 @@
 - Added Wight to the Unlocked list for social commands
 - Ship now only shows one name (chosen randomly)
 - Removed some old unused strings
+
+## v7.5.13 - 14-15 June 2022
+- West Kargadian translation for social commands

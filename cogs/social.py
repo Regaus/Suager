@@ -16,8 +16,13 @@ def get_data(author: discord.Member, target: discord.Member, action: str, langua
     # Correct cases
     author_case: str = "nominative"
     target_case: str = "accusative"
-    if language.language == "en" and action in ["pat", "feed"]:
+    if language.language == "en" and action in ["pat", "feed", "high_five"]:
         target_case = "dative"
+    if language.is_in_family("ka_wk"):
+        if action in ["handhold"]:
+            target_case = "genitive"
+        elif action in ["feed", "high_five"]:
+            target_case = "dative"
 
     # Get names adapted to the given case
     a1, a2 = language.case(author.name, author_case), language.case(target.name, author_case)
