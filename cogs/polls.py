@@ -78,8 +78,8 @@ class Polls(commands.Cog):
             return await ctx.send(language.string("polls_vote_invalid"))
 
         # Nuriki server - Anarchist role
-        if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
-            return await ctx.send("You need the Anarchist role to vote in polls.")
+        # if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
+        #     return await ctx.send("You need the Anarchist role to vote in polls.")
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
             return await ctx.send(language.string("polls_not_found", id=poll_id))
@@ -238,8 +238,8 @@ class Polls(commands.Cog):
             language = self.bot.language(ctx)
 
             # Nuriki server - Anarchist role
-            if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
-                return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
+            # if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
+            #     return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
 
             if user == ctx.author.id:
                 return await ctx.send(language.string("trials_user_self"))
@@ -379,8 +379,8 @@ class Polls(commands.Cog):
             return await ctx.send(language.string("polls_vote_invalid"))
 
         # Nuriki server - Anarchist role
-        if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
-            return await ctx.send("You need the Anarchist role to start new trials or vote in existing ones.")
+        # if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
+        #     return await ctx.send("You need the Anarchist role to start new trials or vote in existing ones.")
 
         data = self.bot.db.fetchrow("SELECT * FROM trials WHERE trial_id=? OR message_id=? OR user_id=?", (trial_id, trial_id, trial_id))
         if not data:
