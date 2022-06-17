@@ -34,10 +34,9 @@ class Settings(commands.Cog):
                         continue
                     d1, d2 = _en.data(k), _language.data(k)
 
-                    # Well they should never be different, but better make sure
                     # Behaviour for when the data is a list
                     if isinstance(d1, list) and isinstance(d2, list):
-                        if len(d1) == len(d2):
+                        if len(d1) == len(d2):  # Well they should never be different, but better make sure
                             # If the lengths are the same, then check through every single string inside
                             for i, s1 in enumerate(d1):
                                 strings += 1
@@ -50,7 +49,7 @@ class Settings(commands.Cog):
                             strings += 1
 
                     # Behaviour for when the data is a dict
-                    elif isinstance(d1, dict) and isinstance(d2, dict):
+                    elif isinstance(d1, dict) and isinstance(d2, dict) and k != "_languages":  # Languages should count as just one big "string" so that they wouldn't create 50 extra entries
                         for key, s1 in d1.items():
                             s2 = d2.get(key)
                             strings += 1

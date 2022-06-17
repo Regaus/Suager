@@ -222,3 +222,9 @@
 
 ## v1.2.9 - 24 May 2022
 - `m!handhold` command
+
+## v1.2.10 - 17 June 2022
+- Language strings now use keywords for better understandability
+- Ship now only shows one name (chosen randomly)
+- Improved how translation completion is counted (made all language names count as one large "string")
+- West Kargadian translation for discord-related commands and various error messages

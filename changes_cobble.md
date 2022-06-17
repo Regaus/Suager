@@ -542,3 +542,7 @@
 - Changed the UTC field name in `..time` to Virsetgar
 - The UTC timezone in Kargadia is now replaced with Virsetgar
 - Fixed citizen profile crashing when the user has no profile
+
+## v1.5.14 - 17 June 2022
+- Improved how translation completion is counted (made all language names count as one large "string")
+- West Kargadian translation for discord-related commands and various error messages

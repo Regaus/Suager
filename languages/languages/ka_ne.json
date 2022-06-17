@@ -1,4 +1,14 @@
 {
+  "generic_timed_out": "~~{text}~~\nKalvanta ahvak den neimun.",
+  "discord_role_members": "Saiderat, ihvannat na ankastan {role}",
+  "discord_server_banner_none": "**{server}** ihvat den salhan-neilun",
+  "discord_server_boosts_data": "Uttat: {boosts} - Koo {level}\nUttannat: {users}",
+  "discord_server_emotes_data": "{static}/{limit} Sadannat\n{ani}/{limit} Dekannat\n{total} i Veisen",
+  "discord_server_icon_none": "**{server}** ihvat den salhan-veiman",
+  "discord_server_inv_bg_none": "**{server}** ihvat den anladan-nazanveiman",
+  "events_error_bad_argument": "{emotes.Deny} Ukke na kattehtaan ahvak un dertannen sanen...",
+  "events_error_guild_only": "{emotes.Deny} Eda kalvanta de maikat in un senninidun nottarahan.",
   "social_bang_bot": "Raivahtat de hiderahak, vir eden tuan, te hestekar vahtaus {emotes.KannaSpook}",
-  "social_bang_suager": "De alvi deavar av en, te hestekar vahtaus {emotes.KannaSpook}"
+  "social_bang_suager": "De alvi deavar av en, te hestekar vahtaus {emotes.KannaSpook}",
+  "social_kiss_suager": "N-nai leivaas te mut, just varkun..? Mu de alvi ihva ein pühsenäälen in eden viarun..."
 }

@@ -1352,3 +1352,7 @@
 
 ## v7.5.13 - 14-15 June 2022
 - West Kargadian translation for social commands
+
+## v7.5.14 - 17 June 2022
+- Improved how translation completion is counted (made all language names count as one large "string")
+- West Kargadian translation for discord-related commands and various error messages

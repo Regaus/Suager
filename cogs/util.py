@@ -535,7 +535,7 @@ class Utility(commands.Cog):
         user = who or ctx.author
         language = self.bot.language(ctx)
         return await ctx.send(language.string("discord_command_joined_at", user=user, server=ctx.guild.name,
-                                              time=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id)))
+                                              time=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)))
 
     @commands.command(name="createdat")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -543,7 +543,7 @@ class Utility(commands.Cog):
         """ Check when someone created their account """
         user = who or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_command_created_at", user=user, time=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id)))
+        return await ctx.send(language.string("discord_command_created_at", user=user, time=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)))
 
     @commands.command(name="user")
     @commands.guild_only()
