@@ -506,7 +506,7 @@ class Utility(commands.Cog):
                 embed.add_field(name=language.string("discord_role_mentionable"), value=language.yes(role.mentionable), inline=True)
                 embed.add_field(name=language.string("discord_role_hoisted"), value=language.yes(role.hoist), inline=True)
                 embed.add_field(name=language.string("discord_role_position"), value=language.number(role.position), inline=True)
-                embed.add_field(name=language.string("discord_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=True)
+                embed.add_field(name=language.string("discord_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=True)
                 embed.add_field(name=language.string("discord_role_default"), value=language.yes(role.is_default()), inline=True)
                 return await ctx.send(embed=embed)
 
@@ -558,8 +558,8 @@ class Utility(commands.Cog):
         embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=False)
-        embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=False)
+        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=False)
+        embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=False)
         if len(user.roles) < 15:
             r = user.roles
             r.sort(key=lambda x: x.position, reverse=True)
@@ -587,7 +587,7 @@ class Utility(commands.Cog):
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
         embed.add_field(name=language.string("discord_user_username"), value=str(user), inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), inline=True)
+        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=True)
         return await ctx.send(embed=embed)
 
     @commands.command(name="emoji", aliases=["emote"])
@@ -640,7 +640,7 @@ class Utility(commands.Cog):
             n, a, e, t = language.number(na), language.number(ani), language.number(el), language.number(total_emotes)
             embed.add_field(name=language.string("discord_server_emotes"), value=language.string("discord_server_emotes_data", static=n, ani=a, limit=e, total=t), inline=True)
             ca = guild.created_at
-            ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
+            ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
             embed.add_field(name=language.string("discord_created_at"), value=f"{ct}\n{cd}", inline=False)
             return await ctx.send(embed=embed)
 
@@ -793,7 +793,7 @@ class Reminders(Utility, name="Utility"):
             for reminder in reminders:
                 _reminder += 1
                 expiry = reminder["expiry"]
-                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id)
+                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
                 expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
                 outputs.append(language.string("util_reminders_item", i=_reminder, message=reminder["message"], id=reminder["id"], time=expires_on, delta=expires_in))
                 # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
@@ -842,7 +842,7 @@ class Reminders(Utility, name="Utility"):
                 _expiry = _expiry.replace(tzinfo=self.bot.timezone(ctx.author.id)).astimezone(time2.timezone.utc).replace(tzinfo=None)
             except ValueError:
                 return await ctx.send(language.string("util_reminders_edit_time"))
-        expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id)
+        expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
         self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (_message, _expiry, reminder_id))
         return await ctx.send(language.string("util_reminders_edit", id=reminder_id, message=_message, time=expiry))
 
