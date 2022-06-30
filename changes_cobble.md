@@ -546,3 +546,6 @@
 ## v1.5.14 - 17 June 2022
 - Improved how translation completion is counted (made all language names count as one large "string")
 - West Kargadian translation for discord-related commands and various error messages
+
+## v1.5.15 - 18-30 June 2022
+- West Kargadian translation for the rest of the commands

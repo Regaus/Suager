@@ -228,3 +228,6 @@
 - Ship now only shows one name (chosen randomly)
 - Improved how translation completion is counted (made all language names count as one large "string")
 - West Kargadian translation for discord-related commands and various error messages
+
+## v1.2.11 - 18-30 June 2022
+- West Kargadian translation for the rest of the commands
