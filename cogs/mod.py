@@ -60,6 +60,8 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
     """ Try to send the user a DM that they've been warned/muted/kicked/banned """
     try:
         _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not _data:
+            return  # No data found means disabled
         data = json.loads(_data["data"])
         mod_dms = data["mod_dms"]
         if action in ["warn", "pardon"]:
@@ -118,6 +120,8 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, u
     """ Try to send a mod log message about the punishment """
     try:
         _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        if not _data:
+            return  # No data found means disabled
         data = json.loads(_data["data"])
         mod_logs = data["mod_logs"]
         if action in ["warn", "pardon"]:
