@@ -236,7 +236,7 @@ def prep_birthdays(bot: bot_data.Bot):
                 #     current = data[uid]
                 #     data[uid] = birthday.Birthday(current.uid, current.birthday_date, current.tz, current.bot)
         # Go through the data entries to see if there are any old entries that don't exist in the db anymore
-        for uid in data:
+        for uid in list(data):  # Should prevent "RuntimeError: dictionary changed size during iteration"
             if uid not in mentioned:  # not an entry in the db
                 data.pop(uid)  # removes the entry
         birthday.birthdays[bot.name] = data
