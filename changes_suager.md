@@ -1362,3 +1362,6 @@
 
 ## v7.5.15-pre2 - 30 June 2022
 - West Kargadian translation for moderation commands
+
+## v7.5.15-pre3 - 7 July 2022
+- West Kargadian translation for ratings and utility

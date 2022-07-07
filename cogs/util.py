@@ -8,7 +8,7 @@ from io import BytesIO
 import discord
 import pytz
 from PIL import Image, ImageDraw, ImageFont
-from regaus import time as time2
+from regaus import conworlds, time as time2
 
 from utils import arg_parser, bases, bot_data, commands, emotes, general, http, permissions, time
 
@@ -28,8 +28,16 @@ class Utility(commands.Cog):
         language = self.bot.language(ctx)
         user = user or ctx.author
         if self.bot.name == "cobble":
-            now = time2.datetime.now(time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG"), time2.Kargadia)
-            start = "Virsetgar"
+            place = conworlds.Place("Virsetgar")
+            now = time2.datetime.now(place.tz, time2.Kargadia)
+            # Try to get the local language name for Virsetgar
+            start = None
+            for _lang in language.fallbacks(place.languages):
+                start = place.names.get(_lang)
+                if start is not None:
+                    break
+            if start is None:
+                start = "Virsetgar"
         else:
             now = time2.datetime.now()
             start = "UTC/GMT"

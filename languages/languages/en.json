@@ -757,7 +757,6 @@
   "trials_votes_current2": "{emotes.Allow} {yes}, {emotes.Meh} {neutral}, {emotes.Deny} {no}\nTotal votes: {total}\nScore: {score} ({percentage} voted yes)\n\nSuccess requirement: {required} votes, at least 60% yes",
   "trials_votes_result": "Final votes",
   "util_reminders_delete": "Reminder `{id}` was successfully deleted.",
-  "util_reminders_dms": "You need to have your DMs open for me to be able to send you the list of your reminders.",
   "util_reminders_edit": "Updated reminder `{id}`:\nReminder message: {message}\nReminder for **{time}**",
   "util_reminders_edit_none": "Reminder `{id}` was not found.",
   "util_reminders_edit_time": "Failed to parse new reminder time. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional).",

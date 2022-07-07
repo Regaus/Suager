@@ -37,5 +37,10 @@
   "mod_warn_mass2_timed": "Avastak **{total} saideraan** sa {duration} naen {reason}:\n{emotes.Allow} Ka uvehun: **{banned}**\n{emotes.Deny} Ha uvehun: **{failed}**",
   "social_bang_bot": "Raivahtat de hiderahak, vir eden tuan, te hestekar vahtaus {emotes.KannaSpook}",
   "social_bang_suager": "De alvi deavar av en, te hestekar vahtaus {emotes.KannaSpook}",
-  "social_kiss_suager": "N-nai leivaas te mut, just varkun..? Mu de alvi ihva ein pühsenäälen in eden viarun..."
+  "social_kiss_suager": "N-nai leivaas te mut, just varkun..? Mu de alvi ihva ein pühsenäälen in edan viarun...",
+  "util_reminders_none": "De ihvas dean annepattaan, {author}.",
+  "util_weather_clouds": "Aivallankalve",
+  "util_weather_error": "De maikak na lürvan in {place} ahvan:\n`{err}`",
+  "util_weather_sunrise": "Vaiketa",
+  "util_weather_sunset": "Kvell"
 }
