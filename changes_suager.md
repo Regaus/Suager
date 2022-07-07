@@ -1365,3 +1365,7 @@
 
 ## v7.5.15-pre3 - 7 July 2022
 - West Kargadian translation for ratings and utility
+
+## v7.5.15-pre4 - 7 July 2022
+- Updated to newer version of discord.py
+- Also updated other dependencies

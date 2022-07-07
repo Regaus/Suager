@@ -177,5 +177,5 @@ class Achievements(commands.Cog):
         return await ctx.send(file=discord.File(bio, filename="test.png"))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Achievements(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Achievements(bot))

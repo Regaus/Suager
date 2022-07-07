@@ -226,5 +226,5 @@ class ReactionRoles(commands.Cog):
         return await ctx.send(f"The role {role} has been removed from the group {message_id}.")
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(ReactionRoles(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(ReactionRoles(bot))

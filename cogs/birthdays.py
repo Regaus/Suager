@@ -64,10 +64,10 @@ class Birthdays(commands.Cog):
         if has_birthday is not None:
             self.bot.db.execute(f"UPDATE birthdays SET birthday=? WHERE uid=? AND bot=?", (timestamp, ctx.author.id, self.bot.name))
             old_date = language.date(has_birthday, short=0, dow=False, year=False)
-            return await ctx.send(language.string("birthdays_set_already", user=ctx.author.name, new=date, old=old_date), True)
+            return await ctx.send(language.string("birthdays_set_already", user=ctx.author.name, new=date, old=old_date))
         else:
             self.bot.db.execute(f"INSERT INTO birthdays VALUES (?, ?, ?, ?)", (ctx.author.id, timestamp, False, self.bot.name))
-            return await ctx.send(language.string("birthdays_set_set", user=ctx.author.name, date=date), True)
+            return await ctx.send(language.string("birthdays_set_set", user=ctx.author.name, date=date))
 
     @birthday.command(name="clear", aliases=["reset", "delete"])
     async def delete(self, ctx: commands.Context):
@@ -100,5 +100,5 @@ class Birthdays(commands.Cog):
         return await ctx.send(data)
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Birthdays(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Birthdays(bot))

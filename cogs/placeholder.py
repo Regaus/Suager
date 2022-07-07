@@ -13,5 +13,5 @@ class Placeholder(commands.Cog):
         return await ctx.send(language.string("placeholder"))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Placeholder(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Placeholder(bot))

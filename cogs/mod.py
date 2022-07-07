@@ -1201,8 +1201,8 @@ class ModerationKyomi(Moderation, name="Moderation"):
         return await ctx.send(output)
 
 
-def setup(bot: bot_data.Bot):
+async def setup(bot: bot_data.Bot):
     if bot.name == "kyomi":
-        bot.add_cog(ModerationKyomi(bot))
+        await bot.add_cog(ModerationKyomi(bot))
     else:
-        bot.add_cog(Moderation(bot))
+        await bot.add_cog(Moderation(bot))

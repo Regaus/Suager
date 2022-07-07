@@ -2,7 +2,7 @@ import json
 
 import discord
 
-from utils import commands, general, languages, logger, time
+from utils import bot_data, commands, general, languages, logger, time
 
 
 class Starboard(commands.Cog):
@@ -273,5 +273,5 @@ class Starboard(commands.Cog):
             return await ctx.send(embed=embed)
 
 
-def setup(bot):
-    bot.add_cog(Starboard(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Starboard(bot))

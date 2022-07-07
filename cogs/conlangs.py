@@ -1,4 +1,4 @@
-from utils import commands, conlangs
+from utils import bot_data, commands, conlangs
 
 
 def is_rsl1_eligible(ctx: commands.Context):
@@ -94,5 +94,5 @@ class Conlangs(commands.Cog):
         return await ctx.send("\n\n".join(out))
 
 
-def setup(bot):
-    bot.add_cog(Conlangs(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Conlangs(bot))

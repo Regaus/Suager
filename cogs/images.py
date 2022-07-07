@@ -6,7 +6,7 @@ from io import BytesIO
 import discord
 from PIL import Image, UnidentifiedImageError
 
-from utils import commands, emotes, http
+from utils import bot_data, commands, emotes, http
 
 
 async def af_image_gen(ctx: commands.Context, user: discord.User | discord.Member, link, filename=None, extra_args=None):
@@ -190,8 +190,8 @@ class ImagesSuager(Images, name="Images"):
         return await ctx.send(file=discord.File(bio, filename="russia.png"))
 
 
-def setup(bot):
+async def setup(bot: bot_data.Bot):
     if bot.name == "suager":
-        bot.add_cog(ImagesSuager(bot))
+        await bot.add_cog(ImagesSuager(bot))
     else:
-        bot.add_cog(Images(bot))
+        await bot.add_cog(Images(bot))

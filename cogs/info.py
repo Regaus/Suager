@@ -134,10 +134,10 @@ class CobbleInformation(BotInformation, name="Bot Information"):
         return await ctx.send("Vuu Käivallus. Vu ju zäide, via te av Kaagadian kuvalsen zäivan mäikah <:SenkoWatch:739242217666904165>")
 
 
-def setup(bot: bot_data.Bot):
+async def setup(bot: bot_data.Bot):
     if bot.name == "suager":
-        bot.add_cog(SuagerInformation(bot))
+        await bot.add_cog(SuagerInformation(bot))
     elif bot.name == "cobble":
-        bot.add_cog(CobbleInformation(bot))
+        await bot.add_cog(CobbleInformation(bot))
     else:
-        bot.add_cog(BotInformation(bot))
+        await bot.add_cog(BotInformation(bot))

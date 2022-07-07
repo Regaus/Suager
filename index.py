@@ -51,17 +51,17 @@ for i in range(len(config["bots"])):
         blacklist = []
     name = local_config["internal_name"]
     if name == "kyomi":
-        intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True, voice_states=True)
+        intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True, voice_states=True, message_content=True)
     else:
-        intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True)
+        intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True, message_content=True)
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db,
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd, intents=intents,
                        allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True), message_commands=True, slash_commands=False)
     load = bot_data.load[name]
     for name in load:
-        bot.load_extension(f"cogs.{name}")
-    bot.load_extension("jishaku")
+        tasks.append(loop.create_task(bot.load_extension(f"cogs.{name}")))
+    tasks.append(loop.create_task(bot.load_extension("jishaku")))
     if "token" in local_config and local_config["token"]:
         tasks.append(loop.create_task(bot.start(local_config["token"])))
         tasks.append(loop.create_task(temporaries.playing(bot)))

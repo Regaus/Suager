@@ -339,5 +339,5 @@ class Conworlds(commands.Cog):
         return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=str(user), date=birthday, delta=delta))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Conworlds(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Conworlds(bot))

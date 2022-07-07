@@ -70,13 +70,18 @@ class Bot(commands.AutoShardedBot):
         # self.usages = usages
         self.uptime = None
 
+    async def get_context(self, message, *, cls=commands.Context):
+        return await super().get_context(message, cls=cls)
+
+    async def process_commands(self, message, /) -> None:
+        ctx = await self.get_context(message)
+        # the type of the invocation context's bot attribute will be correct
+        await self.invoke(ctx)  # type: ignore
+
     async def on_message(self, msg):
         if not self.is_ready() or msg.author.bot or not permissions.can_send(msg) or msg.author.id in self.blacklist:
             return
         await self.process_commands(msg)
-
-    async def get_context(self, message, *, cls=commands.Context):
-        return await super().get_context(message, cls=cls)
 
     @staticmethod
     def language(ctx: commands.Context | languages.FakeContext):
@@ -89,3 +94,6 @@ class Bot(commands.AutoShardedBot):
     @staticmethod
     def timezone(uid: int, time_class: str = "Earth"):
         return languages.Language.get_timezone(uid, time_class)
+
+    def __str__(self):
+        return self.full_name

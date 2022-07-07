@@ -26,5 +26,5 @@ class Kuastall(commands.Cog):
         return await ctx.send("Time in Sentatebaria: " + conworlds.Place("Sentatebaria").time.strftime('%A, %d %B %Y, %H:%M:%S', 'en'))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Kuastall(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Kuastall(bot))

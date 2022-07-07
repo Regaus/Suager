@@ -780,5 +780,5 @@ class Leveling(commands.Cog):
         return await leaderboard2(self, ctx, f"SELECT * FROM leveling WHERE bot=?", (self.bot.name,), top, "leaderboards_levels_global", language)
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Leveling(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Leveling(bot))

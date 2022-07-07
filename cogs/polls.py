@@ -252,7 +252,7 @@ class Polls(commands.Cog):
                 return await ctx.send(language.string("trials_action_invalid"))
             if action in ["ban", "unban"]:
                 try:
-                    bans: list[BanEntry] = await ctx.guild.bans()
+                    bans: list[BanEntry] = [_ async for _ in ctx.guild.bans(limit=None)]
                     banned = False
                     for ban in bans:
                         if ban.user.id == user:
@@ -560,5 +560,5 @@ class Polls(commands.Cog):
         return await ctx.send(language.string("trials_list", server=ctx.guild.name, data="\n\n".join(output)))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Polls(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Polls(bot))

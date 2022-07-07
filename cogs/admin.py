@@ -100,9 +100,9 @@ def reload_module(human_name: str, module_name: str, bot: bot_data.Bot):
     return reloaded
 
 
-def reload_extension(bot: bot_data.Bot, name: str):
+async def reload_extension(bot: bot_data.Bot, name: str):
     try:
-        bot.reload_extension(f"cogs.{name}")
+        await bot.reload_extension(f"cogs.{name}")
     except Exception as e:
         return f"{type(e).__name__}: {e}"
     reloaded = f"Reloaded extension **cogs/{name}.py**"
@@ -255,7 +255,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, name: str):
         """ Reloads an extension. """
-        return await ctx.send(reload_extension(self.bot, name))
+        return await ctx.send(await reload_extension(self.bot, name))
 
     @commands.command(name="reloadall", aliases=["rall", "ra"])
     @commands.is_owner()
@@ -265,7 +265,7 @@ class Admin(commands.Cog):
         load = bot_data.load[self.bot.name]
         for name in load:
             try:
-                self.bot.reload_extension(f"cogs.{name}")
+                await self.bot.reload_extension(f"cogs.{name}")
             except Exception as e:
                 error_collection.append([name, f"{type(e).__name__}: {e}"])
         if error_collection:
@@ -297,7 +297,7 @@ class Admin(commands.Cog):
 
     async def load_ext(self, ctx: commands.Context, name2: str):
         try:
-            self.bot.load_extension(f"cogs.{name2}")
+            await self.bot.load_extension(f"cogs.{name2}")
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
         reloaded = f"Loaded extension **cogs/{name2}.py**"
@@ -306,7 +306,7 @@ class Admin(commands.Cog):
 
     async def unload_ext(self, ctx: commands.Context, name2: str):
         try:
-            self.bot.unload_extension(f"cogs.{name2}")
+            await self.bot.unload_extension(f"cogs.{name2}")
         except Exception as e:
             return await ctx.send(f"{type(e).__name__}: {e}")
         reloaded = f"Unloaded extension **cogs/{name2}.py**"
@@ -370,7 +370,7 @@ class Admin(commands.Cog):
         if len(content) > 1900:
             try:
                 data = BytesIO(content.encode('utf-8'))
-                await message.edit(content="The result was a bit too long, so here is a text file instead", file=discord.File(data, filename=time.file_ts('Execute')))
+                await message.edit(content="The result was a bit too long, so here is a text file instead", attachments=[discord.File(data, filename=time.file_ts('Execute'))])
             except asyncio.TimeoutError as e:
                 # I have no idea when or why this could occur, but whatever...
                 await message.delete()
@@ -461,7 +461,7 @@ class Admin(commands.Cog):
             return await ctx.send(f"Successfully changed the avatar. Currently using:\n{url}")
         except aiohttp.InvalidURL:
             return await ctx.send("The URL is invalid...")
-        except discord.InvalidArgument:
+        except ValueError:
             return await ctx.send("This URL does not contain a usable image")
         except discord.HTTPException as err:
             return await ctx.send(str(err))
@@ -528,8 +528,8 @@ class Admin(commands.Cog):
                     extra += f"\nAttachments: {len(file_links)}\n" + "\n".join(file_links)
                 return base + msg.content[:lmt] + extra
 
-            # We fetch the latest n messages, and then invert the order to "oldest first"
-            _data = [convert(message) for message in (await (await user.create_dm()).history(limit=limit, oldest_first=False).flatten())[::-1]]
+            # We fetch the latest n messages, and then invert the order to be "oldest first" out of the n most recent messages (instead of the first n messages ever sent)
+            _data = [convert(message) for message in [_ async for _ in (await user.create_dm()).history(limit=limit, oldest_first=False)][::-1]]
             messages = len(_data)
             data = "\n\n".join(_data)
             if ctx.guild is None:
@@ -591,5 +591,5 @@ class Admin(commands.Cog):
         return await ctx.send("Config file updated.")
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Admin(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Admin(bot))

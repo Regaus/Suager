@@ -182,5 +182,5 @@ class Ratings(commands.Cog):
         return await ctx.send(language.string("ratings_iq", user=user.name, value=ri))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Ratings(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Ratings(bot))

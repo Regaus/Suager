@@ -1896,5 +1896,5 @@ class Settings(commands.Cog):
         return dp, cp
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Settings(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Settings(bot))

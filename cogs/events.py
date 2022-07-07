@@ -705,5 +705,5 @@ class Events(commands.Cog):
                         logger.log(self.bot.name, "errors", out)
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Events(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Events(bot))

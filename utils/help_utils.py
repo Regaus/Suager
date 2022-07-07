@@ -78,7 +78,7 @@ class HelpFormat(MinimalHelpCommand):
             return None
 
     async def send_pages(self):
-        destination: discord.User | discord.TextChannel = self.get_destination()
+        destination: discord.User | discord.TextChannel = self.get_destination()  # type: ignore
         if self.nsfw:
             self.paginator.add_line()
             self.paginator.add_line(f"⚠ {self.nsfw:,} NSFW commands hidden")
@@ -177,7 +177,7 @@ class HelpFormat(MinimalHelpCommand):
             return cog.qualified_name if cog is not None else no_category_name
 
         filtered = await self.filter_commands(bot.commands, sort=True, key=get_category)
-        to_iterate = groupby(filtered, key=get_category)
+        to_iterate = groupby(filtered, key=get_category)  # type: ignore
 
         for category, cmds in to_iterate:
             cmds = sorted(cmds, key=lambda c: c.name) if self.sort_commands else list(cmds)
@@ -205,7 +205,7 @@ class HelpFormat(MinimalHelpCommand):
         filtered = await self.filter_commands(cog.get_commands(), sort=self.sort_commands)
         if filtered:
             self.paginator.add_line(f"**{cog.qualified_name} {self.commands_heading}**")
-            for command in filtered:
+            for command in filtered:  # type: ignore
                 self.add_subcommand_formatting(command)
 
         await self.send_pages()
@@ -220,7 +220,7 @@ class HelpFormat(MinimalHelpCommand):
                 self.paginator.add_line(note, empty=True)
 
             self.paginator.add_line(f"**{self.commands_heading}**")
-            for command in filtered:
+            for command in filtered:  # type: ignore
                 self.add_subcommand_formatting(command)
 
         await self.send_pages()

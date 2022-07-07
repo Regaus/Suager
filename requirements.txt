@@ -1,6 +1,6 @@
 Pillow
 discord
-git+https://github.com/iDevision/enhanced-discord.py@2.0#egg=discord.py
+git+https://github.com/Rapptz/discord.py@master#egg=discord.py
 aiohttp
 python-dateutil
 asyncio

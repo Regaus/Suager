@@ -39,20 +39,21 @@ def group(name: str = MISSING, cls: Type[GroupT] = MISSING, **attrs: Any):
 
 
 class Group(Group):
-    def to_application_command(self, nested: int = 0):
-        if self.slash_command is False:
-            return
-        elif nested == 2:
-            raise ApplicationCommandRegistrationError(self, f"{self.qualified_name} is too deeply nested!")
-
-        options = [cmd.to_application_command(nested=nested + 1) for cmd in sorted(self.commands, key=lambda x: x.name)]
-
-        return {  # type: ignore
-            "name": self.name,
-            "type": int(not (nested - 1)) + 1,
-            "description": self.short_doc or "no description",
-            "options": [option for option in options if option is not None],
-        }
+    pass
+    # def to_application_command(self, nested: int = 0):
+    #     if self.slash_command is False:
+    #         return
+    #     elif nested == 2:
+    #         raise ApplicationCommandRegistrationError(self, f"{self.qualified_name} is too deeply nested!")
+    #
+    #     options = [cmd.to_application_command(nested=nested + 1) for cmd in sorted(self.commands, key=lambda x: x.name)]
+    #
+    #     return {  # type: ignore
+    #         "name": self.name,
+    #         "type": int(not (nested - 1)) + 1,
+    #         "description": self.short_doc or "no description",
+    #         "options": [option for option in options if option is not None],
+    #     }
 
 
 class Context(Context):

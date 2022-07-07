@@ -255,5 +255,5 @@ class Tags(commands.Cog):
         return await ctx.send(language.string("tags_unclaimed", server=ctx.guild, page=language.number(page), max=language.number(ceil(len(tags) / 20)), data=block))
 
 
-def setup(bot: bot_data.Bot):
-    bot.add_cog(Tags(bot))
+async def setup(bot: bot_data.Bot):
+    await bot.add_cog(Tags(bot))

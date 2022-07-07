@@ -629,10 +629,10 @@ class Utility(commands.Cog):
             embed.add_field(name=language.string("discord_server_owner"), inline=True, value=f"{guild.owner}\n({guild.owner.display_name})")
             embed.add_field(name=language.string("discord_members"), value=language.number(guild.member_count), inline=True)
             embed.add_field(name=language.string("discord_server_bots"), value=f"{language.number(bots)} ({language.number(bots_amt, percentage=True)})", inline=True)
-            embed.add_field(name=language.string("discord_server_region"), value=guild.region, inline=True)
+            embed.add_field(name=language.string("discord_server_region"), value="Deprecated", inline=True)
             embed.add_field(name=language.string("discord_server_roles"), value=language.number(len(guild.roles)), inline=True)
             try:
-                embed.add_field(name=language.string("discord_server_bans"), value=language.number(len(await guild.bans())), inline=True)
+                embed.add_field(name=language.string("discord_server_bans"), value=language.number(len([_ async for _ in ctx.guild.bans(limit=None)])), inline=True)
             except discord.Forbidden:
                 embed.add_field(name=language.string("discord_server_bans"), value=language.string("discord_server_bans_denied"), inline=True)
             embed.add_field(name=language.string("discord_server_verification"), inline=True, value=str(guild.verification_level).capitalize())
@@ -1088,12 +1088,12 @@ class UtilityCobble(Utility, name="Utility"):
         return await ctx.send(f"{_time_class1}: **{out1}**\n{_time_class2}: **{out2}**")
 
 
-def setup(bot: bot_data.Bot):
+async def setup(bot: bot_data.Bot):
     if bot.name == "suager":
-        bot.add_cog(UtilitySuager(bot))
+        await bot.add_cog(UtilitySuager(bot))
     elif bot.name == "kyomi":
-        bot.add_cog(Reminders(bot))
+        await bot.add_cog(Reminders(bot))
     elif bot.name == "cobble":
-        bot.add_cog(UtilityCobble(bot))
+        await bot.add_cog(UtilityCobble(bot))
     else:
-        bot.add_cog(Utility(bot))
+        await bot.add_cog(Utility(bot))

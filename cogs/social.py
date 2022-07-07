@@ -748,8 +748,8 @@ class SocialSuager(Social, name="Social"):
         return await ctx.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}")
 
 
-def setup(bot: bot_data.Bot):
+async def setup(bot: bot_data.Bot):
     if bot.name == "suager":
-        bot.add_cog(SocialSuager(bot))
+        await bot.add_cog(SocialSuager(bot))
     else:
-        bot.add_cog(Social(bot))
+        await bot.add_cog(Social(bot))

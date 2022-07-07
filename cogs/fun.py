@@ -105,8 +105,8 @@ class EntertainmentSuager(Entertainment, name="Entertainment"):
             return await msg.edit(content=beer)
 
 
-def setup(bot: bot_data.Bot):
+async def setup(bot: bot_data.Bot):
     if bot.name == "suager":
-        bot.add_cog(EntertainmentSuager(bot))
+        await bot.add_cog(EntertainmentSuager(bot))
     else:
-        bot.add_cog(Entertainment(bot))
+        await bot.add_cog(Entertainment(bot))
