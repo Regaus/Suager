@@ -353,7 +353,7 @@ class Conworlds(commands.Cog):
             delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(), tz).replace(year=year), accuracy=2, brief=False, affix=True)
         if user == ctx.author:
             return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
-        return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=str(user), date=birthday, delta=delta))
+        return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username, date=birthday, delta=delta))
 
 
 async def setup(bot: bot_data.Bot):
