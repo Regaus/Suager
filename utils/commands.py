@@ -67,3 +67,30 @@ class Context(Context):
     @staticmethod
     def language2(name: str):
         return languages.Language(name)
+
+
+# The solution to the type warnings is just using "type: ignore"
+class MemberID(Converter):
+    """ Tries to find a Member by name, mention, nickname, or ID. Their ID is returned. If the Member isn't found, tries to just convert the input to int. """
+    async def convert(self, ctx, argument):
+        try:
+            m = await MemberConverter().convert(ctx, argument)
+            return m.id
+        except BadArgument:
+            try:
+                return int(argument, base=10)
+            except ValueError:
+                raise MemberNotFound(argument) from None
+
+
+class UserID(MemberID):
+    """ Tries to find a User by username, mention, or ID. Their ID is returned. If the User isn't found, tries to just convert the input to int. """
+    async def convert(self, ctx, argument):
+        try:
+            m = await UserConverter().convert(ctx, argument)
+            return m.id
+        except BadArgument:
+            try:
+                return int(argument, base=10)  # For Kargadia citizen profiles, this should therefore accept citizen IDs
+            except ValueError:
+                raise UserNotFound(argument) from None

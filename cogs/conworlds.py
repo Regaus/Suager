@@ -269,28 +269,36 @@ class Conworlds(commands.Cog):
         return await ctx.send(output)
 
     @ka_citizenship.command(name="see", aliases=["view", "profile", "id"])
-    async def ka_citizen_profile(self, ctx: commands.Context, user: discord.User = None):
+    async def ka_citizen_profile(self, ctx: commands.Context, _user: commands.UserID = None):
         """ See your or someone else's profile """
         language = ctx.language2("en")
-        user = user or ctx.author
-        if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
-            return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
-        uid = user.id
-        data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=?", (uid,))
+        if _user is None:
+            _user = ctx.author.id
+        # if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
+        #     return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
+        data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
         if not data:
             return await ctx.send("A citizen profile is not available for this user.")
+
         embed = discord.Embed(colour=random_colour())
-        embed.title = f"{user.name}'s Kargadian citizen ID"
-        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
+        name = data["name"]
+        if data["name2"]:
+            name += f" {data['name2']}"
+
+        try:
+            user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
+            username = user.name
+            embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
+        except discord.NotFound:
+            username = data["name"]
+
+        embed.title = f"{username}'s Kargadian citizen ID"
         embed.add_field(name="Citizen ID", value=data["id"], inline=True)
         # embed.add_field(name="User ID", value=data["uid"], inline=True)
 
         genders = {"m": "Male", "f": "Female"}
         embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
 
-        name = data["name"]
-        if data["name2"]:
-            name += f" {data['name2']}"
         embed.add_field(name="Kargadian Name", value=name, inline=False)
 
         if data["birthday"]:
@@ -308,22 +316,31 @@ class Conworlds(commands.Cog):
         embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
         return await ctx.send(embed=embed)
 
-    def check_birthday(self, user_id):
-        data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=?", (user_id,))
-        return data["birthday"] if data else None
+    # def check_birthday(self, user_id):
+    #     data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=? OR id=?", (user_id, user_id))
+    #     return data["birthday"] if data else None
 
     @commands.command(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
+    async def birthday(self, ctx: commands.Context, *, _user: commands.UserID = None):
         """ Check out someone's Kargadian birthday"""
         language = ctx.language()
-        user = user or ctx.author
-        if user.id == self.bot.user.id:
+        if _user is None:
+            _user = ctx.author.id
+        if _user == self.bot.user.id:
             return await ctx.send(language.string("birthdays_birthday_cobble"))
-        has_birthday = self.check_birthday(user.id)
-        if not has_birthday:
-            return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
-        birthday_date = time.date.from_iso(has_birthday, time.Kargadia)
+        # has_birthday = self.check_birthday(_user)
+
+        data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
+        try:
+            user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
+            username = user.name
+        except discord.NotFound:
+            username = data["name"]
+            user = self.bot.user  # Use the bot's user account so the tz check doesn't fail
+        if data is None or data["birthday"] is None:
+            return await ctx.send(language.string("birthdays_birthday_not_saved", user=username))
+        birthday_date = time.date.from_iso(data["birthday"], time.Kargadia)
         birthday = language.date(birthday_date, short=0, dow=False, year=False)
         tz = language.get_timezone(user.id, "Kargadia")
         now = time.datetime.now(tz, time.Kargadia)

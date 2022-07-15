@@ -3,7 +3,6 @@ import json
 import discord
 from discord.guild import BanEntry
 
-from cogs.mod import MemberID
 from utils import bot_data, commands, general, logger, time
 
 
@@ -218,7 +217,7 @@ class Polls(commands.Cog):
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def trial(self, ctx: commands.Context, duration: str, action: str, user: MemberID, *, reason: str = ""):
+    async def trial(self, ctx: commands.Context, duration: str, action: str, user: commands.MemberID, *, reason: str = ""):
         """ Start a new trial to take action against a user or interact with existing ones
         Supported actions: mute, unmute, kick, ban, unban
         For muting, you can specify the length of the mute, or only specify a reason if you with to mute permanently

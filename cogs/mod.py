@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Literal, Union
 from io import BytesIO
+from typing import Literal, Union
 
 import discord
 
@@ -39,20 +39,6 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         await _message.delete()
         return await ctx.send(language.string("mod_purge", total=language.number(_deleted)), delete_after=10)
         # await general.send(f"🚮 Successfully removed {_deleted:,} messages", ctx.channel, delete_after=10)
-
-
-class MemberID(commands.Converter):
-    # The solution to the warnings is just using "type: ignore"
-    async def convert(self, ctx, argument):
-        try:
-            m = await commands.MemberConverter().convert(ctx, argument)
-        except commands.BadArgument:
-            try:
-                return int(argument, base=10)
-            except ValueError:
-                raise commands.BadArgument(f"{argument} is not a valid member or member ID.") from None
-        else:
-            return m.id
 
 
 async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member,
@@ -228,7 +214,7 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def mass_kick(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_kick(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass kick users from the server """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -259,7 +245,7 @@ class Moderation(commands.Cog):
             output = language.string("mod_kick_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
 
-    def ban_check(self, ctx: commands.Context, user: MemberID, language: Language):
+    def ban_check(self, ctx: commands.Context, user: commands.MemberID, language: Language):
         member = ctx.guild.get_member(user)  # type: ignore
         if user == ctx.author.id:
             return language.string("mod_ban_self")
@@ -295,7 +281,7 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def ban(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
+    async def ban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
         """ Ban a user from the server """
         language = ctx.language()
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -318,7 +304,7 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def mass_ban(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_ban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass ban users from the server """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -369,7 +355,7 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def unban(self, ctx: commands.Context, member: MemberID, *, reason: str = None):
+    async def unban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
         """ Unban a user """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -389,7 +375,7 @@ class Moderation(commands.Cog):
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True)
     @commands.bot_has_permissions(ban_members=True)
-    async def mass_unban(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_unban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass unban users from the server """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -510,7 +496,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def mass_mute(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_mute(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-mute multiple members """
         language = self.bot.language(ctx)
         mute_role = self.mute_role(ctx, language)
@@ -594,7 +580,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
     @commands.bot_has_permissions(manage_roles=True)
-    async def mass_unmute(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_unmute(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-unmute multiple members """
         language = self.bot.language(ctx)
         reason = reason[:400] if reason else language.string("mod_reason_none")
@@ -763,7 +749,7 @@ class Moderation(commands.Cog):
     @commands.command(name="masswarn")
     @commands.guild_only()
     @permissions.has_permissions(kick_members=True)
-    async def mass_warn(self, ctx: commands.Context, members: commands.Greedy[MemberID], *, reason: str = None):
+    async def mass_warn(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-warn multiple users """
         language = self.bot.language(ctx)
         warn_settings, missing = self.get_warn_settings(ctx, language)
