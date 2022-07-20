@@ -547,7 +547,8 @@
 - Improved how translation completion is counted (made all language names count as one large "string")
 - West Kargadian translation for discord-related commands and various error messages
 
-## v1.5.15 - 18 June - 15 July 2022
+## v1.5.15 - 18 June - 20 July 2022
 - West Kargadian translation for the rest of the commands
 - Updated discord.py and other dependencies to the latest versions
 - Kargadia citizen profile and Kargadian birthdays can now be accessed by citizen ID
+- Fixed timezone misbehaviour for Kargadian birthdays
