@@ -56,7 +56,7 @@ for i in range(len(config["bots"])):
         intents = discord.Intents(members=True, messages=True, guilds=True, bans=True, emojis=True, reactions=True, message_content=True)
     bot = bot_data.Bot(blacklist, i, local_config, config, name, db,
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=HelpFormat(),
-                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Loading..."), status=discord.Status.dnd, intents=intents,
+                       case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Starting up..."), status=discord.Status.dnd, intents=intents,
                        allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True), message_commands=True, slash_commands=False)
     load = bot_data.load[name]
     for name in load:

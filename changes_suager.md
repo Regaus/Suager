@@ -1370,6 +1370,7 @@
 - Updated to newer version of discord.py
 - Also updated other dependencies
 
-## v7.5.15 - 15 July 2022
+## v7.5.15 - 15-20 July 2022
 - Commands using a single MemberID will now show the invalid input
 - TODO: Finished West Kargadian translation
+- Updated status messages used while loading and just afterwards

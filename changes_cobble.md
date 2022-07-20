@@ -552,3 +552,4 @@
 - Updated discord.py and other dependencies to the latest versions
 - Kargadia citizen profile and Kargadian birthdays can now be accessed by citizen ID
 - Fixed timezone misbehaviour for Kargadian birthdays
+- Updated status messages used while loading and just afterwards
