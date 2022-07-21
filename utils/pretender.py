@@ -32,7 +32,10 @@ class MessageManager:
         self.db.execute("DELETE FROM pretender_messages WHERE author=?", (author.id,))
 
     def generate(self, author: discord.Member | discord.User, channel_id: int = None) -> str:
-        dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))[:self.max_limit]
+        if channel_id:
+            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))[:self.max_limit]
+        else:
+            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))[:self.max_limit]
 
         if not dataset or len(dataset) < self.min_limit:
             dataset = self.default()
