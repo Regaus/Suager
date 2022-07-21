@@ -88,6 +88,8 @@ class BotInformation(commands.Cog, name="Bot Information"):
         """ Invite me to your own server! """
         language = self.bot.language(ctx)
         perms = 470150358  # Old: 470150231
+        if self.bot.name == "pretender":
+            perms = 537259072   # Removes unnecessary permissions and adds Manage Webhooks
         # link1 = oauth_url(str(self.bot.user.id), permissions=Permissions(perms), scopes=['bot'])
         # link2 = oauth_url(str(self.bot.user.id), permissions=Permissions(0), scopes=['bot'])
         link3 = oauth_url(str(self.bot.user.id), permissions=Permissions(perms), scopes=['bot', 'applications.commands'])

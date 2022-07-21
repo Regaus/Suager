@@ -809,6 +809,22 @@ async def playing(bot: bot_data.Bot):
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
+            elif bot.name == "pretender":
+                activities = [
+                    {"type": 0, "name": "Amogus"},
+                    {"type": 3, "name": "your every move"},
+                    {"type": 3, "name": "after you"}
+                ]
+                random.seed()
+                _activity = random.choice(activities)
+                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                name = _activity["name"]
+                status = {
+                    0: "Playing",
+                    3: "Watching"
+                }.get(_activity["type"], "Undefined")
+                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+
             else:  # Suager
                 status_type = random.random()
                 if status_type <= 0.2:  # 20% chance of being a birthday status

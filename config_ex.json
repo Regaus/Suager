@@ -35,6 +35,18 @@
       ],
       "error_channel": 738442483591151638,
       "default_locale": "en"
+    },
+    {
+      "name": "Pretender",
+      "internal_name": "pretender",
+      "token": "token",
+      "join_message": "The time has come...",
+      "prefixes": [
+        "a.",
+        "A."
+      ],
+      "error_channel": 738442483591151638,
+      "default_locale": "en"
     }
   ],
   "owner_prefixes": [

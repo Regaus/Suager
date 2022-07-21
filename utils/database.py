@@ -1,3 +1,4 @@
+import re
 import sqlite3
 
 types = ["INTEGER", "REAL", "TEXT", "BOOLEAN", "TIMESTAMP"]  # Real = float, Text = str, Timestamp = datetime
@@ -13,10 +14,19 @@ def dict_factory(cursor, row):
     return d
 
 
+# Built to support the regex required on the Pretender bot, but I suppose if I ever need to use this on other bots I could still use the same thing or just call it something else
+def regex_function(expr, item):
+    if item is None:
+        return False
+    reg = re.compile(re.escape(expr), re.IGNORECASE)
+    return reg.search(item) is not None
+
+
 class Database:
     def __init__(self):
         self.conn = sqlite3.connect(f"data/database.db", isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = dict_factory
+        self.conn.create_function("REGEXP", 2, regex_function)
         self.db = self.conn.cursor()
 
     def execute(self, sql: str, prepared: tuple = ()):
@@ -162,6 +172,18 @@ tables = [
         Column("voters_no", 2, True),       # List of users who voted No
         Column("expiry", 4, True),          # When the poll ends
         Column("anonymous", 3, True),       # Whether the poll is anonymous or not
+    ]),
+    Table("pretender_blacklist", [  # Users ignored for message logging
+        Column("uid", 0, True),     # Blacklisted User's ID
+    ]),
+    Table("pretender_messages", [    # All the messages
+        Column("author", 0, True),   # Message author ID
+        Column("content", 2, True),  # Message content
+    ]),
+    Table("pretender_webhooks", [   # Stores webhooks for channels
+        Column("id", 0, True),      # Webhook ID
+        Column("token", 2, True),   # Webhook's token
+        Column("channel", 0, True)  # Webhook's channel ID
     ]),
     Table("punishments", [
         Column("id", 0, True, True),  # Case ID

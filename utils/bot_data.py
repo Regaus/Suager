@@ -35,6 +35,12 @@ load = {
     ],
     "kyomi2": [],
     "kyomi3": [],
+    "pretender": [
+        "admin",
+        "events",
+        "info",
+        "pretender"
+    ],
     "suager": [
         "achievements",
         "admin",
