@@ -14,3 +14,6 @@
 - Reduced cooldowns for `a.count` and `a.impersonate`
 - Added more channels for message logging
 - Senko Lair's Secret Rooms will have separate message logs for impersonation, while all other channels will have their messages mashed together
+
+## v1.1.1 - 21 July 2022
+- Ignore messages starting with `a.` in the logs

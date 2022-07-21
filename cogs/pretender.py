@@ -21,6 +21,8 @@ class Pretender(commands.Cog):
             return
         if not message.clean_content:
             return
+        if message.content.startswith("a."):
+            return
         if message.channel.id not in self.whitelist:
             return
         if self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (message.author.id,)):
