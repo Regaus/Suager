@@ -8,8 +8,10 @@ from utils import bot_data, commands, general, pretender
 class Pretender(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
-        # Whitelist:      SL general,         RK general
-        self.whitelist = [568148147457490958, 738425419325243424]
+        # Whitelist:      SL: general,        elite-lounge,       secret-room-2,      secret-room-3,      secret-room-8,      secret-room-15
+        # Whitelist:      RK general,         Alex: general,      voice text,         gamer-hub
+        self.whitelist = [568148147457490958, 658112535656005663, 672535025698209821, 681647810357362786, 725835449502924901, 969720792457822219,
+                          738425419325243424, 857504678371917855, 858344984625676360, 917150209149141042]
         self.messages = pretender.MessageManager()
         self.webhooks = pretender.WebhookManager()
 
@@ -19,19 +21,20 @@ class Pretender(commands.Cog):
             return
         if not message.clean_content:
             return
-        if message.channel.id not in self.bot.config["whitelist"]:
+        if message.channel.id not in self.whitelist:
             return
         if self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (message.author.id,)):
             return
         self.messages.add(message)
 
     @commands.command(name="count")
-    @commands.cooldown(rate=1, per=20, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def count(self, ctx: commands.Context, *, content: str):
         """ Counts the amount of messages containing a keyword and shows the Top #10 people who said it. """
         keyword = content.lower()
         occurrences = {}
-        messages = self.bot.db.fetch("SELECT * FROM pretender_messages WHERE content REGEXP ?", (keyword,))
+        # Ignore the secret room messages for counting (For future self, maybe do the same behaviour as impersonate command?)
+        messages = self.bot.db.fetch("SELECT * FROM pretender_messages WHERE content REGEXP ? AND channel IS NULL", (keyword,))
 
         for message in messages:
             text = message.get("content")
@@ -101,17 +104,18 @@ class Pretender(commands.Cog):
         return await ctx.send("Successfully deleted all message data from you and added you to the log blacklist.")
 
     @commands.command(name="impersonate")
-    @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.channel)
+    @commands.bot_has_permissions(manage_webhooks=True, manage_messages=True)
     async def impersonate(self, ctx: commands.Context, victim: discord.User = None):
         """ Impersonates a user (or you), based on their messages that have been collected.
         If the user has opted out of message collecting, or there are not enough messages, it will be based on all messages in the database. """
         victim = victim or ctx.author
         session = ClientSession()
-        try:
-            message = self.messages.generate(victim)
+        try:  # For secret rooms, generate message based on the messages already there
+            message = self.messages.generate(victim, ctx.channel.id if ctx.channel.category_id == 663031673813860420 else None)
             webhook = await self.webhooks.get(ctx.channel, session)
             await ctx.message.delete()
-            return await webhook.send(message, username=victim.name, avatar_url=str(victim.display_avatar))
+            await webhook.send(message, username=victim.name, avatar_url=str(victim.display_avatar))
         except Exception as e:
             raise e
         finally:

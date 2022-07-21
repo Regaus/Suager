@@ -8,3 +8,9 @@
 
 ## v1.0.0 - 20 July 2022
 - Incorporated the code into the code for all the other bots
+
+## v1.1.0 - 21 July 2022
+- Added permission checks for `a.impersonate`
+- Reduced cooldowns for `a.count` and `a.impersonate`
+- Added more channels for message logging
+- Senko Lair's Secret Rooms will have separate message logs for impersonation, while all other channels will have their messages mashed together

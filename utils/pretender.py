@@ -9,8 +9,9 @@ from utils.database import Database
 
 
 class MessageManager:
-    def __init__(self, min_limit: int = 500, max_limit: int = 25000, length: int = 200, tries: int = 100):
+    def __init__(self, min_limit: int = 500, max_limit: int = 100000, length: int = 200, tries: int = 100):
         # The original had the min_limit set to 1000, but let's have it at 500 here since a lot of users might not have that many
+        # The original had the max_limit set to 25000
         self.db = Database()
 
         self.min_limit = min_limit
@@ -20,16 +21,18 @@ class MessageManager:
         self.tries = tries
 
     def default(self) -> list[dict]:
-        return self.db.fetch("SELECT * FROM pretender_messages", ())[:self.max_limit]
+        return self.db.fetch("SELECT * FROM pretender_messages WHERE channel IS NULL", ())[:self.max_limit]
 
     def add(self, message: discord.Message):
-        self.db.execute("INSERT INTO pretender_messages VALUES (?, ?)", (message.author.id, message.clean_content))
+        # We only need to track the channel if the channel is a Secret Room - else, mash everything together
+        _channel = message.channel.id if message.channel.category_id == 663031673813860420 else None
+        self.db.execute("INSERT INTO pretender_messages VALUES (?, ?, ?)", (message.author.id, _channel, message.clean_content))
 
     def remove(self, author: discord.Member | discord.User):
         self.db.execute("DELETE FROM pretender_messages WHERE author=?", (author.id,))
 
-    def generate(self, author: discord.Member | discord.User) -> str:
-        dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=?", (author.id,))[:self.max_limit]
+    def generate(self, author: discord.Member | discord.User, channel_id: int = None) -> str:
+        dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))[:self.max_limit]
 
         if not dataset or len(dataset) < self.min_limit:
             dataset = self.default()

@@ -176,9 +176,10 @@ tables = [
     Table("pretender_blacklist", [  # Users ignored for message logging
         Column("uid", 0, True),     # Blacklisted User's ID
     ]),
-    Table("pretender_messages", [    # All the messages
-        Column("author", 0, True),   # Message author ID
-        Column("content", 2, True),  # Message content
+    Table("pretender_messages", [     # All the messages
+        Column("author", 0, True),    # Message author ID
+        Column("channel", 0, False),  # Message channel ID
+        Column("content", 2, True),   # Message content
     ]),
     Table("pretender_webhooks", [   # Stores webhooks for channels
         Column("id", 0, True),      # Webhook ID
