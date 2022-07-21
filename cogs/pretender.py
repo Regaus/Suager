@@ -36,7 +36,7 @@ class Pretender(commands.Cog):
         for message in messages:
             text = message.get("content")
             text = text.lower()
-            author = message["author"]["id"]
+            author = message["author"]
 
             if author not in occurrences:
                 occurrences[author] = 0
@@ -51,7 +51,7 @@ class Pretender(commands.Cog):
             colour=general.random_colour(),
             timestamp=ctx.message.created_at
         )
-        embed.set_footer(text=f"Invoked by {ctx.author}", icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=f"Invoked by {ctx.author}", icon_url=str(ctx.author.display_avatar))
         index = 1
 
         for uid, count in occurrences.items():
@@ -62,7 +62,7 @@ class Pretender(commands.Cog):
                 except discord.NotFound:
                     continue
 
-            embed.add_field(name=f"#{index} - {str(user)}", value=f"**{count}** uses")
+            embed.add_field(name=f"#{index} - {str(user)}", value=f"**{count}** uses", inline=False)
 
             if index == 10:  # 10th place
                 break
