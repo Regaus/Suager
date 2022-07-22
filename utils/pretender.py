@@ -1,6 +1,8 @@
 # Code adapted from: https://github.com/okbuddyhololive/polkabot
 from __future__ import annotations
 
+import random
+
 import discord
 import markovify
 from aiohttp import ClientSession
@@ -9,7 +11,7 @@ from utils.database import Database
 
 
 class MessageManager:
-    def __init__(self, min_limit: int = 500, max_limit: int = 100000, length: int = 200, tries: int = 100):
+    def __init__(self, min_limit: int = 500, max_limit: int = 50000, length: int = 200, tries: int = 100):
         # The original had the min_limit set to 1000, but let's have it at 500 here since a lot of users might not have that many
         # The original had the max_limit set to 25000
         self.db = Database()
@@ -21,7 +23,7 @@ class MessageManager:
         self.tries = tries
 
     def default(self) -> list[dict]:
-        return self.db.fetch("SELECT * FROM pretender_messages WHERE channel IS NULL", ())[:self.max_limit]
+        return self.db.fetch("SELECT * FROM pretender_messages WHERE channel IS NULL", ())
 
     def add(self, message: discord.Message):
         # We only need to track the channel if the channel is a Secret Room - else, mash everything together
@@ -33,12 +35,17 @@ class MessageManager:
 
     def generate(self, author: discord.Member | discord.User, channel_id: int = None) -> str:
         if channel_id:
-            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))[:self.max_limit]
+            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))
         else:
-            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))[:self.max_limit]
+            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))
 
         if not dataset or len(dataset) < self.min_limit:
             dataset = self.default()
+
+        # This should make it so that if the length of the dataset exceeds the limit, it will use random entries in the database instead of the same ones over and over again
+        if len(dataset) > self.max_limit:
+            random.shuffle(dataset)
+            dataset = dataset[:self.max_limit]
 
         dataset = [message.get("content") for message in dataset]
         chain = markovify.NewlineText(dataset, well_formed=False)

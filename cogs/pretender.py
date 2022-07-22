@@ -106,7 +106,7 @@ class Pretender(commands.Cog):
         return await ctx.send("Successfully deleted all message data from you and added you to the log blacklist.")
 
     @commands.command(name="impersonate")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.channel)
+    @commands.cooldown(rate=1, per=7.5, type=commands.BucketType.user)
     @commands.bot_has_permissions(manage_webhooks=True, manage_messages=True)
     async def impersonate(self, ctx: commands.Context, victim: discord.User = None):
         """ Impersonates a user (or you), based on their messages that have been collected.

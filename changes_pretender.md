@@ -17,3 +17,8 @@
 
 ## v1.1.1 - 21 July 2022
 - Ignore messages starting with `a.` in the logs
+
+## v1.1.2 - 22 July 2022
+- Changed the cooldown for `a.impersonate` to 7.5s per user (from 5s per channel)
+- Reduced the Markov chain generator's dataset length limit to 50,000 (from 10,000) 
+- The generator will now use random entries of the dataset if the overall length exceeds the max limit
