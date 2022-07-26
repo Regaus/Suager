@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 from io import BytesIO
 
 import discord
@@ -835,19 +835,30 @@ class Reminders(Utility, name="Utility"):
         _expiry = reminder["expiry"]
         if args.time is not None:
             _datetime = args.time
-            if len(_datetime) == 1:
-                _date, _time = _datetime[0], "00:00:00"
-            elif len(_datetime) == 2:
-                _date, _time = _datetime
-                _time = _time.replace(".", ":")
-                c = _time.count(":")
-                if c == 1:
-                    _time = f"{_time}:00"
-            else:
-                return await ctx.send(language.string("util_reminders_edit_time2"))
             try:
-                _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
-                _expiry = _expiry.replace(tzinfo=self.bot.timezone(ctx.author.id)).astimezone(time2.timezone.utc).replace(tzinfo=None)
+                if len(_datetime) == 1:
+                    _date, time_part = _datetime[0], time2.time()  # 0:00:00
+                elif len(_datetime) == 2:
+                    _date, _time = _datetime
+                    _time = _time.replace(".", ":")
+                    # c = _time.count(":")
+                    # if c == 1:
+                    #     _time = f"{_time}:00"
+                    _h, _m, *_s = _time.split(":")
+                    h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+                    time_part = time2.time(h, m, s, 0, time2.utc)
+                else:
+                    return await ctx.send(language.string("util_reminders_edit_time2"))
+
+                _date = _date.replace(".", "-").replace("/", "-")
+                _y, _m, _d = _date.split("-")
+                y, m, d = int(_y), int(_m), int(_d)
+                date_part = time2.date(y, m, d, time2.Earth)
+
+                _expiry = time2.datetime.combine(date_part, time_part, self.bot.timezone(ctx.author.id))
+                _expiry = _expiry.to_timezone(time2.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
+                # _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
+                # _expiry = _expiry.replace(tzinfo=self.bot.timezone(ctx.author.id)).astimezone(time2.timezone.utc).replace(tzinfo=None)
             except ValueError:
                 return await ctx.send(language.string("util_reminders_edit_time"))
         expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
