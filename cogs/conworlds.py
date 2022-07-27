@@ -332,13 +332,15 @@ class Conworlds(commands.Cog):
         # has_birthday = self.check_birthday(_user)
 
         data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
+        if data is None:
+            return await ctx.send(language.string("birthdays_birthday_not_saved", user=self.bot.get_user(_user)))
         try:
             user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
             username = user.name
         except discord.NotFound:
             username = data["name"]
             user = self.bot.user  # Use the bot's user account so the tz check doesn't fail
-        if data is None or data["birthday"] is None:
+        if data["birthday"] is None:
             return await ctx.send(language.string("birthdays_birthday_not_saved", user=username))
         birthday_date = time.date.from_iso(data["birthday"], time.Kargadia)
         birthday = language.date(birthday_date, short=0, dow=False, year=False)
