@@ -547,10 +547,11 @@
 - Improved how translation completion is counted (made all language names count as one large "string")
 - West Kargadian translation for discord-related commands and various error messages
 
-## v1.5.15 - 18 June - 27 July 2022
+## v1.6.0 - 18 June - 28 July 2022
 - West Kargadian translation for the rest of the commands
 - Updated discord.py and other dependencies to the latest versions
 - Kargadia citizen profile and Kargadian birthdays can now be accessed by citizen ID
 - Fixed timezone misbehaviour for Kargadian birthdays
 - Fixed Kargadian birthdays breaking when the user does not have a Kargadian citizen profile
 - Updated status messages used while loading and just afterwards
+- Command to see distance between two places on Kargadia and other planets

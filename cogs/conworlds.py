@@ -1,6 +1,6 @@
 import json
 import re
-from math import ceil
+from math import atan2, ceil, cos, radians as rad, sin, sqrt
 
 import discord
 from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
@@ -143,6 +143,74 @@ class Conworlds(commands.Cog):
             return await ctx.send(f"{where} - {place.planet} - {conworlds.format_location(place.lat, place.long, False, 'en')}{coords}")
         except PlaceDoesNotExist:
             return await ctx.send(f"Location {where!r} not found.")
+
+    @commands.command(name="distance", aliases=["dist"])
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def distance(self, ctx: commands.Context, origin: str, destination: str, planet: str = None):
+        """ Calculate the distance between two places in SS-23
+        The distance cannot be calculated if the two places are located on two different planets
+        The planet argument is only used for calculations using coordinates instead of place names (defaults to Kargadia if none specified)
+        You can mix places and coordinates together if you want
+
+        Example using place name: `..distance Reggar "Rakkan Lintina"`
+        Example using coordinates: `..distance "60.00,-53.48" "22.00,-77.48" Kargadia` """
+        radii = {
+            "Virkada": 5224.22,
+            "Zeivela": 7008.10,
+            "Kargadia": 7326.65,
+            "Qevenerus": 14016.20,
+        }
+        coord_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,2}\.?\d*)$")
+
+        # Check if the origin is a coordinate or a place name
+        try:
+            if re.match(coord_check, origin):
+                x, y = origin.split(",")
+                lat1, long1 = float(x), float(y)
+                planet1 = planet
+                name1 = conworlds.format_location(lat1, long1)
+            else:
+                place1 = conworlds.Place(origin)
+                lat1, long1 = place1.lat, place1.long
+                planet1 = place1.planet
+                name1 = place1.names["en"]
+        except ValueError:  # PlaceDoesNotExist and invalid coordinates will both raise a ValueError
+            return await ctx.send(f"Location {origin!r} is not a valid place or coordinate.")
+
+        # Do the same for the destination
+        try:
+            if re.match(coord_check, destination):
+                x, y = destination.split(",")
+                lat2, long2 = float(x), float(y)
+                planet2 = planet
+                name2 = conworlds.format_location(lat2, long2)
+            else:
+                place2 = conworlds.Place(destination)
+                lat2, long2 = place2.lat, place2.long
+                planet2 = place2.planet
+                name2 = place2.names["en"]
+        except ValueError:
+            return await ctx.send(f"Location {origin!r} is not a valid place or coordinate.")
+
+        if planet1 != planet2:
+            return await ctx.send(f"These two places are on different planets ({planet1} and {planet2}). Distance cannot be calculated.")
+        planet = planet1
+        if planet is None:
+            planet = "Kargadia"  # default value to Kargadia if no planet is specified
+        del planet1, planet2
+
+        try:
+            radius = radii[planet]
+        except KeyError:
+            return await ctx.send(f"{planet!r} is not a valid planet.")
+
+        la1, la2 = rad(lat1), rad(lat2)  # Latitudes expressed in radians
+        dla, dlo = rad(lat2 - lat1), rad(long2 - long1)  # Delta of latitudes, delta of longitudes expressed in radians
+        a = sin(dla / 2) ** 2 + cos(la1) * cos(la2) * (sin(dlo / 2) ** 2)
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        distance = radius * c  # km
+        metric, imperial = ctx.language2("en").length(distance * 1000, precision=2).split(" | ")
+        return await ctx.send(f"The distance between **{name1}** and **{name2}** is **{metric}** (**{imperial}**).")
 
     @commands.command(name="nlc")
     @commands.is_owner()
