@@ -192,11 +192,16 @@ class Conworlds(commands.Cog):
         except ValueError:
             return await ctx.send(f"Location {origin!r} is not a valid place or coordinate.")
 
-        if planet1 != planet2:
+        if planet1 is None and planet2 is not None:
+            planet = planet2
+        elif planet1 is not None and planet2 is None:
+            planet = planet1
+        elif planet1 != planet2:
             return await ctx.send(f"These two places are on different planets ({planet1} and {planet2}). Distance cannot be calculated.")
-        planet = planet1
-        if planet is None:
-            planet = "Kargadia"  # default value to Kargadia if no planet is specified
+        elif planet1 is None and planet2 is None:
+            planet = "Kargadia"
+        else:
+            planet = planet1
         del planet1, planet2
 
         try:
