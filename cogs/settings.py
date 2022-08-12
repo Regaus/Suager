@@ -1358,7 +1358,7 @@ class Settings(commands.Cog):
         elif value.lower() == "no":
             _settings["polls"]["voter_anonymity"] = False
         else:
-            return await ctx.send(language.string("settings_polls_anonymity_invalid"))
+            return await ctx.send(language.string("settings_poll_anonymity_invalid"))
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))

@@ -518,7 +518,7 @@
   "settings_mod_logs_enable_roles": "Members gaining/losing roles will now be logged to {channel}.",
   "settings_mod_logs_invalid": "Invalid punishment `{value}` specified",
   "settings_mute_role": "The Muted role is now {role}.",
-  "settings_polls_anonymity_invalid": "You must say either \"yes\" or \"no\".",
+  "settings_poll_anonymity_invalid": "You must say either \"yes\" or \"no\".",
   "settings_poll_anonymity_no": "Polls will now show who voted for which option.",
   "settings_poll_anonymity_yes": "Polls will now only show how many people voted for each option.",
   "settings_poll_channel_none": "Poll announcements will now be sent to the channel the poll is started in.",
