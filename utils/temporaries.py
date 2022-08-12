@@ -898,11 +898,10 @@ async def playing(bot: bot_data.Bot):
             await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
             error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
-        except aiohttp.ClientConnectorError:
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > The bot tried to do something while disconnected.")
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
         except Exception as e:
             error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
-            print(general.traceback_maker(e))
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
@@ -932,8 +931,8 @@ async def avatars(bot: bot_data.Bot):
             logger.log(bot.name, "avatar", send)
         except PermissionError:
             error(f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
-        except aiohttp.ClientConnectorError:
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > The bot tried to do something while disconnected.")
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
         except Exception as e:
             error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
 

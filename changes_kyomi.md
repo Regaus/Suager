@@ -234,3 +234,4 @@
 - Updated discord.py and other dependencies to the latest versions
 - Commands using a single MemberID will now show the invalid input
 - Fix `m!reminders edit` improperly converting timezones because datetime was designed by monkeys
+- Numbers should no longer show up as links on Android

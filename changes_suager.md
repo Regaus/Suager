@@ -1375,3 +1375,4 @@
 - TODO: Finished West Kargadian translation
 - Updated status messages used while loading and just afterwards
 - Fix `//reminders edit` improperly converting timezones because datetime was designed by monkeys
+- Numbers should no longer show up as links on Android

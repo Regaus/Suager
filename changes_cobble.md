@@ -555,3 +555,4 @@
 - Fixed Kargadian birthdays breaking when the user does not have a Kargadian citizen profile
 - Updated status messages used while loading and just afterwards
 - Command to see distance between two places on Kargadia and other planets
+- Numbers should no longer show up as links on Android
