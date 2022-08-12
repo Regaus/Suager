@@ -543,7 +543,7 @@
   "settings_starboard_none": "There are no starboard settings in this server.",
   "settings_starboard_requirement": "Stars required",
   "settings_starboard_requirement_min": "You must require at least 1 star.",
-  "settings_starboard_requirement_set": "The amount of stars required to get to starboard is now {value}.",
+  "settings_starboard_requirement_set": "The amount of stars required to get to the starboard is now {value}.",
   "settings_users_join_none": "New members joining the server will no longer be logged.",
   "settings_users_join_set": "New members joining the server will now be logged in {channel}.",
   "settings_users_leave_none": "Members leaving the server will no longer be logged.",
