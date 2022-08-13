@@ -87,7 +87,7 @@ class Language(languages.Language):
             now = datetime.now()
         else:
             now = time.datetime.now(time_class=delta.time_class)
-        return self.delta_dt(now + delta, source=now, accuracy=accuracy, brief=brief, affix=affix)
+        return self.delta_dt(now + delta, source=now, accuracy=accuracy, brief=brief, affix=affix, case=case)
 
     @staticmethod
     def time2(when: time.datetime | time.time | datetime | dt_time, *, seconds: bool = True, tz: bool = False, tz_name: str = None) -> str:
