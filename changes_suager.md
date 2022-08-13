@@ -1370,9 +1370,9 @@
 - Updated to newer version of discord.py
 - Also updated other dependencies
 
-## v7.5.15 - 15-26 July 2022
+## v7.5.15 - 15 July - 13 August 2022
 - Commands using a single MemberID will now show the invalid input
-- TODO: Finished West Kargadian translation
+- Finished West Kargadian translation
 - Updated status messages used while loading and just afterwards
 - Fix `//reminders edit` improperly converting timezones because datetime was designed by monkeys
 - Numbers should no longer show up as links on Android
