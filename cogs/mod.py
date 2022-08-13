@@ -625,8 +625,8 @@ class Moderation(commands.Cog):
         # This also has the side effect of showing active permanent mutes first, as their "expiry" value is set to the time the mute was issued, which is in the past.
         mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE gid=? AND action='mute' AND handled=0 ORDER BY expiry", (ctx.guild.id,))
         if not mutes:
-            return await ctx.send(language.string("mod_mute_list_none", ctx.guild.name))
-        output = language.string("mod_mute_list", ctx.guild.name)
+            return await ctx.send(language.string("mod_mute_list_none", server=ctx.guild.name))
+        output = language.string("mod_mute_list", server=ctx.guild.name)
         outputs = []
         _mute = 0
         for mute in mutes:
