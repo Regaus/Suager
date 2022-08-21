@@ -6,10 +6,10 @@ from datetime import datetime, time as dt_time
 import jstyleson
 import pytz
 from dateutil.relativedelta import relativedelta
-from regaus import languages, time
+from regaus import languages, time, version_info as regaus_version_info
 from regaus.conworlds import Place
 
-from utils import database
+from utils import database, emotes
 
 
 def _read_dir(folder: str):
@@ -81,6 +81,12 @@ class Language(languages.Language):
     def number(self, value: int | float, *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True, positives: bool = False) -> str:
         # Surround the full stops and spaces by "zero width non-joiners" to prevent Android from treating the number outputs like links (Why does this even have to be a problem?)
         return super().number(value, precision=precision, fill=fill, percentage=percentage, commas=commas, positives=positives).replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c")
+
+    def string(self, string: str, *values, **kwargs) -> str:
+        if regaus_version_info >= 8589959430:  # Regaus.py v2.0.0a5 doesn't add the emotes anymore
+            return super().string(string, *values, **kwargs, emotes=emotes)
+        else:
+            return super().string(string, *values, **kwargs)
 
     def delta_rd(self, delta: time.relativedelta | relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False, case: str = "default") -> str:
         if isinstance(delta, relativedelta):
