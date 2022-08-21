@@ -160,7 +160,7 @@ class Conworlds(commands.Cog):
             "Kargadia": 7326.65,
             "Qevenerus": 14016.20,
         }
-        coord_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,2}\.?\d*)$")
+        coord_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,3}\.?\d*)$")
 
         # Check if the origin is a coordinate or a place name
         try:
@@ -190,7 +190,7 @@ class Conworlds(commands.Cog):
                 planet2 = place2.planet
                 name2 = place2.names["en"]
         except ValueError:
-            return await ctx.send(f"Location {origin!r} is not a valid place or coordinate.")
+            return await ctx.send(f"Location {destination!r} is not a valid place or coordinate.")
 
         if planet1 is None and planet2 is not None:
             planet = planet2

@@ -235,3 +235,6 @@
 - Commands using a single MemberID will now show the invalid input
 - Fix `m!reminders edit` improperly converting timezones because datetime was designed by monkeys
 - Numbers should no longer show up as links on Android
+
+## v1.2.11.1 - 21 August 2022
+- Handle emotes kwarg no longer being added in Regaus.py v2.0

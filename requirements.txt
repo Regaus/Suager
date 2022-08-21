@@ -1,5 +1,4 @@
-discord
-git+https://github.com/Rapptz/discord.py@master#egg=discord.py
+discord.py
 git+https://github.com/Regaus/Regaus.py.git@stable#egg=regaus.py
 Pillow
 aiohttp

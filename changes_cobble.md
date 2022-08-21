@@ -556,3 +556,7 @@
 - Updated status messages used while loading and just afterwards
 - Command to see distance between two places on Kargadia and other planets
 - Numbers should no longer show up as links on Android
+
+## v1.6.0.1 - 21 August 2022
+- Handle emotes kwarg no longer being added in Regaus.py v2.0
+- Fix `..distance` not accepting longitude coordinates with 3 digits
