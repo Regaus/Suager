@@ -1379,3 +1379,7 @@
 
 ## v7.5.15.1 - 21 August 2022
 - Handle emotes kwarg no longer being added in Regaus.py v2.0
+
+## v7.5.15.2 - 3 September 2022
+- The database builder now uses the actual type string instead of the number abstraction
+- Added new converters for datetime, which will hopefully bring less issues

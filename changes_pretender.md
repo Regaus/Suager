@@ -22,3 +22,6 @@
 - Changed the cooldown for `a.impersonate` to 7.5s per user (from 5s per channel)
 - Reduced the Markov chain generator's dataset length limit to 50,000 (from 10,000) 
 - The generator will now use random entries of the dataset if the overall length exceeds the max limit
+
+## v1.1.2.1 - 3 September 2022
+- The database builder now uses the actual type string instead of the number abstraction
