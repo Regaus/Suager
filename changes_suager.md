@@ -1383,3 +1383,6 @@
 ## v7.5.15.2 - 3 September 2022
 - The database builder now uses the actual type string instead of the number abstraction
 - Added new converters for datetime, which will hopefully bring less issues
+
+## v7.5.15.3 - 3 September 2022
+- Made a "protected" list for social commands so that my bots could also be protected from being slapped or whatever
