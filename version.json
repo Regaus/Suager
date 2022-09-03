@@ -8,10 +8,10 @@
   },
   "cobble": {
     "short_version": "1.6",
-    "version": "1.6.0.2",
+    "version": "1.6.1",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1662163205
+    "last_update": 1662164519
   },
   "kyomi": {
     "short_version": "1.2",

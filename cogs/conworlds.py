@@ -160,13 +160,20 @@ class Conworlds(commands.Cog):
             "Kargadia": 7326.65,
             "Qevenerus": 14016.20,
         }
-        coord_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,3}\.?\d*)$")
+        lat_long_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,3}\.?\d*)$")
+        coordinate_check = re.compile(r"^c(\d{1,4}\.?\d*),(\s?)(\d{1,4}\.?\d*)$")
 
         # Check if the origin is a coordinate or a place name
         try:
-            if re.match(coord_check, origin):
+            if re.match(lat_long_check, origin):
                 x, y = origin.split(",")
                 lat1, long1 = float(x), float(y)
+                planet1 = planet
+                name1 = conworlds.format_location(lat1, long1)
+            elif re.match(coordinate_check, origin):
+                x, y = origin[1:].split(",")
+                x1, y1 = float(x), float(y)
+                lat1, long1 = conworlds.calc_position(x1, y1, planet if planet else "Kargadia")
                 planet1 = planet
                 name1 = conworlds.format_location(lat1, long1)
             else:
@@ -179,9 +186,15 @@ class Conworlds(commands.Cog):
 
         # Do the same for the destination
         try:
-            if re.match(coord_check, destination):
+            if re.match(lat_long_check, destination):
                 x, y = destination.split(",")
                 lat2, long2 = float(x), float(y)
+                planet2 = planet
+                name2 = conworlds.format_location(lat2, long2)
+            elif re.match(coordinate_check, destination):
+                x, y = destination[1:].split(",")
+                x2, y2 = float(x), float(y)
+                lat2, long2 = conworlds.calc_position(x2, y2, planet if planet else "Kargadia")
                 planet2 = planet
                 name2 = conworlds.format_location(lat2, long2)
             else:

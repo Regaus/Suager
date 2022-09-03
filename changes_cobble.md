@@ -564,3 +564,6 @@
 ## v1.6.0.2 - 3 September 2022
 - The database builder now uses the actual type string instead of the number abstraction
 - Added new converters for datetime, which will hopefully bring less issues
+
+## v1.6.1 - 3 September 2022
+- Made it possible to calculate distance between two places using map coordinates instead of lat/long
