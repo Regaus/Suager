@@ -1071,7 +1071,7 @@ async def trials(bot: bot_data.Bot):
                         duration_text = None
                         if action in ["mute", "unmute"]:
                             if member:
-                                _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (guild.id,))
+                                _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (guild.id, bot.name))
                                 if not _data:
                                     out = f"{time.time()} > Trials > Trial {trial_id} > Guild settings not found"
                                     general.print_error(out)
