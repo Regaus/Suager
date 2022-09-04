@@ -245,3 +245,6 @@
 
 ## v1.2.11.3 - 3 September 2022
 - Made a "protected" list for social commands so that my bots could also be protected from being slapped or whatever
+
+## v1.2.11.4 - 4 September 2022
+- Fixed mod commands breaking when multiple bots have settings saved for the server

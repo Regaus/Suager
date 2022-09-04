@@ -45,7 +45,7 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
                       action: str, reason: str, duration: str = None, auto: bool = False, original_warning: str = None):
     """ Try to send the user a DM that they've been warned/muted/kicked/banned """
     try:
-        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, bot.name))
         if not _data:
             return  # No data found means disabled
         data = json.loads(_data["data"])
@@ -105,7 +105,7 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, u
                        entry_id: int, action: str, reason: str, duration: str = None, original_warning: str = None):
     """ Try to send a mod log message about the punishment """
     try:
-        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _data = bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, bot.name))
         if not _data:
             return  # No data found means disabled
         data = json.loads(_data["data"])
@@ -407,7 +407,7 @@ class Moderation(commands.Cog):
         return await ctx.send(output)
 
     def mute_role(self, ctx: commands.Context, language: Language):
-        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not _data:
             return language.string("mod_mute_role2", p=ctx.prefix)
         data = json.loads(_data["data"])
@@ -658,7 +658,7 @@ class Moderation(commands.Cog):
         }.get(self.bot.name)
 
     def get_warn_settings(self, ctx: commands.Context, language: Language):
-        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
+        _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not _data:
             return self.settings_template["warnings"], language.string("mod_warn_settings", ctx.prefix)
         data = json.loads(_data["data"])
