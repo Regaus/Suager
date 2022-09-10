@@ -21,7 +21,7 @@ class Settings(commands.Cog):
         """ List of all supported languages """
         nat, con, rsl = [], [], []
         _en = languages.Language("en")
-        exclude = ["_self", "_en", "_valid", "_conlang"]
+        exclude = ["_self", "_en", "_valid", "_conlang", "weather78_islands", "weather78_regions"]
         for language in list(languages.languages.languages.keys()):
             _language = languages.Language(language)
             if language == "en":
