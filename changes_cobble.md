@@ -567,3 +567,10 @@
 
 ## v1.6.1 - 3 September 2022
 - Made it possible to calculate distance between two places using map coordinates instead of lat/long
+
+## v1.7.0 - 10 September 2022
+- Regaus.py v2.0 compatibility: Renamed Kargadian language translation files and language translation counter
+- Updated the list of places for Kargadian time to suit the new v2.0 structure
+- Improved the way the places are shown on the Kargadian time list and in CobbleBot's playing status
+- Updated the Playing status translations to use up-to-date forms of the language
+- Fixed holiday countdowns yet again (hopefully this time it will actually work)

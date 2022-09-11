@@ -21,7 +21,7 @@ class Settings(commands.Cog):
         """ List of all supported languages """
         nat, con, rsl = [], [], []
         _en = languages.Language("en")
-        exclude = ["_self", "_en", "_valid", "_conlang", "weather78_islands", "weather78_regions"]
+        exclude = ["_self", "_en", "_valid", "_conlang"]
         for language in list(languages.languages.languages.keys()):
             _language = languages.Language(language)
             if language == "en":
@@ -49,7 +49,8 @@ class Settings(commands.Cog):
                             strings += 1
 
                     # Behaviour for when the data is a dict
-                    elif isinstance(d1, dict) and isinstance(d2, dict) and k != "_languages":  # Languages should count as just one big "string" so that they wouldn't create 50 extra entries
+                    # Languages, island names and region names should count as just one big "string" each so that they wouldn't create hundreds of extra entries
+                    elif isinstance(d1, dict) and isinstance(d2, dict) and k not in ["_languages", "weather78_islands", "weather78_regions"]:
                         for key, s1 in d1.items():
                             s2 = d2.get(key)
                             strings += 1

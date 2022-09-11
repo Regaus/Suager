@@ -47,22 +47,21 @@ class Conworlds(commands.Cog):
         output = f"Time on Earth: **{time_earth}**"
         _pre = "on"
         if place_name == "Kargadia":
-            _name = _id = "Kargadia"
-            place_name = "South Pole Kargadia"
+            _name = "Kargadia"
+            place_name = "Virsetgar"
         elif place_name == "Qevenerus":
-            _name = _id = "Qevenerus"
+            _name = "Qevenerus"
             place_name = "Kaltarena Qevenerus"
         elif place_name == "Virkada":
-            _name = _id = "Virkada"
+            _name = "Virkada"
             place_name = "Virkada Central"
         else:
             _pre = "in"
-            _name = place_name
-            _id = None
+            _name = None
         place = conworlds.Place(place_name, dt)
-        if _id is None:
-            _id = place.id
-        output += f"\nTime {_pre} {_id}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
+        if _name is None:
+            _name = place.name_translation(ctx.language2("en"))
+        output += f"\nTime {_pre} {_name}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
         return await ctx.send(output)
 
     @commands.command(name="kaage", aliases=["age"])
@@ -394,7 +393,12 @@ class Conworlds(commands.Cog):
             embed.add_field(name="Birthday", value="Unavailable", inline=False)
 
         if data["location"]:
-            embed.add_field(name="Location", value=data["location"], inline=False)
+            try:
+                place = conworlds.Place(data["location"])
+                location = place.name_translation(language)
+            except PlaceDoesNotExist:
+                location = data["location"]
+            embed.add_field(name="Location", value=location, inline=False)
         else:
             embed.add_field(name="Location", value="Unavailable", inline=False)
 

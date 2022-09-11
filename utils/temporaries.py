@@ -334,74 +334,112 @@ async def birthdays(bot: bot_data.Bot):
 
 ka_places = {
     "Regaazdall": {
-        "Regavall": {"en": None, "weight": 40},
-        "Reggar":   {"en": None, "weight": 50},
-        "Suvagar":  {"en": None, "weight": 40},
+        "Munearan Köreldaivus": {"data": "", "weight": 30},
+        "Regavall":             {"data": "", "weight": 40},
+        "Reggar":               {"data": "", "weight": 50},
+        "Suvagar":              {"data": "", "weight": 40},
     },
     "Nehtivia": {
-        "Ekspigar":    {"en": None, "weight": 35},
-        "Leitagar":    {"en": None, "weight": 35},
-        "Orlagar":     {"en": None, "weight": 35},
-        "Pakigar":     {"en": None, "weight": 35},
-        "Runnegar":    {"en": None, "weight": 25},
-        "Shonangar":   {"en": None, "weight": 35},
-        "Steirigar":   {"en": None, "weight": 35},
-        "Sunmagar":    {"en": None, "weight": 25},
-        "Tenmagar":    {"en": None, "weight": 25},
-        "Peaskar":     {"en": None, "weight": 25},
-        "Sulingar":    {"en": None, "weight": 30},
-        "Alyksandris": {"en": None, "weight": 35},
-        "Läkingar":    {"en": None, "weight": 25},
-        "Leogar":      {"en": None, "weight": 35},
-        "Menenvallus": {"en": None, "weight": 30},
-        "Tevivall":    {"en": None, "weight": 30},
-        "Kamikava":    {"en": None, "weight": 35},
-        "Kiomigar":    {"en": None, "weight": 35},
-        "Lailagar":    {"en": None, "weight": 35},
+        "Ekspigar":           {"data": "", "weight": 35},
+        "Kollugar":           {"data": "", "weight": 35},
+        "Leitagar":           {"data": "", "weight": 35},
+        "Pakigar":            {"data": "", "weight": 35},
+        "Steirigar":          {"data": "", "weight": 35},
+        "Sunmagar":           {"data": "", "weight": 25},
+        "Tenmagar":           {"data": "", "weight": 30},
+        "Runnegar":           {"data": "", "weight": 25},
+        "Lurvugar":           {"data": "", "weight": 25},
+        "Peaskar":            {"data": "", "weight": 25},
+        "Sulingar":           {"data": "", "weight": 30},
+        "Alexandris":         {"data": "", "weight": 35},
+        "Drippangar":         {"data": "", "weight": 35},
+        "Läkingar":           {"data": "", "weight": 25},
+        "Leogar":             {"data": "", "weight": 35},
+        "Menenvallus":        {"data": "", "weight": 30},
+        "Tevivall":           {"data": "", "weight": 30},
+        "Melligar":           {"data": "", "weight": 35},
+        "Chakkangar":         {"data": "", "weight": 35},
+        "Kamikawa":           {"data": "", "weight": 35},
+        "Kiomigar":           {"data": "", "weight": 35},
+        "Lailagar":           {"data": "", "weight": 35},
+        "Koutun Köreldaivus": {"data": "", "weight": 30},
     },
     "Nittavia": {
-        "Erdagar":     {"en": None, "weight": 25},
-        "Körevallus":  {"en": None, "weight": 30},
-        "Nuktagar":    {"en": None, "weight": 25},
-        "Saikovallus": {"en": None, "weight": 30},
+        "Erdagar":     {"data": "", "weight": 25},
+        "Ammugar":     {"data": "", "weight": 25},
+        "Körevallus":  {"data": "", "weight": 30},
+        "Saikovallus": {"data": "", "weight": 30},
     },
     "Tebaria": {
-        "Sentatebaria": {"en": None, "weight": 30},
-        "Kaivalgard":   {"en": None, "weight": 35},
-        "Harvugar":     {"en": None, "weight": 25},
-        "Vallangar":    {"en": None, "weight": 25},
-        "Bylkangar":    {"en": None, "weight": 30},
-        "Sadegar":      {"en": None, "weight": 25},
-        "Vadertebaria": {"en": None, "weight": 25},
-        "Istagar":      {"en": None, "weight": 25},
-        "Lervagar":     {"en": None, "weight": 25},
+        "Kianta":       {"data": "", "weight": 25},
+        "Kuntuma":      {"data": "", "weight": 25},
+        "Sentatebaria": {"data": "", "weight": 30},
+        "Nilli":        {"data": "", "weight": 25},
+        "Nilligar":     {"data": "", "weight": 25},
+        "Hantia":       {"data": "", "weight": 25},
+        "Hantisgar":    {"data": "", "weight": 25},
+        "Tahda":        {"data": "", "weight": 25},
+        "Kaivalgard":   {"data": "", "weight": 35},
+        "Kuvul-Ghuzu":  {"data": "", "weight": 25},
+        "Harvugar":     {"data": "", "weight": 30},
+        "Urum":         {"data": "", "weight": 30},
+        "Kullivi":      {"data": "", "weight": 25},
+        "Nurvut":       {"data": "", "weight": 25},
+        "Vallangar":    {"data": "", "weight": 25},
+        "Kaltagar":     {"data": "", "weight": 25},
+        "Noqqo":        {"data": "", "weight": 25},
+        "Qeshte":       {"data": "", "weight": 25},
+        "Kainedungar":  {"data": "", "weight": 25},
+        "Suttulu":      {"data": "", "weight": 25},
+        "Usmutgar":     {"data": "", "weight": 25},
+        "Bylkangar":    {"data": "", "weight": 30},
+        "Kaltatebaria": {"data": "", "weight": 25},
+        "Sittegar":     {"data": "", "weight": 25},
+        "Keltagar":     {"data": "", "weight": 25},
+        "Sadegar":      {"data": "", "weight": 25},
+        "Tenkigar":     {"data": "", "weight": 25},
+        "Vadertebaria": {"data": "", "weight": 25},
+        "Istagar":      {"data": "", "weight": 25},
+        "Lervagar":     {"data": "", "weight": 25},
+        "Simmagar":     {"data": "", "weight": 25},
+        "Hinnegar":     {"data": "", "weight": 25},
     },
     "Kaltar Azdall": {
-        "Kaltar Kainead": {"en": None, "weight": 20},
-        "Kaltarena":      {"en": None, "weight": 25},
-        "Küangar":        {"en": None, "weight": 25},
+        "Kalta Centeria": {"data": "", "weight": 25},
+        "Kalta Mainta":   {"data": "", "weight": 25},
+        "Kaltar Kainead": {"data": "", "weight": 20},
+        "Kaltarena":      {"data": "", "weight": 25},
+        "Küangar":        {"data": "", "weight": 25},
     },
     "Arnattia": {
-        "Vainararna": {"en": None, "weight": 25},
-        "Avikarna":   {"en": None, "weight": 25},
-        "Kanerarna":  {"en": None, "weight": 25},
-        "Terra Arna": {"en": None, "weight": 25},
+        "Mahatarna":   {"data": "", "weight": 25},
+        "Vainararna":  {"data": "", "weight": 25},
+        "Ezmetarna":   {"data": "", "weight": 25},
+        "Tuhtun Arna": {"data": "", "weight": 25},
+        "Avikarna":    {"data": "", "weight": 25},
+        "Kanerarna":   {"data": "", "weight": 25},
+        "Terra Arna":  {"data": "", "weight": 25},
     },
     "Erellia": {
-        "Raagar": {"en": None, "weight": 25},
+        "Itta":      {"data": "", "weight": 25},
+        "Rankadus":  {"data": "", "weight": 20},
+        "Raagar":    {"data": "", "weight": 25},
+        "Orlagar":   {"data": "", "weight": 35},
+        "Shonangar": {"data": "", "weight": 35},
     },
     "Centeria": {
-        "Kalagar":   {"en": None, "weight": 25},
-        "Virsetgar": {"en": None, "weight": 30},
+        "Kalagar":   {"data": "", "weight": 25},
+        "Sukugar":   {"data": "", "weight": 30},
+        "Virsetgar": {"data": "", "weight": 30},
     },
     "Verlennia": {
     },
     "Inhattia": {
     },
     "Other Areas": {
-        "Vintelingar":     {"en": None, "weight": 35},
-        "Rakka's Volcano": {"en": None, "weight": 35},
-        "Kanerakainedus":  {"en": None, "weight": 20},
+        "Rakka's Volcano":     {"data": "", "weight": 35},
+        "Vintelingar":         {"data": "", "weight": 35},
+        "North Pole Kargadia": {"data": "", "weight": 20},
     }
 }
 _places = {}  # Since the playing status won't be able to read through a 2-layer dict...
@@ -409,7 +447,6 @@ _places = {}  # Since the playing status won't be able to read through a 2-layer
 # Playing will read the data from _places, to show as a simple dict
 # _places will also store the Place instances, so that it wouldn't be necessary to keep calling new ones...
 
-# The ka_time uses Reggar for now, I will either keep it so or change it once Virsetgar is actually added to the places list
 ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
 
 # The key is the timestamp as mm-dd, the value is the date instance | Defaults to 2151/2022 if somehow not overwritten
@@ -503,20 +540,24 @@ def ka_data_updater(bot: bot_data.Bot):
                     # It seems this actually does what I want it to, and simply keeps updating the instance, not needing to do any rewriting into the dict
                     place: conworlds.Place = _places[city]["place"]
                     place.update_time()
-                tebarian = place.time.strftime("%d %b %Y, %H:%M", "ka_tb")
-                english = place.time.strftime("%d %B %Y, %H:%M", "en")  # Note to future self: Consider shortening to %b (eg 14 Kar 2151) to save space
+                en = bot.language2("en")
+                ka = bot.language2("ne_rc")
+                kargadian = f"{place.name_translation(ka)}: "
+                kargadian += place.time.strftime("%d %b %Y, %H:%M", "ne_rc")
+                english = f"{place.name_translation(en):<20} - "
+                english += place.time.strftime("%d %b %Y, %H:%M", "en")  # Note to future self: Consider shortening to %b (eg 14 Kar 2151) to save space - Considered at 11/09/2022
                 if place.weather is not None:
                     temp = f"{place.weather['temperature']:.0f}°C"
                     rain = place.weather['rain']
                     if rain == "sunny":
                         rain += "2" if place.sun is not None and place.sun.elevation < 0 else "1"
-                    weather_en = bot.language2("en").data("weather78")[rain]
-                    weather_tb = bot.language2("ka_tb").data("weather78")[rain]
+                    weather_en = en.data("weather78")[rain]
+                    weather_ka = ka.data("weather78")[rain]
                     english += f" | {temp} | {weather_en}"
-                    tebarian += f" | {temp} | {weather_tb}"
+                    kargadian += f" | {temp} | {weather_ka}"
                 # ka_cities[city] = {"english": english, "tebarian": tebarian, "weight": ka_cities[city]["weight"]}
-                ka_places[area_name][city]["en"] = english
-                _places[city]["text"] = tebarian
+                ka_places[area_name][city]["data"] = english
+                _places[city]["text"] = kargadian
                 if city == "Virsetgar":  # Since, after all, Virsetgar is currently the UTC base, so the dates and times are based off of that...
                     global ka_time
                     ka_time = place.time
@@ -545,7 +586,6 @@ async def ka_time_updater(bot: bot_data.Bot):
         # Load all areas currently available, initialise them with a None
         for key in ka_places.keys():
             messages[key] = None
-            messages[key] = None
         # Store the messages for the appropriate channel
         # Now, if the message exists, it will be stored in its appropriate area, and if not, it will remain null
         async for msg in channel.history(limit=None, oldest_first=True):
@@ -553,6 +593,7 @@ async def ka_time_updater(bot: bot_data.Bot):
                 line = msg.content.splitlines()[0]  # Get the message's header (eg "Regaazdall:")
                 messages[line[:-1]] = msg  # The message's instance is then stored into its appropriate dict
         return messages
+
     messages_ka = await get_data(channel_ka)
     messages_rk = await get_data(channel_rk)
 
@@ -581,8 +622,8 @@ async def ka_time_updater(bot: bot_data.Bot):
 
         for area_name, area in ka_places.items():
             data = [f"{area_name}:"]
-            for city, _data in area.items():
-                data.append(f"`{city:<15} - {_data['en']}`")
+            for _data in area.values():
+                data.append(f"`{_data['data']}`")
             await update_message(area_name, "\n".join(data))
         logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
 
@@ -603,7 +644,9 @@ async def playing(bot: bot_data.Bot):
         general.print_error(text)
         logger.log(bot.name, "errors", text)
 
-    language = bot.language2("ka_tb")
+    # It would be funnier to set it to Cobbletopia Tebarian, but that language will not be made anytime soon,
+    # and it would also be even less likely to be understood by anyone, so it's better off to leave the language as Regaazdall Nehtivian
+    language = bot.language2("ne_rc")
     holiday_names_ka = language.data("data_holidays_ka")
     holiday_names_sl = language.data("data_holidays_sl")
 
@@ -617,7 +660,7 @@ async def playing(bot: bot_data.Bot):
         days = (when - time2.date.today(when.time_class)).days
         if rsl:
             s = "in" if days != 1 else ""
-            v = "at" if days == 1 else "in"
+            v = "at" if days == 1 else "an"
             return f"{days} sea{s} astall{v}"
         else:
             s = "s" if days != 1 else ""
@@ -649,23 +692,17 @@ async def playing(bot: bot_data.Bot):
                     activities = [
                         {"type": 0, "name": fv},
                         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                        {"type": 0, "name": "Regaus'ar"},
-                        {"type": 0, "name": "dekedar"},
-                        {"type": 0, "name": "tarair sevirtair"},
-                        {"type": 5, "name": "noartai"},
-                        {"type": 0, "name": "denedaa"},
+                        {"type": 0, "name": "ka Regausan"},
+                        {"type": 0, "name": "ka dekedan"},
+                        {"type": 0, "name": "ka ten rajain"},
+                        {"type": 5, "name": "i noartan"},
+                        {"type": 0, "name": "denedan"},
                         {"type": 3, "name": "ten"},
                         {"type": 3, "name": "ten sevartan"},
                         {"type": 2, "name": "ut penat"},
                         {"type": 3, "name": "na meitan"},
                         {"type": 2, "name": "na deinettat"},
-                        # {"type": 0, "name": "na Temval na Bylkain'den Liidenvirkalten"},
-                        # {"type": 0, "name": "na TBL'n"},
-                        # {"type": 0, "name": "Akos'an"},
-                        # {"type": 0, "name": "na Tadevan Kunneanpaitenan"},
-                        # {"type": 0, "name": "na TKP'n"},
-                        {"type": 0, "name": "vaihaga kiinanshavarkan"},
-                        # {"type": 0, "name": "Vainar veikidat pahtemar, discord.py"},
+                        {"type": 0, "name": "inkorra kiinan seldevanvarkan an ten eivarkaivanan"},
                     ]
                     random.seed()
                     _activity = random.choice(activities)
@@ -681,8 +718,8 @@ async def playing(bot: bot_data.Bot):
                         0: "Koa",
                         1: "Eimia",
                         2: "Sanna",
-                        3: "Veita",
-                        5: "Aara sen"
+                        3: "Veitea",
+                        5: "Ahmura sen"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
                 elif status_type == 3:  # Kargadian holidays
@@ -722,8 +759,8 @@ async def playing(bot: bot_data.Bot):
                         data.append(city)
                         weights.append(city[1]["weight"])
                     random.seed()
-                    city, city_data = random.choices(data, weights)[0]
-                    status = f"{city}: {city_data['text']}"
+                    city_data = random.choices(data, weights)[0][1]
+                    status = f"{city_data['text']}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 5)")
 
@@ -812,6 +849,7 @@ async def playing(bot: bot_data.Bot):
             elif bot.name == "pretender":
                 activities = [
                     {"type": 0, "name": "Amogus"},
+                    {"type": 0, "name": "Among us"},
                     {"type": 3, "name": "your every move"},
                     {"type": 3, "name": "after you"}
                 ]
@@ -1328,7 +1366,7 @@ async def sl_holidays_updater(bot: bot_data.Bot):
                         channel = bot.get_channel(ch)
                         await channel.send(f"Happy {holiday_names.get(key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    holiday += time2.relativedelta(years=1, time_class=time2.Earth)
+                    sl_holidays[key] += time2.relativedelta(years=1, time_class=time2.Earth)
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
@@ -1365,7 +1403,7 @@ async def ka_holidays_updater(bot: bot_data.Bot):
                         channel = bot.get_channel(ch)
                         await channel.send(f"Happy {holiday_names.get(key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    holiday += time2.relativedelta(years=1, time_class=time2.Kargadia)
+                    ka_holidays[key] += time2.relativedelta(years=1, time_class=time2.Kargadia)
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")

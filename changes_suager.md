@@ -1389,3 +1389,6 @@
 
 ## v7.5.15.4 - 4 September 2022
 - Fixed mod commands breaking when multiple bots have settings saved for the server
+
+## v7.5.16 - 10 September 2022
+- Regaus.py v2.0 compatibility: Renamed Kargadian language translation files and language translation counter
