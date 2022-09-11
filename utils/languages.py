@@ -51,10 +51,10 @@ class Language(languages.Language):
         if hasattr(ctx, "channel"):
             # Channel:            secret-room-8,      secret-room-15
             if ctx.channel.id in [725835449502924901, 969720792457822219]:
-                return cls("ka_re")
+                return cls("ne_rc")
             # Channels:             rsl-1,              secret-room-11,     secret-room-1
             elif ctx.channel.id in [787340111963881472, 799714065256808469, 671520521174777869]:
-                return cls("ka_ne")
+                return cls("ne_rn")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
         if ctx.guild is not None:
             data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, ctx.bot.name))
