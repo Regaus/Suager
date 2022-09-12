@@ -38,6 +38,7 @@
   "mod_warn_mass2": "Avastak **{total} saideraan** naen {reason}:\n{emotes.Allow} Ka uvehun: **{banned}**\n{emotes.Deny} Ah uvehun: **{failed}**",
   "mod_warn_mass2_timed": "Avastak **{total} saideraan** sa {duration} naen {reason}:\n{emotes.Allow} Ka uvehun: **{banned}**\n{emotes.Deny} Ah uvehun: **{failed}**",
   "placeholder": "Mu just arra zeide, allhad mu arde tua einedan! Ne tuas te zeide?",
+  "ratings_pickle_suager2": "Nai haidas te zaivan? Me jan just raivahtat, Regausan riadat, se nuhtan edet...",
   "settings_birthdays_disabled": "Reideseat jan esaad kvellikan.\nEuma: Nottarat veiseri maikan ka `{p}birthday set` sen reideseaan sahtan, no in de ahvanva ein reideseanattaan in edan salhan.",
   "settings_birthdays_role_none2": "Saiderat de valse ahvanva ein ankastan, ki se ian reidesea jat.",
   "settings_current_welcome_channel": "Nuat saiderat heidekaihan in <#{channel}>",

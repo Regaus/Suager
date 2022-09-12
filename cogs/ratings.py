@@ -15,14 +15,18 @@ class Ratings(commands.Cog):
         """ Measure someone's pickle """
         language = self.bot.language(ctx)
         user = who or ctx.author
-        random.seed(user.id)
-        _result = random.uniform(10, 30)
-        custom = {
-            self.bot.user.id: 42.0,
-            302851022790066185: 30.0,
-        }
-        result = custom.get(user.id, _result)
-        # return await ctx.send(language.string("ratings_pickle", user.name, language.number(result, precision=2), language.number(result / 2.54, precision=2)))
+        # My bots - don't output a numer at all
+        if user.id == self.bot.user.id:
+            return await ctx.send(language.string("ratings_pickle_suager"))
+        elif user.id in [609423646347231282, 577608850316853251, 854877153866678333]:
+            return await ctx.send(language.string("ratings_pickle_suager2"))
+        random.seed(user.id + 11)  # Gives me desired values
+        result = random.uniform(2.54, 20.32)
+        # custom = {
+        #     self.bot.user.id: 42.0,
+        #     302851022790066185: 30.0,
+        # }
+        # result = custom.get(user.id, _result)
         return await ctx.send(language.string("ratings_pickle", user=user.name, value=language.length(result / 100, precision=2, force_size=1)))  # The Length converter uses the value in metres
 
     @commands.command(name="rate")

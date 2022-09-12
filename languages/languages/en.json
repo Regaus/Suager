@@ -364,6 +364,8 @@
   "ratings_love_calc_bots": "Bots don't feel love to normal users.",
   "ratings_love_calc_suager": "You know, I don't feel love towards others like that...",
   "ratings_pickle": "**{user}**'s pickle length is **{value}**",
+  "ratings_pickle_suager": "Why do you want to know? I'm just a robot, and way too young for that...",
+  "ratings_pickle_suager2": "Why do you want to know? We're just robots, Regaus's creations, and way too young for that...",
   "ratings_rate": "I rate \"{thing}\" as **{value}/100**",
   "ratings_rate_user": "I rate {user} as **{value}/100**",
   "settings_birthdays": "Birthday settings",

@@ -1392,3 +1392,7 @@
 
 ## v7.5.16 - 10 September 2022
 - Regaus.py v2.0 compatibility: Renamed Kargadian language translation files and language translation counter
+
+## v7.5.17 - 12 September 2022
+- Updated `//pickle` algorithm and updated behaviour when the specified user is my bot
+- Slightly changed the `//pickle` seed generator to give me desired values

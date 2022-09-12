@@ -334,6 +334,8 @@
   "ratings_love_calc_bots": "Raivahtat de leivaan narvallaan nottaraan.",
   "ratings_love_calc_suager": "Zaivas had, mu de leivaa deraan zi...",
   "ratings_pickle": "**{user}**'n palkandalta jat **{value}**",
+  "ratings_pickle_suager": "Nai haidas te zaivan? Mu ja just ur raivahtu, u taikii se nuhtar edet...",
+  "ratings_pickle_suager2": "Nai haidas te zaivan? Me jan just raivahtat, Regausan riadat, se nuhtan edet...",
   "ratings_rate": "Mu finda \"{thing}\" kai **{value}/100**",
   "ratings_rate_user": "Mu finda {user} kai **{value}/100**",
   "settings_birthdays": "Sahtat av Reideseain",
