@@ -5,10 +5,9 @@ from io import BytesIO
 from typing import List
 
 import discord
-from aiohttp import ClientPayloadError
 from regaus import time as time2
 
-from utils import bot_data, commands, general, http, languages, logger, time
+from utils import bot_data, commands, general, languages, logger, time
 
 
 class Events(commands.Cog):
@@ -18,11 +17,9 @@ class Events(commands.Cog):
         self.local_config = self.bot.local_config
         self.blocked = [667187968145883146, 852695205073125376]
         self.bad = ["reg", "reag", "302851022790066185"]
-        self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
         self.blocked_logs = 739183533792297164
+        self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
         self.dm_logger = 806884278037643264  # DM logs channel
-        #                       Suager,             Suager Dev,         Suager Original,    xelA
-        self.ignored_avatars = [609423646347231282, 568149836927467542, 520042197391769610, 267941509272174592]
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -52,6 +49,7 @@ class Events(commands.Cog):
                 extra_str = "\n\n" + "\n".join(extra) if extra else ""
 
                 await channel.send(f"{ctx.author} ({ctx.author.id}) | {now}\n{ctx.content[:limit]}{extra_str}", embeds=embeds, files=files)
+
         if ctx.author.id in self.blocked:
             for word in self.bad:
                 if word in ctx.content.lower():
@@ -59,6 +57,7 @@ class Events(commands.Cog):
                     gid = ctx.guild.id if ctx.guild is not None else "not a guild"
                     await channel.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id}) | {time.time()}\n{ctx.content}")
                     break
+
         if self.bot.name == "suager":
             if ctx.channel.id == 742886280911913010:
                 for channel_id in self.updates:
@@ -71,11 +70,6 @@ class Events(commands.Cog):
                             general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
                         general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > {channel_id} > {type(e).__name__}: {e}")
-            # if ctx.channel.id == 568148147457490958:  # generic-general
-            #     # Emojis: weary,        tired,        hot face,     DX/"dizzy",   pleading,     "confounded", "persevering"
-            #     emojis = ["\U0001F629", "\U0001F62B", "\U0001F975", "\U0001F635", "\U0001F97A", "\U0001F616", "\U0001F623"]
-            #     if any(e in ctx.content for e in emojis):  # if any of the emojis are found in the message content
-            #         await ctx.delete()  # Fuck you ryan and aya :)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
@@ -214,7 +208,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just joined {member.guild.name}")
         # Load settings
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
         # Push all "User left" status punishments back into normal mode
@@ -369,7 +362,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {member} ({member.id}) just left {member.guild.name}")
         # Push all unhandled punishments to "User left" status
         self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? and gid=? AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
         if self.bot.name == "suager":
@@ -433,14 +425,6 @@ class Events(commands.Cog):
 
                 if user_logs["preserve_roles"]:
                     self.bot.db.execute("INSERT INTO user_roles VALUES (?, ?, ?)", (member.guild.id, member.id, json.dumps([r.id for r in member.roles if not r.is_default()])))
-
-    @commands.Cog.listener()
-    async def on_member_ban(self, guild: discord.Guild, user: discord.User | discord.Member):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got banned from {guild.name}")
-
-    @commands.Cog.listener()
-    async def on_member_unban(self, guild: discord.Guild, user: discord.User):
-        logger.log(self.bot.name, "members", f"{time.time()} > {self.bot.full_name} > {user} ({user.id}) just got unbanned from {guild.name}")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -598,111 +582,33 @@ class Events(commands.Cog):
                     return await process_msg(delete_id)
 
     @commands.Cog.listener()
-    async def on_user_update(self, before: discord.User, after: discord.User):
-        now = time.time()
-        uid = after.id
-
-        # Username
-        n1, n2 = [before.name, after.name]
-        if n1 != n2:
-            send = f"{now} > {n1} ({uid}) is now known as {n2}"
-            logger.log(self.bot.name, "names", send)
-
-        # Discriminator
-        d1, d2 = [before.discriminator, after.discriminator]
-        if d1 != d2:
-            send = f"{now} > {n2}'s ({uid}) discriminator is now {d2} (from {d1})"
-            logger.log(self.bot.name, "names", send)
-
-        # Avatar
-        if self.bot.name in ["suager", "kyomi"]:
-            a1, a2 = [before.display_avatar, after.display_avatar]  # type: discord.Asset, discord.Asset
-            avatar_channel = self.bot.get_channel(745760639955370083)
-            if a1 != a2:
-                send = f"{now} > {n2} ({uid}) changed their avatar"
-                if uid not in self.ignored_avatars:
-                    logger.log(self.bot.name, "user_avatars", send)
-                    try:
-                        avatar = BytesIO(await http.get(str(after.display_avatar.replace(static_format="png", size=4096)), res_method="read"))
-                        ext = "gif" if after.display_avatar.is_animated() else "png"
-                        if avatar_channel is None:
-                            out = f"{time.time()} > {self.bot.name} > User Update > {n2} ({uid}) > No avatar log channel found."
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
-                        else:
-                            await avatar_channel.send(f"{time.time()} > {n2} ({uid}) changed their avatar", file=discord.File(avatar, filename=f"{a2.key}.{ext}"))
-                    except (discord.HTTPException, ClientPayloadError) as e:
-                        out = f"{time.time()} > {self.bot.name} > User Update > {n2} ({uid}) > Failed to send updated avatar: {e}"
-                        general.print_error(out)
-                        logger.log(self.bot.name, "errors", out)
-
-    @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
-        now = time.time()
-        guild = after.guild.name
-        name = after.name
-        uid = after.id
-
-        if after.guild.id in [568148147457490954, 738425418637639775] and uid not in [302851022790066185]:
+        # Nickname - Dehoist in SL and RK
+        if after.guild.id in [568148147457490954, 738425418637639775] and after.id != 302851022790066185:
             if after.display_name[0] < "A":
                 await after.edit(reason="De-hoist", nick=f"\u17b5{after.display_name[:31]}")
             if "spoingus" in after.display_name.lower():
                 await after.edit(nick=None)
-            if uid == 910941637742592000 and after.display_name != "Niki":  # Nuriki
-                await after.edit(nick="Niki")
 
-        # Nickname
-        n1, n2 = before.nick, after.nick
-        if n1 != n2:
-            logger.log(self.bot.name, "names", f"{now} > {guild} > {name}'s ({uid}) nickname is now {n2} (from {n1})")
+        # Roles - boosters in Kyomi's server
+        if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
+            r1, r2 = before.roles, after.roles
+            if r1 != r2:
+                roles_lost = []
+                for role in r1:
+                    if role not in r2:
+                        roles_lost.append(role)
+                roles_gained = []
+                for role in r2:
+                    if role not in r1:
+                        roles_gained.append(role)
 
-        # Roles
-        r1, r2 = before.roles, after.roles
-        if r1 != r2:
-            roles_lost = []
-            for role in r1:
-                if role not in r2:
-                    roles_lost.append(role.name)
-            roles_gained = []
-            for role in r2:
-                if role not in r1:
-                    roles_gained.append(role.name)
-            for role in roles_lost:
-                logger.log(self.bot.name, "member_roles", f"{now} > {guild} > {name} ({uid}) lost role {role}")
-            for role in roles_gained:
-                logger.log(self.bot.name, "member_roles", f"{now} > {guild} > {name} ({uid}) got role {role}")
-            if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
                 booster_role = after.guild.get_role(716324385119535168)
                 if booster_role in roles_gained:  # User started boosting MD
                     await after.edit(nick=f"⁀➷Booster!🧁 ☆ {after.name[:14]} 🍩 ✦", reason="Applying booster nick design")
                 if booster_role in roles_lost:  # User no longer boosts MD
                     if "⁀➷Booster!🧁 ☆" in after.nick:  # If they still have "Booster" in their nickname
                         await after.edit(nick=f"✧₊˚🍰⌇{after.name[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
-
-        # Guild Avatar
-        if self.bot.name in ["suager", "kyomi"]:
-            a1, a2 = [before.guild_avatar, after.guild_avatar]  # type: discord.Asset | None, discord.Asset | None
-            avatar_channel = self.bot.get_channel(745760639955370083)
-            if a1 and not a2:  # User removed their guild avatar
-                send = f"{now} > {guild} > {name} ({uid}) removed their guild avatar"
-                logger.log(self.bot.name, "user_avatars", send)
-            elif a1 != a2:
-                send = f"{now} > {guild} > {name} ({uid}) changed their guild avatar"
-                logger.log(self.bot.name, "user_avatars", send)
-                if uid not in self.ignored_avatars:
-                    try:
-                        avatar = BytesIO(await http.get(str(after.guild_avatar.replace(static_format="png", size=4096)), res_method="read"))
-                        ext = "gif" if after.guild_avatar.is_animated() else "png"
-                        if avatar_channel is None:
-                            out = f"{now} > {self.bot.name} > {guild} > Member Update > {name} ({uid}) > No avatar log channel found."
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
-                        else:
-                            await avatar_channel.send(f"{now} > {guild} > {n2} ({uid}) changed their guild avatar", file=discord.File(avatar, filename=f"{a2.key}.{ext}"))
-                    except (discord.HTTPException, ClientPayloadError) as e:
-                        out = f"{now} > {self.bot.name} > {guild} > Member Update > {name} ({uid}) > Failed to send updated avatar: {e}"
-                        general.print_error(out)
-                        logger.log(self.bot.name, "errors", out)
 
 
 async def setup(bot: bot_data.Bot):
