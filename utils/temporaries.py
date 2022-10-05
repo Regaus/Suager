@@ -940,6 +940,7 @@ async def playing(bot: bot_data.Bot):
             error(f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
         except Exception as e:
             error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
+            error(general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
@@ -1366,7 +1367,7 @@ async def sl_holidays_updater(bot: bot_data.Bot):
                         channel = bot.get_channel(ch)
                         await channel.send(f"Happy {holiday_names.get(key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    sl_holidays[key] += time2.relativedelta(years=1, time_class=time2.Earth)
+                    sl_holidays[key] = (sl_holidays[key] + time2.relativedelta(years=1, time_class=time2.Earth)).date()
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
@@ -1403,7 +1404,7 @@ async def ka_holidays_updater(bot: bot_data.Bot):
                         channel = bot.get_channel(ch)
                         await channel.send(f"Happy {holiday_names.get(key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    ka_holidays[key] += time2.relativedelta(years=1, time_class=time2.Kargadia)
+                    ka_holidays[key] = (ka_holidays[key] + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")

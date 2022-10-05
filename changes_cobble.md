@@ -574,3 +574,6 @@
 - Improved the way the places are shown on the Kargadian time list and in CobbleBot's playing status
 - Updated the Playing status translations to use up-to-date forms of the language
 - Fixed holiday countdowns yet again (hopefully this time it will actually work)
+
+## v1.7.0.1 - 5 October 2022
+- Fixed error where playing status couldn't calculate how long was left until a holiday because the date got converted into a datetime
