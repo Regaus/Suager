@@ -1396,3 +1396,7 @@
 ## v7.5.17 - 12 September 2022
 - Updated `//pickle` algorithm and updated behaviour when the specified user is my bot
 - Slightly changed the `//pickle` seed generator to give me desired values
+
+## v7.5.17.1 - 20 October 2022
+- Updated to Python 3.11
+- Improved code for showing versions of libraries used

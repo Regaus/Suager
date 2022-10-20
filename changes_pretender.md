@@ -25,3 +25,7 @@
 
 ## v1.1.2.1 - 3 September 2022
 - The database builder now uses the actual type string instead of the number abstraction
+
+## v1.1.2.2 - 20 October 2022
+- Updated to Python 3.11
+- Improved code for showing versions of libraries used

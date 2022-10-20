@@ -577,3 +577,7 @@
 
 ## v1.7.0.1 - 5 October 2022
 - Fixed error where playing status couldn't calculate how long was left until a holiday because the date got converted into a datetime
+
+## v1.7.0.2 - 20 October 2022
+- Updated to Python 3.11
+- Improved code for showing versions of libraries used

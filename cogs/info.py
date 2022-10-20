@@ -47,21 +47,23 @@ class BotInformation(commands.Cog, name="Bot Information"):
             embed.add_field(name=language.string("info_stats_users"), value=language.string("info_stats_users_data", members=lm, users=lu, avg=la), inline=True)
         ls, lt, lc, lv = language.number(servers), language.number(tc), language.number(cc), language.number(vc)
         embed.add_field(name=language.string("info_stats_servers"), value=language.string("info_stats_servers_data", servers=ls, text=lt, cats=lc, voice=lv), inline=True)
-        _version = sys.version_info
-        version = f"{_version.major}.{_version.minor}.{_version.micro}"
-        _discord = discord.version_info
-        dis_version = f"{_discord.major}.{_discord.minor}.{_discord.micro}"
-        if _discord.releaselevel != "final":
-            dis_version += _discord.releaselevel[0]
+
+        version = sys.version.split(" ")[0]  # Gets the Python version number without the stupid details added on afterwards
+        if discord.version_info.releaselevel == "final":
+            dis_version = discord.__version__
+        else:
+            _discord = discord.version_info
+            dis_version = f"{_discord.major}.{_discord.minor}.{_discord.micro}{_discord.releaselevel[0]}"
         libs_used = f"**Python v{version}**\n**Discord.py v{dis_version}**"
         if self.bot.name == "cobble":
             libs_used += f"\n**Regaus.py v{reg_version}**"
         embed.add_field(name=language.string("info_stats_used"), inline=True, value=libs_used)
+
         mv = version_data["version"].split(".")[0]
+        major = f"v{mv}.0"
         fv = language.time(time.from_ts(version_data["first_version"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         mr = language.time(time.from_ts(version_data["major_release"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
         lu = language.time(time.from_ts(version_data["last_update"], None), short=1, dow=False, seconds=False, tz=True, uid=ctx.author.id)
-        major = f"v{mv}.0"
         embed.add_field(name=language.string("info_stats_dates"), value=language.string("info_stats_dates_data", first=fv, major=mr, last=lu, mjr=major), inline=True)
         return await ctx.send(embed=embed)
 

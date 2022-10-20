@@ -248,3 +248,7 @@
 
 ## v1.2.11.4 - 4 September 2022
 - Fixed mod commands breaking when multiple bots have settings saved for the server
+
+## v1.2.11.5 - 20 October 2022
+- Updated to Python 3.11
+- Improved code for showing versions of libraries used
