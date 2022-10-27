@@ -29,3 +29,14 @@
 ## v1.1.2.2 - 20 October 2022
 - Updated to Python 3.11
 - Improved code for showing versions of libraries used
+
+## v1.2.0 - 27 October 2022
+- Message ID is now stored in the database
+- The bot can now handle message edits and deletion
+- Links will now be removed from message content before getting saved into the database
+- Raw message content will now be stored, instead of the "clean content"
+- As such, the response will use AllowedMentions set to all False to avoid pinging people in the replies
+- Added the bot to Satan's Rib server, currently only using messages from the general chat
+- Satan's Rib will also qualify the message content to be separated (i.e. stored with a channel ID saved rather than null)
+- Reduced message limit to 10,000 in an attempt to reduce lag on loading the impersonate command
+- Added more detail to opt-out command's confirmation message

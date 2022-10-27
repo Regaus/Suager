@@ -9,25 +9,48 @@ class Pretender(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         # Whitelist:      SL: general,        elite-lounge,       secret-room-2,      secret-room-3,      secret-room-8,      secret-room-15
-        # Whitelist:      RK general,         Alex: general,      gamer-hub
+        # Whitelist:      RK general,         Alex: general,      gamer-hub,          Satan Rib general
         self.whitelist = [568148147457490958, 658112535656005663, 672535025698209821, 681647810357362786, 725835449502924901, 969720792457822219,
-                          738425419325243424, 857504678371917855, 917150209149141042]
+                          738425419325243424, 857504678371917855, 917150209149141042, 872464449255125033]
         self.messages = pretender.MessageManager()
         self.webhooks = pretender.WebhookManager()
 
+    def check_ignore(self, message: discord.Message) -> bool:
+        if message.author.bot:
+            return True
+        if not message.content:
+            return True
+        if message.channel.id not in self.whitelist:
+            return True
+        if self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (message.author.id,)):
+            return True
+        return False
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot:
+        if self.check_ignore(message):
             return
-        if not message.clean_content:
-            return
-        if message.content.startswith("a."):
-            return
-        if message.channel.id not in self.whitelist:
-            return
-        if self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (message.author.id,)):
-            return
+        # Checks for message content moved to the add method
         self.messages.add(message)
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, _: discord.Message, after: discord.Message):
+        if self.check_ignore(after):
+            return
+        self.messages.edit(after)
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        if self.check_ignore(message):
+            return
+        self.messages.delete_message(message.id)
+
+    @commands.Cog.listener()
+    async def on_bulk_message_delete(self, messages: list[discord.Message]):
+        for message in messages:
+            if self.check_ignore(message):
+                continue
+            self.messages.delete_message(message.id)
 
     @commands.command(name="count")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -92,7 +115,11 @@ class Pretender(commands.Cog):
         def check(reaction, user):
             return user == ctx.author and str(reaction.emoji) == "✅"
 
-        message = await ctx.send(f"{ctx.author.name}, Are you sure you want to opt out?\nReact with ✅ to confirm.")
+        message = await ctx.send(f"{ctx.author.name}, Are you sure you want to opt out?\n"
+                                 f"All your saved messages will be deleted from the database. "
+                                 f"You may opt back in at any time, but the messages cannot be restored.\n"
+                                 f"The impersonate command can still be used on you, but it will only use others' messages.\n"
+                                 f"React with ✅ to confirm.")
         await message.add_reaction("✅")
 
         try:
@@ -114,10 +141,10 @@ class Pretender(commands.Cog):
         victim = victim or ctx.author
         session = ClientSession()
         try:  # For secret rooms, generate message based on the messages already there
-            message = self.messages.generate(victim, ctx.channel.id if ctx.channel.category_id == 663031673813860420 else None)
+            message = self.messages.generate(victim, ctx.channel.id if pretender.separation_condition(ctx.channel) else None)
             webhook = await self.webhooks.get(ctx.channel, session)
             await ctx.message.delete()
-            await webhook.send(message, username=victim.name, avatar_url=str(victim.display_avatar))
+            await webhook.send(message, username=victim.name, avatar_url=str(victim.display_avatar), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
         except Exception as e:
             raise e
         finally:

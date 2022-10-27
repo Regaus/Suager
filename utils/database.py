@@ -188,6 +188,7 @@ tables = [
         Column("uid", "INTEGER", True),  # Blacklisted User's ID
     ]),
     Table("pretender_messages", [             # All the messages
+        Column("id", "INTEGER", True, True),  # Message ID
         Column("author", "INTEGER", True),    # Message author ID
         Column("channel", "INTEGER", False),  # Message channel ID
         Column("content", "TEXT", True)       # Message content

@@ -35,11 +35,11 @@
     "last_update": 1652828637
   },
   "pretender": {
-    "short_version": "1.1",
-    "version": "1.1.2.2",
+    "short_version": "1.2",
+    "version": "1.2.0",
     "first_version": 1658334660,
     "major_release": 1658357872,
-    "last_update": 1666298286
+    "last_update": 1666828912
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

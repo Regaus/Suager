@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import random
+import re
 
 import discord
 import markovify
@@ -10,10 +11,18 @@ from aiohttp import ClientSession
 from utils.database import Database
 
 
+def separation_condition(channel: discord.TextChannel | discord.Thread):
+    """ Check whether the channel should have a separate message record or be mashed together with everything else """
+    if not channel.guild:
+        return False
+    # If the channel is a Secret Room or is in Satan's Rib
+    return channel.category_id == 663031673813860420 or channel.guild.id == 866050967249223720
+
+
 class MessageManager:
-    def __init__(self, min_limit: int = 500, max_limit: int = 50000, length: int = 200, tries: int = 100):
+    def __init__(self, min_limit: int = 500, max_limit: int = 10000, length: int = 200, tries: int = 100):
         # The original had the min_limit set to 1000, but let's have it at 500 here since a lot of users might not have that many
-        # The original had the max_limit set to 25000
+        # The original had the max_limit set to 25000, used to be 50000, now I set it to 10000 in hopes of reducing lag upon loading the messages
         self.db = Database()
 
         self.min_limit = min_limit
@@ -22,15 +31,46 @@ class MessageManager:
 
         self.tries = tries
 
-    def default(self) -> list[dict]:
-        return self.db.fetch("SELECT * FROM pretender_messages WHERE channel IS NULL", ())
+    @staticmethod
+    def fix_content(original: str):
+        """ Remove unnecessary things from the message content """
+        content = re.sub(r"https?://(\S+)", "", original)  # Replace links with nothing
+        return content
 
     def add(self, message: discord.Message):
+        """ Add a new messages to the database """
+        prefixes = ["a,", "a.", "//", ",/", ",,"]  # Ignore bot command messages
+        for prefix in prefixes:
+            if message.content.startswith(prefix):
+                return
+
+        content = self.fix_content(message.content)
+        if not content:  # If nothing is left in the message content, ignore the message
+            return
+
         # We only need to track the channel if the channel is a Secret Room - else, mash everything together
-        _channel = message.channel.id if message.channel.category_id == 663031673813860420 else None
-        self.db.execute("INSERT INTO pretender_messages VALUES (?, ?, ?)", (message.author.id, _channel, message.clean_content))
+        _channel = message.channel.id if separation_condition(message.channel) else None
+
+        # If we ever somehow end up adding the same message twice, it will raise a silent IntegrityError in Database.execute(), so we can just ignore that edge case
+        self.db.execute("INSERT INTO pretender_messages VALUES (?, ?, ?, ?)", (message.id, message.author.id, _channel, content))
+
+    def edit(self, message: discord.Message):
+        """ This is the updated message - we change the content of the messages with the given ID """
+        # This will fail if the message originally had empty content or was a bot command, and then was edited into a message with normal text,
+        # but I this is the kind of edge case I don't think is worth handling.
+        # Besides, it would silently do nothing, so it's no harm anyways
+
+        content = self.fix_content(message.content)
+        if not content:  # If nothing is left in the message content, delete the message
+            return self.delete_message(message.id)
+        self.db.execute("UPDATE pretender_messages SET content=? WHERE id=?", (message.content, message.id))
+
+    def delete_message(self, message_id: int):
+        """ Delete a specific message - correlates to being deleted on Discord """
+        self.db.execute("DELETE FROM pretender_messages WHERE id=?", (message_id,))
 
     def remove(self, author: discord.Member | discord.User):
+        """ Wipe all messages from a given user, this would happen if they decide to opt out of Pretender """
         self.db.execute("DELETE FROM pretender_messages WHERE author=?", (author.id,))
 
     def generate(self, author: discord.Member | discord.User, channel_id: int = None) -> str:
@@ -40,7 +80,7 @@ class MessageManager:
             dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))
 
         if not dataset or len(dataset) < self.min_limit:
-            dataset = self.default()
+            dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE channel IS NULL", ())
 
         # This should make it so that if the length of the dataset exceeds the limit, it will use random entries in the database instead of the same ones over and over again
         if len(dataset) > self.max_limit:
