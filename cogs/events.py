@@ -591,8 +591,11 @@ class Events(commands.Cog):
                 await after.edit(nick=None)
 
         # Some people don't learn
-        if after.guild.id == 378586302703992835 and after.id == 302851022790066185 and after.nick is not None:
-            await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
+        if after.guild.id == 378586302703992835 and after.id == 302851022790066185:
+            print("Test 1")
+            if after.nick is not None:
+                print("Test 2")
+                await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
 
         # Roles - boosters in Kyomi's server
         if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
