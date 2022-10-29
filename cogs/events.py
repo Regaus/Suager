@@ -590,6 +590,10 @@ class Events(commands.Cog):
             if "spoingus" in after.display_name.lower():
                 await after.edit(nick=None)
 
+        # Some people don't learn
+        if after.guild.id == 378586302703992835 and after.id == 302851022790066185 and after.nick is not None:
+            await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
+
         # Roles - boosters in Kyomi's server
         if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
             r1, r2 = before.roles, after.roles
