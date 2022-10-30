@@ -1400,3 +1400,7 @@
 ## v7.5.17.1 - 20 October 2022
 - Updated to Python 3.11
 - Improved code for showing versions of libraries used
+
+## v7.5.18 - 30 October 2022
+- (Regaus.py v2.1.5) Fixed pytz behaviour during daylight saving transitions
+- Fixed pytz timezone name breaking during the transitions

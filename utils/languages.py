@@ -123,8 +123,11 @@ class Language(languages.Language):
                 when = time.datetime.from_datetime(when)
             tz = self.get_timezone(uid, when.time_class.__name__)
             when = when.as_timezone(tz)
-            if tz.__class__.__module__.startswith("pytz"):
-                tz_name = tz.tzname(when.to_datetime().replace(tzinfo=None))
+            # if tz.__class__.__module__.startswith("pytz"):
+            if isinstance(tz, pytz.tzinfo.DstTzInfo):
+                # Try to get the name of the timezone at the given time. For ambiguous cases,
+                # assume non-DST tz name variant (except for some reason it sometimes uses the other one anyways).
+                tz_name = tz.tzname(when.as_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None), is_dst=False)
         case = case_override if case_override is not None else self.string("time_at_case") if at else "default"
         _date = self.date(when, short=short, dow=dow, year=True, case=case)
         _time = self.time2(when, seconds=seconds, tz=tz, tz_name=tz_name)
