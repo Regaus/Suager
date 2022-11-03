@@ -581,3 +581,7 @@
 ## v1.7.0.2 - 20 October 2022
 - Updated to Python 3.11
 - Improved code for showing versions of libraries used
+
+## v1.7.1 - 1 November 2022
+- Added new places to Kargadia time
+- Fixed issues arising from pytz timezones in places where Earth time is handled

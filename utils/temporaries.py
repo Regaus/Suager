@@ -338,6 +338,8 @@ ka_places = {
         "Regavall":             {"data": "", "weight": 40},
         "Reggar":               {"data": "", "weight": 50},
         "Suvagar":              {"data": "", "weight": 40},
+        "Vaidangar":            {"data": "", "weight": 25},
+        "Vakungar":             {"data": "", "weight": 25},
     },
     "Nehtivia": {
         "Ekspigar":           {"data": "", "weight": 35},
@@ -353,11 +355,13 @@ ka_places = {
         "Sulingar":           {"data": "", "weight": 30},
         "Alexandris":         {"data": "", "weight": 35},
         "Drippangar":         {"data": "", "weight": 35},
+        "Joptanagar":         {"data": "", "weight": 35},
         "Läkingar":           {"data": "", "weight": 25},
         "Leogar":             {"data": "", "weight": 35},
         "Menenvallus":        {"data": "", "weight": 30},
-        "Tevivall":           {"data": "", "weight": 30},
         "Melligar":           {"data": "", "weight": 35},
+        "Tevivall":           {"data": "", "weight": 30},
+        # "Watsangar":          {"data": "", "weight": 35},
         "Chakkangar":         {"data": "", "weight": 35},
         "Kamikawa":           {"data": "", "weight": 35},
         "Kiomigar":           {"data": "", "weight": 35},
@@ -494,7 +498,7 @@ sl_holidays: dict[str, time2.date] = {
     "09-01": time2.date(2022,  9,  1),
     "10-03": time2.date(2022, 10,  3),
     "10-22": time2.date(2022, 10, 22),
-    "10-30": time2.date(2022, 10, 30),
+    "10-31": time2.date(2022, 10, 31),
     "11-19": time2.date(2022, 11, 19),
     "12-05": time2.date(2022, 12,  5),
 }
@@ -573,7 +577,7 @@ def ka_data_updater(bot: bot_data.Bot):
 async def ka_time_updater(bot: bot_data.Bot):
     """ Update the time and weather info for Kargadian cities in Kargadia and Regaus'tar Koankadu """
     update_speed = 300
-    await wait_until_next_iter(update_speed, 0, time2.Kargadia)
+    await wait_until_next_iter(update_speed, 1, time2.Kargadia)
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised RK City Time Updater")
 
@@ -629,7 +633,7 @@ async def ka_time_updater(bot: bot_data.Bot):
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(update_speed, 0, time2.Kargadia)
+        await wait_until_next_iter(update_speed, 1, time2.Kargadia)
         # await asyncio.sleep(update_speed)
 
 

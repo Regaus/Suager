@@ -1404,3 +1404,6 @@
 ## v7.5.18 - 30 October 2022
 - (Regaus.py v2.1.5) Fixed pytz behaviour during daylight saving transitions
 - Fixed pytz timezone name breaking during the transitions
+
+## v7.5.18.1 - 30-31 October 2022
+- Fixed more issues arising from pytz timezones
