@@ -125,9 +125,10 @@ class Language(languages.Language):
             when = when.as_timezone(tz)
             # if tz.__class__.__module__.startswith("pytz"):
             if isinstance(tz, pytz.tzinfo.DstTzInfo):
+                tz_name = when.tzinfo._tzname  # type: ignore
                 # Try to get the name of the timezone at the given time. For ambiguous cases,
                 # assume non-DST tz name variant (except for some reason it sometimes uses the other one anyways).
-                tz_name = tz.tzname(when.as_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None), is_dst=False)
+                # tz_name = tz.tzname(when.as_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None), is_dst=bool(when.tzinfo._dst))  # type: ignore
         case = case_override if case_override is not None else self.string("time_at_case") if at else "default"
         _date = self.date(when, short=short, dow=dow, year=True, case=case)
         _time = self.time2(when, seconds=seconds, tz=tz, tz_name=tz_name)

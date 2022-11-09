@@ -1407,3 +1407,6 @@
 
 ## v7.5.18.1 - 30-31 October 2022
 - Fixed more issues arising from pytz timezones
+
+## v7.5.18.2 - 9 November 2022
+- Fixed pytz timezone names during daylight savings transitions
