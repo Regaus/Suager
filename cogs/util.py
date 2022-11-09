@@ -1008,6 +1008,7 @@ class UtilityCobble(Utility, name="Utility"):
                     _y, _m, _d = _date.split("-")
                     y, m, d = int(_y), int(_m), int(_d)
                     date_part = time2.date(y, m, d, time_class)
+                    # The funky timezone behaviour isn't needed here because this won't interact with pytz timezones
                     date = time2.datetime.combine(date_part, time_part, tz)
                 except ValueError:
                     return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
@@ -1064,7 +1065,7 @@ class UtilityCobble(Utility, name="Utility"):
         Example: `..times Kargadia Earth 2152-08-11 12:00:00` would output 10 August 2022 18:59:58
         Leave the command empty to convert to the current time on Kargadia
         Only specify the two calendars if you want to see the current time in a specific time class """
-        language = ctx.language()
+        language = ctx.language2("en")
         try:
             time_class1 = getattr(time2, _time_class1)
         except AttributeError:
@@ -1094,7 +1095,10 @@ class UtilityCobble(Utility, name="Utility"):
                 _y, _m, _d = _date.split("-")
                 y, m, d = int(_y), int(_m), int(_d)
                 date_part = time2.date(y, m, d, time_class1)
-                date1 = time2.datetime.combine(date_part, time_part, language.get_timezone(ctx.author.id, _time_class1)).to_timezone(time2.timezone.utc)
+                date1 = time2.datetime.combine(date_part, time_part, time2.utc)
+                date1b = date1.as_timezone(self.bot.timezone(ctx.author.id, _time_class1))
+                date1.replace(tz=date1b.tzinfo)
+                # date1 = time2.datetime.combine(date_part, time_part, language.get_timezone(ctx.author.id, _time_class1)).to_timezone(time2.timezone.utc)
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
         date2 = date1.convert_time_class(time_class2, False)

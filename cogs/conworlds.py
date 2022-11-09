@@ -39,11 +39,14 @@ class Conworlds(commands.Cog):
                 _y, _m, _d = _date.split("-")
                 y, m, d = int(_y), int(_m), int(_d)
                 date_part = time.date(y, m, d, time.Earth)
-                dt = time.datetime.combine(date_part, time_part)
+                dt = time.datetime.combine(date_part, time_part, time.utc)
+                dt2 = dt.as_timezone(self.bot.timezone(ctx.author.id))
+                dt.replace(tz=dt2.tzinfo)
+                _expiry = dt.to_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
         # time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
-        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S", "en")
+        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S ", "en") + dt.tzinfo._tzname  # type: ignore
         output = f"Time on Earth: **{time_earth}**"
         _pre = "on"
         if place_name == "Kargadia":
@@ -61,7 +64,7 @@ class Conworlds(commands.Cog):
         place = conworlds.Place(place_name, dt)
         if _name is None:
             _name = place.name_translation(ctx.language2("en"))
-        output += f"\nTime {_pre} {_name}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S', 'en')}**"
+        output += f"\nTime {_pre} {_name}: **{place.time.strftime('%A, %d %B %Y, %H:%M:%S %Z', 'en')}**"
         return await ctx.send(output)
 
     @commands.command(name="kaage", aliases=["age"])

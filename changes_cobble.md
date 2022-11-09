@@ -585,3 +585,8 @@
 ## v1.7.1 - 1 November 2022
 - Added new places to Kargadia time
 - Fixed issues arising from pytz timezones in places where Earth time is handled
+
+## v1.7.2 - 9 November 2022
+- `..time78` now takes the input time in your Earth timezone
+- `..time78` now shows the timezone name for both Earth and Kargadia
+- The time converter now also takes in the time in your Earth timezone and output in English
