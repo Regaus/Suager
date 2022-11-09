@@ -20,7 +20,7 @@
 
 ## v1.1.2 - 22 July 2022
 - Changed the cooldown for `a.impersonate` to 7.5s per user (from 5s per channel)
-- Reduced the Markov chain generator's dataset length limit to 50,000 (from 10,000) 
+- Reduced the Markov chain generator's dataset length limit to 50,000 (from 100,000) 
 - The generator will now use random entries of the dataset if the overall length exceeds the max limit
 
 ## v1.1.2.1 - 3 September 2022
@@ -40,3 +40,7 @@
 - Satan's Rib will also qualify the message content to be separated (i.e. stored with a channel ID saved rather than null)
 - Reduced message limit to 10,000 in an attempt to reduce lag on loading the impersonate command
 - Added more detail to opt-out command's confirmation message
+
+## v1.2.1 - 9 November 2022
+- Added Pretender to a new server
+- Added a smarter behaviour for impersonating users who are inactive in separated channels

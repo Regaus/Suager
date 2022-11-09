@@ -15,8 +15,8 @@ def separation_condition(channel: discord.TextChannel | discord.Thread):
     """ Check whether the channel should have a separate message record or be mashed together with everything else """
     if not channel.guild:
         return False
-    # If the channel is a Secret Room or is in Satan's Rib
-    return channel.category_id == 663031673813860420 or channel.guild.id == 866050967249223720
+    # If the channel is a Secret Room or is in Satan's Rib or Shepherd Rep edge posters channel
+    return channel.category_id == 663031673813860420 or channel.guild.id == 866050967249223720 or channel.id == 828742737493884968
 
 
 class MessageManager:
@@ -74,8 +74,13 @@ class MessageManager:
         self.db.execute("DELETE FROM pretender_messages WHERE author=?", (author.id,))
 
     def generate(self, author: discord.Member | discord.User, channel_id: int = None) -> str:
+        # If the channel is one of the separated channels, first try to fetch the user's messages in that channel.
+        # If there are not enough messages from the channel, use the user's messages from non-separated channels.
+        # Else if the dataset is still too low, use any messages from non-separated channels
         if channel_id:
             dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))
+            if len(dataset < self.min_limit):
+                dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))
         else:
             dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))
 
