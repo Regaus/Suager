@@ -44,3 +44,6 @@
 ## v1.2.1 - 9 November 2022
 - Added Pretender to a new server
 - Added a smarter behaviour for impersonating users who are inactive in separated channels
+
+## v1.2.1.1 - 10 November 2022
+- Fixed impersonator breaking in separated channels

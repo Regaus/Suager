@@ -79,7 +79,7 @@ class MessageManager:
         # Else if the dataset is still too low, use any messages from non-separated channels
         if channel_id:
             dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel=?", (author.id, channel_id))
-            if len(dataset < self.min_limit):
+            if len(dataset) < self.min_limit:
                 dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))
         else:
             dataset = self.db.fetch("SELECT * FROM pretender_messages WHERE author=? AND channel IS NULL", (author.id,))
