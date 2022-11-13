@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import random
+import re
 from typing import Type
 
 import aiohttp
@@ -549,7 +550,7 @@ def ka_data_updater(bot: bot_data.Bot):
                 kargadian = f"{place.name_translation(ka)}: "
                 kargadian += place.time.strftime("%d %b %Y, %H:%M", "ne_rc")
                 english = f"{place.name_translation(en):<20} - "
-                english += place.time.strftime("%d %b %Y, %H:%M", "en")  # Note to future self: Consider shortening to %b (eg 14 Kar 2151) to save space - Considered at 11/09/2022
+                english += place.time.strftime("%d %b %Y, %H:%M", "en")
                 if place.weather is not None:
                     temp = f"{place.weather['temperature']:.0f}°C"
                     rain = place.weather['rain']
@@ -732,13 +733,25 @@ async def playing(bot: bot_data.Bot):
                     status = None
                     for key, holiday in ka_holidays.items():
                         if holiday == ka_day:
-                            name = language.case(holiday_names_ka.get(key), "genitive", "singular")
+                            # name = language.case(holiday_names_ka.get(key), "genitive", "singular")
+                            _name = holiday_names_ka.get(key)
+                            if _name == "Nuar Kad":
+                                name = "Nuan Kadan"
+                            else:
+                                name = re.sub(r"^Sea", "Sean", _name)
+                                name = re.sub(r"sea$", "sean", name)
                             status = f"Kovanan {name}!"
                             break
                     if status is None:  # if no holidays are on, so the status hasn't yet been determined
                         random.seed()
                         key, holiday = random.choice(list(ka_holidays.items()))
-                        name = language.case(holiday_names_ka.get(key), "dative", "singular")
+                        # name = language.case(holiday_names_ka.get(key), "dative", "singular")
+                        _name = holiday_names_ka.get(key)
+                        if _name == "Nuar Kad":
+                            name = "Nuart Kadut"
+                        else:
+                            name = re.sub(r"^Sea", "Seat", _name)
+                            name = re.sub(r"sea$", "seat", name)
                         status = f"ZK: {until(holiday, True)} {name}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 3)")
@@ -746,13 +759,29 @@ async def playing(bot: bot_data.Bot):
                     status = None
                     for key, holiday in sl_holidays.items():
                         if holiday == today:
-                            name = language.case(holiday_names_sl.get(key), "genitive", "singular")
+                            # name = language.case(holiday_names_sl.get(key), "genitive", "singular")
+                            _name = holiday_names_sl.get(key)
+                            if _name == "Nuar Kad":
+                                name = "Nuan Kadan"
+                            elif _name == "Hallauvin":
+                                name = "Hallauvinan"
+                            else:
+                                name = re.sub(r"^Sea", "Sean", _name)
+                                name = re.sub(r"sea$", "sean", name)
                             status = f"Kovanan {name}!"
                             break
                     if status is None:  # if the status still hasn't been decided, meaning no holidays are on
                         random.seed()
                         key, holiday = random.choice(list(sl_holidays.items()))
-                        name = language.case(holiday_names_sl.get(key), "dative", "singular")
+                        # name = language.case(holiday_names_sl.get(key), "dative", "singular")
+                        _name = holiday_names_sl.get(key)
+                        if _name == "Nuar Kad":
+                            name = "Nuart Kadut"
+                        elif _name == "Hallauvin":
+                            name = "Hallauvinut"
+                        else:
+                            name = re.sub(r"^Sea", "Seat", _name)
+                            name = re.sub(r"sea$", "seat", name)
                         status = f"SL: {until(holiday, True)} {name}"
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")

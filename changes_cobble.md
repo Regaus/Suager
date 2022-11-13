@@ -590,3 +590,6 @@
 - `..time78` now takes the input time in your Earth timezone
 - `..time78` now shows the timezone name for both Earth and Kargadia
 - The time converter now also takes in the time in your Earth timezone and output in English
+
+## v1.7.2.1 - 13 November 2022
+- Fixed incorrect cases on Kargadian holiday names
