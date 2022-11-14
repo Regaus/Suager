@@ -1410,3 +1410,7 @@
 
 ## v7.5.18.2 - 9 November 2022
 - Fixed pytz timezone names during daylight savings transitions
+
+## v7.5.18.3 - 14 November 2022
+- Fixed zero width space characters showing up on the rank image
+- Fixed variables not being filled in when `//ranklang` receives an invalid language

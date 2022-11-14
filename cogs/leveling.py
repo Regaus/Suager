@@ -457,7 +457,8 @@ class Leveling(commands.Cog):
                 r1 = language.number(xp, precision=0)
                 y = 288
                 if level < max_level:
-                    r3 = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True))
+                    # Remove the zero-width spaces from the progress text
+                    r3 = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True).replace("\u200c", ""))
                     r4 = language.string("leveling_rank_xp_left", left=language.number((req - xp), precision=0))
                 else:
                     progress = 1
@@ -505,7 +506,7 @@ class Leveling(commands.Cog):
         """ Check your or someone's rank - In a different language """
         _language = self.bot.language2(language)
         if language not in languages.languages.languages.keys():
-            return await ctx.send(self.bot.language(ctx).string("settings_locale_invalid", language, ctx.prefix))
+            return await ctx.send(self.bot.language(ctx).string("settings_locale_invalid", language=language, p=ctx.prefix))
         return await self.level(ctx, who, _language)
 
     @commands.command(name="rankembed", aliases=["rank2", "ranke"])
