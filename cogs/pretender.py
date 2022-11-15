@@ -147,7 +147,13 @@ class Pretender(commands.Cog):
         try:  # For secret rooms, generate message based on the messages already there
             message = self.messages.generate(victim, ctx.channel.id if pretender.separation_condition(ctx.channel) else None)
             webhook = await self.webhooks.get(ctx.channel, session)
-            await ctx.message.delete()
+
+            try:
+                await ctx.message.delete()
+            except (discord.NotFound, discord.Forbidden):
+                # If we can't delete the ctx message, then so be it, just tell the user about it
+                await ctx.send("Failed to delete original message...", delete_after=5)
+
             await webhook.send(message, username=victim.name, avatar_url=str(victim.display_avatar), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
         except Exception as e:
             raise e

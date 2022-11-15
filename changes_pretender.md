@@ -50,3 +50,6 @@
 
 ## v1.2.1.2 - 15 November 2022
 - Database errors will now be logged instead of getting silently ignored
+
+## v1.2.1.3 - 15 November 2022
+- Fixed the bot breaking when the message with the impersonate command is deleted before the bot deletes it
