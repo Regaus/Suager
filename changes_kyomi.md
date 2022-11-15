@@ -252,3 +252,6 @@
 ## v1.2.11.5 - 20 October 2022
 - Updated to Python 3.11
 - Improved code for showing versions of libraries used
+
+## v1.2.11.6 - 15 November 2022
+- Database errors will now be logged instead of getting silently ignored

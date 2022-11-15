@@ -1414,3 +1414,6 @@
 ## v7.5.18.3 - 14 November 2022
 - Fixed zero width space characters showing up on the rank image
 - Fixed variables not being filled in when `//ranklang` receives an invalid language
+
+## v7.5.18.4 - 15 November 2022
+- Database errors will now be logged instead of getting silently ignored

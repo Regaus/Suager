@@ -47,3 +47,6 @@
 
 ## v1.2.1.1 - 10 November 2022
 - Fixed impersonator breaking in separated channels
+
+## v1.2.1.2 - 15 November 2022
+- Database errors will now be logged instead of getting silently ignored

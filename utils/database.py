@@ -2,6 +2,8 @@ import re
 import sqlite3
 from datetime import datetime
 
+from utils import general, logger
+
 
 def adapt_datetime_iso(val: datetime) -> str:
     """ Convert datetime object into ISO timestamp """
@@ -44,6 +46,9 @@ class Database:
         try:
             data = self.db.execute(sql, prepared)
         except Exception as e:
+            msg = f"{datetime.now():%d %b %Y, %H:%M:%S} > Database > {type(e).__name__}: {e}"
+            general.print_error(msg)
+            logger.log("suager", "database", msg)
             return f"{type(e).__name__}: {e}"
         status_word = sql.split(' ')[0].upper()
         status_code = data.rowcount if data.rowcount > 0 else 0
