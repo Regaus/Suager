@@ -27,7 +27,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         """ Placeholder """
         if write == "write":
             out = await self.get_data()
-            json.dump(out, open("assets/gtfs/data.json", "w+"))
+            json.dump(out, open("assets/gtfs/data.json", "w+"), indent=2)
         return await ctx.send("placeholder")
 
 
