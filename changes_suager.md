@@ -1417,3 +1417,6 @@
 
 ## v7.5.18.4 - 15 November 2022
 - Database errors will now be logged instead of getting silently ignored
+
+## v7.5.18.5 - 28 November 2022
+- Better database error logging
