@@ -432,7 +432,10 @@ class Events(commands.Cog):
             self.bot.uptime = time.now(None)
 
         print(f"{time.time()} > {self.bot.full_name} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
-        playing = f"Good morning | v{general.get_version()[self.bot.name]['short_version']}"
+        try:
+            playing = f"Good morning | v{general.get_version()[self.bot.name]['short_version']}"
+        except KeyError:
+            playing = "Good morning | Version unknown"
         await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.full_name} > Bot is online")
 

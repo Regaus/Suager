@@ -673,7 +673,7 @@ async def playing(bot: bot_data.Bot):
 
     while True:
         try:
-            version = general.get_version()[bot.name]
+            version = general.get_version().get(bot.name, {"version": "Unknown version", "short_version": "Unknown"})
             fv, sv = f"v{version['version']}", f"v{version['short_version']}"
             today = time2.date.today()
             year = today.year

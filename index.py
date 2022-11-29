@@ -58,7 +58,7 @@ for i in range(len(config["bots"])):
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Starting up..."), status=discord.Status.dnd, intents=intents,
                        allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True), message_commands=True, slash_commands=False)
-    load = bot_data.load[name]
+    load = bot_data.load.get(name, ["events"])
     for name in load:
         tasks.append(loop.create_task(bot.load_extension(f"cogs.{name}")))
     tasks.append(loop.create_task(bot.load_extension("jishaku")))

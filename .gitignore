@@ -31,6 +31,7 @@ data/
 config.json
 nohup.out
 blacklist.json
+assets/gtfs
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
