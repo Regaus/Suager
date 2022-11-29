@@ -593,3 +593,6 @@
 
 ## v1.7.2.1 - 13 November 2022
 - Fixed incorrect cases on Kargadian holiday names
+
+## v1.7.2.2 - 29 November 2022
+- Fixed timezone name causing `..time78` to break

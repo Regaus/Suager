@@ -3,6 +3,7 @@ import re
 from math import atan2, ceil, cos, radians as rad, sin, sqrt
 
 import discord
+from pytz.tzinfo import DstTzInfo
 from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
 
 from utils import bot_data, commands, conlangs
@@ -27,7 +28,7 @@ class Conworlds(commands.Cog):
 
         Example: ..time78 Reggar 2021-07-18 20:00"""
         if _date is None:
-            dt = time.datetime.now()
+            dt = time.datetime.now(tz=self.bot.timezone(ctx.author.id, time_class="Earth"))
         else:
             try:
                 if not _time:
@@ -40,13 +41,17 @@ class Conworlds(commands.Cog):
                 y, m, d = int(_y), int(_m), int(_d)
                 date_part = time.date(y, m, d, time.Earth)
                 dt = time.datetime.combine(date_part, time_part, time.utc)
-                dt2 = dt.as_timezone(self.bot.timezone(ctx.author.id))
+                dt2 = dt.as_timezone(self.bot.timezone(ctx.author.id, time_class="Earth"))
                 dt.replace(tz=dt2.tzinfo)
                 _expiry = dt.to_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
         # time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
-        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S ", "en") + dt.tzinfo._tzname  # type: ignore
+        if isinstance(dt.tzinfo, DstTzInfo):
+            tz_name = dt.tzinfo._tzname  # type: ignore
+        else:
+            tz_name = dt.tz_name()
+        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S ", "en") + tz_name
         output = f"Time on Earth: **{time_earth}**"
         _pre = "on"
         if place_name == "Kargadia":
