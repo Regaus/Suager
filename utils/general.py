@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 import os
 import random
-import sys
 import traceback
 from io import BytesIO
+from sys import stderr
 
 import discord
 
@@ -43,8 +43,8 @@ def traceback_maker(err: BaseException, text: str = None, guild=None, author=Non
     return error
 
 
-def print_error(text: str):
-    return sys.stderr.write(f"{text}\n")
+def print_error(*values):
+    return print(*values, file=stderr)
 
 
 def random_colour() -> int:
