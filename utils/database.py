@@ -141,9 +141,10 @@ tables = [
     ]),
     Table("custom_rank", [
         Column("uid", "INTEGER", True),
-        Column("font", "INTEGER", True),
-        Column("progress", "INTEGER", True),
-        Column("background", "INTEGER", True)
+        Column("font", "INTEGER", False),        # Text colour
+        Column("progress", "INTEGER", False),    # Progress bar colour
+        Column("background", "INTEGER", False),  # Background colour
+        Column("custom_font", "TEXT", False),    # Font to use
     ]),
     Table("custom_role", [
         Column("uid", "INTEGER", True),

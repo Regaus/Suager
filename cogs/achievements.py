@@ -3,7 +3,7 @@ from io import BytesIO
 import discord
 from PIL import Image, ImageDraw, ImageFont
 
-from utils import bot_data, commands, emotes
+from utils import bot_data, commands, emotes, images
 
 achievement_colours = [
     (96, 96, 96),     # Tier 0
@@ -53,7 +53,8 @@ class Achievements(commands.Cog):
         large_size = 96
         img = Image.new("RGBA", ((width + 20) * shelves - 20, 256 * rows + large_size), color=(0, 0, 0, 64))
         dr = ImageDraw.Draw(img)
-        font_dir = "assets/font.ttf"
+        # font_dir = "assets/font.ttf"
+        font_dir = images.font_files["whitney"]
         try:
             font = ImageFont.truetype(font_dir, size=large_size)
             font_med = ImageFont.truetype(font_dir, size=64)
@@ -166,7 +167,7 @@ class Achievements(commands.Cog):
         from io import BytesIO
         img = Image.new("RGBA", (2000, 200 * len(achievement_colours)), color=(0, 0, 0, 0))
         dr = ImageDraw.Draw(img)
-        font = ImageFont.truetype("assets/font.ttf", size=128)
+        font = ImageFont.truetype(images.font_files["whitney"], size=128)  # "assets/font.ttf"
         for i in range(len(achievement_colours)):
             paste = Image.new("RGBA", (1500, 150), color=achievement_colours[i])
             img.paste(paste, (500, 200 * i + 25))

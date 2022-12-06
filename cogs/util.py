@@ -10,7 +10,7 @@ import pytz
 from PIL import Image, ImageDraw, ImageFont
 from regaus import conworlds, time as time2
 
-from utils import arg_parser, bases, bot_data, commands, emotes, general, http, permissions, time
+from utils import arg_parser, bases, bot_data, commands, emotes, general, http, images, permissions, time
 
 
 def custom_role_enabled(ctx):
@@ -339,7 +339,7 @@ class Utility(commands.Cog):
         font_size = 48
         size = 256
         try:
-            font = ImageFont.truetype("assets/font.ttf", size=font_size)
+            font = ImageFont.truetype(images.font_files["jetbrains mono"], size=font_size)
         except ImportError:
             await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font = None
@@ -361,14 +361,16 @@ class Utility(commands.Cog):
             draw2b = ImageDraw.Draw(image2b)
             hex2a = "#" + _hex(red2a) + _hex(green2a) + _hex(blue2a)
             hex2b = "#" + _hex(red2b) + _hex(green2b) + _hex(blue2b)
-            width2a, height2a = draw2a.textsize(hex2a, font)
-            width2b, height2b = draw2b.textsize(hex2b, font)
+            # width2a, height2a = draw2a.textsize(hex2a, font)
+            # width2b, height2b = draw2b.textsize(hex2b, font)
             sum2a = (red2a + green2a + blue2a) // 3
             sum2b = (red2b + green2b + blue2b) // 3
             fill2a = (0, 0, 0, 255) if sum2a >= 128 or green2a >= 224 else (255, 255, 255, 255)
             fill2b = (0, 0, 0, 255) if sum2b >= 128 or green2b >= 224 else (255, 255, 255, 255)
-            draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
-            draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
+            draw2a.text((size // 2, size), hex2a, font=font, fill=fill2a, anchor="md")
+            draw2b.text((size // 2, size), hex2b, font=font, fill=fill2b, anchor="md")
+            # draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
+            # draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
             image2.paste(image2a, start2a)
             image2.paste(image2b, start2b)
 

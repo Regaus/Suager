@@ -7,7 +7,7 @@ from io import BytesIO
 import discord
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
 
-from utils import bot_data, commands, emotes, general, http, languages, logger, settings, time
+from utils import bot_data, commands, emotes, general, http, images, languages, logger, settings, time
 from utils.leaderboards import leaderboard, leaderboard2
 
 
@@ -96,6 +96,13 @@ xp_amounts = [20, 27]
 class Leveling(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+
+        # Default colours and font for custom ranks
+        # Note: when saving to the database, the default values are null, in case they ever get changed
+        self.default_text = 0x32ff32
+        self.default_progress = 0x32ff32
+        self.default_background = 0x000000
+        self.default_font = "whitney"
 
     @commands.command(name="leveling")
     @commands.is_owner()
@@ -393,20 +400,40 @@ class Leveling(commands.Cog):
         async with ctx.typing():
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
             r = language.string("leveling_rank", user=user, server=ctx.guild.name)
+            # Load custom rank data from database
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
-            if custom:
-                font_colour, progress_colour, background_colour = \
-                    get_colour(custom["font"]), get_colour(custom["progress"]), get_colour(custom["background"])
+            if not custom:
+                text, progress, background, font_name = None, None, None, None
             else:
-                font_colour, progress_colour, background_colour = (50, 255, 50), (50, 255, 50), 0
+                text: int | None = custom["font"]
+                progress: int | None = custom["progress"]
+                background: int | None = custom["background"]
+                font_name: str | None = custom["custom_font"]
+            # Fill with default values
+            if text is None:
+                text = self.default_text
+            if progress is None:
+                progress = self.default_progress
+            if background is None:
+                background = self.default_background
+            if font_name is None:
+                font_name = self.default_font
+            # Load font file and interpret colours into tuples
+            font_colour = get_colour(text)
+            progress_colour = get_colour(progress)
+            background_colour = get_colour(background)
+            font_dir = images.font_files.get(font_name, images.font_files[self.default_font])  # Back up by default font in case the custom font is ever deleted
+            # Load leveling data
             if data:
                 xp = data["xp"]
                 level = data["level"]
             else:
                 level, xp = 0, 0
+            # Image setup
             width = 2048
             img = Image.new("RGB", (width, 612), color=background_colour)
             dr = ImageDraw.Draw(img)
+            # Get the user's avatar
             try:
                 avatar = BytesIO(await http.get(str(user.display_avatar.replace(size=512, format="png")), res_method="read"))
                 avatar_img = Image.open(avatar)
@@ -415,15 +442,17 @@ class Leveling(commands.Cog):
             except UnidentifiedImageError:  # Failed to get image
                 avatar = Image.open("assets/error.png")
                 img.paste(avatar)
-            font_dir = "assets/font.ttf"
+            # Set up font
             try:
                 font = ImageFont.truetype(font_dir, size=128)
                 font_small = ImageFont.truetype(font_dir, size=64)
             except ImportError:
                 await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
                 font, font_small = None, None
+            # Write user's name to the top of the rank card
             text_x = 542
             dr.text((text_x, -10), str(user), font=font, fill=font_colour)
+            # Calculate XP required to reach the next level
             try:
                 if level >= 0:
                     req = int(levels[level])  # Requirement to next level
@@ -435,6 +464,7 @@ class Leveling(commands.Cog):
             except IndexError:
                 req = float("inf")
                 r2 = language.string("generic_max")
+            # Calculate XP required to reach the current level
             try:
                 if level > 0:
                     prev = int(levels[level-1])
@@ -444,18 +474,20 @@ class Leveling(commands.Cog):
                     prev = -int(levels[(-level) - 1])
             except IndexError:
                 prev = 0
+            # Get the user's rank within the current server
             _data = self.bot.db.fetch(f"SELECT * FROM leveling WHERE gid=? AND bot=? ORDER BY xp DESC", (ctx.guild.id, self.bot.name))
             place = language.string("leveling_rank_unknown")
             for x in range(len(_data)):
                 if _data[x]['uid'] == user.id:
                     place = language.string("leveling_rank_rank", place=language.string("leaderboards_place", val=language.number(x + 1)), total=language.number(len(_data)))
                     break
+            # Draw the details of the rank card (rank, level, XP amounts)
+            text_y = 512  # 495
             if not is_self:
                 progress = (xp - prev) / (req - prev)
                 _level = language.string("leveling_rank_level", level=language.number(level))
                 dr.text((text_x, 130), f"{place} | {_level}", font=font_small, fill=font_colour)
                 r1 = language.number(xp, precision=0)
-                y = 288
                 if level < max_level:
                     # Remove the zero-width spaces from the progress text
                     r3 = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True).replace("\u200c", ""))
@@ -463,15 +495,15 @@ class Leveling(commands.Cog):
                 else:
                     progress = 1
                     r3, r4 = language.string("leveling_rank_max_1"), random.choice(language.data("leveling_rank_max_2"))
-                    # y = 426
-                dr.text((text_x, y), language.string("leveling_rank_xp", xp=r1, next=r2, progress=r3, left=r4), font=font_small, fill=font_colour)
+                dr.text((text_x, text_y), language.string("leveling_rank_xp", xp=r1, next=r2, progress=r3, left=r4), font=font_small, fill=font_colour, anchor="ld")
             else:
                 progress = 1  # 0.5
                 place = language.string("leaderboards_place", val=1)
                 _rank = language.string("leveling_rank_rank2", place=place)
                 _level = language.string("leveling_rank_level", level=language.number(69420))
                 dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
-                dr.text((text_x, 357), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour)  # 426
+                dr.text((text_x, text_y), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour, anchor="ld")
+            # Draw progress bar
             full = width - 20
             done = int(progress * full)
             if done < 0:
@@ -486,6 +518,7 @@ class Leveling(commands.Cog):
             img.paste(i1, box1)
             img.paste(i2, box2)
             img.paste(i3, box3)
+            # Save image and return it
             bio = BytesIO()
             img.save(bio, "PNG")
             bio.seek(0)
@@ -621,13 +654,14 @@ class Leveling(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def custom_rank(self, ctx: commands.Context):
         """ Customise your rank card
-        Change the colour of the font, the background, or the progress bar"""
+        Change the colour of the text, the background, or the progress bar
+        New in v7.5.19: You can now also change the font used"""
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
-    @custom_rank.command(name="font")
-    async def crank_font(self, ctx: commands.Context, colour: str):
-        """ Font colour """
+    @custom_rank.command(name="text", aliases=["fontcolour", "font2"])
+    async def crank_font_colour(self, ctx: commands.Context, colour: str):
+        """ Font colour - Provide a hex colour (6-letter rgb code) """
         c = int_colour(colour)
         cc = await catch_colour(ctx, c)
         if cc:
@@ -635,12 +669,12 @@ class Leveling(commands.Cog):
             if data:
                 self.bot.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
             else:
-                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, c, 0x32ff32, 0))
+                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, c, None, None, None))
             return await ctx.send(f"Set your font colour to #{colour}")
 
     @custom_rank.command(name="progress")
     async def crank_progress(self, ctx: commands.Context, colour: str):
-        """ Progress bar colour """
+        """ Progress bar colour - Provide a hex colour (6-letter rgb code) """
         c = int_colour(colour)
         cc = await catch_colour(ctx, c)
         if cc:
@@ -648,12 +682,12 @@ class Leveling(commands.Cog):
             if data:
                 self.bot.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
             else:
-                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, c, 0))
+                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, c, None, None))
             return await ctx.send(f"Set your progress bar colour to #{colour}")
 
     @custom_rank.command(name="background", aliases=["bg"])
     async def crank_bg(self, ctx: commands.Context, colour: str):
-        """ Background colour """
+        """ Background colour - Provide a hex colour (6-letter rgb code) """
         c = int_colour(colour)
         cc = await catch_colour(ctx, c)
         if cc:
@@ -661,8 +695,35 @@ class Leveling(commands.Cog):
             if data:
                 self.bot.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
             else:
-                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?)", (ctx.author.id, 0x32ff32, 0x32ff32, c))
+                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, None, c, None))
             return await ctx.send(f"Set your background colour to #{colour}")
+
+    @custom_rank.command(name="font", aliases=["customfont", "font1"])
+    async def crank_font(self, ctx: commands.Context, *, font: str = None):
+        """ Change the font used in your rank card
+        Leave empty to see list of valid fonts"""
+        if font is not None:
+            font = font.lower()  # Font names are not case-sensitive
+        valid_fonts = list(images.font_files.keys())
+        if font == "-i":
+            message = "This is how the currently available fonts look.\n" \
+                      "The first row is the font name.\nThe second row shows sample text in English.\n" \
+                      "The third row shows sample text in Russian.\nThe last row shows numbers and special characters."
+            bio = images.font_tester()
+            return await ctx.send(message, file=discord.File(bio, filename="fonts.png"))
+        if font not in valid_fonts:  # This includes if the font is not specified
+            message = f"No font was specified or an invalid font was passed.\n" \
+                      f"The currently available fonts are: `{'`, `'.join(list(images.font_files))}`\n" \
+                      f"Type the name of the font you want to use with this command to set it.\n" \
+                      f"The default font is `{self.default_font}`.\n" \
+                      f"Type `{ctx.prefix}crank font -i` to see how these fonts look."
+            return await ctx.send(message)
+        data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+        if data:
+            self.bot.db.execute("UPDATE custom_rank SET custom_font=? WHERE uid=?", (font, ctx.author.id))
+        else:
+            self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, None, None, font))
+        return await ctx.send(f"Set your rank card font to `{font}`.")
 
     @commands.command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

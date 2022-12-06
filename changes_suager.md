@@ -1420,3 +1420,10 @@
 
 ## v7.5.18.5 - 3 December 2022
 - Updated printing method for `print_error()`
+
+## v7.5.19 - 5 December 2022
+- Made it possible to use different fonts for your rank card (`//crank font`)
+- Text colour customisation moved to `//crank text`
+- Custom rank database values can now be null, in case the default values ever change
+- Changed the font used in the `//colour` command to JetBrains Mono
+- Improved text alignment in `//rank` and `//colour`
