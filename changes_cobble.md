@@ -596,3 +596,13 @@
 
 ## v1.7.2.2 - 29 November 2022
 - Fixed timezone name causing `..time78` to break
+
+## v1.7.3 - 5 December 2022
+- Made it possible to use different fonts for your rank card (`..crank font`)
+- Text colour customisation moved to `..crank text`
+- Custom rank database values can now be null, in case the default values ever change
+- Changed the font used in the `..colour` command to JetBrains Mono
+- Improved text alignment in `..rank` and `..colour`
+
+## v1.7.4 - 6 December 2022
+- Improved how translation completion is counted in `..settings`

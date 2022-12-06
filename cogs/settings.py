@@ -21,17 +21,38 @@ class Settings(commands.Cog):
         """ List of all supported languages """
         nat, con, rsl = [], [], []
         _en = languages.Language("en")
-        exclude = ["_self", "_en", "_valid", "_conlang"]
+        # Values never considered for translation completion
+        exclude = ["_self", "_en", "_valid", "_conlang", "time_ago_p", "time_ago_s", "time_in_p", "time_in_s", "weather78_regions", "weather78_trivia_data"]
+        # Get values that are valid to count for translation completion
+        always_valid = ["_languages", "_language_alt", "generic", "frequency", "time", "discord", "events", "info", "settings"]
+        valid_prefixes = {
+            "suager": ["achievements", "birthdays", "fun", "images", "leaderboards", "leveling", "mod", "polls", "ratings", "social", "starboard", "tags", "trials", "util"],
+            "cobble": ["weather78", "achievements", "birthdays", "kuastall", "leaderboards", "leveling", "placeholder", "util"],
+            "kyomi":  ["birthdays", "fun", "images", "mod", "ratings", "social", "starboard", "util"]
+        }
+        valid = always_valid + valid_prefixes.get(self.bot.name, [])
         for language in list(languages.languages.languages.keys()):
             _language = languages.Language(language)
+            if not _language.data("_valid"):
+                continue
             if language == "en":
                 completeness = 1
             else:
                 strings = 0
                 matching = 0
                 for k in languages.languages.languages["en"].keys():
+                    # Check if the string is always excluded
                     if k.startswith("country_") or k.startswith("data_holidays_") or k in exclude:
                         continue
+                    # Check if the string prefix is applicable to this bot
+                    is_valid = False
+                    for p in valid:
+                        if k.startswith(p):
+                            is_valid = True
+                            break
+                    if not is_valid:
+                        continue
+
                     d1, d2 = _en.data(k), _language.data(k)
 
                     # Behaviour for when the data is a list
@@ -50,7 +71,7 @@ class Settings(commands.Cog):
 
                     # Behaviour for when the data is a dict
                     # Languages, island names and region names should count as just one big "string" each so that they wouldn't create hundreds of extra entries
-                    elif isinstance(d1, dict) and isinstance(d2, dict) and k not in ["_languages", "weather78_islands", "weather78_regions"]:
+                    elif isinstance(d1, dict) and isinstance(d2, dict) and k not in ["_languages", "weather78_islands"]:
                         for key, s1 in d1.items():
                             s2 = d2.get(key)
                             strings += 1
@@ -63,11 +84,10 @@ class Settings(commands.Cog):
                         if d1 == d2:
                             matching += 1
                 completeness = 1 - (matching / strings)
+                # print(f"{self.bot.name} > {language} > Translated {strings - matching}/{strings}")
 
             out = f"`{language}`: {_language.string('_self')} - {_language.string('_en')} - {completeness:.1%} translated"
             conlang = _language.data("_conlang")
-            if not _language.data("_valid"):
-                continue
             add_list = rsl if conlang == 2 else con if conlang == 1 else nat
             add_list.append(out)
 
@@ -91,6 +111,8 @@ class Settings(commands.Cog):
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
             if ctx.author.id in trusted:
                 output += "\n\n__RSLs supported:__\n" + "\n".join(rsl)
+
+        output += "\n\n*Please note that some of these translations have not been updated for a long time and may not be up to date with the current \"standard\" form.*"
         return await ctx.send(output)
 
     @commands.group(name="settings", aliases=["set"], case_insensitive=True)

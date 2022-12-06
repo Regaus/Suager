@@ -1427,3 +1427,6 @@
 - Custom rank database values can now be null, in case the default values ever change
 - Changed the font used in the `//colour` command to JetBrains Mono
 - Improved text alignment in `//rank` and `//colour`
+
+## v7.5.20 - 6 December 2022
+- Improved how translation completion is counted in `//settings`

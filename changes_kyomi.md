@@ -255,3 +255,10 @@
 
 ## v1.2.11.6 - 15 November 2022
 - Database errors will now be logged instead of getting silently ignored
+
+## v1.2.12 - 5 December 2022
+- Changed the font used in the `m!colour` command to JetBrains Mono
+- Improved text alignment in `m!rank` and `m!colour`
+
+## v1.2.13 - 6 December 2022
+- Improved how translation completion is counted in `m!settings`
