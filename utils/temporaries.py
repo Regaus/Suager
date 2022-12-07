@@ -220,10 +220,14 @@ def prep_birthdays(bot: bot_data.Bot):
                 if bot.name == "cobble":
                     if data[uid].birthday_date.iso() != entry["birthday"]:
                         data[uid].birthday_date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
+
                     if entry["location"] and str(data[uid].tz) != entry["location"]:
-                        data[uid].tz = conworlds.Place(entry["location"]).tz
+                        try:
+                            data[uid].tz = conworlds.Place(entry["location"]).tz
+                        except (ValueError, AttributeError, KeyError):  # Place does not exist or is not specified (null -> AttError)
+                            data[uid].tz = time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG")
                     elif not entry["location"]:
-                        data[uid].tz = time2.timezone.utc
+                        data[uid].tz = time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG")
                 else:
                     if data[uid].birthday_date.iso() != entry["birthday"].strftime("%Y-%m-%d"):
                         data[uid].birthday_date = time2.date.from_datetime(entry["birthday"])
