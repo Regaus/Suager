@@ -178,10 +178,10 @@ def process_birthday(bot: bot_data.Bot, entry: dict) -> birthday.Birthday:
     uid = entry["uid"]
     if bot.name == "cobble":
         date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
-        if entry["location"]:
+        try:
             tz = conworlds.Place(entry["location"]).tz
-        else:
-            tz = time2.timezone.utc
+        except (ValueError, AttributeError, KeyError):  # Place does not exist or is not specified (null -> AttError)
+            tz = time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG")  # Since they have Virsetgar instead of UTC
     else:
         date = time2.date.from_datetime(entry["birthday"])  # although the birthday is stored as a datetime, the converter only takes in the date part
         tz_entry = bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (uid,))

@@ -606,3 +606,6 @@
 
 ## v1.7.4 - 6 December 2022
 - Improved how translation completion is counted in `..settings`
+
+## v1.7.4.1 - 7 December 2022
+- Better Kargadian timezone conversion for the birthdays loader
