@@ -10,3 +10,5 @@ git+https://github.com/Gorialis/jishaku.git@master#egg=jishaku  # Use github ver
 luas.py
 jstyleson
 markovify
+scipy
+numpy

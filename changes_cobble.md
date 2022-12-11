@@ -609,3 +609,6 @@
 
 ## v1.7.4.1 - 7 December 2022
 - Better Kargadian timezone conversion for the birthdays loader
+
+## v1.8.0-alpha1 - 9-11 December 2022
+- Created a Kargadian name generator and citizen generator
