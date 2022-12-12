@@ -86,7 +86,8 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.punishments(bot)))
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
 
-try:
-    loop.run_until_complete(asyncio.gather(*tasks))
-except (KeyboardInterrupt, asyncio.CancelledError):
-    loop.close()
+if __name__ == '__main__':
+    try:
+        loop.run_until_complete(asyncio.gather(*tasks))
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        loop.close()
