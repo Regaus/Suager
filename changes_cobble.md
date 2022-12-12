@@ -618,3 +618,6 @@
 - Fixed encoding issues with the names' json files
 - Fixed the generator not being properly random for some reason
 - ~~Generated birthdays will now be shown in the birthplace's timezone~~ (once the underlying Regaus.py code is fixed)
+
+## v1.8.0-alpha3 - 12 December 2022
+- Made generated birthdays younger - most people are now around 15-50 Kargadian years old
