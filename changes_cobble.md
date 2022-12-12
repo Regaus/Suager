@@ -626,3 +626,7 @@
 - Added more error checking to try to prevent the bot from crashing due to connection errors
 - Added button interactions to the Kargadian name/citizen generator
 - Made places for birth, residence, and origin more random by removing population weights
+
+## v1.8.0 - 12 December 2022
+- Moved Kargadian events and holidays to a separate channel
+- CobbleBot update announcements will now be shown in the Kargadia server

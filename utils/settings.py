@@ -26,7 +26,7 @@ template_mizuki = {
         "enabled": False,
         "role": 0,
         "channel": 0,
-        "message": "Happy birthday [MENTION], have a nice one! 🎂🎉"
+        "message": "Happy birthday [MENTION]! 🎂🎉"
     },
     "join_roles": {
         "members": [],
@@ -96,7 +96,7 @@ template_suager = {
         "enabled": False,
         "role": 0,
         "channel": 0,
-        "message": "Happy birthday [MENTION], have a nice one! 🎂🎉"
+        "message": "Happy birthday [MENTION]! 🎂🎉"
     },
     "polls": {
         "channel": 0,

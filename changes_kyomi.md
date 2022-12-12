@@ -262,3 +262,6 @@
 
 ## v1.2.13 - 6 December 2022
 - Improved how translation completion is counted in `m!settings`
+
+## v1.2.13.1 - 12 December 2022
+- Changed the default happy birthday message

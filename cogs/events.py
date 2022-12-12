@@ -18,7 +18,10 @@ class Events(commands.Cog):
         self.blocked = [667187968145883146, 852695205073125376]
         self.bad = ["reg", "reag", "302851022790066185"]
         self.blocked_logs = 739183533792297164
-        self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
+        # Suager updates:      SL announcements,   3tk4 updates,       mimohome suwu,      Chill Crew updates, 1337xp updates,     # Kargadia updates
+        self.updates_suager = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713, 1051869244771549314]
+        # Cobble updates:      Kargadia updates
+        self.updates_cobble = [1051869244771549314]
         self.dm_logger = 806884278037643264  # DM logs channel
 
     @commands.Cog.listener()
@@ -58,18 +61,22 @@ class Events(commands.Cog):
                     await channel.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id}) | {time.time()}\n{ctx.content}")
                     break
 
-        if self.bot.name == "suager":
-            if ctx.channel.id == 742886280911913010:
-                for channel_id in self.updates:
+        await self.update_message(ctx, "suager",  742886280911913010, self.updates_suager)  # Update channel: RK suager-updates
+        await self.update_message(ctx, "cobble", 1051871739879116821, self.updates_cobble)  # Update channel: RK cobble-updates
+
+    async def update_message(self, ctx: discord.Message, bot_name: str, update_channel: int, channel_ids: list[int]):
+        if self.bot.name == bot_name:
+            if ctx.channel.id == update_channel:
+                for channel_id in channel_ids:
                     channel = self.bot.get_channel(channel_id)
                     # These don't need to be logged because nobody cares
                     try:
                         if channel is not None:
-                            await channel.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}")
+                            await channel.send(f"{ctx.author} | {self.bot.full_name} updates | {time.time()}\n{ctx.content}")
                         else:
                             general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
-                        general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > {channel_id} > {type(e).__name__}: {e}")
+                        general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} > {type(e).__name__}: {e}")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):

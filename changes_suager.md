@@ -1430,3 +1430,6 @@
 
 ## v7.5.20 - 6 December 2022
 - Improved how translation completion is counted in `//settings`
+
+## v7.5.20.1 - 12 December 2022
+- Changed the default happy birthday message
