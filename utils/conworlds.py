@@ -28,14 +28,15 @@ birthday_random /= max(birthday_random)  # Make the max value 1
 path = join("languages", "names")
 available_languages = [f.removesuffix(".json") for f in listdir(path) if isfile(join(path, f))]
 weights = [int(open(join(path, f) + ".json").readline().rstrip().removeprefix("// Weight: ")) for f in available_languages]
-all_available_names: dict[str, dict[str, list[str]]] = {lang: jstyleson.loads(open(join(path, lang) + ".json").read()) for lang in available_languages}
+all_available_names: dict[str, dict[str, list[str]]] = {lang: jstyleson.loads(open(join(path, lang) + ".json", encoding="utf-8").read()) for lang in available_languages}
 
 
-def citizen_generator(language: str = None, name_only: bool = False):
+def citizen_generator(language: str = None, name_only: bool = False) -> tuple[str, str] | dict[str, str | time.datetime]:
     """ Generate a Kargadian name in the given language (or random) """
+    random.seed()  # For some reason, something was interfering with the randomness, but we can fix that by calling this
     if language is None:  # If the language is not specified, use a random language that has its naming system specified
         language = random.choices(available_languages, weights)[0]
-    all_names: dict[str, list[str]] = jstyleson.loads(open(join(path, language) + ".json").read())
+    all_names: dict[str, list[str]] = all_available_names[language]
     gender = random.choice(("male", "female"))  # 50% male, 50% female
     names = all_names[gender] + all_names["neutral"]  # Pool of names to use as a first name
     # The first name in the list is used as a first name.
@@ -116,7 +117,8 @@ def citizen_generator(language: str = None, name_only: bool = False):
     # Get the citizen's birthday
     age = choice(birthday_random)
     timestamp = birthday_min.timestamp + age * timestamp_delta  # Timestamp of the birthday
-    birthday = time.datetime.from_timestamp(timestamp, tz=time.timezone.utc, time_class=time.Kargadia)  # The actual birthday
+    birthday_tz = conworlds.Place(birth["id"]).tz
+    birthday = time.datetime.from_timestamp(timestamp, tz=birthday_tz, time_class=time.Kargadia)  # The actual birthday
 
     # For the native language, the language code is provided.
     # For the birthday, a datetime of the birthdate is provided.

@@ -6,7 +6,7 @@ import discord
 from pytz.tzinfo import DstTzInfo
 from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
 
-from utils import bot_data, commands, conlangs
+from utils import bot_data, commands, conlangs, conworlds as conworlds2
 
 longest_city = {
     "Virkada": 15,
@@ -454,6 +454,53 @@ class Conworlds(commands.Cog):
         if user == ctx.author:
             return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
         return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username, date=birthday, delta=delta))
+
+    @commands.group(name="generate", aliases=["gen"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def generate(self, ctx: commands.Context):
+        """ Generate a random Kargadian citizen"""
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @generate.command(name="name", aliases=["names"])
+    async def generate_name(self, ctx: commands.Context, language: str = "ne_rc"):
+        """ Generate a couple random Kargadian names """
+        try:
+            names = []
+            for i in range(10):
+                name, gender = conworlds2.citizen_generator(language, name_only=True)
+                names.append(f"`{name}` ({gender.title()})")
+            return await ctx.send("Here are some Kargadian names for you:\n" + "\n".join(names))
+        except KeyError:
+            return await ctx.send(f"Invalid language specified: `{language}`.")
+
+    @generate.command(name="citizen")
+    async def generate_citizen(self, ctx: commands.Context, citizen_language: str = None):
+        """ Generate an entire citizen
+        If no language is specified, a random available language will be used """
+        try:
+            citizen = conworlds2.citizen_generator(citizen_language, name_only=False)
+        except KeyError:
+            return await ctx.send(f"Invalid language specified: `{citizen_language}`.")
+
+        embed = discord.Embed(colour=random_colour())
+
+        language = ctx.language2("en")
+
+        embed.title = "Kargadia Random Citizen Generator"
+        # embed.add_field(name="Citizen ID", value=data["id"], inline=True)
+        embed.add_field(name="Full Name", value=citizen["name"], inline=True)
+        embed.add_field(name="Gender", value=citizen["gender"].title(), inline=True)
+
+        embed.add_field(name="Date of Birth", value=language.time(citizen["birthday"], short=0, dow=False, seconds=True, tz=True, at=True), inline=False)
+        embed.add_field(name="Age (in Kargadian time)", value=language.delta_dt(citizen["birthday"], accuracy=3, brief=False, affix=False), inline=False)
+
+        embed.add_field(name="Native Language", value=language.data("_languages").get(citizen["language"]), inline=False)
+        birth = conworlds.Place(citizen["birthplace"])
+        embed.add_field(name="Place of Birth", value=f"{birth.name_translation(language)}, {birth.state}", inline=True)
+        residence = conworlds.Place(citizen["residence"])
+        embed.add_field(name="Place of Residence", value=f"{residence.name_translation(language)}, {residence.state}", inline=True)
+        return await ctx.send(embed=embed)
 
 
 async def setup(bot: bot_data.Bot):

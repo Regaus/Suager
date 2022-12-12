@@ -612,3 +612,9 @@
 
 ## v1.8.0-alpha1 - 9-11 December 2022
 - Created a Kargadian name generator and citizen generator
+
+## v1.8.0-alpha2 - 12 December 2022
+- Added command to be able to actually see the generated names
+- Fixed encoding issues with the names' json files
+- Fixed the generator not being properly random for some reason
+- ~~Generated birthdays will now be shown in the birthplace's timezone~~ (once the underlying Regaus.py code is fixed)
