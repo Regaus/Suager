@@ -25,6 +25,11 @@ def can_send(channel: discord.TextChannel | discord.DMChannel | discord.Thread):
     return isinstance(channel, discord.DMChannel) or channel.permissions_for(channel.guild.me).send_messages
 
 
+def error(bot: bot_data.Bot, text: str):
+    general.print_error(text)
+    logger.log(bot.name, "errors", text)
+
+
 async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
     entry_id = entry["id"]
     handled = 2 if not retry else 1
@@ -53,12 +58,18 @@ async def reminders(bot: bot_data.Bot):
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Handler")
     while True:
-        expired = bot.db.fetch("SELECT * FROM reminders WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
-        bot.db.execute("DELETE FROM reminders WHERE handled=1", ())  # We don't need to keep reminders after they expire and are dealt with
-        if expired:
-            for entry in expired:
-                await handle_reminder(bot, entry, False)
-        await asyncio.sleep(1)
+        try:
+            expired = bot.db.fetch("SELECT * FROM reminders WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
+            bot.db.execute("DELETE FROM reminders WHERE handled=1", ())  # We don't need to keep reminders after they expire and are dealt with
+            if expired:
+                for entry in expired:
+                    await handle_reminder(bot, entry, False)
+            await asyncio.sleep(1)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > Reminders > Error with connection.")
+        except Exception as e:
+            error(bot, f"{time.time()} > {bot.full_name} > Reminders > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def reminders_errors(bot: bot_data.Bot):
@@ -69,13 +80,19 @@ async def reminders_errors(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Errors Handler")
 
     while True:
-        # If it's errored out, it must've expired already...
-        expired = bot.db.fetch("SELECT * FROM reminders WHERE handled=2 AND bot=?", (bot.name,))
-        if expired:
-            for entry in expired:
-                await handle_reminder(bot, entry, True)
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 0)
+        try:
+            # If it's errored out, it must've expired already...
+            expired = bot.db.fetch("SELECT * FROM reminders WHERE handled=2 AND bot=?", (bot.name,))
+            if expired:
+                for entry in expired:
+                    await handle_reminder(bot, entry, True)
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 0)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > Error with connection.")
+        except Exception as e:
+            error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -151,11 +168,17 @@ async def punishments(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Handler")
 
     while True:
-        expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
-        if expired:
-            for entry in expired:
-                await handle_punishment(bot, entry, False)
-        await asyncio.sleep(1)
+        try:
+            expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
+            if expired:
+                for entry in expired:
+                    await handle_punishment(bot, entry, False)
+            await asyncio.sleep(1)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > Punishments > Error with connection.")
+        except Exception as e:
+            error(bot, f"{time.time()} > {bot.full_name} > Punishments > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def punishments_errors(bot: bot_data.Bot):
@@ -165,13 +188,19 @@ async def punishments_errors(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Errors Handler")
 
     while True:
-        # If it's errored out, it must've expired already...
-        expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND handled=2 AND bot=?", (bot.name,))
-        if expired:
-            for entry in expired:
-                await handle_punishment(bot, entry, True)
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 0)
+        try:
+            # If it's errored out, it must've expired already...
+            expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND handled=2 AND bot=?", (bot.name,))
+            if expired:
+                for entry in expired:
+                    await handle_punishment(bot, entry, True)
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 0)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > Error with connection.")
+        except Exception as e:
+            error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 def process_birthday(bot: bot_data.Bot, entry: dict) -> birthday.Birthday:
@@ -258,79 +287,85 @@ async def birthdays(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
     while True:
-        guilds = {}
-        settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
-        for entry in settings:
-            data = json.loads(entry["data"])
-            if "birthdays" in data:
-                if data["birthdays"]["enabled"]:
-                    out = [data["birthdays"]["role"], data["birthdays"]["channel"], data["birthdays"]["message"]]
-                    guilds[entry["gid"]] = out
+        try:
+            guilds = {}
+            settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
+            for entry in settings:
+                data = json.loads(entry["data"])
+                if "birthdays" in data:
+                    if data["birthdays"]["enabled"]:
+                        out = [data["birthdays"]["role"], data["birthdays"]["channel"], data["birthdays"]["message"]]
+                        guilds[entry["gid"]] = out
 
-        prep_birthdays(bot)
-        # birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
-        birthday_today = birthday.birthdays_today(bot.name)
-        if birthday_today:
-            for person in birthday_today:
-                # dm = True
+            prep_birthdays(bot)
+            # birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+            birthday_today = birthday.birthdays_today(bot.name)
+            if birthday_today:
+                for person in birthday_today:
+                    # dm = True
+                    for gid, data in guilds.items():
+                        # guild = guilds[i]
+                        guild: discord.Guild = bot.get_guild(gid)
+                        if guild is not None:
+                            user: discord.Member = guild.get_member(person.uid)
+                            if user is not None:
+                                # dm = False
+                                if data[1] and data[2]:
+                                    channel: discord.TextChannel = guild.get_channel(data[1])
+                                    message = data[2].replace("[MENTION]", user.mention).replace("[USER]", user.name)
+                                    try:
+                                        await channel.send(message)
+                                        print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
+                                    except Exception as e:
+                                        out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed sending birthday message (Guild {gid}, User {user.id}): {e}"
+                                        general.print_error(out)
+                                        logger.log(bot.name, "errors", out)
+                                if data[0]:
+                                    role: discord.Role = guild.get_role(data[0])
+                                    try:
+                                        await user.add_roles(role, reason=f"[Birthdays] It is {user}'s birthday")
+                                        print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave {user} the birthday role")
+                                    except Exception as e:
+                                        out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
+                                        general.print_error(out)
+                                        logger.log(bot.name, "errors", out)
+                    person.has_role = True
+                    if bot.name == "cobble":
+                        bot.db.execute("UPDATE kargadia SET has_role=1 WHERE uid=?", (person.uid,))
+                    else:
+                        bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
+
+            # birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+            birthday_over = birthday.birthdays_ended(bot.name)
+            for person in birthday_over:
+                if bot.name == "cobble":
+                    bot.db.execute("UPDATE kargadia SET has_role=0 WHERE uid=?", (person.uid,))
+                else:
+                    bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
+                person.has_role = False
+                person.push_birthday()
                 for gid, data in guilds.items():
                     # guild = guilds[i]
                     guild: discord.Guild = bot.get_guild(gid)
                     if guild is not None:
                         user: discord.Member = guild.get_member(person.uid)
                         if user is not None:
-                            # dm = False
-                            if data[1] and data[2]:
-                                channel: discord.TextChannel = guild.get_channel(data[1])
-                                message = data[2].replace("[MENTION]", user.mention).replace("[USER]", user.name)
-                                try:
-                                    await channel.send(message)
-                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
-                                except Exception as e:
-                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed sending birthday message (Guild {gid}, User {user.id}): {e}"
-                                    general.print_error(out)
-                                    logger.log(bot.name, "errors", out)
                             if data[0]:
                                 role: discord.Role = guild.get_role(data[0])
                                 try:
-                                    await user.add_roles(role, reason=f"[Birthdays] It is {user}'s birthday")
-                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave {user} the birthday role")
+                                    await user.remove_roles(role, reason=f"[Birthdays] It is no longer {user}'s birthday")
+                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user}")
                                 except Exception as e:
-                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
+                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed taking away birthday role (Guild {gid}, User {user.id}): {e}"
                                     general.print_error(out)
                                     logger.log(bot.name, "errors", out)
-                person.has_role = True
-                if bot.name == "cobble":
-                    bot.db.execute("UPDATE kargadia SET has_role=1 WHERE uid=?", (person.uid,))
-                else:
-                    bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
-
-        # birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
-        birthday_over = birthday.birthdays_ended(bot.name)
-        for person in birthday_over:
-            if bot.name == "cobble":
-                bot.db.execute("UPDATE kargadia SET has_role=0 WHERE uid=?", (person.uid,))
-            else:
-                bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
-            person.has_role = False
-            person.push_birthday()
-            for gid, data in guilds.items():
-                # guild = guilds[i]
-                guild: discord.Guild = bot.get_guild(gid)
-                if guild is not None:
-                    user: discord.Member = guild.get_member(person.uid)
-                    if user is not None:
-                        if data[0]:
-                            role: discord.Role = guild.get_role(data[0])
-                            try:
-                                await user.remove_roles(role, reason=f"[Birthdays] It is no longer {user}'s birthday")
-                                print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user}")
-                            except Exception as e:
-                                out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed taking away birthday role (Guild {gid}, User {user.id}): {e}"
-                                general.print_error(out)
-                                logger.log(bot.name, "errors", out)
-                # except Exception as e:
-                #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+                    # except Exception as e:
+                    #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > Error with connection.")
+        except Exception as e:
+            error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # birthday.save()
         await asyncio.sleep(1)
@@ -603,8 +638,25 @@ async def ka_time_updater(bot: bot_data.Bot):
                 messages[line[:-1]] = msg  # The message's instance is then stored into its appropriate dict
         return messages
 
-    messages_ka = await get_data(channel_ka)
-    messages_rk = await get_data(channel_rk)
+    try:
+        messages_ka = await get_data(channel_ka)
+        messages_rk = await get_data(channel_rk)
+    except (aiohttp.ClientConnectorError, ConnectionError):
+        error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Error with connection.")
+        await bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+        # Try again, whatever...
+        try:
+            messages_ka = await get_data(channel_ka)
+            messages_rk = await get_data(channel_rk)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Discord.py is weird.")
+            await asyncio.sleep(300)
+            return await ka_time_updater(bot)
+    except Exception as e:
+        error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > {type(e).__name__}: {e}")
+        error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
     async def update_message(name: str, content: str):
         async def edit_message(messages_dict: dict, channel: discord.abc.Messageable):
@@ -617,8 +669,8 @@ async def ka_time_updater(bot: bot_data.Bot):
                 message = await channel.send(content)  # Send a new message
                 messages_dict[name] = message  # Store the new message
                 logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > Message not found, sending new one")
-            except Exception as e:  # Any other error
-                out = f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > {type(e).__name__}: {e}"
+            except Exception as _e:  # Any other error
+                out = f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > {type(_e).__name__}: {_e}"
                 general.print_error(out)
                 logger.log(bot.name, "kargadia", out)
                 logger.log(bot.name, "errors", out)
@@ -627,19 +679,25 @@ async def ka_time_updater(bot: bot_data.Bot):
         await edit_message(messages_rk, channel_rk)
 
     while True:
-        ka_data_updater(bot)
+        try:
+            ka_data_updater(bot)
 
-        for area_name, area in ka_places.items():
-            data = [f"{area_name}:"]
-            for _data in area.values():
-                data.append(f"`{_data['data']}`")
-            await update_message(area_name, "\n".join(data))
-        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
+            for area_name, area in ka_places.items():
+                data = [f"{area_name}:"]
+                for _data in area.values():
+                    data.append(f"`{_data['data']}`")
+                await update_message(area_name, "\n".join(data))
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
 
-        # This should make it adjust itself for lag caused
-        await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(update_speed, 1, time2.Kargadia)
-        # await asyncio.sleep(update_speed)
+            # This should make it adjust itself for lag caused
+            await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
+            await wait_until_next_iter(update_speed, 1, time2.Kargadia)
+            # await asyncio.sleep(update_speed)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > Error with connection.")
+        except Exception as e:
+            error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def playing(bot: bot_data.Bot):
@@ -648,10 +706,6 @@ async def playing(bot: bot_data.Bot):
     await bot.wait_until_ready()
     await asyncio.sleep(1)  # So that the new status isn't immediately overwritten with the "Loading..." status if the status change time is hit during loading
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
-
-    def error(text: str):
-        general.print_error(text)
-        logger.log(bot.name, "errors", text)
 
     # It would be funnier to set it to Cobbletopia Tebarian, but that language will not be made anytime soon,
     # and it would also be even less likely to be understood by anyone, so it's better off to leave the language as Regaazdall Nehtivian
@@ -972,12 +1026,12 @@ async def playing(bot: bot_data.Bot):
             _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
             await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
+            error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
+            error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
         except Exception as e:
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
-            error(general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
@@ -988,10 +1042,6 @@ async def avatars(bot: bot_data.Bot):
     await wait_until_next_iter(3600, 1)
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
-
-    def error(text: str):
-        general.print_error(text)
-        logger.log(bot.name, "errors", text)
 
     while True:
         try:
@@ -1006,11 +1056,12 @@ async def avatars(bot: bot_data.Bot):
             send = s2 if e else s1
             logger.log(bot.name, "avatar", send)
         except PermissionError:
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
+            error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
+            error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
         except Exception as e:
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+            error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         await asyncio.sleep(1)
         await wait_until_next_iter(3600, 1)

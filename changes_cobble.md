@@ -621,3 +621,8 @@
 
 ## v1.8.0-alpha3 - 12 December 2022
 - Made generated birthdays younger - most people are now around 15-50 Kargadian years old
+
+## v1.8.0-pre1 - 12 December 2022
+- Added more error checking to try to prevent the bot from crashing due to connection errors
+- Added button interactions to the Kargadian name/citizen generator
+- Made places for birth, residence, and origin more random by removing population weights
