@@ -630,3 +630,6 @@
 ## v1.8.0 - 12 December 2022
 - Moved Kargadian events and holidays to a separate channel
 - CobbleBot update announcements will now be shown in the Kargadia server
+
+## v1.8.0.1 - 13 December 2022
+- Fixed generator command going into an infinite while loop and breaking the bots when generating a surname from origin

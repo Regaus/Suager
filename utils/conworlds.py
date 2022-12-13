@@ -76,7 +76,7 @@ def citizen_generator(language: str = None, name_only: bool = False) -> tuple[st
         # origin = random.choices(available_places, place_weights, k=1)[0]
         origin = random.choice(available_places)
         origin_name = conworlds.Place(origin["id"]).name_translation(language_cls)
-        while len(origin_name) > 2:  # Prevent extremely long names from being used
+        while len(origin_name.split()) > 2:  # Prevent extremely long names from being used
             origin = random.choice(available_places)
             origin_name = conworlds.Place(origin["id"]).name_translation(language_cls)
         if language_cls.is_in_family("ne_rc", "ne_rn"):
