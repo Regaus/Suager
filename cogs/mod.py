@@ -177,11 +177,20 @@ class Moderation(commands.Cog):
         self.image_formats = ["jpg", "jpeg", "jfif", "png", "gif", "webp", "tiff", "psd", "pdn",
                               "mp4", "mov", "wmv", "avi", "flv", "mkv", "webm"]
         self.image_link = re.compile(r"https?://\S+")
-        self.exceptions = ["https://tenor.com/", "https://imgur.com/", "https://youtu.be/", "https://www.youtube.com/watch?"]
+        # self.exceptions = ["https://tenor.com/", "https://imgur.com/", "https://youtu.be/", "https://www.youtube.com/watch?"]
 
     @commands.Cog.listener(name="on_message")
     async def on_message(self, ctx: discord.Message):
-        """ This event will be used for auto-moderation features, unless I decide to split them in the future """
+        """ A message is sent """
+        return await self.moderate_message(ctx)
+
+    @commands.Cog.listener(name="on_message_edit")
+    async def on_message_edit(self, _: discord.Message, after: discord.Message):
+        """ A message is edited - We still run all the checks """
+        return await self.moderate_message(after)
+
+    async def moderate_message(self, ctx: discord.Message):
+        """ This function will call all the moderation checks for every message """
         if ctx.author.bot:  # Ignore bots for image-only and anti-ads... I don't think bots would be sending discord links anyways
             return
         if self.bot.name in ["suager", "kyomi"]:
@@ -202,8 +211,10 @@ class Moderation(commands.Cog):
                     if ctx.attachments:
                         # Bitwise or: change to True if valid, else keep at current value
                         valid |= any(any(att.filename.endswith(ext) for ext in self.image_formats) for att in ctx.attachments)
-                    if links := re.findall(self.image_link, ctx.content):  # If there are any links present
-                        valid |= any((any(link.endswith(ext) for ext in self.image_formats) or any(link.startswith(exc) for exc in self.exceptions)) for link in links)
+                    # if links := re.findall(self.image_link, ctx.content):  # If there are any links present
+                    #     valid |= any((any(link.endswith(ext) for ext in self.image_formats) or any(link.startswith(exc) for exc in self.exceptions)) for link in links)
+                    if re.findall(self.image_link, ctx.content):  # Ignore what the link points to, always count links as valid: it would be easier to moderate manually
+                        valid = True
 
                     if not valid:
                         try:

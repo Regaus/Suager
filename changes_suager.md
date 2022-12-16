@@ -1449,3 +1449,7 @@
 ## v7.6.0-pre3 - 16 December 2022
 - Anti-ads and image-only will now detect if they can send the warning message. If not, they will silently do their job
 - Turned FakeContext into a dataclass
+
+## v7.6.0 - 16 December 2022
+- All links are now treated as valid for image-only, regardless of whether they actually contain an image or not
+- Message-related auto-moderation (image-only and anti-ads) will now also handle message edits
