@@ -170,7 +170,12 @@ class Moderation(commands.Cog):
         # self.admins = self.bot.config["owners"]
 
         # Regex for a discord invite link
-        self.discord_link = re.compile(r"((?:https://)?discord\.gg/\S+)|((?:https://)?discord(?:app)?\.com/invite/\S+)")
+        # Detected links: https://discord.gg/, https://discord.com/invite/, https://discord.com/servers/ (Public servers list),
+        # Listing sites: https://disboard.org/server/(join/), https://top.gg/servers/, https://discadia.com/, https://discadia.com/servers/,
+        # Listing sites: https://discordservers.com/server/, https://discordbotlist.com/servers/, https://disforge.com/server/, https://discord.me/, https://discords.com/servers/
+        self.discord_link = re.compile(r"(?:https://)?(discord\.gg/|discord(?:app)?\.com/(?:invite/|servers/)|disboard.org/server/(?:join/)?|"
+                                       r"top.gg/servers/|discadia.com/(?!add|emojis|\?)|discordservers.com/server/|discordbotlist.com/servers/|"
+                                       r"disforge.com/server/|discord.me/(?!bots)|discords.com/servers/)\S+")
 
         # Formats for images and videos, that are allowed to be used in image-only channels
         # I might adjust this as time goes on, if we find file formats that might not be as popular but still images/videos
