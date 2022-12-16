@@ -137,10 +137,3 @@ class Language(languages.Language):
             return self.string("time_at", date=_date, time=_time)
         else:
             return f"{_date}, {_time}"
-
-
-class FakeContext:
-    """ Build a fake Context instead of commands.Context to pass on to Language.get() """
-    def __init__(self, guild, bot):
-        self.guild = guild
-        self.bot = bot

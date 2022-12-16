@@ -252,7 +252,7 @@ class Leveling(commands.Cog):
 
         # Handle level rewards
         reason = f"Level Rewards - Level {level}"
-        language = self.bot.language(languages.FakeContext(ctx.guild, self.bot))
+        language = self.bot.language(commands.FakeContext(ctx.guild, self.bot))
         current_reward, next_reward = {"role": language.string("generic_none"), "level": 0}, {"role": language.string("generic_unknown"), "level": 0}
         top_role = False
         new_role = False

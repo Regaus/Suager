@@ -7,7 +7,7 @@ from typing import List
 import discord
 from regaus import time as time2
 
-from utils import bot_data, commands, general, languages, logger, time
+from utils import bot_data, commands, general, logger, time
 
 
 class Events(commands.Cog):
@@ -279,7 +279,7 @@ class Events(commands.Cog):
                 if welcome["channel"]:
                     channel = self.bot.get_channel(welcome["channel"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         message = welcome["message"] \
                             .replace("[MENTION]", member.mention)\
                             .replace("[USER]", member.name)\
@@ -300,7 +300,7 @@ class Events(commands.Cog):
                 if user_logs["join"]:
                     channel = self.bot.get_channel(user_logs["join"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         embed = discord.Embed(title=language.string("events_user_joined"), colour=general.green2)
                         embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
@@ -390,7 +390,7 @@ class Events(commands.Cog):
                 if goodbye["channel"]:
                     channel = self.bot.get_channel(goodbye["channel"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         message = goodbye["message"] \
                             .replace("[MENTION]", member.mention)\
                             .replace("[USER]", member.name)\
@@ -412,7 +412,7 @@ class Events(commands.Cog):
                 if user_logs["leave"]:
                     channel = self.bot.get_channel(user_logs["leave"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         embed = discord.Embed(title=language.string("events_user_left"), colour=general.red3)
                         embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)

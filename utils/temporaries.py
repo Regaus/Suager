@@ -12,7 +12,7 @@ import pytz
 from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import birthday, bot_data, general, http, languages, lists, logger, time
+from utils import birthday, bot_data, commands, general, http, lists, logger, time
 
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
@@ -23,11 +23,6 @@ async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, tim
 
 def can_send(channel: discord.TextChannel | discord.DMChannel | discord.Thread):
     return isinstance(channel, discord.DMChannel) or channel.permissions_for(channel.guild.me).send_messages
-
-
-def error(bot: bot_data.Bot, text: str):
-    general.print_error(text)
-    logger.log(bot.name, "errors", text)
 
 
 async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -66,10 +61,10 @@ async def reminders(bot: bot_data.Bot):
                     await handle_reminder(bot, entry, False)
             await asyncio.sleep(1)
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Reminders > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Reminders > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def reminders_errors(bot: bot_data.Bot):
@@ -89,10 +84,10 @@ async def reminders_errors(bot: bot_data.Bot):
             await asyncio.sleep(1)
             await wait_until_next_iter(update_speed, 0)
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -154,7 +149,7 @@ async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False)
         return
     logger.log(bot.name, "moderation", f"{time.time()} > {bot.full_name} > Punishments > Successfully unmuted the user {member} ({member.id}) from guild {guild} ({entry_id})")
     save_handle(1, entry_id)
-    fake_ctx = languages.FakeContext(guild, bot)
+    fake_ctx = commands.FakeContext(guild, bot)
     language = bot.language(fake_ctx)
     reason = language.string("mod_unmute_auto_reason")
     await send_mod_dm(bot, fake_ctx, member, "unmute", reason, None, True)
@@ -175,10 +170,10 @@ async def punishments(bot: bot_data.Bot):
                     await handle_punishment(bot, entry, False)
             await asyncio.sleep(1)
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Punishments > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Punishments > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def punishments_errors(bot: bot_data.Bot):
@@ -197,10 +192,10 @@ async def punishments_errors(bot: bot_data.Bot):
             await asyncio.sleep(1)
             await wait_until_next_iter(update_speed, 0)
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 def process_birthday(bot: bot_data.Bot, entry: dict) -> birthday.Birthday:
@@ -362,10 +357,10 @@ async def birthdays(bot: bot_data.Bot):
                     # except Exception as e:
                     #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # birthday.save()
         await asyncio.sleep(1)
@@ -642,7 +637,7 @@ async def ka_time_updater(bot: bot_data.Bot):
         messages_ka = await get_data(channel_ka)
         messages_rk = await get_data(channel_rk)
     except (aiohttp.ClientConnectorError, ConnectionError):
-        error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Error with connection.")
+        general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Error with connection.")
         await bot.wait_until_ready()
         await asyncio.sleep(10)
 
@@ -651,12 +646,16 @@ async def ka_time_updater(bot: bot_data.Bot):
             messages_ka = await get_data(channel_ka)
             messages_rk = await get_data(channel_rk)
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Discord.py is weird.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Discord.py is weird.")
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Messages broken, relaunching function in 5 minutes...")
             await asyncio.sleep(300)
             return await ka_time_updater(bot)
     except Exception as e:
-        error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > {type(e).__name__}: {e}")
-        error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > {type(e).__name__}: {e}")
+        general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Messages broken, relaunching function in 1 minute...")
+        await asyncio.sleep(60)
+        return await ka_time_updater(bot)
 
     async def update_message(name: str, content: str):
         async def edit_message(messages_dict: dict, channel: discord.abc.Messageable):
@@ -694,10 +693,10 @@ async def ka_time_updater(bot: bot_data.Bot):
             await wait_until_next_iter(update_speed, 1, time2.Kargadia)
             # await asyncio.sleep(update_speed)
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def playing(bot: bot_data.Bot):
@@ -1026,12 +1025,12 @@ async def playing(bot: bot_data.Bot):
             _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
             await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
-            error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
@@ -1056,12 +1055,12 @@ async def avatars(bot: bot_data.Bot):
             send = s2 if e else s1
             logger.log(bot.name, "avatar", send)
         except PermissionError:
-            error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
         except Exception as e:
-            error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
-            error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         await asyncio.sleep(1)
         await wait_until_next_iter(3600, 1)
@@ -1086,7 +1085,7 @@ async def polls(bot: bot_data.Bot):
             try:
                 guild: discord.Guild = bot.get_guild(guild_id)
                 if guild:
-                    language = bot.language(languages.FakeContext(guild, bot))
+                    language = bot.language(commands.FakeContext(guild, bot))
                     channel: discord.TextChannel = guild.get_channel(poll["channel_id"])
                     if channel:
                         embed = discord.Embed()
@@ -1171,7 +1170,7 @@ async def trials(bot: bot_data.Bot):
             try:
                 guild: discord.Guild = bot.get_guild(trial["guild_id"])
                 if guild:
-                    language = bot.language(languages.FakeContext(guild, bot))
+                    language = bot.language(commands.FakeContext(guild, bot))
                     yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
                     total = yes + neutral + no
                     score = yes - no
@@ -1339,7 +1338,7 @@ async def trials(bot: bot_data.Bot):
                             out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong."
                             general.print_error(out)
                             logger.log(bot.name, "errors", out)
-                        await send_mod_dm(bot, languages.FakeContext(guild, bot), member, action, f"Trial results (Score: {score:+}, {upvotes:.2%} voted yes)", duration_text)
+                        await send_mod_dm(bot, commands.FakeContext(guild, bot), member, action, f"Trial results (Score: {score:+}, {upvotes:.2%} voted yes)", duration_text)
                     else:  # The trial has failed, so restore the member's anarchist roles
                         if guild.id == 869975256566210641 and member:  # Nuriki's anarchy server
                             try:

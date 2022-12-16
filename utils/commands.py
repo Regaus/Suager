@@ -94,3 +94,10 @@ class UserID(MemberID):
                 return int(argument, base=10)  # For Kargadia citizen profiles, this should therefore accept citizen IDs
             except ValueError:
                 raise UserNotFound(argument) from None
+
+
+class FakeContext:
+    """ Build a fake Context instead of commands.Context to pass on to Language.get() """
+    def __init__(self, guild, bot):
+        self.guild = guild
+        self.bot = bot

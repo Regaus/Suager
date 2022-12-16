@@ -9,7 +9,7 @@ from sys import stderr
 
 import discord
 
-from utils import time
+from utils import bot_data, logger, time
 
 
 def get_config() -> dict:
@@ -34,17 +34,25 @@ def make_dir(dir_name):
         pass
 
 
-def traceback_maker(err: BaseException, text: str = None, guild=None, author=None):
+def traceback_maker(err: BaseException, text: str = None, guild=None, author=None, code_block: bool = True):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
+    e = f"{_traceback}{type(err).__name__}: {err}"
+    if not code_block:
+        return e
     t = f"Command: {text}\n" if text is not None else ""
     g = f"Guild: {guild.name}\n" if guild is not None else ""
     a = f"User: {author.name}\n" if author is not None else ""
-    error = f"{g}{a}{t}```py\n{_traceback}{type(err).__name__}: {err}\n```"
+    error = f"{g}{a}{t}```py\n{e}\n```"
     return error
 
 
 def print_error(*values):
     return print(*values, file=stderr)
+
+
+def log_error(bot: bot_data.Bot, text: str):
+    print_error(text)
+    logger.log(bot.name, "errors", text)
 
 
 def random_colour() -> int:

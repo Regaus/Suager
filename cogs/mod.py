@@ -8,7 +8,7 @@ from typing import Literal, Union
 import discord
 
 from utils import bot_data, commands, general, logger, permissions, settings, time
-from utils.languages import FakeContext, Language
+from utils.languages import Language
 
 
 async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: int = None, after: int = None, message: bool = True):
@@ -41,7 +41,7 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         # await general.send(f"🚮 Successfully removed {_deleted:,} messages", ctx.channel, delete_after=10)
 
 
-async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member,
+async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | commands.FakeContext, user: discord.User | discord.Member,
                       action: str, reason: str, duration: str = None, auto: bool = False, original_warning: str = None):
     """ Try to send the user a DM that they've been warned/muted/kicked/banned """
     try:
@@ -101,7 +101,7 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         logger.log(bot.name, "errors", message)
 
 
-async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member | discord.ClientUser,
+async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | commands.FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member | discord.ClientUser,
                        entry_id: int, action: str, reason: str, duration: str = None, original_warning: str = None):
     """ Try to send a mod log message about the punishment """
     try:
@@ -168,6 +168,102 @@ class Moderation(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         # self.admins = self.bot.config["owners"]
+
+        # Regex for a discord invite link
+        self.discord_link = re.compile(r"(https://discord\.gg/\S+)|(https://discord(?:app)?\.com/invite/\S+)")
+
+        # Formats for images and videos, that are allowed to be used in image-only channels
+        # I might adjust this as time goes on, if we find file formats that might not be as popular but still images/videos
+        self.image_formats = ["jpg", "jpeg", "jfif", "png", "gif", "webp", "tiff", "psd", "pdn",
+                              "mp4", "mov", "wmv", "avi", "flv", "mkv", "webm"]
+        self.image_link = re.compile(r"https?://\S+")
+        self.exceptions = ["https://tenor.com/", "https://imgur.com/", "https://youtu.be/", "https://www.youtube.com/watch?"]
+
+    @commands.Cog.listener(name="on_message")
+    async def on_message(self, ctx: discord.Message):
+        """ This event will be used for auto-moderation features, unless I decide to split them in the future """
+        if ctx.author.bot:  # Ignore bots for image-only and anti-ads... I don't think bots would be sending discord links anyways
+            return
+        if self.bot.name in ["suager", "kyomi"]:
+            # Load settings json
+            _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+            if not _data:
+                return  # No data found means disabled
+            data = json.loads(_data["data"])
+
+            # Image-only channels
+            # Note: With this implementation, it does not prevent bot commands from being run in such channels, although the input would still get deleted.
+            # The only way to fix that would be to run this check before the message is scanned for commands in bot_data
+            async def do_image_only():
+                image_only = data["image_only"]
+                if ctx.channel.id in image_only["channels"]:
+                    valid = False
+                    # Scan if either there is a valid image file, or if there is a valid image link
+                    if ctx.attachments:
+                        # Bitwise or: change to True if valid, else keep at current value
+                        valid |= any(any(att.filename.endswith(ext) for ext in self.image_formats) for att in ctx.attachments)
+                    if links := re.findall(self.image_link, ctx.content):  # If there are any links present
+                        valid |= any((any(link.endswith(ext) for ext in self.image_formats) or any(link.startswith(exc) for exc in self.exceptions)) for link in links)
+
+                    if not valid:
+                        try:
+                            await ctx.delete()
+                            await ctx.channel.send("This channel is image-only. No valid image file or link was found.", delete_after=10)
+                        except (discord.Forbidden, discord.HTTPException):
+                            if permissions.can_send(ctx):
+                                await ctx.reply("This message does not contain a valid image file, but I seem to be unable to delete it...")
+                # If the channel doesn't qualify for image-only, do nothing and go to the next section
+
+            if "image_only" in data:
+                try:
+                    await do_image_only()
+                except Exception as e:
+                    general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Image-only channels > {type(e).__name__}: {str(e)}")
+                    # print(general.traceback_maker(e, code_block=False))
+
+            # Anti-ads
+            async def do_anti_ads():
+                anti_ads = data["anti_ads"]
+                if not anti_ads["enabled"]:
+                    return
+                # Channel is in whitelist or channel is not in blacklist
+                channel_valid = (anti_ads["whitelist"] and ctx.channel.id in anti_ads["channels"]) or (not anti_ads["whitelist"] and ctx.channel.id not in anti_ads["channels"])
+                if not channel_valid:
+                    return
+                matches = re.findall(self.discord_link, ctx.content)
+                if matches:
+                    message = None   # Just have this so the IDE doesn't complain, but this shouldn't ever be None.
+                    try:
+                        await ctx.delete()
+                        message = await ctx.channel.send(f"{ctx.author.mention} It would be preferable if you don't advertise here...", delete_after=20)
+                    except (discord.Forbidden, discord.HTTPException):
+                        if permissions.can_send(ctx):
+                            message = await ctx.reply("This message contains an advertisement, but I seem to be unable to delete it...")
+
+                    # Now we will try to warn the person
+                    # Generate a context from our response message, just so that the author is set to us
+                    response_ctx: commands.Context = await self.bot.get_context(message, cls=commands.Context)  # type: ignore
+                    language = response_ctx.language()
+                    warn_settings, missing = self.get_warn_settings(response_ctx, language)
+                    if missing:
+                        await ctx.send(missing)
+
+                    _, delta, expiry, error = await self.get_duration(response_ctx, anti_ads.get("warning", ""), language)
+                    reason = "[Automatic] Advertising"
+                    # We don't need to clutter the chat with the statement that the person has been muted, that should be obvious enough to begin with
+                    if not error:
+                        duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
+                        # out = language.string("mod_warn_timed", user=ctx.author, duration=duration, reason=reason)
+                        await self.warn_user(response_ctx, ctx.author, warn_settings, reason, language, expiry, duration)
+                    else:
+                        # out = language.string("mod_warn", user=ctx.author, reason=reason)
+                        await self.warn_user(response_ctx, ctx.author, warn_settings, reason, language, None, None)
+
+            if "anti_ads" in data:
+                try:
+                    await do_anti_ads()
+                except Exception as e:
+                    general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Anti-ads > {type(e).__name__}: {str(e)}")
 
     def kick_check(self, ctx: commands.Context, member: discord.Member, language: Language):
         if member == ctx.author:

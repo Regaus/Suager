@@ -90,7 +90,7 @@ class Bot(commands.AutoShardedBot):
         await self.process_commands(msg)
 
     @staticmethod
-    def language(ctx: commands.Context | languages.FakeContext):
+    def language(ctx: commands.Context | commands.FakeContext):
         return languages.Language.get(ctx)
 
     @staticmethod

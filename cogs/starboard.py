@@ -2,7 +2,7 @@ import json
 
 import discord
 
-from utils import bot_data, commands, general, languages, logger, time
+from utils import bot_data, commands, general, logger, time
 
 
 class Starboard(commands.Cog):
@@ -37,7 +37,7 @@ class Starboard(commands.Cog):
         else:
             return
         # ^ Checks that the server has starboard enabled
-        language = self.bot.language(languages.FakeContext(guild, self.bot))
+        language = self.bot.language(commands.FakeContext(guild, self.bot))
         # locale = languages.gl(Ctx(guild, self.bot))
         channel = payload.channel_id
         _channel: discord.TextChannel = self.bot.get_channel(channel)

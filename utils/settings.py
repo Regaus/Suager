@@ -69,6 +69,15 @@ template_mizuki = {
         "enabled": False,
         "ignore_bots": True,    # Ignore edited/deleted messages if they're sent by a bot
         "ignore_channels": []  # List of channels in which edited/deleted messages are ignored
+    },
+    "anti_ads": {
+        "enabled": False,    # Disabled by default
+        "channels": [],      # Whitelist: channels to check for ads, Blacklist: channels to ignore
+        "whitelist": False,  # Whether the channels list should act as a whitelist or blacklist
+        "warning": None,     # Warning length: Permanent by default
+    },
+    "image_only": {
+        "channels": [],    # Channels to check for images
     }
 }
 
@@ -143,5 +152,14 @@ template_suager = {
         "enabled": False,
         "ignore_bots": True,    # Ignore edited/deleted messages if they're sent by a bot
         "ignore_channels": []  # List of channels in which edited/deleted messages are ignored
+    },
+    "anti_ads": {
+        "enabled": False,    # Disabled by default
+        "channels": [],      # Whitelist: channels to check for ads, Blacklist: channels to ignore
+        "whitelist": False,  # Whether the channels list should act as a whitelist or blacklist
+        "warning": None,     # Warning length: Permanent by default
+    },
+    "image_only": {
+        "channels": [],    # Channels to check for images
     }
 }

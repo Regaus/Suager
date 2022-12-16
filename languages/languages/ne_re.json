@@ -358,7 +358,7 @@
   "settings_current_birthdays": "Ankikat - Nottarar `{p}settings birthdays`, vir na inkiaan ten reideseain-sahtain veitean",
   "settings_current_disabled": "Kvellikat",
   "settings_current_footer": "Nottarar `{p}help settings`, vir na miastan veisen jortallain sahtankalvantain veitean",
-  "settings_current_goodbye": "Arallat addennaat saideraat Saying goodbye to leaving members",
+  "settings_current_goodbye": "Arallat addennaat saideraat",
   "settings_current_goodbye_channel": "Saiderat arallahatva in <#{channel}>, ki in addean ad na salhan",
   "settings_current_goodbye_message": "Arallanatta",
   "settings_current_join_roles": "Ankasta, hittama ki han sen na salhat katedat",

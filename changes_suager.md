@@ -1433,3 +1433,9 @@
 
 ## v7.5.20.1 - 12 December 2022
 - Changed the default happy birthday message
+
+## v7.6.0-pre1 - 14-16 December 2022
+- Added an anti-ad filter that can remove unwanted Discord links
+- Added an images-only filter that can remove text messages from specified channels
+- Moved FakeContext to `utils.commands` from `utils.languages`
+- Made it possible to send an error traceback without the codeblock

@@ -142,6 +142,11 @@ class Settings(commands.Cog):
             dp, cp = self.prefix_list(ctx)
             embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
 
+            def channel(cid: int):
+                if cid == 0:
+                    return language.string("settings_current_disabled")
+                return f"<#{cid}>"
+
             if self.bot.name in ["kyomi", "suager"]:
                 # Starboard
                 sb = language.string("settings_current_disabled")
@@ -246,11 +251,6 @@ class Settings(commands.Cog):
                     mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
                 embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
 
-                def channel(cid: int):
-                    if cid == 0:
-                        return language.string("settings_current_disabled")
-                    return f"<#{cid}>"
-
                 # Mod Logs
                 mod_logs_text = language.string("settings_current_mod_logs_disabled", p=ctx.prefix)
                 if "mod_logs" in setting:
@@ -266,6 +266,22 @@ class Settings(commands.Cog):
                     join, leave, roles = user_logs["join"], user_logs["leave"], user_logs["preserve_roles"]
                     user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave), roles=language.yes(roles))
                 embed.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
+
+                # Image-only channels settings
+                image_only_text = language.string("settings_current_image_only_disabled", p=ctx.prefix)
+                if "image_only" in setting:
+                    image_only = setting["image_only"]
+                    image_only_text = ", ".join([channel(c) for c in image_only["channels"]]) or language.string("generic_none")
+                embed.add_field(name=language.string("settings_current_image_only"), value=image_only_text, inline=False)
+
+                # Anti-ads
+                anti_ads_text = language.string("settings_current_anti_ads_disabled", p=ctx.prefix)
+                if "anti_ads" in setting:
+                    anti_ads = setting["anti_ads"]
+                    idx = 3 if anti_ads["whitelist"] else 2
+                    anti_ads_text = language.string(f"settings_current_anti_ads{idx}", enabled=language.yes(anti_ads["enabled"]),
+                                                    channels=", ".join([channel(c) for c in anti_ads["channels"]]) or language.string("generic_none"))
+                embed.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
 
             return await ctx.send(embed=embed)
 
@@ -1888,6 +1904,148 @@ class Settings(commands.Cog):
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         return await ctx.send(language.string("settings_warnings_scaling", scaling=language.number(scaling)))
+
+    @settings.group(name="antiads", aliases=["ads", "adblock", "invites"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
+    async def set_anti_ads(self, ctx: commands.Context):
+        """ Settings for anti-ads (blocking unwanted Discord invite links) """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @set_anti_ads.command(name="enable")
+    async def set_anti_ads_enable(self, ctx: commands.Context):
+        """ Enable anti-ads """
+        return await self.set_anti_ads_toggle(ctx, True)
+
+    @set_anti_ads.command(name="disable")
+    async def set_anti_ads_disable(self, ctx: commands.Context):
+        """ Disable anti-ads """
+        return await self.set_anti_ads_toggle(ctx, False)
+
+    async def set_anti_ads_toggle(self, ctx: commands.Context, enabled: bool):
+        """ Enable anti-ads """
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "anti_ads" not in _settings:
+            _settings["anti_ads"] = self.template["anti_ads"].copy()
+        _settings["anti_ads"]["enabled"] = enabled
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(ctx.language().string("settings_anti_ads_enable" if enabled else "settings_anti_ads_disable"))
+
+    @set_anti_ads.command(name="mode", aliases=["whitelist", "blacklist"])
+    async def set_anti_ads_mode(self, ctx: commands.Context, mode: str):
+        """ Set the mode in which the anti-ads channel filter will work
+
+        Blacklist -> Any messages in the specified channels will be ignored
+        Whitelist -> Only messages in the specified channels will be considered
+        (Use `//settings antiads channels` to add or remove channels to the blacklist/whitelist)
+        Default mode: blacklist """
+        language = ctx.language()
+        if mode not in ["blacklist", "whitelist"]:
+            return await ctx.send(language.string("settings_anti_ads_mode_invalid"))
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "anti_ads" not in _settings:
+            _settings["anti_ads"] = self.template["anti_ads"].copy()
+        _settings["anti_ads"]["whitelist"] = mode == "whitelist"  # whitelist -> True, blacklist -> False
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_anti_ads_whitelist" if mode == "whitelist" else "settings_anti_ads_blacklist", p=ctx.prefix))
+
+    @set_anti_ads.command(name="channels", aliases=["channel", "ch"])
+    async def set_anti_ads_channels(self, ctx: commands.Context, action: str, channel: discord.TextChannel | discord.Thread = None):
+        """ Add or remove channels to the blacklist/whitelist
+
+        Actions:
+        add -> Adds a channel
+        remove -> Removes a channel
+        removeall -> Removes all channels (warning: cannot be undone) """
+        language = ctx.language()
+        if action not in ["add", "remove", "removeall"]:
+            return await ctx.send(language.string("settings_anti_ads_channel_invalid"))
+        if channel is not None and channel.guild.id != ctx.guild.id:
+            return await ctx.send(language.string("settings_anti_ads_channel_invalid2"))
+        if channel is None and action in ["add", "remove"]:
+            return await ctx.send(language.string("settings_anti_ads_channel_none"))
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "anti_ads" not in _settings:
+            _settings["anti_ads"] = self.template["anti_ads"].copy()
+        if action == "removeall":  # Remove all channels
+            _settings["anti_ads"]["channels"] = []
+            output = language.string("settings_anti_ads_channel_remove2")
+        elif action == "remove":
+            try:
+                _settings["anti_ads"]["channels"].remove(channel.id)
+                output = language.string("settings_anti_ads_channel_remove", channel=channel.mention)
+            except ValueError:
+                return await ctx.send(language.string("settings_anti_ads_channel_invalid3"))
+        else:
+            _settings["anti_ads"]["channels"].append(channel.id)
+            output = language.string("settings_anti_ads_channel_add", channel=channel.mention)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(output)
+
+    @settings.command(name="imageonly", aliases=["imagesonly", "images"])
+    async def set_image_only_channels(self, ctx: commands.Context, action: str, channel: discord.TextChannel | discord.Thread = None):
+        """ Images-only filter in a channel
+
+        Actions:
+        add -> Adds a channel
+        remove -> Removes a channel
+        removeall -> Removes all channels (warning: cannot be undone) """
+        language = ctx.language()
+        if action not in ["add", "remove", "removeall"]:
+            return await ctx.send(language.string("settings_anti_ads_channel_invalid"))
+        if channel is not None and channel.guild.id != ctx.guild.id:
+            return await ctx.send(language.string("settings_anti_ads_channel_invalid2"))
+        if channel is None and action in ["add", "remove"]:
+            return await ctx.send(language.string("settings_anti_ads_channel_none"))
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "image_only" not in _settings:
+            _settings["image_only"] = self.template["image_only"].copy()
+        if action == "removeall":  # Remove all channels
+            _settings["image_only"]["channels"] = []
+            output = language.string("settings_image_only_channel_remove2")
+        elif action == "remove":
+            try:
+                _settings["image_only"]["channels"].remove(channel.id)
+                output = language.string("settings_image_only_channel_remove", channel=channel.mention)
+            except ValueError:
+                return await ctx.send(language.string("settings_image_only_channel_invalid3"))
+        else:
+            _settings["image_only"]["channels"].append(channel.id)
+            output = language.string("settings_image_only_channel_add", channel=channel.mention)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(output)
 
     @commands.command(name="prefixes", aliases=["prefix"])
     @commands.guild_only()

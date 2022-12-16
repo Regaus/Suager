@@ -265,3 +265,7 @@
 
 ## v1.2.13.1 - 12 December 2022
 - Changed the default happy birthday message
+
+## v1.3.0-pre1 - 14-16 December 2022
+- Added an anti-ad filter that can remove unwanted Discord links
+- Added an images-only filter that can remove text messages from specified channels
