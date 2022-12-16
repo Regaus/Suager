@@ -208,7 +208,8 @@ class Moderation(commands.Cog):
                     if not valid:
                         try:
                             await ctx.delete()
-                            await ctx.channel.send("This channel is image-only. No valid image file or link was found.", delete_after=10)
+                            if permissions.can_send(ctx):
+                                await ctx.channel.send("This channel is image-only. No valid image file or link was found.", delete_after=10)
                         except (discord.Forbidden, discord.HTTPException):
                             if permissions.can_send(ctx):
                                 await ctx.reply("This message does not contain a valid image file, but I seem to be unable to delete it...")
@@ -232,18 +233,22 @@ class Moderation(commands.Cog):
                     return
                 matches = re.findall(self.discord_link, ctx.content)
                 if matches:
-                    message = None   # Just have this so the IDE doesn't complain, but this shouldn't ever be None.
+                    message = None  # If the message can't be sent
                     try:
                         await ctx.delete()
-                        message = await ctx.channel.send(f"{ctx.author.mention} It would be preferable if you don't advertise here...", delete_after=20)
+                        if permissions.can_send(ctx):
+                            message = await ctx.channel.send(f"{ctx.author.mention} It would be preferable if you don't advertise here...", delete_after=20)
                     except (discord.Forbidden, discord.HTTPException):
                         if permissions.can_send(ctx):
                             message = await ctx.reply("This message contains an advertisement, but I seem to be unable to delete it...")
 
                     # Now we will try to warn the person
                     # Generate a context from our response message, just so that the author is set to us
-                    response_ctx: commands.Context = await self.bot.get_context(message, cls=commands.Context)  # type: ignore
-                    language = response_ctx.language()
+                    if message is not None:
+                        response_ctx: commands.Context = await self.bot.get_context(message, cls=commands.Context)  # type: ignore
+                    else:
+                        response_ctx: commands.FakeContext = commands.FakeContext(ctx.guild, self.bot, ctx.guild.me)
+                    language = self.bot.language(response_ctx)
                     warn_settings, missing = self.get_warn_settings(response_ctx, language)
                     if missing:
                         await ctx.send(missing)

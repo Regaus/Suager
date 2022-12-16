@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Type, TypeVar
 
 from discord.ext.commands import *
@@ -96,8 +97,9 @@ class UserID(MemberID):
                 raise UserNotFound(argument) from None
 
 
+@dataclass
 class FakeContext:
-    """ Build a fake Context instead of commands.Context to pass on to Language.get() """
-    def __init__(self, guild, bot):
-        self.guild = guild
-        self.bot = bot
+    """ Build a fake Context instead of commands.Context to pass on to Language.get() or other things """
+    guild: Any
+    bot: Bot
+    author: Any = None

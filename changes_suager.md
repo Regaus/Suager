@@ -1445,3 +1445,7 @@
 - Discord links don't have to start with `https://` to be detected
 - The channel lists for anti-ads and image-only will now detect if you try to add a channel already in the list
 - Changed the mute length for warnings to be shown in full when set
+
+## v7.6.0-pre3 - 16 December 2022
+- Anti-ads and image-only will now detect if they can send the warning message. If not, they will silently do their job
+- Turned FakeContext into a dataclass
