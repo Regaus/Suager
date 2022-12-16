@@ -279,8 +279,13 @@ class Settings(commands.Cog):
                 if "anti_ads" in setting:
                     anti_ads = setting["anti_ads"]
                     idx = 3 if anti_ads["whitelist"] else 2
+                    if anti_ads["warning"] is not None:
+                        warning_length = anti_ads["warning"]
+                    else:
+                        warning_length = language.string("settings_current_anti_ads_permanent")
                     anti_ads_text = language.string(f"settings_current_anti_ads{idx}", enabled=language.yes(anti_ads["enabled"]),
-                                                    channels=", ".join([channel(c) for c in anti_ads["channels"]]) or language.string("generic_none"))
+                                                    channels=", ".join([channel(c) for c in anti_ads["channels"]]) or language.string("generic_none"),
+                                                    warning=warning_length)
                 embed.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
 
             return await ctx.send(embed=embed)
@@ -1879,7 +1884,7 @@ class Settings(commands.Cog):
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_warnings_length", length=language.delta_rd(value, accuracy=7, brief=True, affix=False)))
+        return await ctx.send(language.string("settings_warnings_length", length=language.delta_rd(value, accuracy=7, brief=False, affix=False)))
 
     @set_warnings.command(name="scaling", aliases=["scale", "multiplier"])
     async def set_warning_scaling(self, ctx: commands.Context, scaling: float):
@@ -1997,8 +2002,40 @@ class Settings(commands.Cog):
             except ValueError:
                 return await ctx.send(language.string("settings_anti_ads_channel_invalid3"))
         else:
+            if channel.id in _settings["anti_ads"]["channels"]:  # Channel was already added before
+                return await ctx.send(language.string("settings_anti_ads_channel_already"))
             _settings["anti_ads"]["channels"].append(channel.id)
             output = language.string("settings_anti_ads_channel_add", channel=channel.mention)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(output)
+
+    @set_anti_ads.command(name="warning", aliases=["warninglength", "length", "warningduration", "duration"])
+    async def set_anti_ad_warning_length(self, ctx: commands.Context, warning_length: str = None):
+        """ Set the duration of the warnings given for an advertisement
+
+        Leave empty to set a permanent warning, or specify a valid warning duration.
+        Default value: *Permanent*
+        If the warning length exceeds 5 years, the warning will be permanent."""
+        language = ctx.language()
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "anti_ads" not in _settings:
+            _settings["anti_ads"] = self.template["anti_ads"].copy()
+        if warning_length is not None:
+            value = time.interpret_time(warning_length)
+            if time.rd_is_zero(value):
+                return await ctx.send(language.string("settings_anti_ads_warning_invalid"))
+            output = language.string("settings_anti_ads_warning", length=language.delta_rd(value, accuracy=7, brief=False, affix=False))
+        else:
+            output = language.string("settings_anti_ads_warning2")
+        _settings["anti_ads"]["warning"] = warning_length
         stuff = json.dumps(_settings)
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
@@ -2038,6 +2075,8 @@ class Settings(commands.Cog):
             except ValueError:
                 return await ctx.send(language.string("settings_image_only_channel_invalid3"))
         else:
+            if channel.id in _settings["image_only"]["channels"]:  # Channel was already added before
+                return await ctx.send(language.string("settings_image_only_channel_already"))
             _settings["image_only"]["channels"].append(channel.id)
             output = language.string("settings_image_only_channel_add", channel=channel.mention)
         stuff = json.dumps(_settings)

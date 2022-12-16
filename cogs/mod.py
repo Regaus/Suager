@@ -170,7 +170,7 @@ class Moderation(commands.Cog):
         # self.admins = self.bot.config["owners"]
 
         # Regex for a discord invite link
-        self.discord_link = re.compile(r"(https://discord\.gg/\S+)|(https://discord(?:app)?\.com/invite/\S+)")
+        self.discord_link = re.compile(r"((?:https://)?discord\.gg/\S+)|((?:https://)?discord(?:app)?\.com/invite/\S+)")
 
         # Formats for images and videos, that are allowed to be used in image-only channels
         # I might adjust this as time goes on, if we find file formats that might not be as popular but still images/videos

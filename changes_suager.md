@@ -1439,3 +1439,9 @@
 - Added an images-only filter that can remove text messages from specified channels
 - Moved FakeContext to `utils.commands` from `utils.languages`
 - Made it possible to send an error traceback without the codeblock
+
+## v7.6.0-pre2 - 16 December 2022
+- Added ability to change the duration of the warning given to advertisers
+- Discord links don't have to start with `https://` to be detected
+- The channel lists for anti-ads and image-only will now detect if you try to add a channel already in the list
+- Changed the mute length for warnings to be shown in full when set
