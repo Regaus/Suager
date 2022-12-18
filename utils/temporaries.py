@@ -488,76 +488,38 @@ _places = {}  # Since the playing status won't be able to read through a 2-layer
 
 ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
 
-# The key is the timestamp as mm-dd, the value is the date instance | Defaults to 2151/2022 if somehow not overwritten
-ka_holidays: dict[str, time2.date] = {
-    "01-01": time2.date(2151,  1,  1, time2.Kargadia),
-    "01-06": time2.date(2151,  1,  6, time2.Kargadia),
-    "02-09": time2.date(2151,  2,  9, time2.Kargadia),
-    "02-14": time2.date(2151,  2, 14, time2.Kargadia),
-    "02-15": time2.date(2151,  2, 15, time2.Kargadia),
-    "03-07": time2.date(2151,  3,  7, time2.Kargadia),
-    "03-12": time2.date(2151,  3, 12, time2.Kargadia),
-    "04-08": time2.date(2151,  4,  8, time2.Kargadia),
-    "05-07": time2.date(2151,  5,  7, time2.Kargadia),
-    "06-02": time2.date(2151,  6,  2, time2.Kargadia),
-    "06-08": time2.date(2151,  6,  8, time2.Kargadia),
-    "07-01": time2.date(2151,  7,  1, time2.Kargadia),
-    "07-09": time2.date(2151,  7,  9, time2.Kargadia),
-    "08-11": time2.date(2151,  8, 11, time2.Kargadia),
-    "09-09": time2.date(2151,  9,  9, time2.Kargadia),
-    "10-01": time2.date(2151, 10,  1, time2.Kargadia),
-    "11-02": time2.date(2151, 11,  2, time2.Kargadia),
-    "11-03": time2.date(2151, 11,  3, time2.Kargadia),
-    "12-05": time2.date(2151, 12,  5, time2.Kargadia),
-    "12-11": time2.date(2151, 12, 11, time2.Kargadia),
-    "13-01": time2.date(2151, 13,  1, time2.Kargadia),
-    "13-03": time2.date(2151, 13,  3, time2.Kargadia),
-    "14-01": time2.date(2151, 14,  1, time2.Kargadia),
-    "15-07": time2.date(2151, 15,  7, time2.Kargadia),
-    "15-15": time2.date(2151, 15, 15, time2.Kargadia),
-    "15-16": time2.date(2151, 15, 16, time2.Kargadia),
-    "16-01": time2.date(2151, 16,  1, time2.Kargadia),
-    "16-05": time2.date(2151, 16,  5, time2.Kargadia),
-}
-sl_holidays: dict[str, time2.date] = {
-    "01-01": time2.date(2022,  1,  1),
-    "01-27": time2.date(2022,  1, 27),
-    "02-14": time2.date(2022,  2, 14),
-    "03-17": time2.date(2022,  3, 17),
-    "04-17": time2.date(2022,  4, 17),
-    "05-13": time2.date(2022,  5, 13),
-    "06-20": time2.date(2022,  6, 20),
-    "06-25": time2.date(2022,  6, 25),
-    "07-27": time2.date(2022,  7, 27),
-    "08-08": time2.date(2022,  8,  8),
-    "09-01": time2.date(2022,  9,  1),
-    "10-03": time2.date(2022, 10,  3),
-    "10-22": time2.date(2022, 10, 22),
-    "10-31": time2.date(2022, 10, 31),
-    "11-19": time2.date(2022, 11, 19),
-    "12-05": time2.date(2022, 12,  5),
-}
+# The key is the timestamp as mm-dd, the value is the date instance
+# Lists are used to store the holidays in a shorter way, then the dicts store the times
+ka_holidays_list = ["01-01", "01-06", "01-07", "02-06", "02-14", "03-07", "03-12", "03-13", "04-08", "05-07", "05-13", "06-02",
+                    "07-01", "07-09", "08-01", "08-02", "08-11", "08-16", "09-09", "10-09", "11-02", "11-03", "11-04", "12-05",
+                    "12-11", "13-01", "13-03", "14-01", "14-02", "14-03", "14-04", "15-16", "16-05", "16-07", "16-08"]
+ka_holidays: dict[str, time2.date] = {}
+sl_holidays_list = ["01-01", "01-27", "02-14", "03-03", "03-17", "04-17", "05-13", "06-03", "06-20", "06-25", "08-08",
+                    "09-01", "10-03", "10-22", "10-31", "11-19", "12-05"]
+sl_holidays: dict[str, time2.date] = {}
 
 
 def get_time_ka():
     now = time2.date.today(time2.Kargadia)
     year = now.year
-    for key in ka_holidays.keys():
+    for key in ka_holidays_list:
         month, day = key.split("-", 1)
         holiday_time = time2.date(year, int(month), int(day), time2.Kargadia)
         if now > holiday_time:  # if the holiday already passed this year, skip to next year
-            holiday_time = (holiday_time + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
+            holiday_time = holiday_time.replace(year=holiday_time.year + 1)
+            # holiday_time = (holiday_time + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
         ka_holidays[key] = holiday_time
 
 
 def get_time_sl():
     now = time2.date.today(time2.Earth)
     year = now.year
-    for key in sl_holidays.keys():
+    for key in sl_holidays_list:
         month, day = key.split("-", 1)
         holiday_time = time2.date(year, int(month), int(day), time2.Earth)
         if now > holiday_time:  # if the holiday already passed this year, skip to next year
-            holiday_time = (holiday_time + time2.relativedelta(years=1)).date()
+            holiday_time = holiday_time.replace(year=holiday_time.year + 1)
+            # holiday_time = (holiday_time + time2.relativedelta(years=1)).date()
         sl_holidays[key] = holiday_time
 
 
@@ -791,7 +753,7 @@ async def playing(bot: bot_data.Bot):
                     for key, holiday in ka_holidays.items():
                         if holiday == ka_day:
                             # name = language.case(holiday_names_ka.get(key), "genitive", "singular")
-                            _name = holiday_names_ka.get(key)
+                            _name = holiday_names_ka.get(key, key)
                             if _name == "Nuar Kad":
                                 name = "Nuan Kadan"
                             else:
@@ -803,7 +765,7 @@ async def playing(bot: bot_data.Bot):
                         random.seed()
                         key, holiday = random.choice(list(ka_holidays.items()))
                         # name = language.case(holiday_names_ka.get(key), "dative", "singular")
-                        _name = holiday_names_ka.get(key)
+                        _name = holiday_names_ka.get(key, key)
                         if _name == "Nuar Kad":
                             name = "Nuart Kadut"
                         else:
@@ -817,7 +779,7 @@ async def playing(bot: bot_data.Bot):
                     for key, holiday in sl_holidays.items():
                         if holiday == today:
                             # name = language.case(holiday_names_sl.get(key), "genitive", "singular")
-                            _name = holiday_names_sl.get(key)
+                            _name = holiday_names_sl.get(key, key)
                             if _name == "Nuar Kad":
                                 name = "Nuan Kadan"
                             elif _name == "Hallauvin":
@@ -831,7 +793,7 @@ async def playing(bot: bot_data.Bot):
                         random.seed()
                         key, holiday = random.choice(list(sl_holidays.items()))
                         # name = language.case(holiday_names_sl.get(key), "dative", "singular")
-                        _name = holiday_names_sl.get(key)
+                        _name = holiday_names_sl.get(key, key)
                         if _name == "Nuar Kad":
                             name = "Nuart Kadut"
                         elif _name == "Hallauvin":
@@ -1452,9 +1414,10 @@ async def sl_holidays_updater(bot: bot_data.Bot):
                 if holiday == today:
                     for ch in channels:
                         channel = bot.get_channel(ch)
-                        await channel.send(f"Happy {holiday_names.get(key)}!")
+                        await channel.send(f"Happy {holiday_names.get(key, key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    sl_holidays[key] = (sl_holidays[key] + time2.relativedelta(years=1, time_class=time2.Earth)).date()
+                    # sl_holidays[key] = (sl_holidays[key] + time2.relativedelta(years=1, time_class=time2.Earth)).date()
+                    sl_holidays[key] = holiday.replace(year=holiday.year + 1)
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
@@ -1489,9 +1452,10 @@ async def ka_holidays_updater(bot: bot_data.Bot):
                 if holiday == ka_day:
                     for ch in channels:
                         channel = bot.get_channel(ch)
-                        await channel.send(f"Happy {holiday_names.get(key)}!")
+                        await channel.send(f"Happy {holiday_names.get(key, key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    ka_holidays[key] = (ka_holidays[key] + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
+                    ka_holidays[key] = holiday.replace(year=holiday.year + 1)
+                    # ka_holidays[key] = (ka_holidays[key] + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
