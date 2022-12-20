@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from utils import commands, languages, permissions
-from utils.database import Database
 
 # List of all cogs each bot needs to load
 load = {
@@ -64,7 +63,7 @@ load = {
 
 
 class Bot(commands.AutoShardedBot):
-    def __init__(self, blacklist: list, index: int, lc: dict, config: dict, name: str, db: Database, *args, **kwargs):
+    def __init__(self, blacklist: list, index: int, lc: dict, config: dict, name: str, db, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.blacklist = blacklist
         self.index = index
