@@ -1456,3 +1456,6 @@
 
 ## v7.6.1 - 16 December 2022
 - Popular discord server listings are now also blocked if anti-ads are enabled
+
+## v7.6.1.1 - 31 December 2022
+- Updated new year's script for 2023

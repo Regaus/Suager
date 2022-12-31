@@ -1374,18 +1374,27 @@ async def trials(bot: bot_data.Bot):
 
 async def new_year(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised 2022 New Year Script")
-    ny = time.dt(2022)
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised 2023 New Year Script")
+    # ny = time.dt(2022, 12, 31, 17, 22)
+    ny = time.dt(2023)
     now = time.now()
     if now > ny:
-        logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > It is already 2022...")
+        logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > It is already 2023...")
         return
 
-    channel = bot.get_channel(572857995852251169)  # 742885168997466196 Secretive-commands | Announcements channel: 572857995852251169
+    # Testing channels: 742885168997466196 Secretive-commands, 753000962297299005 SC2 | Announcements channels: 572857995852251169 SL, 970756319164399656 Ka
+    # channels = [bot.get_channel(742885168997466196)]
+    channels = [bot.get_channel(572857995852251169), bot.get_channel(970756319164399656)]
     delay = ny - now
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Waiting {delay} until midnight...")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Waiting for {delay} until midnight...")
     await asyncio.sleep(delay.total_seconds())
-    await channel.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...")
+    for channel in channels:
+        await channel.send("The year 2022 has finally come to an end.\n"
+                           "Another year has passed, and another has begun.\n"
+                           "This was overall quite a challenging year. Many bad things happened, albeit with some occasional good news inbetween.\n"
+                           "Now we can look back at this year and hope the next one will be better.\n"
+                           "Happy New Year, fellow members of Senko Lair and the Kargadia cult! "
+                           "Welcome to 2023, and let's see what this year will bring us...")
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
     return
 
