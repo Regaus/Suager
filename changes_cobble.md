@@ -636,3 +636,6 @@
 
 ## v1.8.1 - 18 December 2022
 - Updated Senko Lair and Kargadian holidays
+
+## v1.8.1.1 - 20 December 2022
+- Reduced the frequency of origin surnames in the Kargadian name generator
