@@ -74,7 +74,7 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
             tasks.append(loop.create_task(temporaries.polls(bot)))
             tasks.append(loop.create_task(temporaries.trials(bot)))
-            tasks.append(loop.create_task(temporaries.new_year(bot)))
+            # tasks.append(loop.create_task(temporaries.new_year(bot)))
         elif bot.name == "cobble":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.ka_time_updater(bot)))

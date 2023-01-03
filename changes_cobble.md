@@ -639,3 +639,6 @@
 
 ## v1.8.1.1 - 20 December 2022
 - Reduced the frequency of origin surnames in the Kargadian name generator
+
+## v1.8.1.2 - 3 January 2023
+- Slightly changed Kargadian surnames
