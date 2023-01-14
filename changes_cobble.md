@@ -651,3 +651,6 @@
 - Kargadia profile: Added support for non-binary gender
 - Kargadia profile: Made cult join date nullable
 - Kargadia profile: Moved the profile to the top-level command (instead of `profile` subcommand)
+
+## v1.8.2.1 - 14 January 2023
+- Fixed `..timein` and `..timeago` breaking when an invalid time interval is specified (now it just zero seconds in the appropriate time class)

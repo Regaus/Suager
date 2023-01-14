@@ -91,8 +91,10 @@ def file_ts(name: str, ext: str = "txt") -> str:
 def interpret_time(period: str, cls=relativedelta, time_class=None) -> relativedelta:
     """Convert str to relativedelta - may be changed to use another class, eg r.py delta"""
     matches = re.findall(r"(\d+(y|mo|w|d|h|m|s))", period)
-    if not matches:
-        return cls(seconds=0)  # Because fuck you
+    if not matches:  # No matches found - not a valid relative time
+        if time_class:
+            return cls(seconds=0, time_class=time_class)  # type: ignore
+        return cls(seconds=0)
     else:
         try:
             _td = {}
@@ -110,6 +112,8 @@ def interpret_time(period: str, cls=relativedelta, time_class=None) -> relatived
             return cls(**_td)
         except Exception as e:
             type(e)  # ignore haha yes
+            if time_class:
+                return cls(seconds=0, time_class=time_class)  # type: ignore
             return cls(seconds=0)
 
 
