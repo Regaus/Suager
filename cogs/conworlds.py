@@ -351,11 +351,6 @@ class Conworlds(commands.Cog):
                 return await ctx.send("You may not view this user's citizen profile.")
 
             embed = discord.Embed(colour=random_colour())
-            # name = data["name"]
-            # if data["name2"]:
-            #     name += f" {data['name2']}"
-            # if data["name3"]:
-            #     name += f" {data['name3']}"
             name = " ".join([n for n in [data["name"], data["name2"], data["name3"]] if n is not None])
 
             try:
@@ -365,7 +360,7 @@ class Conworlds(commands.Cog):
             except discord.NotFound:
                 username = data["name"]
 
-            embed.title = f"{username}'s Kargadian citizen ID"
+            embed.title = f"{username}'s Kargadian Citizen Profile"
             embed.add_field(name="Citizen ID", value=data["id"], inline=True)
             # embed.add_field(name="User ID", value=data["uid"], inline=True)
 
@@ -376,7 +371,9 @@ class Conworlds(commands.Cog):
 
             if data["birthday"]:
                 birthday = time.date.from_iso(data["birthday"], time.Kargadia)
-                embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
+                birthday_text = language.date(birthday, short=1, dow=False, year=True)
+                age = language.delta_dt(time.datetime.combine(birthday, time.time()), accuracy=2, brief=False, affix=False)
+                embed.add_field(name="Birthday and Age", value=f"{birthday_text} - {age}", inline=False)
             else:
                 embed.add_field(name="Birthday", value="Unavailable", inline=False)
 

@@ -654,3 +654,6 @@
 
 ## v1.8.2.1 - 14 January 2023
 - Fixed `..timein` and `..timeago` breaking when an invalid time interval is specified (now it just zero seconds in the appropriate time class)
+
+## v1.8.2.2 - 14 January 2023
+- Kargadia profile now also shows the user's age (in Kargadian time)
