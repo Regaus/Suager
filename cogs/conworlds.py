@@ -332,14 +332,78 @@ class Conworlds(commands.Cog):
         output += f"Year length: {year:,.2f} Earth days ({years:,.2f} Earth years) | {local:,.2f} local solar days"
         return await ctx.send(f"Information on planet `87.78.{ss}.{p}`:", embed=discord.Embed(colour=0xff0057, description=output))
 
-    @commands.group(name="citizenship", aliases=["citizen", "kaprofile", "kargadia"], case_insensitive=True)
+    @commands.group(name="kargadiaprofile", aliases=["kargadianprofile", "kargadia", "kp", "citizen", "citizenship"], case_insensitive=True, invoke_without_subcommand=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def ka_citizenship(self, ctx: commands.Context):
+    async def kargadia_profile(self, ctx: commands.Context, _user: commands.UserID = None):
         """ Your Kargadian citizen ID """
         if ctx.invoked_subcommand is None:
-            return await ctx.send_help(ctx.command)
+            # return await ctx.send_help(ctx.command)
+            language = ctx.language2("en")
+            if _user is None:
+                _user = ctx.author.id
+            # if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
+            #     return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
+            data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
+            if not data:
+                return await ctx.send("A citizen profile is not available for this user.")
 
-    @ka_citizenship.command(name="add")
+            if data["protected"] and ctx.author.id not in [302851022790066185, data["uid"]]:
+                return await ctx.send("You may not view this user's citizen profile.")
+
+            embed = discord.Embed(colour=random_colour())
+            # name = data["name"]
+            # if data["name2"]:
+            #     name += f" {data['name2']}"
+            # if data["name3"]:
+            #     name += f" {data['name3']}"
+            name = " ".join([n for n in [data["name"], data["name2"], data["name3"]] if n is not None])
+
+            try:
+                user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
+                username = user.name
+                embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
+            except discord.NotFound:
+                username = data["name"]
+
+            embed.title = f"{username}'s Kargadian citizen ID"
+            embed.add_field(name="Citizen ID", value=data["id"], inline=True)
+            # embed.add_field(name="User ID", value=data["uid"], inline=True)
+
+            embed.add_field(name="Kargadian Name", value=name, inline=False)
+
+            genders = {"m": "Male", "f": "Female", "n": "Non-binary or other", "u": "Unknown"}
+            embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
+
+            if data["birthday"]:
+                birthday = time.date.from_iso(data["birthday"], time.Kargadia)
+                embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
+            else:
+                embed.add_field(name="Birthday", value="Unavailable", inline=False)
+
+            if data["location"]:
+                try:
+                    place = conworlds.Place(data["location"])
+                    location = place.name_translation(language)
+
+                    if place.state:
+                        regions = language.data("weather78_regions")
+                        state_data = regions.get(place.state)
+                        state = state_data["_self"] if state_data is not None else place.state
+                        location += ", " + state
+                except PlaceDoesNotExist:
+                    location = data["location"]
+                embed.add_field(name="Location", value=location, inline=False)
+            else:
+                embed.add_field(name="Location", value="Unavailable", inline=False)
+
+            if data["joined"]:
+                joined = time.date.from_iso(data["joined"], time.Earth)
+                embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
+            else:
+                embed.add_field(name="Joined the cult on", value="Not a cult member", inline=False)
+            return await ctx.send(embed=embed)
+
+    @kargadia_profile.command(name="add")
     @commands.is_owner()
     async def ka_citizen_add(self, ctx: commands.Context, _id: int, uid: int, name: str = None, name2: str = None, gender: str = None, birthday: str = None, location: str = None, joined: str = None):
         """ Add a new Kargadian citizen to the database """
@@ -347,72 +411,19 @@ class Conworlds(commands.Cog):
                                      (_id, uid, name, name2, gender, birthday, False, location, joined))
         return await ctx.send(output)
 
-    @ka_citizenship.command(name="edit", aliases=["update"])
+    @kargadia_profile.command(name="edit", aliases=["update"])
     @commands.is_owner()
     async def ka_citizen_edit(self, ctx: commands.Context, _id: int, key: str, value: str):
         """ Edit a Kargadian citizen's profile """
         output = self.bot.db.execute(f"UPDATE kargadia SET {key}=? WHERE id=? OR uid=?", (value, _id, _id))
         return await ctx.send(output)
 
-    @ka_citizenship.command(name="delete", aliases=["del", "remove"])
+    @kargadia_profile.command(name="delete", aliases=["del", "remove"])
     @commands.is_owner()
     async def ka_citizen_delete(self, ctx: commands.Context, _id: int):
         """ Delete a Kargadian citizen's profile """
         output = self.bot.db.execute("DELETE FROM kargadia WHERE id=?", (_id,))
         return await ctx.send(output)
-
-    @ka_citizenship.command(name="see", aliases=["view", "profile", "id"])
-    async def ka_citizen_profile(self, ctx: commands.Context, _user: commands.UserID = None):
-        """ See your or someone else's profile """
-        language = ctx.language2("en")
-        if _user is None:
-            _user = ctx.author.id
-        # if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
-        #     return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
-        data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
-        if not data:
-            return await ctx.send("A citizen profile is not available for this user.")
-
-        embed = discord.Embed(colour=random_colour())
-        name = data["name"]
-        if data["name2"]:
-            name += f" {data['name2']}"
-
-        try:
-            user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
-            username = user.name
-            embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
-        except discord.NotFound:
-            username = data["name"]
-
-        embed.title = f"{username}'s Kargadian citizen ID"
-        embed.add_field(name="Citizen ID", value=data["id"], inline=True)
-        # embed.add_field(name="User ID", value=data["uid"], inline=True)
-
-        genders = {"m": "Male", "f": "Female"}
-        embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
-
-        embed.add_field(name="Kargadian Name", value=name, inline=False)
-
-        if data["birthday"]:
-            birthday = time.date.from_iso(data["birthday"], time.Kargadia)
-            embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
-        else:
-            embed.add_field(name="Birthday", value="Unavailable", inline=False)
-
-        if data["location"]:
-            try:
-                place = conworlds.Place(data["location"])
-                location = place.name_translation(language)
-            except PlaceDoesNotExist:
-                location = data["location"]
-            embed.add_field(name="Location", value=location, inline=False)
-        else:
-            embed.add_field(name="Location", value="Unavailable", inline=False)
-
-        joined = time.date.from_iso(data["joined"], time.Earth)
-        embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
-        return await ctx.send(embed=embed)
 
     # def check_birthday(self, user_id):
     #     data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=? OR id=?", (user_id, user_id))

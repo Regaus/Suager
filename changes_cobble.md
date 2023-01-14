@@ -645,3 +645,9 @@
 
 ## v1.8.1.3 - 14 January 2023
 - Added new Kargadian first name, Kista
+
+## v1.8.2 - 14 January 2023
+- Kargadia profile: Added support for surnames and protected profiles
+- Kargadia profile: Added support for non-binary gender
+- Kargadia profile: Made cult join date nullable
+- Kargadia profile: Moved the profile to the top-level command (instead of `profile` subcommand)

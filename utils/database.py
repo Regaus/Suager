@@ -152,15 +152,17 @@ tables = [
         Column("gid", "INTEGER", True)
     ]),
     Table("kargadia", [
-        Column("id", "INTEGER", True, True),  # Citizen ID
-        Column("uid", "INTEGER", True),       # Discord User ID
-        Column("name", "TEXT", True),         # First name
-        Column("name2", "TEXT", False),       # Vaaraninema
-        Column("gender", "TEXT", True),       # m/f
-        Column("birthday", "TEXT", False),    # Kargadian birthday - iso date string
-        Column("has_role", "BOOLEAN", True),  # Is it currently the person's Kargadian birthday?
-        Column("location", "TEXT", False),    # Kargadian location - can also be used to determine timezone
-        Column("joined", "TEXT", True),       # When the user joined as an Earth date
+        Column("id", "INTEGER", True, True),   # Citizen ID
+        Column("uid", "INTEGER", True),        # Discord User ID
+        Column("protected", "BOOLEAN", True),  # Whether a profile is "Protected" (only viewable by me and that user)
+        Column("name", "TEXT", True),          # First Name
+        Column("name2", "TEXT", False),        # Parent Name
+        Column("name3", "TEXT", False),        # Surname
+        Column("gender", "TEXT", True),        # Gender - m/f/n/u
+        Column("birthday", "TEXT", False),     # Kargadian birthday - iso date string
+        Column("has_role", "BOOLEAN", True),   # Is it currently the person's Kargadian birthday?
+        Column("location", "TEXT", False),     # Kargadian location - can also be used to determine timezone
+        Column("joined", "TEXT", False),       # When the user joined as an Earth date
     ]),
     Table("leveling", [
         Column("uid", "INTEGER", True),
