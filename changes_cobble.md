@@ -642,3 +642,6 @@
 
 ## v1.8.1.2 - 3 January 2023
 - Slightly changed Kargadian surnames
+
+## v1.8.1.3 - 14 January 2023
+- Added new Kargadian first name, Kista
