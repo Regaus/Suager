@@ -12,3 +12,4 @@ jstyleson
 markovify
 scipy
 numpy
+py-espeak-ng
