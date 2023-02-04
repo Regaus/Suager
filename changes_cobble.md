@@ -657,3 +657,10 @@
 
 ## v1.8.2.2 - 14 January 2023
 - Kargadia profile now also shows the user's age (in Kargadian time)
+
+## v1.8.3 - 4 February 2023
+- Kargadian holidays and birthdays will now start and end at 6am
+- Improved behaviour with update time adjustments for temporaries
+- Added Mel's Twin Mountains, Kionagar, and Reksigar to Kargadian time display
+- Rearranged Kargadian places in the time list to keep up with previously updated timezones
+- Added comments to the Kargadian time display list, stating each place's timezone

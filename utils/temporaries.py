@@ -17,7 +17,14 @@ from utils import birthday, bot_data, commands, general, http, lists, logger, ti
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
     now = time2.datetime.now(time_class=time_class)
-    then = time2.datetime.from_timestamp(((now.timestamp // update_speed) + 1) * update_speed + adjustment, time2.timezone.utc, time_class)
+    # Funny behaviour with adjustments:
+    # If the update speed is 3600s (1 hour) and the adjustment is +5 minutes
+    # Current time 20:40:00 -> Wait until 21:05:00
+    # Current time 21:01:00 -> Wait until 21:05:00 (Instead of 22:05:00, like it would have before this change)
+    # Current time 21:05:01 -> Wait until 22:05:00
+    then = time2.datetime.from_timestamp((((now.timestamp - adjustment) // update_speed) + 1) * update_speed + adjustment, time2.timezone.utc, time_class)
+    # if time_class.__name__ != "Earth":
+    #     print("Time adjustments: Waiting for", str(then.to_earth_time() - now.to_earth_time()))
     await asyncio.sleep((then.to_earth_time() - now.to_earth_time()).total_seconds())
 
 
@@ -369,116 +376,118 @@ async def birthdays(bot: bot_data.Bot):
 
 ka_places = {
     "Regaazdall": {
-        "Munearan Köreldaivus": {"data": "", "weight": 30},
-        "Regavall":             {"data": "", "weight": 40},
-        "Reggar":               {"data": "", "weight": 50},
-        "Suvagar":              {"data": "", "weight": 40},
-        "Vaidangar":            {"data": "", "weight": 25},
-        "Vakungar":             {"data": "", "weight": 25},
+        "Munearan Köreldaivus": {"data": "", "weight": 30},  # -03
+        "Regavall":             {"data": "", "weight": 40},  # -03
+        "Reggar":               {"data": "", "weight": 50},  # -03
+        "Suvagar":              {"data": "", "weight": 40},  # -03
+        "Vaidangar":            {"data": "", "weight": 25},  # -03
+        "Vakungar":             {"data": "", "weight": 25},  # -03
     },
     "Nehtivia": {
-        "Ekspigar":           {"data": "", "weight": 35},
-        "Kollugar":           {"data": "", "weight": 35},
-        "Leitagar":           {"data": "", "weight": 35},
-        "Pakigar":            {"data": "", "weight": 35},
-        "Steirigar":          {"data": "", "weight": 35},
-        "Sunmagar":           {"data": "", "weight": 25},
-        "Tenmagar":           {"data": "", "weight": 30},
-        "Runnegar":           {"data": "", "weight": 25},
-        "Lurvugar":           {"data": "", "weight": 25},
-        "Peaskar":            {"data": "", "weight": 25},
-        "Sulingar":           {"data": "", "weight": 30},
-        "Alexandris":         {"data": "", "weight": 35},
-        "Drippangar":         {"data": "", "weight": 35},
-        "Joptanagar":         {"data": "", "weight": 35},
-        "Läkingar":           {"data": "", "weight": 25},
-        "Leogar":             {"data": "", "weight": 35},
-        "Menenvallus":        {"data": "", "weight": 30},
-        "Melligar":           {"data": "", "weight": 35},
-        "Tevivall":           {"data": "", "weight": 30},
-        # "Watsangar":          {"data": "", "weight": 35},
-        "Chakkangar":         {"data": "", "weight": 35},
-        "Kamikawa":           {"data": "", "weight": 35},
-        "Kiomigar":           {"data": "", "weight": 35},
-        "Lailagar":           {"data": "", "weight": 35},
-        "Koutun Köreldaivus": {"data": "", "weight": 30},
+        "Ekspigar":             {"data": "", "weight": 35},  # -10
+        "Kollugar":             {"data": "", "weight": 35},  # -10
+        "Leitagar":             {"data": "", "weight": 35},  # -10
+        "Pakigar":              {"data": "", "weight": 35},  # -10
+        "Steirigar":            {"data": "", "weight": 35},  # -10
+        "Tenmagar":             {"data": "", "weight": 30},  # -10
+        "Runnegar":             {"data": "", "weight": 25},  # -09
+        "Sunmagar":             {"data": "", "weight": 25},  # -09
+        "Lurvugar":             {"data": "", "weight": 25},  # -08
+        "Peaskar":              {"data": "", "weight": 25},  # -08
+        "Sulingar":             {"data": "", "weight": 30},  # -08
+        "Alexandris":           {"data": "", "weight": 35},  # -07
+        "Drippangar":           {"data": "", "weight": 35},  # -07
+        "Joptanagar":           {"data": "", "weight": 35},  # -07
+        "Läkingar":             {"data": "", "weight": 25},  # -07
+        "Leogar":               {"data": "", "weight": 35},  # -07
+        "Menenvallus":          {"data": "", "weight": 30},  # -07
+        "Mel's Twin Mountains": {"data": "", "weight": 35},  # -06
+        "Chakkangar":           {"data": "", "weight": 35},  # -05
+        "Kamikawa":             {"data": "", "weight": 35},  # -05
+        "Kiomigar":             {"data": "", "weight": 35},  # -05
+        "Kionagar":             {"data": "", "weight": 35},  # -05
+        "Lailagar":             {"data": "", "weight": 35},  # -05
+        "Koutun Köreldaivus":   {"data": "", "weight": 30},  # -05
+        "Melligar":             {"data": "", "weight": 35},  # -05
+        "Tevivall":             {"data": "", "weight": 30},  # -05
+        "Reksigar":             {"data": "", "weight": 35},  # -04
     },
     "Nittavia": {
-        "Erdagar":     {"data": "", "weight": 25},
-        "Ammugar":     {"data": "", "weight": 25},
-        "Körevallus":  {"data": "", "weight": 30},
-        "Saikovallus": {"data": "", "weight": 30},
+        "Erdagar":     {"data": "", "weight": 25},  # -09
+        "Ammugar":     {"data": "", "weight": 25},  # -08
+        "Körevallus":  {"data": "", "weight": 30},  # -07
+        "Saikovallus": {"data": "", "weight": 30},  # -07
     },
     "Tebaria": {
-        "Kianta":       {"data": "", "weight": 25},
-        "Kuntuma":      {"data": "", "weight": 25},
-        "Sentatebaria": {"data": "", "weight": 30},
-        "Nilli":        {"data": "", "weight": 25},
-        "Nilligar":     {"data": "", "weight": 25},
-        "Hantia":       {"data": "", "weight": 25},
-        "Hantisgar":    {"data": "", "weight": 25},
-        "Tahda":        {"data": "", "weight": 25},
-        "Kaivalgard":   {"data": "", "weight": 35},
-        "Kuvul-Ghuzu":  {"data": "", "weight": 25},
-        "Harvugar":     {"data": "", "weight": 30},
-        "Urum":         {"data": "", "weight": 30},
-        "Kullivi":      {"data": "", "weight": 25},
-        "Nurvut":       {"data": "", "weight": 25},
-        "Vallangar":    {"data": "", "weight": 25},
-        "Kaltagar":     {"data": "", "weight": 25},
-        "Noqqo":        {"data": "", "weight": 25},
-        "Qeshte":       {"data": "", "weight": 25},
-        "Kainedungar":  {"data": "", "weight": 25},
-        "Suttulu":      {"data": "", "weight": 25},
-        "Usmutgar":     {"data": "", "weight": 25},
-        "Bylkangar":    {"data": "", "weight": 30},
-        "Kaltatebaria": {"data": "", "weight": 25},
-        "Sittegar":     {"data": "", "weight": 25},
-        "Keltagar":     {"data": "", "weight": 25},
-        "Sadegar":      {"data": "", "weight": 25},
-        "Tenkigar":     {"data": "", "weight": 25},
-        "Vadertebaria": {"data": "", "weight": 25},
-        "Istagar":      {"data": "", "weight": 25},
-        "Lervagar":     {"data": "", "weight": 25},
-        "Simmagar":     {"data": "", "weight": 25},
-        "Hinnegar":     {"data": "", "weight": 25},
+        "Kianta":       {"data": "", "weight": 25},  # -11
+        "Kuntuma":      {"data": "", "weight": 25},  # -10
+        "Sentatebaria": {"data": "", "weight": 30},  # -08
+        "Nilli":        {"data": "", "weight": 25},  # -06
+        "Nilligar":     {"data": "", "weight": 25},  # -06
+        "Hantia":       {"data": "", "weight": 25},  # -05
+        "Hantisgar":    {"data": "", "weight": 25},  # -04
+        "Tahda":        {"data": "", "weight": 25},  # -04
+        "Kaivalgard":   {"data": "", "weight": 35},  # -02
+        "Kuvul-Ghuzu":  {"data": "", "weight": 25},  # -02
+        "Harvugar":     {"data": "", "weight": 30},  # -01
+        "Urum":         {"data": "", "weight": 30},  # -01
+        "Kullivi":      {"data": "", "weight": 25},  # +00
+        "Nurvut":       {"data": "", "weight": 25},  # +00
+        "Vallangar":    {"data": "", "weight": 25},  # +01
+        "Kaltagar":     {"data": "", "weight": 25},  # +01
+        "Noqqo":        {"data": "", "weight": 25},  # +02
+        "Qeshte":       {"data": "", "weight": 25},  # +02
+        "Kainedungar":  {"data": "", "weight": 25},  # +03
+        "Suttulu":      {"data": "", "weight": 25},  # +03
+        "Usmutgar":     {"data": "", "weight": 25},  # +03
+        "Bylkangar":    {"data": "", "weight": 30},  # +04
+        "Kaltatebaria": {"data": "", "weight": 25},  # +04
+        "Sittegar":     {"data": "", "weight": 25},  # +04
+        "Keltagar":     {"data": "", "weight": 25},  # +05
+        "Sadegar":      {"data": "", "weight": 25},  # +06
+        "Tenkigar":     {"data": "", "weight": 25},  # +07
+        "Vadertebaria": {"data": "", "weight": 25},  # +09
+        "Istagar":      {"data": "", "weight": 25},  # +11
+        "Lervagar":     {"data": "", "weight": 25},  # +12
+        "Simmagar":     {"data": "", "weight": 25},  # +13
+        "Hinnegar":     {"data": "", "weight": 25},  # +14
     },
     "Kaltar Azdall": {
-        "Kalta Centeria": {"data": "", "weight": 25},
-        "Kalta Mainta":   {"data": "", "weight": 25},
-        "Kaltar Kainead": {"data": "", "weight": 20},
-        "Kaltarena":      {"data": "", "weight": 25},
-        "Küangar":        {"data": "", "weight": 25},
+        "Kalta Centeria": {"data": "", "weight": 25},  # -01
+        "Kalta Mainta":   {"data": "", "weight": 25},  # -01
+        "Kaltar Kainead": {"data": "", "weight": 20},  # -01
+        "Kaltarena":      {"data": "", "weight": 25},  # -01
+        "Küangar":        {"data": "", "weight": 25},  # -01
     },
     "Arnattia": {
-        "Mahatarna":   {"data": "", "weight": 25},
-        "Vainararna":  {"data": "", "weight": 25},
-        "Ezmetarna":   {"data": "", "weight": 25},
-        "Tuhtun Arna": {"data": "", "weight": 25},
-        "Avikarna":    {"data": "", "weight": 25},
-        "Kanerarna":   {"data": "", "weight": 25},
-        "Terra Arna":  {"data": "", "weight": 25},
+        "Mahatarna":   {"data": "", "weight": 25},  # -13
+        "Vainararna":  {"data": "", "weight": 25},  # -13
+        "Ezmetarna":   {"data": "", "weight": 25},  # -12
+        "Tuhtun Arna": {"data": "", "weight": 25},  # -12
+        "Avikarna":    {"data": "", "weight": 25},  # -11
+        "Kanerarna":   {"data": "", "weight": 25},  # -11
+        "Terra Arna":  {"data": "", "weight": 25},  # -11
     },
     "Erellia": {
-        "Itta":      {"data": "", "weight": 25},
-        "Rankadus":  {"data": "", "weight": 20},
-        "Raagar":    {"data": "", "weight": 25},
-        "Orlagar":   {"data": "", "weight": 35},
-        "Shonangar": {"data": "", "weight": 35},
+        "Itta":      {"data": "", "weight": 25},  # -05
+        "Rankadus":  {"data": "", "weight": 20},  # -04
+        "Raagar":    {"data": "", "weight": 25},  # -03
+        "Orlagar":   {"data": "", "weight": 35},  # -03
+        "Shonangar": {"data": "", "weight": 35},  # -03
     },
     "Centeria": {
-        "Kalagar":   {"data": "", "weight": 25},
-        "Sukugar":   {"data": "", "weight": 30},
-        "Virsetgar": {"data": "", "weight": 30},
+        "Kalagar":   {"data": "", "weight": 25},  # +00
+        "Sukugar":   {"data": "", "weight": 30},  # +00
+        "Virsetgar": {"data": "", "weight": 30},  # +00
     },
     "Verlennia": {
     },
     "Inhattia": {
     },
     "Other Areas": {
-        "Rakka's Volcano":     {"data": "", "weight": 35},
-        "Vintelingar":         {"data": "", "weight": 35},
-        "North Pole Kargadia": {"data": "", "weight": 20},
+        "Rakka's Volcano":     {"data": "", "weight": 35},  # -05
+        "Vintelingar":         {"data": "", "weight": 35},  # -02
+        "North Pole Kargadia": {"data": "", "weight": 20},  # +00
     }
 }
 _places = {}  # Since the playing status won't be able to read through a 2-layer dict...
@@ -1438,7 +1447,8 @@ async def sl_holidays_updater(bot: bot_data.Bot):
 
 async def ka_holidays_updater(bot: bot_data.Bot):
     update_speed = 86400
-    await wait_until_next_iter(update_speed, 1, time2.Kargadia)  # Update this every Kargadian midnight
+    update_delay = 21601  # Kargadian days start at 06:00, and so should their holidays
+    await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Kargadian Holidays")
     # I don't think Kargadian holidays need to be sent into SL
@@ -1471,4 +1481,4 @@ async def ka_holidays_updater(bot: bot_data.Bot):
             logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
 
         await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 1, time2.Kargadia)
+        await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)

@@ -451,14 +451,14 @@ class Conworlds(commands.Cog):
         birthday_date = time.date.from_iso(data["birthday"], time.Kargadia)
         birthday = language.date(birthday_date, short=0, dow=False, year=False)
         tz = language.get_timezone(user.id, "Kargadia")
-        now = time.datetime.now(tz, time.Kargadia)
-        if now.day == birthday_date.day and now.month == birthday_date.month:
+        now = time.datetime.now(tz, time.Kargadia) - time.timedelta(hours=6)  # Kargadian birthdays pass at 6am, and this is a crutchy way to reflect that here
+        if now.date() == birthday_date:
             today = "_today"
             delta = None
         else:
             today = ""
-            year = now.year + 1 if (now.day > birthday_date.day and now.month == birthday_date.month) or now.month > birthday_date.month else now.year
-            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(), tz).replace(year=year), accuracy=2, brief=False, affix=True)
+            year = now.year + 1 if now.date() > birthday_date else now.year
+            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(6, 0, 0), tz).replace(year=year), accuracy=2, brief=False, affix=True)
         if user == ctx.author:
             return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
         return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username, date=birthday, delta=delta))
