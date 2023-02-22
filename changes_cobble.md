@@ -664,3 +664,7 @@
 - Added Mel's Twin Mountains, Kionagar, and Reksigar to Kargadian time display
 - Rearranged Kargadian places in the time list to keep up with previously updated timezones
 - Added comments to the Kargadian time display list, stating each place's timezone
+
+## v1.8.3.1 - 22 February 2023
+- Fixed the Kargadian birthday command always jumping a year ahead of itself
+- Improved behaviour for the Kargadian time output when a place is not available

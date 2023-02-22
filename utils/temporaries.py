@@ -572,7 +572,17 @@ def ka_data_updater(bot: bot_data.Bot):
                     global ka_time
                     ka_time = place.time
                 # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
+            except conworlds.PlaceDoesNotExist:
+                ka_places[area_name][city]["data"] = f"{city:<20} - No data available"
+                # _places[city]["text"] = f"{city} - Zaita de jortalla"  # _places seems to only account for places that already exist
+                log_out = f"{time.time()} > {bot.full_name} > Place {city} is not available"
+                general.print_error(log_out)
+                logger.log(bot.name, "kargadia", log_out)
+                logger.log(bot.name, "errors", log_out)
             except Exception as e:
+                if not ka_places[area_name][city]["data"]:  # If the place data is still empty, add a space to it, else don't update it
+                    ka_places[area_name][city]["data"] = " "
+                    # _places[city]["text"] = " "
                 general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
                 log_out = f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}"
                 logger.log(bot.name, "kargadia", log_out)

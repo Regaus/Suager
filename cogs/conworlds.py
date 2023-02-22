@@ -457,8 +457,10 @@ class Conworlds(commands.Cog):
             delta = None
         else:
             today = ""
-            year = now.year + 1 if now.date() > birthday_date else now.year
-            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(6, 0, 0), tz).replace(year=year), accuracy=2, brief=False, affix=True)
+            birthday_date.replace(year=now.year)  # Set the date to the current year, then add another one if it's already passed
+            if now.date() > birthday_date:
+                birthday_date.replace(year=now.year + 1)
+            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(6, 0, 0), tz), accuracy=2, brief=False, affix=True)
         if user == ctx.author:
             return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
         return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username, date=birthday, delta=delta))
