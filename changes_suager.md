@@ -1459,3 +1459,6 @@
 
 ## v7.6.1.1 - 31 December 2022
 - Updated new year's script for 2023
+
+## v7.6.2 - 5 March 2023
+- Added Exo2 font for rank cards

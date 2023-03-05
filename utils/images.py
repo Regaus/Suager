@@ -7,7 +7,8 @@ font_files = {
     "gg sans": "assets/fonts/gg_sans.ttf",
     "jetbrains mono": "assets/fonts/mono.ttf",
     "rajdhani": "assets/fonts/rajdhani.ttf",
-    "whitney": "assets/fonts/font.ttf"
+    "whitney": "assets/fonts/font.ttf",
+    "exo2": "assets/fonts/exo2.ttf",
 }
 
 # String used to test various fonts - English pangram, Russian pangram, Numbers and special chars
