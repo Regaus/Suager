@@ -286,3 +286,6 @@
 
 ## v1.3.1 - 16 December 2022
 - Popular discord server listings are now also blocked if anti-ads are enabled
+
+## v1.3.1.1 - 9 March 2023
+- Slightly idiot-proofed reminders

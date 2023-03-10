@@ -784,7 +784,7 @@ class Reminders(Utility, name="Utility"):
         #     random_id = general.random_id()
         # self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False, self.bot.name))
         self.bot.db.execute("INSERT INTO reminders(uid, expiry, message, handled, bot) VALUES (?, ?, ?, ?, ?)", (ctx.author.id, expiry, reminder, 0, self.bot.name))
-        return await ctx.send(language.string("util_reminders_success", author=ctx.author.name, delta=diff, time=when))
+        return await ctx.send(language.string("util_reminders_success", author=ctx.author.name, delta=diff, time=when, p=ctx.prefix))
         # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
     @commands.group(name="reminders", aliases=["reminder"])
@@ -810,11 +810,12 @@ class Reminders(Utility, name="Utility"):
                 outputs.append(language.string("util_reminders_item", i=_reminder, message=reminder["message"], id=reminder["id"], time=expires_on, delta=expires_in))
                 # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
             output2 = "\n\n".join(outputs)
+            output3 = language.string("util_reminders_list_end", p=ctx.prefix)
             if len(output2) > 1900:
                 _data = BytesIO(str(output2).encode('utf-8'))
-                return await ctx.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+                return await ctx.send(output + output3, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
             else:
-                return await ctx.send(f"{output}\n\n{output2}")
+                return await ctx.send(f"{output}\n\n{output2}{output3}")
 
     @reminders.command(name="edit")
     async def reminders_edit(self, ctx: commands.Context, reminder_id: int, *, args: str):

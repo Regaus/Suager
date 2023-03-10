@@ -1462,3 +1462,7 @@
 
 ## v7.6.2 - 5 March 2023
 - Added Exo2 font for rank cards
+
+## v7.6.2.1 - 9 March 2023
+- Slightly idiot-proofed reminders
+- User logs will now show the tag of the user

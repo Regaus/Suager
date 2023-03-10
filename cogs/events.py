@@ -302,7 +302,7 @@ class Events(commands.Cog):
                     if channel:
                         language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         embed = discord.Embed(title=language.string("events_user_joined"), colour=general.green2)
-                        embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
+                        embed.add_field(name=language.string("discord_user_username"), value=f"{member} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
                         embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True, tz=True), inline=False)
                         embed.set_thumbnail(url=str(member.display_avatar.replace(size=1024, static_format="png")))
@@ -414,7 +414,7 @@ class Events(commands.Cog):
                     if channel:
                         language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         embed = discord.Embed(title=language.string("events_user_left"), colour=general.red3)
-                        embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
+                        embed.add_field(name=language.string("discord_user_username"), value=f"{member} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
                         embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True, tz=True), inline=False)
                         joined = language.time(member.joined_at, short=0, dow=False, seconds=True, tz=True)
