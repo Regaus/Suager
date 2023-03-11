@@ -6,8 +6,8 @@ from typing import Any, Iterable
 import discord
 from discord.ext.commands import NSFWChannelRequired
 from discord.ext.commands.core import Group, wrap_callback
-from jishaku.shim.paginator_170 import PaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 
+from utils.paginators import PaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 from utils.commands import Command, CommandError, Context, MinimalHelpCommand, NoPrivateMessage, NotOwner
 
 

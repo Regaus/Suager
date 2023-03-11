@@ -289,3 +289,6 @@
 
 ## v1.3.1.1 - 9 March 2023
 - Slightly idiot-proofed reminders
+
+## v1.3.1.2 - 11 March 2023
+- Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library

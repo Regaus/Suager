@@ -668,3 +668,6 @@
 ## v1.8.3.1 - 22 February 2023
 - Fixed the Kargadian birthday command always jumping a year ahead of itself
 - Improved behaviour for the Kargadian time output when a place is not available
+
+## v1.8.3.2 - 11 March 2023
+- Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library

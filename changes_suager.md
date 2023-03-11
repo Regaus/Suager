@@ -1466,3 +1466,6 @@
 ## v7.6.2.1 - 9 March 2023
 - Slightly idiot-proofed reminders
 - User logs will now show the tag of the user
+
+## v7.6.2.2 - 11 March 2023
+- Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
