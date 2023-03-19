@@ -56,3 +56,6 @@
 
 ## v1.2.1.4 - 11 March 2023
 - Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
+
+## v1.2.1.5 - 19 March 2023
+- Added Overheating Brakes, Wobbe's new server

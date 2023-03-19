@@ -36,10 +36,10 @@
   },
   "pretender": {
     "short_version": "1.2",
-    "version": "1.2.1.4",
+    "version": "1.2.1.5",
     "first_version": 1658334660,
     "major_release": 1658357872,
-    "last_update": 1678567798
+    "last_update": 1679185045
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

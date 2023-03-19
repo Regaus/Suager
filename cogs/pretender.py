@@ -11,11 +11,11 @@ class Pretender(commands.Cog):
         # Whitelist:      SL: general,        elite-lounge,       secret-room-2,      secret-room-3,      secret-room-8,      secret-room-15
         # Whitelist:      RK general,         Alex: general,      gamer-hub,          Satan Rib general
         # Whitelist:      SPHG: general,      memes,              computers-and-int,  software-and-junk,  animation,          random-art
-        # Whitelist:      SPHG: shrek-anime,  edge-posters-vomit
+        # Whitelist:      SPHG: shrek-anime,  edge-posters-vomit, OB: general,         cars,
         self.whitelist = [568148147457490958, 658112535656005663, 672535025698209821, 681647810357362786, 725835449502924901, 969720792457822219,
                           738425419325243424, 857504678371917855, 917150209149141042, 872464449255125033,
                           878332203094913025, 582110154170826755, 805519707045232692, 770529037566738443, 805510833764565042, 878335070996418600,
-                          862397829087887361, 828742737493884968]
+                          862397829087887361, 828742737493884968, 1086802718011695194, 1078443562611511498]
         self.messages = pretender.MessageManager()
         self.webhooks = pretender.WebhookManager()
 
