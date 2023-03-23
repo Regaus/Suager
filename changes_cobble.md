@@ -673,4 +673,4 @@
 - Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
 
 ## v1.8.4 - 23 March 2023
-- Kargadian birthdays now when they will begin in Earth time
+- Kargadian birthdays now show when they will begin in Earth time
