@@ -311,7 +311,7 @@ class Moderation(commands.Cog):
     @commands.command(name="kick")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Kick a user from the server """
@@ -329,7 +329,7 @@ class Moderation(commands.Cog):
     @commands.command(name="masskick")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_kick(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass kick users from the server """
@@ -396,7 +396,7 @@ class Moderation(commands.Cog):
     @commands.command(name="ban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
         """ Ban a user from the server """
@@ -419,7 +419,7 @@ class Moderation(commands.Cog):
     @commands.command(name="massban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_ban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass ban users from the server """
@@ -470,7 +470,7 @@ class Moderation(commands.Cog):
     @commands.command(name="unban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
         """ Unban a user """
@@ -490,7 +490,7 @@ class Moderation(commands.Cog):
     @commands.command(name="massunban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_unban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass unban users from the server """
@@ -582,7 +582,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="mute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Mute someone
@@ -611,7 +611,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="massmute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def mass_mute(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-mute multiple members """
@@ -678,7 +678,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="unmute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Unmute someone """
@@ -695,7 +695,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="massunmute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def mass_unmute(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-unmute multiple members """
@@ -734,7 +734,7 @@ class Moderation(commands.Cog):
     @commands.command(name="mutes")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def mute_list(self, ctx: commands.Context):
         """ See a list of the currently active mutes """
         language = self.bot.language(ctx)
@@ -837,7 +837,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="warn", aliases=["warning"])
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Warn a user
 
@@ -865,7 +865,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="masswarn")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def mass_warn(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-warn multiple users """
         language = self.bot.language(ctx)
@@ -932,7 +932,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="pardon", aliases=["forgive", "unwarn"])
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def pardon(self, ctx: commands.Context, member: discord.Member, warning_id: Union[int, Literal["all"]], *, reason: str = None):
         """ Remove someone's warning
 
@@ -982,7 +982,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="modlog", aliases=["punishments", "infractions"])
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def mod_log(self, ctx: commands.Context, *, member: discord.Member = None):
         """ See the log of all punishments ever applied against the user in this server """
         member = member or ctx.author
@@ -1028,7 +1028,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
-    @permissions.has_permissions(manage_nicknames=True)
+    @permissions.has_permissions(manage_nicknames=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_user(self, ctx: commands.Context, member: discord.Member, *, name: str = None):
         """ Sets a user's nickname """
@@ -1051,7 +1051,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
-    @permissions.has_permissions(change_nickname=True)
+    @permissions.has_permissions(change_nickname=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_self(self, ctx: commands.Context, *, name: str = None):
         """ Change your own nickname """
@@ -1072,7 +1072,7 @@ class Moderation(commands.Cog):
 
     @commands.group(name="find")
     @commands.guild_only()
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     async def find(self, ctx: commands.Context):
         """ Finds a server member within your search term """
         if ctx.invoked_subcommand is None:
@@ -1103,7 +1103,7 @@ class Moderation(commands.Cog):
 
     @commands.group(name="purge", aliases=["prune", "delete"])
     @commands.guild_only()
-    @permissions.has_permissions(manage_messages=True)
+    @permissions.has_permissions(manage_messages=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_messages=True, read_message_history=True)
     async def prune(self, ctx: commands.Context):
         """ Removes messages from the current server. """
@@ -1216,7 +1216,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
-    @permissions.has_permissions(manage_nicknames=True)
+    @permissions.has_permissions(manage_nicknames=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_user(self, ctx: commands.Context, member: discord.Member, design: int, *, name: str = None):
         """ Sets a user's nickname """
@@ -1239,7 +1239,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
-    @permissions.has_permissions(change_nickname=True)
+    @permissions.has_permissions(change_nickname=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_self(self, ctx: commands.Context, design: int, *, name: str = None):
         """ Change your own nickname """

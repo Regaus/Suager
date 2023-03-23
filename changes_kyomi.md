@@ -292,3 +292,6 @@
 
 ## v1.3.1.2 - 11 March 2023
 - Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
+
+## v1.3.2 - 23 March 2023
+- Permission checks for moderation commands can no longer be bypassed by the bot owner
