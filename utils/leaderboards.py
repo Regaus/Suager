@@ -54,7 +54,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
             # s = ' '
             # sp = xpl[k]
             # Place -> 4 spaces -> XP (aligned right) -> 4 spaces -> Name
-            block += f"{i:02d})    {xp[k]:>{spaces}}    {who}\n"
+            block += f"{i:02d})  {xp[k]:>{spaces}}    {who}\n"
     except (ValueError, IndexError):
         block += "No data available"
     s, e, t = language.number(start), language.number(start + 9), language.number(total)
@@ -116,7 +116,7 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
                 # s = ' '
                 # sp = xpl[k]
                 # Place -> 4 spaces -> XP (aligned right) -> 4 spaces -> Name
-                block += f"{i:02d})    {xp[k]:>{spaces}}    {who}\n"
+                block += f"{i:02d})  {xp[k]:>{spaces}}    {who}\n"
                 # block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
             except IndexError:
                 pass

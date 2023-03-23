@@ -1475,3 +1475,6 @@
 
 ## v7.6.4 - 23 March 2023
 - XP on the levels leaderboard is now aligned to the right rather than the left
+
+## v7.6.4.1 - 23 March 2023
+- The XP now has only 2 spaces of padding on the left side instead of 4
