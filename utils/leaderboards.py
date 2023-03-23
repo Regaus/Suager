@@ -37,23 +37,24 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
         if (n <= 10 or top.lower() == "top") and page is None:
             _data = data[:10]
             start = 1
-            spaces = max(xpl[:10]) + 5
+            spaces = max(xpl[:10])  # + 5
         elif page is not None:
             _data = data[(page - 1)*10:page*10]
             start = page * 10 - 9
-            spaces = max(xpl[(page - 1)*10:page*10]) + 5
+            spaces = max(xpl[(page - 1)*10:page*10])  # + 5
         else:
             _data = data[n-5:n+5]
             start = n - 4
-            spaces = max(xpl[n-5:n+5]) + 5
+            spaces = max(xpl[n-5:n+5])  # + 5
         for i, val in enumerate(_data, start=start):
             k = i - 1
             who = un[k]
             if val['uid'] == ctx.author.id:
                 who = f"-> {who}"
-            s = ' '
-            sp = xpl[k]
-            block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
+            # s = ' '
+            # sp = xpl[k]
+            # Place -> 4 spaces -> XP (aligned right) -> 4 spaces -> Name
+            block += f"{i:02d})    {xp[k]:>{spaces}}    {who}\n"
     except (ValueError, IndexError):
         block += "No data available"
     s, e, t = language.number(start), language.number(start + 9), language.number(total)
@@ -86,7 +87,6 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
             place = language.string("leaderboards_place", val=language.number(someone + 1))
             n = someone + 1
             break
-    s = ' '
     try:
         page = int(top)
         if page < 1:
@@ -98,23 +98,26 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
         if (n <= 10 or top.lower() == "top") and page is None:
             _data = sl[:10]
             start = 1
-            spaces = max(xpl[:10]) + 5
+            spaces = max(xpl[:10])  # + 5
         elif page is not None:
             _data = sl[(page - 1) * 10:page * 10]
             start = page * 10 - 9
-            spaces = max(xpl[(page - 1) * 10:page * 10]) + 5
+            spaces = max(xpl[(page - 1) * 10:page * 10])  # + 5
         else:
             _data = sl[n - 5:n + 5]
             start = n - 4
-            spaces = max(xpl[n - 5:n + 5]) + 5
+            spaces = max(xpl[n - 5:n + 5])  # + 5
         for i, d in enumerate(_data, start=start):
             try:
                 k = i - 1
                 who = un[k]
                 if d[0] == ctx.author.id:
                     who = f"-> {who}"
-                sp = xpl[k]
-                block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
+                # s = ' '
+                # sp = xpl[k]
+                # Place -> 4 spaces -> XP (aligned right) -> 4 spaces -> Name
+                block += f"{i:02d})    {xp[k]:>{spaces}}    {who}\n"
+                # block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
             except IndexError:
                 pass
     except (ValueError, IndexError):

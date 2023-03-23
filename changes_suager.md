@@ -1472,3 +1472,6 @@
 
 ## v7.6.3 - 23 March 2023
 - Permission checks for moderation commands can no longer be bypassed by the bot owner
+
+## v7.6.4 - 23 March 2023
+- XP on the levels leaderboard is now aligned to the right rather than the left
