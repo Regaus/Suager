@@ -453,17 +453,23 @@ class Conworlds(commands.Cog):
         tz = language.get_timezone(user.id, "Kargadia")
         now = time.datetime.now(tz, time.Kargadia) - time.timedelta(hours=6)  # Kargadian birthdays pass at 6am, and this is a crutchy way to reflect that here
         if now.date() == birthday_date:
-            today = "_today"
+            today = True
             delta = None
+            birthday_date.replace(year=now.year)
+            birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
         else:
-            today = ""
+            today = False
             birthday_date.replace(year=now.year)  # Set the date to the current year, then add another one if it's already passed
             if now.date() > birthday_date:
                 birthday_date.replace(year=now.year + 1)
-            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(6, 0, 0), tz), accuracy=2, brief=False, affix=True)
-        if user == ctx.author:
-            return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
-        return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username, date=birthday, delta=delta))
+            birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
+            delta = language.delta_dt(birthday_time, accuracy=2, brief=False, affix=True)
+        _user = "your" if user == ctx.author else "general"
+        if today:
+            return await ctx.send(language.string(f"birthdays_birthday_{_user}_today", user=username, date=birthday))
+        earth_time = birthday_time.to_earth_time()  # .to_tz(language.get_timezone(user.id, "Earth"))
+        earth = language.time(earth_time, short=1, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        return await ctx.send(language.string(f"birthdays_birthday_{_user}_ka", user=username, date=birthday, delta=delta, earth=earth))
 
     @commands.group(name="generate", aliases=["gen"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

@@ -671,3 +671,6 @@
 
 ## v1.8.3.2 - 11 March 2023
 - Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
+
+## v1.8.4 - 23 March 2023
+- Kargadian birthdays now when they will begin in Earth time
