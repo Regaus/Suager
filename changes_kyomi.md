@@ -295,3 +295,6 @@
 
 ## v1.3.2 - 23 March 2023
 - Permission checks for moderation commands can no longer be bypassed by the bot owner
+
+## v1.3.3 - 29 March 2023
+- Added a command to give people some cheese

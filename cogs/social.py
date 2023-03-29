@@ -632,6 +632,14 @@ class Social(commands.Cog):
         language = self.bot.language(ctx)
         return await self.food_command(ctx, user, "🍍", language)
 
+    @commands.command(name="cheese")
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def cheese(self, ctx: commands.Context, user: discord.Member):
+        """ Give someone a piece of cheese """
+        language = self.bot.language(ctx)
+        return await self.food_command(ctx, user, "🧀", language)
+
     @commands.command(name="monke", aliases=["monkey"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

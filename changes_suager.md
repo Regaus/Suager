@@ -1478,3 +1478,6 @@
 
 ## v7.6.4.1 - 23 March 2023
 - The XP now has only 2 spaces of padding on the left side instead of 4
+
+## v7.6.5 - 29 March 2023
+- Added a command to give people some cheese
