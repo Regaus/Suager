@@ -16,7 +16,10 @@ class Events(commands.Cog):
         self.db = self.bot.db
         self.local_config = self.bot.local_config
         self.blocked = [667187968145883146, 852695205073125376]
+        # Watched ignored chans: Rat Enj. Den nsfw
+        self.watch_channels = [995376502352916491]
         self.bad = ["reg", "reag", "302851022790066185"]
+        self.bad2 = ["rega", "reag", "regg", "302851022790066185"]
         self.blocked_logs = 739183533792297164
         # Suager updates:      SL announcements,   3tk4 updates,       mimohome suwu,      Chill Crew updates, 1337xp updates,     # Kargadia updates
         self.updates_suager = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713, 1051869244771549314]
@@ -56,13 +59,25 @@ class Events(commands.Cog):
         if ctx.author.id in self.blocked:
             for word in self.bad:
                 if word in ctx.content.lower():
-                    channel = self.bot.get_channel(self.blocked_logs)
-                    gid = ctx.guild.id if ctx.guild is not None else "not a guild"
-                    await channel.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id}) | {time.time()}\n{ctx.content}")
+                    await self.handle_logged_message(ctx, 1)
+                    break
+        if ctx.channel.id in self.watch_channels:
+            for word in self.bad2:
+                if word in ctx.content.lower():
+                    await self.handle_logged_message(ctx, 2)
                     break
 
         await self.update_message(ctx, "suager",  742886280911913010, self.updates_suager)  # Update channel: RK suager-updates
         await self.update_message(ctx, "cobble", 1051871739879116821, self.updates_cobble)  # Update channel: RK cobble-updates
+
+    async def handle_logged_message(self, ctx: discord.Message, msg_type: int):
+        channel = self.bot.get_channel(self.blocked_logs)
+        gid = ctx.guild.id if ctx.guild is not None else "not a guild"
+        types = {1: "User", 2: "Channel"}
+        _author = f"{ctx.author} ({ctx.author.id})"
+        _server = f"{ctx.guild} ({gid})"
+        _channel = f"{ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id})"
+        return await channel.send(f"{_author} | {_server} | {_channel} | {time.time()} | Type: {types[msg_type]}\n{ctx.content}")
 
     async def update_message(self, ctx: discord.Message, bot_name: str, update_channel: int, channel_ids: list[int]):
         if self.bot.name == bot_name:

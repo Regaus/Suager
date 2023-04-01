@@ -1481,3 +1481,6 @@
 
 ## v7.6.5 - 29 March 2023
 - Added a command to give people some cheese
+
+## v7.6.5.1 - 1 April 2023
+- Contents of specific channels can now be checked for specific words, if deemed necessary
