@@ -347,8 +347,9 @@ class Events(commands.Cog):
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:  # Senko Lair
                 role_ids = {
-                    2021: 794699877325471776,
-                    2022: 922602168010309732
+                    2021:  794699877325471776,
+                    2022:  922602168010309732,
+                    2023: 1091828639940747274,
                 }
                 role_id = role_ids[time.now().year]
                 await member.add_roles(member.guild.get_role(role_id))

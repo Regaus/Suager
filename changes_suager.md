@@ -1499,3 +1499,6 @@
 
 ## v7.6.6.2 - 1 April 2023
 - Added "zero width non-joiners" to the end of all numbers so that they stop getting highlighted as phone numbers
+
+## v7.6.6.3 - 1 April 2023
+- Finally added a "Joined in 2023" role to Senko Lair
