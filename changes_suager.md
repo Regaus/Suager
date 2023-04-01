@@ -1484,3 +1484,12 @@
 
 ## v7.6.5.1 - 1 April 2023
 - Contents of specific channels can now be checked for specific words, if deemed necessary
+
+## v7.6.6 - 1 April 2023
+- Updated personal protection for social commands:
+  - Kiss can now only be used by people not locked (previously unprotected)
+  - Bite can now be used by people not locked (previously unlocked-only)
+  - Slap can now be used by people not locked (previously unlocked-only)
+  - Tickle can now be used by people not locked (previously unlocked-only)
+  - Suck can now only be used by people not locked (previously unprotected)
+- Added anti-kill insurance for Caffey

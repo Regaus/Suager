@@ -195,6 +195,8 @@ class Social(commands.Cog):
             choice = self.kiss
         if ctx.author == user:
             return await ctx.send(language.string("social_alone"))
+        if user.id in self.protected and ctx.author.id in self.locked:
+            return await ctx.send(language.string("social_forbidden"))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("social_kiss_suager"))
         if user.bot:
@@ -243,7 +245,7 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
-        if user.id in self.protected and ctx.author.id not in self.unlocked:
+        if user.id in self.protected and ctx.author.id in self.locked:
             return await ctx.send(language.string("social_forbidden"))
         if user.bot:
             return await ctx.send(language.string("social_slap_bot"))
@@ -291,9 +293,9 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
-        if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
-            return await ctx.send(f"{emotes.KannaSpook} How dare you")
-        if user.id in self.protected and ctx.author.id not in self.unlocked:  # and ctx.author.id in self.locked:
+        # if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
+        #     return await ctx.send(f"{emotes.KannaSpook} How dare you")
+        if user.id in self.protected and ctx.author.id in self.locked:
             return await ctx.send(language.string("social_forbidden"))
         if user.bot:
             return await ctx.send(language.string("social_slap_bot"))
@@ -433,8 +435,10 @@ class Social(commands.Cog):
             self.tickle = await lists.get_images(self.bot, "tickle")
         if ctx.author == user:
             return await ctx.send(language.string("social_poke_self"))
-        if user.id in self.protected and ctx.author.id not in self.unlocked:
-            return await ctx.send(language.string("social_tickle_regaus", author=language.case(ctx.author.name, "vocative")))
+        if user.id in self.protected and ctx.author.id in self.locked:
+            return await ctx.send(language.string("social_forbidden"))
+        # if user.id in self.protected and ctx.author.id not in self.unlocked:
+        #     return await ctx.send(language.string("social_tickle_regaus", author=language.case(ctx.author.name, "vocative")))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("social_tickle_suager"))
         if user.bot:
@@ -457,10 +461,12 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
-        if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
-            return await ctx.send(f"{emotes.KannaSpook} How dare you")
-        if user.id in self.protected and ctx.author.id not in self.unlocked:
-            return await ctx.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")))
+        # if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
+        #     return await ctx.send(f"{emotes.KannaSpook} How dare you")
+        if user.id in self.protected and ctx.author.id in self.locked:
+            return await ctx.send(language.string("social_forbidden"))
+        # if user.id in self.protected and ctx.author.id not in self.unlocked:
+        #     return await ctx.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")))
         if user.bot:
             return await ctx.send(language.string("social_slap_bot"))
         given, received = self.data_update(ctx.author.id, user.id, "punch", 15)
@@ -691,9 +697,13 @@ class SocialSuager(Social, name="Social"):
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_kill_suager", author=language.case(ctx.author.name, "vocative")))
         if user.id in self.protected and ctx.author.id not in self.unlocked:
             return await ctx.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")))
+        # Anti-Kill Insurance: Caffey
+        if user.id in [1091802713232257124]:
+            given, received = self.data_update(ctx.bot.user.id, ctx.author.id, "kill", 18)
+            return await ctx.send(language.string("social_kill_insurance", frequency=language.frequency(given)))
         if user.bot:
             return await ctx.send(language.string("social_slap_bot"))
         given, received = self.data_update(ctx.author.id, user.id, "kill", 18)
@@ -730,6 +740,8 @@ class SocialSuager(Social, name="Social"):
             return await ctx.send(language.string("social_bang_suager"))
         if user.bot:
             return await ctx.send(language.string("social_bang_bot"))
+        if user.id in self.protected and ctx.author.id in self.locked:
+            return await ctx.send(language.string("social_forbidden"))
         if user == ctx.author:
             return await ctx.send(emotes.UmmOK)
         given, received = self.data_update(ctx.author.id, user.id, "suck", 17)
