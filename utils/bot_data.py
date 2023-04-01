@@ -12,7 +12,6 @@ load = {
         "events",
         "info",
         "kuastall",
-        "leveling",
         "placeholder",
         "settings",
         "util"

@@ -674,3 +674,6 @@
 
 ## v1.8.4 - 23 March 2023
 - Kargadian birthdays now show when they will begin in Earth time
+
+## v1.8.4.1 - 1 April 2023
+- Unloaded leveling from Cobble (I don't know why it was enabled to begin with?)

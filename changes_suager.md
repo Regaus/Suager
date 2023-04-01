@@ -1496,3 +1496,6 @@
 
 ## v7.6.6.1 - 1 April 2023
 - Updated the new strings to Kargadian
+
+## v7.6.6.2 - 1 April 2023
+- Added "zero width non-joiners" to the end of all numbers so that they stop getting highlighted as phone numbers
