@@ -59,3 +59,6 @@
 
 ## v1.2.1.5 - 19 March 2023
 - Added Overheating Brakes, Wobbe's new server
+
+## v1.2.1.6 - 1 April 2023
+- Playing statuses are now written in reverse during 1st April

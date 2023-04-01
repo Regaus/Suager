@@ -298,3 +298,6 @@
 
 ## v1.3.3 - 29 March 2023
 - Added a command to give people some cheese
+
+## v1.3.3.1 - 1 April 2023
+- Playing statuses are now written in reverse during 1st April

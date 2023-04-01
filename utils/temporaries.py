@@ -12,7 +12,7 @@ import pytz
 from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import birthday, bot_data, commands, general, http, lists, logger, time
+from utils import birthday, bot_data, commands, general, http, lists, logger, time, images
 
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
@@ -709,6 +709,16 @@ async def playing(bot: bot_data.Bot):
             s = "s" if days != 1 else ""
             return f"{days} day{s}"
 
+    def get_activity(_data: dict):
+        if _data["type"] == 0:  # Game
+            __activity = discord.Game(name=_data["name"])
+        elif _data["type"] == 1:  # Streaming
+            __name = _activity["name"]
+            __activity = discord.Streaming(name=__name, details=__name, url=_data["url"])
+        else:
+            __activity = discord.Activity(type=_data["type"], name=_data["name"])
+        return __activity
+
     while True:
         try:
             version = general.get_version().get(bot.name, {"version": "Unknown version", "short_version": "Unknown"})
@@ -749,13 +759,7 @@ async def playing(bot: bot_data.Bot):
                     ]
                     random.seed()
                     _activity = random.choice(activities)
-                    if _activity["type"] == 0:  # Game
-                        activity = discord.Game(name=_activity["name"])
-                    elif _activity["type"] == 1:  # Streaming
-                        name = _activity["name"]
-                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-                    else:
-                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    activity = get_activity(_activity)
                     name = _activity["name"]
                     status = {
                         0: "Koa",
@@ -868,13 +872,7 @@ async def playing(bot: bot_data.Bot):
                     ]
                     random.seed()
                     _activity = random.choice(activities)
-                    if _activity["type"] == 0:  # Game
-                        activity = discord.Game(name=_activity["name"])
-                    elif _activity["type"] == 1:  # Streaming
-                        name = _activity["name"]
-                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-                    else:
-                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    activity = get_activity(_activity)
                     name = _activity["name"]
                     status = {
                         0: "Playing",
@@ -987,13 +985,7 @@ async def playing(bot: bot_data.Bot):
                     ]
                     random.seed()
                     _activity = random.choice(activities)
-                    if _activity["type"] == 0:  # Game
-                        activity = discord.Game(name=_activity["name"])
-                    elif _activity["type"] == 1:  # Streaming
-                        name = _activity["name"]
-                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-                    else:
-                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    activity = get_activity(_activity)
                     name = _activity["name"]
                     status = {
                         0: "Playing",
@@ -1004,6 +996,8 @@ async def playing(bot: bot_data.Bot):
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
             _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
+            if time.april_fools():
+                activity.name = activity.name[::-1]
             await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
@@ -1029,7 +1023,10 @@ async def avatars(bot: bot_data.Bot):
             e = False
             s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
             try:
-                bio = await http.get(avatar, res_method="read")
+                bio: bytes = await http.get(avatar, res_method="read")
+                # Flip the avatar during 1st April
+                if time.april_fools():
+                    bio = images.april_fools_avatar(bio)
                 await bot.user.edit(avatar=bio)
             except discord.errors.HTTPException:
                 e = True

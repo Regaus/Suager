@@ -677,3 +677,6 @@
 
 ## v1.8.4.1 - 1 April 2023
 - Unloaded leveling from Cobble (I don't know why it was enabled to begin with?)
+
+## v1.8.4.2 - 1 April 2023
+- Playing statuses are now written in reverse during 1st April

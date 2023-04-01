@@ -1509,3 +1509,7 @@
 ## v7.6.7 - 1 April 2023
 - Inverted XP and levels displayed during 1st April
 - Leveling now adjusts place padding when the last place start a new order of tens (eg 99 -> 100)
+
+## v7.6.7.1 - 1 April 2023
+- Suager's avatar is now inverted during 1st April
+- Playing statuses are now written in reverse during 1st April
