@@ -1493,3 +1493,6 @@
   - Tickle can now be used by people not locked (previously unlocked-only)
   - Suck can now only be used by people not locked (previously unprotected)
 - Added anti-kill insurance for Caffey
+
+## v7.6.6.1 - 1 April 2023
+- Updated the new strings to Kargadian
