@@ -2,7 +2,7 @@ import re
 import sqlite3
 from datetime import datetime
 
-from utils import general, logger
+from utils import general, logger, time
 
 
 def adapt_datetime_iso(val: datetime) -> str:
@@ -34,11 +34,16 @@ def regex_function(expr, item):
     return reg.search(item) is not None
 
 
+def april_fools_multiplier():
+    return -1 if time.april_fools() else 1
+
+
 class Database:
     def __init__(self):
         self.conn = sqlite3.connect(f"data/database.db", isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = dict_factory
         self.conn.create_function("REGEXP", 2, regex_function)
+        self.conn.create_function("APRILMULT", 0, april_fools_multiplier)
         self.db = self.conn.cursor()
 
     def execute(self, sql: str, prepared: tuple = ()):

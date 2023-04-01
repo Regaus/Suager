@@ -1502,3 +1502,10 @@
 
 ## v7.6.6.3 - 1 April 2023
 - Finally added a "Joined in 2023" role to Senko Lair
+
+## v7.6.6.4 - 1 April 2023
+- Restricted zws addition to only needed commands (currently just nextlevel)
+
+## v7.6.7 - 1 April 2023
+- Inverted XP and levels displayed during 1st April
+- Leveling now adjusts place padding when the last place start a new order of tens (eg 99 -> 100)

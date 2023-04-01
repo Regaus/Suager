@@ -1,10 +1,11 @@
 from discord.ext import commands
 
-from utils import languages
+from utils import languages, time
 
 
 async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, guild: str = None):
-    """ Generate Leaderboard """
+    """ Generate server Leaderboard """
+    _af = -1 if time.april_fools() else 1
     data = self.bot.db.fetch(query, statement)
     if not data:
         return await ctx.send(language.string("leaderboards_no_data"))
@@ -23,7 +24,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
     n = 0
     for x in range(len(data)):
         if data[x]['uid'] == ctx.author.id:
-            place = language.string("leaderboards_place", val=language.number(x + 1))
+            place = language.string("leaderboards_place", val=language.number((x + 1) * _af))
             n = x + 1
             break
     try:
@@ -46,6 +47,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
             _data = data[n-5:n+5]
             start = n - 4
             spaces = max(xpl[n-5:n+5])  # + 5
+        pad = len(str(start + 9)) + (_af < 0)  # This later part adds an extra padding point if it's april fools
         for i, val in enumerate(_data, start=start):
             k = i - 1
             who = un[k]
@@ -54,15 +56,17 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
             # s = ' '
             # sp = xpl[k]
             # Place -> 4 spaces -> XP (aligned right) -> 4 spaces -> Name
-            block += f"{i:02d})  {xp[k]:>{spaces}}    {who}\n"
+            block += f"{i * _af:0{pad}d})  {xp[k]:>{spaces}}    {who}\n"
     except (ValueError, IndexError):
         block += "No data available"
-    s, e, t = language.number(start), language.number(start + 9), language.number(total)
+    s, e, t = language.number(start * _af), language.number((start + 9) * _af), language.number(total)
     output = language.string(string, server=guild, place=place, start=s, end=e, total=t, data=block)
     return await ctx.send(output)
 
 
 async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple, top: str, string: str, language: languages.Language, guild: str = None):
+    """ Generate global leaderboard """
+    _af = -1 if time.april_fools() else 1
     data = self.bot.db.fetch(query, statement)
     coll = {}
     for i in data:
@@ -84,7 +88,7 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     n = 0
     for someone in range(len(sl)):
         if sl[someone][0] == ctx.author.id:
-            place = language.string("leaderboards_place", val=language.number(someone + 1))
+            place = language.string("leaderboards_place", val=language.number((someone + 1) * _af))
             n = someone + 1
             break
     try:
@@ -107,6 +111,7 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
             _data = sl[n - 5:n + 5]
             start = n - 4
             spaces = max(xpl[n - 5:n + 5])  # + 5
+        pad = len(str(start + 9)) + (_af < 0)  # This later part adds an extra padding point if it's april fools
         for i, d in enumerate(_data, start=start):
             try:
                 k = i - 1
@@ -116,11 +121,11 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
                 # s = ' '
                 # sp = xpl[k]
                 # Place -> 4 spaces -> XP (aligned right) -> 4 spaces -> Name
-                block += f"{i:02d})  {xp[k]:>{spaces}}    {who}\n"
+                block += f"{i * _af:0{pad}d})  {xp[k]:>{spaces}}    {who}\n"
                 # block += f"{i:02d}){s * 4}{xp[k]}{s * (spaces - sp)}{who}\n"
             except IndexError:
                 pass
     except (ValueError, IndexError):
         block += "No data available"
-    s, e, t = language.number(start), language.number(start + 9), language.number(total)
+    s, e, t = language.number(start * _af), language.number((start + 9) * _af), language.number(total)
     return await ctx.send(language.string(string, server=guild, place=place, start=s, end=e, total=t, data=block))

@@ -204,3 +204,8 @@ def rd_future(delta: relativedelta) -> bool:
         return True
     except (ValueError, OverflowError):
         return False
+
+
+def april_fools():
+    _now = now2().date()
+    return _now.day == 1 and _now.month == 4
