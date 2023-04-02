@@ -701,7 +701,7 @@ class SocialSuager(Social, name="Social"):
         if user.id in self.protected and ctx.author.id not in self.unlocked:
             return await ctx.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")))
         # Anti-Kill Insurance: Caffey
-        if user.id in [1091802713232257124]:
+        if user.id in [249141823778455552]:
             given, received = self.data_update(ctx.bot.user.id, ctx.author.id, "kill", 18)
             return await ctx.send(language.string("social_kill_insurance", frequency=language.frequency(given)))
         if user.bot:
