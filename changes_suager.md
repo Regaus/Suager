@@ -1513,3 +1513,6 @@
 ## v7.6.7.1 - 1 April 2023
 - Suager's avatar is now inverted during 1st April
 - Playing statuses are now written in reverse during 1st April
+
+## v7.6.7.2 - 2 April 2023
+- Added a "CPU Burner" to passively use up the CPU on the host if all bots are idle for at least 2 minutes

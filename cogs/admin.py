@@ -10,7 +10,7 @@ from io import BytesIO
 import aiohttp
 import discord
 
-from utils import bot_data, commands, data_io, database, general, http, logger, time
+from utils import bot_data, commands, data_io, database, general, http, logger, time, cpu_burner
 
 
 def insert_returns(body):
@@ -347,6 +347,7 @@ class Admin(commands.Cog):
         import sys
         await ctx.send("Shutting down...")
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.full_name} > Shutting down...")
+        cpu_burner.arr[1] = True
         _time.sleep(1)
         sys.stderr.close()
         sys.exit(0)

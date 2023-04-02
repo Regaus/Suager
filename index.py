@@ -1,10 +1,11 @@
 import asyncio
 import json
 from sqlite3 import OperationalError
+from sys import platform
 
 import discord
 
-from utils import bot_data, database, general, temporaries, time
+from utils import bot_data, database, general, temporaries, time, cpu_burner
 from utils.help_utils import HelpFormat
 
 # import logging
@@ -88,7 +89,15 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
 
 if __name__ == '__main__':
+    if platform.startswith("linux"):
+        cpu_burner.enabled = True
+        cpu_burner.setup()
+        tasks.append(loop.create_task(cpu_burner.cpu_burner()))
+    else:
+        cpu_burner.enabled = False
+
     try:
         loop.run_until_complete(asyncio.gather(*tasks))
-    except (KeyboardInterrupt, asyncio.CancelledError):
+    except (KeyboardInterrupt, asyncio.CancelledError, SystemExit):
         loop.close()
+        cpu_burner.arr[1] = True

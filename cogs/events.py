@@ -7,7 +7,7 @@ from typing import List
 import discord
 from regaus import time as time2
 
-from utils import bot_data, commands, general, logger, time
+from utils import bot_data, commands, general, logger, time, cpu_burner
 
 
 class Events(commands.Cog):
@@ -197,6 +197,12 @@ class Events(commands.Cog):
 
         logger.log(self.bot.name, "commands", error_message)
         logger.log(self.bot.name, "errors", error_message)
+
+    @commands.Cog.listener()
+    async def on_command(self, _ctx):
+        """ Triggered when a command is run """
+        cpu_burner.run = False
+        cpu_burner.last_command = time.now_ts()
 
     @commands.Cog.listener()
     async def on_command_completion(self, ctx):
