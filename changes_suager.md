@@ -1516,3 +1516,6 @@
 
 ## v7.6.7.2 - 2 April 2023
 - Added a "CPU Burner" to passively use up the CPU on the host if all bots are idle for at least 2 minutes
+
+## v7.6.7.3 - 5 April 2023
+- Reintroduced ability to blacklist people from customising their rank card

@@ -106,6 +106,8 @@ class Leveling(commands.Cog):
         self.default_progress = 0x32ff32
         self.default_background = 0x000000
         self.default_font = "whitney"
+        # Blocked from custom rank: Caffey,
+        self.blocked = []  # 249141823778455552
 
     @commands.command(name="leveling")
     @commands.is_owner()
@@ -408,7 +410,7 @@ class Leveling(commands.Cog):
             r = language.string("leveling_rank", user=user, server=ctx.guild.name)
             # Load custom rank data from database
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
-            if not custom:
+            if not custom or user.id in self.blocked:
                 text, progress, background, font_name = None, None, None, None
             else:
                 text: int | None = custom["font"]
