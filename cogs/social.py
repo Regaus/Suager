@@ -5,7 +5,7 @@ import discord
 from utils import bot_data, commands, emotes, general, languages, lists
 
 
-def is_fucked(something):
+def is_broken(something):
     return something == [] or something == lists.error or something == [lists.error]
 
 
@@ -94,7 +94,7 @@ class Social(commands.Cog):
     async def pat(self, ctx: commands.Context, user: discord.Member):
         """ Pat someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.pat):
+        if is_broken(self.pat):
             self.pat = await lists.get_images(self.bot, "pat")
         if ctx.author == user:
             return await ctx.send(emotes.AlexPat)
@@ -116,7 +116,7 @@ class Social(commands.Cog):
     async def hug(self, ctx: commands.Context, user: discord.Member):
         """ Hug someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.hug):
+        if is_broken(self.hug):
             self.hug = await lists.get_images(self.bot, "hug")
         if ctx.author == user:
             return await ctx.send(language.string("social_alone"), embed=discord.Embed(colour=general.random_colour()).set_image(
@@ -139,7 +139,7 @@ class Social(commands.Cog):
     async def cuddle(self, ctx: commands.Context, user: discord.Member):
         """ Cuddle someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.cuddle):
+        if is_broken(self.cuddle):
             self.cuddle = await lists.get_images(self.bot, "cuddle")
         if ctx.author == user:
             return await ctx.send(language.string("social_alone"), embed=discord.Embed(colour=general.random_colour()).set_image(
@@ -162,7 +162,7 @@ class Social(commands.Cog):
     async def lick(self, ctx: commands.Context, user: discord.Member):
         """ Lick someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.lick):
+        if is_broken(self.lick):
             self.lick = await lists.get_images(self.bot, "lick")
         if ctx.author == user:
             return await ctx.send(embed=discord.Embed(colour=general.random_colour()).set_image(
@@ -187,7 +187,7 @@ class Social(commands.Cog):
     async def kiss(self, ctx: commands.Context, user: discord.Member):
         """ Kiss someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.kiss):
+        if is_broken(self.kiss):
             self.kiss = await lists.get_images(self.bot, "kiss")
         if ctx.channel.id in [725835449502924901, 969720792457822219]:
             choice = lists.kl
@@ -215,7 +215,7 @@ class Social(commands.Cog):
     async def handhold(self, ctx: commands.Context, user: discord.Member):
         """ Hold someone's hands """
         language = self.bot.language(ctx)
-        if is_fucked(self.handhold):
+        if is_broken(self.handhold):
             self.handhold = await lists.get_images(self.bot, "handhold")
         if ctx.author == user:
             return await ctx.send(language.string("social_handhold_self"))
@@ -239,7 +239,7 @@ class Social(commands.Cog):
     async def bite(self, ctx: commands.Context, user: discord.Member):
         """ Bite someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.bite):
+        if is_broken(self.bite):
             self.bite = await lists.get_images(self.bot, "bite")
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
@@ -263,7 +263,7 @@ class Social(commands.Cog):
     async def nibble(self, ctx: commands.Context, user: discord.Member):
         """ Nibble someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.nibble):
+        if is_broken(self.nibble):
             self.nibble = await lists.get_images(self.bot, "nibble")
         if ctx.author == user:
             return await ctx.send(language.string("social_nibble_self"))
@@ -287,7 +287,7 @@ class Social(commands.Cog):
     async def slap(self, ctx: commands.Context, user: discord.Member):
         """ Slap someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.slap):
+        if is_broken(self.slap):
             self.slap = await lists.get_images(self.bot, "slap")
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
@@ -313,7 +313,7 @@ class Social(commands.Cog):
     async def smell(self, ctx: commands.Context, user: discord.Member):
         """ Sniff someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.smell):
+        if is_broken(self.smell):
             self.smell = await lists.get_images(self.bot, "sniff")
         if ctx.author == user:
             return await ctx.send(language.string("social_poke_self"))
@@ -337,7 +337,7 @@ class Social(commands.Cog):
     async def high_five(self, ctx: commands.Context, user: discord.Member):
         """ Give someone a high five """
         language = self.bot.language(ctx)
-        if is_fucked(self.high_five):
+        if is_broken(self.high_five):
             self.high_five = await lists.get_images(self.bot, "highfive")
         if ctx.author == user:
             return await ctx.send(language.string("social_alone"))
@@ -359,7 +359,7 @@ class Social(commands.Cog):
     async def feed(self, ctx: commands.Context, user: discord.Member):
         """ Feed someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.feed):
+        if is_broken(self.feed):
             self.feed = await lists.get_images(self.bot, "feed")
         if ctx.author == user:
             return await ctx.send(language.string("social_feed_self"))
@@ -383,7 +383,7 @@ class Social(commands.Cog):
     async def poke(self, ctx: commands.Context, user: discord.Member):
         """ Poke someone """
         language = self.bot.language(ctx)
-        if is_fucked(self.poke):
+        if is_broken(self.poke):
             self.poke = await lists.get_images(self.bot, "poke")
         if ctx.author == user:
             return await ctx.send(language.string("social_poke_self"))
@@ -407,7 +407,7 @@ class Social(commands.Cog):
     async def boop(self, ctx: commands.Context, user: discord.Member):
         """ Why is this a thing? """
         language = self.bot.language(ctx)
-        if is_fucked(self.boop):
+        if is_broken(self.boop):
             self.boop = await lists.get_images(self.bot, "boop")
         if ctx.author == user:
             return await ctx.send(language.string("social_poke_self"))
@@ -431,7 +431,7 @@ class Social(commands.Cog):
     async def tickle(self, ctx: commands.Context, user: discord.Member):
         """ How dare you """
         language = self.bot.language(ctx)
-        if is_fucked(self.tickle):
+        if is_broken(self.tickle):
             self.tickle = await lists.get_images(self.bot, "tickle")
         if ctx.author == user:
             return await ctx.send(language.string("social_poke_self"))
@@ -479,7 +479,7 @@ class Social(commands.Cog):
     async def sleepy(self, ctx: commands.Context):
         """ You're sleepy """
         language = self.bot.language(ctx)
-        if is_fucked(self.sleepy):
+        if is_broken(self.sleepy):
             self.sleepy = await lists.get_images(self.bot, "sleepy")
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("social_sleepy", author=ctx.author.name)
@@ -492,7 +492,7 @@ class Social(commands.Cog):
     async def cry(self, ctx: commands.Context):
         """ You're crying """
         language = self.bot.language(ctx)
-        if is_fucked(self.cry):
+        if is_broken(self.cry):
             self.cry = await lists.get_images(self.bot, "cry")
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("social_cry", author=ctx.author.name)
@@ -505,7 +505,7 @@ class Social(commands.Cog):
     async def blush(self, ctx: commands.Context):
         """ You blush """
         language = self.bot.language(ctx)
-        if is_fucked(self.blush):
+        if is_broken(self.blush):
             self.blush = await lists.get_images(self.bot, "blush")
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("social_blush", author=ctx.author.name)
@@ -518,7 +518,7 @@ class Social(commands.Cog):
     async def smile(self, ctx: commands.Context):
         """ You're smiling """
         language = self.bot.language(ctx)
-        if is_fucked(self.smile):
+        if is_broken(self.smile):
             self.smile = await lists.get_images(self.bot, "smile")
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("social_smile", author=ctx.author.name)
@@ -531,7 +531,7 @@ class Social(commands.Cog):
     async def laugh(self, ctx: commands.Context, at: discord.User = None):
         """ Haha funny """
         language = self.bot.language(ctx)
-        if is_fucked(self.laugh):
+        if is_broken(self.laugh):
             self.laugh = await lists.get_images(self.bot, "laugh")
         embed = discord.Embed(colour=general.random_colour())
         embed.set_image(url=random.choice(self.laugh))
@@ -551,7 +551,7 @@ class Social(commands.Cog):
     async def smug(self, ctx: commands.Context):
         """ What have you done """
         language = self.bot.language(ctx)
-        if is_fucked(self.smug):
+        if is_broken(self.smug):
             self.smug = await lists.get_images(self.bot, "smug")
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("social_smug", author=ctx.author.name)
@@ -564,7 +564,7 @@ class Social(commands.Cog):
     async def dance(self, ctx: commands.Context):
         """ You're dancing """
         language = self.bot.language(ctx)
-        if is_fucked(self.dance):
+        if is_broken(self.dance):
             self.dance = await lists.get_images(self.bot, "dance")
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("social_dance", author=ctx.author.name)
