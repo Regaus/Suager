@@ -97,9 +97,9 @@ class Social(commands.Cog):
         if is_broken(self.pat):
             self.pat = await lists.get_images(self.bot, "pat")
         if ctx.author == user:
-            return await ctx.send(emotes.AlexPat)
+            return await ctx.send(emotes.Pat13)
         if user.id == self.bot.user.id:
-            return await ctx.send(emotes.AlexHeart)
+            return await ctx.send(emotes.Hug33)
         if user.bot:
             return await ctx.send(language.string("social_bot"))
         embed = discord.Embed(colour=general.random_colour())
@@ -122,7 +122,7 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_alone"), embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673641089218904065/selfhug.gif"))
         if user.id == self.bot.user.id:
-            return await ctx.send(emotes.AlexHeart)
+            return await ctx.send(emotes.Hug29)
         if user.bot:
             return await ctx.send(language.string("social_bot"))
         embed = discord.Embed(colour=general.random_colour())
@@ -145,7 +145,7 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_alone"), embed=discord.Embed(colour=general.random_colour()).set_image(
                 url="https://cdn.discordapp.com/attachments/610482988123422750/673641089218904065/selfhug.gif"))
         if user.id == self.bot.user.id:
-            return await ctx.send(emotes.AlexHeart)
+            return await ctx.send(emotes.Hug17)
         if user.bot:
             return await ctx.send(language.string("social_bot"))
         embed = discord.Embed(colour=general.random_colour())
@@ -473,6 +473,28 @@ class Social(commands.Cog):
         title, footer = get_data(ctx.author, user, "punch", language, given, received)
         return await ctx.send(f"{title}\n{footer}")
 
+    @commands.command(name="tuck", aliases=["tuckin"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def tuck(self, ctx: commands.Context, user: discord.Member):
+        """ Tuck someone into bed """
+        language = self.bot.language(ctx)
+        if is_broken(self.tuck):
+            self.tuck = await lists.get_images(self.bot, "tuck")
+        if ctx.author == user:
+            return await ctx.send(language.string("social_tuck_self"))
+        if user.id == self.bot.user.id:
+            return await ctx.send(language.string("social_tuck_suager"))
+        if user.bot:
+            return await ctx.send(language.string("social_tuck_bot"))
+        embed = discord.Embed(colour=general.random_colour())
+        given, received = self.data_update(ctx.author.id, user.id, "tuck", 24)
+        title, footer = get_data(ctx.author, user, "tuck", language, given, received)
+        embed.title = title
+        embed.set_footer(text=footer)
+        embed.set_image(url=random.choice(self.tuck))
+        return await ctx.send(embed=embed)
+
     @commands.command(name="sleepy")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -578,7 +600,7 @@ class Social(commands.Cog):
         """ Bean someone """
         language = self.bot.language(ctx)
         if user == ctx.author:
-            return await ctx.send(emotes.AlexPat)
+            return await ctx.send(emotes.Pat13)
         if user.id in self.protected and ctx.author.id in self.locked:
             return await ctx.send(language.string("social_forbidden"))
         if user.id == self.bot.user.id:

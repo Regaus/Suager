@@ -6,7 +6,7 @@ from datetime import datetime, time as dt_time
 import jstyleson
 import pytz
 from dateutil.relativedelta import relativedelta
-from regaus import languages, time, version_info as regaus_version_info
+from regaus import languages, time
 from regaus.conworlds import Place
 
 from utils import database, emotes
@@ -84,10 +84,10 @@ class Language(languages.Language):
             .replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c") + ("\u200c" if zws_end else "")
 
     def string(self, string: str, *values, **kwargs) -> str:
-        if regaus_version_info >= 8589959430:  # Regaus.py v2.0.0a5 doesn't add the emotes anymore
+        try:
             return super().string(string, *values, **kwargs, emotes=emotes)
-        else:
-            return super().string(string, *values, **kwargs)
+        except AttributeError:
+            return super().string(string, *values, **kwargs)  # If the emote is not available, just unload them
 
     def delta_rd(self, delta: time.relativedelta | relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False, case: str = "default") -> str:
         if isinstance(delta, relativedelta):

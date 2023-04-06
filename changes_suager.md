@@ -1519,3 +1519,8 @@
 
 ## v7.6.7.3 - 5 April 2023
 - Reintroduced ability to blacklist people from customising their rank card
+
+## v7.6.8 - 6 April 2023
+- Added command to tuck someone into bed
+- Added new emotes to the emote list and rearranged the list
+- Replaced the old Alex emotes with new ones
