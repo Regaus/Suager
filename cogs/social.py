@@ -49,8 +49,8 @@ class Social(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.high_five, \
-            self.poke, self.boop, self.tickle, self.laugh, self.dance, self.smug, self.nibble, self.feed, self.handhold = [lists.error] * 22
-        db_columns = 24
+            self.poke, self.boop, self.tickle, self.laugh, self.dance, self.smug, self.nibble, self.feed, self.handhold, self.tuck = [lists.error] * 23
+        db_columns = 25
         self.insert = f"INSERT INTO counters VALUES ({'?, ' * (db_columns - 1)}?)"
         self.empty = [0, 0, self.bot.name] + [0] * (db_columns - 3)
         # Locked:      chocolatt,          racc
@@ -678,6 +678,7 @@ class Social(commands.Cog):
         self.smug      = await lists.get_images(self.bot, "smug")      # noqa: E221
         self.tickle    = await lists.get_images(self.bot, "tickle")    # noqa: E221
         self.handhold  = await lists.get_images(self.bot, "handhold")  # noqa: E221
+        self.tuck      = await lists.get_images(self.bot, "tuck")      # noqa: E221
 
     @commands.command(name="reloadimages", aliases=["ri"])
     @commands.is_owner()

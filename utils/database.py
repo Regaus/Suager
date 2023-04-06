@@ -143,6 +143,7 @@ tables = [
         Column("nibble", "INTEGER", True),     # 21
         Column("feed", "INTEGER", True),       # 22
         Column("handhold", "INTEGER", True),   # 23
+        Column("tuck", "INTEGER", True),       # 24
     ]),
     Table("custom_rank", [
         Column("uid", "INTEGER", True),
