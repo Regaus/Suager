@@ -9,6 +9,7 @@ LewdMegumin = "<:LewdMegumin:728631144157020290>"
 Pog = "<:pog:866419906958327809>"
 SadCat = "<:sadcat:866419874356265002>"
 SenkoKnife = "<:SenkoKnife:706894209659175022>"
+Sigh = "<a:Sigh:1095079296445464667>"
 UmmOK = "<a:UmmOK:743120186592460800>"
 Wha = "<:wha:866419817144909874> "
 

@@ -1531,3 +1531,5 @@
 ## v7.6.9 - 10 April 2023
 - Made get_data() into a staticmethod
 - Tried to more strictly make sure that the lists for social commands don't magically become a string
+- Made social command responses more adaptive when there is a difference in the counters
+- Added translations to the NSFW social commands
