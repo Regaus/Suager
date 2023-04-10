@@ -1524,3 +1524,10 @@
 - Added command to tuck someone into bed
 - Added new emotes to the emote list and rearranged the list
 - Replaced the old Alex emotes with new ones
+
+## v7.6.8.1 - 10 April 2023
+- Fixed //rankembed not actually reflecting the server XP multiplier
+
+## v7.6.9 - 10 April 2023
+- Made get_data() into a staticmethod
+- Tried to more strictly make sure that the lists for social commands don't magically become a string

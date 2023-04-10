@@ -571,7 +571,7 @@ class Leveling(commands.Cog):
         if _settings:
             __settings = json.loads(_settings['data'])
             try:
-                sm = __settings['leveling']['multiplier']
+                sm = __settings['leveling']['xp_multiplier']
             except KeyError:
                 sm = 1
         else:
