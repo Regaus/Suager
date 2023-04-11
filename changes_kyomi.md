@@ -301,3 +301,20 @@
 
 ## v1.3.3.1 - 1 April 2023
 - Playing statuses are now written in reverse during 1st April
+
+## v1.3.4 - 6 April 2023
+- Added command to tuck someone into bed
+- Added new emotes to the emote list and rearranged the list
+- Replaced the old Alex emotes with new ones
+
+## v1.3.5 - 10 April 2023
+- Made get_data() into a staticmethod
+- Tried to more strictly make sure that the lists for social commands don't magically become a string
+- Made social command responses more adaptive when there is a difference in the counters
+
+## v1.3.6 - 11 April 2023
+- Added a command to wave at someone
+- The "target has only x'd author back" string is now used if the counters difference is 5 or more, rather than 6 or move
+
+## v1.3.7 - 11 April 2023
+- The strings are now also adjusted if the author did the action 5+ times less than the target
