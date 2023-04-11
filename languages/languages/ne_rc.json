@@ -1,22 +1,30 @@
 {
   "generic_timed_out": "~~{text}~~\nKalvanta ahvak den neimun.",
+
   "discord_role_members": "Saiderat, ihvannan na ankastan {role}",
   "discord_server_banner_none": "**{server}** ihvat den salhan-neilun",
   "discord_server_icon_none": "**{server}** ihvat den salhan-veiman",
   "discord_server_inv_bg_none": "**{server}** ihvat den anladan-nazanveiman",
+
   "events_error_bad_argument": "{emotes.Deny} Ukke na kattehtaan ahvak un dertannen sanen...",
   "events_error_guild_only": "{emotes.Deny} Eda kalvanta de maikat in un senninidun nottarahan.",
+
   "fun_8ball_responses": ["To", "Des", "Hettalar dikki...", "Aize kuurame", "Kaini", "Kuuraah", "Igaelvi", "Seilat seilan jan", "Vainar sami na suddan", "Des. (╯°□°）╯︵ ┻━┻", "Aize delvi", "Deavasta janni vi?", "Nai deaval te vi?", "Jatta na neimus de vasserar?", "Vasseri des!", "Vasseri to!"],
   "fun_beer_bot": "{emotes.Deny} Mu de deava, ed na raivahtu tet neimatva. Taikii, mu de deava, ed eir raivahtu ihvat eize 20 kadaan si...",
   "fun_roll": "**{name}** ishteak **{num1} - {num2}** un ahvak **{output}**",
+
   "images_colour_invalid_value": "Na kattensane taizat tiavi 3 air 6 seiraan si ihvan.",
+
   "info_invite_bot2": "[Entelaman saikantat]({recommended})\n[Ha saikantain]({none})",
+
   "leaderboards_no_data": "Mu ihva den zaitan av edan salhan esaa.",
+
   "leveling_next_level": "**{user}** - Te ihvas **{xp}/{next} Aivin**.\nTe nittaras **{left}** kuvalse, vir **Koon {level}** sekean (Eskyta: **{prog}**)\nKiime kairankalve: **ad {min} ta {max}**",
   "leveling_next_level_none": "Mu ihva den zaitan av ten esaa...",
   "leveling_rank_global": "**{user}** ihvat **{xp} veiden-aivin**.\nHan jat na **{place}**'dar igavellar nottarus.\nZi valse aivin saina vallaitaz, vir na **{level}**'dan koon sekean.",
   "leveling_rewards_none": "Eda salha ihvat dean koon-ankadaan",
   "leveling_rewards_title": "Ankadat hat den vahtaan in **{server}** ihvan",
+
   "mod_dms_warn_muted": "Te **rallaghak** ad {server} sa {duration}, naen te ahvak {warnings}.",
   "mod_dms_warn_muted2": "Te **rallaghak** ad {server} veikidat, naen te ahvak {warnings}.",
   "mod_ban_mass2": "Mass-banned **{total} nottaraan** naen {reason}:\n{emotes.Allow} Ka uvehun: **{banned}**\n{emotes.Deny} Ha uvehun: **{failed}**",
@@ -35,6 +43,7 @@
   "mod_warn_list_none": "**{user}** ihvat dean savastaan... kai se jat",
   "mod_warn_mass2": "Avastak **{total} saideraan** naen {reason}:\n{emotes.Allow} Ka uvehun: **{banned}**\n{emotes.Deny} Ha uvehun: **{failed}**",
   "mod_warn_mass2_timed": "Avastak **{total} saideraan** sa {duration} naen {reason}:\n{emotes.Allow} Ka uvehun: **{banned}**\n{emotes.Deny} Ha uvehun: **{failed}**",
+
   "settings_birthdays_disabled": "Reideseat jan esaad kvellikan.\nEuma: Nottarat veiseri maikan ka `{p}birthday set` sen reideseaan sahtan, no in de ahvanva ein reideseanattaan in edan salhan.",
   "settings_birthdays_role_none2": "Saiderat de valse ahvanva ein ankastan, ki se ian reidesea jat.",
   "settings_join_bots_add": "Nuan raivahtat esaad ahvanva na ankastan {role}, ki in sen katedan.",
@@ -70,7 +79,9 @@
   "settings_users_roles_disable": "Addennan saiderat de valse ahvanva ein ankastaan nazut, ir in sen na salhat anne-katean.",
   "settings_users_roles_enable": "Addennan saiderat esaad ahvanva sen ankastaan nazut, ir in sen na salhat anne-katean.",
   "settings_warnings_requirement": "Nottarat esaad rallaghanva, ki in ahvan {warnings} savastaan.",
+
   "social_kiss_suager": "N-nai leivaas te mut, just varkun..? Mu de alvi ihva ein pühsenäälen in edan viarun...",
+
   "social_nsfw_face_fuck": "**{author}** esaa hillat **{target}** i leisen...",
   "social_nsfw_face_fuck_finally": "{author} esaa hillak {target} i leisen nastat",
   "social_nsfw_face_fuck_frequency": "{author} hillak {target} i leisen {frequency}",
@@ -81,9 +92,11 @@
   "social_nsfw_face_fuck_never5": "{author} veiseri de hillak {target} i leisen kai se jat",
   "social_nsfw_fuck_bot": "Raivahtat de hiderahak, vir eden tuan, te hestekar vahtaus {emotes.KannaSpook}",
   "social_nsfw_fuck_suager": "De alvi deavar av en, te hestekar vahtaus {emotes.KannaSpook}",
+
   "starboard_stats_none": "Den attat eiken ahvak ein sunnon in edan salhan.",
   "starboard_stats_none2": "Den attat ad {user} eiken ahvak ein sunnon in edan salhan.",
   "starboard_stats_user_desc": "Ahvak ⭐ **{stars} sunnaan** senti {messages} attain\n\nIgjaran attat:",
+
   "util_reminders_none": "De ihvas dean annepattaan, {author}.",
   "util_weather_clouds": "Aivallankalve",
   "util_weather_error": "De maikak na lürvan in {place} ahvan:\n`{err}`",

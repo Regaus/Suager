@@ -1,5 +1,6 @@
 {
   "generic_timed_out": "~~{text}~~\nCommand timed out with no response.",
+
   "achievements_achievements": "This is what **{user}** has accomplished so far.",
   "achievements_current": "Current Level: {current} of {max}",
   "achievements_goal": "Level {level} Goal: {goal} ({current}/{target})",
@@ -8,6 +9,7 @@
   "achievements_leveling_levels_desc": "Reach XP Level {target} in a server",
   "achievements_leveling_xp": "Experience",
   "achievements_leveling_xp_desc": "Collect {target} XP in total",
+
   "birthdays_birthday_cobble": "My birthday is on **5th December** on Earth and on **9th Kiitavar** in Kargadia, thanks for asking. {emotes.Hug17}",
   "birthdays_birthday_general": "**{user}**'s birthday is on **{date}**.\nTheir next birthday is {delta}.",
   "birthdays_birthday_general_ka": "**{user}**'s birthday is on **{date}**.\nTheir next birthday is {delta}.\nTheir next birthday will start on {earth} in Earth time.",
@@ -22,6 +24,7 @@
   "birthdays_set_already": "**{user}**, your birthday has been changed from **{old}** to **{new}**.",
   "birthdays_set_invalid": "You need to enter a valid date with the command.\nThe format used is `DD/MM`.\nFor example, if your birthday is on 27th January, enter `{p}birthday set 27/1`.",
   "birthdays_set_set": "**{user}**, your birthday is now saved as **{date}**.",
+
   "discord_avatar": "ℹ Avatar of **{user}**\n{avatar}",
   "discord_command_created_at": "**{user}** created their account on **{time}**",
   "discord_command_joined_at": "**{user}** joined **{server}** on **{time}**",
@@ -71,6 +74,7 @@
   "discord_user_roles_many": "There are {total} of them",
   "discord_user_roles_overall": "\nTotal: {total} roles",
   "discord_user_username": "Username",
+
   "events_error_bad_argument": "{emotes.Deny} One of the arguments received an invalid value...",
   "events_error_channel_access": "{emotes.Deny} I cannot access that channel.",
   "events_error_check": "{emotes.Deny} You can't use this command here...",
@@ -94,6 +98,7 @@
   "events_error_owner": "{emotes.Deny} Only the bot owner can execute this command.",
   "events_user_joined": "User joined the server",
   "events_user_left": "User left the server",
+
   "fun_8ball": "**{name}**:\nQuestion: **{question}**\nAnswer: **{answer}**",
   "fun_8ball_responses": [
     "Yes",
@@ -138,6 +143,7 @@
   "fun_tell_guilds": "{emotes.Deny} You can't use `tell` to send messages into other servers...",
   "fun_tell_success": "{emotes.Allow} Successfully sent message to {channel}",
   "fun_vote": "{name} starts a vote: ```fix\n{text}```",
+
   "images_colour_brightness": "Brightness",
   "images_colour_font": "Font colour",
   "images_colour_hex": "HEX value",
@@ -146,6 +152,7 @@
   "images_colour_invalid_value": "The value must be either 3 or 6 digits long",
   "images_colour_rgb": "RGB value",
   "images_filter_filters": "Supported filters are: `{filters}`",
+
   "info_invite_bot": "You can use these links to invite me to your server:",
   "info_invite_bot2": "[Recommended permissions]({recommended})\n[No permissions]({none})",
   "info_invite_private": "Note: This bot is private. Only the bot owner can add it to other servers.",
@@ -162,10 +169,12 @@
   "info_stats_users": "User counters",
   "info_stats_users_data": "Total members: **{members}**\nUnique users: **{users}**\nAvg. members: **{avg}**",
   "info_stats_users_data2": "Total members: **{members}**\nUnique users: **{users}**",
+
   "leaderboards_no_data": "No data is available for this server at the moment.",
   "leaderboards_levels": "Top users in **{server}** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
   "leaderboards_levels_global": "Top users **globally** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
   "leaderboards_place": "#{val}",
+
   "leveling_next_level": "**{user}** - You have **{xp}/{next} XP**.\nYou need **{left}** more to reach **level {level}** (Progress: **{prog}**)\nEst. talking time: **{min} to {max}**",
   "leveling_next_level_none": "I have no data saved for you right now...",
   "leveling_next_level_max": "**{user}**, you have already reached the max level.",
@@ -201,6 +210,7 @@
   "leveling_xplevel_extra": "\nXP left: **{left}**\nTalking time: **{min} to {max}**",
   "leveling_xplevel_main": "You need **{xp} XP** to reach level **{level}**.",
   "leveling_xplevel_max": "The max level is {level}.",
+
   "mod_ban": "{emotes.Allow} Successfully banned **{user} ({id})** for {reason}.",
   "mod_ban_already": "{member} is already banned from this server.",
   "mod_ban_forbidden": "You do not have permissions required to ban {member}.",
@@ -321,7 +331,9 @@
   "mod_warn_settings": "Warning settings not found, default values will be used.",
   "mod_warn_timed": "{emotes.Allow} Successfully warned **{user}** for **{duration}** for {reason}.",
   "mod_warn_word": "warning",
+
   "placeholder": "Placeholder",
+
   "polls_end_description": "Poll Result: {result}\nPoll Question: {question}\nPoll ended {time}",
   "polls_end_neutral": "Neutral",
   "polls_end_title": "The poll has ended",
@@ -352,6 +364,7 @@
   "polls_votes_none2": "No votes",
   "polls_votes_many": "\nand {val} more...",
   "polls_votes_yes": "Voted Yes",
+
   "ratings_baby_rate": "The chance of **{name1}** and **{name2}** having a baby is **{value}**.",
   "ratings_baby_rate_bot": "Bots can't do that.",
   "ratings_baby_rate_self": "I don't think that's how it works.",
@@ -370,6 +383,7 @@
   "ratings_pickle_suager2": "Why do you want to know? We're just robots, Regaus's creations, and way too young for that...",
   "ratings_rate": "I rate \"{thing}\" as **{value}/100**",
   "ratings_rate_user": "I rate {user} as **{value}/100**",
+
   "settings_anti_ads_blacklist": "Channels you add in `{p}settings antiads channels` will now be treated as a blacklist.",
   "settings_anti_ads_channel_add": "The channel {channel} has been added to the list.",
   "settings_anti_ads_channel_already": "The specified channel is already in the list.",
@@ -591,6 +605,7 @@
   "settings_welcome_channel_set": "New members will now be welcomed in {channel}.",
   "settings_welcome_message": "The welcome message has been set to:\n{message}\n\nExample welcome message:\n{formatted}",
   "settings_welcome_message_variables": "Available welcome message variables:\n\n[MENTION] - Mention the user who joined the server\n[USER] - The name of the user who joined the server\n[SERVER] - The name of the server\n[CREATED_AT] - When the user created their account\n[JOINED_AT] - When the user joined the server\n[ACCOUNT_AGE] - How old the user's account is\n[MEMBERS] - The server's new member count",
+
   "social_alone": "Alone?",
   "social_bad_suager": "If I'm that bad, why am I here?",
   "social_bean": "{emotes.Allow} {target} is now dismissed from {server}",
@@ -812,6 +827,7 @@
   "social_wave_never5": "{author} has still never waved back at {target} so far",
   "social_wave_self": "How are you planning to do that?",
   "social_wave_suager": "Hey there, how are you today? {emotes.Hug17}",
+
   "social_nsfw_face_fuck": "**{author}** is now face-fucking **{target}**...",
   "social_nsfw_face_fuck_finally": "{author} has now face-fucked {target} back",
   "social_nsfw_face_fuck_frequency": "{author} has face-fucked {target} {frequency}",
@@ -841,6 +857,7 @@
   "social_nsfw_suck_never1": "{author} has not sucked {target} off yet",
   "social_nsfw_suck_never2": "{author} has not sucked {target} off so far",
   "social_nsfw_suck_never5": "{author} has still never sucked {target} off so far",
+
   "starboard_error_channel": "There is no starboard channel set up.",
   "starboard_error_channel2": "The starboard channel could not be accessed.",
   "starboard_error_fetch": "I don't have permissions to load messages in the starboard channel.\nNew star amount was still saved to the database.",
@@ -855,6 +872,7 @@
   "starboard_stats_none2": "No message by {user} was ever starred in this server.",
   "starboard_stats_user": "Starboard stats for {user} in {server}",
   "starboard_stats_user_desc": "Received ⭐ **{stars} stars** across {messages} messages\n\nTop messages:",
+
   "tags_all": "Tags in {server} - Sorted by name\nPage {page} of {max}\n{data}```",
   "tags_claim_owned": "You already own this tag.",
   "tags_claim_server": "You can't claim a tag which belongs to a user who's still in this server.",
@@ -884,6 +902,7 @@
   "tags_user": "Tags belonging to the user {user}\nPage {page} of {max}\n{data}```",
   "tags_user_guild": "User no longer in this server",
   "tags_user_none": "User {user} has no tags in this server.",
+
   "trials_already": "There is already an ongoing trial to {action}. To vote yes, use `{p}trial vote {id} yes`.",
   "trials_already_recent": "You have already started a trial recently. To prevent abuse, you have to wait {time} before starting a new one.",
   "trials_action_ban": "Ban {user}",
@@ -938,6 +957,7 @@
   "trials_votes_current": "Current votes",
   "trials_votes_current2": "{emotes.Allow} {yes}, {emotes.Meh} {neutral}, {emotes.Deny} {no}\nTotal votes: {total}\nScore: {score} ({percentage} voted yes)\n\nSuccess requirement: {required} votes, at least 60% yes",
   "trials_votes_result": "Final votes",
+
   "util_reminders_delete": "Reminder `{id}` was successfully deleted.",
   "util_reminders_edit": "Updated reminder `{id}`:\nReminder message: {message}\nReminder for **{time}**",
   "util_reminders_edit_none": "Reminder `{id}` was not found.",
@@ -976,6 +996,7 @@
   "util_weather_title": "{emote}Weather in **{place}, {country}**",
   "util_weather_weather": "Current weather",
   "util_weather_wind": "Wind speed",
+
   "data_holidays_ka": {
     "01-01": "New Year",
     "01-06": "Affection Day",

@@ -1,5 +1,6 @@
 {
   "generic_timed_out": "~~{text}~~\nKalvanta ahwak den neimun.",
+
   "achievements_achievements": "Ede jat ne **{user}** sekeak kai se jat.",
   "achievements_current": "Esaan koo: {current} iad {max}",
   "achievements_goal": "Sella {level}'dart Koot: {goal} ({current}/{target})",
@@ -8,6 +9,7 @@
   "achievements_leveling_levels_desc": "Sekear {target}'dan Aivikoon in un salhan",
   "achievements_leveling_xp": "Aivis",
   "achievements_leveling_xp_desc": "Savvar {target} aivin i veisen",
+
   "birthdays_birthday_cobble": "Mun reidesea jat an **5'den Hintavan** an Zymlän un an **9'den Kiitavan** i Kargadian, alla ed vaskak. {emotes.Hug17}",
   "birthdays_birthday_general": "**{user}**'n reidesea jat an **{date}**.\nHan selda reidesea vainat {delta}.",
   "birthdays_birthday_general_ka": "**{user}**'n reidesea jat an **{date}**.\nHan selda reidesea vainat {delta}.\nHan selda reidesea navadatva an {earth} Zymlän-taidan.",
@@ -22,6 +24,7 @@
   "birthdays_set_already": "**{user}**, ten reidesea jat esaad kai **{new}** aner **{old}** zaivama.",
   "birthdays_set_invalid": "Te taizas un irtannan sean ka na kalvantan kattan.\nNa nottarame mooto jat `DD/MM`.\nUt perrut, ir ten reidesea jat an 27'den Navaddan, kattar `{p}birthday set 27/1`.",
   "birthdays_set_set": "**{user}**, ten reidesea jat esaad kai **{date}** zaivama.",
+
   "discord_avatar": "ℹ **{user}**'n Veima\n{avatar}",
   "discord_command_created_at": "**{user}** hiderak sen akonen an **{time}**",
   "discord_command_joined_at": "**{user}** kateak sen ta **{server}** an **{time}**",
@@ -71,6 +74,7 @@
   "discord_user_roles_many": "Jan {total} ian",
   "discord_user_roles_overall": "\nI veisen: {total} ankastain",
   "discord_user_username": "Nottarva",
+
   "events_error_bad_argument": "{emotes.Deny} Ukke na kattehtaan ahwak un dertannen sanen...",
   "events_error_channel_access": "{emotes.Deny} Mu de saika idan idun jorran.",
   "events_error_check": "{emotes.Deny} Te de saikas edan kalvantan zeide nottaran...",
@@ -94,6 +98,7 @@
   "events_error_owner": "{emotes.Deny} Tiavi na raivahtunvillyr saikat edan kalvantan nottaran.",
   "events_user_joined": "Nottarus kateak sen salhat",
   "events_user_left": "Nottarus addeak ad salhan",
+
   "fun_8ball": "**{name}**:\nVasku: **{question}**\nNeimus: **{answer}**",
   "fun_8ball_responses": [
     "To",
@@ -138,6 +143,7 @@
   "fun_tell_guilds": "{emotes.Deny} Te de saikas `tell`'an nottan, vir deraat salhaat attaan attakan...",
   "fun_tell_success": "{emotes.Allow} Atta ka uvehun attakahak ta {channel}",
   "fun_vote": "{name} hiderat un gailatan: ```fix\n{text}```",
+
   "images_colour_brightness": "Jarkanta",
   "images_colour_font": "Salvaansefte",
   "images_colour_hex": "HEX-sane",
@@ -146,6 +152,7 @@
   "images_colour_invalid_value": "Na kattensane taizat tiavi 3 air 6 seiraan si ihwan.",
   "images_colour_rgb": "RGB-sane",
   "images_filter_filters": "Appaman iksat jan: `{filters}`",
+
   "info_invite_bot": "Te maikas edaan estelaan nottaran, vir mut ten salhat anladan:",
   "info_invite_bot2": "[Entelaman saikantat]({recommended})\n[Saikantaah]({none})",
   "info_invite_private": "Euma: Edar raivahtu jat laikkar. Tiavi na villyr na raivahtun saikat oan deraat salhaat anladan.",
@@ -162,10 +169,12 @@
   "info_stats_users": "Nottarankalve",
   "info_stats_users_data": "Saiderain i veisen: **{members}**\nTäävain nottarain: **{users}**\nSerde saiderankalve: **{avg}**",
   "info_stats_users_data2": "Saiderain i veisen: **{members}**\nTäävain nottarain: **{users}**",
+
   "leaderboards_no_data": "Mu ihwa den zaitan av edan salhan esaa.",
   "leaderboards_levels": "Igjaran nottarat in **{server}**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun\nVeiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```",
   "leaderboards_levels_global": "Igjaran nottarat **veide**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun\nVeiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```",
   "leaderboards_place": "{val}",
+
   "leveling_next_level": "**{user}** - Te ihwas **{xp}/{next} Aivin**.\nTe nittaras **{left}** kuvalse, vir **Koon {level}** sekean (Eskyta: **{prog}**)\nKiime kairankalve: **ad {min} ta {max}**",
   "leveling_next_level_none": "Mu ihwa den zaitan av ten esaa...",
   "leveling_next_level_max": "**{user}**, te eize sekeak na igavalsan koon.",
@@ -201,6 +210,7 @@
   "leveling_xplevel_extra": "\nTe nittaras **{left}** kuvalse aivin\nKairankalve: **ad {min} ta {max}**",
   "leveling_xplevel_main": "Te nittaras **{xp} Aivin**, vir na **{level}**'dan koon sekean.",
   "leveling_xplevel_max": "Na igavalsar koo jat {level}.",
+
   "mod_ban": "{emotes.Allow} Zaparak **{user} ({id})** naen {reason}.",
   "mod_ban_already": "{member} eize zaparahak ad edan salhan.",
   "mod_ban_forbidden": "Te de saikas {member} zaparan (de vallaitaz saikantaan).",
@@ -321,7 +331,9 @@
   "mod_warn_settings": "Savastaan-sahte de nattemahak, inittat nottarahanva.",
   "mod_warn_timed": "{emotes.Allow} Avastak **{user}** sa **{duration}** naen {reason}.",
   "mod_warn_word": "avasta",
+
   "placeholder": "Mu just arra zeide, allhad mu ar de tua einedan! Ne tuas te zeide?",
+
   "ratings_baby_rate": "Na sitte, ed **{name1}** u **{name2}** ihval un riadun, jat **{value}**.",
   "ratings_baby_rate_bot": "Raivahtat de maikan eden tuan.",
   "ratings_baby_rate_self": "Mu de deava, ed se zi raivat.",
@@ -340,6 +352,7 @@
   "ratings_pickle_suager2": "Nai haidas te zaivan? Me jan just raivahtat, Regausan riadat, se nuhtan edet...",
   "ratings_rate": "Mu finda \"{thing}\" kai **{value}/100**",
   "ratings_rate_user": "Mu finda {user} kai **{value}/100**",
+
   "settings_birthdays": "Sahtat av Reideseain",
   "settings_birthdays_channel": "Reideseanattain Idus",
   "settings_birthdays_channel_none": "Der idus ansahtakar - den \"kovanan reidesean\"-attan",
@@ -525,6 +538,7 @@
   "settings_welcome_channel_set": "Nuan saiderat esaad heidekaihanva in {channel}.",
   "settings_welcome_message": "Na heidekaintanatta sahtahak kai:\n{message}\n\nPerrin-heidekaintanatta:\n{formatted}",
   "settings_welcome_message_variables": "Jortallan heidekaintanattan-kattehtat:\n\n[MENTION] - Karkan na kateadan nottarun\n[USER] - Na inema na kateadan nottarun\n[SERVER] - Na salhan ineva\n[CREATED_AT] - Ki na nottarus sen akonen hiderak\n[JOINED_AT] - Ki na nottarus sen na salhat katedak\n[ACCOUNT_AGE] - Na nottarun akonen altta\n[MEMBERS] - Na salhan nue saiderankalve",
+
   "social_alone": "Jasta ukkahar?",
   "social_bad_suager": "Ir mu ja vi diarar, nai ja mu zeide?",
   "social_bean": "{emotes.Allow} {target} de taidat in {server} ei valse jan",
@@ -746,6 +760,7 @@
   "social_wave_never5": "{author} veiseri de asenak an {target} nastat kai se jat",
   "social_wave_self": "U kai sallas te eden tuan?",
   "social_wave_suager": "Hei, kai jas te esea? {emotes.Hug17}",
+
   "social_nsfw_face_fuck": "**{author}** esaa hillat **{target}** i leitsen...",
   "social_nsfw_face_fuck_finally": "{author} esaa hillak {target} i leitsen nastat",
   "social_nsfw_face_fuck_frequency": "{author} hillak {target} i leitsen {frequency}",
@@ -775,6 +790,7 @@
   "social_nsfw_suck_never1": "{author} anda de nastessak {target} na averen",
   "social_nsfw_suck_never2": "{author} anda de nastessak {target} na averen kai se jat",
   "social_nsfw_suck_never5": "{author} veiseri de nastessak {target} na averen kai se jat",
+
   "starboard_error_channel": "Jat den sahtakan sunnansavvantan idun.",
   "starboard_error_channel2": "De maikak na sunnansavvantan idun jortan.",
   "starboard_error_fetch": "Mu de saika veitean attaan i na savvantan idun.\nNa nue sunnankalve veiseri vairahak na zaitanzöntat.",
@@ -789,6 +805,7 @@
   "starboard_stats_none2": "Den attat ad {user} eiken ahwak ein sunnon in edan salhan.",
   "starboard_stats_user": "{user}'n sunnansavvantan kalventa in {server}",
   "starboard_stats_user_desc": "Ahvak ⭐ **{stars} sunnaan** senti {messages} attain\n\nIgjaran attat:",
+
   "tags_all": "Külüssalvat in {server} - Shiraman inevar\nPekine {page} iad {max}\n{data}```",
   "tags_claim_owned": "Te eize villyas eden külüssalven.",
   "tags_claim_server": "Te de saikas keilan un külüssalven, ne örat ut saiderut, ker jat veiseri in edan salhan.",
@@ -818,6 +835,7 @@
   "tags_user": "Külüssalvat, nen na nottarut {user} öran\nPekine {page} iad {max}\n{data}```",
   "tags_user_guild": "Nottarus de valse in edan salhan",
   "tags_user_none": "Na nottarus {user} ihvat dean külüssalvaan in edan salhan.",
+
   "util_reminders_delete": "Annepatte `{id}` havirahak.",
   "util_reminders_edit": "Hinnak na annepatten `{id}`:\nAnnepatten atta: {message}\nAnnepatten taida: **{time}**",
   "util_reminders_edit_none": "Annepatte `{id}` de nattemahak.",
