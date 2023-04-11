@@ -1537,3 +1537,7 @@
 ## v7.6.10 - 11 April 2023
 - Added a command to wave at someone
 - The "target has only x'd author back" string is now used if the counters difference is 5 or more, rather than 6 or move
+
+## v7.6.11 - 11 April 2023
+- The strings are now also adjusted if the author did the action 5+ times less than the target
+- Added the "only" word to NSFW commands when there's a difference in the counters

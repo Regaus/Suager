@@ -80,10 +80,15 @@ class Social(commands.Cog):
         title = language.string(f"social_{action}", author=a1, target=t1)
 
         # Footer line 1: "Author has x'd Target x times"
+        counter_diff = given - received  # How many more times the author did the action than the target
         if given == 1 and received >= 5:
             # This string is used if the user only did the action for the first time, while the other has done it 5 or more times:
             # "Author has finally x'd Target back"
             footer1 = language.string(f"social_{action}_finally", author=a1, target=t1, frequency=language.frequency(given))
+        elif counter_diff <= -5:
+            # This string is used if the author did the action 5+ times less than the target
+            # "Author has only x'd Target x times"
+            footer1 = language.string(f"social_{action}_frequency_only", author=a1, target=t1, frequency=language.frequency(given))
         else:
             # Default string: "Author has x'd Target x times"
             footer1 = language.string(f"social_{action}_frequency", author=a1, target=t1, frequency=language.frequency(given))
@@ -105,13 +110,17 @@ class Social(commands.Cog):
                 footer2 = language.string(f"social_{action}_never5", author=a2, target=t2)
             # footer2 = language.string(f"social_{action}_never", author=a2, target=t2)
         else:
-            if given - received >= 5:
-                # This string is called if the author did the action 5+ times more than the target
+            if counter_diff >= 5:
+                # This string is used if the author did the action 5+ times more than the target
                 # "Target has only x'd Author back x times"
-                footer2 = language.string(f"social_{action}_frequency3", author=a2, target=t2, frequency=language.frequency(received))
+                footer2 = language.string(f"social_{action}_frequency_only_back", author=a2, target=t2, frequency=language.frequency(received))
+            elif counter_diff <= -5:
+                # This string is used if the author did the action 5+ times less than the target
+                # "Target has x'd Author x times"
+                footer2 = language.string(f"social_{action}_frequency", author=a2, target=t2, frequency=language.frequency(received))
             else:
                 # Default string: "Target has x'd Author back x times"
-                footer2 = language.string(f"social_{action}_frequency2", author=a2, target=t2, frequency=language.frequency(received))
+                footer2 = language.string(f"social_{action}_frequency_back", author=a2, target=t2, frequency=language.frequency(received))
         return title, f"{footer1}\n{footer2}"
 
     @commands.command(name="pat", aliases=["pet"])
