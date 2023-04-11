@@ -144,6 +144,7 @@ tables = [
         Column("feed", "INTEGER", True),       # 22
         Column("handhold", "INTEGER", True),   # 23
         Column("tuck", "INTEGER", True),       # 24
+        Column("wave", "INTEGER", True),       # 25
     ]),
     Table("custom_rank", [
         Column("uid", "INTEGER", True),

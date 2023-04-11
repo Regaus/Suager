@@ -1533,3 +1533,7 @@
 - Tried to more strictly make sure that the lists for social commands don't magically become a string
 - Made social command responses more adaptive when there is a difference in the counters
 - Added translations to the NSFW social commands
+
+## v7.6.10 - 11 April 2023
+- Added a command to wave at someone
+- The "target has only x'd author back" string is now used if the counters difference is 5 or more, rather than 6 or move

@@ -16,8 +16,8 @@ class Social(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self.pat, self.hug, self.kiss, self.lick, self.cuddle, self.bite, self.sleepy, self.smell, self.cry, self.slap, self.blush, self.smile, self.high_five, \
-            self.poke, self.boop, self.tickle, self.laugh, self.dance, self.smug, self.nibble, self.feed, self.handhold, self.tuck = [[lists.error]] * 23
-        db_columns = 25
+            self.poke, self.boop, self.tickle, self.laugh, self.dance, self.smug, self.nibble, self.feed, self.handhold, self.tuck, self.wave = [[lists.error]] * 24
+        db_columns = 26
         self.insert = f"INSERT INTO counters VALUES ({'?, ' * (db_columns - 1)}?)"
         self.empty = [0, 0, self.bot.name] + [0] * (db_columns - 3)
         # Locked:      chocolatt,          racc
@@ -63,7 +63,7 @@ class Social(commands.Cog):
         if language.language == "en" and action in ["pat", "feed", "high_five"]:
             target_case = "dative"
         if language.is_in_family("ka_wk"):
-            if action in ["handhold"]:
+            if action in ["handhold", "wave"]:
                 target_case = "genitive"
             elif action in ["feed", "high_five"]:
                 target_case = "dative"
@@ -105,8 +105,8 @@ class Social(commands.Cog):
                 footer2 = language.string(f"social_{action}_never5", author=a2, target=t2)
             # footer2 = language.string(f"social_{action}_never", author=a2, target=t2)
         else:
-            if given - received > 5:
-                # This string is called if the author did the action more than 5 times
+            if given - received >= 5:
+                # This string is called if the author did the action 5+ times more than the target
                 # "Target has only x'd Author back x times"
                 footer2 = language.string(f"social_{action}_frequency3", author=a2, target=t2, frequency=language.frequency(received))
             else:
@@ -521,6 +521,28 @@ class Social(commands.Cog):
         embed.set_image(url=random.choice(self.tuck))
         return await ctx.send(embed=embed)
 
+    @commands.command(name="wave", aliases=["waveat"])
+    @commands.guild_only()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def wave(self, ctx: commands.Context, user: discord.Member):
+        """ Wave at someone """
+        language = self.bot.language(ctx)
+        if is_broken(self.wave):
+            self.wave = await lists.get_images(self.bot, "wave")
+        if ctx.author == user:
+            return await ctx.send(language.string("social_wave_self"))
+        if user.id == self.bot.user.id:
+            return await ctx.send(language.string("social_wave_suager"))
+        if user.bot:
+            return await ctx.send(language.string("social_bot"))
+        embed = discord.Embed(colour=general.random_colour())
+        given, received = self.data_update(ctx.author.id, user.id, "wave", 25)
+        title, footer = self.get_data(ctx.author, user, "wave", language, given, received)
+        embed.title = title
+        embed.set_footer(text=footer)
+        embed.set_image(url=random.choice(self.wave))
+        return await ctx.send(embed=embed)
+
     @commands.command(name="sleepy")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -727,6 +749,7 @@ class Social(commands.Cog):
         self.tickle    = await lists.get_images(self.bot, "tickle")    # noqa: E221
         self.handhold  = await lists.get_images(self.bot, "handhold")  # noqa: E221
         self.tuck      = await lists.get_images(self.bot, "tuck")      # noqa: E221
+        self.wave      = await lists.get_images(self.bot, "wave")      # noqa: E221
 
     @commands.command(name="reloadimages", aliases=["ri"])
     @commands.is_owner()

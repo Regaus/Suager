@@ -51,6 +51,7 @@ image_channels = {
     "dance":     856636461101482014,  # images-2-21
     "handhold":  978747000948408371,  # images-2-22
     "tuck":     1093570818803499038,  # images-2-23
+    "wave":     1095379952091803751,  # images-2-24
 }
 
 
