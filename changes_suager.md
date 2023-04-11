@@ -1541,3 +1541,6 @@
 ## v7.6.11 - 11 April 2023
 - The strings are now also adjusted if the author did the action 5+ times less than the target
 - Added the "only" word to NSFW commands when there's a difference in the counters
+
+## v7.6.11.1 - 11 April 2023
+- There is now a little warning sign in front of NSFW commands in the help utility (only in cog-specific help)

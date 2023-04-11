@@ -17,20 +17,22 @@ HookT = TypeVar("HookT", bound="Hook")
 ErrorT = TypeVar("ErrorT", bound="Error")
 
 
-def command(name: str = MISSING, cls: Type[CommandT] = MISSING, **attrs: Any):
+def command(name: str = MISSING, cls: Type[CommandT] = MISSING, nsfw: bool = False, **attrs: Any):
     if cls is MISSING:
         cls = Command  # type: ignore
 
     def decorator(func) -> CommandT:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
-        return cls(func, name=name, **attrs)
+        return cls(func, nsfw=nsfw, name=name, **attrs)
 
     return decorator
 
 
 class Command(Command):
-    pass
+    def __init__(self, func, nsfw: bool = False, *args, **kwargs):
+        self.nsfw: bool = nsfw
+        super().__init__(func, **kwargs)
 
 
 def group(name: str = MISSING, cls: Type[GroupT] = MISSING, **attrs: Any):

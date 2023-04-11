@@ -791,7 +791,7 @@ class SocialSuager(Social, name="Social"):
         title, footer = self.get_data(ctx.author, user, "kill", language, given, received)
         return await ctx.send(f"{title}\n{footer}")
 
-    @commands.command(name="fuck", aliases=["bang"])
+    @commands.command(name="fuck", aliases=["bang"], nsfw=True)
     @commands.guild_only()
     @commands.is_nsfw()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -810,7 +810,7 @@ class SocialSuager(Social, name="Social"):
         title, footer = self.get_data(ctx.author, user, "nsfw_fuck", language, given, received)
         return await ctx.send(f"{title}\n{footer}")
 
-    @commands.command(name="suck", aliases=["succ"])
+    @commands.command(name="suck", aliases=["succ"], nsfw=True)
     @commands.guild_only()
     @commands.is_nsfw()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -832,7 +832,7 @@ class SocialSuager(Social, name="Social"):
         # _given, _received = language.frequency(given), language.frequency(received)
         # return await ctx.send(f"**{t1}** is now sucking **{t2}** off...\n{t1} did that to {t2} {_given}\n{t2} did that to {t1} {_received}")
 
-    @commands.command(name="facefuck", aliases=["ff"])
+    @commands.command(name="facefuck", aliases=["ff"], nsfw=True)
     @commands.guild_only()
     @commands.is_nsfw()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
