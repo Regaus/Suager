@@ -318,3 +318,7 @@
 
 ## v1.3.7 - 11 April 2023
 - The strings are now also adjusted if the author did the action 5+ times less than the target
+
+## v1.3.7.1 - 15 April 2023
+- The starboard now tracks which bot saw the message
+- The starboard now tracks star count better when two bots see the message at the same time

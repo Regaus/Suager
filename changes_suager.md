@@ -1544,3 +1544,7 @@
 
 ## v7.6.11.1 - 11 April 2023
 - There is now a little warning sign in front of NSFW commands in the help utility (only in cog-specific help)
+
+## v7.6.11.2 - 15 April 2023
+- The starboard now tracks which bot saw the message
+- The starboard now tracks star count better when two bots see the message at the same time

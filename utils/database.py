@@ -253,12 +253,13 @@ tables = [
         Column("data", "TEXT", True)
     ]),
     Table("starboard", [
-        Column("message", "INTEGER", True),       # Original message ID
-        Column("channel", "INTEGER", True),       # Original message's channel ID
-        Column("author", "INTEGER", True),        # Original message's author's user ID
-        Column("guild", "INTEGER", True),         # Original message's guild ID
-        Column("stars", "INTEGER", True),         # Star count
-        Column("star_message", "INTEGER", False)  # Starboard message ID
+        Column("message", "INTEGER", True),        # Original message ID
+        Column("channel", "INTEGER", True),        # Original message's channel ID
+        Column("author", "INTEGER", True),         # Original message's author's user ID
+        Column("guild", "INTEGER", True),          # Original message's guild ID
+        Column("stars", "INTEGER", True),          # Star count
+        Column("star_message", "INTEGER", False),  # Starboard message ID
+        Column("bot", "TEXT", True),               # The bot tracking the message
     ]),
     Table("tags", [
         Column("gid", "INTEGER", True),

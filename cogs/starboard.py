@@ -69,7 +69,7 @@ class Starboard(commands.Cog):
         # else:
         #     _author = 0
         # adder = payload.user_id
-        data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=?", (message,))
+        data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=? AND bot=?", (message, self.bot.name))
         new = not data
         stars = 1 if new else data["stars"] + increase  # if _type == 1 else 0
         star_message = f"⭐ {stars} - <#{channel}>"
@@ -78,15 +78,9 @@ class Starboard(commands.Cog):
         else:
             minimum = __settings["starboard"]["minimum"]
         if new and stars != 0:
-            self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None))
-        # elif _type == 4:
-        #     self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))  # The message has been deleted, so also remove it from the database.
-        #     logger.log(self.bot.name, "starboard", f"{time.time()} - Message ID {message} has been deleted.")
+            self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None, self.bot.name))
         else:
-            # if _type == 1:
-            self.bot.db.execute("UPDATE starboard SET stars=stars+? WHERE message=?", (increase, message))
-            # else:
-            #     self.bot.db.execute("UPDATE starboard SET stars=0 WHERE message=?", (increase, message))
+            self.bot.db.execute("UPDATE starboard SET stars=? WHERE message=? AND bot=?", (stars, message, self.bot.name))
         logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {message} in #{_channel.name} ({guild.name}) now has {stars} stars.")
 
         async def send_starboard_message():
@@ -105,7 +99,7 @@ class Starboard(commands.Cog):
             embed.timestamp = _message.created_at
             try:
                 _starboard_message = await starboard_channel.send(star_message, embed=embed)
-                self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=?", (_starboard_message.id, message))
+                self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=? AND bot=?", (_starboard_message.id, message, self.bot.name))
                 logger.log(self.bot.name, "starboard", f"{time.time()} > Saved Message ID {message} to starboard channel")
             except discord.Forbidden:
                 try:
@@ -161,8 +155,9 @@ class Starboard(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload: discord.RawReactionClearEvent):
         """ All reactions were cleared from a message """
-        # return await self.starboard_update(payload)
         # Delete the message from the database, but keep it on the starboard channel
+        # I think we don't need to specify the bot name here. If the stars are no longer available on the message,
+        # then we might as well delete all relevant entries at once.
         output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
         if output != "DELETE 0":
             logger.log(self.bot.name, "starboard", f"{time.time()} > Reactions of Message ID {payload.message_id} were cleared.")
@@ -170,7 +165,6 @@ class Starboard(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent):
         """ An emote has been cleared from a message """
-        # return await self.starboard_update(payload)
         if payload.emoji.name == "⭐":
             # Delete the message from the database, but keep it on the starboard channel
             output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
@@ -180,7 +174,6 @@ class Starboard(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         """ Message was deleted """
-        # return await self.starboard_update(payload)
         # Delete the message from the database, but keep it on the starboard channel
         output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
         if output != "DELETE 0":
@@ -206,7 +199,7 @@ class Starboard(commands.Cog):
         language = self.bot.language(ctx)
         if user is None:
             embed = discord.Embed(colour=general.random_colour())
-            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? ORDER BY stars DESC", (ctx.guild.id,))
+            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, self.bot.name))
             if not data:
                 return await ctx.send(language.string("starboard_stats_none"))
             stars = 0
@@ -251,7 +244,7 @@ class Starboard(commands.Cog):
             return await ctx.send(embed=embed)
         else:
             embed = discord.Embed(colour=general.random_colour())
-            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? ORDER BY stars DESC", (ctx.guild.id, user.id))
+            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, user.id, self.bot.name))
             if not data:
                 return await ctx.send(language.number("starboard_stats_none2", user=user.name))
             stars = 0
