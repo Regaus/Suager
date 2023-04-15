@@ -15,9 +15,10 @@ class Events(commands.Cog):
         self.bot = bot
         self.db = self.bot.db
         self.local_config = self.bot.local_config
+        # Watched blocked users
         self.blocked = [667187968145883146, 852695205073125376]
-        # Watched ignored chans: Rat Enj. Den nsfw
-        self.watch_channels = [995376502352916491]
+        # Watched ignored chans: none
+        self.watch_channels = []
         self.bad = ["reg", "reag", "302851022790066185"]
         self.bad2 = ["rega", "reag", "regg", "302851022790066185"]
         self.blocked_logs = 739183533792297164
