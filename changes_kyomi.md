@@ -322,3 +322,10 @@
 ## v1.3.7.1 - 15 April 2023
 - The starboard now tracks which bot saw the message
 - The starboard now tracks star count better when two bots see the message at the same time
+
+## v1.3.7.2 - 15 April 2023
+- Star count is now read from the reaction count on the actual message
+
+## v1.3.8 - 15 April 2023
+- The starboard now tries to embed attachments and links, and if it fails, sends links to them
+- The starboard now prints error messages
