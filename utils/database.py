@@ -182,10 +182,11 @@ tables = [
         Column("disc", "INTEGER", True),
         Column("bot", "TEXT", True),
     ]),
-    Table("locales", [
-        Column("gid", "INTEGER", True),
-        Column("locale", "TEXT", True),
-        Column("bot", "TEXT", True)
+    Table("locales", [    # Language settings for servers
+        Column("id", "INTEGER", True),   # ID of the guild, channel, or user
+        Column("locale", "TEXT", True),  # Language chosen
+        Column("bot", "TEXT", True),     # Name of the bot
+        Column("type", "TEXT", True),    # Type: "guild", "channel", or "user"
     ]),
     Table("polls", [
         Column("guild_id", "INTEGER", True),     # The Guild ID where the poll was started

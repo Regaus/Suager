@@ -680,3 +680,6 @@
 
 ## v1.8.4.2 - 1 April 2023
 - Playing statuses are now written in reverse during 1st April
+
+## v1.8.5 - 22 April 2023
+- Made it possible to set a personal language or have channel-specific languages

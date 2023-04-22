@@ -115,6 +115,22 @@ class Settings(commands.Cog):
         output += "\n\n*Please note that some of these translations have not been updated for a long time and may not be up to date with the current \"standard\" form.*"
         return await ctx.send(output)
 
+    @commands.command(name="setpersonallanguage", aliases=["spl"], hidden=True)
+    async def set_personal_language(self, ctx: commands.Context, new_language: str):
+        """ Set your own personal language """
+        old_language = self.bot.language(ctx)
+        new_language = new_language.lower()  # Make it case-insensitive just in case
+        if new_language not in languages.languages.languages.keys():
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        elif not languages.Language(new_language).data("_valid"):
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (ctx.author.id, self.bot.name))
+        if locale:
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type='user'", (new_language, ctx.author.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (ctx.author.id, new_language, self.bot.name, "user"))
+        return await ctx.send(ctx.language2(new_language).string("settings_locale_set_personal"))
+
     @commands.group(name="settings", aliases=["set"], case_insensitive=True)
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
@@ -338,21 +354,45 @@ class Settings(commands.Cog):
             self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
         return await ctx.send(f"Settings for {ctx.guild.name} have been updated.")
 
-    @settings.command(name="language", aliases=["lang"])
-    async def set_language(self, ctx: commands.Context, new_language: str):
-        """ Change the bot's language in this server """
+    @settings.group(name="language", aliases=["lang"])
+    async def set_language(self, ctx: commands.Context):
+        """ Change the bot's language in this server or in a specific channel """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    @set_language.command(name="server", aliases=["guild"])
+    async def set_server_language(self, ctx: commands.Context, new_language: str):
+        """ Set the bot's language for this server """
         old_language = self.bot.language(ctx)
         new_language = new_language.lower()  # Make it case-insensitive just in case
         if new_language not in languages.languages.languages.keys():
             return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
         elif not languages.Language(new_language).data("_valid"):
             return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
-        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='guild'", (ctx.guild.id, self.bot.name))
         if locale:
-            self.bot.db.execute("UPDATE locales SET locale=? WHERE gid=? AND bot=?", (new_language, ctx.guild.id, self.bot.name))
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type='guild'", (new_language, ctx.guild.id, self.bot.name))
         else:
-            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?)", (ctx.guild.id, new_language, self.bot.name))
-        return await ctx.send(self.bot.language2(new_language).string("settings_locale_set"))
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (ctx.guild.id, new_language, self.bot.name, "guild"))
+        return await ctx.send(ctx.language2(new_language).string("settings_locale_set_guild"))
+
+    @set_language.command(name="channel")
+    async def set_channel_language(self, ctx: commands.Context, channel: discord.TextChannel | discord.Thread, new_language: str):
+        """ Set the bot's language for a certain channel """
+        old_language = self.bot.language(ctx)
+        new_language = new_language.lower()  # Make it case-insensitive just in case
+        if new_language not in languages.languages.languages.keys():
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        elif not languages.Language(new_language).data("_valid"):
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        if channel.guild.id != ctx.guild.id:
+            return await ctx.send(old_language.string("settings_anti_ads_channel_invalid2"))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='channel'", (channel.id, self.bot.name))
+        if locale:
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type='channel'", (new_language, channel.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (channel.id, new_language, self.bot.name, "channel"))
+        return await ctx.send(ctx.language2(new_language).string("settings_locale_set_channel", channel=channel.mention))
 
     @settings.group(name="prefixes", aliases=["prefix", "p"], case_insensitive=True)
     async def set_prefixes(self, ctx: commands.Context):

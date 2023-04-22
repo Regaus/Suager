@@ -1555,3 +1555,7 @@
 ## v7.6.12 - 15 April 2023
 - The starboard now tries to embed attachments and links, and if it fails, sends links to them
 - The starboard now prints error messages
+
+## v7.6.13 - 22 April 2023
+- Made it possible to set a personal language or have channel-specific languages
+- The personal language command is currently hidden
