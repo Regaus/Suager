@@ -111,8 +111,8 @@ def citizen_generator(language: str = None, name_only: bool = False) -> tuple[st
     # This is slightly unrealistic because it does not include the chance that people would live in a place
     # that does not speak their native language, but whatever.
     # With a 90% chance, the citizen will live in the same place as where they were born.
-    available_places = [p for p in conworlds.places if p["population"] is not None and language in p["language"] and p.get("inhabitability", 2) >= 2]   # 2: Valid for residence and birth
-    available_places2 = [p for p in conworlds.places if p["population"] is not None and language in p["language"] and p.get("inhabitability", 2) >= 1]  # 1: Valid for residence only
+    available_places = [p for p in conworlds.places if p["population"] is not None and language in p["language"] and p.get("habitability", 2) >= 2]   # 2: Valid for residence and birth
+    available_places2 = [p for p in conworlds.places if p["population"] is not None and language in p["language"] and p.get("habitability", 2) >= 1]  # 1: Valid for residence only
     # place_weights = [p["population"] ** 0.5 for p in available_places]  # The sqrt of the place's population size determines the likelihood it will be used as the birthplace
     # birth = residence = random.choices(available_places, place_weights, k=1)[0]  # By default, the place of residence is the same as the place of birth
     birth = residence = random.choice(available_places)

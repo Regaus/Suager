@@ -690,4 +690,4 @@
 - Added "profile" as an alias to the Kargadian profile
 
 ## v1.8.6.1 - 24 April 2023
-- The Kargadian name generator will now use places' inhabitability markers to determine whether a citizen could live or be born there
+- The Kargadian name generator will now use places' habitability markers to determine whether a citizen could live or be born there
