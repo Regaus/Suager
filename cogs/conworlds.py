@@ -332,7 +332,7 @@ class Conworlds(commands.Cog):
         output += f"Year length: {year:,.2f} Earth days ({years:,.2f} Earth years) | {local:,.2f} local solar days"
         return await ctx.send(f"Information on planet `87.78.{ss}.{p}`:", embed=discord.Embed(colour=0xff0057, description=output))
 
-    @commands.group(name="kargadiaprofile", aliases=["kargadianprofile", "kargadia", "kp", "citizen", "citizenship"], case_insensitive=True, invoke_without_command=True)
+    @commands.group(name="kargadiaprofile", aliases=["kargadianprofile", "kargadia", "kp", "citizen", "citizenship", "profile"], case_insensitive=True, invoke_without_command=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def kargadia_profile(self, ctx: commands.Context, _user: commands.UserID = None):
         """ Your Kargadian citizen ID """

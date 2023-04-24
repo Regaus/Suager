@@ -683,3 +683,11 @@
 
 ## v1.8.5 - 22 April 2023
 - Made it possible to set a personal language or have channel-specific languages
+
+## v1.8.6 - 23 April 2023
+- Added a few new first names
+- Removed "origin" surnames
+- Added "profile" as an alias to the Kargadian profile
+
+## v1.8.7 - 24 April 2023
+- The Kargadian name generator will now use places' inhabitability markers to determine whether a citizen could live or be born there
