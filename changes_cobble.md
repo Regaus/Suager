@@ -689,5 +689,5 @@
 - Removed "origin" surnames
 - Added "profile" as an alias to the Kargadian profile
 
-## v1.8.7 - 24 April 2023
+## v1.8.6.1 - 24 April 2023
 - The Kargadian name generator will now use places' inhabitability markers to determine whether a citizen could live or be born there
