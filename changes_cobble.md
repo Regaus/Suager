@@ -691,3 +691,7 @@
 
 ## v1.8.6.1 - 24 April 2023
 - The Kargadian name generator will now use places' habitability markers to determine whether a citizen could live or be born there
+
+## v1.8.6.2 - 25-26 April 2023
+- Updated spelling of certain Kargadian surnames
+- Added a few new surnames and removed duplicates

@@ -50,7 +50,7 @@ def citizen_generator(language: str = None, name_only: bool = False) -> tuple[st
 
     name2 = parent_name()
 
-    # "Origin" surnames have 0% chance of coming up, so while they do exist, they are excluded from being used
+    # "Origin" surnames have 0% chance of coming up, so while they do exist, they are excluded from being used (previously was 10%)
     surname_type = random.choices(("profession", "origin", "parent", "random", "trait"), (20, 0, 15, 40, 15), k=1)[0]
     if surname_type == "profession":
         idx3 = 1 if gender == "female" else 0
