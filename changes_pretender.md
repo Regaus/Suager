@@ -62,3 +62,6 @@
 
 ## v1.2.1.6 - 1 April 2023
 - Playing statuses are now written in reverse during 1st April
+
+## v1.2.1.7 - 12 May 2023
+- Added Huskie's Generous Cabin
