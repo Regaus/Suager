@@ -329,3 +329,11 @@
 ## v1.3.8 - 15 April 2023
 - The starboard now tries to embed attachments and links, and if it fails, sends links to them
 - The starboard now prints error messages
+
+## v1.4.0 - 27 April - 13 May 2023
+- Reformatted settings to make more sense UX-wise and look better code-wise
+- If anything is written together with the `//settings` command, it now shows the help instead of current settings
+- Added a command to specifically see the current settings (`//settings current`)
+- Made message logs settings actually possible to view
+- Made edited messages actually go to the channel for edited message logs (instead of the channel for deleted messages)
+- The language translation counter now just shows the ratio of values which are equal to English, and no longer has special behaviour for different value types

@@ -1560,7 +1560,7 @@
 - Made it possible to set a personal language or have channel-specific languages
 - The personal language command is currently hidden
 
-## v7.7.0a1 - 27-28 April, 2-13 May 2023
+## v7.7.0a1 - 27-28 April, 2-12 May 2023
 - Reformatted the settings to make more sense UX-wise and look better code-wise
 - If anything is written together with the `//settings` command, it now shows the help instead of current settings
 - Added a command to specifically see the current settings (`//settings current`)
@@ -1568,9 +1568,11 @@
 - Made message logs settings actually possible to view
 - Made edited messages actually go to the channel for edited message logs (instead of the channel for deleted messages)
 - The language translation counter now just shows the ratio of values which are equal to English, and no longer has special behaviour for different value types
-- Added limited translations to Kargadian for the anti-ads and image-only settings
+- Added translations to Kargadian for the anti-ads and image-only settings
 - The placeholder role names now have <> around them.
 - Made it possible to see the current level up message
 - Made it possible to easily reset the level up message
 - Made the level up announcements setting only reset when explicitly stated
 - Renamed some level reward commands to make more sense
+
+## v7.7.0a2 - 12-xx May 2023

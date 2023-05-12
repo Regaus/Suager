@@ -407,9 +407,9 @@ ka_places = {
         "Kiomigar":             {"data": "", "weight": 35},  # -05
         "Kionagar":             {"data": "", "weight": 35},  # -05
         "Lailagar":             {"data": "", "weight": 35},  # -05
-        "Koutun Köreldaivus":   {"data": "", "weight": 30},  # -05
         "Melligar":             {"data": "", "weight": 35},  # -05
         "Tevivall":             {"data": "", "weight": 30},  # -05
+        "Koutun Köreldaivus":   {"data": "", "weight": 30},  # -04
         "Reksigar":             {"data": "", "weight": 35},  # -04
     },
     "Nittavia": {
@@ -469,16 +469,19 @@ ka_places = {
         "Terra Arna":  {"data": "", "weight": 25},  # -11
     },
     "Erellia": {
-        "Itta":      {"data": "", "weight": 25},  # -05
-        "Rankadus":  {"data": "", "weight": 20},  # -04
-        "Raagar":    {"data": "", "weight": 25},  # -03
-        "Orlagar":   {"data": "", "weight": 35},  # -03
-        "Shonangar": {"data": "", "weight": 35},  # -03
+        "Itta":          {"data": "", "weight": 25},  # -05
+        "Senka's Lair":  {"data": "", "weight": 30},  # -05
+        "Shankiranköde": {"data": "", "weight": 30},  # -05
+        "Rankadus":      {"data": "", "weight": 20},  # -04
+        "Raagar":        {"data": "", "weight": 25},  # -03
+        "Orlagar":       {"data": "", "weight": 35},  # -03
+        "Shonangar":     {"data": "", "weight": 35},  # -03
     },
     "Centeria": {
-        "Kalagar":   {"data": "", "weight": 25},  # +00
-        "Sukugar":   {"data": "", "weight": 30},  # +00
-        "Virsetgar": {"data": "", "weight": 30},  # +00
+        "Mügoslavia": {"data": "", "weight": 25},  # -01
+        "Kalagar":    {"data": "", "weight": 25},  # +00
+        "Sukugar":    {"data": "", "weight": 30},  # +00
+        "Virsetgar":  {"data": "", "weight": 30},  # +00
     },
     "Verlennia": {
     },

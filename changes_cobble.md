@@ -695,3 +695,14 @@
 ## v1.8.6.2 - 25-26 April 2023
 - Updated spelling of certain Kargadian surnames
 - Added a few new surnames and removed duplicates
+
+## v1.8.7 - 27 April - 12 May 2023
+- Reformatted the settings to make more sense UX-wise and look better code-wise
+- If anything is written together with the `//settings` command, it now shows the help instead of current settings
+- Added a command to specifically see the current settings (`//settings current`)
+- The language translation counter now just shows the ratio of values which are equal to English, and no longer has special behaviour for different value types
+
+## v1.8.8 - 12 May 2023
+- Added new Kargadian first names
+- Updated spellings of several male parent names
+- Added 3 new places to the Kargadian time channel
