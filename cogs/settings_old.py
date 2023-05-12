@@ -1,6 +1,5 @@
 import json
 from io import BytesIO
-from typing import Tuple
 
 import discord
 
@@ -56,9 +55,34 @@ class Settings(commands.Cog):
 
                     d1, d2 = _en.data(k), _language.data(k)
 
-                    strings += 1
-                    if d1 == d2:
-                        matching += 1
+                    # Behaviour for when the data is a list
+                    if isinstance(d1, list) and isinstance(d2, list):
+                        if len(d1) == len(d2):  # Well they should never be different, but better make sure
+                            # If the lengths are the same, then check through every single string inside
+                            for i, s1 in enumerate(d1):
+                                strings += 1
+                                s2 = d2[i]
+                                if s1 == s2:
+                                    matching += 1
+                        else:
+                            # If the lengths are somehow different, then we count it all as just one big string
+                            # Don't bother checking if any strings inside there match or not...
+                            strings += 1
+
+                    # Behaviour for when the data is a dict
+                    # Languages, island names and region names should count as just one big "string" each so that they wouldn't create hundreds of extra entries
+                    elif isinstance(d1, dict) and isinstance(d2, dict) and k not in ["_languages", "weather78_islands"]:
+                        for key, s1 in d1.items():
+                            s2 = d2.get(key)
+                            strings += 1
+                            if s1 == s2:
+                                matching += 1
+
+                    # Behaviour for when the data is something else (so, a string)
+                    else:
+                        strings += 1
+                        if d1 == d2:
+                            matching += 1
                 completeness = 1 - (matching / strings)
                 # print(f"{self.bot.name} > {language} > Translated {strings - matching}/{strings}")
 
@@ -67,7 +91,6 @@ class Settings(commands.Cog):
             add_list = rsl if conlang == 2 else con if conlang == 1 else nat
             add_list.append(out)
 
-        # List of trusted people last updated 23/05/2022, list of trusted servers last updated 05/05/2023
         # Users:   Regaus,             Leitoxz,            Alex Five,          Potato,             Chuck,              Mid,                Noodle
         # Users:   Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza,               HatKid
         # Users:   Karmeck,            Steir,              PandaBoi,           Suager,             Mary,               Wight,              Back,
@@ -76,257 +99,217 @@ class Settings(commands.Cog):
                    236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691, 418151634087182359,
                    857360761135431730, 230313032956248064, 301091858354929674, 517012611573743621, 660639108674224158, 505486500314611717, 454599329232191488,
                    690895816914763866, 381870347814830081]
-        is_trusted = ctx.author.id in trusted
-        # Anyone in the Kargadia server is also automatically trusted
-        ka = self.bot.get_guild(928745963877720144)
-        if ka is not None:
-            is_in_server = ka.get_member(ctx.author.id) is not None
-            is_trusted |= is_in_server
-
-        # Bad Users:   neppkun,             bowser
-        no_conlangs = [350199484246130690,  94762492923748352]
-        is_untrusted = ctx.author.id in no_conlangs
-        # Servers:         Senko Lair,         Regaus'tar Koankadu, Kargadia,          3tk4
-        trusted_servers = [568148147457490954, 738425418637639775, 928745963877720144, 430945139142426634]
-        is_trusted_server = ctx.guild is not None and ctx.guild.id in trusted_servers
-
+        # Bad Users:   neppkun,            szymon,              bowser
+        no_conlangs = [350199484246130690, 443363116504580117,  94762492923748352]
+        # Servers:         Senko Lair,         Regaus'tar Koankadu, Kargadia,          3tk4,               Imperium
+        trusted_servers = [568148147457490954, 738425418637639775, 928745963877720144, 430945139142426634, 853385632813678643]
+        # List of trusted people and servers last updated 23/05/2022 AD
         output = "__List of supported languages:__\n" + "\n".join(nat)
+
         # If the person is in a trusted server while not being in the No Conlangs list, or if the person is in a DM while they're trusted
-        if (is_trusted_server and not is_untrusted) or (ctx.guild is None and is_trusted):
+        if ((ctx.guild is not None and ctx.guild.id in trusted_servers) and ctx.author.id not in no_conlangs) or (ctx.guild is None and ctx.author.id in trusted):
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
-            if is_trusted:
+            if ctx.author.id in trusted:
                 output += "\n\n__RSLs supported:__\n" + "\n".join(rsl)
-                output += "\n\n*Please note that some of these translations have not been updated for a long time and may not be up to date with the current \"standard\" form.*"
+
+        output += "\n\n*Please note that some of these translations have not been updated for a long time and may not be up to date with the current \"standard\" form.*"
         return await ctx.send(output)
 
-    async def set_language(self, ctx: commands.Context, new_language: str, _id: int, _type: str, key: str, valid: bool = True):
-        """ Function to update language settings """
+    @commands.command(name="setpersonallanguage", aliases=["spl"], hidden=True)
+    async def set_personal_language(self, ctx: commands.Context, new_language: str):
+        """ Set your own personal language """
         old_language = self.bot.language(ctx)
         new_language = new_language.lower()  # Make it case-insensitive just in case
         if new_language not in languages.languages.languages.keys():
             return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
         elif not languages.Language(new_language).data("_valid"):
             return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
-
-        if not valid:  # This is the only validity check - A channel not being in the same server as where the command was run
-            return await ctx.send(old_language.string("settings_anti_ads_channel_invalid2"))
-
-        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type=?", (_id, self.bot.name, _type))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (ctx.author.id, self.bot.name))
         if locale:
-            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type=?", (new_language, _id, self.bot.name, _type))
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type='user'", (new_language, ctx.author.id, self.bot.name))
         else:
-            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (_id, new_language, self.bot.name, _type))
-        return await ctx.send(ctx.language2(new_language).string("settings_locale_set" + key, channel=f"<#{_id}>"))
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (ctx.author.id, new_language, self.bot.name, "user"))
+        return await ctx.send(ctx.language2(new_language).string("settings_locale_set_personal"))
 
-    @commands.command(name="setpersonallanguage", aliases=["spl"], hidden=True)
-    async def set_personal_language(self, ctx: commands.Context, new_language: str):
-        """ Set your own personal language """
-        return await self.set_language(ctx, new_language, ctx.author.id, "user", "_personal")
-
-    async def settings_current_embed(self, ctx: commands.Context):
-        """ Embed of current settings """
-        language = self.bot.language(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if not data:
-            setting = self.template.copy()
-        else:
-            setting = json.loads(data["data"])
-        embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("settings_current", server=ctx.guild.name)
-        if ctx.guild.icon:
-            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-        embed.set_footer(text=language.string("settings_current_footer", p=ctx.prefix))
-
-        # Language
-        embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
-
-        # Prefix
-        dp, cp = self.prefix_list(ctx)
-        embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
-
-        def channel(cid: int):
-            if cid == 0:
-                return language.string("settings_current_disabled")
-            return f"<#{cid}>"
-
-        # Levels
-        if self.bot.name in ["suager"]:
-            lvl = language.string("settings_current_disabled")
-            if "leveling" in setting:
-                if setting["leveling"]["enabled"]:
-                    lvl = language.string("settings_current_leveling2", p=ctx.prefix)
-            embed.add_field(name=language.string("settings_current_leveling"), value=lvl, inline=False)
-
-        # Starboard
-        if self.bot.name in ["kyomi", "suager"]:
-            sb = language.string("settings_current_disabled")
-            if "starboard" in setting:
-                starboard = setting["starboard"]
-                if starboard["enabled"]:
-                    sb = language.string("settings_current_starboard2", stars=language.number(starboard["minimum"]), channel=starboard["channel"])
-            embed.add_field(name=language.string("settings_current_starboard"), value=sb, inline=False)
-
-        # Birthdays
-        bd = language.string("settings_current_disabled")
-        if "birthdays" in setting:
-            if setting["birthdays"]["enabled"]:
-                bd = language.string("settings_current_birthdays2", p=ctx.prefix)
-        embed.add_field(name=language.string("settings_current_birthdays"), value=bd, inline=False)
-
-        if self.bot.name in ["kyomi", "suager"]:
-            # Polls
-            if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
-                polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
-                if "polls" in setting:
-                    polls = setting["polls"]
-                    if polls["channel"]:
-                        polls_channel = f"<#{polls['channel']}>"
-                    polls_anonymity = language.yes(polls["voter_anonymity"])
-                embed.add_field(name=language.string("settings_current_polls"), inline=False,
-                                value=language.string("settings_current_polls2", channel=polls_channel, anon=polls_anonymity))
-
-            # Join roles
-            members, bots = language.string("generic_none"), language.string("generic_none")
-            if "join_roles" in setting:
-                join_roles = setting["join_roles"]
-                if join_roles["members"]:
-                    members = language.join([f"<@&{role}>" for role in join_roles["members"]])
-                else:
-                    members = language.string("generic_none")
-                if join_roles["bots"]:
-                    bots = language.join([f"<@&{role}>" for role in join_roles["bots"]])
-                else:
-                    bots = language.string("generic_none")
-            embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", humans=members, bots=bots), inline=False)
-
-            # Welcomes
-            welcome_channel, welcome_message = language.string("settings_current_disabled"), None
-            if "welcome" in setting:
-                welcome = setting["welcome"]
-                if welcome["channel"]:
-                    welcome_channel = language.string("settings_current_welcome_channel", channel=welcome["channel"])
-                    welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
-            embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
-            if welcome_message:
-                embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
-
-            # Goodbyes
-            goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
-            if "goodbye" in setting:
-                goodbye = setting["goodbye"]
-                if goodbye["channel"]:
-                    goodbye_channel = language.string("settings_current_goodbye_channel", channel=goodbye["channel"])
-                    goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
-            embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
-            if goodbye_message:
-                embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
-
-            # Mute role
-            mute_role = language.string("generic_none")
-            if "mute_role" in setting:
-                if setting["mute_role"] != 0:
-                    mute_role = f"<@&{setting['mute_role']}>"
-            embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
-
-            # Warnings
-            warnings = language.string("settings_current_warnings_disabled", p=ctx.prefix)
-            if "warnings" in setting:
-                warning = setting["warnings"]
-                mute_requirement = warning["required_to_mute"]  # Warnings required to mute
-                mute_length = warning["mute_length"]  # Starting mute length
-                scaling = warning["scaling"]  # The multiplier for mute length
-                warnings = language.string("settings_current_warnings2", mute_req=mute_requirement, mute_len=mute_length, scaling=language.number(scaling))
-            embed.add_field(name=language.string("settings_current_warnings"), value=warnings, inline=False)
-
-            # Message Logs
-            msg = language.string("settings_current_messages_disabled", p=ctx.prefix)
-            if "message_logs" in setting:
-                message_logs = setting["message_logs"]
-                enabled = message_logs["enabled"]
-                edit, delete = message_logs["edit"], message_logs["delete"]
-                ignore_bots = message_logs["ignore_bots"]
-                if not message_logs["ignore_channels"]:
-                    ignored_channels = language.string("generic_none")
-                else:
-                    length = len(message_logs["ignore_channels"])
-                    if length <= 12:
-                        ignored_channels = ", ".join(f"<#{channel}>" for channel in message_logs["ignore_channels"])
-                    else:
-                        ignored_channels = ", ".join(f"<#{channel}>" for channel in message_logs["ignore_channels"][:12])
-                        ignored_channels += language.string("settings_leveling_ignored_many", val=language.number(length - 12))
-                msg = language.string("settings_current_messages2", enabled=language.yes(enabled), edit=channel(edit), delete=channel(delete),
-                                      ignore_bots=language.yes(ignore_bots), ignored_channels=ignored_channels)
-            embed.add_field(name=language.string("settings_current_messages"), value=msg, inline=False)
-
-            # Mod DMs
-            mod_dms_text = language.string("settings_current_mod_dms_disabled", p=ctx.prefix)
-            if "mod_dms" in setting:
-                mod_dms = setting["mod_dms"]
-                warn, mute, kick, ban = mod_dms["warn"], mod_dms["mute"], mod_dms["kick"], mod_dms["ban"]
-                mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
-            embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
-
-            # Mod Logs
-            mod_logs_text = language.string("settings_current_mod_logs_disabled", p=ctx.prefix)
-            if "mod_logs" in setting:
-                mod_logs = setting["mod_logs"]
-                warn, mute, kick, ban, roles = mod_logs["warn"], mod_logs["mute"], mod_logs["kick"], mod_logs["ban"], mod_logs["roles"]
-                mod_logs_text = language.string("settings_current_mod_logs2", warn=channel(warn), mute=channel(mute), kick=channel(kick), ban=channel(ban), roles=channel(roles))
-            embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
-
-            # User Logs
-            user_logs_text = language.string("settings_current_user_logs_disabled", p=ctx.prefix)
-            if "user_logs" in setting:
-                user_logs = setting["user_logs"]
-                join, leave, roles = user_logs["join"], user_logs["leave"], user_logs["preserve_roles"]
-                user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave), roles=language.yes(roles))
-            embed.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
-
-            # Image-only channels settings
-            image_only_text = language.string("settings_current_image_only_disabled", p=ctx.prefix)
-            if "image_only" in setting:
-                image_only = setting["image_only"]
-                image_only_text = ", ".join([channel(c) for c in image_only["channels"]]) or language.string("generic_none")
-            embed.add_field(name=language.string("settings_current_image_only"), value=image_only_text, inline=False)
-
-            # Anti-ads
-            anti_ads_text = language.string("settings_current_anti_ads_disabled", p=ctx.prefix)
-            if "anti_ads" in setting:
-                anti_ads = setting["anti_ads"]
-                idx = 3 if anti_ads["whitelist"] else 2
-                if anti_ads["warning"] is not None:
-                    warning_length = anti_ads["warning"]
-                else:
-                    warning_length = language.string("settings_current_anti_ads_permanent")
-                anti_ads_text = language.string(f"settings_current_anti_ads{idx}", enabled=language.yes(anti_ads["enabled"]),
-                                                channels=", ".join([channel(c) for c in anti_ads["channels"]]) or language.string("generic_none"),
-                                                warning=warning_length)
-            embed.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
-
-        return await ctx.send(embed=embed)
-
-    # @commands.hybrid_group(name="settings", aliases=["set"], case_insensitive=True, fallback="current")
-    # @app_commands.guilds(738425418637639775)
-    @commands.group(name="settings", aliases=["set"], case_insensitive=True, invoke_without_command=True)
+    @commands.group(name="settings", aliases=["set"], case_insensitive=True)
     @commands.guild_only()
     @permissions.has_permissions(manage_guild=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def settings(self, ctx: commands.Context, _: str = None):
+    async def settings(self, ctx: commands.Context):
         """ Server settings """
         if ctx.invoked_subcommand is None:
-            if _ is not None:
-                return await ctx.send_help(ctx.command)
-            return await self.settings_current_embed(ctx)
+            language = self.bot.language(ctx)
+            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+            if not data:
+                # return await ctx.send_help(str(ctx.command))
+                setting = self.template.copy()
+            else:
+                setting = json.loads(data["data"])
+            embed = discord.Embed(colour=general.random_colour())
+            embed.title = language.string("settings_current", server=ctx.guild.name)
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+            embed.set_footer(text=language.string("settings_current_footer", p=ctx.prefix))
+
+            # Language
+            embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
+
+            # Prefix
+            dp, cp = self.prefix_list(ctx)
+            embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
+
+            def channel(cid: int):
+                if cid == 0:
+                    return language.string("settings_current_disabled")
+                return f"<#{cid}>"
+
+            if self.bot.name in ["kyomi", "suager"]:
+                # Starboard
+                sb = language.string("settings_current_disabled")
+                if "starboard" in setting:
+                    starboard = setting["starboard"]
+                    if starboard["enabled"]:
+                        sb = language.string("settings_current_starboard", stars=language.number(starboard["minimum"]), channel=starboard["channel"])
+                embed.add_field(name=language.string("settings_starboard"), value=sb, inline=False)
+
+                # Levels
+                if self.bot.name in ["suager"]:
+                    lvl = language.string("settings_current_disabled")
+                    if "leveling" in setting:
+                        if setting["leveling"]["enabled"]:
+                            lvl = language.string("settings_current_leveling", p=ctx.prefix)
+                    embed.add_field(name=language.string("settings_leveling"), value=lvl, inline=False)
+
+            # Birthdays
+            bd = language.string("settings_current_disabled")
+            if "birthdays" in setting:
+                if setting["birthdays"]["enabled"]:
+                    bd = language.string("settings_current_birthdays", p=ctx.prefix)
+            embed.add_field(name=language.string("settings_birthdays"), value=bd, inline=False)
+
+            if self.bot.name in ["kyomi", "suager"]:
+                # Polls
+                if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
+                    polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
+                    if "polls" in setting:
+                        polls = setting["polls"]
+                        if polls["channel"]:
+                            polls_channel = f"<#{polls['channel']}>"
+                        polls_anonymity = language.yes(polls["voter_anonymity"])
+                    embed.add_field(name=language.string("settings_current_polls"), inline=False,
+                                    value=language.string("settings_current_polls2", channel=polls_channel, anon=polls_anonymity))
+
+                # Join roles
+                members, bots = language.string("generic_none"), language.string("generic_none")
+                if "join_roles" in setting:
+                    join_roles = setting["join_roles"]
+                    if join_roles["members"]:
+                        members = language.join([f"<@&{role}>" for role in join_roles["members"]])
+                    else:
+                        members = language.string("generic_none")
+                    if join_roles["bots"]:
+                        bots = language.join([f"<@&{role}>" for role in join_roles["bots"]])
+                    else:
+                        bots = language.string("generic_none")
+                embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", humans=members, bots=bots), inline=False)
+
+                # Welcomes
+                welcome_channel, welcome_message = language.string("settings_current_disabled"), None
+                if "welcome" in setting:
+                    welcome = setting["welcome"]
+                    if welcome["channel"]:
+                        welcome_channel = language.string("settings_current_welcome_channel", channel=welcome["channel"])
+                        welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
+                embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
+                if welcome_message:
+                    embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
+
+                # Goodbyes
+                goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
+                if "goodbye" in setting:
+                    goodbye = setting["goodbye"]
+                    if goodbye["channel"]:
+                        goodbye_channel = language.string("settings_current_goodbye_channel", channel=goodbye["channel"])
+                        goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
+                embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
+                if goodbye_message:
+                    embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
+
+                # Mute role
+                mute_role = language.string("generic_none")
+                if "mute_role" in setting:
+                    if setting["mute_role"] != 0:
+                        mute_role = f"<@&{setting['mute_role']}>"
+                embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
+
+                # Warnings
+                warnings = language.string("settings_current_warnings_disabled", p=ctx.prefix)
+                if "warnings" in setting:
+                    warning = setting["warnings"]
+                    mute_requirement = warning["required_to_mute"]  # Warnings required to mute
+                    mute_length = warning["mute_length"]  # Starting mute length
+                    scaling = warning["scaling"]  # The multiplier for mute length
+                    warnings = language.string("settings_current_warnings2", mute_req=mute_requirement, mute_len=mute_length, scaling=language.number(scaling))
+                embed.add_field(name=language.string("settings_current_warnings"), value=warnings, inline=False)
+
+                # Message Logs
+                msg = language.string("settings_current_disabled")
+                if "message_logs" in setting:
+                    if setting["message_logs"]["enabled"]:
+                        msg = language.string("settings_current_messages", p=ctx.prefix)
+                embed.add_field(name=language.string("settings_messages"), value=msg, inline=False)
+
+                # Mod DMs
+                mod_dms_text = language.string("settings_current_mod_dms_disabled", p=ctx.prefix)
+                if "mod_dms" in setting:
+                    mod_dms = setting["mod_dms"]
+                    warn, mute, kick, ban = mod_dms["warn"], mod_dms["mute"], mod_dms["kick"], mod_dms["ban"]
+                    mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
+                embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
+
+                # Mod Logs
+                mod_logs_text = language.string("settings_current_mod_logs_disabled", p=ctx.prefix)
+                if "mod_logs" in setting:
+                    mod_logs = setting["mod_logs"]
+                    warn, mute, kick, ban, roles = mod_logs["warn"], mod_logs["mute"], mod_logs["kick"], mod_logs["ban"], mod_logs["roles"]
+                    mod_logs_text = language.string("settings_current_mod_logs2", warn=channel(warn), mute=channel(mute), kick=channel(kick), ban=channel(ban), roles=channel(roles))
+                embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
+
+                # User Logs
+                user_logs_text = language.string("settings_current_user_logs_disabled", p=ctx.prefix)
+                if "user_logs" in setting:
+                    user_logs = setting["user_logs"]
+                    join, leave, roles = user_logs["join"], user_logs["leave"], user_logs["preserve_roles"]
+                    user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave), roles=language.yes(roles))
+                embed.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
+
+                # Image-only channels settings
+                image_only_text = language.string("settings_current_image_only_disabled", p=ctx.prefix)
+                if "image_only" in setting:
+                    image_only = setting["image_only"]
+                    image_only_text = ", ".join([channel(c) for c in image_only["channels"]]) or language.string("generic_none")
+                embed.add_field(name=language.string("settings_current_image_only"), value=image_only_text, inline=False)
+
+                # Anti-ads
+                anti_ads_text = language.string("settings_current_anti_ads_disabled", p=ctx.prefix)
+                if "anti_ads" in setting:
+                    anti_ads = setting["anti_ads"]
+                    idx = 3 if anti_ads["whitelist"] else 2
+                    if anti_ads["warning"] is not None:
+                        warning_length = anti_ads["warning"]
+                    else:
+                        warning_length = language.string("settings_current_anti_ads_permanent")
+                    anti_ads_text = language.string(f"settings_current_anti_ads{idx}", enabled=language.yes(anti_ads["enabled"]),
+                                                    channels=", ".join([channel(c) for c in anti_ads["channels"]]) or language.string("generic_none"),
+                                                    warning=warning_length)
+                embed.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
+
+            return await ctx.send(embed=embed)
 
     @settings.command(name="current")
-    async def settings_current(self, ctx: commands.Context):
-        """ See the current settings in a server """
-        return await self.settings_current_embed(ctx)
-
-    @settings.command(name="json")
     @commands.is_owner()
     # @permissions.has_permissions(administrator=True)
-    async def settings_current_json(self, ctx: commands.Context):
+    async def settings_current(self, ctx: commands.Context):
         """ Current settings (in JSON) """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not data:
@@ -337,7 +320,7 @@ class Settings(commands.Cog):
 
     @settings.command(name="template")
     @commands.is_owner()
-    async def settings_template_json(self, ctx: commands.Context):
+    async def settings_template(self, ctx: commands.Context):
         """ Settings template (in JSON) """
         stuff = json.dumps(self.template.copy(), indent=2)
         bio = BytesIO(stuff.encode("utf-8"))
@@ -346,7 +329,7 @@ class Settings(commands.Cog):
     @settings.command(name="upload")
     @commands.is_owner()
     # @permissions.has_permissions(administrator=True)
-    async def settings_upload_json(self, ctx: commands.Context):
+    async def settings_upload(self, ctx: commands.Context):
         """ Upload settings using a JSON file """
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         ma = ctx.message.attachments
@@ -372,43 +355,44 @@ class Settings(commands.Cog):
         return await ctx.send(f"Settings for {ctx.guild.name} have been updated.")
 
     @settings.group(name="language", aliases=["lang"])
-    async def set_language_command(self, ctx: commands.Context):
+    async def set_language(self, ctx: commands.Context):
         """ Change the bot's language in this server or in a specific channel """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
-    @set_language_command.command(name="server", aliases=["guild"])
+    @set_language.command(name="server", aliases=["guild"])
     async def set_server_language(self, ctx: commands.Context, new_language: str):
         """ Set the bot's language for this server """
-        return await self.set_language(ctx, new_language, ctx.guild.id, "guild", "_guild")
+        old_language = self.bot.language(ctx)
+        new_language = new_language.lower()  # Make it case-insensitive just in case
+        if new_language not in languages.languages.languages.keys():
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        elif not languages.Language(new_language).data("_valid"):
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='guild'", (ctx.guild.id, self.bot.name))
+        if locale:
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type='guild'", (new_language, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (ctx.guild.id, new_language, self.bot.name, "guild"))
+        return await ctx.send(ctx.language2(new_language).string("settings_locale_set_guild"))
 
-    @set_language_command.command(name="channel")
+    @set_language.command(name="channel")
     async def set_channel_language(self, ctx: commands.Context, channel: discord.TextChannel | discord.Thread, new_language: str):
         """ Set the bot's language for a certain channel """
-        return await self.set_language(ctx, new_language, channel.id, "channel", "_channel", valid=channel.guild.id == ctx.guild.id)
-
-    async def settings_start(self, ctx: commands.Context, key: str) -> Tuple[dict, bool]:
-        """ Template start of a settings command (loading data) """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
+        old_language = self.bot.language(ctx)
+        new_language = new_language.lower()  # Make it case-insensitive just in case
+        if new_language not in languages.languages.languages.keys():
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        elif not languages.Language(new_language).data("_valid"):
+            return await ctx.send(old_language.string("settings_locale_invalid", language=new_language, p=ctx.prefix))
+        if channel.guild.id != ctx.guild.id:
+            return await ctx.send(old_language.string("settings_anti_ads_channel_invalid2"))
+        locale = self.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='channel'", (channel.id, self.bot.name))
+        if locale:
+            self.bot.db.execute("UPDATE locales SET locale=? WHERE id=? AND bot=? AND type='channel'", (new_language, channel.id, self.bot.name))
         else:
-            _settings = self.template.copy()
-
-        if key not in _settings:
-            _settings[key] = self.template[key].copy()
-
-        return _settings, bool(data)
-
-    async def settings_end(self, ctx: commands.Context, _settings: dict, existent: bool, output_key: str, **kwargs):
-        """ Template end of a settings command (saving data) """
-        stuff = json.dumps(_settings)
-        if existent:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        # The "allowed mentions" is here just for settings like the level up message, to avoid sending unnecessary pings
-        return await ctx.send(ctx.language().string(output_key, **kwargs), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
+            self.bot.db.execute("INSERT INTO locales VALUES (?, ?, ?, ?)", (channel.id, new_language, self.bot.name, "channel"))
+        return await ctx.send(ctx.language2(new_language).string("settings_locale_set_channel", channel=channel.mention))
 
     @settings.group(name="prefixes", aliases=["prefix", "p"], case_insensitive=True)
     async def set_prefixes(self, ctx: commands.Context):
@@ -421,246 +405,268 @@ class Settings(commands.Cog):
     @set_prefixes.command(name="add")
     async def prefix_add(self, ctx: commands.Context, prefix: str):
         """ Add a new custom prefix """
-        _settings, existent = await self.settings_start(ctx, "prefixes")
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
         _settings["prefixes"].append(prefix)
-        return await self.settings_end(ctx, _settings, existent, "settings_prefix_add", prefix=prefix)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(self.bot.language(ctx).string("settings_prefix_add", prefix=prefix))
+        # return await general.send(f"Added {prefix} to the custom prefix list", ctx.channel)
 
     @set_prefixes.command(name="remove")
     async def prefix_remove(self, ctx: commands.Context, prefix: str):
         """ Remove a custom prefix """
-        _settings, existent = await self.settings_start(ctx, "prefixes")
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
         try:
             _settings["prefixes"].remove(prefix)
         except ValueError:
-            return await ctx.send(ctx.language().string("settings_prefix_remove_none", prefix=prefix))
-        return await self.settings_end(ctx, _settings, existent, "settings_prefix_remove", prefix=prefix)
+            return await ctx.send(self.bot.language(ctx).string("settings_prefix_remove_none", prefix=prefix))
+            # return await general.send(f"{prefix} is not a prefix in this server", ctx.channel)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(self.bot.language(ctx).string("settings_prefix_remove", prefix=prefix))
+        # return await general.send(f"Removed {prefix} from the prefix list", ctx.channel)
 
-    @set_prefixes.group(name="default")
-    async def prefix_default(self, ctx: commands.Context):
-        """ Enable or disable the use of default prefixes
-
-        Use `//settings prefixes default enable` to enable
-        Use `//settings prefixes default disable` to disable """
-        if ctx.invoked_subcommand is None:
-            return await ctx.send_help(str(ctx.command))
-
-    async def prefix_default_toggle(self, ctx: commands.Context, toggle: bool):
-        """ Toggle the use of default prefixes """
-        _settings, existent = await self.settings_start(ctx, "use_default")
-        _settings["use_default"] = toggle
-        output = "settings_prefix_default_enable" if toggle else "settings_prefix_default_disable"
-        return await self.settings_end(ctx, _settings, existent, output)
-
-    @prefix_default.command(name="enable")
-    async def prefix_default_enable(self, ctx: commands.Context):
-        """ Enable the use of default prefixes """
-        return await self.prefix_default_toggle(ctx, True)
-
-    @prefix_default.command(name="disable")
-    async def prefix_default_disable(self, ctx: commands.Context):
-        """ Disable the use of default prefixes """
-        return await self.prefix_default_toggle(ctx, False)
-
-    async def settings_current_leveling(self, ctx: commands.Context):
-        """ Current leveling settings"""
+    @set_prefixes.command(name="default")
+    async def prefix_default(self, ctx: commands.Context, action: str):
+        """ Enable or disable the use of default prefixes """
         language = self.bot.language(ctx)
+        if action not in ["enable", "disable"]:
+            return await ctx.send(language.string("settings_prefix_default_invalid"))
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if not data:
-            return await ctx.send(language.string("settings_none"))
-        setting = json.loads(data["data"])
-        if "leveling" not in setting:
-            return await ctx.send(language.string("settings_leveling_none"))
-        leveling = setting["leveling"]
-        embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("settings_leveling", ctx.guild.name)
-        if ctx.guild.icon:
-            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-        embed.set_footer(text=language.string("settings_leveling_footer", p=ctx.prefix))
-        embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
-        embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
-        ac = leveling["announce_channel"]
-        if ac == -1:
-            embed.add_field(name=language.string("settings_leveling_announcements"), value=language.string("settings_current_disabled"), inline=False)
+        if data:
+            _settings = json.loads(data["data"])
         else:
-            if ac == 0:
-                embed.add_field(name=language.string("settings_leveling_announcements"), value=language.string("settings_leveling_announcements_zero"), inline=False)
-            else:
-                embed.add_field(name=language.string("settings_leveling_announcements"), value=f"<#{ac}>", inline=False)
-            message = f"{leveling['level_up_message'][:1021]}..." if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
-            embed.add_field(name=language.string("settings_leveling_message"), value=message, inline=False)
-            if "level_up_role" in leveling:
-                if leveling["level_up_role"]:
-                    message = f"{leveling['level_up_role'][:1021]}..." if len(leveling["level_up_role"]) > 1024 else leveling["level_up_role"]
-                    embed.add_field(name=language.string("settings_leveling_message_role"), value=message, inline=False)
-            if "level_up_highest" in leveling:
-                if leveling["level_up_highest"]:
-                    message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
-                    embed.add_field(name=language.string("settings_leveling_message_highest"), value=message, inline=False)
-            if "level_up_max" in leveling:
-                if leveling["level_up_max"]:
-                    message = f"{leveling['level_up_max'][:1021]}..." if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
-                    embed.add_field(name=language.string("settings_leveling_message_max"), value=message, inline=False)
-        if not leveling["ignored_channels"]:
-            ignored = language.string("generic_none")
+            _settings = self.template.copy()
+        _settings["use_default"] = action == "enable"
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
-            length = len(leveling["ignored_channels"])
-            if length <= 48:
-                ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"])
-            else:
-                ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"][:45])
-                ignored += language.string("settings_leveling_ignored_many", val=language.number(length - 45))
-        embed.add_field(name=language.string("settings_leveling_ignored"), value=ignored, inline=False)
-        embed.add_field(name=language.string("settings_leveling_rewards"), value=language.string("settings_leveling_rewards2", p=ctx.prefix), inline=False)
-        return await ctx.send(embed=embed)
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_prefix_default" if action == "enable" else "settings_prefix_default2"))
+        # return await general.send(f"Default prefixes are now {'enabled' if t else 'disabled'} in this server.", ctx.channel)
 
-    @settings.group(name="leveling", aliases=["levels", "lvl"], case_insensitive=True, invoke_without_command=True)
+    @settings.group(name="leveling", aliases=["levels", "lvl"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["suager"])
-    async def set_lvl(self, ctx: commands.Context, _: str = None):
+    async def set_lvl(self, ctx: commands.Context):
         """ Leveling settings """
         if ctx.invoked_subcommand is None:
-            if _ is not None:
-                return await ctx.send_help(ctx.command)
-            return await self.settings_current_leveling(ctx)
-
-    async def leveling_toggle(self, ctx: commands.Context, toggle: bool):
-        """ Toggle the leveling system """
-        _settings, existent = await self.settings_start(ctx, "leveling")
-        _settings["leveling"]["enabled"] = toggle
-        output = "settings_leveling_enabled" if toggle else "settings_leveling_disabled"
-        return await self.settings_end(ctx, _settings, existent, output)
+            language = self.bot.language(ctx)
+            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+            if not data:
+                return await ctx.send(language.string("settings_none"))
+            setting = json.loads(data["data"])
+            if "leveling" not in setting:
+                return await ctx.send(language.string("settings_leveling_none"))
+            leveling = setting["leveling"]
+            embed = discord.Embed(colour=general.random_colour())
+            embed.title = language.string("settings_leveling", ctx.guild.name)
+            if ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+            embed.set_footer(text=language.string("settings_leveling_footer", p=ctx.prefix))
+            embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
+            embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
+            ac = leveling["announce_channel"]
+            if ac == -1:
+                embed.add_field(name=language.string("settings_leveling_announcements"), value=language.string("settings_current_disabled"), inline=False)
+            else:
+                if ac == 0:
+                    embed.add_field(name=language.string("settings_leveling_announcements"), value=language.string("settings_leveling_announcements_zero"), inline=False)
+                else:
+                    embed.add_field(name=language.string("settings_leveling_announcements"), value=f"<#{ac}>", inline=False)
+                message = f"{leveling['level_up_message'][:1021]}..." if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
+                embed.add_field(name=language.string("settings_leveling_message"), value=message, inline=False)
+                if "level_up_role" in leveling:
+                    if leveling["level_up_role"]:
+                        message = f"{leveling['level_up_role'][:1021]}..." if len(leveling["level_up_role"]) > 1024 else leveling["level_up_role"]
+                        embed.add_field(name=language.string("settings_leveling_message_role"), value=message, inline=False)
+                if "level_up_highest" in leveling:
+                    if leveling["level_up_highest"]:
+                        message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
+                        embed.add_field(name=language.string("settings_leveling_message_highest"), value=message, inline=False)
+                if "level_up_max" in leveling:
+                    if leveling["level_up_max"]:
+                        message = f"{leveling['level_up_max'][:1021]}..." if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
+                        embed.add_field(name=language.string("settings_leveling_message_max"), value=message, inline=False)
+            if not leveling["ignored_channels"]:
+                ignored = language.string("generic_none")
+            else:
+                length = len(leveling["ignored_channels"])
+                if length <= 48:
+                    ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"])
+                else:
+                    ignored = "\n".join(f"<#{channel}>" for channel in leveling["ignored_channels"][:45])
+                    ignored += language.string("settings_leveling_ignored_many", val=language.number(length - 45))
+            embed.add_field(name=language.string("settings_leveling_ignored"), value=ignored, inline=False)
+            embed.add_field(name=language.string("settings_leveling_rewards"), value=language.string("settings_leveling_rewards2", p=ctx.prefix), inline=False)
+            return await ctx.send(embed=embed)
 
     @set_lvl.command(name="enable")
     async def lvl_enable(self, ctx: commands.Context):
         """ Enable leveling """
-        return await self.leveling_toggle(ctx, True)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
+        _settings["leveling"]["enabled"] = True
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(self.bot.language(ctx).string("settings_leveling_enabled"))
+        # return await general.send("Leveling is now enabled.", ctx.channel)
 
     @set_lvl.command(name="disable")
     async def lvl_disable(self, ctx: commands.Context):
         """ Disable leveling """
-        return await self.leveling_toggle(ctx, False)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
+        _settings["leveling"]["enabled"] = False
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(self.bot.language(ctx).string("settings_leveling_disabled"))
+        # return await general.send("Leveling is now disabled.", ctx.channel)
 
     @set_lvl.command(name="multiplier", aliases=["mult"])
     async def lvl_multiplier(self, ctx: commands.Context, value: float):
         """ Set the XP gain multiplier """
-        _settings, existent = await self.settings_start(ctx, "leveling")
-        if value > 10:
-            return await ctx.send(ctx.language().string("settings_leveling_multiplier_max"))
-        if value < 0.04:  # Used to be 0.001, but bumped up to 0.04 so that you could get at least 1 XP at the 27 rate.
-            return await ctx.send(ctx.language().string("settings_leveling_multiplier_min"))
-        _settings["leveling"]["xp_multiplier"] = value
-        return await self.settings_end(ctx, _settings, existent, "settings_leveling_multiplier_set", value=ctx.language().number(value, precision=2))
-
-    @staticmethod
-    def format_leveling_message(ctx: commands.Context, value: str, language: "languages.Language", **kwargs):
-        """ Format the leveling message (since this happens in multiple places) """
-        return value \
-            .replace("[MENTION]", ctx.author.mention) \
-            .replace("[USER]", ctx.author.name) \
-            .replace("[LEVEL]", language.number(kwargs["level"])) \
-            .replace("[CURRENT_REWARD]", language.string("settings_leveling_reward_placeholder")) \
-            .replace("[CURRENT_REWARD_LEVEL]", language.number(kwargs["current_reward_level"])) \
-            .replace("[NEXT_REWARD]", language.string(kwargs["next_reward"])) \
-            .replace("[NEXT_REWARD_LEVEL]", language.number(kwargs["next_reward_level"])) \
-            .replace("[NEXT_REWARD_PROGRESS]", language.number(kwargs["next_reward_progress"])) \
-            .replace("[MAX_LEVEL]", language.number(max_level))
-
-    async def level_up_message_general(self, ctx: commands.Context, value: str, **kwargs):
-        """ For all level up message functions """
-        _settings, existent = await self.settings_start(ctx, "leveling")
         language = self.bot.language(ctx)
-        key = kwargs["key"]
-        # If a new message was not specified
-        if not value:
-            value = _settings["leveling"].get(key, None)
-            # If the message content is None or otherwise absent
-            if not value:
-                return await ctx.send(language.string(kwargs["output_none"]))
-            # If the message does exist
-            example = language.string("settings_leveling_message_example", formatted=self.format_leveling_message(ctx, value, language, **kwargs))
-            return await ctx.send(language.string(kwargs["output_current"], message=value+example), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
-        # If the message is "reset", reset back to the default value
-        if value.lower() == "reset":
-            _settings["leveling"][key] = self.template["leveling"][key]
-            return await self.settings_end(ctx, _settings, existent, kwargs["output_reset"])
-        # If a new message was specified
-        value = value.replace("\\n", "\n")
-        _settings["leveling"][key] = value
-        example = language.string("settings_leveling_message_example", formatted=self.format_leveling_message(ctx, value, language, **kwargs))
-        return await self.settings_end(ctx, _settings, existent, kwargs["output"], message=value+example)
+        if value > 10:
+            return await ctx.send(language.string("settings_leveling_multiplier_max"))
+            # return await general.send("The multiplier cannot be above 10.", ctx.channel)
+        if value < 0.04:  # Used to be 0.001, but bumped up to 0.04 so that you could get at least 1 XP at the 27 rate.
+            return await ctx.send(language.string("settings_leveling_multiplier_min"))
+            # return await general.send("The multiplier cannot be below 0.001.", ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
+        _settings["leveling"]["xp_multiplier"] = value
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_leveling_multiplier_set", value=language.number(value, precision=2)))
+        # return await general.send(f"The XP multiplier is now {value}", ctx.channel)
 
     @set_lvl.group(name="message", aliases=["msg"], invoke_without_command=True, case_insensitive=True)
-    async def lvl_message(self, ctx: commands.Context, *, value: str = None):
+    async def lvl_message(self, ctx: commands.Context, *, value: str):
         """ Set level up message
 
-        See `//settings leveling message variables` for the list of available variables
-        Use `//settings leveling message reset` to reset back to the default value """
+        See `//settings leveling message variables` for the list of available variables"""
         if ctx.invoked_subcommand is None:
-            return await self.level_up_message_general(ctx, value, **{
+            return await self.level_up_message_general(ctx, value, {
                 "key": "level_up_message",
                 "level": 17,
                 "current_reward_level": 15,
                 "next_reward": "settings_leveling_reward_placeholder2",
                 "next_reward_level": 20,
                 "next_reward_progress": 3,
-                "output": "settings_leveling_message_set",
-                "output_current": "settings_leveling_message_current",
-                "output_none": "settings_leveling_message_none",
-                "output_reset": "settings_leveling_message_reset"
+                "output": "settings_leveling_message_set"
             })
 
     @lvl_message.command(name="newrole", aliases=["newreward", "nr"])
-    async def level_up_message_new_role(self, ctx: commands.Context, *, value: str = None):
-        """ Add a custom level up message when the user has achieved a new level reward
-
-        Use `//settings leveling message newrole reset` to remove the custom message for this scenario """
-        return await self.level_up_message_general(ctx, value, **{
+    async def level_up_message_new_role(self, ctx: commands.Context, *, value: str):
+        """ Add a custom level up message when the user has achieved a new level reward """
+        return await self.level_up_message_general(ctx, value, {
             "key": "level_up_role",
             "level": 10,
             "current_reward_level": 10,
             "next_reward": "settings_leveling_reward_placeholder2",
             "next_reward_level": 15,
             "next_reward_progress": 5,
-            "output": "settings_leveling_message_set2",
-            "output_current": "settings_leveling_message_current2",
-            "output_none": "settings_leveling_message_none2",
-            "output_reset": "settings_leveling_message_reset2"
+            "output": "settings_leveling_message_set4"
         })
 
     @lvl_message.command(name="highestrole", aliases=["hr"])
-    async def level_up_message_highest_role(self, ctx: commands.Context, *, value: str = None):
-        """ Add a custom level up message when the user has achieved the highest available level reward
-
-        Use `//settings leveling message highestrole reset` to remove the custom message for this scenario """
-        return await self.level_up_message_general(ctx, value, **{
+    async def level_up_message_highest_role(self, ctx: commands.Context, *, value: str):
+        """ Add a custom level up message when the user has achieved the highest available level reward """
+        return await self.level_up_message_general(ctx, value, {
             "key": "level_up_highest",
             "level": 175,
             "current_reward_level": 150,
             "next_reward": "leveling_rewards_max",
             "next_reward_level": max_level,
             "next_reward_progress": max_level - 175,
-            "output": "settings_leveling_message_set3",
-            "output_current": "settings_leveling_message_current3",
-            "output_none": "settings_leveling_message_none3",
-            "output_reset": "settings_leveling_message_reset3"
+            "output": "settings_leveling_message_set2"
         })
 
     @lvl_message.command(name="highestlevel", aliases=["hl", "max", str(max_level)])
-    async def level_up_message_highest_level(self, ctx: commands.Context, *, value: str = None):
-        """ Add a custom level up message when the user has reached the max level
-
-        Use `//settings leveling message highestlevel reset` to remove the custom message for this scenario """
-        return await self.level_up_message_general(ctx, value, **{
+    async def level_up_message_highest_level(self, ctx: commands.Context, *, value: str):
+        """ Add a custom level up message when the user has reached the max level """
+        return await self.level_up_message_general(ctx, value, {
             "key": "level_up_max",
             "level": 200,
             "current_reward_level": 150,
             "next_reward": "leveling_rewards_max",
             "next_reward_level": max_level,
             "next_reward_progress": 0,
-            "output": "settings_leveling_message_set4",
-            "output_current": "settings_leveling_message_current4",
-            "output_none": "settings_leveling_message_none4",
-            "output_reset": "settings_leveling_message_reset4"
+            "output": "settings_leveling_message_set3"
         })
+
+    async def level_up_message_general(self, ctx: commands.Context, value: str, variables: dict):
+        """ For all level up message functions """
+        key = variables["key"]
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
+        value = value.replace("\\n", "\n")
+        _settings["leveling"][key] = value
+        message2 = value \
+            .replace("[MENTION]", ctx.author.mention) \
+            .replace("[USER]", ctx.author.name) \
+            .replace("[LEVEL]", language.number(variables["level"])) \
+            .replace("[CURRENT_REWARD]", language.string("settings_leveling_reward_placeholder")) \
+            .replace("[CURRENT_REWARD_LEVEL]", language.number(variables["current_reward_level"])) \
+            .replace("[NEXT_REWARD]", language.string(variables["next_reward"])) \
+            .replace("[NEXT_REWARD_LEVEL]", language.number(variables["next_reward_level"])) \
+            .replace("[NEXT_REWARD_PROGRESS]", language.number(variables["next_reward_progress"])) \
+            .replace("[MAX_LEVEL]", language.number(max_level))
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string(variables["output"], message=value, formatted=message2))
 
     @lvl_message.command(name="variables", aliases=["vars"])
     async def level_up_message_variables(self, ctx: commands.Context):
@@ -673,58 +679,105 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(str(ctx.command))
 
-    @lvl_ignored.command(name="add", aliases=["a", "+"])
+    @lvl_ignored.command(name="add")
     async def ic_add(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Disable XP gain in a channel """
-        _settings, existent = await self.settings_start(ctx, "leveling")
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
         if channel.id in _settings["leveling"]["ignored_channels"]:
-            return await ctx.send(ctx.language().string("settings_leveling_ignored_already", channel=channel.mention))
+            return await ctx.send(language.string("settings_leveling_ignored_already", channel=channel.mention))
+            # return await general.send(f"Leveling is already disabled in {channel.mention}", ctx.channel)
         _settings["leveling"]["ignored_channels"].append(channel.id)
-        return await self.settings_end(ctx, _settings, existent, "settings_leveling_ignored_add", channel=channel.mention)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_leveling_ignored_add", channel=channel.mention))
+        # return await general.send(f"Leveling will now be disabled in {channel.mention}", ctx.channel)
 
-    @lvl_ignored.command(name="remove", aliases=["delete", "r", "d", "-"])
+    @lvl_ignored.command(name="remove")
     async def ic_remove(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Enable XP gain in a channel """
-        _settings, existent = await self.settings_start(ctx, "leveling")
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
         try:
             _settings["leveling"]["ignored_channels"].remove(channel.id)
         except ValueError:
-            return await ctx.send(ctx.language().string("settings_leveling_ignored_already2", channel=channel.mention))
-        return await self.settings_end(ctx, _settings, existent, "settings_leveling_ignored_remove", channel=channel.mention)
+            return await ctx.send(language.string("settings_leveling_ignored_already2", channel=channel.mention))
+            # return await general.send(f"Leveling is already enabled in {channel.mention}", ctx.channel)
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_leveling_ignored_remove", channel=channel.mention))
+        # return await general.send(f"Leveling is now enabled in {channel.mention}", ctx.channel)
 
     @set_lvl.group(name="announcements", aliases=["announcement", "ac"], invoke_without_command=True, case_insensitive=True)
     async def lvl_announcements(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set level up announcement channel
 
         Type a channel to set the channel as the level up channel
-        Type "default" to make level ups announced where the level up occurs
+        Don't type a channel to make level ups announced where the level up occurs
         Type "disable" to disable level up announcements altogether"""
         if ctx.invoked_subcommand is None:
-            _settings, existent = await self.settings_start(ctx, "leveling")
+            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+            if data:
+                _settings = json.loads(data["data"])
+            else:
+                _settings = self.template.copy()
+            if "leveling" not in _settings:
+                _settings["leveling"] = self.template["leveling"].copy()
+                _settings["leveling"]["rewards"] = []
             if channel is None:
-                _channel = _settings["leveling"]["announce_channel"]
-                if _channel == -1:
-                    return await ctx.send(ctx.language().string("settings_leveling_announcements_disabled2"))
-                elif _channel == 0:
-                    return await ctx.send(ctx.language().string("settings_leveling_announcements_zero2"))
-                return await ctx.send(ctx.language().string("settings_leveling_announcements_set2", channel=f"<#{_channel}>"))
+                _settings["leveling"]["announce_channel"] = 0
             else:
                 _settings["leveling"]["announce_channel"] = channel.id
-                return await self.settings_end(ctx, _settings, existent, "settings_leveling_announcements_set", channel=channel.mention)
-
-    @lvl_announcements.command(name="default", assets=["reset"])
-    async def lvl_announcements_default(self, ctx: commands.Context):
-        """ Make level up announcements show up in the channel where they occur """
-        _settings, existent = await self.settings_start(ctx, "leveling")
-        _settings["leveling"]["announce_channel"] = 0
-        return await self.settings_end(ctx, _settings, existent, "settings_leveling_announcements_none")
+            stuff = json.dumps(_settings)
+            if data:
+                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+            else:
+                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+            if channel is not None:
+                return await ctx.send(self.bot.language(ctx).string("settings_leveling_announcements_set", channel=channel.mention))
+                # return await general.send(f"Level ups will now be announced in {channel.mention}", ctx.channel)
+            else:
+                return await ctx.send(self.bot.language(ctx).string("settings_leveling_announcements_none"))
+                # return await general.send(f"Level ups will now be announced where they happen", ctx.channel)
 
     @lvl_announcements.command(name="disable")
     async def lvl_announcements_disable(self, ctx: commands.Context):
         """ Disable level up announcements """
-        _settings, existent = await self.settings_start(ctx, "leveling")
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
         _settings["leveling"]["announce_channel"] = -1
-        return await self.settings_end(ctx, _settings, existent, "settings_leveling_announcements_disabled")
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(self.bot.language(ctx).string("settings_leveling_announcements_disabled"))
 
     @set_lvl.group(name="rewards", aliases=["rr", "lr"], case_insensitive=True)
     async def lvl_rewards(self, ctx: commands.Context):
@@ -733,38 +786,67 @@ class Settings(commands.Cog):
             # return await level_rewards(self, ctx)
             return await ctx.send_help(str(ctx.command))
 
-    @lvl_rewards.command(name="add", aliases=["new", "a", "+"])
+    @lvl_rewards.command(name="add", aliases=["a", "+"])
     async def level_rewards_add(self, ctx: commands.Context, role: discord.Role, level: int):
         """ Add a level reward """
-        _settings, existent = await self.settings_start(ctx, "leveling")
-        language = ctx.language()
+        language = self.bot.language(ctx)
         if level > max_level or level <= -max_level:
             return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
+            # return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
         if role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
+            # return await general.send("You can't award the default role", ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
         except KeyError:
             rr = []
+        # roles = [i["role"] for i in rr]
+        # if role.id in roles:
         for reward in rr:
             if role.id == reward["role"]:
                 return await ctx.send(language.string("settings_leveling_rewards_already_role", level=language.number(reward["level"]), p=ctx.prefix))
             if level == reward["level"]:
                 role = ctx.guild.get_role(reward["role"])
                 return await ctx.send(language.string("settings_leveling_rewards_already_level", role=role, p=ctx.prefix))
+            # return await general.send("This role is already rewarded", ctx.channel)
+        # levels = [i["level"] for i in rr]
+        # if level in levels:
+        #     return await general.send("There is already a reward for this level", ctx.channel)
         rr.append({"level": level, "role": role.id})
         _settings["leveling"]["rewards"] = rr
-        return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_add", role=role.name, level=language.number(level))
+        stuff = json.dumps(_settings)
+        if data:
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        else:
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+        return await ctx.send(language.string("settings_leveling_rewards_add", role=role.name, level=language.number(level)))
+        # return await general.send(f"The role {role.name} will now be rewarded at level {level:,}", ctx.channel)
 
-    @lvl_rewards.command(name="remove", aliases=["delete", "del", "r", "-"])
+    @lvl_rewards.command(name="remove", aliases=["r", "-"])
     async def level_rewards_remove(self, ctx: commands.Context, role: discord.Role):
         """ Remove a role reward """
-        _settings, existent = await self.settings_start(ctx, "leveling")
-        language = ctx.language()
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
         except KeyError:
             return await ctx.send(language.string("settings_leveling_rewards_none"))
+            # return await general.send("There are no level rewards right now anyway", ctx.channel)
         r = False
         for _role in rr:
             if _role["role"] == role.id:
@@ -773,19 +855,34 @@ class Settings(commands.Cog):
                 break
         if r:
             _settings["leveling"]["rewards"] = rr
-            return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_remove", role=role.name)
+            stuff = json.dumps(_settings)
+            if data:
+                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+            else:
+                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+            return await ctx.send(language.string("settings_leveling_rewards_remove", role=role.name))
+            # return await general.send(f"The role {role.name} will no longer be rewarded", ctx.channel)
         else:
             return await ctx.send(language.string("settings_leveling_rewards_not_found", role=role.name))
+            # return await general.send(f"The role {role.name} was not removed from the level rewards list.", ctx.channel)
 
-    @lvl_rewards.command(name="cleanup", aliases=["c"])
+    @lvl_rewards.command(name="deleted", aliases=["del", "d"])
     async def level_rewards_deleted(self, ctx: commands.Context):
         """ Remove roles that no longer exist from the role rewards """
-        _settings, existent = await self.settings_start(ctx, "leveling")
-        language = ctx.language()
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            _settings = self.template.copy()
+        if "leveling" not in _settings:
+            _settings["leveling"] = self.template["leveling"].copy()
+            _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
         except KeyError:
             return await ctx.send(language.string("settings_leveling_rewards_none"))
+            # return await general.send("There are no level rewards right now anyway", ctx.channel)
         removed = 0
         roles = [role.id for role in await ctx.guild.fetch_roles()]  # Get IDs of all roles in a server
         for _role in rr:
@@ -794,19 +891,39 @@ class Settings(commands.Cog):
                 removed += 1
         if removed > 0:
             _settings["leveling"]["rewards"] = rr
-            return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_deleted", value=language.number(removed))
+            stuff = json.dumps(_settings)
+            if data:
+                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+            else:
+                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+            return await ctx.send(language.string("settings_leveling_rewards_deleted", value=language.number(removed)))
+            # return await general.send(f"Removed {removed} roles from the level rewards list.", ctx.channel)
         else:
             return await ctx.send(language.string("settings_leveling_rewards_deleted_none"))
+            # return await general.send("No deleted roles were found. Nothing has changed", ctx.channel)
 
     @lvl_rewards.command(name="editrole", aliases=["er"])
     async def level_rewards_edit_role(self, ctx: commands.Context, level: int, new_role: discord.Role):
         """ Change what role is awarded at a certain level """
-        _settings, existent = await self.settings_start(ctx, "leveling")
         language = self.bot.language(ctx)
         if level > max_level or level <= -max_level:
             return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
+            # return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
         if new_role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
+            # return await general.send("You can't award the default role", ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            return await ctx.send(language.string("settings_leveling_rewards_none"))
+            # return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings = settings.template.copy()
+        if "leveling" not in _settings:
+            return await ctx.send(language.string("settings_leveling_rewards_none"))
+            # return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings["leveling"] = settings.template["leveling"].copy()
+            # _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
         except KeyError:
@@ -814,6 +931,7 @@ class Settings(commands.Cog):
         roles = [i["role"] for i in rr]
         if new_role.id in roles:
             return await ctx.send(language.string("settings_leveling_rewards_already_role2", p=ctx.prefix))
+            # return await general.send("This role is already rewarded", ctx.channel)
         u = False
         for i, reward in enumerate(rr):
             if level == reward["level"]:
@@ -822,19 +940,36 @@ class Settings(commands.Cog):
                 break
         if u:
             _settings["leveling"]["rewards"] = rr
-            return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_edit", role=new_role.name, level=language.number(level))
+            stuff = json.dumps(_settings)
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+            return await ctx.send(language.string("settings_leveling_rewards_edit", role=new_role.name, level=language.number(level)))
+            # return await general.send(f"The role {new_role.name} will now be rewarded at level {level:,}", ctx.channel)
         else:
             return await ctx.send(language.string("settings_leveling_rewards_edit_fail", level=language.number(level)))
+            # return await general.send("I don't think that worked... There might be no reward at the specified level.", ctx.channel)
 
     @lvl_rewards.command(name="editlevel", aliases=["el"])
     async def level_rewards_edit_level(self, ctx: commands.Context, role: discord.Role, new_level: int):
         """ Change at which level the role is awarded """
-        _settings, existent = await self.settings_start(ctx, "leveling")
         language = self.bot.language(ctx)
         if new_level > max_level or new_level <= -max_level:
             return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
+            # return await general.send(f"The level cannot be above the max level ({max_level:,})", ctx.channel)
         if role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
+            # return await general.send("You can't award the default role", ctx.channel)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if data:
+            _settings = json.loads(data["data"])
+        else:
+            return await ctx.send(language.string("settings_leveling_rewards_none"))
+            # return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings = settings.template.copy()
+        if "leveling" not in _settings:
+            return await ctx.send(language.string("settings_leveling_rewards_none"))
+            # return await general.send("You don't seem to have any role rewards to begin with...", ctx.channel)
+            # _settings["leveling"] = settings.template["leveling"].copy()
+            # _settings["leveling"]["rewards"] = []
         try:
             rr = _settings["leveling"]["rewards"]
         except KeyError:
@@ -842,6 +977,7 @@ class Settings(commands.Cog):
         levels = [i["level"] for i in rr]
         if new_level in levels:
             return await ctx.send(language.string("settings_leveling_rewards_already_level2", p=ctx.prefix))
+            # return await general.send("There is already a reward for this level", ctx.channel)
         u = False
         for i, r in enumerate(rr):
             if role.id == r["role"]:
@@ -850,9 +986,13 @@ class Settings(commands.Cog):
                 break
         if u:
             _settings["leveling"]["rewards"] = rr
-            return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_edit", role=role.name, level=language.number(new_level))
+            stuff = json.dumps(_settings)
+            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+            return await ctx.send(language.string("settings_leveling_rewards_edit", role=role.name, level=language.number(new_level)))
+            # return await general.send(f"The role {role.name} will now be rewarded at level {new_level:,}", ctx.channel)
         else:
             return await ctx.send(language.string("settings_leveling_rewards_edit_fail2", role=role.name))
+            # return await general.send("I don't think that worked... Maybe the role is not awarded at all.", ctx.channel)
 
     @settings.command(name="muterole", aliases=["mutedrole", "muted", "mute"])
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
@@ -1973,7 +2113,7 @@ class Settings(commands.Cog):
                 _settings["image_only"]["channels"].remove(channel.id)
                 output = language.string("settings_image_only_channel_remove", channel=channel.mention)
             except ValueError:
-                return await ctx.send(language.string("settings_image_only_channel_invalid3"))
+                return await ctx.send(language.string("settings_image_only_channel_invalid"))
         else:
             if channel.id in _settings["image_only"]["channels"]:  # Channel was already added before
                 return await ctx.send(language.string("settings_image_only_channel_already"))

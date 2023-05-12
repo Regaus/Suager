@@ -603,7 +603,7 @@ class Events(commands.Cog):
                     enabled: bool = logs_settings.get("enabled", False)
                     if not enabled:
                         return
-                    delete_id: int = logs_settings.get("delete", 0)
+                    delete_id: int = logs_settings.get("edit", 0)
                     if delete_id == 0:
                         return
                     ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
