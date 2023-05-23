@@ -65,3 +65,6 @@
 
 ## v1.2.1.7 - 12 May 2023
 - Added Huskie's Generous Cabin
+
+## v1.2.1.8 - 23 May 2023
+- Added "Mr.Dan Fan Club"
