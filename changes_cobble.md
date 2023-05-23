@@ -706,3 +706,7 @@
 - Added new Kargadian first names
 - Updated spellings of several male parent names
 - Added 3 new places to the Kargadian time channel
+
+## v1.8.9 - 18-19 May 2023
+- Added Kaltelan (North Regaazdallian) language to the name generator
+- Updated word-mix surnames for Nuunvallian (Central Regaazdallian) and updated the spellings for a few others
