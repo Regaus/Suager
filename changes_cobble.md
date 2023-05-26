@@ -710,3 +710,8 @@
 ## v1.8.9 - 18-19 May 2023
 - Added Kaltelan (North Regaazdallian) language to the name generator
 - Updated word-mix surnames for Nuunvallian (Central Regaazdallian) and updated the spellings for a few others
+
+## v1.8.10 - 26 May 2023
+- Once again updated spellings for names and surnames
+- Reduced duplicates in the first names pool
+- Added Munearan and Kovanerran names

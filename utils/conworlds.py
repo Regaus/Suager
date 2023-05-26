@@ -30,7 +30,7 @@ weights = [int(open(join(path, f) + ".json").readline().rstrip().removeprefix("/
 all_available_names: dict[str, dict[str, list[str]]] = {lang: jstyleson.loads(open(join(path, lang) + ".json", encoding="utf-8").read()) for lang in available_languages}
 
 
-def citizen_generator(language: str = None, name_only: bool = False) -> tuple[str, str] | dict[str, str | time.datetime]:
+def generate_citizen(language: str = None, name_only: bool = False) -> tuple[str, str] | dict[str, str | time.datetime]:
     """ Generate a Kargadian name in the given language (or random) """
     random.seed()  # For some reason, something was interfering with the randomness, but we can fix that by calling this
     if language is None:  # If the language is not specified, use a random language that has its naming system specified
@@ -146,7 +146,7 @@ def generate_citizen_names(language: str) -> str:
     try:
         names = []
         for i in range(10):
-            name, gender = citizen_generator(language, name_only=True)
+            name, gender = generate_citizen(language, name_only=True)
             names.append(f"`{name}` ({gender.title()})")
         return "Here are some Kargadian names for you:\n" + "\n".join(names)
     except KeyError:
@@ -156,7 +156,7 @@ def generate_citizen_names(language: str) -> str:
 async def generate_citizen_embed(ctx, citizen_language: str) -> discord.Embed:
     """ Generate an Embed with a Kargadian citizen """
     try:
-        citizen = citizen_generator(citizen_language, name_only=False)
+        citizen = generate_citizen(citizen_language, name_only=False)
     except KeyError:
         # Technically this can be called by the button Interaction and fail by AttError,
         # but I think we can just ignore this for now
