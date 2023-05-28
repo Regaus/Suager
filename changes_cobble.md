@@ -715,3 +715,6 @@
 - Once again updated spellings for names and surnames
 - Reduced duplicates in the first names pool
 - Added Munearan and Kovanerran names
+
+## v1.8.11 - 27-28 May 2023
+- Added Vaidanvallian names
