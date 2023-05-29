@@ -718,3 +718,6 @@
 
 ## v1.8.11 - 27-28 May 2023
 - Added Vaidanvallian names
+
+## v1.8.12 - 28-29 May 2023
+- Added Kaltanazdallian names
