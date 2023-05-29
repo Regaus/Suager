@@ -26,7 +26,7 @@ birthday_random /= max(birthday_random)  # Make the max value 1
 # This can also be used to exclude invalid languages
 path = join("languages", "names")
 available_languages = [f.removesuffix(".json") for f in listdir(path) if isfile(join(path, f))]
-weights = [int(open(join(path, f) + ".json").readline().rstrip().removeprefix("// Weight: ")) for f in available_languages]
+weights = [int(open(join(path, f) + ".json", encoding="utf-8").readline().rstrip().removeprefix("// Weight: ")) for f in available_languages]
 all_available_names: dict[str, dict[str, list[str]]] = {lang: jstyleson.loads(open(join(path, lang) + ".json", encoding="utf-8").read()) for lang in available_languages}
 
 
