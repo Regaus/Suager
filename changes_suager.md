@@ -1575,4 +1575,5 @@
 - Made the level up announcements setting only reset when explicitly stated
 - Renamed some level reward commands to make more sense
 
-## v7.7.0a2 - 12-xx May 2023
+## v7.7.0a2 - 31 May 2023
+- The `//embed` command's description now tells you to use `\n` for newlines

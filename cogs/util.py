@@ -712,6 +712,7 @@ class Utility(commands.Cog):
         -c/--colour: A hex code for embed's colour
 
         All of the arguments are optional, so if you don't fill them they will simply be empty.
+        Use "\n" to add newlines - The current implementation of the code doesn't insert them otherwise
         Example: //embed --title Good evening --description Some very interesting text --colour ff0057"""
         embed = discord.Embed()
         parser = arg_parser.Arguments()

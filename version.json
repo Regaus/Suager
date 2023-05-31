@@ -15,10 +15,10 @@
   },
   "kyomi": {
     "short_version": "1.3",
-    "version": "1.3.8",
+    "version": "1.4.0a2",
     "first_version": 1623891776,
     "major_release": 1642621994,
-    "last_update": 1681611935
+    "last_update": 1685555872
   },
   "kyomi2": {
     "short_version": "1.0",
