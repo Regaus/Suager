@@ -1577,3 +1577,4 @@
 
 ## v7.7.0a2 - 31 May 2023
 - The `//embed` command's description now tells you to use `\n` for newlines
+- Social commands now only trigger the "only" response if the difference in counters is more than 20% of the sum
