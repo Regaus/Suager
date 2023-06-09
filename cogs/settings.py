@@ -555,7 +555,7 @@ class Settings(commands.Cog):
         """ Format the leveling message (since this happens in multiple places) """
         return value \
             .replace("[MENTION]", ctx.author.mention) \
-            .replace("[USER]", ctx.author.name) \
+            .replace("[USER]", general.username(ctx.author)) \
             .replace("[LEVEL]", language.number(kwargs["level"])) \
             .replace("[CURRENT_REWARD]", language.string("settings_leveling_reward_placeholder")) \
             .replace("[CURRENT_REWARD_LEVEL]", language.number(kwargs["current_reward_level"])) \
@@ -1493,7 +1493,7 @@ class Settings(commands.Cog):
             _settings["welcome"]["message"] = value
             message2 = value \
                 .replace("[MENTION]", ctx.author.mention)\
-                .replace("[USER]", ctx.author.name)\
+                .replace("[USER]", general.username(ctx.author))\
                 .replace("[SERVER]", ctx.guild.name)\
                 .replace("[CREATED_AT]", language.time(ctx.author.created_at, short=1, dow=False, seconds=False, tz=True))\
                 .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=True))\
@@ -1558,7 +1558,7 @@ class Settings(commands.Cog):
             _settings["goodbye"]["message"] = value
             message2 = value \
                 .replace("[MENTION]", ctx.author.mention)\
-                .replace("[USER]", ctx.author.name)\
+                .replace("[USER]", general.username(ctx.author))\
                 .replace("[SERVER]", ctx.guild.name)\
                 .replace("[CREATED_AT]", language.time(ctx.author.created_at, short=1, dow=False, seconds=False, tz=True))\
                 .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=True))\
@@ -1994,7 +1994,7 @@ class Settings(commands.Cog):
         language = self.bot.language(ctx)
         dp, cp = self.prefix_list(ctx)
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("settings_prefixes_title", bot=self.bot.user.name, server=ctx.guild.name)
+        embed.title = language.string("settings_prefixes_title", bot=self.bot.user.display_name, server=ctx.guild.name)
         # embed.title = f"Prefixes for {self.bot.user.name} in {ctx.guild.name}"
         if ctx.guild.icon:
             embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))

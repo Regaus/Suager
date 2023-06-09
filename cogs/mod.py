@@ -296,7 +296,7 @@ class Moderation(commands.Cog):
         elif member.top_role.position >= ctx.guild.me.top_role.position:  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_kick_forbidden2", member=member)
         elif member.id == self.bot.user.id:
-            return language.string("mod_ban_suager", author=ctx.author.name)
+            return language.string("mod_ban_suager", author=general.username(ctx.author))
         return True
 
     async def kick_user(self, ctx: commands.Context, member: discord.Member, reason: str):
@@ -373,7 +373,7 @@ class Moderation(commands.Cog):
         elif member is not None and (member.top_role.position >= ctx.guild.me.top_role.position):  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_ban_forbidden2", member=member)
         elif user == self.bot.user.id:
-            return language.string("mod_ban_suager", author=ctx.author.name)
+            return language.string("mod_ban_suager", author=general.username(ctx.author))
         return True
 
     @staticmethod
@@ -958,8 +958,8 @@ class Moderation(commands.Cog):
         # This also has the side effect of showing active permanent warnings first, as their "expiry" value is set to the time the mute was issued, which is in the past.
         warns = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='warn' AND handled=0 ORDER BY expiry", (member.id, ctx.guild.id))
         if not warns:
-            return await ctx.send(language.string("mod_warn_list_none", user=member.name))
-        output = language.string("mod_warn_list", user=member.name, server=ctx.guild.name)
+            return await ctx.send(language.string("mod_warn_list_none", user=general.username(member)))
+        output = language.string("mod_warn_list", user=general.username(member), server=ctx.guild.name)
         outputs = []
         for item, warning in enumerate(warns, start=1):
             text = general.reason(ctx.guild.get_member(warning["author"]), warning["reason"])
@@ -990,8 +990,8 @@ class Moderation(commands.Cog):
         # Show all actions taken against the user, in chronological order (ie. sorted by punishment ID)
         punishments = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? ORDER BY id", (member.id, ctx.guild.id))
         if not punishments:
-            return await ctx.send(language.string("mod_log_none", user=member.name))
-        output = language.string("mod_log", user=member.name, server=ctx.guild.name)
+            return await ctx.send(language.string("mod_log_none", user=general.username(member)))
+        output = language.string("mod_log", user=general.username(member), server=ctx.guild.name)
         outputs = []
         for item, entry in enumerate(punishments, start=1):
             author = ctx.guild.get_member(entry["author"])
@@ -1226,7 +1226,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
                 return await ctx.send(language.string("mod_nick_owner"))
             if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
                 return await ctx.send(language.string("mod_nick_forbidden2"))
-            name = name or member.name
+            name = name or general.username(member)
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
@@ -1247,7 +1247,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
         try:
             if ctx.author.id == ctx.guild.owner.id:
                 return await ctx.send(language.string("mod_nick_owner"))
-            name = name or ctx.author.name
+            name = name or general.username(ctx.author)
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
@@ -1271,7 +1271,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
             if ctx.author.id == ctx.guild.owner.id:
                 return await ctx.send(language.string("mod_nick_owner"))
             _design, length = self.designs[design - 1].split(" // ")
-            name = _design.replace('<nick>', ctx.author.name[:int(length)])
+            name = _design.replace('<nick>', general.username(ctx.author)[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             message = language.string("mod_nick_self", name=name)
             return await ctx.send(message)
@@ -1289,7 +1289,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
         output = "Here are the designs available in Midnight Dessert:\n\n"
         for i, _design in enumerate(self.designs, start=1):
             design, length = _design.split(" // ")
-            output += f"{i}) {design.replace('<nick>', ctx.author.name[:int(length)])}\n"
+            output += f"{i}) {design.replace('<nick>', general.username(ctx.author)[:int(length)])}\n"
         output += "\nUse `m!nickdesigns` to see the nicknames applied to your username\n" \
                   "\nUse `m!nickdesign <design_number>` to apply a design to your name\n" \
                   "  - Note: This command will use your username (and therefore reset any nickname you have)\n" \
@@ -1297,7 +1297,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
                   "  - Example: `m!nickdesign 7`\n" \
                   "\nUse `m!nickme <design_number> <nickname>` to apply a design to a nickname of your choice\n" \
                   "  - Note: Requires permission to change your nickname\n" \
-                  f"  - Example: `m!nickme 7 {ctx.author.name}`\n" \
+                  f"  - Example: `m!nickme 7 {general.username(ctx.author)}`\n" \
                   "\nNote: If you boost this server, you will get a special nickname design. It is not included here, " \
                   "so if you change it, only the admins will be able to change it back.\n" \
                   "\nWarning: these designs are NF2U, you may not copy these for your own servers."

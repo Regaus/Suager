@@ -94,7 +94,7 @@ class Starboard(commands.Cog):
             async def send_starboard_message():
                 embed = discord.Embed(colour=0xffff00)
                 author = _message.author
-                author_name = author.name
+                author_name = general.username(author)
                 author_url = str(author.display_avatar.replace(size=64, format="png"))
                 embed.set_author(name=author_name, icon_url=author_url)
                 embed.description = _message.content
@@ -370,7 +370,7 @@ class Starboard(commands.Cog):
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, user.id, self.bot.name))
             if not data:
-                return await ctx.send(language.number("starboard_stats_none2", user=user.name))
+                return await ctx.send(language.number("starboard_stats_none2", user=general.username(user)))
             stars = 0
             top = []
             for i, message in enumerate(data):
@@ -379,7 +379,7 @@ class Starboard(commands.Cog):
                     top.append(message)
                 stars += message["stars"]
             # embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
-            embed.title = language.string("starboard_stats_user", user=user, server=ctx.guild.name)
+            embed.title = language.string("starboard_stats_user", user=general.username(user), server=ctx.guild.name)
             # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
             embed.description = language.string("starboard_stats_user_desc", stars=language.number(stars), messages=language.number(len(data)))
             embed.set_thumbnail(url=str(user.display_avatar))

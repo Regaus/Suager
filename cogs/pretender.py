@@ -102,7 +102,7 @@ class Pretender(commands.Cog):
                 except discord.NotFound:
                     continue
 
-            embed.add_field(name=f"#{index} - {str(user)}", value=f"**{count}** uses", inline=False)
+            embed.add_field(name=f"#{index} - {general.username(user)}", value=f"**{count}** uses", inline=False)
 
             if index == 10:  # 10th place
                 break
@@ -127,7 +127,7 @@ class Pretender(commands.Cog):
         def check(reaction, user):
             return user == ctx.author and str(reaction.emoji) == "✅"
 
-        message = await ctx.send(f"{ctx.author.name}, Are you sure you want to opt out?\n"
+        message = await ctx.send(f"{general.username(ctx.author)}, Are you sure you want to opt out?\n"
                                  f"All your saved messages will be deleted from the database. "
                                  f"You may opt back in at any time, but the messages cannot be restored.\n"
                                  f"The impersonate command can still be used on you, but it will only use others' messages.\n"
@@ -162,7 +162,7 @@ class Pretender(commands.Cog):
                 # If we can't delete the ctx message, then so be it, just tell the user about it
                 await ctx.send("Failed to delete original message...", delete_after=5)
 
-            await webhook.send(message, username=victim.name, avatar_url=str(victim.display_avatar), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
+            await webhook.send(message, username=victim.display_name, avatar_url=str(victim.display_avatar), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
         except Exception as e:
             raise e
         finally:

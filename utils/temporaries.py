@@ -314,7 +314,7 @@ async def birthdays(bot: bot_data.Bot):
                                 # dm = False
                                 if data[1] and data[2]:
                                     channel: discord.TextChannel = guild.get_channel(data[1])
-                                    message = data[2].replace("[MENTION]", user.mention).replace("[USER]", user.name)
+                                    message = data[2].replace("[MENTION]", user.mention).replace("[USER]", general.username(user))
                                     try:
                                         await channel.send(message)
                                         print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")

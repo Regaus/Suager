@@ -1578,3 +1578,10 @@
 ## v7.7.0a2 - 31 May 2023
 - The `//embed` command's description now tells you to use `\n` for newlines
 - Social commands now only trigger the "only" response if the difference in counters is more than 20% of the sum
+
+## v7.7.0a3 - 8 June 2023
+- Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
+- Updated most commands to use display names in the output, where it makes sense to
+- The leveling leaderboard will show both the display name and username for updated users
+- Fixed Kargadian incorrectly declining "Regaus" in the lowercase
+- Hid the `//russia` command

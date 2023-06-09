@@ -137,7 +137,7 @@ class Leveling(commands.Cog):
             output = ""
             for key, name in names.items():
                 output += f"\n`{name:<9} -> {level_history[key][level - 1]:>9,.0f} XP`"
-            return await ctx.send(f"{ctx.author.name}, for **level {level}** you would've needed:{output}")
+            return await ctx.send(f"{general.username(ctx.author)}, for **level {level}** you would've needed:{output}")
         else:
             xp_ = self.bot.db.fetchrow(f"SELECT xp FROM leveling WHERE uid=? AND gid=? AND bot=?", (ctx.author.id, ctx.guild.id, self.bot.name))
             xp = xp_["xp"] if xp_ else 0
@@ -150,7 +150,7 @@ class Leveling(commands.Cog):
                     else:
                         break
                 output += f"\n`{name:<9} -> Level {level:>3}`"
-            return await ctx.send(f"{ctx.author.name}, you have **{xp:,} XP** in this server. Here are the levels you would have been on in the older leveling systems:{output}")
+            return await ctx.send(f"{general.username(ctx.author)}, you have **{xp:,} XP** in this server. Here are the levels you would have been on in the older leveling systems:{output}")
 
     @commands.Cog.listener()
     async def on_message(self, ctx: discord.Message):
@@ -301,7 +301,7 @@ class Leveling(commands.Cog):
         except AttributeError:  # This means a role was deleted and somehow didn't get skipped...
             pass
         except discord.Forbidden:
-            await ctx.send(f"{ctx.author.name} should receive a level reward right now, but I don't have permissions required to give it.")
+            await ctx.send(f"{general.username(ctx.author)} should receive a level reward right now, but I don't have permissions required to give it.")
         except Exception as e:
             out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
             general.print_error(out)
@@ -328,7 +328,7 @@ class Leveling(commands.Cog):
                 # This allows to fall back to the default level up message if the highest/max one isn't available
                 send = level_up_message\
                     .replace("[MENTION]", ctx.author.mention)\
-                    .replace("[USER]", ctx.author.name)\
+                    .replace("[USER]", general.username(ctx.author))\
                     .replace("[LEVEL]", language.number(level * _af))\
                     .replace("[CURRENT_REWARD]", current_reward["role"])\
                     .replace("[CURRENT_REWARD_LEVEL]", language.number(current_reward["level"] * _af))\
@@ -359,13 +359,18 @@ class Leveling(commands.Cog):
         # Save data
         last_send = last if dc else now
         minute = now if full else ls
+        if int(ctx.author.discriminator) == 0:
+            name = f"{general.username(ctx.author)} ({ctx.author.name})"
+        else:
+            name = ctx.author.name
+
         if data:
             self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=? AND bot=?",
-                                (level, xp, last_send, minute, ctx.author.name, ctx.author.discriminator, ctx.author.id, ctx.guild.id, self.bot.name))
+                                (level, xp, last_send, minute, name, ctx.author.discriminator, ctx.author.id, ctx.guild.id, self.bot.name))
         else:
             if xp != 0:  # No point in saving data if XP is zero...
                 self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, ctx.author.name, ctx.author.discriminator, self.bot.name))
+                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, name, ctx.author.discriminator, self.bot.name))
 
     @commands.command(name="rewards")
     @commands.guild_only()
@@ -407,7 +412,7 @@ class Leveling(commands.Cog):
 
         async with ctx.typing():
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
-            r = language.string("leveling_rank", user=user, server=ctx.guild.name)
+            r = language.string("leveling_rank", user=general.username(user), server=ctx.guild.name)
             # Load custom rank data from database
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if not custom or user.id in self.blocked:
@@ -459,7 +464,7 @@ class Leveling(commands.Cog):
                 font, font_small = None, None
             # Write user's name to the top of the rank card
             text_x = 542
-            dr.text((text_x, -10), str(user), font=font, fill=font_colour)
+            dr.text((text_x, -10), general.username(user), font=font, fill=font_colour)
             # Calculate XP required to reach the next level
             try:
                 if level >= 0:
@@ -562,7 +567,7 @@ class Leveling(commands.Cog):
             return await ctx.send(language.string("leveling_rank_bot"))
         _af = -1 if time.april_fools() else 1
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
-        r = language.string("leveling_rank", user=user, server=ctx.guild.name)
+        r = language.string("leveling_rank", user=general.username(user), server=ctx.guild.name)
         if data:
             level, xp = [data['level'], data['xp']]
         else:
@@ -802,7 +807,7 @@ class Leveling(commands.Cog):
                 dm = 1
         level, xp = [data['level'], data['xp']]
         if level == max_level:
-            return await ctx.send(language.string("leveling_next_level_max", user=ctx.author.name))
+            return await ctx.send(language.string("leveling_next_level_max", user=general.username(ctx.author)))
         r1 = language.number(xp * _af, precision=0)
         try:
             if level >= 0:
@@ -834,7 +839,7 @@ class Leveling(commands.Cog):
         except (OverflowError, OSError):
             error = "Never"
             t1, t2 = [error, error]
-        return await ctx.send(language.string("leveling_next_level", user=ctx.author.name, xp=r1, next=r2, left=r3, level=r5, prog=r4, min=t1, max=t2))
+        return await ctx.send(language.string("leveling_next_level", user=general.username(ctx.author), xp=r1, next=r2, left=r3, level=r5, prog=r4, min=t1, max=t2))
 
     @commands.command(name="levels", aliases=["ranks", "lb"])
     @commands.guild_only()

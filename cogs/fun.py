@@ -4,6 +4,7 @@ import random
 import discord
 
 from utils import bot_data, commands, lists
+from utils.general import username
 
 
 class Entertainment(commands.Cog):
@@ -18,12 +19,12 @@ class Entertainment(commands.Cog):
         language = self.bot.language(ctx)
         if not user or user.id == ctx.author.id:
             async with ctx.typing():
-                return await ctx.send(language.string("fun_hc_self", author=ctx.author.name), file=discord.File("assets/hc.gif", "chocolate.gif"))
+                return await ctx.send(language.string("fun_hc_self", author=username(ctx.author)), file=discord.File("assets/hc.gif", "chocolate.gif"))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("fun_hc_me"))
         if user.bot:
             return await ctx.send(language.string("fun_hc_bot"))
-        beer_offer = language.string("fun_beer_offer", target=user.name, author=ctx.author.name, emote="☕🍫")
+        beer_offer = language.string("fun_beer_offer", target=username(user), author=username(ctx.author), emote="☕🍫")
         if reason:
             beer_offer += language.string("fun_beer_reason", reason=reason)
         msg = await ctx.send(beer_offer)
@@ -35,12 +36,12 @@ class Entertainment(commands.Cog):
             await msg.add_reaction("☕")
             await self.bot.wait_for("raw_reaction_add", timeout=30.0, check=reaction_check)
             await msg.delete()
-            return await ctx.send(language.string("fun_hc_success", target=user.name, author=ctx.author.name, emote="☕🍫"))
+            return await ctx.send(language.string("fun_hc_success", target=username(user), author=username(ctx.author), emote="☕🍫"))
         except asyncio.TimeoutError:
             await msg.delete()
-            return await ctx.send(language.string("fun_hc_timeout", target=user.name, author=ctx.author.name))
+            return await ctx.send(language.string("fun_hc_timeout", target=username(user), author=username(ctx.author)))
         except discord.Forbidden:
-            beer = language.string("fun_beer_no_react", target=user.name, author=ctx.author.name, emote="☕🍫")
+            beer = language.string("fun_beer_no_react", target=username(user), author=username(ctx.author), emote="☕🍫")
             if reason:
                 beer += reason
             return await msg.edit(content=beer)
@@ -50,7 +51,7 @@ class Entertainment(commands.Cog):
     async def eight_ball(self, ctx: commands.Context, *, question: str):
         """ Consult the 8-Ball """
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("fun_8ball", name=ctx.author.name, question=question, answer=random.choice(language.data("fun_8ball_responses"))))
+        return await ctx.send(language.string("fun_8ball", name=username(ctx.author), question=question, answer=random.choice(language.data("fun_8ball_responses"))))
 
     @commands.command(name="f")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -58,7 +59,7 @@ class Entertainment(commands.Cog):
         """ Press F to pay respects """
         language = self.bot.language(ctx)
         heart = random.choice(lists.hearts)
-        return await ctx.send(language.string("fun_f_none" if text is None else "fun_f_text", name=ctx.author.name, heart=heart, text=text))
+        return await ctx.send(language.string("fun_f_none" if text is None else "fun_f_text", name=username(ctx.author), heart=heart, text=text))
 
     @commands.command(name="coin", aliases=["flip", "coinflip"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -77,12 +78,12 @@ class EntertainmentSuager(Entertainment, name="Entertainment"):
         language = self.bot.language(ctx)
         if not user or user.id == ctx.author.id:
             async with ctx.typing():
-                return await ctx.send(language.string("fun_beer_self", author=ctx.author.name), file=discord.File("assets/party.gif", "party.gif"))
+                return await ctx.send(language.string("fun_beer_self", author=username(ctx.author)), file=discord.File("assets/party.gif", "party.gif"))
         if user.id == self.bot.user.id:
             return await ctx.send(language.string("fun_beer_me"))
         if user.bot:
             return await ctx.send(language.string("fun_beer_bot"))
-        beer_offer = language.string("fun_beer_offer", target=user.name, author=ctx.author.name, emote="🍺")
+        beer_offer = language.string("fun_beer_offer", target=username(user), author=username(ctx.author), emote="🍺")
         if reason:
             beer_offer += language.string("fun_beer_reason", reason=reason)
         msg = await ctx.send(beer_offer)
@@ -94,12 +95,12 @@ class EntertainmentSuager(Entertainment, name="Entertainment"):
             await msg.add_reaction("🍻")
             await self.bot.wait_for('raw_reaction_add', timeout=30.0, check=reaction_check)
             await msg.delete()
-            return await ctx.send(language.string("fun_beer_success", target=user.name, author=ctx.author.name, emote="🍻"))
+            return await ctx.send(language.string("fun_beer_success", target=username(user), author=username(ctx.author), emote="🍻"))
         except asyncio.TimeoutError:
             await msg.delete()
-            return await ctx.send(language.string("fun_beer_timeout", target=user.name, author=ctx.author.name))
+            return await ctx.send(language.string("fun_beer_timeout", target=username(user), author=username(ctx.author)))
         except discord.Forbidden:
-            beer = language.string("fun_beer_no_react", target=user.name, author=ctx.author.name, emote="🍺")
+            beer = language.string("fun_beer_no_react", target=username(user), author=username(ctx.author), emote="🍺")
             if reason:
                 beer += reason
             return await msg.edit(content=beer)

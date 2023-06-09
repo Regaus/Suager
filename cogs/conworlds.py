@@ -6,7 +6,7 @@ import discord
 from pytz.tzinfo import DstTzInfo
 from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
 
-from utils import bot_data, commands, conlangs, conworlds as conworlds2, views
+from utils import bot_data, commands, conlangs, conworlds as conworlds2, views, general
 
 longest_city = {
     "Virkada": 15,
@@ -355,7 +355,7 @@ class Conworlds(commands.Cog):
 
             try:
                 user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
-                username = user.name
+                username = general.username(user)
                 embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
             except discord.NotFound:
                 username = data["name"]
@@ -442,7 +442,7 @@ class Conworlds(commands.Cog):
             return await ctx.send(language.string("birthdays_birthday_not_saved", user=self.bot.get_user(_user)))
         try:
             user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
-            username = user.name
+            username = general.username(user)
         except discord.NotFound:
             username = data["name"]
             user = self.bot.user  # Use the bot's user account so the tz check doesn't fail

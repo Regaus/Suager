@@ -17,7 +17,7 @@
       "instrumental": "<:-2>daar"   // kainedaar
     }
   },
-  "^(?!(.+)var$)((Regaus|Leitoxz)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
+  "^(?!(.+)var$)(([Rr]egaus)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
     "default": {
       "default": "<>",         // kad
       "nominative": "<>",      // kad

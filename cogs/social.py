@@ -73,8 +73,10 @@ class Social(commands.Cog):
                 target_case = "dative"
 
         # Get names adapted to the given case
-        a1, a2 = language.case(author.name, author_case), language.case(target.name, author_case)
-        t1, t2 = language.case(target.name, target_case), language.case(author.name, target_case)
+        author_name = general.username(author)
+        target_name = general.username(target)
+        a1, a2 = language.case(author_name, author_case), language.case(target_name, author_case)
+        t1, t2 = language.case(target_name, target_case), language.case(author_name, target_case)
 
         # Generate title
         title = language.string(f"social_{action}", author=a1, target=t1)
@@ -280,7 +282,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_slap_suager", author=language.case(general.username(ctx.author), "vocative")))
         if user.id in self.protected and ctx.author.id in self.locked:
             return await ctx.send(language.string("social_forbidden"))
         if user.bot:
@@ -328,7 +330,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_slap_suager", author=language.case(general.username(ctx.author), "vocative")))
         # if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
         #     return await ctx.send(f"{emotes.KannaSpook} How dare you")
         if user.id in self.protected and ctx.author.id in self.locked:
@@ -378,7 +380,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await ctx.send(language.string("social_alone"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_high_five_suager", author=language.case(ctx.author.name, "high_five")))
+            return await ctx.send(language.string("social_high_five_suager", author=language.case(general.username(ctx.author), "high_five")))
         if user.bot:
             return await ctx.send(language.string("social_bot"))
         embed = discord.Embed(colour=general.random_colour())
@@ -426,7 +428,7 @@ class Social(commands.Cog):
         if user.id in self.protected and ctx.author.id in self.locked:
             return await ctx.send(language.string("social_forbidden"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_poke_suager", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_poke_suager", author=language.case(general.username(ctx.author), "vocative")))
         if user.bot:
             return await ctx.send(language.string("social_bot"))
         embed = discord.Embed(colour=general.random_colour())
@@ -496,7 +498,7 @@ class Social(commands.Cog):
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_slap_suager", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_slap_suager", author=language.case(general.username(ctx.author), "vocative")))
         # if user.id == 302851022790066185 and ctx.author.id == 236884090651934721:
         #     return await ctx.send(f"{emotes.KannaSpook} How dare you")
         if user.id in self.protected and ctx.author.id in self.locked:
@@ -562,7 +564,7 @@ class Social(commands.Cog):
         if is_broken(self.sleepy):
             self.sleepy = await lists.get_images(self.bot, "sleepy")
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_sleepy", author=ctx.author.name)
+        embed.title = language.string("social_sleepy", author=general.username(ctx.author))
         embed.set_image(url=random.choice(self.sleepy))
         return await ctx.send(embed=embed)
 
@@ -575,7 +577,7 @@ class Social(commands.Cog):
         if is_broken(self.cry):
             self.cry = await lists.get_images(self.bot, "cry")
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_cry", author=ctx.author.name)
+        embed.title = language.string("social_cry", author=general.username(ctx.author))
         embed.set_image(url=random.choice(self.cry))
         return await ctx.send(embed=embed)
 
@@ -588,7 +590,7 @@ class Social(commands.Cog):
         if is_broken(self.blush):
             self.blush = await lists.get_images(self.bot, "blush")
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_blush", author=ctx.author.name)
+        embed.title = language.string("social_blush", author=general.username(ctx.author))
         embed.set_image(url=random.choice(self.blush))
         return await ctx.send(embed=embed)
 
@@ -601,7 +603,7 @@ class Social(commands.Cog):
         if is_broken(self.smile):
             self.smile = await lists.get_images(self.bot, "smile")
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_smile", author=ctx.author.name)
+        embed.title = language.string("social_smile", author=general.username(ctx.author))
         embed.set_image(url=random.choice(self.smile))
         return await ctx.send(embed=embed)
 
@@ -616,13 +618,13 @@ class Social(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         embed.set_image(url=random.choice(self.laugh))
         if at is None:
-            embed.title = language.string("social_laugh", author=ctx.author.name)
+            embed.title = language.string("social_laugh", author=general.username(ctx.author))
         else:
             if at == ctx.author:
-                embed.title = language.string("social_laugh_at_self", author=ctx.author.name)
+                embed.title = language.string("social_laugh_at_self", author=general.username(ctx.author))
             if at.id == self.bot.user.id:
                 return await ctx.send(language.string("social_laugh_at_suager"))
-            embed.title = language.string("social_laugh_at", author=ctx.author.name, target=language.case(at.name, "laugh_at"))
+            embed.title = language.string("social_laugh_at", author=general.username(ctx.author), target=language.case(general.username(ctx.at), "laugh_at"))
         return await ctx.send(embed=embed)
 
     @commands.command(name="smug")
@@ -634,7 +636,7 @@ class Social(commands.Cog):
         if is_broken(self.smug):
             self.smug = await lists.get_images(self.bot, "smug")
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_smug", author=ctx.author.name)
+        embed.title = language.string("social_smug", author=general.username(ctx.author))
         embed.set_image(url=random.choice(self.smug))
         return await ctx.send(embed=embed)
 
@@ -647,7 +649,7 @@ class Social(commands.Cog):
         if is_broken(self.dance):
             self.dance = await lists.get_images(self.bot, "dance")
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("social_dance", author=ctx.author.name)
+        embed.title = language.string("social_dance", author=general.username(ctx.author))
         embed.set_image(url=random.choice(self.dance))
         return await ctx.send(embed=embed)
 
@@ -655,7 +657,7 @@ class Social(commands.Cog):
     @commands.guild_only()
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def bean(self, ctx: commands.Context, user: discord.Member):
-        """ Bean someone """
+        """ Fake-ban someone """
         language = self.bot.language(ctx)
         if user == ctx.author:
             return await ctx.send(emotes.Pat13)
@@ -665,7 +667,7 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_forbidden"))
         if user.id == ctx.guild.owner.id:
             return await ctx.send(language.string("social_bean_owner"))
-        bean = language.string("social_bean", target=user.name, server=ctx.guild.name)
+        bean = language.string("social_bean", target=general.username(user), server=ctx.guild.name)
         return await ctx.send(bean)
 
     async def food_command(self, ctx: commands.Context, user: discord.Member, emote: str, language: languages.Language):
@@ -675,7 +677,7 @@ class Social(commands.Cog):
             return await ctx.send(language.string("social_food_suager"))
         if user.bot:
             return await ctx.send(language.string("social_food_bot"))
-        output = language.string("social_food", author=language.case(ctx.author.name, "nominative"), target=language.case(user.name, "dative"), item=emote)
+        output = language.string("social_food", author=language.case(general.username(ctx.author), "nominative"), target=language.case(general.username(user), "dative"), item=emote)
         return await ctx.send(output)
 
     @commands.command(name="cookie")
@@ -779,9 +781,9 @@ class SocialSuager(Social, name="Social"):
         if ctx.author == user:
             return await ctx.send(language.string("social_slap_self"))
         if user.id == self.bot.user.id:
-            return await ctx.send(language.string("social_kill_suager", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_kill_suager", author=language.case(general.username(ctx.author), "vocative")))
         if user.id in self.protected and ctx.author.id not in self.unlocked:
-            return await ctx.send(language.string("social_kill_regaus", author=language.case(ctx.author.name, "vocative")))
+            return await ctx.send(language.string("social_kill_regaus", author=language.case(general.username(ctx.author), "vocative")))
         # Anti-Kill Insurance: Caffey
         if user.id in [249141823778455552]:
             given, received = self.data_update(ctx.bot.user.id, ctx.author.id, "kill", 18)

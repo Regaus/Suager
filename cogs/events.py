@@ -273,8 +273,8 @@ class Events(commands.Cog):
                         logger.log(self.bot.name, "errors", out)
 
         if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
-            if member.name[0] < "A":
-                await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
+            if member.display_name[0] < "A":
+                await member.edit(reason="De-hoist", nick=f"\u17b5{member.display_name[:31]}")
 
         if data:
             settings = json.loads(data["data"])
@@ -304,7 +304,7 @@ class Events(commands.Cog):
                         language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         message = welcome["message"] \
                             .replace("[MENTION]", member.mention)\
-                            .replace("[USER]", member.name)\
+                            .replace("[USER]", general.username(member))\
                             .replace("[SERVER]", member.guild.name)\
                             .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=True))\
                             .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=True))\
@@ -388,7 +388,7 @@ class Events(commands.Cog):
 
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
-                await member.edit(nick=f"✧₊˚🍰⌇{member.name[:23]}🌙⋆｡˚", reason="Joining the server")
+                await member.edit(nick=f"✧₊˚🍰⌇{general.username(member)[:23]}🌙⋆｡˚", reason="Joining the server")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -416,7 +416,7 @@ class Events(commands.Cog):
                         language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         message = goodbye["message"] \
                             .replace("[MENTION]", member.mention)\
-                            .replace("[USER]", member.name)\
+                            .replace("[USER]", general.username(member))\
                             .replace("[SERVER]", member.guild.name)\
                             .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=True))\
                             .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=True))\
@@ -647,10 +647,10 @@ class Events(commands.Cog):
 
                 booster_role = after.guild.get_role(716324385119535168)
                 if booster_role in roles_gained:  # User started boosting MD
-                    await after.edit(nick=f"⁀➷Booster!🧁 ☆ {after.name[:14]} 🍩 ✦", reason="Applying booster nick design")
+                    await after.edit(nick=f"⁀➷Booster!🧁 ☆ {general.username(after)[:14]} 🍩 ✦", reason="Applying booster nick design")
                 if booster_role in roles_lost:  # User no longer boosts MD
                     if "⁀➷Booster!🧁 ☆" in after.nick:  # If they still have "Booster" in their nickname
-                        await after.edit(nick=f"✧₊˚🍰⌇{after.name[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
+                        await after.edit(nick=f"✧₊˚🍰⌇{general.username(after)[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
 
 
 async def setup(bot: bot_data.Bot):

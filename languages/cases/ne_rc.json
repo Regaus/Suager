@@ -19,7 +19,7 @@
       "locative": "<:-2>dai"        // kainedai
     }
   },
-  "^(?!(.+)var$)((Regaus|Leitoxz)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
+  "^(?!(.+)var$)(([Rr]egaus)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
     "default": {
       "default": "<>",         // kad
       "nominative": "<>",      // kad

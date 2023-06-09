@@ -67,6 +67,7 @@
   "discord_server_region": "Server Region",
   "discord_server_verification": "Verification Level",
   "discord_user_about": "ℹ About user {name}",
+  "discord_user_display_name": "Display Name",
   "discord_user_id": "User ID",
   "discord_user_joined_at": "Joined at",
   "discord_user_nickname": "Nickname",

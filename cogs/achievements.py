@@ -4,6 +4,7 @@ import discord
 from PIL import Image, ImageDraw, ImageFont
 
 from utils import bot_data, commands, emotes, images
+from utils.general import username
 
 achievement_colours = [
     (96, 96, 96),     # Tier 0
@@ -62,7 +63,7 @@ class Achievements(commands.Cog):
         except ImportError:
             await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font, font_med, font_small = None, None, None
-        w, _ = dr.textsize(str(user), font=font)
+        w, _ = dr.textsize(username(user), font=font)
         max_description = language.string("achievements_highest")
         # max_description = "Highest achievement tier reached!"
 
@@ -152,12 +153,12 @@ class Achievements(commands.Cog):
         max_tier = max(tiers)
         # req = min_tier + 1 if min_tier < 12 else 12
         # generate_box(2, 5, min_tier, 12, "Achievements", f"Reach tier {req} on all achievements", min_tier, req, min_tier)
-        dr.text(((((width + 20) * shelves - 20) - w) / 2, -15), str(user), font=font, fill=achievement_colours[max_tier])
+        dr.text(((((width + 20) * shelves - 20) - w) / 2, -15), username(user), font=font, fill=achievement_colours[max_tier])
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
         # f"This is what **{user}** has accomplished so far."
-        return await ctx.send(language.string("achievements_achievements", user=str(user)), file=discord.File(bio, filename="achievements.png"))
+        return await ctx.send(language.string("achievements_achievements", user=username(user)), file=discord.File(bio, filename="achievements.png"))
 
     @commands.command(name="tiers")
     @commands.is_owner()

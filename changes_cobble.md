@@ -721,3 +721,8 @@
 
 ## v1.8.12 - 28-29 May 2023
 - Added Kaltanazdallian names
+
+## v1.8.13 - 8 June 2023
+- Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
+- Updated most commands to use display names in the output, where it makes sense to
+- Fixed Kargadian incorrectly declining "Regaus" in the lowercase

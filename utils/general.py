@@ -41,7 +41,7 @@ def traceback_maker(err: BaseException, text: str = None, guild=None, author=Non
         return e
     t = f"Command: {text}\n" if text is not None else ""
     g = f"Guild: {guild.name}\n" if guild is not None else ""
-    a = f"User: {author.name}\n" if author is not None else ""
+    a = f"User: {username(author)} ({author.name})\n" if author is not None else ""
     error = f"{g}{a}{t}```py\n{e}\n```"
     return error
 
@@ -86,3 +86,8 @@ def bold(string: str) -> str:
 
 red, red2, yellow, green2, green = 0xff0000, 0xff4000, 0xffc000, 0xc0ff00, 0x00ff00
 red3 = 0xff4040
+
+
+def username(user: discord.User | discord.Member) -> str:
+    """ Return the user's display name. """
+    return user.global_name or user.name
