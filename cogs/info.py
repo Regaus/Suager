@@ -23,7 +23,7 @@ class BotInformation(commands.Cog, name="Bot Information"):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("info_stats_about", bot=self.bot.user, version=version_data["version"])
         embed.set_thumbnail(url=str(self.bot.user.display_avatar.replace(size=1024)))
-        owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
+        owners = "\n".join([general.username(self.bot.get_user(i)) for i in config["owners"]])
         embed.add_field(name=language.string("info_stats_developers"), value=f"**{owners}**", inline=True)
         if self.bot.uptime is None:
             uptime = "Unknown"
