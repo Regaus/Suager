@@ -55,7 +55,7 @@ class Events(commands.Cog):
                         extra.extend(file_links)
                 extra_str = "\n\n" + "\n".join(extra) if extra else ""
 
-                await channel.send(f"{ctx.author} ({ctx.author.id}) | {now}\n{ctx.content[:limit]}{extra_str}", embeds=embeds, files=files)
+                await channel.send(f"{general.username(ctx.author)} ({ctx.author.name} - {ctx.author.id}) | {now}\n{ctx.content[:limit]}{extra_str}", embeds=embeds, files=files)
 
         if ctx.author.id in self.blocked:
             for word in self.bad:
@@ -75,7 +75,7 @@ class Events(commands.Cog):
         channel = self.bot.get_channel(self.blocked_logs)
         gid = ctx.guild.id if ctx.guild is not None else "not a guild"
         types = {1: "User", 2: "Channel"}
-        _author = f"{ctx.author} ({ctx.author.id})"
+        _author = f"{general.username(ctx.author)} ({ctx.author.name} - {ctx.author.id})"
         _server = f"{ctx.guild} ({gid})"
         _channel = f"{ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id})"
         return await channel.send(f"{_author} | {_server} | {_channel} | {time.time()} | Type: {types[msg_type]}\n{ctx.content}")
@@ -88,7 +88,7 @@ class Events(commands.Cog):
                     # These don't need to be logged because nobody cares
                     try:
                         if channel is not None:
-                            await channel.send(f"{ctx.author} | {self.bot.full_name} updates | {time.time()}\n{ctx.content}")
+                            await channel.send(f"{general.username(ctx.author)} | {self.bot.full_name} updates | {time.time()}\n{ctx.content}")
                         else:
                             general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
