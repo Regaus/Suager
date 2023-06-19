@@ -193,7 +193,7 @@ class Utility(commands.Cog):
     async def weather(self, ctx: commands.Context, *, place: str):
         """ Check weather in a place """
         language = self.bot.language(ctx)
-        lang = "en" if language.data("_conlang") is not False else language.string("_short")
+        lang = "en" if language.data("_conlang") else language.string("_short")
         a = await ctx.send(f"{emotes.Loading} Loading weather for {place}...")
         try:
             token = self.bot.config["weather_api_token"]

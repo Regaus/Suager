@@ -1585,3 +1585,7 @@
 - The leveling leaderboard will show both the display name and username for updated users
 - Fixed Kargadian incorrectly declining "Regaus" in the lowercase
 - Hid the `//russia` command
+
+## v7.7.0a4 - 15 June 2023
+- Updated the "translations may not be accurate" notice
+- Made the weather command translate to natural languages again (once Regaus.py v3 is made)

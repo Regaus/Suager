@@ -96,7 +96,7 @@ class Settings(commands.Cog):
             output += "\n\n__Conlangs supported:__\n" + "\n".join(con)
             if is_trusted:
                 output += "\n\n__RSLs supported:__\n" + "\n".join(rsl)
-                output += "\n\n*Please note that some of these translations have not been updated for a long time and may not be up to date with the current \"standard\" form.*"
+        output += "\n\n*Please note that some of these translations may be incorrect or outdated. Even if someone else helped with these translations, I could not guarantee 100% accuracy.*"
         return await ctx.send(output)
 
     async def set_language(self, ctx: commands.Context, new_language: str, _id: int, _type: str, key: str, valid: bool = True):
