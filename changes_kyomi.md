@@ -345,3 +345,10 @@
 ## v1.4.0a3 - 8 June 2023
 - Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
 - Updated most commands to use display names in the output, where it makes sense to
+
+## v1.4.0a4 - 15 June 2023
+- Updated the "translations may not be accurate" notice
+- Made the weather command translate to natural languages again (once Regaus.py v3 is made)
+
+## v1.4.0a5 - 24 June 2023
+- Fix reminders list using the username instead of display name

@@ -1589,3 +1589,6 @@
 ## v7.7.0a4 - 15 June 2023
 - Updated the "translations may not be accurate" notice
 - Made the weather command translate to natural languages again (once Regaus.py v3 is made)
+
+## v7.7.0a5 - 24 June 2023
+- Fix reminders list using the username instead of display name

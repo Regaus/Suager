@@ -726,3 +726,7 @@
 - Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
 - Updated most commands to use display names in the output, where it makes sense to
 - Fixed Kargadian incorrectly declining "Regaus" in the lowercase
+
+## v1.8.13.1 - 15 June 2023
+- Updated the "translations may not be accurate" notice
+- Made the weather command translate to natural languages again (once Regaus.py v3 is made)

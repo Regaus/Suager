@@ -801,7 +801,7 @@ class Reminders(Utility, name="Utility"):
             if not reminders:
                 return await ctx.send(language.string("util_reminders_none", author=general.username(ctx.author)))
                 # return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
-            output = language.string("util_reminders_list", author=ctx.author)
+            output = language.string("util_reminders_list", author=general.username(ctx.author))
             # output = f"**{ctx.author}**, here is the list of your currently active reminders"
             outputs = []
             _reminder = 0
