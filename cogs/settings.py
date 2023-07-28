@@ -593,7 +593,7 @@ class Settings(commands.Cog):
         """ Set level up message
 
         See `//settings leveling message variables` for the list of available variables
-        Use `//settings leveling message reset` to reset back to the default value """
+        Enter "reset" to reset back to the default value """
         if ctx.invoked_subcommand is None:
             return await self.level_up_message_general(ctx, value, **{
                 "key": "level_up_message",
@@ -696,9 +696,9 @@ class Settings(commands.Cog):
     async def lvl_announcements(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set level up announcement channel
 
-        Type a channel to set the channel as the level up channel
-        Type "default" to make level ups announced where the level up occurs
-        Type "disable" to disable level up announcements altogether"""
+        Enter a channel to set the channel as the level up channel
+        Enter "default" to make level ups announced where the level up occurs
+        Enter "disable" to disable level up announcements altogether"""
         if ctx.invoked_subcommand is None:
             _settings, existent = await self.settings_start(ctx, "leveling")
             if channel is None:
@@ -712,7 +712,7 @@ class Settings(commands.Cog):
                 _settings["leveling"]["announce_channel"] = channel.id
                 return await self.settings_end(ctx, _settings, existent, "settings_leveling_announcements_set", channel=channel.mention)
 
-    @lvl_announcements.command(name="default", assets=["reset"])
+    @lvl_announcements.command(name="default", aliases=["reset"])
     async def lvl_announcements_default(self, ctx: commands.Context):
         """ Make level up announcements show up in the channel where they occur """
         _settings, existent = await self.settings_start(ctx, "leveling")
@@ -858,267 +858,198 @@ class Settings(commands.Cog):
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
         """ Set the Muted role """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
+        _settings, existent = await self.settings_start(ctx, "mute_role")
         _settings["mute_role"] = role.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_mute_role", role=role.name))
-        # return await general.send(f"The muted role has been set to {role.name}", ctx.channel)
+        return await self.settings_end(ctx, _settings, existent, "settings_mute_role", role=role.name)
 
-    @settings.group(name="starboard", aliases=["stars", "sb"], case_insensitive=True)
+    async def settings_current_starboard(self, ctx: commands.Context):
+        """ Current starboard settings """
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if not data:
+            return await ctx.send(language.string("settings_none"))
+        setting = json.loads(data["data"])
+        if "starboard" not in setting:
+            return await ctx.send(language.string("settings_starboard_none"))
+        starboard = setting["starboard"]
+        embed = discord.Embed(colour=general.random_colour())
+        embed.title = language.string("settings_starboard", ctx.guild.name)
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+        embed.set_footer(text=language.string("settings_starboard_footer", p=ctx.prefix))
+        embed.add_field(name=language.string("settings_starboard_enabled2"), value=language.yes(starboard["enabled"]), inline=False)
+        channel = f"<#{starboard['channel']}>" if starboard["channel"] != 0 else language.string("settings_starboard_channel_none")
+        embed.add_field(name=language.string("settings_starboard_channel"), value=channel, inline=False)
+        embed.add_field(name=language.string("settings_starboard_requirement"), value=language.number(starboard["minimum"]), inline=False)
+        return await ctx.send(embed=embed)
+
+    @settings.group(name="starboard", aliases=["stars", "sb"], case_insensitive=True, invoke_without_command=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
-    async def set_starboard(self, ctx: commands.Context):
+    async def set_starboard(self, ctx: commands.Context, _: str = None):
         """ Starboard settings """
         if ctx.invoked_subcommand is None:
-            language = self.bot.language(ctx)
-            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-            if not data:
-                return await ctx.send(language.string("settings_none"))
-            setting = json.loads(data["data"])
-            if "starboard" not in setting:
-                return await ctx.send(language.string("settings_starboard_none"))
-            starboard = setting["starboard"]
-            embed = discord.Embed(colour=general.random_colour())
-            embed.title = language.string("settings_starboard", ctx.guild.name)
-            if ctx.guild.icon:
-                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.set_footer(text=language.string("settings_starboard_footer", p=ctx.prefix))
-            embed.add_field(name=language.string("settings_starboard_enabled2"), value=language.yes(starboard["enabled"]), inline=False)
-            channel = f"<#{starboard['channel']}>" if starboard["channel"] != 0 else language.string("settings_starboard_channel_none")
-            embed.add_field(name=language.string("settings_starboard_channel"), value=channel, inline=False)
-            embed.add_field(name=language.string("settings_starboard_requirement"), value=language.number(starboard["minimum"]), inline=False)
-            return await ctx.send(embed=embed)
+            if _ is not None:
+                return await ctx.send_help(ctx.command)
+            return await self.settings_current_starboard(ctx)
+
+    async def starboard_toggle(self, ctx: commands.Context, toggle: bool):
+        """ Enable or disable the starboard """
+        _settings, existent = await self.settings_start(ctx, "starboard")
+        _settings["starboard"]["enabled"] = toggle
+        output = "settings_starboard_enabled" if toggle else "settings_starboard_disabled"
+        return await self.settings_end(ctx, _settings, existent, output)
 
     @set_starboard.command(name="enable")
     async def starboard_enable(self, ctx: commands.Context):
         """ Enable starboard """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "starboard" not in _settings:
-            _settings["starboard"] = self.template["starboard"].copy()
-        _settings["starboard"]["enabled"] = True
-        # is_or_not = "enabled" if _settings["starboard"]["enabled"] else "disabled"
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_starboard_enabled"))
-        # return await general.send(f"Starboard is now {is_or_not} in this server.", ctx.channel)
+        return await self.starboard_toggle(ctx, True)
 
     @set_starboard.command(name="disable")
     async def starboard_disable(self, ctx: commands.Context):
         """ Disable starboard """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "starboard" not in _settings:
-            _settings["starboard"] = self.template["starboard"].copy()
-        _settings["starboard"]["enabled"] = False
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_starboard_disabled"))
+        return await self.starboard_toggle(ctx, False)
 
     @set_starboard.command(name="channel")
     async def starboard_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Set the channel for starboard messages """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "starboard" not in _settings:
-            _settings["starboard"] = self.template["starboard"].copy()
+        _settings, existent = await self.settings_start(ctx, "starboard")
         _settings["starboard"]["channel"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_starboard_channel_set", channel=channel.mention))
-        # return await general.send(f"Starboard messages will now be sent to {channel.mention}.", ctx.channel)
+        return await self.settings_end(ctx, _settings, existent, "settings_starboard_channel_set", channel=channel.mention)
 
     @set_starboard.command(name="minimum", aliases=["requirement", "min", "req"])
     async def starboard_requirement(self, ctx: commands.Context, requirement: int):
         """ Set the minimum amount of stars before the message is sent to the starboard """
+        _settings, existent = await self.settings_start(ctx, "starboard")
         language = self.bot.language(ctx)
         if requirement < 1:
             return await ctx.send(language.string("settings_starboard_requirement_min"))
-            # return await general.send("The requirement has to be 1 or above.", ctx.channel)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "starboard" not in _settings:
-            _settings["starboard"] = self.template["starboard"].copy()
         _settings["starboard"]["minimum"] = requirement
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_starboard_requirement_set", value=language.number(requirement)))
+        return await self.settings_end(ctx, _settings, existent, "settings_starboard_requirement_set", value=language.number(requirement))
 
-    @settings.group(name="birthdays", aliases=["birthday", "bd", "b"], case_insensitive=True)
+    async def settings_current_birthdays(self, ctx: commands.Context):
+        """ Current birthday settings """
+        language = self.bot.language(ctx)
+        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        if not data:
+            return await ctx.send(f"{language.string('settings_none')}\n{language.string('settings_birthdays_footer', ctx.prefix)}")
+        setting = json.loads(data["data"])
+        if "birthdays" not in setting:
+            return await ctx.send(f"{language.string('settings_birthdays_none')}\n{language.string('settings_birthdays_footer', ctx.prefix)}")
+        birthdays = setting["birthdays"]
+        embed = discord.Embed(colour=general.random_colour())
+        embed.title = language.string("settings_birthdays", ctx.guild.name)
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+        embed.set_footer(text=language.string("settings_birthdays_footer", p=ctx.prefix))
+        embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
+        if birthdays["channel"] != 0:
+            embed.add_field(name=language.string("settings_birthdays_channel"), value=f"<#{birthdays['channel']}>", inline=False)
+            if birthdays["message"] and len(birthdays["message"]) > 1024:
+                message = f"{birthdays['message'][:1021]}..."
+            else:
+                message = birthdays["message"]
+            embed.add_field(name=language.string("settings_birthdays_message"), value=message, inline=False)
+        else:
+            embed.add_field(name=language.string("settings_birthdays_channel"), value=language.string("settings_birthdays_channel_none"), inline=False)
+        role = f"<@&{birthdays['role']}>" if birthdays["role"] != 0 else language.string("settings_birthdays_role_none")
+        embed.add_field(name=language.string("settings_birthdays_role"), value=role, inline=False)
+        return await ctx.send(embed=embed)
+
+    @settings.group(name="birthdays", aliases=["birthday", "bd", "b"], case_insensitive=True, invoke_without_command=True)
     # @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
-    async def set_birthday(self, ctx: commands.Context):
+    async def set_birthday(self, ctx: commands.Context, _: str = None):
         """ Birthday settings """
         if ctx.invoked_subcommand is None:
-            language = self.bot.language(ctx)
-            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-            if not data:
-                return await ctx.send(f"{language.string('settings_none')}\n{language.string('settings_birthdays_footer', ctx.prefix)}")
-            setting = json.loads(data["data"])
-            if "birthdays" not in setting:
-                return await ctx.send(f"{language.string('settings_birthdays_none')}\n{language.string('settings_birthdays_footer', ctx.prefix)}")
-            birthdays = setting["birthdays"]
-            embed = discord.Embed(colour=general.random_colour())
-            embed.title = language.string("settings_birthdays", ctx.guild.name)
-            if ctx.guild.icon:
-                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            embed.set_footer(text=language.string("settings_birthdays_footer", p=ctx.prefix))
-            embed.add_field(name=language.string("settings_birthdays_enabled2"), value=language.yes(birthdays["enabled"]), inline=False)
-            if birthdays["channel"] != 0:
-                embed.add_field(name=language.string("settings_birthdays_channel"), value=f"<#{birthdays['channel']}>", inline=False)
-                if birthdays["message"] and len(birthdays["message"]) > 1024:
-                    message = f"{birthdays['message'][:1021]}..."
-                else:
-                    message = birthdays["message"]
-                embed.add_field(name=language.string("settings_birthdays_message"), value=message, inline=False)
-            else:
-                embed.add_field(name=language.string("settings_birthdays_channel"), value=language.string("settings_birthdays_channel_none"), inline=False)
-            role = f"<@&{birthdays['role']}>" if birthdays["role"] != 0 else language.string("settings_birthdays_role_none")
-            embed.add_field(name=language.string("settings_birthdays_role"), value=role, inline=False)
-            return await ctx.send(embed=embed)
+            if _ is not None:
+                return await ctx.send_help(ctx.command)
+            return await self.settings_current_birthdays(ctx)
+
+    async def birthdays_toggle(self, ctx: commands.Context, toggle: bool):
+        """ Enable or disable birthdays """
+        _settings, existent = await self.settings_start(ctx, "birthdays")
+        _settings["birthdays"]["enabled"] = toggle
+        output = "settings_birthdays_enabled" if toggle else "settings_birthdays_disabled"
+        return await self.settings_end(ctx, _settings, existent, output, p=ctx.prefix)
 
     @set_birthday.command(name="enable")
     async def birthday_enable(self, ctx: commands.Context):
         """ Enable birthdays in your server """
-        language = self.bot.language(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "birthdays" not in _settings:
-            _settings["birthdays"] = self.template["birthdays"].copy()
-        _settings["birthdays"]["enabled"] = True
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_birthdays_enabled"))
+        return await self.birthdays_toggle(ctx, True)
 
     @set_birthday.command(name="disable")
     async def birthday_disable(self, ctx: commands.Context):
         """ Disable birthdays in your server """
-        language = self.bot.language(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "birthdays" not in _settings:
-            _settings["birthdays"] = self.template["birthdays"].copy()
-        _settings["birthdays"]["enabled"] = False
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_birthdays_disabled", p=ctx.prefix))
+        return await self.birthdays_toggle(ctx, False)
 
-    @set_birthday.command(name="channel")
+    @set_birthday.group(name="channel", case_insensitive=True, invoke_without_command=True)
     async def birthday_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
-        """ Set the channel for birthday messages """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "birthdays" not in _settings:
-            _settings["birthdays"] = self.template["birthdays"].copy()
+        """ Set the channel for birthday messages
+
+        Enter "disable" to disable birthday messages """
+        _settings, existent = await self.settings_start(ctx, "birthdays")
         if channel is None:
-            _settings["birthdays"]["channel"] = 0
+            _channel = _settings["birthdays"]["channel"]
+            if _channel == 0:
+                return await ctx.send(ctx.language().string("settings_birthdays_channel_unset"))
+            return await ctx.send(ctx.language().string("settings_birthdays_channel_set2", channel=f"<#{_channel}>"))
         else:
             _settings["birthdays"]["channel"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_set", channel=channel.mention))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_none2"))
+            return await self.settings_end(ctx, _settings, existent, "settings_birthdays_channel_set", channel=channel.mention)
 
-    @set_birthday.command(name="role")
+    @birthday_channel.command(name="disable", aliases=["reset"])
+    async def birthday_channel_disable(self, ctx: commands.Context):
+        """ Disable birthday messages """
+        _settings, existent = await self.settings_start(ctx, "birthdays")
+        _settings["birthdays"]["channel"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_birthdays_channel_none2")
+
+    @set_birthday.group(name="role", case_insensitive=True, invoke_without_command=True)
     async def birthday_role(self, ctx: commands.Context, role: discord.Role = None):
-        """ Set the birthday role """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "birthdays" not in _settings:
-            _settings["birthdays"] = self.template["birthdays"].copy()
+        """ Set the birthday role
+
+        Enter "disable" to not give a birthday role"""
+        _settings, existent = await self.settings_start(ctx, "birthdays")
         if role is None:
-            _settings["birthdays"]["role"] = 0
+            _role = _settings["birthdays"]["role"]
+            if _role == 0:
+                return await ctx.send(ctx.language().string("settings_birthdays_role_unset"))
+            return await ctx.send(ctx.language().string("settings_birthdays_role_set2", role=f"<@&{_role}>"), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
         else:
             _settings["birthdays"]["role"] = role.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if role is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_role_set", role=role.name))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_role_none2"))
+            return await self.settings_end(ctx, _settings, existent, "settings_birthdays_role_set", role=role.name)
 
-    @set_birthday.command(name="message")
-    async def birthday_message(self, ctx: commands.Context, *, text: str = ""):
+    @birthday_role.command(name="disable", aliases=["remove", "reset"])
+    async def birthday_role_disable(self, ctx: commands.Context):
+        """ Disable giving a role to people who have a birthday """
+        _settings, existent = await self.settings_start(ctx, "birthdays")
+        _settings["birthdays"]["role"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_birthdays_role_none2")
+
+    @set_birthday.group(name="message")
+    async def birthday_message(self, ctx: commands.Context, *, text: str = None):
         """ Set the happy birthday message
+
+        Enter "default" or "reset" to go back to the default message
 
         Variables:
         [MENTION] - Mention the user who has birthday
         [USER] - The name of the user who has birthday"""
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
+        _settings, existent = await self.settings_start(ctx, "birthdays")
+        if text is None:
+            _message = _settings["birthdays"]["message"]
+            return await ctx.send(ctx.language().string("settings_birthdays_message_set2", message=_message, allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False)))
         else:
-            _settings = self.template.copy()
-        if "birthdays" not in _settings:
-            _settings["birthdays"] = self.template["birthdays"].copy()
-        text = text.replace("\\n", "\n")
-        _settings["birthdays"]["message"] = text
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if text:
+            text = text.replace("\\n", "\n")
+            _settings["birthdays"]["message"] = text
             filled = text.replace("[MENTION]", ctx.author.mention).replace("[USER]", ctx.author.name)
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_message_set", message=text, formatted=filled))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_birthdays_channel_none2"))
+            return await self.settings_end(ctx, _settings, existent, "settings_birthdays_message_set", message=text, formatted=filled)
+
+    @birthday_message.command(name="default", aliases=["reset"])
+    async def birthday_message_default(self, ctx: commands.Context):
+        """ Reset the birthday message to the default value """
+        _settings, existent = await self.settings_start(ctx, "birthdays")
+        _settings["birthdays"]["message"] = self.template["birthdays"]["message"]
+        return await self.settings_end(ctx, _settings, existent, "settings_birthdays_message_reset")
 
     @settings.group(name="messagelogs", aliases=["messages", "message", "msg"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])

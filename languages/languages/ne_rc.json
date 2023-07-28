@@ -46,6 +46,7 @@
 
   "settings_birthdays_disabled": "Reideseat jan esaad kvellikan.\nEuma: Nottarat veiseri maikan ka `{p}birthday set` sen reideseaan sahtan, no in de ahvanva ein reideseanattaan in edan salhan.",
   "settings_birthdays_role_none2": "Saiderat de valse ahvanva ein ankastan, ki se ian reidesea jat.",
+  "settings_birthdays_role_unset": "Dea reideseanankasta jat sahtaka - Saiderat de ahvanva ein ankastan, ki se ian reidesea jat.",
   "settings_join_bots_add": "Nuan raivahtat esaad ahvanva na ankastan {role}, ki in sen katedan.",
   "settings_join_bots_remove": "Nuan raivahtat esaad de ahvanva na ankastan {role}, ki in sen katedan.",
   "settings_join_members_add": "Nuan saiderat esaad ahvanva na ankastan {role}, ki in sen katedan.",

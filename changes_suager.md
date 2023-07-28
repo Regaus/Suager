@@ -1592,3 +1592,7 @@
 
 ## v7.7.0a5 - 24 June 2023
 - Fix reminders list using the username instead of display name
+
+## v7.7.0a6 - 9 July 2023
+- Rewrote birthday settings to the new standard
+- Birthday-related settings now have specific commands to disable things, rather than being reset when input is empty
