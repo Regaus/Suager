@@ -1596,3 +1596,7 @@
 ## v7.7.0a6 - 9 July 2023
 - Rewrote birthday settings to the new standard
 - Birthday-related settings now have specific commands to disable things, rather than being reset when input is empty
+
+## v7.7.0a7 - 30 July 2023
+- Log files now ignore encoding errors and replace them with a special character instead of spamming errors to chat
+- Log files should now be sorted alphabetically before being appended to the output

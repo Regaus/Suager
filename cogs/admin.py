@@ -160,32 +160,30 @@ class Admin(commands.Cog):
         """ Get logs """
         try:
             data = ""
-            for path, _, __ in os.walk(f"data/logs/{self.bot.name}"):
+            for path, dirs, __ in os.walk(f"data/logs/{self.bot.name}"):
+                dirs.sort()  # Sort the folder names, this should make them appear alphabetically
                 if re.compile(r"(\d{4})-(\d{2})-(\d{2})").search(path):
                     filename = os.path.join(path, f"{log}.rsf")
                     # _path = path.replace("\\", "/")
                     # filename = f"{_path}/{log}.rsf"
                     try:
-                        file = open(filename, "r", encoding="utf-8")
+                        file = open(filename, "r", encoding="utf-8", errors="replace")
                     except FileNotFoundError:
                         # await general.send(f"File `{filename}` not found.", ctx.channel)
                         continue
-                    if search is None:
-                        try:
+                    try:
+                        if search is None:
                             result = file.read()
                             data += f"{result}"  # Put a newline in the end, just in case
-                        except UnicodeDecodeError as e:
-                            await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
-                    else:
-                        try:
+                        else:
                             stuff = file.readlines()
                             result = ""
                             for line in stuff:
                                 if search in line:
                                     result += line
                             data += f"{result}"
-                        except UnicodeDecodeError as e:
-                            await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
+                    except UnicodeDecodeError as e:
+                        await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
             if ctx.guild is None:
                 limit = 8000000
             else:
@@ -213,7 +211,7 @@ class Admin(commands.Cog):
         """ Get logs """
         try:
             filename = f"data/logs/{self.bot.name}/{date}/{log_file}.rsf"
-            file = open(filename, "r", encoding="utf-8")
+            file = open(filename, "r", encoding="utf-8", errors="replace")
             if search is None:
                 result = file.read()
                 data = f"{result}"  # Put a newline in the end, just in case
