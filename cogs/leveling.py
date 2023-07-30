@@ -301,7 +301,7 @@ class Leveling(commands.Cog):
         except AttributeError:  # This means a role was deleted and somehow didn't get skipped...
             pass
         except discord.Forbidden:
-            await ctx.send(f"{general.username(ctx.author)} should receive a level reward right now, but I don't have permissions required to give it.")
+            await ctx.channel.send(f"{general.username(ctx.author)} should receive a level reward right now, but I don't have permissions required to give it.")
         except Exception as e:
             out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
             general.print_error(out)
@@ -359,18 +359,14 @@ class Leveling(commands.Cog):
         # Save data
         last_send = last if dc else now
         minute = now if full else ls
-        if int(ctx.author.discriminator) == 0:
-            name = f"{general.username(ctx.author)} ({ctx.author.name})"
-        else:
-            name = ctx.author.name
 
         if data:
             self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=? AND bot=?",
-                                (level, xp, last_send, minute, name, ctx.author.discriminator, ctx.author.id, ctx.guild.id, self.bot.name))
+                                (level, xp, last_send, minute, general.username(ctx.author), str(ctx.author), ctx.author.id, ctx.guild.id, self.bot.name))
         else:
             if xp != 0:  # No point in saving data if XP is zero...
                 self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, name, ctx.author.discriminator, self.bot.name))
+                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, general.username(ctx.author), str(ctx.author), self.bot.name))
 
     @commands.command(name="rewards")
     @commands.guild_only()

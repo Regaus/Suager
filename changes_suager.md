@@ -1600,3 +1600,6 @@
 ## v7.7.0a7 - 30 July 2023
 - Log files now ignore encoding errors and replace them with a special character instead of spamming errors to chat
 - Log files should now be sorted alphabetically before being appended to the output
+
+## v7.7.0a8 - 30 July 2023
+- Leveling leaderboard now handles the new usernames more efficiently and doesn't have special behaviour for people still on the old username system

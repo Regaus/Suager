@@ -14,7 +14,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
     xp = []   # XP
     xpl = []  # XP string lengths
     for user in data:
-        name = f"{user['name']}#{user['disc']:04d}" if user["disc"] else user["name"]
+        name = f"{user['name']} ({user['disc']})"
         un.append(name)
         val = language.number(user["xp"], precision=0)
         xp.append(val)
@@ -71,7 +71,7 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     coll = {}
     for i in data:
         if i['uid'] not in coll:
-            coll[i['uid']] = [0, f"{i['name']}#{i['disc']:04d}" if i["disc"] else i["name"]]
+            coll[i['uid']] = [0, f"{i['name']} ({i['disc']})"]
         coll[i['uid']][0] += i["xp"]
     sl = sorted(coll.items(), key=lambda a: a[1][0], reverse=True)
     r = len(sl)
