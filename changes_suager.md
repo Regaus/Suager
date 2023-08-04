@@ -1603,3 +1603,7 @@
 
 ## v7.7.0a8 - 30 July 2023
 - Leveling leaderboard now handles the new usernames more efficiently and doesn't have special behaviour for people still on the old username system
+
+## v7.7.0a9 - 30 July, 4 August 2023
+- Rewrote message logs settings
+- There are now separate commands to set the channel for edited and deleted messages, as well as a command to set both at once

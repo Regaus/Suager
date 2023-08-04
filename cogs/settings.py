@@ -1058,133 +1058,133 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
+    async def messages_toggle(self, ctx: commands.Context, toggle: bool):
+        """ Enable or disable the message logs """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
+        _settings["message_logs"]["enabled"] = toggle
+        output = "settings_messages_enable" if toggle else "settings_messages_disable"
+        return await self.settings_end(ctx, _settings, existent, output)
+
     @set_messages.command(name="disable")
-    async def set_message_disable(self, ctx: commands.Context):
+    async def set_messages_disable(self, ctx: commands.Context):
         """ Disable message logs """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "message_logs" not in _settings:
-            _settings["message_logs"] = self.template["message_logs"].copy()
-        _settings["message_logs"]["enabled"] = False
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_messages_disable"))
+        return await self.messages_toggle(ctx, False)
 
     @set_messages.command(name="enable")
-    async def set_message_enable(self, ctx: commands.Context):
+    async def set_messages_enable(self, ctx: commands.Context):
         """ Enable message logs """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "message_logs" not in _settings:
-            _settings["message_logs"] = self.template["message_logs"].copy()
-        _settings["message_logs"]["enabled"] = True
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_messages_enable"))
+        return await self.messages_toggle(ctx, True)
+
+    @staticmethod
+    def current_edit_channel(ctx: commands.Context, _settings: dict):
+        """ Return the current edit channel """
+        _channel = _settings["message_logs"]["edit"]
+        if _channel == 0:
+            return ctx.language().string("settings_messages_current_edit_disabled")
+        return ctx.language().string("settings_messages_current_edit", channel=f"<#{_channel}>")
+
+    @set_messages.group(name="editchannel", aliases=["edits", "edit"], invoke_without_command=True, case_insensitive=True)
+    async def set_messages_channel_edit(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Set the channel for edited message logs """
+        if ctx.invoked_subcommand is None:
+            _settings, existent = await self.settings_start(ctx, "message_logs")
+            if channel is None:
+                return await ctx.send(self.current_edit_channel(ctx, _settings))
+            else:
+                _settings["message_logs"]["edit"] = channel.id
+                return await self.settings_end(ctx, _settings, existent, "settings_messages_set_edit", channel=channel.mention, p=ctx.prefix)
+
+    @set_messages_channel_edit.command(name="disable")
+    async def set_messages_channel_edit_disable(self, ctx: commands.Context):
+        """ Disable logging edited messages """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
+        _settings["message_logs"]["edit"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_messages_disable_edit")
+
+    @staticmethod
+    def current_delete_channel(ctx: commands.Context, _settings: dict):
+        """ Return the current deleted channel """
+        _channel = _settings["message_logs"]["delete"]
+        if _channel == 0:
+            return ctx.language().string("settings_messages_current_delete_disabled")
+        return ctx.language().string("settings_messages_current_delete", channel=f"<#{_channel}>")
+
+    @set_messages.group(name="deletechannel", aliases=["deletes", "delete"], invoke_without_command=True, case_insensitive=True)
+    async def set_messages_channel_delete(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Set the channel for delete message logs """
+        if ctx.invoked_subcommand is None:
+            _settings, existent = await self.settings_start(ctx, "message_logs")
+            if channel is None:
+                return await ctx.send(self.current_delete_channel(ctx, _settings))
+            else:
+                _settings["message_logs"]["delete"] = channel.id
+                return await self.settings_end(ctx, _settings, existent, "settings_messages_set_delete", channel=channel.mention, p=ctx.prefix)
+
+    @set_messages_channel_delete.command(name="disable")
+    async def set_messages_channel_delete_disable(self, ctx: commands.Context):
+        """ Disable logging deleted messages """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
+        _settings["message_logs"]["delete"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_messages_disable_delete")
 
     @set_messages.command(name="channel", aliases=["set"])
-    async def set_message_channel(self, ctx: commands.Context, log_type: str, channel: discord.TextChannel = None):
-        """ Set the channel for the message logs
-        log_type must be either "edit" or "delete" """
-        language = self.bot.language(ctx)
-        if log_type not in ["edit", "delete"]:
-            return await ctx.send(language.string("settings_messages_type_invalid"))
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "message_logs" not in _settings:
-            _settings["message_logs"] = self.template["message_logs"].copy()
+    async def set_messages_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Set the channel for message logs - both edited and deleted messages """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
         if channel is None:
-            _settings["message_logs"][log_type] = 0
+            edits = self.current_edit_channel(ctx, _settings)
+            deletes = self.current_delete_channel(ctx, _settings)
+            return await ctx.send(f"{edits}\n{deletes}")
         else:
-            _settings["message_logs"][log_type] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        output = "settings_messages_set_edit" if log_type == "edit" else "settings_messages_set_delete"
-        return await ctx.send(language.string(output, channel=channel.mention, p=ctx.prefix))
+            _settings["message_logs"]["edit"] = channel.id
+            _settings["message_logs"]["delete"] = channel.id
+            return await self.settings_end(ctx, _settings, existent, "settings_messages_set", channel=channel.mention, p=ctx.prefix)
 
     @set_messages.group(name="ignore", aliases=["ignoredchannels", "ignorechannels", "ic"], case_insensitive=True)
-    async def set_message_ignore(self, ctx: commands.Context):
+    async def set_messages_ignore(self, ctx: commands.Context):
         """ Ignore edited and deleted messages in certain channels """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.channel)
 
-    @set_message_ignore.command(name="add", aliases=["+"])
-    async def message_ignore_add(self, ctx: commands.Context, channel: discord.TextChannel):
-        """ Ignore edited and deleted messages in this channel """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "message_logs" not in _settings:
-            _settings["message_logs"] = self.template["message_logs"].copy()
+    @set_messages_ignore.command(name="add", aliases=["+"])
+    async def messages_ignore_add(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Ignore edited and deleted messages in the specified channel """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
         _settings["message_logs"]["ignore_channels"].append(channel.id)
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_add", channel=channel.mention))
+        return await self.settings_end(ctx, _settings, existent, "settings_messages_ignore_add", channel=channel.mention)
 
-    @set_message_ignore.command(name="remove", aliases=["-"])
-    async def message_ignore_remove(self, ctx: commands.Context, channel: discord.TextChannel):
-        """ Don't ignore edited and deleted messages in this channel anymore """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
+    @set_messages_ignore.command(name="remove", aliases=["-"])
+    async def messages_ignore_remove(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Don't ignore edited and deleted messages in the specified channel anymore """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
         try:
             _settings["message_logs"]["ignore_channels"].remove(channel.id)
         except (ValueError, KeyError):
             return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_invalid"))
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_remove", channel=channel.mention))
+        return await self.settings_end(ctx, _settings, existent, "settings_messages_ignore_remove", channel=channel.mention)
 
-    @set_messages.command(name="ignorebots", aliases=["bots"])
-    async def message_ignore_bots(self, ctx: commands.Context, action: str):
-        """ Ignore bots' messages
+    async def messages_ignore_bots_toggle(self, ctx: commands.Context, toggle: bool):
+        """ Enable or disable ignoring bots' messages """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
+        _settings["message_logs"]["ignore_bots"] = toggle
+        output = "settings_messages_bots_enable" if toggle else "settings_messages_bots_disable"
+        return await self.settings_end(ctx, _settings, existent, output)
 
-        Enter "enable" to ignore bots, "disable" to treat them like any other message """
-        language = self.bot.language(ctx)
-        if action not in ["enable", "disable"]:
-            return await ctx.send(language.string("settings_prefix_default_invalid"))
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "message_logs" not in _settings:
-            _settings["message_logs"] = self.template["message_logs"].copy()
-        _settings["message_logs"]["ignore_bots"] = action == "enable"
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_messages_bots_enable" if action == "enable" else "settings_messages_bots_disable"))
+    @set_messages.group(name="ignorebots", aliases=["bots"])
+    async def set_messages_ignore_bots(self, ctx: commands.Context):
+        """ Ignore bots' messages """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.channel)
+
+    @set_messages_ignore_bots.command(name="enable")
+    async def messages_ignore_bots_enable(self, ctx: commands.Context):
+        """ Enable ignoring bots' messages """
+        return await self.messages_ignore_bots_toggle(ctx, True)
+
+    @set_messages_ignore_bots.command(name="disable")
+    async def messages_ignore_bots_disable(self, ctx: commands.Context):
+        """ Disable ignoring bots' messages """
+        return await self.messages_ignore_bots_toggle(ctx, False)
 
     @settings.group(name="polls", case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["suager"] and ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
