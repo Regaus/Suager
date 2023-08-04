@@ -352,3 +352,18 @@
 
 ## v1.4.0a5 - 24 June 2023
 - Fix reminders list using the username instead of display name
+
+## v1.4.0a6 - 9 July 2023
+- Rewrote birthday settings to the new standard
+- Birthday-related settings now have specific commands to disable things, rather than being reset when input is empty
+
+## v1.4.0a7 - 30 July 2023
+- Log files now ignore encoding errors and replace them with a special character instead of spamming errors to chat
+- Log files should now be sorted alphabetically before being appended to the output
+
+## v1.4.0a8 - 30 July, 4 August 2023
+- Rewrote message logs settings
+- There are now separate commands to set the channel for edited and deleted messages, as well as a command to set both at once
+
+## v1.4.0a9 - 4 August 2023
+- Fixed reaction roles trying to remove a role that the member doesn't have

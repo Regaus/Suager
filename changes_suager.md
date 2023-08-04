@@ -1607,3 +1607,6 @@
 ## v7.7.0a9 - 30 July, 4 August 2023
 - Rewrote message logs settings
 - There are now separate commands to set the channel for edited and deleted messages, as well as a command to set both at once
+
+## v7.7.0a10 - 4 August 2023
+- Fixed reaction roles trying to remove a role that the member doesn't have
