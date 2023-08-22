@@ -730,3 +730,6 @@
 ## v1.8.13.1 - 15 June 2023
 - Updated the "translations may not be accurate" notice
 - Made the weather command translate to natural languages again (once Regaus.py v3 is made)
+
+## v1.8.14 - 21 August 2023
+- Updated the declensions command to new language codes and to include Larihalian declension

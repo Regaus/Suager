@@ -60,7 +60,7 @@ class Conlangs(commands.Cog):
         #     return await ctx.send(f"Base-10: {number:,}\nBase-16: {_hex}\nRSL-{_version.split('-')[1]}: {output}")
 
     @rsl1.command(name="decline", aliases=["dec", "d"])
-    async def rsl1_decline(self, ctx: commands.Context, word: str, language: str = "ka_ne"):
+    async def rsl1_decline(self, ctx: commands.Context, word: str, language: str = "re_nu"):
         """ Decline a Kargadian noun """
         if word.startswith("debug "):
             word = word[6:]
@@ -68,14 +68,16 @@ class Conlangs(commands.Cog):
             cases = ["default", "nominative", "vocative", "accusative", "genitive", "dative", "high_five", "laugh_at", "for", "in", "ago"]  # , "instrumental", "locative", "inessive"
         else:
             case_lists = {
-                "ka_an": ["nominative", "accusative", "genitive", "dative", "instrumental", "comitative", "locative", "ablative", "vocative"],
-                "ka_ow": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative", "ablative"],
-                "ka_mw": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
-                "ka_re": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
-                "ka_ne": ["nominative", "accusative", "genitive", "dative", "instrumental"],
-                "ka_ni": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
-                "ka_tb": ["nominative", "accusative", "genitive", "dative", "instrumental", "abessive", "locative", "ablative"],
-                "ka_ka": ["subjective", "objective"]
+                "na": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative", "ablative"],
+                "kt": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative", "ablative"],
+                "re_kl": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+                "re_nu": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+                "re_mu": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+                "re_kv": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+                "vv": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+                "kz": ["nominative", "accusative", "genitive", "dative", "instrumental", "locative"],
+
+                "lh": ["nominative", "vocative", "accusative", "genitive", "dative", "locative", "ablative", "instrumental", "comitative"]
             }
             try:
                 cases = case_lists[language]
