@@ -83,7 +83,7 @@ class Social(commands.Cog):
 
         # Footer line 1: "Author has x'd Target x times"
         counter_diff = given - received  # How many more times the author did the action than the target
-        threshold = max((given + received) // 10, 5)  # The difference required for the "only" response to show up: 10% of the sum of the counters (100 each -> diff 20) - at least 5
+        threshold = max((given + received) // 20, 5)  # The difference required for the "only" response to show up: 5% of the sum of the counters (100 each -> diff 10); value has to be at least 5
         if given == 1 and received >= 5:
             # This string is used if the user only did the action for the first time, while the other has done it 5 or more times:
             # "Author has finally x'd Target back"

@@ -367,3 +367,6 @@
 
 ## v1.4.0a9 - 4 August 2023
 - Fixed reaction roles trying to remove a role that the member doesn't have
+
+## v1.4.0a10 - 22 August 2023
+- Counters now only require a 5% difference rather than 10% to give the "user has only done it x times" response
