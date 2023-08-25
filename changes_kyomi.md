@@ -370,3 +370,9 @@
 
 ## v1.4.0a10 - 22 August 2023
 - Counters now only require a 5% difference rather than 10% to give the "user has only done it x times" response
+
+## v1.4.0a11 - 23, 25 August 2023
+- Rewrote join roles, welcome/farewell, mod DMs, mod logs, user logs settings to the new standard
+- These settings now have specific commands to disable things, rather than being reset when the input is empty
+- Mod DM and mod log settings now have separate commands for each setting, as well as a command to enable/disable all the settings at once
+- Role preservation has been moved to a separate command rather than being a subcommand of user logs

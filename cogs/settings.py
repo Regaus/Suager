@@ -278,9 +278,16 @@ class Settings(commands.Cog):
             user_logs_text = language.string("settings_current_user_logs_disabled", p=ctx.prefix)
             if "user_logs" in setting:
                 user_logs = setting["user_logs"]
-                join, leave, roles = user_logs["join"], user_logs["leave"], user_logs["preserve_roles"]
-                user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave), roles=language.yes(roles))
+                join, leave = user_logs["join"], user_logs["leave"]
+                user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave))
             embed.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
+
+            # Role Preservation
+            role_preservation_text = language.string("settings_current_roles_disabled", p=ctx.prefix)
+            if "user_logs" in setting:
+                if setting["user_logs"]["preserve_roles"]:
+                    role_preservation_text = language.string("settings_current_roles_enabled", p=ctx.prefix)
+            embed.add_field(name=language.string("settings_current_roles"), value=role_preservation_text, inline=False)
 
             # Image-only channels settings
             image_only_text = language.string("settings_current_image_only_disabled", p=ctx.prefix)
@@ -1193,56 +1200,39 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_polls.command(name="channel")
+    @set_polls.group(name="channel", case_insensitive=True, invoke_without_command=True)
     async def set_poll_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set the channel where poll updates and results will go """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "polls" not in _settings:
-            _settings["polls"] = self.template["polls"].copy()
-        if channel is None:
-            _settings["polls"]["channel"] = 0
-        else:
-            _settings["polls"]["channel"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_poll_channel_set", channel=channel.mention))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_poll_channel_none"))
+        if ctx.invoked_subcommand is None:
+            _settings, existent = await self.settings_start(ctx, "polls")
+            if channel is None:
+                _channel = _settings["polls"]["channel"]
+                if _channel == 0:
+                    return await ctx.send(ctx.language().string("settings_poll_channel_none2"))
+                return await ctx.send(ctx.language().string("settings_poll_channel_set2", channel=f"<#{_channel}>"))
+            else:
+                _settings["polls"]["channel"] = channel.id
+                return await self.settings_end(ctx, _settings, existent, "settings_poll_channel_set", channel=channel.mention)
+
+    @set_poll_channel.command(name="default", aliases=["reset"])
+    async def set_poll_channel_default(self, ctx: commands.Context):
+        """ Reset the poll channel """
+        _settings, existent = await self.settings_start(ctx, "polls")
+        _settings["polls"]["channel"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_poll_channel_none")
 
     @set_polls.command(name="anonymity", aliases=["anon"])
     async def set_poll_anonymity(self, ctx: commands.Context, value: str):
         """ Set whether voters will be shown at the end of the poll or not (yes = anonymous, no = log voters) """
-        language = self.bot.language(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "polls" not in _settings:
-            _settings["polls"] = self.template["polls"].copy()
+        _settings, existent = await self.settings_start(ctx, "polls")
         if value.lower() == "yes":
             _settings["polls"]["voter_anonymity"] = True
         elif value.lower() == "no":
             _settings["polls"]["voter_anonymity"] = False
         else:
-            return await ctx.send(language.string("settings_poll_anonymity_invalid"))
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if _settings["polls"]["voter_anonymity"]:
-            return await ctx.send(self.bot.language(ctx).string("settings_poll_anonymity_yes"))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_poll_anonymity_no"))
+            return await ctx.send(ctx.language().string("settings_poll_anonymity_invalid"))
+        output = "settings_poll_anonymity_yes" if _settings["polls"]["voter_anonymity"] else "settings_poll_anonymity_no"
+        return await self.settings_end(ctx, _settings, existent, output)
 
     @settings.group(name="joinrole", aliases=["autorole", "join", "jr"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
@@ -1251,22 +1241,16 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_join_role.group(name="members", aliases=["member"])
+    @set_join_role.group(name="members", aliases=["member"], case_insensitive=True)
     async def set_member_join_role(self, ctx: commands.Context):
         """ Set the role to give to new human members """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_member_join_role.command(name="add")
+    @set_member_join_role.command(name="add", aliases=["a", "+"])
     async def add_member_join_role(self, ctx: commands.Context, role: discord.Role):
         """ Give this role to new human members """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "join_roles" not in _settings:
-            _settings["join_roles"] = self.template["join_roles"].copy()
+        _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["members"]
         if type(members) == int:  # If it is old
             if members == 0:
@@ -1274,26 +1258,12 @@ class Settings(commands.Cog):
             else:
                 _settings["join_roles"]["members"] = [members]
         _settings["join_roles"]["members"].append(role.id)
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        # if role is not None:
-        return await ctx.send(self.bot.language(ctx).string("settings_join_members_add", role=role.name))
-        # else:
-        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+        return await self.settings_end(ctx, _settings, existent, "settings_join_members_add", role=role.name)
 
-    @set_member_join_role.command(name="remove")
+    @set_member_join_role.command(name="remove", aliases=["r", "delete", "d", "-"])
     async def remove_member_join_role(self, ctx: commands.Context, role: discord.Role):
         """ Don't give this role new human members """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "join_roles" not in _settings:
-            _settings["join_roles"] = self.template["join_roles"].copy()
+        _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["members"]
         if type(members) == int:  # If it is old
             if members == 0:
@@ -1303,33 +1273,27 @@ class Settings(commands.Cog):
         try:
             _settings["join_roles"]["members"].remove(role.id)
         except (IndexError, ValueError):
-            return await ctx.send(self.bot.language(ctx).string("settings_join_members_error", role=role.name))
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        # if role is not None:
-        return await ctx.send(self.bot.language(ctx).string("settings_join_members_remove", role=role.name))
-        # else:
-        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+            return await ctx.send(ctx.language().string("settings_join_members_error", role=role.name))
+        return await self.settings_end(ctx, _settings, existent, "settings_join_members_remove", role=role.name)
 
-    @set_join_role.group(name="bots", aliases=["bot"])
+    @set_member_join_role.command(name="removeall", aliases=["deleteall"])
+    async def remove_all_member_join_roles(self, ctx: commands.Context):
+        """ Stop giving any roles to new human members
+        Warning - This action cannot be undone! """
+        _settings, existent = await self.settings_start(ctx, "join_roles")
+        _settings["join_roles"]["members"] = []
+        return await self.settings_end(ctx, _settings, existent, "settings_join_members_removeall")
+
+    @set_join_role.group(name="bots", aliases=["bot"], case_insensitive=True)
     async def set_bot_join_role(self, ctx: commands.Context):
         """ Set the role to give to new bots """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_bot_join_role.command(name="add")
+    @set_bot_join_role.command(name="add", aliases=["a", "+"])
     async def add_bot_join_role(self, ctx: commands.Context, role: discord.Role):
         """ Give this role to new bots """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "join_roles" not in _settings:
-            _settings["join_roles"] = self.template["join_roles"].copy()
+        _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["bots"]
         if type(members) == int:  # If it is old
             if members == 0:
@@ -1337,26 +1301,12 @@ class Settings(commands.Cog):
             else:
                 _settings["join_roles"]["bots"] = [members]
         _settings["join_roles"]["bots"].append(role.id)
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        # if role is not None:
-        return await ctx.send(ctx.language().string("settings_join_bots_add", role=role.name))
-        # else:
-        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+        return await self.settings_end(ctx, _settings, existent, "settings_join_bots_add", role=role.name)
 
-    @set_bot_join_role.command(name="remove")
+    @set_bot_join_role.command(name="remove", aliases=["r", "delete", "d", "-"])
     async def remove_bot_join_role(self, ctx: commands.Context, role: discord.Role):
         """ Don't give this role new bots """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "join_roles" not in _settings:
-            _settings["join_roles"] = self.template["join_roles"].copy()
+        _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["bots"]
         if type(members) == int:  # If it is old
             if members == 0:
@@ -1366,16 +1316,16 @@ class Settings(commands.Cog):
         try:
             _settings["join_roles"]["bots"].remove(role.id)
         except (IndexError, ValueError):
-            return await ctx.send(self.bot.language(ctx).string("settings_join_bots_error", role=role.name))
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        # if role is not None:
-        return await ctx.send(self.bot.language(ctx).string("settings_join_bots_remove", role=role.name))
-        # else:
-        #     return await general.send(self.bot.language(ctx).string("settings_join_members_none"), ctx.channel)
+            return await ctx.send(ctx.language().string("settings_join_bots_error", role=role.name))
+        return await self.settings_end(ctx, _settings, existent, "settings_join_bots_remove", role=role.name)
+
+    @set_bot_join_role.command(name="removeall", aliases=["deleteall"])
+    async def remove_all_bot_join_roles(self, ctx: commands.Context):
+        """ Stop giving any roles to new bots
+        Warning - This action cannot be undone! """
+        _settings, existent = await self.settings_start(ctx, "join_roles")
+        _settings["join_roles"]["bots"] = []
+        return await self.settings_end(ctx, _settings, existent, "settings_join_bots_removeall")
 
     @settings.group(name="welcome", case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
@@ -1384,42 +1334,33 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_welcome.command(name="channel")
+    @set_welcome.command(name="channel", case_insensitive=True, invoke_without_command=True)
     async def set_welcome_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set the channel for welcome messages """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "welcome" not in _settings:
-            _settings["welcome"] = self.template["welcome"].copy()
-        if channel is None:
-            _settings["welcome"]["channel"] = 0
-        else:
-            _settings["welcome"]["channel"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_welcome_channel_set", channel=channel.mention))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_welcome_channel_none"))
+        if ctx.invoked_subcommand is None:
+            _settings, existent = await self.settings_start(ctx, "welcome")
+            if channel is None:
+                _channel = _settings["welcome"]["channel"]
+                if _channel == 0:
+                    return await ctx.send(ctx.language().string("settings_welcome_channel_none2"))
+                return await ctx.send(ctx.language().string("settings_welcome_channel_set2", channel=f"<#{_channel}>"))
+            else:
+                _settings["welcome"]["channel"] = channel.id
+                return await self.settings_end(ctx, _settings, existent, "settings_welcome_channel_set", channel=channel.mention)
+
+    @set_welcome.command(name="disable", aliases=["reset"])
+    async def set_welcome_channel_default(self, ctx: commands.Context):
+        """ Disable welcome messages """
+        _settings, existent = await self.settings_start(ctx, "welcome")
+        _settings["welcome"]["channel"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_welcome_channel_none")
 
     @set_welcome.group(name="message", invoke_without_command=True, case_insensitive=True)
     async def welcome_message(self, ctx: commands.Context, *, value: str):
         """ Set the welcome message """
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
-            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-            if data:
-                _settings = json.loads(data["data"])
-            else:
-                _settings = self.template.copy()
-            if "welcome" not in _settings:
-                _settings["welcome"] = self.template["welcome"].copy()
+            _settings, existent = await self.settings_start(ctx, "welcome")
             value = value.replace("\\n", "\n")
             _settings["welcome"]["message"] = value
             message2 = value \
@@ -1430,17 +1371,12 @@ class Settings(commands.Cog):
                 .replace("[JOINED_AT]", language.time(ctx.author.joined_at, short=1, dow=False, seconds=False, tz=True))\
                 .replace("[ACCOUNT_AGE]", language.delta_dt(ctx.author.created_at, accuracy=3, brief=False, affix=False))\
                 .replace("[MEMBERS]", language.number(ctx.guild.member_count))
-            stuff = json.dumps(_settings)
-            if data:
-                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-            else:
-                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            return await ctx.send(language.string("settings_welcome_message", message=value, formatted=message2))
+            return await self.settings_end(ctx, _settings, existent, "settings_welcome_message", message=value, formatted=message2)
 
     @welcome_message.command(name="variables", aliases=["vars"])
     async def welcome_message_vars(self, ctx: commands.Context):
         """ Welcome message variables """
-        return await ctx.send(self.bot.language(ctx).string("settings_welcome_message_variables"))
+        return await ctx.send(ctx.language().string("settings_welcome_message_variables"))
 
     @settings.group(name="goodbye", aliases=["farewell"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
@@ -1449,42 +1385,32 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_goodbye.command(name="channel")
+    @set_goodbye.command(name="channel", case_insensitive=True, invoke_without_command=True)
     async def set_goodbye_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set the channel for goodbye messages """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "goodbye" not in _settings:
-            _settings["goodbye"] = self.template["goodbye"].copy()
+        _settings, existent = await self.settings_start(ctx, "goodbye")
         if channel is None:
-            _settings["goodbye"]["channel"] = 0
+            _channel = _settings["goodbye"]["channel"]
+            if _channel == 0:
+                return await ctx.send(ctx.language().string("settings_goodbye_channel_none2"))
+            return await ctx.send(ctx.language().string("settings_goodbye_channel_set2", channel=f"<#{_channel}>"))
         else:
             _settings["goodbye"]["channel"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_goodbye_channel_set", channel=channel.mention))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_goodbye_channel_none"))
+            return await self.settings_end(ctx, _settings, existent, "settings_goodbye_channel_set", channel=channel.mention)
+
+    @set_goodbye.command(name="disable", aliases=["reset"])
+    async def set_goodbye_channel_default(self, ctx: commands.Context):
+        """ Disable goodbye messages """
+        _settings, existent = await self.settings_start(ctx, "goodbye")
+        _settings["goodbye"]["channel"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_goodbye_channel_none")
 
     @set_goodbye.group(name="message", invoke_without_command=True, case_insensitive=True)
     async def goodbye_message(self, ctx: commands.Context, *, value: str):
         """ Set the goodbye message """
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
-            data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-            if data:
-                _settings = json.loads(data["data"])
-            else:
-                _settings = self.template.copy()
-            if "goodbye" not in _settings:
-                _settings["goodbye"] = self.template["goodbye"].copy()
+            _settings, existent = await self.settings_start(ctx, "goodbye")
             value = value.replace("\\n", "\n")
             _settings["goodbye"]["message"] = value
             message2 = value \
@@ -1496,90 +1422,250 @@ class Settings(commands.Cog):
                 .replace("[ACCOUNT_AGE]", language.delta_dt(ctx.author.created_at, accuracy=3, brief=False, affix=False))\
                 .replace("[LENGTH_OF_STAY]", language.delta_dt(ctx.author.joined_at, accuracy=3, brief=False, affix=False))\
                 .replace("[MEMBERS]", language.number(ctx.guild.member_count))
-            stuff = json.dumps(_settings)
-            if data:
-                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-            else:
-                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            return await ctx.send(language.string("settings_goodbye_message", message=value, formatted=message2))
+            return await self.settings_end(ctx, _settings, existent, "settings_goodbye_message", message=value, formatted=message2)
 
     @goodbye_message.command(name="variables", aliases=["vars"])
     async def goodbye_message_vars(self, ctx: commands.Context):
         """ Goodbye message variables """
-        return await ctx.send(self.bot.language(ctx).string("settings_goodbye_message_variables"))
+        return await ctx.send(ctx.language().string("settings_goodbye_message_variables"))
 
-    @settings.command(name="moddm", aliases=["moddms", "dmonmod", "dms"])
+    @settings.group(name="moddms", aliases=["moddm", "dmonmod", "dms", "md"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
-    async def set_mod_dms(self, ctx: commands.Context, punishment: str, action: str = None):
-        """ Send a DM to the user when a punishment is applied against them
-        Punishment values: warn, mute, kick, ban
-        Action: enable, disable (leave empty to see current value)"""
-        language = self.bot.language(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "mod_dms" not in _settings:
-            _settings["mod_dms"] = self.template["mod_dms"].copy()
-        punishment = punishment.lower()
-        if punishment not in ["warn", "mute", "kick", "ban"]:
-            return await ctx.send(language.string("settings_mod_dms_invalid", value=punishment))
-        if action is None:
-            try:
-                enabled = _settings["mod_dms"][punishment]
-                text = "enabled2" if enabled else "disabled2"
-                return await ctx.send(language.string(f"settings_mod_dms_{punishment}_{text}"))
-            except KeyError:
-                # return await general.send(language.string(f"settings_mod_dms_{punishment}_disabled2"), ctx.channel)
-                return await ctx.send(language.string("settings_mod_dms_invalid", value=punishment))
-        else:
-            action = action.lower()
-            if action not in ["enable", "disable"]:
-                return await ctx.send(language.string("settings_mod_dms_invalid2", value=action))
-            enable = action == "enable"
-            _settings["mod_dms"][punishment] = enable
-            stuff = json.dumps(_settings)
-            if data:
-                self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-            else:
-                self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-            text = "enabled" if enable else "disabled"
-            return await ctx.send(language.string(f"settings_mod_dms_{punishment}_{text}"))
+    async def set_mod_dms(self, ctx: commands.Context):
+        """ Send a DM to the user when a moderation action is applied against them """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
 
-    @settings.command(name="modlogs", aliases=["ml"])
+    async def set_mod_dms_generic_check(self, ctx: commands.Context, punishment: str):
+        _settings, _ = await self.settings_start(ctx, "mod_dms")
+        enabled = _settings["mod_dms"][punishment]
+        text = "enabled2" if enabled else "disabled2"
+        command_part = "disable" if enabled else "enable"
+        command = f"`{ctx.prefix}settings moddms {ctx.invoked_with} {command_part}`"
+        return await ctx.send(ctx.language().string(f"settings_mod_dms_{punishment}_{text}", command=command))
+
+    async def set_mod_dms_generic_enable(self, ctx: commands.Context, punishment: str):
+        _settings, existent = await self.settings_start(ctx, "mod_dms")
+        if punishment == "all":
+            _settings["mod_dms"]["ban"] = True
+            _settings["mod_dms"]["kick"] = True
+            _settings["mod_dms"]["mute"] = True
+            _settings["mod_dms"]["warn"] = True
+        else:
+            _settings["mod_dms"][punishment] = True
+        return await self.settings_end(ctx, _settings, existent, f"settings_mod_dms_{punishment}_enabled")
+
+    async def set_mod_dms_generic_disable(self, ctx: commands.Context, punishment: str):
+        _settings, existent = await self.settings_start(ctx, "mod_dms")
+        if punishment == "all":
+            _settings["mod_dms"]["ban"] = False
+            _settings["mod_dms"]["kick"] = False
+            _settings["mod_dms"]["mute"] = False
+            _settings["mod_dms"]["warn"] = False
+        else:
+            _settings["mod_dms"][punishment] = False
+        return await self.settings_end(ctx, _settings, existent, f"settings_mod_dms_{punishment}_disabled")
+
+    @set_mod_dms.command(name="enableall", aliases=["enable", "onall", "on"])
+    async def set_mod_dms_enableall(self, ctx: commands.Context):
+        """ Enable mod DMs for all punishments at once """
+        return await self.set_mod_dms_generic_enable(ctx, "all")
+
+    @set_mod_dms.command(name="disableall", aliases=["disable", "offall", "off"])
+    async def set_mod_dms_disableall(self, ctx: commands.Context):
+        """ Disable mod DMs for all punishments at once """
+        return await self.set_mod_dms_generic_disable(ctx, "all")
+
+    @set_mod_dms.group(name="bans", aliases=["ban"], case_insensitive=True)
+    async def set_mod_dms_bans(self, ctx: commands.Context):
+        """ Send a DM to the user when they get banned """
+        if ctx.invoked_subcommand is None:
+            return await self.set_mod_dms_generic_check(ctx, "ban")
+
+    @set_mod_dms_bans.command(name="enable", aliases=["on"])
+    async def set_mod_dm_bans_enable(self, ctx: commands.Context):
+        """ Enable DMs for bans """
+        return await self.set_mod_dms_generic_enable(ctx, "ban")
+
+    @set_mod_dms_bans.command(name="disable", aliases=["off", "reset"])
+    async def set_mod_dm_bans_disable(self, ctx: commands.Context):
+        """ Disable DMs for bans """
+        return await self.set_mod_dms_generic_disable(ctx, "ban")
+
+    @set_mod_dms.group(name="kicks", aliases=["kick"], case_insensitive=True)
+    async def set_mod_dms_kicks(self, ctx: commands.Context):
+        """ Send a DM to the user when they get kicked """
+        if ctx.invoked_subcommand is None:
+            return await self.set_mod_dms_generic_check(ctx, "kick")
+
+    @set_mod_dms_kicks.command(name="enable", aliases=["on"])
+    async def set_mod_dm_kicks_enable(self, ctx: commands.Context):
+        """ Enable DMs for kicks """
+        return await self.set_mod_dms_generic_enable(ctx, "kick")
+
+    @set_mod_dms_kicks.command(name="disable", aliases=["off", "reset"])
+    async def set_mod_dm_kicks_disable(self, ctx: commands.Context):
+        """ Disable DMs for kicks """
+        return await self.set_mod_dms_generic_disable(ctx, "kick")
+
+    @set_mod_dms.group(name="mutes", aliases=["mute"], case_insensitive=True)
+    async def set_mod_dms_mutes(self, ctx: commands.Context):
+        """ Send a DM to the user when they get muted """
+        if ctx.invoked_subcommand is None:
+            return await self.set_mod_dms_generic_check(ctx, "mute")
+
+    @set_mod_dms_mutes.command(name="enable", aliases=["on"])
+    async def set_mod_dm_mutes_enable(self, ctx: commands.Context):
+        """ Enable DMs for mutes """
+        return await self.set_mod_dms_generic_enable(ctx, "mute")
+
+    @set_mod_dms_mutes.command(name="disable", aliases=["off", "reset"])
+    async def set_mod_dm_mutes_disable(self, ctx: commands.Context):
+        """ Disable DMs for mutes """
+        return await self.set_mod_dms_generic_disable(ctx, "mute")
+
+    @set_mod_dms.group(name="warnings", aliases=["warning", "warns", "warn"], case_insensitive=True)
+    async def set_mod_dms_warnings(self, ctx: commands.Context):
+        """ Send a DM to the user when they get warned """
+        if ctx.invoked_subcommand is None:
+            return await self.set_mod_dms_generic_check(ctx, "warn")
+
+    @set_mod_dms_warnings.command(name="enable", aliases=["on"])
+    async def set_mod_dm_warnings_enable(self, ctx: commands.Context):
+        """ Enable DMs for warnings """
+        return await self.set_mod_dms_generic_enable(ctx, "warn")
+
+    @set_mod_dms_warnings.command(name="disable", aliases=["off", "reset"])
+    async def set_mod_dm_warnings_disable(self, ctx: commands.Context):
+        """ Disable DMs for warnings """
+        return await self.set_mod_dms_generic_disable(ctx, "warn")
+
+    @settings.group(name="modlogs", aliases=["modlog", "ml"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
-    async def set_mod_logs(self, ctx: commands.Context, punishment: str, channel: discord.TextChannel = None):
-        """ Log all moderation actions taken with this bot
-        Punishment values: warn, mute, kick, ban, roles
-        ("Roles" means logging when a user gains or loses a role)
+    async def set_mod_logs(self, ctx: commands.Context):
+        """ Log moderation actions taken using this bot """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
 
-        To disable, don't specify the channel (Mod logs are disabled by default anyway)
-        To enable, specify a channel where all actions of the given type will be logged.
-        """
-        language = self.bot.language(ctx)
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "mod_logs" not in _settings:
-            _settings["mod_logs"] = self.template["mod_logs"].copy()
-        punishment = punishment.lower()
-        if punishment not in ["warn", "mute", "kick", "ban", "roles"]:
-            return await ctx.send(language.string("settings_mod_logs_invalid", value=punishment))
-        if channel is None:
-            _settings["mod_logs"][punishment] = 0
-            text = language.string(f"settings_mod_logs_disable_{punishment}")
+    async def set_mod_logs_generic_check(self, ctx: commands.Context, punishment: str):
+        _settings, _ = await self.settings_start(ctx, "mod_logs")
+        language = ctx.language()
+        enabled = _settings["mod_logs"][punishment]
+        text = "enabled" if enabled else "disabled"
+        command_part = "disable" if enabled else language.string("settings_mod_dms_channel")
+        command = f"`{ctx.prefix}settings modlogs {ctx.invoked_with} {command_part}`"
+        return await ctx.send(language.string(f"settings_mod_logs_{text}_{punishment}", command=command, channel=f"<#{enabled}>"))
+
+    async def set_mod_logs_generic_enable(self, ctx: commands.Context, punishment: str, channel: discord.TextChannel):
+        _settings, existent = await self.settings_start(ctx, "mod_logs")
+        if punishment.startswith("all"):
+            _settings["mod_logs"]["ban"] = channel.id
+            _settings["mod_logs"]["kick"] = channel.id
+            _settings["mod_logs"]["mute"] = channel.id
+            _settings["mod_logs"]["warn"] = channel.id
+            if punishment == "all2":
+                _settings["mod_logs"]["roles"] = channel.id
         else:
             _settings["mod_logs"][punishment] = channel.id
-            text = language.string(f"settings_mod_logs_enable_{punishment}", channel=channel.mention)
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
+        return await self.settings_end(ctx, _settings, existent, f"settings_mod_logs_enable_{punishment}", channel=channel.mention)
+
+    async def set_mod_logs_generic_disable(self, ctx: commands.Context, punishment: str):
+        _settings, existent = await self.settings_start(ctx, "mod_logs")
+        if punishment.startswith("all"):
+            _settings["mod_logs"]["ban"] = 0
+            _settings["mod_logs"]["kick"] = 0
+            _settings["mod_logs"]["mute"] = 0
+            _settings["mod_logs"]["warn"] = 0
+            if punishment == "all2":
+                _settings["mod_logs"]["roles"] = 0
         else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(text)
+            _settings["mod_logs"][punishment] = 0
+        return await self.settings_end(ctx, _settings, existent, f"settings_mod_logs_disable_{punishment}")
+
+    @set_mod_logs.command(name="enableall", aliases=["enable", "onall", "on"])
+    async def set_mod_logs_enable_all(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Log all moderation actions **except role changes** to the specified channel """
+        return await self.set_mod_logs_generic_enable(ctx, "all", channel)
+
+    @set_mod_logs.command(name="enableall2", aliases=["enable2", "onall2", "on2", "enableroles", "onroles"])
+    async def set_mod_logs_enable_all2(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Log all moderation actions **including role changes** to the specified channel """
+        return await self.set_mod_logs_generic_enable(ctx, "all2", channel)
+
+    @set_mod_logs.command("disableall", aliases=["disable", "offall", "off"])
+    async def set_mod_logs_disable_all(self, ctx: commands.Context):
+        """ Disable logging of any moderation actions (except role changes) """
+        return await self.set_mod_logs_generic_disable(ctx, "all")
+
+    @set_mod_logs.command("disableall2", aliases=["disable2", "offall2", "off2", "disableroles", "offroles"])
+    async def set_mod_logs_disable_all2(self, ctx: commands.Context):
+        """ Disable logging of any moderation actions (including role changes) """
+        return await self.set_mod_logs_generic_disable(ctx, "all2")
+
+    @set_mod_logs.group("bans", aliases=["ban"], case_insensitive=True, invoke_without_command=True)
+    async def set_mod_logs_bans(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Log bans to the specified channel """
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.set_mod_logs_generic_check(ctx, "ban")
+            return await self.set_mod_logs_generic_enable(ctx, "ban", channel)
+
+    @set_mod_logs_bans.command(name="disable", aliases=["reset", "off"])
+    async def set_mod_logs_bans_disable(self, ctx: commands.Context):
+        """ Disable mod logs for bans """
+        return await self.set_mod_logs_generic_disable(ctx, "ban")
+
+    @set_mod_logs.group("kicks", aliases=["kick"], case_insensitive=True, invoke_without_command=True)
+    async def set_mod_logs_kicks(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Log kicks to the specified channel """
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.set_mod_logs_generic_check(ctx, "kick")
+            return await self.set_mod_logs_generic_enable(ctx, "kick", channel)
+
+    @set_mod_logs_kicks.command(name="disable", aliases=["reset", "off"])
+    async def set_mod_logs_kicks_disable(self, ctx: commands.Context):
+        """ Disable mod logs for kicks """
+        return await self.set_mod_logs_generic_disable(ctx, "kick")
+
+    @set_mod_logs.group("mutes", aliases=["mute"], case_insensitive=True, invoke_without_command=True)
+    async def set_mod_logs_mutes(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Log mutes to the specified channel """
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.set_mod_logs_generic_check(ctx, "mute")
+            return await self.set_mod_logs_generic_enable(ctx, "mute", channel)
+
+    @set_mod_logs_mutes.command(name="disable", aliases=["reset", "off"])
+    async def set_mod_logs_mutes_disable(self, ctx: commands.Context):
+        """ Disable mod logs for mutes """
+        return await self.set_mod_logs_generic_disable(ctx, "mute")
+
+    @set_mod_logs.group("warnings", aliases=["warning", "warns", "warn"], case_insensitive=True, invoke_without_command=True)
+    async def set_mod_logs_warns(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Log warnings to the specified channel """
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.set_mod_logs_generic_check(ctx, "warn")
+            return await self.set_mod_logs_generic_enable(ctx, "warn", channel)
+
+    @set_mod_logs_warns.command(name="disable", aliases=["reset", "off"])
+    async def set_mod_logs_warns_disable(self, ctx: commands.Context):
+        """ Disable mod logs for warnings """
+        return await self.set_mod_logs_generic_disable(ctx, "warn")
+
+    @set_mod_logs.group("roles", aliases=["role"], case_insensitive=True, invoke_without_command=True)
+    async def set_mod_logs_roles(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        """ Log changes in members' roles to the specified channel """
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.set_mod_logs_generic_check(ctx, "roles")
+            return await self.set_mod_logs_generic_enable(ctx, "roles", channel)
+
+    @set_mod_logs_roles.command(name="disable", aliases=["reset", "off"])
+    async def set_mod_logs_roles_disable(self, ctx: commands.Context):
+        """ Disable mod logs for changes in members' roles """
+        return await self.set_mod_logs_generic_disable(ctx, "roles")
 
     @settings.group(name="userlogs", aliases=["users"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
@@ -1588,76 +1674,87 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @set_user_logs.command(name="join")
+    async def user_logs_check(self, ctx: commands.Context, action: str):
+        _settings, _ = await self.settings_start(ctx, "user_logs")
+        language = ctx.language()
+        enabled = _settings["user_logs"][action]
+        text = "set2" if enabled else "none2"
+        command_part = "disable" if enabled else language.string("settings_mod_dms_channel")
+        command = f"`{ctx.prefix}settings userlogs {ctx.invoked_with} {command_part}`"
+        return await ctx.send(language.string(f"settings_users_{action}_{text}", command=command, channel=f"<#{enabled}>"))
+
+    async def user_logs_enable(self, ctx: commands.Context, action: str, channel: discord.TextChannel):
+        _settings, existent = await self.settings_start(ctx, "user_logs")
+        _settings["user_logs"][action] = channel.id
+        return await self.settings_end(ctx, _settings, existent, f"settings_users_{action}_set", channel=channel.mention)
+
+    async def user_logs_disable(self, ctx: commands.Context, action: str):
+        _settings, existent = await self.settings_start(ctx, "user_logs")
+        _settings["user_logs"][action] = 0
+        return await self.settings_end(ctx, _settings, existent, f"settings_users_{action}_none")
+
+    @set_user_logs.group(name="join", case_insensitive=True, invoke_without_command=True)
     async def set_join_logs_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set the channel for logging people who join the server """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "user_logs" not in _settings:
-            _settings["user_logs"] = self.template["user_logs"].copy()
-        if channel is None:
-            _settings["user_logs"]["join"] = 0
-        else:
-            _settings["user_logs"]["join"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_users_join_set", channel=channel.mention))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_users_join_none"))
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.user_logs_check(ctx, "join")
+            return await self.user_logs_enable(ctx, "join", channel)
 
-    @set_user_logs.command(name="leave")
+    @set_join_logs_channel.command(name="disable", aliases=["reset"])
+    async def set_join_logs_disable(self, ctx: commands.Context):
+        """ Disable logging people joining the server """
+        return await self.user_logs_disable(ctx, "join")
+
+    @set_user_logs.group(name="leave", case_insensitive=True, invoke_without_command=True)
     async def set_leave_logs_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
         """ Set the channel for logging people who leave the server """
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "user_logs" not in _settings:
-            _settings["user_logs"] = self.template["user_logs"].copy()
-        if channel is None:
-            _settings["user_logs"]["leave"] = 0
-        else:
-            _settings["user_logs"]["leave"] = channel.id
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        if channel is not None:
-            return await ctx.send(self.bot.language(ctx).string("settings_users_leave_set", channel=channel.mention))
-        else:
-            return await ctx.send(self.bot.language(ctx).string("settings_users_leave_none"))
+        if ctx.invoked_subcommand is None:
+            if channel is None:
+                return await self.user_logs_check(ctx, "leave")
+            return await self.user_logs_enable(ctx, "leave", channel)
 
-    @set_user_logs.command(name="roles")
-    async def set_role_preservation(self, ctx: commands.Context, action: str):
+    @set_leave_logs_channel.command(name="disable", aliases=["reset"])
+    async def set_leave_logs_disable(self, ctx: commands.Context):
+        """ Disable logging people leaving the server """
+        return await self.user_logs_disable(ctx, "leave")
+
+    @set_user_logs.group(name="all", aliases=["both"], case_insensitive=True, invoke_without_command=True)
+    async def set_user_logs_channel(self, ctx: commands.Context, channel: discord.TextChannel):
+        """ Set the channel for logging both people joining and leaving the server in one command """
+        if ctx.invoked_subcommand is None:
+            _settings, existent = await self.settings_start(ctx, "user_logs")
+            _settings["user_logs"]["join"] = channel.id
+            _settings["user_logs"]["leave"] = channel.id
+            return await self.settings_end(ctx, _settings, existent, "settings_users_all_set", channel=channel.mention)
+
+    @set_user_logs_channel.command(name="disable", aliases=["reset"])
+    async def set_user_logs_disable(self, ctx: commands.Context):
+        """ Disable logging people joining and leaving the server """
+        _settings, existent = await self.settings_start(ctx, "user_logs")
+        _settings["user_logs"]["join"] = 0
+        _settings["user_logs"]["leave"] = 0
+        return await self.settings_end(ctx, _settings, existent, "settings_users_all_none")
+
+    @settings.group(name="rolepreservation", aliases=["roles", "preservation"], case_insensitive=True)
+    async def set_role_preservation(self, ctx: commands.Context):
         """ Keep the roles the user had when they left if they ever rejoin """
-        language = ctx.language()
-        data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if data:
-            _settings = json.loads(data["data"])
-        else:
-            _settings = self.template.copy()
-        if "user_logs" not in _settings:
-            _settings["user_logs"] = self.template["user_logs"].copy()
-        action = action.lower()
-        if action not in ["enable", "disable"]:
-            return await ctx.send(language.string("settings_users_roles_action", action))
-        enable = action == "enable"
-        _settings["user_logs"]["preserve_roles"] = enable
-        stuff = json.dumps(_settings)
-        if data:
-            self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
-        else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
-        return await ctx.send(language.string("settings_users_roles_enable" if enable else "settings_users_roles_disable"))
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @set_role_preservation.command(name="enable", aliases=["on"])
+    async def enable_role_preservation(self, ctx: commands.Context):
+        """ Enable giving back the roles the user had when they left if they rejoin """
+        _settings, existent = await self.settings_start(ctx, "user_logs")
+        _settings["user_logs"]["preserve_roles"] = True
+        return await self.settings_end(ctx, _settings, existent, "settings_users_roles_enable")
+
+    @set_role_preservation.command(name="disable", aliases=["off"])
+    async def disable_role_preservation(self, ctx: commands.Context):
+        """ Disable giving back the roles the user had when they left if they rejoin """
+        _settings, existent = await self.settings_start(ctx, "user_logs")
+        _settings["user_logs"]["preserve_roles"] = False
+        return await self.settings_end(ctx, _settings, existent, "settings_users_roles_disable")
 
     @settings.group(name="warnings", aliases=["warns", "warn"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
