@@ -267,9 +267,9 @@ class Moderation(commands.Cog):
                     language = self.bot.language(response_ctx)
                     warn_settings, missing = self.get_warn_settings(response_ctx, language)
                     if missing:
-                        await ctx.send(missing)
+                        await response_ctx.send(missing)
 
-                    _, delta, expiry, error = await self.get_duration(response_ctx, anti_ads.get("warning", ""), language)
+                    _, delta, expiry, error = await self.get_duration(response_ctx, anti_ads.get("warning", ""), language, "mod_warn_limit")
                     reason = "[Automatic] Advertising"
                     # We don't need to clutter the chat with the statement that the person has been muted, that should be obvious enough to begin with
                     if not error:
@@ -545,13 +545,13 @@ class Moderation(commands.Cog):
         return True
 
     @staticmethod
-    async def get_duration(ctx: commands.Context, reason: str, language: Language):
+    async def get_duration(ctx: commands.Context, reason: str, language: Language, overflow_response: str = "mod_mute_limit"):
         reason = reason[:400] if reason else language.string("mod_reason_none")
         _duration = reason.split(" ")[0]
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
         if time.rd_is_above_5y(delta):
-            await ctx.send(language.string("mod_mute_limit"), delete_after=15)
+            await ctx.send(language.string(overflow_response), delete_after=15)
             error = True
         return reason, delta, expiry, error
 
@@ -774,7 +774,7 @@ class Moderation(commands.Cog):
             "kyomi":  settings.template_mizuki,
         }.get(self.bot.name)
 
-    def get_warn_settings(self, ctx: commands.Context, language: Language):
+    def get_warn_settings(self, ctx: commands.Context, language: Language) -> tuple[dict, str | None]:
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not _data:
             return self.settings_template["warnings"], language.string("mod_warn_settings", ctx.prefix)
@@ -851,7 +851,7 @@ class Moderation(commands.Cog):
         warn_check = self.warn_check(ctx, member, language)
         if warn_check is not True:
             return await ctx.send(warn_check)
-        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language, "mod_warn_limit")
         if not error:
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
@@ -872,7 +872,7 @@ class Moderation(commands.Cog):
         warn_settings, missing = self.get_warn_settings(ctx, language)
         if missing:
             await ctx.send(missing)
-        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language, "mod_warn_limit")
         duration = None
         if not error:
             reason = " ".join(reason.split(" ")[1:])

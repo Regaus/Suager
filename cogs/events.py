@@ -624,13 +624,13 @@ class Events(commands.Cog):
                 await after.edit(nick=None)
 
         # Some people don't learn
-        if after.guild.id == 378586302703992835 and after.id == 302851022790066185 and after.nick is not None:
-            try:
-                await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
-            except discord.Forbidden:
-                message = f"{time.time()} > {self.bot.full_name} > Nickname Change > Can't revert nickname change for {after.name} in {after.guild.name} - Forbidden"
-                general.print_error(message)
-                logger.log(self.bot.name, "errors", message)
+        # if after.guild.id == 378586302703992835 and after.id == 302851022790066185 and after.nick is not None:
+        #     try:
+        #         await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
+        #     except discord.Forbidden:
+        #         message = f"{time.time()} > {self.bot.full_name} > Nickname Change > Can't revert nickname change for {after.name} in {after.guild.name} - Forbidden"
+        #         general.print_error(message)
+        #         logger.log(self.bot.name, "errors", message)
 
         # Roles - boosters in Kyomi's server
         if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert

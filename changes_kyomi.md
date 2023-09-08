@@ -372,7 +372,15 @@
 - Counters now only require a 5% difference rather than 10% to give the "user has only done it x times" response
 
 ## v1.4.0a11 - 23, 25 August 2023
-- Rewrote join roles, welcome/farewell, mod DMs, mod logs, user logs settings to the new standard
+- Rewrote join roles, welcome/farewell, mod DMs, mod logs, and user logs settings to the new standard
 - These settings now have specific commands to disable things, rather than being reset when the input is empty
 - Mod DM and mod log settings now have separate commands for each setting, as well as a command to enable/disable all the settings at once
 - Role preservation has been moved to a separate command rather than being a subcommand of user logs
+
+## v1.4.0a12 - 8 September 2023
+- Rewrote warnings, anti-ads, and image-only settings to the new standard
+- The anti-ads now have specific commands for changing the list mode
+- The anti-ads and image-only settings now have separate commands for adding and removing channels
+- The anti-ads warning length can no longer be set above 5 years
+- The anti-ads warning length is now shown in full form, rather than showing the short string stored in the settings
+- Warnings now have a separate text when the duration is more than 5 years, rather than using the same text as the mute command
