@@ -443,6 +443,13 @@ class Settings(commands.Cog):
             return await ctx.send(ctx.language().string("settings_prefix_remove_none", prefix=prefix))
         return await self.settings_end(ctx, _settings, existent, "settings_prefix_remove", prefix=prefix)
 
+    @set_prefixes.command(name="removeall", aliases=["deleteall", "rall", "dall"])
+    async def prefix_removeall(self, ctx: commands.Context):
+        """ Remove all custom prefixes (Warning: this cannot be undone) """
+        _settings, existent = await self.settings_start(ctx, "prefixes")
+        _settings["prefixes"] = []
+        return await self.settings_end(ctx, _settings, existent, "settings_prefix_removeall")
+
     @set_prefixes.group(name="default")
     async def prefix_default(self, ctx: commands.Context):
         """ Enable or disable the use of default prefixes
@@ -682,7 +689,7 @@ class Settings(commands.Cog):
             return await ctx.send_help(str(ctx.command))
 
     @lvl_ignored.command(name="add", aliases=["a", "+"])
-    async def ic_add(self, ctx: commands.Context, channel: discord.TextChannel):
+    async def lvl_ic_add(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Disable XP gain in a channel """
         _settings, existent = await self.settings_start(ctx, "leveling")
         if channel.id in _settings["leveling"]["ignored_channels"]:
@@ -691,7 +698,7 @@ class Settings(commands.Cog):
         return await self.settings_end(ctx, _settings, existent, "settings_leveling_ignored_add", channel=channel.mention)
 
     @lvl_ignored.command(name="remove", aliases=["delete", "r", "d", "-"])
-    async def ic_remove(self, ctx: commands.Context, channel: discord.TextChannel):
+    async def lvl_ic_remove(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Enable XP gain in a channel """
         _settings, existent = await self.settings_start(ctx, "leveling")
         try:
@@ -699,6 +706,13 @@ class Settings(commands.Cog):
         except ValueError:
             return await ctx.send(ctx.language().string("settings_leveling_ignored_already2", channel=channel.mention))
         return await self.settings_end(ctx, _settings, existent, "settings_leveling_ignored_remove", channel=channel.mention)
+
+    @lvl_ignored.command(name="removeall", aliases=["deleteall", "rall", "dall"])
+    async def lvl_ic_removeall(self, ctx: commands.Context):
+        """ Enable XP gain in all channels again (Warning: this cannot be undone) """
+        _settings, existent = await self.settings_start(ctx, "leveling")
+        _settings["leveling"]["ignored_channels"] = []
+        return await self.settings_end(ctx, _settings, existent, "settings_leveling_ignored_removeall")
 
     @set_lvl.group(name="announcements", aliases=["announcement", "ac"], invoke_without_command=True, case_insensitive=True)
     async def lvl_announcements(self, ctx: commands.Context, channel: discord.TextChannel = None):
@@ -764,7 +778,7 @@ class Settings(commands.Cog):
         _settings["leveling"]["rewards"] = rr
         return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_add", role=role.name, level=language.number(level))
 
-    @lvl_rewards.command(name="remove", aliases=["delete", "del", "r", "-"])
+    @lvl_rewards.command(name="remove", aliases=["delete", "del", "r", "d", "-"])
     async def level_rewards_remove(self, ctx: commands.Context, role: discord.Role):
         """ Remove a role reward """
         _settings, existent = await self.settings_start(ctx, "leveling")
@@ -784,6 +798,13 @@ class Settings(commands.Cog):
             return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_remove", role=role.name)
         else:
             return await ctx.send(language.string("settings_leveling_rewards_not_found", role=role.name))
+
+    @lvl_rewards.command(name="removeall", aliases=["deleteall", "rall", "dall"])
+    async def level_rewards_removeall(self, ctx: commands.Context):
+        """ Remove all role rewards (Warning: this cannot be undone) """
+        _settings, existent = await self.settings_start(ctx, "leveling")
+        _settings["leveling"]["rewards"] = []
+        return await self.settings_end(ctx, _settings, existent, "settings_leveling_rewards_removeall")
 
     @lvl_rewards.command(name="cleanup", aliases=["c"])
     async def level_rewards_deleted(self, ctx: commands.Context):
@@ -1154,14 +1175,14 @@ class Settings(commands.Cog):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.channel)
 
-    @set_messages_ignore.command(name="add", aliases=["+"])
+    @set_messages_ignore.command(name="add", aliases=["a", "+"])
     async def messages_ignore_add(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Ignore edited and deleted messages in the specified channel """
         _settings, existent = await self.settings_start(ctx, "message_logs")
         _settings["message_logs"]["ignore_channels"].append(channel.id)
         return await self.settings_end(ctx, _settings, existent, "settings_messages_ignore_add", channel=channel.mention)
 
-    @set_messages_ignore.command(name="remove", aliases=["-"])
+    @set_messages_ignore.command(name="remove", aliases=["delete", "r", "d", "-"])
     async def messages_ignore_remove(self, ctx: commands.Context, channel: discord.TextChannel):
         """ Don't ignore edited and deleted messages in the specified channel anymore """
         _settings, existent = await self.settings_start(ctx, "message_logs")
@@ -1170,6 +1191,13 @@ class Settings(commands.Cog):
         except (ValueError, KeyError):
             return await ctx.send(self.bot.language(ctx).string("settings_messages_ignore_invalid"))
         return await self.settings_end(ctx, _settings, existent, "settings_messages_ignore_remove", channel=channel.mention)
+
+    @set_messages_ignore.command(name="removeall", aliases=["deleteall", "rall", "dall"])
+    async def messages_ignore_removeall(self, ctx: commands.Context):
+        """ Stop ignoring edited and deleted messages in any channels (Warning: this cannot be undone) """
+        _settings, existent = await self.settings_start(ctx, "message_logs")
+        _settings["message_logs"]["ignore_channels"] = []
+        return await self.settings_end(ctx, _settings, existent, "settings_messages_ignore_removeall")
 
     async def messages_ignore_bots_toggle(self, ctx: commands.Context, toggle: bool):
         """ Enable or disable ignoring bots' messages """
@@ -1277,10 +1305,9 @@ class Settings(commands.Cog):
             return await ctx.send(ctx.language().string("settings_join_members_error", role=role.name))
         return await self.settings_end(ctx, _settings, existent, "settings_join_members_remove", role=role.name)
 
-    @set_member_join_role.command(name="removeall", aliases=["deleteall"])
+    @set_member_join_role.command(name="removeall", aliases=["deleteall", "rall", "dall"])
     async def remove_all_member_join_roles(self, ctx: commands.Context):
-        """ Stop giving any roles to new human members
-        Warning - This action cannot be undone! """
+        """ Stop giving any roles to new human members (Warning: this cannot be undone) """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         _settings["join_roles"]["members"] = []
         return await self.settings_end(ctx, _settings, existent, "settings_join_members_removeall")
@@ -1320,10 +1347,9 @@ class Settings(commands.Cog):
             return await ctx.send(ctx.language().string("settings_join_bots_error", role=role.name))
         return await self.settings_end(ctx, _settings, existent, "settings_join_bots_remove", role=role.name)
 
-    @set_bot_join_role.command(name="removeall", aliases=["deleteall"])
+    @set_bot_join_role.command(name="removeall", aliases=["deleteall", "rall", "dall"])
     async def remove_all_bot_join_roles(self, ctx: commands.Context):
-        """ Stop giving any roles to new bots
-        Warning - This action cannot be undone! """
+        """ Stop giving any roles to new bots (Warning: this cannot be undone) """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         _settings["join_roles"]["bots"] = []
         return await self.settings_end(ctx, _settings, existent, "settings_join_bots_removeall")
@@ -1887,7 +1913,7 @@ class Settings(commands.Cog):
             return await ctx.send(ctx.language().string("settings_anti_ads_channel_invalid3"))
         return await self.settings_end(ctx, _settings, existent, "settings_anti_ads_channel_remove", channel=channel.mention)
 
-    @set_anti_ads_channels.command(name="removeall", aliases=["deleteall", "rall", "dall", "ra", "da"])
+    @set_anti_ads_channels.command(name="removeall", aliases=["deleteall", "rall", "dall"])
     async def set_anti_ads_channel_removeall(self, ctx: commands.Context):
         """ Remove all channels from the list (Warning: this cannot be undone) """
         _settings, existent = await self.settings_start(ctx, "anti_ads")
@@ -1950,7 +1976,7 @@ class Settings(commands.Cog):
             return await ctx.send(ctx.language().string("settings_image_only_channel_invalid3"))
         return await self.settings_end(ctx, _settings, existent, "settings_image_only_channel_remove", channel=channel.mention)
 
-    @set_image_only_channels.command(name="removeall", aliases=["deleteall", "rall", "dall", "ra", "da"])
+    @set_image_only_channels.command(name="removeall", aliases=["deleteall", "rall", "dall"])
     async def set_image_only_channels_removeall(self, ctx: commands.Context):
         """ Disable the image-only filter in all channels (Warning: this cannot be undone) """
         _settings, existent = await self.settings_start(ctx, "image_only")

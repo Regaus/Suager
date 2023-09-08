@@ -733,3 +733,6 @@
 
 ## v1.8.14 - 21 August 2023
 - Updated the declensions command to new language codes and to include Larihalian declension
+
+## v1.8.15 - 8 September 2023
+- Added removeall command to prefixes

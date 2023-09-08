@@ -1628,3 +1628,6 @@
 - The anti-ads warning length is now shown in full form, rather than showing the short string stored in the settings
 - Warnings now have a separate text when the duration is more than 5 years, rather than using the same text as the mute command
 - Disabled old nick removal behaviour for me on the Crabs server
+
+## v7.7.0 - 8 September 2023
+- Added removeall commands to prefixes, leveling ignored channels, leveling role rewards, and message logs ignored channels
