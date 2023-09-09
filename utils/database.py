@@ -1,8 +1,13 @@
 import re
 import sqlite3
-from datetime import datetime
+from datetime import datetime, date
 
 from utils import general, logger, time
+
+
+def adapt_date_iso(val: date) -> str:
+    """ Convert date object into ISO timestamp """
+    return val.isoformat()
 
 
 def adapt_datetime_iso(val: datetime) -> str:
@@ -10,12 +15,19 @@ def adapt_datetime_iso(val: datetime) -> str:
     return val.isoformat(sep=" ")
 
 
+def convert_date(val: bytes) -> date:
+    """ Convert ISO date back into date object """
+    return date.fromisoformat(val.decode("latin1"))
+
+
 def convert_datetime(val: bytes) -> datetime:
     """ Convert ISO timestamp back into datetime object """
     return datetime.fromisoformat(val.decode("latin1"))
 
 
+sqlite3.register_adapter(date, adapt_date_iso)
 sqlite3.register_adapter(datetime, adapt_datetime_iso)
+sqlite3.register_converter("date", convert_date)
 sqlite3.register_converter("timestamp", convert_datetime)
 
 
@@ -114,7 +126,7 @@ def creation():
 tables = [
     Table("birthdays", [
         Column("uid", "INTEGER", True),
-        Column("birthday", "TIMESTAMP", True),
+        Column("birthday", "DATE", True),
         Column("has_role", "BOOLEAN", True),
         Column("bot", "TEXT", True),
     ]),

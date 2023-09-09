@@ -736,3 +736,10 @@
 
 ## v1.8.15 - 8 September 2023
 - Added removeall command to prefixes
+
+## v1.9.0 - 9 September 2023
+- Updated to Regaus.py v3.0
+- Updated list of places used by the ka-time channels
+- Changed "Developers" in the bot stats command to "Developer"
+- Updated the hidden `..cobble` command to modern versions of Regaazdallian
+- Changed some of the statuses to Custom Status now that it is possible

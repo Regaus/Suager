@@ -162,7 +162,7 @@
   "info_stats_commands": "Commands",
   "info_stats_dates": "Dates",
   "info_stats_dates_data": "First version: **{first}**\nRelease {mjr}: **{major}**\nLast Update: **{last}**",
-  "info_stats_developers": "Developers",
+  "info_stats_developer": "Developer",
   "info_stats_servers": "Server counters",
   "info_stats_servers_data": "Total servers: **{servers}**\nText channels: **{text}**\nCategories: **{cats}**\nVoice channels: **{voice}**",
   "info_stats_uptime": "Uptime",
@@ -176,7 +176,7 @@
   "leaderboards_levels_global": "Top users **globally** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
   "leaderboards_place": "#{val}",
 
-  "leveling_next_level": "**{user}** - You have **{xp}/{next} XP**.\nYou need **{left}** more to reach **level {level}** (Progress: **{prog}**)\nEst. talking time: **{min} to {max}**",
+  "leveling_next_level": "**{user}** - You have **{xp}/{next} XP**.\nYou need **{left}** more to reach **level {level}** (Progress: **{prog}**)\nNon-stop activity to level up: **{min} to {max}**",
   "leveling_next_level_none": "I have no data saved for you right now...",
   "leveling_next_level_max": "**{user}**, you have already reached the max level.",
   "leveling_rank": "**{user}**'s rank in **{server}**",
@@ -208,7 +208,7 @@
   "leveling_rewards_none": "This server has no leveling rewards",
   "leveling_rewards_role": "Level {level}: <@&{role_id}>\n",
   "leveling_rewards_title": "Rewards for having no life in **{server}**",
-  "leveling_xplevel_extra": "\nXP left: **{left}**\nTalking time: **{min} to {max}**",
+  "leveling_xplevel_extra": "\nXP left: **{left}**\nNon-stop activity to reach level: **{min} to {max}**",
   "leveling_xplevel_main": "You need **{xp} XP** to reach level **{level}**.",
   "leveling_xplevel_max": "The max level is {level}.",
 

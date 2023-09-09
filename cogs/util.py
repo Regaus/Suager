@@ -132,7 +132,7 @@ class Utility(commands.Cog):
             if _date is None:
                 def dt(_month, _day):
                     return time2.datetime(now.year, _month, _day, tz=tz)
-                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(7, 27), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
+                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
                          time2.datetime(now.year + 1, 1, 1, tz=tz)]
                 for _date in dates:
                     if now < _date:
@@ -165,8 +165,9 @@ class Utility(commands.Cog):
     async def time_diff(ctx: commands.Context, string: str, multiplier: int):
         language = ctx.language()
         try:
-            _delta = time.interpret_time(string) * multiplier
-            delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds)
+            # _delta = time.interpret_time(string) * multiplier
+            # delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds)
+            delta = time.interpret_time(string, time2.relativedelta, time2.Earth) * multiplier
             now = time2.datetime.now()
             then = now + delta
         except (ValueError, OverflowError) as e:

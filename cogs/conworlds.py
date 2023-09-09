@@ -105,10 +105,10 @@ class Conworlds(commands.Cog):
                     # LOD 2 Channel Names:  hidden-commands,  secretive-commands-2
                     elif ctx.channel.id in [610482988123422750, 753000962297299005]:
                         lod = 2
-                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10      secret-room-13      Kargadia commands,
-                    #                       secret-room-14,     secret-room-15,     secret-room-16,     secret-room-17
+                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10,     secret-room-13,     Kargadia commands,
+                    #                       secret-room-14,     secret-room-15,     secret-room-16,     secret-room-17      secret-room-18,     secret-room-21,     secret-room-22,
                     elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 958489459672891452, 938582514166034514,
-                                            965801985716666428, 969720792457822219, 971195522830442527, 972112792624726036]:
+                                            965801985716666428, 969720792457822219, 971195522830442527, 972112792624726036, 999750177181147246, 999750231539335338, 999750252775084122]:
                         lod = 1
                     else:
                         lod = 0  # All other channels are "untrusted", so default to LOD 0
@@ -254,7 +254,7 @@ class Conworlds(commands.Cog):
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
         if not (1 <= s <= 8700):
-            return await ctx.send("De tuava eden, var te en de kihteral.")
+            return await ctx.send("De tuava eden, ta te en kihteravas.")
         shift = s * 128
         _code = "--code" in t
         code = ""
@@ -265,7 +265,7 @@ class Conworlds(commands.Cog):
         try:
             text = "".join([chr(ord(letter) + shift) for letter in t])
         except ValueError:
-            return await ctx.send(f"Si valse, alteknaar ka un kudalsan kihteran")
+            return await ctx.send(f"Si valse, altekaar ka un kudalsan kihteran")
         return await ctx.send(f"{code} {text}")
 
     @commands.command("rslf")
@@ -273,7 +273,7 @@ class Conworlds(commands.Cog):
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
         if not (1 <= s <= 8700):
-            return await ctx.send("De tuava eden, var te en de kihteral.")
+            return await ctx.send("De tuava eden, ta te en kihteravas.")
         shift = s * 128
         text = ""
         for letter in t:
@@ -479,7 +479,7 @@ class Conworlds(commands.Cog):
             return await ctx.send_help(ctx.command)
 
     @generate.command(name="name", aliases=["names"])
-    async def generate_name(self, ctx: commands.Context, language: str = "ne_rc"):
+    async def generate_name(self, ctx: commands.Context, language: str = "re_nu"):
         """ Generate a couple random Kargadian names """
         message = await ctx.send(conworlds2.generate_citizen_names(language))
         view = views.GenerateNamesView(sender=ctx.author, message=message, language=language)

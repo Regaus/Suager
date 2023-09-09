@@ -1,4 +1,5 @@
-// Weight: 125
+// Weight: 0
+// Disabled until rewrite
 // Kaltanazdallian: seunu -> see, -sen; taikka -> tåkka
 {
   "male": ["Kolu/Kolussen/Koluttåkka", "Kamis/Kamissen/Kamittåkka", "Temus/Temussen/Temuttåkka", "Kjøvattu/Kjøvassen/Kjøvattåkka", "Jostu/Jostussen/Jostuttåkka", "Lattes/Lattessen/Lattettåkka", "Sehlus/Sehlussen/Sehluttåkka", "Tåvus/Tåvussen/Tåvuttåkka", "Sekkus/Sekkussen/Sekkuttåkka", "Sokku/Sokkussen/Sokkuttåkka", "Nyttu/Nyttussen/Nyttuttåkka", "Appu/Appussen/Apputtåkka", "Battu/Battussen/Battuttåkka", "Sørus/Sørussen/Søruttåkka", "Neltis/Neltissen/Neltittåkka", "Kaksis/Kaksissen/Kaksittåkka", "Gatrees/Gatreessen/Gatreettåkka", "Herre/Herressen/Herrettåkka", "Yrru/Yrrussen/Yrruttåkka", "Atturus/Atturussen/Atturuttåkka", "Sigurrus/Sigurrussen/Sigurruttåkka", "Leksis/Leksissen/Leksittåkka", "Simmus/Simmussen/Simmuttåkka", "Listes/Listessen/Listettåkka", "Lækji/Lækjissen/Lækjittåkka", "Seevy/Seevyssen/Seevyttåkka"],

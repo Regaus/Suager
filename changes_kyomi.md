@@ -387,3 +387,10 @@
 
 ## v1.4.0 - 8 September 2023
 - Added removeall commands to prefixes, leveling ignored channels, leveling role rewards, and message logs ignored channels
+
+## v1.4.1 - 9 September 2023
+- Updated to Regaus.py v3.0
+- Made the old time module use `datetime.min` instead of `datetime.now()` to measure length of relativedeltas
+- Changed "Developers" in the bot stats command to "Developer"
+- Birthdays are now stored as a `date` rather than `datetime` in the database
+- Changed some of the statuses to Custom Status now that it is possible

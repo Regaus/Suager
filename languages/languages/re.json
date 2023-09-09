@@ -162,7 +162,7 @@
   "info_stats_commands": "Kalvantat",
   "info_stats_dates": "Seat",
   "info_stats_dates_data": "Ukkada hinna: **{first}**\nHinna {mjr}: **{major}**\nIganella hinna: **{last}**",
-  "info_stats_developers": "Varkannat",
+  "info_stats_developer": "Varkannus",
   "info_stats_servers": "Salhankalvat",
   "info_stats_servers_data": "Salhain i veisen: **{servers}**\nSalvanidain: **{text}**\nTakäin: **{cats}**\nKairanidain: **{voice}**",
   "info_stats_uptime": "Raitanline",
@@ -176,7 +176,7 @@
   "leaderboards_levels_global": "Igjaran nottarat **veide**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun\nVeiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```",
   "leaderboards_place": "{val}",
 
-  "leveling_next_level": "**{user}** - Te ihwas **{xp}/{next} Aivin**.\nTe nittaras **{left}** kuvalse, vir **Koon {level}** sekean (Eskyta: **{prog}**)\nKiime kairankalve: **ad {min} ta {max}**",
+  "leveling_next_level": "**{user}** - Te ihwas **{xp}/{next} Aivin**.\nTe nittaras **{left}** kuvalse, vir **Koon {level}** sekean (Eskyta: **{prog}**)\nTikimar kairanänmis la sekean seldan koon: **ad {min} ta {max}**",
   "leveling_next_level_none": "Mu ihwa den zaitan av ten esaa...",
   "leveling_next_level_max": "**{user}**, te eize sekeak na igavalsan koon.",
   "leveling_rank": "**{user}**'n kasta in **{server}**",
@@ -208,7 +208,7 @@
   "leveling_rewards_none": "Eda salha ihwat dean koon-ankadaan",
   "leveling_rewards_role": "Koo {level}: <@&{role_id}>\n",
   "leveling_rewards_title": "Ankadat hat den wahtaan in **{server}** ihwan",
-  "leveling_xplevel_extra": "\nTe nittaras **{left}** kuvalse aivin\nKairankalve: **ad {min} ta {max}**",
+  "leveling_xplevel_extra": "\nTe nittaras **{left}** kuvalse aivin\nTikimar kairanänmis la sekean koon: **ad {min} ta {max}**",
   "leveling_xplevel_main": "Te nittaras **{xp} Aivin**, vir na **{level}**'dan koon sekean.",
   "leveling_xplevel_max": "Na igavalsar koo jat {level}.",
 

@@ -44,7 +44,7 @@ async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
     else:
         try:
             await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")
-            expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, uid=user.id)
+            expiry = bot.language2("en").time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, uid=user.id)
             logger.log(bot.name, "reminders", f"{time.time()} > {bot.full_name} > Reminders > Successfully sent {user} ({user.id}) the reminder for {expiry} ({entry_id})")
             handled = 1
         except Exception as e:
@@ -376,7 +376,11 @@ async def birthdays(bot: bot_data.Bot):
 
 ka_places = {
     "Regaazdall": {
+        "Jostungar":            {"data": "", "weight": 30},  # -03
+        "Lehtingar":            {"data": "", "weight": 30},  # -03
+        "Leksinsalte":          {"data": "", "weight": 30},  # -03
         "Munearan Köreldaivus": {"data": "", "weight": 30},  # -03
+        "Nuugar":               {"data": "", "weight": 30},  # -03
         "Regavall":             {"data": "", "weight": 40},  # -03
         "Reggar":               {"data": "", "weight": 50},  # -03
         "Suvagar":              {"data": "", "weight": 40},  # -03
@@ -388,6 +392,8 @@ ka_places = {
         "Kollugar":             {"data": "", "weight": 35},  # -10
         "Leitagar":             {"data": "", "weight": 35},  # -10
         "Pakigar":              {"data": "", "weight": 35},  # -10
+        "Sadagar":              {"data": "", "weight": 35},  # -10
+        "Stardew Valley":       {"data": "", "weight": 35},  # -10
         "Steirigar":            {"data": "", "weight": 35},  # -10
         "Tenmagar":             {"data": "", "weight": 30},  # -10
         "Runnegar":             {"data": "", "weight": 25},  # -09
@@ -396,11 +402,11 @@ ka_places = {
         "Peaskar":              {"data": "", "weight": 25},  # -08
         "Sulingar":             {"data": "", "weight": 30},  # -08
         "Alexandris":           {"data": "", "weight": 35},  # -07
-        "Drippangar":           {"data": "", "weight": 35},  # -07
         "Joptanagar":           {"data": "", "weight": 35},  # -07
         "Läkingar":             {"data": "", "weight": 25},  # -07
         "Leogar":               {"data": "", "weight": 35},  # -07
         "Menenvallus":          {"data": "", "weight": 30},  # -07
+        "Bakkangar":            {"data": "", "weight": 30},  # -06
         "Mel's Twin Mountains": {"data": "", "weight": 35},  # -06
         "Chakkangar":           {"data": "", "weight": 35},  # -05
         "Kamikawa":             {"data": "", "weight": 35},  # -05
@@ -469,13 +475,15 @@ ka_places = {
         "Terra Arna":  {"data": "", "weight": 25},  # -11
     },
     "Erellia": {
-        "Itta":          {"data": "", "weight": 25},  # -05
-        "Senka's Lair":  {"data": "", "weight": 30},  # -05
-        "Shankiranköde": {"data": "", "weight": 30},  # -05
-        "Rankadus":      {"data": "", "weight": 20},  # -04
-        "Raagar":        {"data": "", "weight": 25},  # -03
-        "Orlagar":       {"data": "", "weight": 35},  # -03
-        "Shonangar":     {"data": "", "weight": 35},  # -03
+        "Itta":                 {"data": "", "weight": 25},  # -05
+        "Senka's Lair":         {"data": "", "weight": 30},  # -05
+        "Shankiranköde":        {"data": "", "weight": 30},  # -05
+        "Rankadus":             {"data": "", "weight": 20},  # -04
+        "Erellian Köreldaivus": {"data": "", "weight": 35},  # -03
+        "Larihalus":            {"data": "", "weight": 35},  # -03
+        "Orlagar":              {"data": "", "weight": 35},  # -03
+        "Raagar":               {"data": "", "weight": 25},  # -03
+        "Shonangar":            {"data": "", "weight": 35},  # -03
     },
     "Centeria": {
         "Mügoslavia": {"data": "", "weight": 25},  # -01
@@ -554,7 +562,7 @@ def ka_data_updater(bot: bot_data.Bot):
                     place: conworlds.Place = _places[city]["place"]
                     place.update_time()
                 en = bot.language2("en")
-                ka = bot.language2("ne_rc")
+                ka = bot.language2("re_nu")
                 kargadian = f"{place.name_translation(ka)}: "
                 kargadian += place.time.strftime("%d %b %Y, %H:%M", "ne_rc")
                 english = f"{place.name_translation(en):<20} - "
@@ -692,7 +700,7 @@ async def playing(bot: bot_data.Bot):
 
     # It would be funnier to set it to Cobbletopia Tebarian, but that language will not be made anytime soon,
     # and it would also be even less likely to be understood by anyone, so it's better off to leave the language as Regaazdall Nehtivian
-    language = bot.language2("ne_rc")
+    language = bot.language2("re_nu")
     holiday_names_ka = language.data("data_holidays_ka")
     holiday_names_sl = language.data("data_holidays_sl")
 
@@ -706,8 +714,8 @@ async def playing(bot: bot_data.Bot):
         days = (when - time2.date.today(when.time_class)).days
         if rsl:
             s = "in" if days != 1 else ""
-            v = "at" if days == 1 else "an"
-            return f"{days} sea{s} astall{v}"
+            # v = "at" if days == 1 else "an"
+            return f"{days} sea{s}"
         else:
             s = "s" if days != 1 else ""
             return f"{days} day{s}"
@@ -718,6 +726,9 @@ async def playing(bot: bot_data.Bot):
         elif _data["type"] == 1:  # Streaming
             __name = _activity["name"]
             __activity = discord.Streaming(name=__name, details=__name, url=_data["url"])
+        elif _data["type"] == 4:  # Custom Status
+            __name = _activity["name"]
+            __activity = discord.CustomActivity(name=__name)
         else:
             __activity = discord.Activity(type=_data["type"], name=_data["name"])
         return __activity
@@ -738,15 +749,15 @@ async def playing(bot: bot_data.Bot):
                 if status_type == 1:
                     cobble = get_date(12, 5)
                     is_cobble = today == cobble
-                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat"
-                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat"
+                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} ta mun reidesean"
+                    status_regaus = f"🎉 Esea jat Regausan reidesea!" if is_regaus else f"{until(regaus, True)} ta Regausan reidesean"
                     random.seed()
                     status = random.choice([status_cobble, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
                 elif status_type == 2:
                     activities = [
-                        {"type": 0, "name": fv},
+                        {"type": 0, "name": fv},  # These could be custom statuses, but I decided to let them stay as Playing so it's not too short
                         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                         {"type": 0, "name": "ka Regausan"},
                         {"type": 0, "name": "ka dekedan"},
@@ -755,10 +766,10 @@ async def playing(bot: bot_data.Bot):
                         {"type": 0, "name": "denedan"},
                         {"type": 3, "name": "ten"},
                         {"type": 3, "name": "ten sevartan"},
-                        {"type": 2, "name": "ut penat"},
+                        {"type": 2, "name": "un penan"},
                         {"type": 3, "name": "na meitan"},
                         {"type": 2, "name": "na deinettat"},
-                        {"type": 0, "name": "inkorra kiinan seldevanvarkan an ten eivarkaivanan"},
+                        {"type": 4, "name": "Inkorra kiinan seldevanvarkan an ten eivarkaivanan"},
                     ]
                     random.seed()
                     _activity = random.choice(activities)
@@ -769,6 +780,7 @@ async def playing(bot: bot_data.Bot):
                         1: "Eimia",
                         2: "Sanna",
                         3: "Veitea",
+                        4: "Custom status:",
                         5: "Ahmura sen"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
@@ -860,17 +872,17 @@ async def playing(bot: bot_data.Bot):
                     activities = [
                         {"type": 0, "name": fv},
                         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                        {"type": 0, "name": "Snuggling with Mochi"},
-                        {"type": 0, "name": "Feeding Mochi"},
-                        {"type": 0, "name": "Petting Mochi"},
-                        {"type": 0, "name": "Snuggling with Matsu"},
-                        {"type": 0, "name": "Feeding Matsu"},
-                        {"type": 0, "name": "Petting Matsu"},
-                        {"type": 0, "name": "Eating pineapples"},
-                        {"type": 0, "name": "Eating pineapple pizza"},
-                        {"type": 0, "name": "Stealing pineapples"},
-                        {"type": 0, "name": "Stealing star cookies"},
-                        {"type": 0, "name": "Praying to the Pineapple God"},
+                        {"type": 4, "name": "Snuggling with Mochi"},
+                        {"type": 4, "name": "Feeding Mochi"},
+                        {"type": 4, "name": "Petting Mochi"},
+                        {"type": 4, "name": "Snuggling with Matsu"},
+                        {"type": 4, "name": "Feeding Matsu"},
+                        {"type": 4, "name": "Petting Matsu"},
+                        {"type": 4, "name": "Eating pineapples"},
+                        {"type": 4, "name": "Eating pineapple pizza"},
+                        {"type": 4, "name": "Stealing pineapples"},
+                        {"type": 4, "name": "Stealing star cookies"},
+                        {"type": 4, "name": "Praying to the Pineapple God"},
                         {"type": 3, "name": "you"},
                     ]
                     random.seed()
@@ -882,16 +894,17 @@ async def playing(bot: bot_data.Bot):
                         1: "Streaming",
                         2: "Listening to",
                         3: "Watching",
+                        4: "Custom status:",
                         5: "Competing in"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
 
             elif bot.name == "kyomi2":  # Mochi
                 activities = [
-                    {"type": 0, "name": "Looking for cookies"},
-                    {"type": 0, "name": "Snuggling with Mizuki"},
-                    {"type": 0, "name": "Stealing cookies from Mizuki"},
-                    {"type": 0, "name": "Eating cookies"},
+                    {"type": 4, "name": "Looking for cookies"},
+                    {"type": 4, "name": "Snuggling with Mizuki"},
+                    {"type": 4, "name": "Stealing cookies from Mizuki"},
+                    {"type": 4, "name": "Eating cookies"},
                 ]
                 random.seed()
                 _activity = random.choice(activities)
@@ -899,15 +912,16 @@ async def playing(bot: bot_data.Bot):
                 name = _activity["name"]
                 status = {
                     0: "Playing",
+                    4: "Custom status:",
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
             elif bot.name == "kyomi3":  # Matsu
                 activities = [
-                    {"type": 0, "name": "Looking for cheese"},
-                    {"type": 0, "name": "Snuggling with Mizuki"},
-                    {"type": 0, "name": "Stealing cheese from Mizuki"},
-                    {"type": 0, "name": "Eating cheese"},
+                    {"type": 4, "name": "Looking for cheese"},
+                    {"type": 4, "name": "Snuggling with Mizuki"},
+                    {"type": 4, "name": "Stealing cheese from Mizuki"},
+                    {"type": 4, "name": "Eating cheese"},
                 ]
                 random.seed()
                 _activity = random.choice(activities)
@@ -915,6 +929,7 @@ async def playing(bot: bot_data.Bot):
                 name = _activity["name"]
                 status = {
                     0: "Playing",
+                    4: "Custom status:",
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
@@ -931,7 +946,8 @@ async def playing(bot: bot_data.Bot):
                 name = _activity["name"]
                 status = {
                     0: "Playing",
-                    3: "Watching"
+                    3: "Watching",
+                    4: "Custom status:",
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
@@ -960,7 +976,7 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 0, "name": "Custom Status"},
                         {"type": 0, "name": "Discord"},
                         {"type": 3, "name": "Senko"},
-                        {"type": 5, "name": "uselessness"},
+                        # {"type": 5, "name": "uselessness"},
                         # {"type": 0, "name": "nothing"},
                         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
                         {"type": 3, "name": "you"},
@@ -985,6 +1001,7 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 0, "name": "something"},
                         # {"type": 0, "name": "sentience"},
                         # {"type": 0, "name": "RIP discord.py"},
+                        {"type": 4, "name": "Acquiring sentience..."}
                     ]
                     random.seed()
                     _activity = random.choice(activities)
@@ -995,6 +1012,7 @@ async def playing(bot: bot_data.Bot):
                         1: "Streaming",
                         2: "Listening to",
                         3: "Watching",
+                        4: "Custom status:",
                         5: "Competing in"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
@@ -1239,7 +1257,7 @@ async def trials(bot: bot_data.Bot):
                                                         general.print_error(out)
                                                         logger.log(bot.name, "errors", out)
                                                 if duration:
-                                                    duration_text = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
+                                                    duration_text = bot.language2("en").delta_int(duration, accuracy=3, brief=False, affix=False)
                                                     # try:
                                                     #     if duration:
                                                     #         _duration2 = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)

@@ -1,5 +1,6 @@
 import re
-from datetime import datetime
+from datetime import datetime, date as _date, time as _time
+from typing import Union
 
 import discord
 
@@ -13,7 +14,7 @@ class Birthdays(commands.Cog):
         self.timestamp_regex = re.compile(r"^([0-2]?\d|3[0-1])/((1[0-2])|(0?[1-9]))$")
         self.birthday_self = "birthdays_birthday_mizuki" if bot.name == "kyomi" else "birthdays_birthday_suager"
 
-    def check_birthday(self, user_id):
+    def check_birthday(self, user_id) -> Union[_date, None]:
         data = self.bot.db.fetchrow(f"SELECT * FROM birthdays WHERE uid=? AND bot=?", (user_id, self.bot.name))
         return data["birthday"] if data else None
 
@@ -27,9 +28,10 @@ class Birthdays(commands.Cog):
             user = user or ctx.author
             if user.id == self.bot.user.id:
                 return await ctx.send(language.string(self.birthday_self))
-            birthday_date = self.check_birthday(user.id)
-            if not birthday_date:
+            _birthday_date = self.check_birthday(user.id)
+            if not _birthday_date:
                 return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
+            birthday_date = datetime.combine(_birthday_date, _time(0, 0, 0))
             birthday = language.date(birthday_date, short=0, dow=False, year=False)
             tz = language.get_timezone(user.id, "Earth")
             now = datetime.now(tz=tz)
@@ -54,7 +56,7 @@ class Birthdays(commands.Cog):
         if self.timestamp_regex.search(date):
             try:
                 d, m = date.split("/", 1)
-                timestamp = datetime(2020, int(m), int(d))
+                timestamp = _date(2020, int(m), int(d))
                 # timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
             except ValueError:
                 return await ctx.send(language.string("birthdays_set_invalid", p=ctx.clean_prefix))

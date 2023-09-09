@@ -1631,3 +1631,11 @@
 
 ## v7.7.0 - 8 September 2023
 - Added removeall commands to prefixes, leveling ignored channels, leveling role rewards, and message logs ignored channels
+
+## v7.7.1 - 9 September 2023
+- Updated to Regaus.py v3.0
+- Made the old time module use `datetime.min` instead of `datetime.now()` to measure length of relativedeltas
+- Changed "Developers" in the bot stats command to "Developer"
+- Birthdays are now stored as a `date` rather than `datetime` in the database
+- Added a new Custom Status to the playing statuses list, removed the "Competing in uselessness" status
+- Improved precision for `//timeago` and `//timein`

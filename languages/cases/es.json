@@ -1,0 +1,22 @@
+{
+  "^.+z$": {  // vez -> veces
+    "default": {
+      "default": "<>"
+    },
+    "plural": {
+      "default": "<:-1>ces"
+    }
+  },
+  "^.+s$": {  // mes -> meses
+    "default": {
+      "default": "<>"
+    },
+    "plural": {
+      "default": "<>es"
+    }
+  },
+  "^.+": {  // Pattern[number][case]
+    "default": {"default": "<>"},
+    "plural": {"default": "<>s"}
+  }
+}
