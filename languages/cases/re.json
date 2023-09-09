@@ -1,30 +1,33 @@
 {  // Pattern[number][case], default ~ singular, default ~ nominative
-  "^kainead$": {  // kainead - C2
+  "^[Kk][aä]in(?:ea|ee|ää)d$": {  // kainead - C2
     "default": {
-      "default": "<>",             // kainead
-      "nominative": "<>",          // kainead
-      "accusative": "<:-2>dan",    // kainedan
-      "genitive": "<:-2>dan",      // kainedan
-      "dative": "<:-2>dut",        // kainedut
-      "instrumental": "<:-2>dur"   // kainedur
+      "default": "<>",              // kainead / Mu kaineed / Kv käinääd
+      "nominative": "<>",           // kainead / Mu kaineed / Kv käinääd
+      "accusative": "<:-3>edan",    // kainedan
+      "genitive": "<:-3>edan",      // kainedan
+      "dative": "<:-3>edut",        // kainedut
+      "instrumental": "<:-3>edur",  // kainedur
+      "locative": "<:-3>edi"        // kainedi
     },
     "plural": {
-      "default": "<:-2>dat",        // kainedat
-      "nominative": "<:-2>dat",     // kainedat
-      "accusative": "<:-2>daan",    // kainedaan
-      "genitive": "<:-2>dain",      // kainedain
-      "dative": "<:-2>daat",        // kainedaat
-      "instrumental": "<:-2>daar"   // kainedaar
+      "default": "<:-3>edat",        // kainedat
+      "nominative": "<:-3>edat",     // kainedat
+      "accusative": "<:-3>edaan",    // kainedaan
+      "genitive": "<:-3>edain",      // kainedain
+      "dative": "<:-3>edaat",        // kainedaat
+      "instrumental": "<:-3>edaar",  // kainedaar
+      "locative": "<:-3>edai"        // kainedai
     }
   },
-  "^(?!(.+)var$)(([Rr]egaus)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
+  "^(?!(.+)var$)(([Rr]egaus|[Ll]ias)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, lias (s-decl. exceptions) | C1 | Does NOT match -var endings
     "default": {
       "default": "<>",         // kad
       "nominative": "<>",      // kad
       "accusative": "<>an",    // kadan
       "genitive": "<>an",      // kadan
       "dative": "<>ut",        // kadut
-      "instrumental": "<>ur"   // kadur
+      "instrumental": "<>ur",  // kadur
+      "locative": "<>i"        // kadi
     },
     "plural": {
       "default": "<>at",        // kadat
@@ -32,17 +35,19 @@
       "accusative": "<>aan",    // kadaan
       "genitive": "<>ain",      // kadain
       "dative": "<>aat",        // kadaat
-      "instrumental": "<>aar"   // kadaar
+      "instrumental": "<>aar",  // kadaar
+      "locative": "<>ai"        // kadai
     }
   },
-  "^saa$": {  // saa - A2
+  "^[Ss]aa$": {  // saa - A2
     "default": {
       "default": "<>",        // saa
       "nominative": "<>",     // saa
       "accusative": "<>n",    // saan
       "genitive": "<>n",      // saan
       "dative": "<>t",        // saat
-      "instrumental": "<>r"   // saar
+      "instrumental": "<>r",  // saar
+      "locative": "<:-1>i"    // sai
     },
     "plural": {
       "default": "<>t",        // saat
@@ -50,7 +55,8 @@
       "accusative": "<>an",    // saaan
       "genitive": "<>in",      // saain
       "dative": "<>at",        // saaat
-      "instrumental": "<>ar"   // saaar
+      "instrumental": "<>ar",  // saaar
+      "locative": "<>i"        // saai
     }
   },
   "^(.+)aa$": {  // -aa - A3
@@ -60,7 +66,8 @@
       "accusative": "<>n",    // vahtaan
       "genitive": "<>n",      // vahtaan
       "dative": "<>t",        // vahtaat
-      "instrumental": "<>r"   // vahtaar
+      "instrumental": "<>r",  // vahtaar
+      "locative": "<:-1>i"    // vahtai
     },
     "plural": {
       "default": "<>t",        // vahtaat
@@ -68,7 +75,8 @@
       "accusative": "<>n",     // vahtaan
       "genitive": "<:-1>in",   // vahtain
       "dative": "<>t",         // vahtaat
-      "instrumental": "<>r"    // vahtaar
+      "instrumental": "<>r",   // vahtaar
+      "locative": "<:-1>ji"    // vahtaji
     }
   },
   "^(.+)aas$": {  // -aas - A3 with s
@@ -78,7 +86,8 @@
       "accusative": "<:-1>n",    // Raan
       "genitive": "<:-1>n",      // Raan
       "dative": "<:-1>t",        // Raat
-      "instrumental": "<:-1>r"   // Raar
+      "instrumental": "<:-1>r",  // Raar
+      "locative": "<:-2>i"       // Rai
     },
     "plural": {
       "default": "<:-1>t",        // Raat
@@ -86,7 +95,8 @@
       "accusative": "<:-1>n",     // Raan
       "genitive": "<:-1>n",       // Raan
       "dative": "<:-1>t",         // Raat
-      "instrumental": "<:-1>r"    // Raar
+      "instrumental": "<:-1>r",   // Raar
+      "locative": "<:-1>ji"       // Raaji
     }
   },
   "^(.+)[aä]$": {  // -a - A1 | -ä - Ä1 (same pattern)
@@ -96,7 +106,8 @@
       "accusative": "<>n",    // sean
       "genitive": "<>n",      // sean
       "dative": "<>t",        // seat
-      "instrumental": "<>r"   // sear
+      "instrumental": "<>r",  // sear
+      "locative": "<:-1>i"    // sei
     },
     "plural": {
       "default": "<>t",        // seat
@@ -104,7 +115,8 @@
       "accusative": "<>an",    // seaan
       "genitive": "<>in",      // seain
       "dative": "<>at",        // seaat
-      "instrumental": "<>ar"   // seaar
+      "instrumental": "<>ar",  // seaar
+      "locative": "<>i"        // seai
     }
   },
   "^(.+)([aä]s|var)$": {  // -as - A1 | -äs - Ä1 with s | -var - month endings
@@ -114,7 +126,8 @@
       "accusative": "<:-1>n",    // lian
       "genitive": "<:-1>n",      // lian
       "dative": "<:-1>t",        // liat
-      "instrumental": "<:-1>r"   // liar
+      "instrumental": "<:-1>r",  // liar
+      "locative": "<:-2>i"       // lii
     },
     "plural": {
       "default": "<:-1>t",        // liat
@@ -122,17 +135,19 @@
       "accusative": "<:-1>an",    // liaan
       "genitive": "<:-1>in",      // liain
       "dative": "<:-1>at",        // liaat
-      "instrumental": "<:-1>ar"   // liaar
+      "instrumental": "<:-1>ar",  // liaar
+      "locative": "<:-1>i"        // liai
     }
   },
-  "^(?!derge)((.+)[eouö])$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 | Matches if the value is NOT "derge"
+  "^(?![Dd]erge)((.+)[eouö])$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 | Matches if the value is NOT "derge"
     "default": {
       "default": "<>",        // penteme
       "nominative": "<>",     // penteme
       "accusative": "<>n",    // pentemen
       "genitive": "<>n",      // pentemen
       "dative": "<>t",        // pentemet
-      "instrumental": "<>r"   // pentemer
+      "instrumental": "<>r",  // pentemer
+      "locative": "<:-1>i"    // pentemi
     },
     "plural": {
       "default": "<:-1>at",        // pentemat
@@ -140,17 +155,19 @@
       "accusative": "<:-1>aan",    // pentemaan
       "genitive": "<:-1>ain",      // pentemain
       "dative": "<:-1>aat",        // pentemaat
-      "instrumental": "<:-1>aar"   // pentemaar
+      "instrumental": "<:-1>aar",  // pentemaar
+      "locative": "<:-1>ai"        // pentemai
     }
   },
-  "^((.+)[eouö]s|ilatis)$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 with s | ilatis - I1
+  "^((.+)[eouö]s|[Ii]latis|[Ii]skalis)$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 with s | ilatis, iskalis - I1
     "default": {
       "default": "<>",           // veises
       "nominative": "<>",        // veises
       "accusative": "<:-1>n",    // veisen
       "genitive": "<:-1>n",      // veisen
       "dative": "<:-1>t",        // veiset
-      "instrumental": "<:-1>r"   // veiser
+      "instrumental": "<:-1>r",  // veiser
+      "locative": "<:-1>i"       // veisei
     },
     "plural": {
       "default": "<:-2>at",        // veisat
@@ -158,17 +175,19 @@
       "accusative": "<:-2>aan",    // veisain
       "genitive": "<:-2>ain",      // veisain
       "dative": "<:-2>aat",        // veisaat
-      "instrumental": "<:-2>aar"   // veisaar
+      "instrumental": "<:-2>aar",  // veisaar
+      "locative": "<:-2>ai"        // veisai
     }
   },
-  "^leitakis$": {  // leitakis - I3 (-jat plural)
+  "^[Ll]eitakis$": {  // leitakis - I3 (-jat plural)
     "default": {
       "default": "<>",           // leitakis
       "nominative": "<>",        // leitakis
       "accusative": "<:-1>n",    // leitakin
       "genitive": "<:-1>n",      // leitakin
       "dative": "<:-1>t",        // leitakit
-      "instrumental": "<:-1>r"   // leitakir
+      "instrumental": "<:-1>r",  // leitakir
+      "locative": "<:-1>i"       // leitakii
     },
     "plural": {
       "default": "<:-3>jat",        // leitajat
@@ -176,7 +195,8 @@
       "accusative": "<:-3>jaan",    // leitajaan
       "genitive": "<:-3>jain",      // leitajain
       "dative": "<:-3>jaat",        // leitajaat
-      "instrumental": "<:-3>jaar"   // leitajaar
+      "instrumental": "<:-3>jaar",  // leitajaar
+      "locative": "<:-3>jai"        // leitajai
     }
   },
   "^(.+)[aeiouäyöü]i$": {  // -Vi - I4 (koi, nei)
@@ -186,7 +206,8 @@
       "accusative": "<>n",    // nein
       "genitive": "<>n",      // nein
       "dative": "<>t",        // neit
-      "instrumental": "<>r"   // neir
+      "instrumental": "<>r",  // neir
+      "locative": "<>ji"      // neiji
     },
     "plural": {
       "default": "<>jat",        // neijat
@@ -194,17 +215,19 @@
       "accusative": "<>jaan",    // neijaan
       "genitive": "<>jaan",      // neijaan
       "dative": "<>jaat",        // neijaat
-      "instrumental": "<>jaar"   // neijaar
+      "instrumental": "<>jaar",  // neijaar
+      "locative": "<>jai"        // neijai
     }
   },
-  "^(derge|(.+)[iü])$": {  // derge - E2 | -i - I2 (vintelis) | -ü - Ü1
+  "^([Dd]erge|(.+)[iü])$": {  // derge - E2 | -i - I2 (vintelis) | -ü - Ü1
     "default": {
       "default": "<>",        // derge
       "nominative": "<>",     // derge
       "accusative": "<>n",    // dergen
       "genitive": "<>n",      // dergen
       "dative": "<>t",        // derget
-      "instrumental": "<>r"   // derger
+      "instrumental": "<>r",  // derger
+      "locative": "<:-1>i"    // dergi
     },
     "plural": {
       "default": "<:-1>ät",        // dergät
@@ -212,7 +235,8 @@
       "accusative": "<:-1>äan",    // dergäan
       "genitive": "<:-1>äin",      // dergäin
       "dative": "<:-1>äat",        // dergäat
-      "instrumental": "<:-1>äar"   // dergäar
+      "instrumental": "<:-1>äar",  // dergäar
+      "locative": "<:-1>äi"        // dergäi
     }
   },
   "^(.+)[iü]s$": {  // -i - I2 (vintelis) | -ü - Ü1 with s
@@ -222,7 +246,8 @@
       "accusative": "<:-1>n",    // vintelin
       "genitive": "<:-1>n",      // vintelin
       "dative": "<:-1>t",        // vintelit
-      "instrumental": "<:-1>r"   // vintelir
+      "instrumental": "<:-1>r",  // vintelir
+      "locative": "<:-1>i"       // vintelii
     },
     "plural": {
       "default": "<:-2>ät",        // vintelät
@@ -230,7 +255,8 @@
       "accusative": "<:-2>äan",    // vinteläan
       "genitive": "<:-2>äin",      // vinteläin
       "dative": "<:-2>äat",        // vinteläat
-      "instrumental": "<:-2>äar"   // vinteläar
+      "instrumental": "<:-2>äar",  // vinteläar
+      "locative": "<:-2>äi"        // vinteläi
     }
   },
   "^.+": {  // "Default" in case no pattern matches at all
@@ -240,7 +266,8 @@
       "accusative": "<>'n",
       "genitive": "<>'n",
       "dative": "<>'t",
-      "instrumental": "<>'r"
+      "instrumental": "<>'r",
+      "locative": "<>'i"
     },
     "plural": {
       "default": "<>'at",
@@ -248,7 +275,8 @@
       "accusative": "<>'aan",
       "genitive": "<>'ain",
       "dative": "<>'aat",
-      "instrumental": "<>'aar"
+      "instrumental": "<>'aar",
+      "locative": "<>'ai"
     }
   }
 }

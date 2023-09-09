@@ -80,9 +80,9 @@ def generate_citizen(language: str = None, name_only: bool = False) -> tuple[str
         while len(origin_name.split()) > 2:  # Prevent extremely long names from being used
             origin = random.choice(available_places)
             origin_name = conworlds.Place(origin["id"]).name_translation(language_cls)
-        if language_cls.is_in_family("ne_rc", "ne_rn"):
+        if language_cls.is_in_family("re"):
             name3 = "ad " + language_cls.case(origin_name, "genitive", "singular")
-        elif language_cls.is_in_family("ne_rs", "ne_rm", "ne_vv"):
+        elif language_cls.is_in_family("vv"):  # "re_kv", "re_mu"
             # These languages don't yet have a proper case declension, so it will just return the raw name
             name3 = language_cls.case(origin_name, "ablative", "singular")
         else:

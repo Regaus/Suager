@@ -62,7 +62,7 @@ class Social(commands.Cog):
         target_case: str = "accusative"
         if language.language == "en" and action in ["pat", "feed", "high_five"]:
             target_case = "dative"
-        if language.is_in_family("ka_wk"):
+        if language.is_in_family("kai", "ka_ne"):
             if action in ["handhold", "wave"]:
                 target_case = "genitive"
             elif action in ["feed", "high_five"]:

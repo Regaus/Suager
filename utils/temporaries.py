@@ -564,7 +564,7 @@ def ka_data_updater(bot: bot_data.Bot):
                 en = bot.language2("en")
                 ka = bot.language2("re_nu")
                 kargadian = f"{place.name_translation(ka)}: "
-                kargadian += place.time.strftime("%d %b %Y, %H:%M", "ne_rc")
+                kargadian += place.time.strftime("%d %b %Y, %H:%M", "re_nu")
                 english = f"{place.name_translation(en):<20} - "
                 english += place.time.strftime("%d %b %Y, %H:%M", "en")
                 if place.weather is not None:

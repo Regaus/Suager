@@ -743,3 +743,6 @@
 - Changed "Developers" in the bot stats command to "Developer"
 - Updated the hidden `..cobble` command to modern versions of Regaazdallian
 - Changed some of the statuses to Custom Status now that it is possible
+
+## v1.9.0.1 - 9 September 2023
+- Updated the code to new language codes
