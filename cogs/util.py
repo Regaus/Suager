@@ -10,11 +10,15 @@ import pytz
 from PIL import Image, ImageDraw, ImageFont
 from regaus import conworlds, time as time2
 
-from utils import arg_parser, bases, bot_data, commands, emotes, general, http, images, permissions, time
+from utils import arg_parser, bases, bot_data, commands, dcu_timetable, emotes, general, http, images, permissions, time
 
 
 def custom_role_enabled(ctx):
     return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473, 759095477979054081]
+
+
+def dcu_data_access(ctx):
+    return ctx.author.id in [302851022790066185, 942829514457755738]
 
 
 class Utility(commands.Cog):
@@ -954,6 +958,13 @@ class UtilitySuager(Reminders, name="Utility"):
         else:
             self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
             return await ctx.send(f"Updated custom role of {general.username(ctx.author)} to {role.name}")
+
+    @commands.command(name="timetable")
+    @commands.guild_only()
+    @commands.check(dcu_data_access)
+    async def dcu_timetable(self, ctx: commands.Context):
+        """ Fetch DCU timetables for current week """
+        return await ctx.send(embed=await dcu_timetable.timetable_embed())
 
 
 class UtilityCobble(Utility, name="Utility"):
