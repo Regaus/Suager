@@ -1,10 +1,5 @@
 {
-  "generic_timed_out": "~~{text}~~\nKalvanta ahvak den neimun.",
-
-  "discord_role_members": "Saiderat, ihvannat na ankastan {role}",
-  "discord_server_banner_none": "**{server}** ihvat den salhan-neilun",
-  "discord_server_icon_none": "**{server}** ihvat den salhan-veiman",
-  "discord_server_inv_bg_none": "**{server}** ihvat den anladan-nazanveiman",
+  "achievements_leveling_levels_desc": "Sekear {target}'dan Aivikoon in un salhan",
 
   "events_error_bad_argument": "{emotes.Deny} Ukke na kattehtaan ahvak un dertannen sanen...",
   "events_error_guild_only": "{emotes.Deny} Eda kalvanta de maikat in un senninidun nottarahan.",

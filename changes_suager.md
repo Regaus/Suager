@@ -1639,3 +1639,6 @@
 - Birthdays are now stored as a `date` rather than `datetime` in the database
 - Added a new Custom Status to the playing statuses list, removed the "Competing in uselessness" status
 - Improved precision for `//timeago` and `//timein`
+
+## v7.8.0a1 - 22 September 2023
+- Started translating to newer version of Regaazdallian

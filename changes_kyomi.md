@@ -394,3 +394,6 @@
 - Changed "Developers" in the bot stats command to "Developer"
 - Birthdays are now stored as a `date` rather than `datetime` in the database
 - Changed some of the statuses to Custom Status now that it is possible
+
+## v1.5.0a1 - 22 September 2023
+- Started translating to newer version of Regaazdallian

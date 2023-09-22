@@ -1,10 +1,11 @@
 {
-  "generic_timed_out": "~~{text}~~\nKalvanta ahvak den neimun.",
+  "achievements_leveling_levels_desc": "Sekear {target}'dan Aivikoon in un salhan",
 
-  "discord_role_members": "Saiderat, ihvannan na ankastan {role}",
-  "discord_server_banner_none": "**{server}** ihvat den salhan-neilun",
-  "discord_server_icon_none": "**{server}** ihvat den salhan-veiman",
-  "discord_server_inv_bg_none": "**{server}** ihvat den anladan-nazanveiman",
+  "birthdays_birthday_cobble": "Mun reidesea jat an **5'den Hintavan** an Zemlän un an **9'den Kiitavan** an Kargadian, halla ed vaskakas. {emotes.Hug17}",
+  "birthdays_birthday_general_ka": "**{user}**'n reidesea jat an **{date}**.\nHan selda reidesea vainat {delta}.\nHan selda reidesea navadavat an {earth} Zemlän-taidan.",
+  "birthdays_birthday_your_ka": "**Tara** reidesea jat an **{date}**.\nTara selda reidesea vainat {delta}.\nTara selda reidesea navadavat an {earth} Zemlän-taidan.",
+
+  "discord_server_owner": "Salhan Viller",
 
   "events_error_bad_argument": "{emotes.Deny} Ukke na kattehtaan ahvak un dertannen sanen...",
   "events_error_guild_only": "{emotes.Deny} Eda kalvanta de maikat in un senninidun nottarahan.",

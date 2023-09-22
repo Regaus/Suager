@@ -746,3 +746,6 @@
 
 ## v1.9.0.1 - 9 September 2023
 - Updated the code to new language codes
+
+## v1.10.0a1 - 22 September 2023
+- Started translating to newer version of Regaazdallian
