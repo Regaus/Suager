@@ -1642,3 +1642,7 @@
 
 ## v7.7.2 - 22 September 2023
 - Added a way to see the current week's timetables for my course in university
+
+## v7.7.3 - 22 September 2023
+- Made the timetable be able to load the timetable for any course
+- Made the module be able to look up the list of courses

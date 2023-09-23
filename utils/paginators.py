@@ -16,6 +16,8 @@ import discord
 from discord.ext import commands
 import collections
 
+from jishaku import paginators
+
 # emoji settings, this sets what emoji are used for PaginatorInterface
 EmojiSettings = collections.namedtuple('EmojiSettings', 'start back forward end close')
 
@@ -28,7 +30,8 @@ EMOJI_DEFAULT = EmojiSettings(
 )
 
 
-class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
+# This code is for the reaction-based paginator, used in the help command and stuff like that
+class ReactionPaginatorInterface:  # pylint: disable=too-many-instance-attributes
     """
     A message and reaction based interface for paginators.
 
@@ -83,10 +86,10 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
 
         self.sent_page_reactions = False
 
-        self.task: asyncio.Task = None
+        self.task: asyncio.Task = None  # type: ignore
         self.send_lock: asyncio.Event = asyncio.Event()
 
-        self.close_exception: Exception = None
+        self.close_exception: Exception = None  # type: ignore
 
         if self.page_size > self.max_page_size:
             raise ValueError(
@@ -250,23 +253,23 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
 
         start, back, forward, end, close = self.emojis
 
-        def check(payload: discord.RawReactionActionEvent):
+        def check(_payload: discord.RawReactionActionEvent):
             """
             Checks if this reaction is related to the paginator interface.
             """
 
-            owner_check = not self.owner or payload.user_id == self.owner.id
+            owner_check = not self.owner or _payload.user_id == self.owner.id
 
-            emoji = payload.emoji
-            if isinstance(emoji, discord.PartialEmoji) and emoji.is_unicode_emoji():
-                emoji = emoji.name
+            _emoji = _payload.emoji
+            if isinstance(_emoji, discord.PartialEmoji) and _emoji.is_unicode_emoji():
+                _emoji = _emoji.name
 
             tests = (
                 owner_check,
-                payload.message_id == self.message.id,
-                emoji,
-                emoji in self.emojis,
-                payload.user_id != self.bot.user.id
+                _payload.message_id == self.message.id,
+                _emoji,
+                _emoji in self.emojis,
+                _payload.user_id != self.bot.user.id
             )
 
             return all(tests)
@@ -320,7 +323,7 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
                             ))
                     else:
                         # Send lock was released
-                        task_list.append(self.bot.loop.create_task(self.send_lock_delayed()))
+                        task_list.append(self.bot.loop.create_task(self.send_lock_delayed()))  # type: ignore
 
                 if not self.sent_page_reactions and self.page_count > 1:
                     self.bot.loop.create_task(self.send_all_reactions())
@@ -356,7 +359,7 @@ class PaginatorInterface:  # pylint: disable=too-many-instance-attributes
                 task.cancel()
 
 
-class PaginatorEmbedInterface(PaginatorInterface):
+class ReactionPaginatorEmbedInterface(ReactionPaginatorInterface):
     """
     A subclass of :class:`PaginatorInterface` that encloses content in an Embed.
     """
@@ -377,3 +380,7 @@ class PaginatorEmbedInterface(PaginatorInterface):
     @property
     def page_size(self) -> int:
         return self.paginator.max_size
+
+
+PaginatorInterface = paginators.PaginatorInterface
+PaginatorEmbedInterface = paginators.PaginatorEmbedInterface

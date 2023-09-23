@@ -7,11 +7,11 @@ import discord
 from discord.ext.commands import NSFWChannelRequired
 from discord.ext.commands.core import Group, wrap_callback
 
-from utils.paginators import PaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
+from utils.paginators import ReactionPaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 from utils.commands import Command, CommandError, Context, MinimalHelpCommand, NoPrivateMessage, NotOwner
 
 
-class PaginatorInterface(PaginatorEmbedInterface):
+class PaginatorInterface(ReactionPaginatorEmbedInterface):
     @property
     def send_kwargs(self) -> dict:
         display_page = self.display_page

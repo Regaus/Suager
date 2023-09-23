@@ -10,7 +10,7 @@ import pytz
 from PIL import Image, ImageDraw, ImageFont
 from regaus import conworlds, time as time2
 
-from utils import arg_parser, bases, bot_data, commands, dcu_timetable, emotes, general, http, images, permissions, time
+from utils import arg_parser, bases, bot_data, commands, dcu, emotes, general, http, images, permissions, time, paginators
 
 
 def custom_role_enabled(ctx):
@@ -959,12 +959,27 @@ class UtilitySuager(Reminders, name="Utility"):
             self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
             return await ctx.send(f"Updated custom role of {general.username(ctx.author)} to {role.name}")
 
-    @commands.command(name="timetable")
-    @commands.guild_only()
+    @commands.group(name="dcu", case_insensitive=True)
     @commands.check(dcu_data_access)
-    async def dcu_timetable(self, ctx: commands.Context):
-        """ Fetch DCU timetables for current week """
-        return await ctx.send(embed=await dcu_timetable.timetable_embed())
+    async def dcu_stuff(self, ctx: commands.Context):
+        """ Access stuff related to DCU and its timetables """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @dcu_stuff.command(name="timetable", aliases=["timetables", "tt"])
+    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1"):
+        """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
+        return await ctx.send(embed=await dcu.get_timetable(course_code))
+
+    @dcu_stuff.command(name="courses", aliases=["course", "courselist"])
+    async def dcu_courses(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU course list """
+        data = await dcu.get_courses(search)
+        paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
+        for line in data:
+            paginator.add_line(line)
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author)
+        return await interface.send_to(ctx)
 
 
 class UtilityCobble(Utility, name="Utility"):
