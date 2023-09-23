@@ -1646,3 +1646,8 @@
 ## v7.7.3 - 22 September 2023
 - Made the timetable be able to load the timetable for any course
 - Made the module be able to look up the list of courses
+
+## v7.7.4 - 23 September 2023
+- Timetables can now be looked up for any course, room, or list of modules
+- It is now possible to look up the list of existing courses, modules, or rooms
+- The list of courses, modules, and rooms is cached for 30 days, as they should not change often

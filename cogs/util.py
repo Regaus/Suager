@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from collections.abc import Callable, Awaitable
 from datetime import timedelta
 from io import BytesIO
 
@@ -966,20 +967,66 @@ class UtilitySuager(Reminders, name="Utility"):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @dcu_stuff.command(name="timetable", aliases=["timetables", "tt"])
+    @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True)
     async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1"):
         """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
-        return await ctx.send(embed=await dcu.get_timetable(course_code))
+        if ctx.invoked_subcommand is None:
+            try:
+                return await ctx.send(embed=await dcu.get_timetable_course(course_code))
+            except KeyError as e:
+                return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
 
-    @dcu_stuff.command(name="courses", aliases=["course", "courselist"])
-    async def dcu_courses(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU course list """
-        data = await dcu.get_courses(search)
+    @dcu_timetable.command(name="modules", aliases=["module", "m"])
+    async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
+        """ Fetch DCU timetables for specified modules for the current week"""
+        try:
+            return await ctx.send(embed=await dcu.get_timetable_module(module_codes))
+        except KeyError as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
+
+    @dcu_timetable.command(name="room", aliases=["rooms", "r"])
+    async def dcu_timetable_room(self, ctx: commands.Context, room_code: str):
+        """ Fetch DCU timetables for a given room for the current week"""
+        try:
+            return await ctx.send(embed=await dcu.get_timetable_room(room_code))
+        except KeyError as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search rooms` to find your room code.")
+
+    @dcu_stuff.group(name="search", aliases=["list"], case_insensitive=True)
+    async def dcu_search(self, ctx: commands.Context):
+        """ Find a course, module or room """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    async def dcu_list(self, ctx: commands.Context, get_function: Callable[[str | None], Awaitable[list[str]]], title: str, search: str, *, notes: str = None):
+        data = await get_function(search)
         paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
         for line in data:
             paginator.add_line(line)
-        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author)
+        embed = discord.Embed(title=title, colour=general.random_colour())
+        if notes is not None:
+            embed.set_footer(text=notes)
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
         return await interface.send_to(ctx)
+
+    @dcu_search.command(name="courses", aliases=["course", "courselist"])
+    async def dcu_courses(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU course list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_courses, "DCU Course Codes", search)
+
+    @dcu_search.command(name="modules", aliases=["module", "modulelist"])
+    async def dcu_modules(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU module list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_modules, "DCU Module Codes", search,
+                                       notes="Note: Some of the modules may have been parsed incorrectly, however I tried to reduce the chance of this happening")
+
+    @dcu_search.command(name="rooms", aliases=["room", "roomlist", "locations", "location", "locationlist"])
+    async def dcu_rooms(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU module list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_rooms, "DCU Room Codes", search)
 
 
 class UtilityCobble(Utility, name="Utility"):
