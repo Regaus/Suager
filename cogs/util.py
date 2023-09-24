@@ -968,29 +968,50 @@ class UtilitySuager(Reminders, name="Utility"):
             return await ctx.send_help(ctx.command)
 
     @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True)
-    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1"):
+    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1", custom_week: str = ""):
         """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
         if ctx.invoked_subcommand is None:
             try:
-                return await ctx.send(embed=await dcu.get_timetable_course(course_code))
+                date = None
+                if custom_week:
+                    date = time2.date.from_iso(custom_week)
+                    date = time2.datetime.combine(date, time2.time(), dcu.TZ)
+                return await ctx.send(embed=await dcu.get_timetable_course(course_code, date))
             except KeyError as e:
                 return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
+            except Exception as e:
+                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_timetable.command(name="modules", aliases=["module", "m"])
     async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
         """ Fetch DCU timetables for specified modules for the current week"""
         try:
-            return await ctx.send(embed=await dcu.get_timetable_module(module_codes))
+            date = None
+            try:
+                date = time2.date.from_iso(module_codes[-1])
+                date = time2.datetime.combine(date, time2.time(), dcu.TZ)
+                module_codes = module_codes[:-1]
+            except ValueError:
+                pass
+            return await ctx.send(embed=await dcu.get_timetable_module(module_codes, date))
         except KeyError as e:
             return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
+        except Exception as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_timetable.command(name="room", aliases=["rooms", "r"])
-    async def dcu_timetable_room(self, ctx: commands.Context, room_code: str):
+    async def dcu_timetable_room(self, ctx: commands.Context, room_code: str, custom_week: str = ""):
         """ Fetch DCU timetables for a given room for the current week"""
         try:
-            return await ctx.send(embed=await dcu.get_timetable_room(room_code))
+            date = None
+            if custom_week:
+                date = time2.date.from_iso(custom_week)
+                date = time2.datetime.combine(date, time2.time(), dcu.TZ)
+            return await ctx.send(embed=await dcu.get_timetable_room(room_code, date))
         except KeyError as e:
             return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search rooms` to find your room code.")
+        except Exception as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_stuff.group(name="search", aliases=["list"], case_insensitive=True)
     async def dcu_search(self, ctx: commands.Context):

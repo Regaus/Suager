@@ -12,3 +12,5 @@ jstyleson
 markovify
 scipy
 numpy
+icalendar
+cherrypy

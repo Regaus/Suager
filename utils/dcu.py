@@ -7,6 +7,7 @@ from typing import Type, TypeVar
 
 import discord
 import pytz
+from icalendar import Calendar, Event as CalendarEvent
 from regaus import time, print_error
 
 from utils import http, logger, general
@@ -21,7 +22,7 @@ MODULES_CATEGORY = "525fe79b-73c3-4b5c-8186-83c652b3adcc"
 LOCATIONS_CATEGORY = "1e042cb1-547d-41d4-ae93-a1f2c3d34538"
 PROGRAMMES_OF_STUDY = "241e4d36-60e0-49f8-b27e-99416745d98d"
 # Identity for Computer Science 1
-# COMSCI1 = "db214724-e16c-82a1-8b07-5edb97d78f2d"
+COMSCI1 = "db214724-e16c-82a1-8b07-5edb97d78f2d"
 # The timezone we're using
 TZ = pytz.timezone("Europe/Dublin")
 # Building names
@@ -467,6 +468,9 @@ class Event(object):
             description = data["Description"]
         self.description = description
 
+        self.last_modified = self.iso_to_datetime(data["LastModified"])
+        # self.data = data  # So that I can access the data that the event class ignores
+
     @staticmethod
     def iso_to_datetime(data: str) -> time.datetime:
         """ Convert ISO timestamp to datetime in Europe/Dublin timezone """
@@ -496,6 +500,26 @@ class Event(object):
         else:
             rooms_list = ", ".join([room[4:] for room in rooms])
             return f"{CAMPUSES[rooms[0][:3]]} {rooms_list}"
+
+    def coordinates(self) -> tuple[str, str]:
+        """ Convert the location code into map coordinates + room name """
+        rooms = self.location.split(", ")
+        assert rooms[0][:3] == "GLA"  # This should never encounter SPC/AHC rooms, since it's only used by my calendar
+        building_code = rooms[0][4:-3]
+        location = {
+            "C":  "53.38625149, -6.25983371",
+            "CA": "53.38598334, -6.25914272",
+            "H":  "53.38583436, -6.25490563",
+            "L":  "53.38563562, -6.25742329",
+            "N":  "53.38505261, -6.25585218",
+            "Q":  "53.38620605, -6.25744379",
+            "S":  "53.38556896, -6.25609541",
+            "SA": "53.38587691, -6.25643261",
+            "T":  "53.38618517, -6.25816241",
+            "X":  "53.38497192, -6.25494111"
+        }.get(building_code)
+        rooms_list = ", ".join([room[4:] for room in rooms])
+        return location, rooms_list
 
     def __str__(self) -> str:
         return f"**{self.start:%H:%M} - {self.end:%H:%M}** - {self.description} - {self.module_name} - {self.building_and_room()}"
@@ -574,3 +598,46 @@ class Room(BaseIdentity):
 
 
 BaseID = TypeVar("BaseID", bound=BaseIdentity)
+
+
+async def generate_ical() -> bytes:
+    """ Generate the icalendar files for COMSCI1 for the current academic year """
+    now = time.datetime.now()
+    start = time.datetime(2023, 9, 25)
+    end = time.datetime(2024, 5, 4) - time.timedelta(seconds=1)
+    time_format = "%Y%m%dT%H%M%SZ"  # "20230924T165500Z"
+
+    data = await get_timetable_data(PROGRAMMES_OF_STUDY, [COMSCI1], start, end)
+
+    event_list = []
+    for event_category in data["CategoryEvents"]:
+        event_list += event_category["Results"]
+    events = [Event(event) for event in event_list]
+    events.sort(key=lambda x: x.start)  # Sort by starting time
+
+    calendar = Calendar()
+    calendar.add("METHOD", "PUBLISH")
+    calendar.add("PRODID", "-//Regaus//DCU Timetables Reader//EN")
+    calendar.add("VERSION", "2.0")  # Seems to represent the version of the format
+    for i, item in enumerate(events, start=1):  # type: int, Event
+        location, room = item.coordinates()
+        event = CalendarEvent()
+        event.add("UID", i)
+        event["DTSTAMP"] = now.strftime(time_format)
+        event["LAST-MODIFIED"] = item.last_modified.to_timezone(time.utc).strftime(time_format)
+        event["DTSTART"] = item.start.to_timezone(time.utc).strftime(time_format)
+        event["DTEND"] = item.end.to_timezone(time.utc).strftime(time_format)
+        # event.add("DTSTAMP", now.strftime(time_format))
+        # event.add("LAST-MODIFIED", item.last_modified.strftime(time_format))
+        # event.add("DTSTART", item.start.strftime(time_format))
+        # event.add("DTEND", item.end.strftime(time_format))
+        event.add("SUMMARY", f"({room}) {item.description} - {item.module_name.replace('*', '')}")  # "(HG20) Lecture - [CA116] Computer Programming"
+        event.add("LOCATION", location)
+        event.add("DESCRIPTION", f"{item.description} - {item.building_and_room()}")
+        event.add("CLASS", "PUBLIC")
+        calendar.add_component(event)
+
+    with open("data/dcu/calendar.ics", "wb+") as file:
+        output = calendar.to_ical()
+        file.write(output)
+        return output

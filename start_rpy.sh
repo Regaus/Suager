@@ -6,4 +6,5 @@ echo ""
 python3.11 -m pip install -U "git+https://github.com/Regaus/Regaus.py.git@stable#egg=regaus.py"
 echo ""
 nohup python3.11 -u index.py > data/log.out 2>&1 < /dev/null &
+nohup python3.11 -u webserver/cherry.py > data/log_cherry.out 2>&1 < /dev/null &
 tail -f data/log.out

@@ -12,7 +12,7 @@ import pytz
 from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import birthday, bot_data, commands, general, http, lists, logger, time, images
+from utils import birthday, bot_data, commands, dcu, general, http, images, lists, logger, time
 
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
@@ -1510,3 +1510,21 @@ async def ka_holidays_updater(bot: bot_data.Bot):
 
         await asyncio.sleep(1)
         await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
+
+
+async def dcu_calendar_updater(bot: bot_data.Bot):
+    update_speed = 604800  # 7 days / 1 week
+    update_delay = 345600  # 4 days -> Restart every Monday
+    await wait_until_next_iter(update_speed, update_delay)  # Wait until the start of next week
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised DCU Calendar Updater")
+    while True:
+        try:
+            await dcu.generate_ical()
+            logger.log(bot.name, "dcu", f"{time.time()} > {bot.full_name} > DCU Calendar > Fetched new timetable information and generated new .ics file")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > DCU Calendar > {type(e).__name__}: {e}")
+            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > DCU Calendar > {type(e).__name__}: {e}")
+
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, update_delay)

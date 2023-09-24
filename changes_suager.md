@@ -1651,3 +1651,8 @@
 - Timetables can now be looked up for any course, room, or list of modules
 - It is now possible to look up the list of existing courses, modules, or rooms
 - The list of courses, modules, and rooms is cached for 30 days, as they should not change often
+
+## v7.7.5 - 24 September 2023
+- Timetables can now be looked up for a specific week
+- The timetable for my course will now be looked up and stored as a calendar file (with events created for the whole year)
+- Created a cherry.py webserver to store the calendar on so it can be accessed by the calendar apps
