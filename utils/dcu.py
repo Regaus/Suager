@@ -507,16 +507,16 @@ class Event(object):
         assert rooms[0][:3] == "GLA"  # This should never encounter SPC/AHC rooms, since it's only used by my calendar
         building_code = rooms[0][4:-3]
         location = {
-            "C":  "53.38625149, -6.25983371",
-            "CA": "53.38598334, -6.25914272",
-            "H":  "53.38583436, -6.25490563",
-            "L":  "53.38563562, -6.25742329",
-            "N":  "53.38505261, -6.25585218",
-            "Q":  "53.38620605, -6.25744379",
-            "S":  "53.38556896, -6.25609541",
-            "SA": "53.38587691, -6.25643261",
-            "T":  "53.38618517, -6.25816241",
-            "X":  "53.38497192, -6.25494111"
+            "C":  "Henry Grattan Building (C), Glasnevin, Dublin, Co. Dublin, Ireland",
+            "CA": "Henry Grattan Building (C), Glasnevin, Dublin, Co. Dublin, Ireland",
+            "H":  "DCU - School of Nursing & Human Sciences (H), 620 Collins Ave Ext, Whitehall, Dublin 9, D09 X984, Ireland",
+            "L":  "DCU - School of Computing, Dublin City University, Collins Ave Ext, Whitehall, Dublin 9, Ireland",
+            "N":  "School of Physics, Whitehall, Artane, Co. Dublin",
+            "Q":  "DCU Business School, Artane - Whitehall, Dublin, Ireland",
+            "S":  "DCU Stokes Building, Collins Ave Ext Collins Ave Ext, Whitehall, Dublin 9, D09 E432, Ireland",
+            "SA": "DCU Stokes Building, Collins Ave Ext Collins Ave Ext, Whitehall, Dublin 9, D09 E432, Ireland",
+            "T":  "The Larkin Lecture Theatre, DCU, Dublin, 58 Albert College Park, Whitehall, Dublin 9, D09 AE28, Ireland",
+            "X":  "School of Chemical Sciences, 592, 628 Collins Ave Ext, Whitehall, Dublin 9, D09 E432"
         }.get(building_code)
         rooms_list = ", ".join([room[4:] for room in rooms])
         return location, rooms_list
@@ -622,7 +622,8 @@ async def generate_ical() -> bytes:
     for i, item in enumerate(events, start=1):  # type: int, Event
         location, room = item.coordinates()
         event = CalendarEvent()
-        event.add("UID", i)
+        # event.add("UID", uuid.uuid1(node=i, clock_seq=item.start.total_microseconds()))
+        event.add("UID", str(i) + "@regaus.dcu.comsci1")  # To avoid having IDs that are short and not unique
         event["DTSTAMP"] = now.strftime(time_format)
         event["LAST-MODIFIED"] = item.last_modified.to_timezone(time.utc).strftime(time_format)
         event["DTSTART"] = item.start.to_timezone(time.utc).strftime(time_format)
@@ -631,7 +632,7 @@ async def generate_ical() -> bytes:
         # event.add("LAST-MODIFIED", item.last_modified.strftime(time_format))
         # event.add("DTSTART", item.start.strftime(time_format))
         # event.add("DTEND", item.end.strftime(time_format))
-        event.add("SUMMARY", f"({room}) {item.description} - {item.module_name.replace('*', '')}")  # "(HG20) Lecture - [CA116] Computer Programming"
+        event.add("SUMMARY", f"{item.module_name.replace('*', '')} {item.description} ({room})")  # "[CA116] Computer Programming Lecture (HG20)"
         event.add("LOCATION", location)
         event.add("DESCRIPTION", f"{item.description} - {item.building_and_room()}")
         event.add("CLASS", "PUBLIC")

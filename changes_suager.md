@@ -1659,3 +1659,8 @@
 
 ## v7.7.5.1 - 24 September 2023
 - Fixed `//eval` crashing when the error traceback is very long
+
+## v7.7.5.2 - 25 September 2023
+- Disabled the cherry server and the automatic calendar updater
+- Added `@regaus.dcu.comsci1` to the end of iCalendar event UIDs to make them longer and unique
+- Rearranged the words in the event names
