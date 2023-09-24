@@ -19,8 +19,8 @@ class Calendar(object):
 
 
 def main():
-    cherrypy.config.update({"log.screen": False, "log.access_file": "", "log.error_file": ""})
-    cherrypy.engine.unsubscribe("graceful", cherrypy.log.reopen_files)
+    # cherrypy.config.update({"log.screen": False, "log.access_file": "", "log.error_file": ""})
+    # cherrypy.engine.unsubscribe("graceful", cherrypy.log.reopen_files)
     # logging.config.dictConfig(LOG_CONF)
     cherrypy.config.update("webserver/server.conf")
     # cherrypy.tree.mount(Calendar(), "app.conf")
