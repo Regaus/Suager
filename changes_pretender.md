@@ -73,3 +73,6 @@
 - Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
 - Updated most commands to use display names in the output, where it makes sense to
 - The `a.impersonate` command now shows the member's name instead of username (nickname -> display name -> username)
+
+## v1.2.2.1 - 24 September 2023
+- Fixed `a.eval` crashing when the error traceback is very long

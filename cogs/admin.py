@@ -77,7 +77,22 @@ async def eval_fn(ctx: commands.Context, cmd):
             tb.insert(i + 1, "    " + code)  # We insert a line before the exception, which shows the code actually run, indented properly
         else:
             await ctx.send("Error line number not found...")
-        return await ctx.send("\n".join(tb))
+
+        traceback = "\n".join(tb)
+
+        if len(traceback) == 0 or traceback is None:
+            return await ctx.send("An error has occurred. No traceback is available.")
+        elif 2000 < len(traceback) <= 8000000:
+            async with ctx.typing():
+                data = BytesIO(traceback.encode('utf-8'))
+                return await ctx.send(f"An error has occurred. The traceback is a bit too long... ({len(traceback):,} chars)", file=discord.File(data, filename=f"{time.file_ts('Traceback')}"))
+        elif len(traceback) > 8000000:
+            async with ctx.typing():
+                data = BytesIO(traceback[-8000000:].encode('utf-8'))
+                return await ctx.send(f"An error has occurred. The traceback is a bit too long... ({len(traceback):,} chars)\nSending last {8000000:,} chars",
+                                      file=discord.File(data, filename=f"{time.file_ts('Traceback')}"))
+        return await ctx.send(traceback)
+        # return await ctx.send("\n".join(tb))
 
 
 def reload_util(name: str, bot: bot_data.Bot):

@@ -746,3 +746,6 @@
 
 ## v1.9.0.1 - 9 September 2023
 - Updated the code to new language codes
+
+## v1.9.0.2 - 24 September 2023
+- Fixed `..eval` crashing when the error traceback is very long

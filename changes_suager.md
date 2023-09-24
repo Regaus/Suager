@@ -1656,3 +1656,6 @@
 - Timetables can now be looked up for a specific week
 - The timetable for my course will now be looked up and stored as a calendar file (with events created for the whole year)
 - Created a cherry.py webserver to store the calendar on so it can be accessed by the calendar apps
+
+## v7.7.5.1 - 24 September 2023
+- Fixed `//eval` crashing when the error traceback is very long
