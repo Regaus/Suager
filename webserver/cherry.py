@@ -3,16 +3,18 @@ from sys import platform
 
 import cherrypy
 
-from utils import time
+from datetime import datetime
 
 
 # logger = logging.getLogger("cherrypy")
+def time() -> str:
+    return datetime.utcnow().strftime("%d %b %Y, %H:%M:%S")
 
 
 class Calendar(object):
     @cherrypy.expose
     def index(self):
-        print(f"{time.time()} > Cherry > Index page accessed")
+        print(f"{time()} > Cherry > Index page accessed")
         return "Hello World!"
 
 
@@ -22,7 +24,7 @@ def main():
     # logging.config.dictConfig(LOG_CONF)
     cherrypy.config.update("webserver/server.conf")
     # cherrypy.tree.mount(Calendar(), "app.conf")
-    print(f"{time.time()} > Cherry > Server launched")
+    print(f"{time()} > Cherry > Server launched")
     if platform.startswith("linux"):
         cherrypy.quickstart(Calendar(), "/", "webserver/app.conf")
     else:
