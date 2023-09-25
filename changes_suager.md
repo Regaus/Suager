@@ -1664,3 +1664,6 @@
 - Disabled the cherry server and the automatic calendar updater
 - Added `@regaus.dcu.comsci1` to the end of iCalendar event UIDs to make them longer and unique
 - Rearranged the words in the event names
+
+## v7.7.5.3 - 25 September 2023
+- Fixed the timetables breaking when the class is online

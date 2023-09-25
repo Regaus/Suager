@@ -492,6 +492,8 @@ class Event(object):
 
     def building_and_room(self) -> str:
         """ Convert the location code into human-readable format """
+        if self.location is None:
+            return "Location Unknown / " + self.event_type
         rooms = self.location.split(", ")
         if rooms[0][:3] == "GLA":
             building_code = rooms[0][4:-3]  # Assume the building is the same for all labs
