@@ -493,7 +493,7 @@ class Event(object):
     def building_and_room(self) -> str:
         """ Convert the location code into human-readable format """
         if self.location is None:
-            return "Location Unknown / " + self.event_type
+            return self.event_type
         rooms = self.location.split(", ")
         if rooms[0][:3] == "GLA":
             building_code = rooms[0][4:-3]  # Assume the building is the same for all labs
@@ -505,6 +505,8 @@ class Event(object):
 
     def coordinates(self) -> tuple[str, str]:
         """ Convert the location code into map coordinates + room name """
+        if self.location is None:
+            return self.event_type, self.event_type
         rooms = self.location.split(", ")
         assert rooms[0][:3] == "GLA"  # This should never encounter SPC/AHC rooms, since it's only used by my calendar
         building_code = rooms[0][4:-3]
