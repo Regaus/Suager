@@ -511,16 +511,16 @@ class Event(object):
         assert rooms[0][:3] == "GLA"  # This should never encounter SPC/AHC rooms, since it's only used by my calendar
         building_code = rooms[0][4:-3]
         location = {
-            "C":  "Henry Grattan Building (C), Glasnevin, Dublin, Co. Dublin, Ireland",
-            "CA": "Henry Grattan Building (C), Glasnevin, Dublin, Co. Dublin, Ireland",
-            "H":  "DCU - School of Nursing & Human Sciences (H), 620 Collins Ave Ext, Whitehall, Dublin 9, D09 X984, Ireland",
-            "L":  "DCU - School of Computing, Dublin City University, Collins Ave Ext, Whitehall, Dublin 9, Ireland",
-            "N":  "School of Physics, Whitehall, Artane, Co. Dublin",
-            "Q":  "DCU Business School, Artane - Whitehall, Dublin, Ireland",
-            "S":  "DCU Stokes Building, Collins Ave Ext Collins Ave Ext, Whitehall, Dublin 9, D09 E432, Ireland",
-            "SA": "DCU Stokes Building, Collins Ave Ext Collins Ave Ext, Whitehall, Dublin 9, D09 E432, Ireland",
-            "T":  "The Larkin Lecture Theatre, DCU, Dublin, 58 Albert College Park, Whitehall, Dublin 9, D09 AE28, Ireland",
-            "X":  "School of Chemical Sciences, 592, 628 Collins Ave Ext, Whitehall, Dublin 9, D09 E432"
+            "C":  "DCU - Henry Grattan Building",
+            "CA": "DCU - Henry Grattan Extension",
+            "H":  "DCU - Nursing Building",
+            "L":  "DCU - McNulty Building",
+            "N":  "DCU - Marconi Building",
+            "Q":  "DCU - Business School",
+            "S":  "DCU - Stokes Building",
+            "SA": "DCU - Stokes Annex",
+            "T":  "DCU - Terence Larkin Theatre",
+            "X":  "DCU - Lonsdale Building"
         }.get(building_code)
         rooms_list = ", ".join([room[4:] for room in rooms])
         return location, rooms_list
@@ -637,7 +637,7 @@ async def generate_ical() -> bytes:
         # event.add("DTSTART", item.start.strftime(time_format))
         # event.add("DTEND", item.end.strftime(time_format))
         event.add("SUMMARY", f"{item.module_name.replace('*', '')} {item.description} ({room})")  # "[CA116] Computer Programming Lecture (HG20)"
-        event.add("LOCATION", location)
+        event.add("LOCATION", f"{location} - {room}")
         event.add("DESCRIPTION", f"{item.description} - {item.building_and_room()}")
         event.add("CLASS", "PUBLIC")
         calendar.add_component(event)
