@@ -444,29 +444,38 @@ class Event(object):
         # self.description = data["Description"]                                       # Lecture / Lab / Tutorial
         self.name: str = data["Name"]                                                 # Coded name of the event
         self.event_type: str = data["EventType"]                                      # On Campus
-        self.module_name = self.get_module_name(data["ExtraProperties"][0]["Value"])  # Module name in English
+        self.is_booking = self.event_type == "Booking"
+        if self.is_booking:
+            self.description = f"{data['Description']} - {self.name.split(' ', 1)[1]}"
+            weeks = data["ExtraProperties"][0]["Value"]
+            if "-" in weeks:
+                self.module_name = f"Weeks {weeks}"
+            else:
+                self.module_name = f"Week {weeks}"
+        else:
+            self.module_name = self.get_module_name(data["ExtraProperties"][0]["Value"])  # Module name in English
 
-        # Decode description -> Lecture / Lab / Tutorial (since some modules show module name instead of actual type)
-        # if self.description.startswith("IT Mathematics"):
-        try:
-            lecture_type = self.name.split("/")[-2]
-            letter = lecture_type[0]
-            description = {
-                "L": "Lecture",
-                "P": "Practical",
-                "T": "Tutorial",
-                "W": "Workshop",
-                "S": "Seminar"
-            }.get(letter, letter)
-            if letter == "T" and "IT Mathematics" in data["Description"]:
-                description += data["Description"][-8:]  # " Group X"
-            elif letter in ["T", "W", "S"]:
-                group = self.name.split("/")[2]
-                description += f" Group {group}"
-        except IndexError:
-            # If it doesn't conform to the regular class names (something other than, say, "CA116[1]OC/L1/01")
-            description = data["Description"]
-        self.description = description
+            # Decode description -> Lecture / Lab / Tutorial (since some modules show module name instead of actual type)
+            # if self.description.startswith("IT Mathematics"):
+            try:
+                lecture_type = self.name.split("/")[-2]
+                letter = lecture_type[0]
+                description = {
+                    "L": "Lecture",
+                    "P": "Practical",
+                    "T": "Tutorial",
+                    "W": "Workshop",
+                    "S": "Seminar"
+                }.get(letter, letter)
+                if letter == "T" and "IT Mathematics" in data["Description"]:
+                    description += data["Description"][-8:]  # " Group X"
+                elif letter in ["T", "W", "S"]:
+                    group = self.name.split("/")[2]
+                    description += f" Group {group}"
+            except IndexError:
+                # If it doesn't conform to the regular class names (something other than, say, "CA116[1]OC/L1/01")
+                description = data["Description"]
+            self.description = description
 
         self.last_modified = self.iso_to_datetime(data["LastModified"])
         # self.data = data  # So that I can access the data that the event class ignores

@@ -1667,3 +1667,10 @@
 
 ## v7.7.5.3 - 25 September 2023
 - Fixed the timetables breaking when the class is online
+
+## v7.7.5.4 - 26 September 2023
+- Changed the output formatting for online events
+- Improved the location output for the calendar
+
+## v7.7.5.5 - 27 September 2023
+- Improved output for bookings when looking up a room's timetable
