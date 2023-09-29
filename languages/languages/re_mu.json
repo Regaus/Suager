@@ -36,5 +36,61 @@
   "discord_server_owner": "Salhan Villär",
   "discord_user_id": "Nottarun Näile",
   "discord_user_joined_at": "Kateek sen an",
-  "discord_user_roles_overall": "\nI väisen: {total} ankastain"
+  "discord_user_roles_overall": "\nI väisen: {total} ankastain",
+
+  "events_error_bad_argument": "{emotes.Deny} Ukke na kattehtain awak un dertannen sanen...",
+  "events_error_check": "{emotes.Deny} Te de saikas eden kanden zäide nottaran...",
+  "events_error_concurrency": "{emotes.Deny} Ede kande nottarahat se valse samalinni ({rate} en {per}). Altekaar anneet kuveni...",
+  "events_error_cooldown": "{emotes.Deny} Ede kande nottarahak se nelli u jat an sedenlinen ({rate} en {per}u). Altekaar anneet en {time} urain...",
+  "events_error_permissions_bot": "{emotes.Deny} Mu nittara edaan tikimaan saikantaan la maikan eskäan eden kanden: {perms}.",
+  "events_error_owner": "{emotes.Deny} Tiavi na villär na raivahtun saikat eden kanden nottaran.",
+  "events_user_joined": "Nottarus kateek sen salhat",
+  "events_user_left": "Nottarus addeek ad salhan",
+
+  "fun_8ball": "**{name}**:\nVasku: **{question}**\nNäimus: **{answer}**",
+  "fun_8ball_responses": ["Tá", "To", "Des", "Hettalar zhakki...", "Kuora en valse", "Kaini", "Ah äin kuorain", "Igaelji", "Säilat säilen jan", "Jar sami na suddun", "Des. (╯°□°）╯︵ ┻━┻", "Aize delji", "Deevasta janni hi?", "Nai deeval te hi?", "Jatta na näimus de vasserar?", "Vasseri des!", "Vasseri to!"],
+  "fun_beer_bot": "{emotes.Deny} Mu de deeva, ed na raivahtu tet näimavat. Mu taikie de deeva, ed äir raivahtu äize iwat 20 kadaan si...",
+  "fun_beer_me": "{emotes.Deny} Mu de maika alen erhäan... Air äinedan iren, net sainat se de maante.",
+  "fun_beer_no_react": "**{target}** awak un {emote} ad **{author}**",
+  "fun_beer_offer": "**{target}** kiehak un {emote} ad **{author}**",
+  "fun_beer_success": "**{target}** u **{author}** teraz gäran un alen issi {emote}",
+  "fun_hc_bot": "Mu de deeva, ed raivahtat eden erhäan maikan...",
+  "fun_hc_me": "Mu ja ur raivahtu, mu de maika erhäan en, nen ve erhäaz...",
+  "fun_hc_self": "**{author}** erhäat äin ittalaan",
+  "fun_hc_success": "**{target}** u **{author}** teraz gäran un ittalaan issi {emote}",
+  "fun_hc_timeout": "Hettali **{target}** de haidah un ittalaan ka ten, **{author}**",
+  "fun_roll": "**{name}** ishteek **{num1} - {num2}** un awak **{output}**",
+
+  "images_colour_invalid_value": "Na kattensane taizat tiavi 3 air 6 säiraan si ihvan.",
+
+  "info_invite_private": "Euma: Mu ja ur laikkar raivahtu. Tiavi na villär na raivahtun saikat mut deraat salhaat anladan.",
+  "info_stats_servers_data": "Salhain i väisen: **{servers}**\nSalvattanuurejain: **{text}**\nTakäin: **{cats}**\nKairattanuurejain: **{voice}**",
+  "info_stats_users_data": "Saiderain i väisen: **{members}**\nTäävain nottarain: **{users}**\nSerde saiderainkalve: **{avg}**",
+  "info_stats_users_data2": "Saiderain i väisen: **{members}**\nTäävain nottarain: **{users}**",
+
+  "leaderboards_no_data": "Mu iwa den zaitan av edan salhan edilinni.",
+
+  "leveling_next_level": "**{user}** - Te iwas **{xp}/{next} aivin**.\nTe nittaras **{left}** kuvalse, la na **{level}'dan koon** sekäan (Eskäta: **{prog}**)\nNittaramar astahankuftanänmis: **ad {min} ta {max}**",
+  "leveling_next_level_none": "Mu iwa den zaitan av ten edilinni...",
+  "leveling_next_level_max": "**{user}**, te äize sekäak na igavalsan koon.",
+  "leveling_rank": "**{user}**'n säine in **{server}**",
+  "leveling_rank_embed_rank": "Säine",
+  "leveling_rank_embed_progress": "Eskäta",
+  "leveling_rank_global": "**{user}** iwat **{xp} aivin** senti väisain salhain.\nHan jat na **{place}**'dar igakairahhar nottarus.\nVi valse aivin saina vallaitaz la sekäan na **{level}**'dan koon.",
+  "leveling_rank_max_1": "Igavalsar koo sekähak!",
+  "leveling_rank_max_2": [
+    "Sestar na tenratat äideen.",
+    "Kainasta äiken a na tenratan?",
+    "Zaivasta, assat kuvalse in edan viarun, nev just tar sehlankadu...",
+    "Kalhasta äiken ad Diskordan?",
+    "Te jas just se, se kuvar.",
+    "Edes jat aize tehme, tá, no se de maikat tet aize irian jan...",
+    "Te taidas äiken tarvan takran."
+  ],
+  "leveling_rank_progress": "Eskäta: {progress}",
+  "leveling_rank_xp_self": "Väisar aivis\nNe, deevahta te, ed mu de ektal?",
+  "leveling_rewards_max": "Igavalsa ankada sekähak",
+  "leveling_rewards_none": "Eda salha iwat dean koon-ankadaan",
+  "leveling_xplevel_main": "Te nittaras **{xp} aivin**, la na **{level}**'dan koon sekäan.",
+  "leveling_xplevel_extra": "\nTe nittaras **{left}** kuvalse aivin, la na koon sekäan.\nNittaramar astahankuftanänmis: **ad {min} ta {max}**"
 }

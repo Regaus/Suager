@@ -749,3 +749,7 @@
 
 ## v1.10.0a1 - 22 September 2023
 - Started translating to newer version of Regaazdallian
+
+### v1.10.0a2 - 29 September 2023
+- Translated events, fun and images commands, bot info, and leveling strings to Regaazdallian
+- Updated some of the English strings as well

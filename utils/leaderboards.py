@@ -60,6 +60,7 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
     except (ValueError, IndexError):
         block += "No data available"
     s, e, t = language.number(start * _af), language.number((start + 9) * _af), language.number(total)
+    block += "```"
     output = language.string(string, server=guild, place=place, start=s, end=e, total=t, data=block)
     return await ctx.send(output)
 
@@ -128,4 +129,5 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
     except (ValueError, IndexError):
         block += "No data available"
     s, e, t = language.number(start * _af), language.number((start + 9) * _af), language.number(total)
+    block += "```"
     return await ctx.send(language.string(string, server=guild, place=place, start=s, end=e, total=t, data=block))

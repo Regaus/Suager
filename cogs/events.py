@@ -162,7 +162,7 @@ class Events(commands.Cog):
         elif isinstance(err, commands.CommandOnCooldown):
             # The command is currently on cooldown and cannot be used
             await ctx.send(language.string("events_error_cooldown", time=language.number(err.retry_after, precision=2), rate=language.number(err.cooldown.rate),
-                                           per=language.number(err.cooldown.per, precision=1)), delete_after=5 if err.retry_after < 5 else err.retry_after)
+                                           per=language.number(err.cooldown.per, precision=1)), delete_after=max(5.0, err.retry_after))
         elif isinstance(err, commands.MaxConcurrencyReached):
             # I think this might show `per` as some funny value instead of the name, but this isn't going to matter for Suager so...
             await ctx.send(language.string("events_error_concurrency", rate=language.number(err.number), per=err.per), delete_after=15)

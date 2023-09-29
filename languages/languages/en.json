@@ -84,7 +84,7 @@
   "events_error_error": "{emotes.Deny} An error occurred:\n{err}",
   "events_error_extra_argument": "{emotes.Deny} Too many arguments were specified...",
   "events_error_guild_only": "{emotes.Deny} This command cannot be used in DMs.",
-  "events_error_message_length": "{emotes.Deny} By typing a lot of text in, you have successfully broken the command. Congrats.",
+  "events_error_message_length": "{emotes.Deny} By typing a lot of text in, you have successfully broken the command. Well done...",
   "events_error_missing": "{emotes.Deny} A required command argument `{param}` is missing...",
   "events_error_not_found_channel": "{emotes.Deny} The specified channel `{value}` was not found.",
   "events_error_not_found_guild": "{emotes.Deny} The specified server `{value}` was not found.",
@@ -120,7 +120,7 @@
     "Of course, yes!"
   ],
   "fun_beer_bot": "{emotes.Deny} I don't think the bot will respond. Besides, I don't think any bot has already turned 18...",
-  "fun_beer_me": "{emotes.Deny} I can't drink beer. Or anything, for that matter.",
+  "fun_beer_me": "{emotes.Deny} I can't drink beer... Or anything else, for that matter.",
   "fun_beer_no_react": "**{target}** got a {emote} from **{author}**",
   "fun_beer_offer": "**{target}** got a {emote} offer from **{author}**",
   "fun_beer_reason": "\nReason: {reason}",
@@ -143,7 +143,7 @@
   "fun_tell_fail": "{emotes.Deny} Failed to send message: `{err}`",
   "fun_tell_guilds": "{emotes.Deny} You can't use `tell` to send messages into other servers...",
   "fun_tell_success": "{emotes.Allow} Successfully sent message to {channel}",
-  "fun_vote": "{name} starts a vote: ```fix\n{text}```",
+  "fun_vote": "{name} started a vote: ```fix\n{text}```",
 
   "images_colour_brightness": "Brightness",
   "images_colour_font": "Font colour",
@@ -156,8 +156,8 @@
 
   "info_invite_bot": "You can use these links to invite me to your server:",
   "info_invite_bot2": "[Recommended permissions]({recommended})\n[No permissions]({none})",
-  "info_invite_private": "Note: This bot is private. Only the bot owner can add it to other servers.",
-  "info_source": "These are the links you can use if you want to make your own bot:",
+  "info_invite_private": "Note: I am a private bot. Only the bot owner can add me to other servers.",
+  "info_source": "These are the links you can use if you want to make your own bot:",  // Unused string
   "info_stats_about": "ℹ About {bot} | v{version}",
   "info_stats_commands": "Commands",
   "info_stats_dates": "Dates",
@@ -172,8 +172,8 @@
   "info_stats_users_data2": "Total members: **{members}**\nUnique users: **{users}**",
 
   "leaderboards_no_data": "No data is available for this server at the moment.",
-  "leaderboards_levels": "Top users in **{server}** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
-  "leaderboards_levels_global": "Top users **globally** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
+  "leaderboards_levels": "Most active users in **{server}**, sorted by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}",
+  "leaderboards_levels_global": "Most active users **globally**, sorted by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}",
   "leaderboards_place": "#{val}",
 
   "leveling_next_level": "**{user}** - You have **{xp}/{next} XP**.\nYou need **{left}** more to reach **level {level}** (Progress: **{prog}**)\nNon-stop activity to level up: **{min} to {max}**",
@@ -186,16 +186,17 @@
   "leveling_rank_embed_rank": "Rank",
   "leveling_rank_embed_rate": "XP per minute",
   "leveling_rank_embed_progress": "Progress",
-  "leveling_rank_global": "**{user}** has **{xp} global XP**.\nThey are the **{place}** most active user.\nThat is enough XP to reach level **{level}**.",
+  "leveling_rank_global": "**{user}** has **{xp} XP** across all servers.\nThey are the **{place}** most talkative user.\nThat is enough XP to reach level **{level}**.",
   "leveling_rank_level": "Level {level}",
   "leveling_rank_max_1": "Highest level reached!",
   "leveling_rank_max_2": [
     "Consider going outside.",
     "Ever tried going outside?",
-    "You know, there's more to this world than your room...",
+    "You know, there's more to this world than your bedroom...",
     "Do you ever take a break off Discord?",
     "You are way too active, really.",
-    "That's very impressive, but it can't be that good for you..."
+    "That's very impressive, but it can't be that good for you...",
+    "You should touch grass sometimes."
   ],
   "leveling_rank_progress": "Progress: {progress}",
   "leveling_rank_rank": "Rank {place} of {total}",
@@ -208,8 +209,8 @@
   "leveling_rewards_none": "This server has no leveling rewards",
   "leveling_rewards_role": "Level {level}: <@&{role_id}>\n",
   "leveling_rewards_title": "Rewards for having no life in **{server}**",
-  "leveling_xplevel_extra": "\nXP left: **{left}**\nNon-stop activity to reach level: **{min} to {max}**",
   "leveling_xplevel_main": "You need **{xp} XP** to reach level **{level}**.",
+  "leveling_xplevel_extra": "\nYou need **{left}** more XP to reach that level.\nNon-stop activity required: **{min} to {max}**",
   "leveling_xplevel_max": "The max level is {level}.",
 
   "mod_ban": "{emotes.Allow} Successfully banned **{user} ({id})** for {reason}.",
