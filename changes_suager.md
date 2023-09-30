@@ -1643,6 +1643,10 @@
 ## v7.8.0a1 - 22 September 2023
 - Translated achievements, birthdays, and discord-related strings to newer version of Regaazdallian
 
-### v7.8.0a2 - 29 September 2023
+## v7.8.0a2 - 29 September 2023
 - Translated events, fun and images commands, bot info, and leveling strings to Regaazdallian
 - Updated some of the English strings as well
+
+## v7.8.0a3 - 30 September 2023
+- Updated the list of people with access to Kargadian translations
+- Translated moderation-related strings to Regaazdallian

@@ -5,7 +5,7 @@ from typing import Tuple
 import discord
 
 from cogs.leveling import max_level
-from utils import bot_data, commands, general, languages, permissions, settings, time
+from utils import bot_data, commands, general, languages, lists, permissions, settings, time
 
 
 class Settings(commands.Cog):
@@ -67,28 +67,15 @@ class Settings(commands.Cog):
             add_list = rsl if conlang == 2 else con if conlang == 1 else nat
             add_list.append(out)
 
-        # List of trusted people last updated 23/05/2022, list of trusted servers last updated 05/05/2023
-        # Users:   Regaus,             Leitoxz,            Alex Five,          Potato,             Chuck,              Mid,                Noodle
-        # Users:   Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza,               HatKid
-        # Users:   Karmeck,            Steir,              PandaBoi,           Suager,             Mary,               Wight,              Back,
-        # Users:   Ash/Kollu,          Drip
-        trusted = [302851022790066185, 291665491221807104, 430891116318031872, 374853432168808448, 593736085327314954, 581206591051923466, 411925326780825602,
-                   236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691, 418151634087182359,
-                   857360761135431730, 230313032956248064, 301091858354929674, 517012611573743621, 660639108674224158, 505486500314611717, 454599329232191488,
-                   690895816914763866, 381870347814830081]
-        is_trusted = ctx.author.id in trusted
+        is_trusted = ctx.author.id in lists.trusted_users
         # Anyone in the Kargadia server is also automatically trusted
         ka = self.bot.get_guild(928745963877720144)
         if ka is not None:
             is_in_server = ka.get_member(ctx.author.id) is not None
             is_trusted |= is_in_server
 
-        # Bad Users:   neppkun,             bowser
-        no_conlangs = [350199484246130690,  94762492923748352]
-        is_untrusted = ctx.author.id in no_conlangs
-        # Servers:         Senko Lair,         Regaus'tar Koankadu, Kargadia,          3tk4
-        trusted_servers = [568148147457490954, 738425418637639775, 928745963877720144, 430945139142426634]
-        is_trusted_server = ctx.guild is not None and ctx.guild.id in trusted_servers
+        is_untrusted = ctx.author.id in lists.untrusted_users
+        is_trusted_server = ctx.guild is not None and ctx.guild.id in lists.trusted_servers
 
         output = "__List of supported languages:__\n" + "\n".join(nat)
         # If the person is in a trusted server while not being in the No Conlangs list, or if the person is in a DM while they're trusted

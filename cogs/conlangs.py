@@ -1,25 +1,13 @@
-from utils import bot_data, commands, conlangs
+from utils import bot_data, commands, conlangs, lists
 
 
 def is_rsl1_eligible(ctx: commands.Context):
-    # Users:                 Regaus,             Leitoxz,            Alex Five,          Potato,             Chuck,              Mid,                Noodle
-    # Users:                 Shawn,              LostCandle,         Ash,                1337xp,             Aya,                Maza,               HatKid
-    # Users:                 Karmeck,            Steir,              PandaBoi,           Suager,             Mary,               Wight,              Back,
-    # Users:                 Ash/Kollu,          Drip
-    if ctx.author.id not in [302851022790066185, 291665491221807104, 430891116318031872, 374853432168808448, 593736085327314954, 581206591051923466, 411925326780825602,
-                             236884090651934721, 659879737509937152, 499038637631995906, 679819572278198272, 527729196688998415, 735902817151090691, 418151634087182359,
-                             857360761135431730, 230313032956248064, 301091858354929674, 517012611573743621, 660639108674224158, 505486500314611717, 454599329232191488,
-                             690895816914763866, 381870347814830081]:
+    if ctx.author.id not in lists.trusted_users:
         return False
     if ctx.guild is None:
         return True
     else:
-        # Channels:               rsl-1,              hidden-commands,    secretive-commands, secretive-commands-2, Ka. commands,     Ka. discussion,     Ka. lang. disc.
-        # Channels:               secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10,     secret-room-11,     secret-room-13,
-        # Channels:               secret-room-14,     secret-room-15,     secret-room-16,     secret-room-17
-        return ctx.channel.id in [787340111963881472, 610482988123422750, 742885168997466196, 753000962297299005, 938582514166034514, 938587178680864788, 938587585415086140,
-                                  671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 799714065256808469, 958489459672891452,
-                                  965801985716666428, 969720792457822219, 971195522830442527, 972112792624726036]
+        return ctx.channel.id in lists.trusted_channels
 
 
 class Conlangs(commands.Cog):

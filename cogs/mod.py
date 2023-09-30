@@ -357,7 +357,7 @@ class Moderation(commands.Cog):
                     failed += 1
         total = kicked + failed
         if failed:
-            output = language.string("mod_kick_mass2", reason=reason, total=language.number(total), banned=language.number(kicked), failed=language.number(failed))
+            output = language.string("mod_kick_mass2", reason=reason, total=language.number(total), success=language.number(kicked), failed=language.number(failed))
         else:
             output = language.string("mod_kick_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
@@ -454,7 +454,7 @@ class Moderation(commands.Cog):
                         failed += 1
         total = banned + failed
         if failed:
-            output = language.string("mod_ban_mass2", reason=reason, total=language.number(total), banned=language.number(banned), failed=language.number(failed))
+            output = language.string("mod_ban_mass2", reason=reason, total=language.number(total), success=language.number(banned), failed=language.number(failed))
         else:
             output = language.string("mod_ban_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
@@ -518,7 +518,7 @@ class Moderation(commands.Cog):
                     failed += 1
         total = banned + failed
         if failed:
-            output = language.string("mod_unban_mass2", reason=reason, total=language.number(total), banned=language.number(banned), failed=language.number(failed))
+            output = language.string("mod_unban_mass2", reason=reason, total=language.number(total), success=language.number(banned), failed=language.number(failed))
         else:
             output = language.string("mod_unban_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
@@ -651,7 +651,7 @@ class Moderation(commands.Cog):
         total = muted + failed
         timed = "_timed" if not error else ""
         if failed:
-            output = language.string("mod_mute_mass2" + timed, reason=reason, total=language.number(total), banned=language.number(muted), failed=language.number(failed), duration=duration)
+            output = language.string("mod_mute_mass2" + timed, reason=reason, total=language.number(total), success=language.number(muted), failed=language.number(failed), duration=duration)
         else:
             output = language.string("mod_mute_mass" + timed, reason=reason, total=language.number(total), duration=duration)
         return await ctx.send(output)
@@ -661,7 +661,7 @@ class Moderation(commands.Cog):
         if member.id == ctx.author.id:
             return language.string("mod_unmute_self")
         if mute_role not in member.roles:
-            return language.string("mod_unmute_already")
+            return language.string("mod_unmute_already", member=member)
         return True
 
     async def unmute_user(self, ctx: commands.Context, member: discord.Member, mute_role: discord.Role, reason: str):
@@ -726,7 +726,7 @@ class Moderation(commands.Cog):
                     failed += 1
         total = muted + failed
         if failed:
-            output = language.string("mod_unmute_mass2", reason=reason, total=language.number(total), banned=language.number(muted), failed=language.number(failed))
+            output = language.string("mod_unmute_mass2", reason=reason, total=language.number(total), success=language.number(muted), failed=language.number(failed))
         else:
             output = language.string("mod_unmute_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
@@ -900,7 +900,7 @@ class Moderation(commands.Cog):
         total = warned + failed
         timed = "_timed" if not error else ""
         if failed:
-            output = language.string("mod_warn_mass2" + timed, reason=reason, total=language.number(total), banned=language.number(warned), failed=language.number(failed), duration=duration)
+            output = language.string("mod_warn_mass2" + timed, reason=reason, total=language.number(total), success=language.number(warned), failed=language.number(failed), duration=duration)
         else:
             output = language.string("mod_warn_mass" + timed, reason=reason, total=language.number(total), duration=duration)
         return await ctx.send(output)

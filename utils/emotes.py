@@ -2,6 +2,7 @@ Allow = "<:allow:610828713424191498>"
 Meh = "<:meh:610828713315139623>"
 Deny = "<:deny:610828713533112350>"
 
+BigBrain = "<:bigbrain:1157471547120947250>"
 BlobCatPolice = "<:blobcatpolice:648243791769239571>"
 ForsenDiscoSnake = "<a:forsendiscosnake:613403121686937601>"
 KannaSpook = "<:KannaSpook:866419940742529035>"
