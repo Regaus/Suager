@@ -20,15 +20,13 @@
   "mod_logs_description": "Pakkar nottarus: {punished}\nIlar aivahanr: {responsible}\nNaenta: {reason}",
   "mod_purge_substring": "Na danntansalvatta taizat i sen ivvirsei 3 lantaan ihvan.",
   "mod_unmute_auto_reason": "[Auto-Unmute] Vitinta iadlöjak",
-  "mod_warn_list_none": "**{user}** ihvat dean savastaan... kai se jat",
 
   "placeholder": "Mu just arra zeide, allhad mu arde tua einedan! Ne tuas te zeide?",
 
-  "ratings_pickle_suager2": "Nai haidas te zaivan? Me jan just raivahtat, Regausan riadat, se nuhtan edet...",
-
-  "settings_birthdays_disabled": "Reideseat jan esaad kvellikan.\nEuma: Nottarat veiseri maikan ka `{p}birthday set` sen reideseaan sahtan, no in de ahvanva ein reideseanattaan in edan salhan.",
-  "settings_birthdays_role_none2": "Saiderat de valse ahvanva ein ankastan, ki se ian reidesea jat.",
-  "settings_birthdays_role_unset": "Dea reideseanankasta jat sahtaka - Saiderat de ahvanva ein ankastan, ki se ian reidesea jat.",
+  "settings_anti_ads_whitelist": "Na uurejat, katedakat ka `{p}settings antiads channels`, esaad adtessahavan kai uo lassanpekine u vai vainan na täävat serlirrimat uurejat.",
+  "settings_birthdays_disabled": "Reideseat jan teraz kvellikat.\nEuma: Nottarat veiseri maikan ka `{p}birthday set` sen reidesean sahtan, no in de ahvavan ein reideseaneghittartan in edan salhan.",
+  "settings_birthdays_enabled": "Reideseat jan teraz ankikat.",
+  "settings_birthdays_enabled2": "Janda reideseat ankikat",
   "settings_current_welcome_channel": "Nuat saiderat heidekaihan in <#{channel}>",
   "settings_goodbye_message_variables": "Jortallat arallanattan-kattehtat:\n\n[MENTION] - Karkan na addennan nottarun\n[USER] - Na inema na addennan nottarun\n[SERVER] - Na salhan ineva\n[CREATED_AT] - Ki na nottarus sen akonen hiderak\n[JOINED_AT] - Ki na nottarus sen na salhat katedak kaina\n[ACCOUNT_AGE] - Na nottarun akonen altta\n[LENGTH_OF_STAY] - Na nottarun amtanänmis\n[MEMBERS] - Na salhan nue saiderankalve",
   "settings_join_bots_add": "Nuat raivahtat esaad ahvanva na ankastan {role}, ki in sen katedan.",

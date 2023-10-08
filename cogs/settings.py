@@ -966,7 +966,7 @@ class Settings(commands.Cog):
                 message = birthdays["message"]
             embed.add_field(name=language.string("settings_birthdays_message"), value=message, inline=False)
         else:
-            embed.add_field(name=language.string("settings_birthdays_channel"), value=language.string("settings_birthdays_channel_none"), inline=False)
+            embed.add_field(name=language.string("settings_birthdays_channel"), value=language.string("settings_birthdays_channel_none2"), inline=False)
         role = f"<@&{birthdays['role']}>" if birthdays["role"] != 0 else language.string("settings_birthdays_role_none")
         embed.add_field(name=language.string("settings_birthdays_role"), value=role, inline=False)
         return await ctx.send(embed=embed)
@@ -1017,7 +1017,7 @@ class Settings(commands.Cog):
         """ Disable birthday messages """
         _settings, existent = await self.settings_start(ctx, "birthdays")
         _settings["birthdays"]["channel"] = 0
-        return await self.settings_end(ctx, _settings, existent, "settings_birthdays_channel_none2")
+        return await self.settings_end(ctx, _settings, existent, "settings_birthdays_channel_none")
 
     @set_birthday.group(name="role", case_insensitive=True, invoke_without_command=True)
     async def birthday_role(self, ctx: commands.Context, role: discord.Role = None):

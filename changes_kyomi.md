@@ -405,3 +405,7 @@
 ## v1.5.0a3 - 30 September 2023
 - Updated the list of people with access to Kargadian translations
 - Translated moderation-related strings to Regaazdallian
+
+## v1.5.0a4 - 30 September, 6-7 October 2023
+- Translated ratings and anti-ads and birthdays settings to Regaazdallian
+- Improved some of the English strings as well
