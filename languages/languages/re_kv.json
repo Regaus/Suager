@@ -178,6 +178,7 @@
   "mod_purge_user": "Te täizas mut käiran, kin attaan te häidas haviran.",
   "mod_unmute_mass": "{emotes.Allow} Dezi-nistegak **{total} säideraan** naen {reason}.",
   "mod_unmute_mass2": "Dezi-nistegak **{total} säideraan** naen {reason}:\n{emotes.Allow} Uvehi: **{success}**\n{emotes.Deny} Dezuvehi: **{failed}**",
+  "mod_unmute_self": "Kiivastar altekaan sen dezi-nistegan {emotes.BlobCatPolice}",
   "mod_warn_limit": "Te de mäikas sa kuvalse 5 kadaan avastan. Na savasta väinat väikidatta.",
   "mod_warn_list_item": "**{i})** {text} - Gilten Näile `{id}`\nTäisat ta {time}\nIadlöjavat {delta}",
   "mod_warn_list_item2": "**{i})** {text} - Gilten Näile `{id}`\n*Väikidatta savasta*\nEstehakat {delta}",
