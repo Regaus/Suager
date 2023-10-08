@@ -979,8 +979,9 @@ class UtilitySuager(Reminders, name="Utility"):
                 return await ctx.send(embed=await dcu.get_timetable_course(course_code, date))
             except KeyError as e:
                 return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
-            # except Exception as e:
-            #     return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+            except Exception as e:
+                # await ctx.send(general.traceback_maker(e))
+                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_timetable.command(name="modules", aliases=["module", "m"])
     async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
@@ -997,6 +998,7 @@ class UtilitySuager(Reminders, name="Utility"):
         except KeyError as e:
             return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
         except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
             return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_timetable.command(name="room", aliases=["rooms", "r"])
@@ -1011,6 +1013,7 @@ class UtilitySuager(Reminders, name="Utility"):
         except KeyError as e:
             return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search rooms` to find your room code.")
         except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
             return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_stuff.group(name="search", aliases=["list"], case_insensitive=True)

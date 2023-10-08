@@ -1674,3 +1674,7 @@
 
 ## v7.7.5.5 - 27 September 2023
 - Improved output for bookings when looking up a room's timetable
+
+## v7.7.5.6 - 8 October 2023
+- Made the timetables support weird "WRB" events
+- Fixed bookings crashing when they forget to include a space in the name

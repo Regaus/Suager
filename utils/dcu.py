@@ -438,20 +438,26 @@ async def get_timetable_room(room_code: str, custom_week: time.datetime = None) 
 
 class Event(object):
     def __init__(self, data: dict):
-        self.start = self.iso_to_datetime(data["StartDateTime"])                      # Start datetime
-        self.end = self.iso_to_datetime(data["EndDateTime"])                          # End datetime
-        self.location: str = data["Location"]                                         # Code for building and room
-        # self.description = data["Description"]                                       # Lecture / Lab / Tutorial
-        self.name: str = data["Name"]                                                 # Coded name of the event
-        self.event_type: str = data["EventType"]                                      # On Campus
+        self.start = self.iso_to_datetime(data["StartDateTime"])  # Start datetime
+        self.end = self.iso_to_datetime(data["EndDateTime"])      # End datetime
+        self.location: str = data["Location"]                     # Code for building and room
+        # self.description = data["Description"]                   # Lecture / Lab / Tutorial
+        self.name: str = data["Name"]                             # Coded name of the event
+        self.event_type: str = data["EventType"]                  # On Campus / Asynchronous (Recorded) / Synchronous (Online) / Booking
         self.is_booking = self.event_type == "Booking"
         if self.is_booking:
-            self.description = f"{data['Description']} - {self.name.split(' ', 1)[1]}"
+            try:
+                self.description = f"{data['Description']} - {self.name.split(' ', 1)[1]}"
+            except IndexError:
+                self.description = f"{data['Description']} - {self.name}"
             weeks = data["ExtraProperties"][0]["Value"]
             if "-" in weeks:
                 self.module_name = f"Weeks {weeks}"
             else:
                 self.module_name = f"Week {weeks}"
+        elif "WRB" in self.event_type:  # I have no idea what these are supposed to mean
+            self.description = f"{self.event_type} - {self.name.split(' - ')[0]}"  # The first part usually contains the name of the society/organiser
+            self.module_name = f"{data['Description'].split(', ')[-1]}"  # The last part usually contains the description
         else:
             self.module_name = self.get_module_name(data["ExtraProperties"][0]["Value"])  # Module name in English
 
