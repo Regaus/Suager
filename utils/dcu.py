@@ -171,6 +171,8 @@ def get_times(custom_week: time.datetime = None) -> tuple[time.datetime, time.da
         start = first_week
     else:
         start: time.datetime = (now - time.timedelta(days=now.weekday)).replace(hour=0, minute=0, second=0, microsecond=0)
+        if now.weekday >= 5:  # Saturday or Sunday -> Show next week's timetables
+            start += time.timedelta(weeks=1)
     end: time.datetime = start + time.timedelta(weeks=1) - time.timedelta(seconds=1)  # type: ignore
     return start, end
 
@@ -457,7 +459,10 @@ class Event(object):
                 self.module_name = f"Week {weeks}"
         elif "WRB" in self.event_type:  # I have no idea what these are supposed to mean
             self.description = f"{self.event_type} - {self.name.split(' - ')[0]}"  # The first part usually contains the name of the society/organiser
-            self.module_name = f"{data['Description'].split(', ')[-1]}"  # The last part usually contains the description
+            self.module_name = data["Description"].split(", ")[-1]  # The last part usually contains the description
+        elif "Synchronous" in self.event_type:
+            self.description = f"Synchronous - {self.name}"
+            self.module_name = data["Description"]
         else:
             self.module_name = self.get_module_name(data["ExtraProperties"][0]["Value"])  # Module name in English
 

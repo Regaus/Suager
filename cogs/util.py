@@ -1024,6 +1024,8 @@ class UtilitySuager(Reminders, name="Utility"):
 
     async def dcu_list(self, ctx: commands.Context, get_function: Callable[[str | None], Awaitable[list[str]]], title: str, search: str, *, notes: str = None):
         data = await get_function(search)
+        if not data:
+            return await ctx.send("No data has been found. Try a different search?")
         paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
         for line in data:
             paginator.add_line(line)

@@ -1678,3 +1678,8 @@
 ## v7.7.5.6 - 8 October 2023
 - Made the timetables support weird "WRB" events
 - Fixed bookings crashing when they forget to include a space in the name
+
+## v7.7.5.7 - 8 October 2023
+- Made the timetable handle Synchronous events
+- Made the course/module/room list not break if no data was returned
+- The timetables will be shown for the next week if the current (or specified) date is a Saturday or Sunday
