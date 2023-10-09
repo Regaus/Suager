@@ -13,4 +13,4 @@ markovify
 scipy
 numpy
 icalendar
-cherrypy
+# cherrypy
