@@ -1,14 +1,29 @@
 from __future__ import annotations
 
 import csv
+import pickle
 from dataclasses import dataclass
 
+import pytz
 from regaus import time
 
 
+real_time_filename = "data/gtfs/real_time.json"
+static_filename = "data/gtfs/static.pickle"
+TIMEZONE = pytz.timezone("Europe/Dublin")
+
+
 # These classes handle the GTFS-R Real time information
+def load_gtfs_r_data(data: dict) -> GTFSRData:
+    try:
+        return GTFSRData.load(data)
+    except Exception as e:
+        from utils import general
+        general.print_error(general.traceback_maker(e))
+
+
 @dataclass()
-class GTFSData:
+class GTFSRData:
     header: Header
     entities: list[...]
 
@@ -17,7 +32,7 @@ class GTFSData:
         # If no data is available, keep self.data null until we do get some data
         if data is None:
             return None
-        return cls(Header.load(data["Header"]), [Entity.load(e) for e in data["Entity"]])
+        return cls(Header.load(data["header"]), [Entity.load(e) for e in data["entity"]])
 
 
 @dataclass()
@@ -28,13 +43,13 @@ class Header:
 
     @classmethod
     def load(cls, data: dict):
-        return cls(data["GtfsRealtimeVersion"], data["Incrementality"], time.datetime.from_timestamp(data["Timestamp"]))
+        return cls(data["gtfs_realtime_version"], data["incrementality"], time.datetime.from_timestamp(int(data["timestamp"])))
 
 
 @dataclass()
 class Entity:
     id: str
-    is_deleted: bool
+    # is_deleted: bool
     trip_update: TripUpdate
 
     # def __post_init__(self):
@@ -42,7 +57,8 @@ class Entity:
 
     @classmethod
     def load(cls, data: dict):
-        return cls(data["Id"], data["IsDeleted"], TripUpdate.load(data["TripUpdate"]))
+        # is_deleted was data["IsDeleted"]
+        return cls(data["id"], TripUpdate.load(data["trip_update"]))
 
 
 @dataclass()
@@ -52,8 +68,8 @@ class TripUpdate:
 
     @classmethod
     def load(cls, data: dict):
-        stop_times = [StopTimeUpdate.load(i) for i in data["StopTimeUpdate"]] if "StopTimeUpdate" in data else None
-        return cls(data["Trip"], stop_times)
+        stop_times = [StopTimeUpdate.load(i) for i in data["stop_time_update"]] if "stop_time_update" in data else None
+        return cls(RealTimeTrip.load(data["trip"]), stop_times)
 
 
 @dataclass()
@@ -62,17 +78,18 @@ class RealTimeTrip:
     route_id: str
     start_time: time.datetime
     schedule: str
+    direction_id: int
 
     @classmethod
     def load(cls, data: dict):
-        _time: str = data["StartTime"]
-        _date: str = data["StartDate"]
+        _time: str = data["start_time"]
+        _date: str = data["start_date"]
         h, m, s = _time.split(":")
         y, mo, d = _date[0:4], _date[4:6], _date[6:8]
         # This might have to be in Europe/Dublin timezone, but we'll ignore that for now
         # TODO: See what happens in March when daylight savings kick back in
-        start_time = time.datetime(int(y), int(mo), int(d), int(h), int(m), int(s))
-        return cls(data["TripId"], data["RouteId"], start_time, data["ScheduleRelationship"])
+        start_time = time.datetime(int(y), int(mo), int(d), int(h), int(m), int(s), tz=TIMEZONE)
+        return cls(data.get("trip_id", "Unknown"), data["route_id"], start_time, data.get("schedule_relationship", "Unknown"), data["direction_id"])
 
 
 @dataclass()
@@ -86,25 +103,33 @@ class StopTimeUpdate:
     @classmethod
     def load(cls, data: dict):
         try:
-            arrival = time.timedelta(seconds=data["Arrival"]["Delay"]) if "Arrival" in data else None
+            arrival = time.timedelta(seconds=data["arrival"]["delay"]) if "arrival" in data else None
         except KeyError:
             arrival = None
         try:
-            departure = time.timedelta(seconds=data["Departure"]["Delay"]) if "Departure" in data else None
+            departure = time.timedelta(seconds=data["departure"]["delay"]) if "departure" in data else None
         except KeyError:
             departure = None
-        return cls(data["StopSequence"], data["StopId"], data["ScheduleRelationship"], arrival, departure)
+        return cls(data["stop_sequence"], data.get("stop_id", "Unknown"), data.get("schedule_relationship", "Unknown"), arrival, departure)
 
 
 # These classes handle the GTFS static information
-agencies: dict[int, Agency] = {}
-calendars: dict[int, Calendar] = {}
-calendar_exceptions: dict[int, dict[time.date, CalendarException]] = {}  # calendar_exceptions[service_id][date] = CalendarException
-routes: dict[str, Route] = {}
-stops: dict[str, Stop] = {}
-# stop_times = {}
-schedules: dict[str, list[StopTime]] = {}  # schedules[trip_id][i]
-trips: dict[str, Trip] = {}
+@dataclass()
+class GTFSData:
+    # agencies[agency_id] = Agency
+    agencies: dict[int, Agency]
+    # calendars[service_id] = Calendar
+    calendars: dict[int, Calendar]
+    # calendar_exceptions[service_id][date] = CalendarException
+    calendar_exceptions: dict[int, dict[time.date, CalendarException]]
+    # routes[route_id] = Route
+    routes: dict[str, Route]
+    # stops[stop_id] = Stop
+    stops: dict[str, Stop]
+    # schedules[trip_id] = [StopTime, StopTime, StopTime, ...]
+    schedules: dict[str, list[StopTime]]
+    # trips[trip_id] = Trip
+    trips: dict[str, Trip]
 
 
 @dataclass()
@@ -221,8 +246,28 @@ def time_to_int(value: str) -> int:
     return int(h) * 3600 + int(m) * 60 + int(s)
 
 
-def load_gtfs_data():
+def load_gtfs_data_from_pickle(*, write: bool = True) -> GTFSData:
+    try:
+        data = pickle.load(open(static_filename, "rb"))
+    except FileNotFoundError:
+        data = load_gtfs_data(write=write)
+    return data
+
+
+def save_gtfs_data_to_pickle(data: GTFSData):
+    return pickle.dump(data, open(static_filename, "wb+"))
+
+
+def load_gtfs_data(*, write: bool = True) -> GTFSData:
     """ Load available GTFS data """
+    agencies: dict[int, Agency] = {}
+    calendars: dict[int, Calendar] = {}
+    calendar_exceptions: dict[int, dict[time.date, CalendarException]] = {}
+    routes: dict[str, Route] = {}
+    stops: dict[str, Stop] = {}
+    schedules: dict[str, list[StopTime]] = {}
+    trips: dict[str, Trip] = {}
+
     with open("assets/gtfs/agency.txt", "r", encoding="utf-8") as file:
         reader = csv.reader(file, delimiter=",", quotechar="\"")
         headers = ["agency_id", "agency_name", "agency_url", "agency_timezone"]
@@ -333,3 +378,8 @@ def load_gtfs_data():
             else:
                 if headers != row:
                     raise ValueError(f"stop_times.txt: unexpected headers expected: {row}")
+
+    gtfs_data = GTFSData(agencies, calendars, calendar_exceptions, routes, stops, schedules, trips)
+    if write:
+        save_gtfs_data_to_pickle(gtfs_data)
+    return gtfs_data

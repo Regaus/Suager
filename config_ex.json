@@ -54,8 +54,8 @@
       "token": "token",
       "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:762336598645407785>",
       "prefixes": [
-        "i,",
-        "I,"
+        "i.",
+        "I."
       ],
       "error_channel": 738442483591151638,
       "default_locale": "en"

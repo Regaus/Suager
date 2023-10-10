@@ -9,3 +9,10 @@
 
 ## v0.0.3 - 10 October 2023
 - Made it possible to read the available GTFS data and load it into dataclasses
+
+## v0.0.4 - 10 October 2023
+- The static GTFS data is now stored in one big dataclass that contains all the other data
+- The static GTFS data can now be pickled and then loaded from that instead of wasting processing power every time
+
+## v0.0.4.1 - 10 October 2023
+- Fixed the bot to be able to read GTFS-R v2 data instead of v1
