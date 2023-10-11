@@ -142,6 +142,10 @@ class Agency:
     url: str
     timezone: str
 
+    def __repr__(self):
+        # "Agency 7778019 - Bus Átha Cliath / Dublin Bus"
+        return f"Agency {self.id} - {self.name}"
+
 
 @dataclass()
 class Calendar:
@@ -151,6 +155,10 @@ class Calendar:
     data: list[bool]
     start_date: time.date
     end_date: time.date
+
+    def __repr__(self):
+        # "Calendar 3 - [True, True, True, True, True, False, False]"
+        return f"Calendar {self.service_id} - {self.data}"
 
 
 @dataclass()
@@ -163,6 +171,10 @@ class CalendarException:
     # 2 -> Service has been removed for the specified date
     # My implementation returns a bool of (exception_type != 2)
     exception: bool
+
+    def __repr__(self):
+        # "Exception for Calendar 343 - 2023-10-13 -> False"
+        return f"Exception for Calendar {self.service_id} - {self.date} -> {self.exception}"
 
 
 @dataclass()
@@ -182,6 +194,10 @@ class Route:
     route_colour: str
     route_text_colour: str
 
+    def __repr__(self):
+        # "Route 3643_54890 (DART) - Bray - Howth - Operated by Agency 7778017 - Iardród Éireann / Irish Rail"
+        return f"Route {self.id} ({self.short_name}) - {self.route_desc} - Operated by {self.agency}"
+
 
 @dataclass()
 class Stop:
@@ -196,6 +212,10 @@ class Stop:
     location_type: str   # Type: stop, station, or something else - Empty in our case
     parent_station: str  # Empty in our case
 
+    def __repr__(self):
+        # "Stop 8220DB000334 (334) - D'Olier Street"
+        return f"Stop {self.id} ({self.code}) - {self.name}"
+
 
 @dataclass()
 class Trip:
@@ -208,6 +228,10 @@ class Trip:
     block_id: str      # "A block consists of a single trip or many sequential trips made using the same vehicle"
     shape_id: str      # ID of geospatial shape (not really useful for my case)
 
+    def __repr__(self):
+        # "Trip 3626_209 to Charlesland, stop 7462 - Route 3626_39040 (84n)"
+        return f"Trip {self.trip_id} to {self.headsign} - Route {self.route.id} ({self.route.short_name})"
+
 
 @dataclass()
 class StopTime:
@@ -217,9 +241,15 @@ class StopTime:
     stop: Stop
     sequence: int       # Order of the stop along the route
     stop_headsign: str  # I guess this is in case the "headsign" changes after a certain stop?
-    pickup_type: int    # Pick up or not, I guess?
-    drop_off_type: int  # Drop off or not, I guess?
-    timepoint: int      # No idea
+    pickup_type: int    # 0 or empty -> Pickup, 1 -> No pickup
+    drop_off_type: int  # 0 or empty -> Drop off, 1 -> No drop off
+    timepoint: int      # 0 -> Times are approximate, 1 or empty -> Time are exact (this is factually incorrect)
+
+    def __repr__(self):
+        # This basically returns the time of departure modulo 24 hours
+        departure_time = time.time.from_microsecond(self.departure_time * 1000000)
+        # "02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
+        return f"{departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
 
 
 class SpecificStopTime:
@@ -242,7 +272,8 @@ class SpecificStopTime:
         self.departure_time = _date + time.timedelta(seconds=self.raw_departure_time)
 
     def __repr__(self):
-        return f"{self.departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence})"
+        # "2023-10-14 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
+        return f"{self.departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
 
 
 # @dataclass()
@@ -454,3 +485,6 @@ class StopSchedule:
         today = self.relevant_stop_times_one_day(date)
         tomorrow = self.relevant_stop_times_one_day(date + time.timedelta(days=1))
         return yesterday + today + tomorrow
+
+    def __repr__(self):
+        return f"Stop Schedule for {self.stop}"

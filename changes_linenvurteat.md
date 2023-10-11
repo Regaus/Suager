@@ -24,3 +24,7 @@
 ## v0.0.6 - 11 October 2023
 - The bot will now only initialise the GTFS data when a command using the data is run, instead of doing it on startup
 - Added a method to download the lastest GTFS data archive and update the stored static data
+
+## v0.0.6.1 - 11 October 2023
+- Merged the Linenvürteat bot to the main branch
+- Added reprs to the dataclasses for static GTFS
