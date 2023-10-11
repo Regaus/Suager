@@ -16,3 +16,7 @@
 
 ## v0.0.4.1 - 10 October 2023
 - Fixed the bot to be able to read GTFS-R v2 data instead of v1
+
+## v0.0.5 - 10 October 2023
+- Fixed the calendar not loading whether a service runs on the given weekday correctly
+- Made it possible to look up the schedule for yesterday, today, and tomorrow for a certain stop

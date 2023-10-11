@@ -131,6 +131,9 @@ class GTFSData:
     # trips[trip_id] = Trip
     trips: dict[str, Trip]
 
+    def __repr__(self):
+        return "This string is too large to be feasible to render."
+
 
 @dataclass()
 class Agency:
@@ -146,13 +149,6 @@ class Calendar:
     # List of 7 booleans corresponding to whether the service runs on each day of the week
     # This would be more convenient than trying to find the appropriate weekday's attribute
     data: list[bool]
-    # monday: bool
-    # tuesday: bool
-    # wednesday: bool
-    # thursday: bool
-    # friday: bool
-    # saturday: bool
-    # sunday: bool
     start_date: time.date
     end_date: time.date
 
@@ -204,7 +200,7 @@ class Stop:
 @dataclass()
 class Trip:
     route: Route
-    service_id: Calendar
+    calendar: Calendar
     trip_id: str
     headsign: str      # What is shown as the destination, can be overridden by StopTime.stop_headsign
     short_name: str    # Supposed to be text identifying the trip to riders - in reality, useless gibberish
@@ -226,10 +222,33 @@ class StopTime:
     timepoint: int      # No idea
 
 
-@dataclass()
-class TripSchedule:
-    trip: Trip
-    stops: list[StopTime]
+class SpecificStopTime:
+    """ A StopTime initialised to a specific date """
+    def __init__(self, stop_time: StopTime, date: time.date):
+        self.raw_stop_time = stop_time
+        self.trip = stop_time.trip
+        self.stop = stop_time.stop
+        self.sequence = stop_time.sequence
+        self.stop_headsign = stop_time.stop_headsign
+        self.pickup_type = stop_time.pickup_type
+        self.drop_off_type = stop_time.drop_off_type
+        self.timepoint = stop_time.timepoint
+        self.raw_arrival_time = stop_time.arrival_time
+        self.raw_departure_time = stop_time.departure_time
+
+        self.date = date
+        _date = time.datetime.combine(date, time.time(tz=TIMEZONE))
+        self.arrival_time = _date + time.timedelta(seconds=self.raw_arrival_time)
+        self.departure_time = _date + time.timedelta(seconds=self.raw_departure_time)
+
+    def __repr__(self):
+        return f"{self.departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence})"
+
+
+# @dataclass()
+# class TripSchedule:
+#     trip: Trip
+#     stops: list[StopTime]
 
 
 def str_to_date(value: str) -> time.date:
@@ -288,13 +307,13 @@ def load_gtfs_data(*, write: bool = True) -> GTFSData:
         for i, row in enumerate(reader):
             if i > 0:
                 service_id = int(row[0])
-                mon = bool(row[1])
-                tue = bool(row[2])
-                wed = bool(row[3])
-                thu = bool(row[4])
-                fri = bool(row[5])
-                sat = bool(row[6])
-                sun = bool(row[7])
+                mon = bool(int(row[1]))
+                tue = bool(int(row[2]))
+                wed = bool(int(row[3]))
+                thu = bool(int(row[4]))
+                fri = bool(int(row[5]))
+                sat = bool(int(row[6]))
+                sun = bool(int(row[7]))
                 start_date = str_to_date(row[8])
                 end_date = str_to_date(row[9])
                 calendar = Calendar(service_id, [mon, tue, wed, thu, fri, sat, sun], start_date, end_date)
@@ -311,7 +330,9 @@ def load_gtfs_data(*, write: bool = True) -> GTFSData:
                 service_id = int(row[0])
                 date = str_to_date(row[1])
                 exc_type = int(row[2])
-                calendar_date = CalendarException(service_id, date, exc_type != 2)
+                # 1 -> Service is added (-> return True when checking if trip is applicable today)
+                # 2 -> Service is removed (-> return False when checking if trip is applicable today)
+                calendar_date = CalendarException(service_id, date, exc_type == 1)
                 if service_id in calendar_exceptions:
                     calendar_exceptions[service_id][date] = calendar_date
                 else:
@@ -383,3 +404,53 @@ def load_gtfs_data(*, write: bool = True) -> GTFSData:
     if write:
         save_gtfs_data_to_pickle(gtfs_data)
     return gtfs_data
+
+
+# This here is for dealing with (static) schedules, getting closer to user-readable output
+class StopSchedule:
+    """ Get the stop's schedule """
+    def __init__(self, data: GTFSData, stop_id: str):
+        self.data = data
+        self.stop = self.data.stops[stop_id]
+        self.all_stop_times = []
+
+        # Load all schedules (trips) that will pass through this stop
+        for schedule in self.data.schedules.values():
+            for stop_time in schedule:
+                # In case the stop objects happen to be different, ID should still be same
+                if self.stop.id == stop_time.stop.id:
+                    self.all_stop_times.append(stop_time)
+
+    def relevant_stop_times_one_day(self, date: time.date) -> list[SpecificStopTime]:
+        """ Get the stop times for one day """
+        output = []
+        weekday = date.weekday
+        for stop_time in self.all_stop_times:
+            calendar = stop_time.trip.calendar
+            valid = None  # Whether the trip is valid for the given day
+
+            # Check if the calendar has exceptions for today
+            service_id = calendar.service_id
+            if service_id in self.data.calendar_exceptions:
+                calendar_exception = self.data.calendar_exceptions[service_id].get(date)
+                if calendar_exception is not None:
+                    valid = calendar_exception.exception
+
+            # If there is no exceptional values today, load the default validity from calendar
+            if valid is None:
+                valid = calendar.data[weekday]
+
+            # If the service is, indeed, valid today, then add it to the output
+            if valid:
+                output.append(SpecificStopTime(stop_time, date))
+
+        # Sort the stop times by departure time and return
+        output.sort(key=lambda st: st.departure_time)
+        return output
+
+    def relevant_stop_times(self, date: time.date) -> list[SpecificStopTime]:
+        """ Get the stop times for yesterday, today, and tomorrow """
+        yesterday = self.relevant_stop_times_one_day(date - time.timedelta(days=1))
+        today = self.relevant_stop_times_one_day(date)
+        tomorrow = self.relevant_stop_times_one_day(date + time.timedelta(days=1))
+        return yesterday + today + tomorrow
