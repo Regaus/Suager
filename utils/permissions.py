@@ -7,8 +7,8 @@ def is_owner(ctx):
     return ctx.author.id in ctx.bot.config["owners"]
 
 
-async def check_permissions(ctx, perms, *, check=all):
-    if is_owner(ctx):
+async def check_permissions(ctx, perms, *, check=all, owner_bypass: bool = True):
+    if is_owner(ctx) and owner_bypass:
         return True
     resolved = ctx.channel.permissions_for(ctx.author)
     output = check(getattr(resolved, name, None) == value for name, value in perms.items())
@@ -18,9 +18,9 @@ async def check_permissions(ctx, perms, *, check=all):
     raise commands.MissingPermissions(missing)
 
 
-def has_permissions(*, check=all, **perms):
+def has_permissions(*, check=all, owner_bypass: bool = True, **perms):
     async def pred(ctx):
-        return await check_permissions(ctx, perms, check=check)
+        return await check_permissions(ctx, perms, check=check, owner_bypass=owner_bypass)
     return commands.check(pred)
 
 

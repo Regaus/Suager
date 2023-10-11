@@ -20,12 +20,10 @@ class Birthday:
         self.uid: int = uid
         self.birthday_date: time.date = birthday
         self.tz: time.tzinfo = tz
-        # self.pain: bool = self.tz.__class__.__module__.startswith("pytz")  # pytz timezones cause pain because they can't handle my superior datetime
         self.time_class: time.Earth = self.birthday_date.time_class
         self.has_role: bool = has_role  # This is only used to store whether the person's birthday has been noticed by the bots, so it's False by default
-        # self._year = time.relativedelta(years=1, time_class=self.time_class)
         self.bot: str = bot
-        # self.breaking = 1  # Increase this if a breaking change is introduced, this should kindly instruct the birthday processor to regenerate this
+        self.start_time = time.time(6, 0, 0) if self.bot == "cobble" else time.time()  # Kargadian birthdays start at 6:00
         self.push_birthday()
 
     def now(self) -> time.datetime:
@@ -33,14 +31,10 @@ class Birthday:
 
     @property
     def birthday(self) -> time.datetime:
-        return time.datetime.combine(self.birthday_date, time.time(), self.tz)
+        return time.datetime.combine(self.birthday_date, self.start_time, self.tz)
 
     @property
     def birthday_utc(self) -> time.datetime:
-        # if self.pain:  # whoever developed pytz needs to get their hands cut off
-        #     output = self.birthday - self.tz.utcoffset(self.birthday.to_earth_time().to_datetime().replace(tzinfo=None))
-        #     output.replace(tz=time.timezone.utc)
-        #     return output
         return self.birthday.as_tz(time.timezone.utc)
 
     @property

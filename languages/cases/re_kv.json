@@ -1,0 +1,42 @@
+{  // Pattern[number][case], default ~ singular, default ~ nominative
+  "^[Kk][aä]in(?:ea|ee|ää)d$": {  // kainead - C2
+    "default": {
+      "default": "<>",              // käinääd
+      "nominative": "<>",           // käinääd
+      "accusative": "<:-3>eden",    // käineden
+      "genitive": "<:-3>eden",      // käineden
+      "dative": "<:-3>edut",        // käinedut
+      "instrumental": "<:-3>edur",  // käinedur
+      "locative": "<:-3>edi"        // käinedi
+    },
+    "plural": {
+      "default": "<:-3>edat",        // käinedat
+      "nominative": "<:-3>edat",     // käinedat
+      "accusative": "<:-3>edaan",    // käinedaan
+      "genitive": "<:-3>edain",      // käinedain
+      "dative": "<:-3>edaat",        // käinedaat
+      "instrumental": "<:-3>edaar",  // käinedaar
+      "locative": "<:-3>edai"        // käinedai
+    }
+  },
+  "^(?!(.+)var$)(([Rr]egaus|lias)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, lias (s-decl. exceptions) | C1 | Does NOT match -var endings
+    "default": {
+      "default": "<>",         // kad
+      "nominative": "<>",      // kad
+      "accusative": "<>en",    // kaden
+      "genitive": "<>en",      // kaden
+      "dative": "<>ut",        // kadut
+      "instrumental": "<>ur",  // kadur
+      "locative": "<>i"        // kadi
+    },
+    "plural": {
+      "default": "<>at",        // kadat
+      "nominative": "<>at",     // kadat
+      "accusative": "<>aan",    // kadaan
+      "genitive": "<>ain",      // kadain
+      "dative": "<>aat",        // kadaat
+      "instrumental": "<>aar",  // kadaar
+      "locative": "<>ai"        // kadai
+    }
+  }
+}

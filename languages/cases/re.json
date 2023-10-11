@@ -1,25 +1,25 @@
 {  // Pattern[number][case], default ~ singular, default ~ nominative
-  "^kainead$": {  // kainead - C2
+  "^[Kk][aä]in(?:ea|ee|ää)d$": {  // kainead - C2
     "default": {
-      "default": "<>",             // kainead
-      "nominative": "<>",          // kainead
-      "accusative": "<:-2>dan",    // kainedan
-      "genitive": "<:-2>dan",      // kainedan
-      "dative": "<:-2>dut",        // kainedut
-      "instrumental": "<:-2>dur",  // kainedur
-      "locative": "<:-2>di"        // kainedi
+      "default": "<>",              // kainead / Mu kaineed / Kv käinääd
+      "nominative": "<>",           // kainead / Mu kaineed / Kv käinääd
+      "accusative": "<:-3>edan",    // kainedan
+      "genitive": "<:-3>edan",      // kainedan
+      "dative": "<:-3>edut",        // kainedut
+      "instrumental": "<:-3>edur",  // kainedur
+      "locative": "<:-3>edi"        // kainedi
     },
     "plural": {
-      "default": "<:-2>dat",        // kainedat
-      "nominative": "<:-2>dat",     // kainedat
-      "accusative": "<:-2>daan",    // kainedaan
-      "genitive": "<:-2>dain",      // kainedain
-      "dative": "<:-2>daat",        // kainedaat
-      "instrumental": "<:-2>daar",  // kainedaar
-      "locative": "<:-2>dai"        // kainedai
+      "default": "<:-3>edat",        // kainedat
+      "nominative": "<:-3>edat",     // kainedat
+      "accusative": "<:-3>edaan",    // kainedaan
+      "genitive": "<:-3>edain",      // kainedain
+      "dative": "<:-3>edaat",        // kainedaat
+      "instrumental": "<:-3>edaar",  // kainedaar
+      "locative": "<:-3>edai"        // kainedai
     }
   },
-  "^(?!(.+)var$)((Regaus|Leitoxz)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, Leitoxz (s-decl. exceptions) | C1 | Does NOT match -var endings
+  "^(?!(.+)var$)(([Rr]egaus|[Ll]ias)|(.+)[bcdfghjklmnprtvwxz])$": {  // Regaus, lias (s-decl. exceptions) | C1 | Does NOT match -var endings
     "default": {
       "default": "<>",         // kad
       "nominative": "<>",      // kad
@@ -39,7 +39,7 @@
       "locative": "<>ai"        // kadai
     }
   },
-  "^saa$": {  // saa - A2
+  "^[Ss]aa$": {  // saa - A2
     "default": {
       "default": "<>",        // saa
       "nominative": "<>",     // saa
@@ -139,7 +139,7 @@
       "locative": "<:-1>i"        // liai
     }
   },
-  "^(?!derge)((.+)[eouö])$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 | Matches if the value is NOT "derge"
+  "^(?![Dd]erge)((.+)[eouö])$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 | Matches if the value is NOT "derge"
     "default": {
       "default": "<>",        // penteme
       "nominative": "<>",     // penteme
@@ -159,7 +159,7 @@
       "locative": "<:-1>ai"        // pentemai
     }
   },
-  "^((.+)[eouö]s|ilatis)$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 with s | ilatis - I1
+  "^((.+)[eouö]s|[Ii]latis|[Ii]skalis)$": {  // -e - E1 | -o - O1 | -u - U1 | -ö - Ö1 with s | ilatis, iskalis - I1
     "default": {
       "default": "<>",           // veises
       "nominative": "<>",        // veises
@@ -179,7 +179,7 @@
       "locative": "<:-2>ai"        // veisai
     }
   },
-  "^leitakis$": {  // leitakis - I3 (-jat plural)
+  "^[Ll]eitakis$": {  // leitakis - I3 (-jat plural)
     "default": {
       "default": "<>",           // leitakis
       "nominative": "<>",        // leitakis
@@ -219,7 +219,7 @@
       "locative": "<>jai"        // neijai
     }
   },
-  "^(derge|(.+)[iü])$": {  // derge - E2 | -i - I2 (vintelis) | -ü - Ü1
+  "^([Dd]erge|(.+)[iü])$": {  // derge - E2 | -i - I2 (vintelis) | -ü - Ü1
     "default": {
       "default": "<>",        // derge
       "nominative": "<>",     // derge

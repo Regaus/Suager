@@ -3,6 +3,7 @@ import random
 import discord
 
 from utils import bot_data, commands, emotes
+from utils.general import username
 
 
 class Ratings(commands.Cog):
@@ -27,7 +28,7 @@ class Ratings(commands.Cog):
         #     302851022790066185: 30.0,
         # }
         # result = custom.get(user.id, _result)
-        return await ctx.send(language.string("ratings_pickle", user=user.name, value=language.length(result / 100, precision=2, force_size=1)))  # The Length converter uses the value in metres
+        return await ctx.send(language.string("ratings_pickle", user=username(user), value=language.length(result / 100, precision=2, force_size=1)))  # The Length converter uses the value in metres
 
     @commands.command(name="rate")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -57,7 +58,7 @@ class Ratings(commands.Cog):
             517012611573743621: 100,  # Suager Sentient
         }
         result = custom.get(who.id, r)
-        return await ctx.send(language.string("ratings_rate_user", user=who.name, value=language.number(result)))
+        return await ctx.send(language.string("ratings_rate_user", user=username(who), value=language.number(result)))
 
     @commands.command(name="babyrate")
     @commands.guild_only()
@@ -75,7 +76,7 @@ class Ratings(commands.Cog):
         if user1.id == 302851022790066185 or user2.id == 302851022790066185:
             _rate = 0.00
         rate = language.number(_rate, precision=2, percentage=True)
-        return await ctx.send(language.string("ratings_baby_rate", name1=user1.name, name2=user2.name, value=rate))
+        return await ctx.send(language.string("ratings_baby_rate", name1=username(user1), name2=username(user2), value=rate))
 
     @commands.command(name="love", aliases=["lovecalc"])
     @commands.guild_only()
@@ -104,7 +105,7 @@ class Ratings(commands.Cog):
                 667187968145883146: -1.00,
             }.get(check.id, 0.00)
         rate = language.number(_rate, precision=2, percentage=True)
-        return await ctx.send(language.string("ratings_love_calc", name1=user1.name, name2=user2.name, value=rate))
+        return await ctx.send(language.string("ratings_love_calc", name1=username(user1), name2=username(user2), value=rate))
 
     @commands.command(name="friends", aliases=["friendship"])
     @commands.guild_only()
@@ -139,12 +140,12 @@ class Ratings(commands.Cog):
                 _rate = friendships.get(check.id)
                 rate = language.number(_rate, precision=2, percentage=True)
                 author = check == ctx.author
-                return await output.edit(content=f"{'**You** are' if author else f'**{check.name}** is'} **{rate}** friends with **Regaus**.")
+                return await output.edit(content=f"{'**You** are' if author else f'**{username(check)}** is'} **{rate}** friends with **Regaus**.")
             else:
                 # rate = "undefined%"
                 author = check == ctx.author
-                return await output.edit(content=f"The level of friendship between **{'you' if author else check.name}** and **Regaus** is unknown...")
-        return await ctx.send(language.string("ratings_friend", name1=user1.name, name2=user2.name, value=rate))
+                return await output.edit(content=f"The level of friendship between **{'you' if author else username(check)}** and **Regaus** is unknown...")
+        return await ctx.send(language.string("ratings_friend", name1=username(user1), name2=username(user2), value=rate))
 
     @commands.command(name="hotcalc", aliases=["hotness", "hot"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -164,7 +165,7 @@ class Ratings(commands.Cog):
         }
         rate = custom.get(user.id, step1)
         emote = emotes.SadCat if 0 <= rate < 0.5 else emotes.Pog if 0.5 <= rate < 0.75 else emotes.LewdMegumin
-        return await ctx.send(language.string("ratings_hot", user=user.name, value=language.number(rate, precision=2, percentage=True), emote=emote))
+        return await ctx.send(language.string("ratings_hot", user=username(user), value=language.number(rate, precision=2, percentage=True), emote=emote))
 
     @commands.command(name="iq")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -183,7 +184,7 @@ class Ratings(commands.Cog):
         # elif user.id == 533680271057354762:
         #     iq = -2147483647.0
         ri = language.number(iq, precision=2)
-        return await ctx.send(language.string("ratings_iq", user=user.name, value=ri))
+        return await ctx.send(language.string("ratings_iq", user=username(user), value=ri))
 
 
 async def setup(bot: bot_data.Bot):

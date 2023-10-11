@@ -6,12 +6,12 @@ from typing import Any, Iterable
 import discord
 from discord.ext.commands import NSFWChannelRequired
 from discord.ext.commands.core import Group, wrap_callback
-from jishaku.shim.paginator_170 import PaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 
+from utils.paginators import ReactionPaginatorEmbedInterface  # Forces to use the v1.7 paginator (without buttons)
 from utils.commands import Command, CommandError, Context, MinimalHelpCommand, NoPrivateMessage, NotOwner
 
 
-class PaginatorInterface(PaginatorEmbedInterface):
+class PaginatorInterface(ReactionPaginatorEmbedInterface):
     @property
     def send_kwargs(self) -> dict:
         display_page = self.display_page
@@ -101,8 +101,12 @@ class HelpFormat(MinimalHelpCommand):
         return "Crossed out commands cannot be used by you in the current channel."
 
     def add_subcommand_formatting(self, command):
+        if hasattr(command, "nsfw"):
+            nsfw = "⚠ " if command.nsfw else ""
+        else:
+            nsfw = ""
         fmt = '`{0}{1}` \N{EN DASH} {2}' if command.short_doc else '{0}{1}'
-        self.paginator.add_line(fmt.format(self.prefix, command.qualified_name, command.short_doc))
+        self.paginator.add_line(nsfw + fmt.format(self.prefix, command.qualified_name, command.short_doc))
 
     async def filter_commands(self, command: Iterable[Command], *, sort=False, key: Any = lambda c: c.name):
         # This function is where commands are filtered on whether they can be used or not...

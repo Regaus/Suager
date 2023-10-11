@@ -1,8 +1,13 @@
 import re
 import sqlite3
-from datetime import datetime
+from datetime import datetime, date
 
-from utils import general, logger
+from utils import general, logger, time
+
+
+def adapt_date_iso(val: date) -> str:
+    """ Convert date object into ISO timestamp """
+    return val.isoformat()
 
 
 def adapt_datetime_iso(val: datetime) -> str:
@@ -10,12 +15,19 @@ def adapt_datetime_iso(val: datetime) -> str:
     return val.isoformat(sep=" ")
 
 
+def convert_date(val: bytes) -> date:
+    """ Convert ISO date back into date object """
+    return date.fromisoformat(val.decode("latin1"))
+
+
 def convert_datetime(val: bytes) -> datetime:
     """ Convert ISO timestamp back into datetime object """
     return datetime.fromisoformat(val.decode("latin1"))
 
 
+sqlite3.register_adapter(date, adapt_date_iso)
 sqlite3.register_adapter(datetime, adapt_datetime_iso)
+sqlite3.register_converter("date", convert_date)
 sqlite3.register_converter("timestamp", convert_datetime)
 
 
@@ -34,11 +46,16 @@ def regex_function(expr, item):
     return reg.search(item) is not None
 
 
+def april_fools_multiplier():
+    return -1 if time.april_fools() else 1
+
+
 class Database:
     def __init__(self):
         self.conn = sqlite3.connect(f"data/database.db", isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = dict_factory
         self.conn.create_function("REGEXP", 2, regex_function)
+        self.conn.create_function("APRILMULT", 0, april_fools_multiplier)
         self.db = self.conn.cursor()
 
     def execute(self, sql: str, prepared: tuple = ()):
@@ -112,7 +129,7 @@ def creation():
 tables = [
     Table("birthdays", [
         Column("uid", "INTEGER", True),
-        Column("birthday", "TIMESTAMP", True),
+        Column("birthday", "DATE", True),
         Column("has_role", "BOOLEAN", True),
         Column("bot", "TEXT", True),
     ]),
@@ -141,12 +158,15 @@ tables = [
         Column("nibble", "INTEGER", True),     # 21
         Column("feed", "INTEGER", True),       # 22
         Column("handhold", "INTEGER", True),   # 23
+        Column("tuck", "INTEGER", True),       # 24
+        Column("wave", "INTEGER", True),       # 25
     ]),
     Table("custom_rank", [
         Column("uid", "INTEGER", True),
-        Column("font", "INTEGER", True),
-        Column("progress", "INTEGER", True),
-        Column("background", "INTEGER", True)
+        Column("font", "INTEGER", False),        # Text colour
+        Column("progress", "INTEGER", False),    # Progress bar colour
+        Column("background", "INTEGER", False),  # Background colour
+        Column("custom_font", "TEXT", False),    # Font to use
     ]),
     Table("custom_role", [
         Column("uid", "INTEGER", True),
@@ -154,15 +174,17 @@ tables = [
         Column("gid", "INTEGER", True)
     ]),
     Table("kargadia", [
-        Column("id", "INTEGER", True, True),  # Citizen ID
-        Column("uid", "INTEGER", True),       # Discord User ID
-        Column("name", "TEXT", True),         # First name
-        Column("name2", "TEXT", False),       # Vaaraninema
-        Column("gender", "TEXT", True),       # m/f
-        Column("birthday", "TEXT", False),    # Kargadian birthday - iso date string
-        Column("has_role", "BOOLEAN", True),  # Is it currently the person's Kargadian birthday?
-        Column("location", "TEXT", False),    # Kargadian location - can also be used to determine timezone
-        Column("joined", "TEXT", True),       # When the user joined as an Earth date
+        Column("id", "INTEGER", True, True),   # Citizen ID
+        Column("uid", "INTEGER", True),        # Discord User ID
+        Column("protected", "BOOLEAN", True),  # Whether a profile is "Protected" (only viewable by me and that user)
+        Column("name", "TEXT", True),          # First Name
+        Column("name2", "TEXT", False),        # Parent Name
+        Column("name3", "TEXT", False),        # Surname
+        Column("gender", "TEXT", True),        # Gender - m/f/n/u
+        Column("birthday", "TEXT", False),     # Kargadian birthday - iso date string
+        Column("has_role", "BOOLEAN", True),   # Is it currently the person's Kargadian birthday?
+        Column("location", "TEXT", False),     # Kargadian location - can also be used to determine timezone
+        Column("joined", "TEXT", False),       # When the user joined as an Earth date
     ]),
     Table("leveling", [
         Column("uid", "INTEGER", True),
@@ -175,10 +197,11 @@ tables = [
         Column("disc", "INTEGER", True),
         Column("bot", "TEXT", True),
     ]),
-    Table("locales", [
-        Column("gid", "INTEGER", True),
-        Column("locale", "TEXT", True),
-        Column("bot", "TEXT", True)
+    Table("locales", [    # Language settings for servers
+        Column("id", "INTEGER", True),   # ID of the guild, channel, or user
+        Column("locale", "TEXT", True),  # Language chosen
+        Column("bot", "TEXT", True),     # Name of the bot
+        Column("type", "TEXT", True),    # Type: "guild", "channel", or "user"
     ]),
     Table("polls", [
         Column("guild_id", "INTEGER", True),     # The Guild ID where the poll was started
@@ -246,12 +269,13 @@ tables = [
         Column("data", "TEXT", True)
     ]),
     Table("starboard", [
-        Column("message", "INTEGER", True),       # Original message ID
-        Column("channel", "INTEGER", True),       # Original message's channel ID
-        Column("author", "INTEGER", True),        # Original message's author's user ID
-        Column("guild", "INTEGER", True),         # Original message's guild ID
-        Column("stars", "INTEGER", True),         # Star count
-        Column("star_message", "INTEGER", False)  # Starboard message ID
+        Column("message", "INTEGER", True),        # Original message ID
+        Column("channel", "INTEGER", True),        # Original message's channel ID
+        Column("author", "INTEGER", True),         # Original message's author's user ID
+        Column("guild", "INTEGER", True),          # Original message's guild ID
+        Column("stars", "INTEGER", True),          # Star count
+        Column("star_message", "INTEGER", False),  # Starboard message ID
+        Column("bot", "TEXT", True),               # The bot tracking the message
     ]),
     Table("tags", [
         Column("gid", "INTEGER", True),

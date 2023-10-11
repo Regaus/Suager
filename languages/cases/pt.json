@@ -1,0 +1,22 @@
+{
+  "^vez$": {
+    "default": {
+      "default": "vez"
+    },
+    "plural": {
+      "default": "vezes"
+    }
+  },
+  "^mês$": {
+    "default": {
+      "default": "mês"
+    },
+    "plural": {
+      "default": "meses"
+    }
+  },
+  "^.+": {  // Pattern[number][case]
+    "default": {"default": "<>"},
+    "plural": {"default": "<>s"}
+  }
+}

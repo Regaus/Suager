@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 import os
 import random
-import sys
 import traceback
 from io import BytesIO
+from sys import stderr
 
 import discord
 
-from utils import time
+from utils import bot_data, logger, time
 
 
 def get_config() -> dict:
@@ -26,6 +26,7 @@ def create_dirs():
     for bot in config["bots"]:
         make_dir(f"data/logs/{bot['internal_name']}")
     make_dir("data/gtfs")
+    make_dir("data/dcu")
 
 
 def make_dir(dir_name):
@@ -35,17 +36,25 @@ def make_dir(dir_name):
         pass
 
 
-def traceback_maker(err: BaseException, text: str = None, guild=None, author=None):
+def traceback_maker(err: BaseException, text: str = None, guild=None, author=None, code_block: bool = True):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
+    e = f"{_traceback}{type(err).__name__}: {err}"
+    if not code_block:
+        return e
     t = f"Command: {text}\n" if text is not None else ""
     g = f"Guild: {guild.name}\n" if guild is not None else ""
-    a = f"User: {author.name}\n" if author is not None else ""
-    error = f"{g}{a}{t}```py\n{_traceback}{type(err).__name__}: {err}\n```"
+    a = f"User: {username(author)} ({author.name})\n" if author is not None else ""
+    error = f"{g}{a}{t}```py\n{e}\n```"
     return error
 
 
-def print_error(text: str):
-    return sys.stderr.write(f"{text}\n")
+def print_error(*values):
+    return print(*values, file=stderr)
+
+
+def log_error(bot: bot_data.Bot, text: str):
+    print_error(text)
+    logger.log(bot.name, "errors", text)
 
 
 def random_colour() -> int:
@@ -79,3 +88,8 @@ def bold(string: str) -> str:
 
 red, red2, yellow, green2, green = 0xff0000, 0xff4000, 0xffc000, 0xc0ff00, 0x00ff00
 red3 = 0xff4040
+
+
+def username(user: discord.User | discord.Member) -> str:
+    """ Return the user's display name. """
+    return user.global_name or user.name

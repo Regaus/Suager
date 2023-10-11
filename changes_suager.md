@@ -1420,3 +1420,272 @@
 
 ## v7.5.18.5 - 28 November 2022
 - Better database error logging
+
+## v7.5.18.6 - 3 December 2022
+- Updated printing method for `print_error()`
+
+## v7.5.19 - 5 December 2022
+- Made it possible to use different fonts for your rank card (`//crank font`)
+- Text colour customisation moved to `//crank text`
+- Custom rank database values can now be null, in case the default values ever change
+- Changed the font used in the `//colour` command to JetBrains Mono
+- Improved text alignment in `//rank` and `//colour`
+
+## v7.5.20 - 6 December 2022
+- Improved how translation completion is counted in `//settings`
+
+## v7.5.20.1 - 12 December 2022
+- Changed the default happy birthday message
+
+## v7.6.0-pre1 - 14-16 December 2022
+- Added an anti-ad filter that can remove unwanted Discord links
+- Added an images-only filter that can remove text messages from specified channels
+- Moved FakeContext to `utils.commands` from `utils.languages`
+- Made it possible to send an error traceback without the codeblock
+
+## v7.6.0-pre2 - 16 December 2022
+- Added ability to change the duration of the warning given to advertisers
+- Discord links don't have to start with `https://` to be detected
+- The channel lists for anti-ads and image-only will now detect if you try to add a channel already in the list
+- Changed the mute length for warnings to be shown in full when set
+
+## v7.6.0-pre3 - 16 December 2022
+- Anti-ads and image-only will now detect if they can send the warning message. If not, they will silently do their job
+- Turned FakeContext into a dataclass
+
+## v7.6.0 - 16 December 2022
+- All links are now treated as valid for image-only, regardless of whether they actually contain an image or not
+- Message-related auto-moderation (image-only and anti-ads) will now also handle message edits
+
+## v7.6.1 - 16 December 2022
+- Popular discord server listings are now also blocked if anti-ads are enabled
+
+## v7.6.1.1 - 31 December 2022
+- Updated new year's script for 2023
+
+## v7.6.2 - 5 March 2023
+- Added Exo2 font for rank cards
+
+## v7.6.2.1 - 9 March 2023
+- Slightly idiot-proofed reminders
+- User logs will now show the tag of the user
+
+## v7.6.2.2 - 11 March 2023
+- Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
+
+## v7.6.3 - 23 March 2023
+- Permission checks for moderation commands can no longer be bypassed by the bot owner
+
+## v7.6.4 - 23 March 2023
+- XP on the levels leaderboard is now aligned to the right rather than the left
+
+## v7.6.4.1 - 23 March 2023
+- The XP now has only 2 spaces of padding on the left side instead of 4
+
+## v7.6.5 - 29 March 2023
+- Added a command to give people some cheese
+
+## v7.6.5.1 - 1 April 2023
+- Contents of specific channels can now be checked for specific words, if deemed necessary
+
+## v7.6.6 - 1 April 2023
+- Updated personal protection for social commands:
+  - Kiss can now only be used by people not locked (previously unprotected)
+  - Bite can now be used by people not locked (previously unlocked-only)
+  - Slap can now be used by people not locked (previously unlocked-only)
+  - Tickle can now be used by people not locked (previously unlocked-only)
+  - Suck can now only be used by people not locked (previously unprotected)
+- Added anti-kill insurance for Caffey
+
+## v7.6.6.1 - 1 April 2023
+- Updated the new strings to Kargadian
+
+## v7.6.6.2 - 1 April 2023
+- Added "zero width non-joiners" to the end of all numbers so that they stop getting highlighted as phone numbers
+
+## v7.6.6.3 - 1 April 2023
+- Finally added a "Joined in 2023" role to Senko Lair
+
+## v7.6.6.4 - 1 April 2023
+- Restricted zws addition to only needed commands (currently just nextlevel)
+
+## v7.6.7 - 1 April 2023
+- Inverted XP and levels displayed during 1st April
+- Leveling now adjusts place padding when the last place start a new order of tens (eg 99 -> 100)
+
+## v7.6.7.1 - 1 April 2023
+- Suager's avatar is now inverted during 1st April
+- Playing statuses are now written in reverse during 1st April
+
+## v7.6.7.2 - 2 April 2023
+- Added a "CPU Burner" to passively use up the CPU on the host if all bots are idle for at least 2 minutes
+
+## v7.6.7.3 - 5 April 2023
+- Reintroduced ability to blacklist people from customising their rank card
+
+## v7.6.8 - 6 April 2023
+- Added command to tuck someone into bed
+- Added new emotes to the emote list and rearranged the list
+- Replaced the old Alex emotes with new ones
+
+## v7.6.8.1 - 10 April 2023
+- Fixed //rankembed not actually reflecting the server XP multiplier
+
+## v7.6.9 - 10 April 2023
+- Made get_data() into a staticmethod
+- Tried to more strictly make sure that the lists for social commands don't magically become a string
+- Made social command responses more adaptive when there is a difference in the counters
+- Added translations to the NSFW social commands
+
+## v7.6.10 - 11 April 2023
+- Added a command to wave at someone
+- The "target has only x'd author back" string is now used if the counters difference is 5 or more, rather than 6 or move
+
+## v7.6.11 - 11 April 2023
+- The strings are now also adjusted if the author did the action 5+ times less than the target
+- Added the "only" word to NSFW commands when there's a difference in the counters
+
+## v7.6.11.1 - 11 April 2023
+- There is now a little warning sign in front of NSFW commands in the help utility (only in cog-specific help)
+
+## v7.6.11.2 - 15 April 2023
+- The starboard now tracks which bot saw the message
+- The starboard now tracks star count better when two bots see the message at the same time
+
+## v7.6.11.3 - 15 April 2023
+- Star count is now read from the reaction count on the actual message
+
+## v7.6.12 - 15 April 2023
+- The starboard now tries to embed attachments and links, and if it fails, sends links to them
+- The starboard now prints error messages
+
+## v7.6.13 - 22 April 2023
+- Made it possible to set a personal language or have channel-specific languages
+- The personal language command is currently hidden
+
+## v7.7.0a1 - 27-28 April, 2-12 May 2023
+- Reformatted the settings to make more sense UX-wise and look better code-wise
+- If anything is written together with the `//settings` command, it now shows the help instead of current settings
+- Added a command to specifically see the current settings (`//settings current`)
+- Put leveling settings above starboard settings
+- Made message logs settings actually possible to view
+- Made edited messages actually go to the channel for edited message logs (instead of the channel for deleted messages)
+- The language translation counter now just shows the ratio of values which are equal to English, and no longer has special behaviour for different value types
+- Added translations to Kargadian for the anti-ads and image-only settings
+- The placeholder role names now have <> around them.
+- Made it possible to see the current level up message
+- Made it possible to easily reset the level up message
+- Made the level up announcements setting only reset when explicitly stated
+- Renamed some level reward commands to make more sense
+
+## v7.7.0a2 - 31 May 2023
+- The `//embed` command's description now tells you to use `\n` for newlines
+- Social commands now only trigger the "only" response if the difference in counters is more than 20% of the sum
+
+## v7.7.0a3 - 8 June 2023
+- Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
+- Updated most commands to use display names in the output, where it makes sense to
+- The leveling leaderboard will show both the display name and username for updated users
+- Fixed Kargadian incorrectly declining "Regaus" in the lowercase
+- Hid the `//russia` command
+
+## v7.7.0a4 - 15 June 2023
+- Updated the "translations may not be accurate" notice
+- Made the weather command translate to natural languages again (once Regaus.py v3 is made)
+
+## v7.7.0a5 - 24 June 2023
+- Fix reminders list using the username instead of display name
+
+## v7.7.0a6 - 9 July 2023
+- Rewrote birthday settings to the new standard
+- Birthday-related settings now have specific commands to disable things, rather than being reset when input is empty
+
+## v7.7.0a7 - 30 July 2023
+- Log files now ignore encoding errors and replace them with a special character instead of spamming errors to chat
+- Log files should now be sorted alphabetically before being appended to the output
+
+## v7.7.0a8 - 30 July 2023
+- Leveling leaderboard now handles the new usernames more efficiently and doesn't have special behaviour for people still on the old username system
+
+## v7.7.0a9 - 30 July, 4 August 2023
+- Rewrote message logs settings
+- There are now separate commands to set the channel for edited and deleted messages, as well as a command to set both at once
+
+## v7.7.0a10 - 4 August 2023
+- Fixed reaction roles trying to remove a role that the member doesn't have
+
+## v7.7.0a11 - 22 August 2023
+- Counters now only require a 5% difference rather than 10% to give the "user has only done it x times" response
+
+## v7.7.0a12 - 23, 25 August 2023
+- Rewrote polls, join roles, welcome/farewell, mod DMs, mod logs, and user logs settings to the new standard
+- These settings now have specific commands to disable things, rather than being reset when the input is empty
+- Mod DM and mod log settings now have separate commands for each setting, as well as a command to enable/disable all the settings at once
+- Role preservation has been moved to a separate command rather than being a subcommand of user logs
+
+## v7.7.0a13 - 8 September 2023
+- Rewrote warnings, anti-ads, and image-only settings to the new standard
+- The anti-ads now have specific commands for changing the list mode
+- The anti-ads and image-only settings now have separate commands for adding and removing channels
+- The anti-ads warning length can no longer be set above 5 years
+- The anti-ads warning length is now shown in full form, rather than showing the short string stored in the settings
+- Warnings now have a separate text when the duration is more than 5 years, rather than using the same text as the mute command
+- Disabled old nick removal behaviour for me on the Crabs server
+
+## v7.7.0 - 8 September 2023
+- Added removeall commands to prefixes, leveling ignored channels, leveling role rewards, and message logs ignored channels
+
+## v7.7.1 - 9 September 2023
+- Updated to Regaus.py v3.0
+- Made the old time module use `datetime.min` instead of `datetime.now()` to measure length of relativedeltas
+- Changed "Developers" in the bot stats command to "Developer"
+- Birthdays are now stored as a `date` rather than `datetime` in the database
+- Added a new Custom Status to the playing statuses list, removed the "Competing in uselessness" status
+- Improved precision for `//timeago` and `//timein`
+
+## v7.7.2 - 22 September 2023
+- Added a way to see the current week's timetables for my course in university
+
+## v7.7.3 - 22 September 2023
+- Made the timetable be able to load the timetable for any course
+- Made the module be able to look up the list of courses
+
+## v7.7.4 - 23 September 2023
+- Timetables can now be looked up for any course, room, or list of modules
+- It is now possible to look up the list of existing courses, modules, or rooms
+- The list of courses, modules, and rooms is cached for 30 days, as they should not change often
+
+## v7.7.5 - 24 September 2023
+- Timetables can now be looked up for a specific week
+- The timetable for my course will now be looked up and stored as a calendar file (with events created for the whole year)
+- Created a cherry.py webserver to store the calendar on so it can be accessed by the calendar apps
+
+## v7.7.5.1 - 24 September 2023
+- Fixed `//eval` crashing when the error traceback is very long
+
+## v7.7.5.2 - 25 September 2023
+- Disabled the cherry server and the automatic calendar updater
+- Added `@regaus.dcu.comsci1` to the end of iCalendar event UIDs to make them longer and unique
+- Rearranged the words in the event names
+
+## v7.7.5.3 - 25 September 2023
+- Fixed the timetables breaking when the class is online
+
+## v7.7.5.4 - 26 September 2023
+- Changed the output formatting for online events
+- Improved the location output for the calendar
+
+## v7.7.5.5 - 27 September 2023
+- Improved output for bookings when looking up a room's timetable
+
+## v7.7.5.6 - 8 October 2023
+- Made the timetables support weird "WRB" events
+- Fixed bookings crashing when they forget to include a space in the name
+
+## v7.7.5.7 - 8 October 2023
+- Made the timetable handle Synchronous events
+- Made the course/module/room list not break if no data was returned
+- The timetables will be shown for the next week if the current (or specified) date is a Saturday or Sunday
+
+## v7.7.5.8 - 9 October 2023
+- Removed cherrypy from requirements

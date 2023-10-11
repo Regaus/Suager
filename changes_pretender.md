@@ -53,3 +53,26 @@
 
 ## v1.2.1.3 - 15 November 2022
 - Fixed the bot breaking when the message with the impersonate command is deleted before the bot deletes it
+
+## v1.2.1.4 - 11 March 2023
+- Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
+
+## v1.2.1.5 - 19 March 2023
+- Added Overheating Brakes, Wobbe's new server
+
+## v1.2.1.6 - 1 April 2023
+- Playing statuses are now written in reverse during 1st April
+
+## v1.2.1.7 - 12 May 2023
+- Added Huskie's Generous Cabin
+
+## v1.2.1.8 - 23 May 2023
+- Added "Mr.Dan Fan Club"
+
+## v1.2.2 - 8 June 2023
+- Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
+- Updated most commands to use display names in the output, where it makes sense to
+- The `a.impersonate` command now shows the member's name instead of username (nickname -> display name -> username)
+
+## v1.2.2.1 - 24 September 2023
+- Fixed `a.eval` crashing when the error traceback is very long

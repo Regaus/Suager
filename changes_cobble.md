@@ -593,3 +593,159 @@
 
 ## v1.7.2.1 - 13 November 2022
 - Fixed incorrect cases on Kargadian holiday names
+
+## v1.7.2.2 - 29 November 2022
+- Fixed timezone name causing `..time78` to break
+
+## v1.7.3 - 5 December 2022
+- Made it possible to use different fonts for your rank card (`..crank font`)
+- Text colour customisation moved to `..crank text`
+- Custom rank database values can now be null, in case the default values ever change
+- Changed the font used in the `..colour` command to JetBrains Mono
+- Improved text alignment in `..rank` and `..colour`
+
+## v1.7.4 - 6 December 2022
+- Improved how translation completion is counted in `..settings`
+
+## v1.7.4.1 - 7 December 2022
+- Better Kargadian timezone conversion for the birthdays loader
+
+## v1.8.0-alpha1 - 9-11 December 2022
+- Created a Kargadian name generator and citizen generator
+
+## v1.8.0-alpha2 - 12 December 2022
+- Added command to be able to actually see the generated names
+- Fixed encoding issues with the names' json files
+- Fixed the generator not being properly random for some reason
+- ~~Generated birthdays will now be shown in the birthplace's timezone~~ (once the underlying Regaus.py code is fixed)
+
+## v1.8.0-alpha3 - 12 December 2022
+- Made generated birthdays younger - most people are now around 15-50 Kargadian years old
+
+## v1.8.0-pre1 - 12 December 2022
+- Added more error checking to try to prevent the bot from crashing due to connection errors
+- Added button interactions to the Kargadian name/citizen generator
+- Made places for birth, residence, and origin more random by removing population weights
+
+## v1.8.0 - 12 December 2022
+- Moved Kargadian events and holidays to a separate channel
+- CobbleBot update announcements will now be shown in the Kargadia server
+
+## v1.8.0.1 - 13 December 2022
+- Fixed generator command going into an infinite while loop and breaking the bots when generating a surname from origin
+
+## v1.8.1 - 18 December 2022
+- Updated Senko Lair and Kargadian holidays
+
+## v1.8.1.1 - 20 December 2022
+- Reduced the frequency of origin surnames in the Kargadian name generator
+
+## v1.8.1.2 - 3 January 2023
+- Slightly changed Kargadian surnames
+
+## v1.8.1.3 - 14 January 2023
+- Added new Kargadian first name, Kista
+
+## v1.8.2 - 14 January 2023
+- Kargadia profile: Added support for surnames and protected profiles
+- Kargadia profile: Added support for non-binary gender
+- Kargadia profile: Made cult join date nullable
+- Kargadia profile: Moved the profile to the top-level command (instead of `profile` subcommand)
+
+## v1.8.2.1 - 14 January 2023
+- Fixed `..timein` and `..timeago` breaking when an invalid time interval is specified (now it just zero seconds in the appropriate time class)
+
+## v1.8.2.2 - 14 January 2023
+- Kargadia profile now also shows the user's age (in Kargadian time)
+
+## v1.8.3 - 4 February 2023
+- Kargadian holidays and birthdays will now start and end at 6am
+- Improved behaviour with update time adjustments for temporaries
+- Added Mel's Twin Mountains, Kionagar, and Reksigar to Kargadian time display
+- Rearranged Kargadian places in the time list to keep up with previously updated timezones
+- Added comments to the Kargadian time display list, stating each place's timezone
+
+## v1.8.3.1 - 22 February 2023
+- Fixed the Kargadian birthday command always jumping a year ahead of itself
+- Improved behaviour for the Kargadian time output when a place is not available
+
+## v1.8.3.2 - 11 March 2023
+- Created a local copy of Jishaku's reaction-based paginator, since it was removed from the library
+
+## v1.8.4 - 23 March 2023
+- Kargadian birthdays now show when they will begin in Earth time
+
+## v1.8.4.1 - 1 April 2023
+- Unloaded leveling from Cobble (I don't know why it was enabled to begin with?)
+
+## v1.8.4.2 - 1 April 2023
+- Playing statuses are now written in reverse during 1st April
+
+## v1.8.5 - 22 April 2023
+- Made it possible to set a personal language or have channel-specific languages
+
+## v1.8.6 - 23 April 2023
+- Added a few new first names
+- Removed "origin" surnames
+- Added "profile" as an alias to the Kargadian profile
+
+## v1.8.6.1 - 24 April 2023
+- The Kargadian name generator will now use places' habitability markers to determine whether a citizen could live or be born there
+
+## v1.8.6.2 - 25-26 April 2023
+- Updated spelling of certain Kargadian surnames
+- Added a few new surnames and removed duplicates
+
+## v1.8.7 - 27 April - 12 May 2023
+- Reformatted the settings to make more sense UX-wise and look better code-wise
+- If anything is written together with the `//settings` command, it now shows the help instead of current settings
+- Added a command to specifically see the current settings (`//settings current`)
+- The language translation counter now just shows the ratio of values which are equal to English, and no longer has special behaviour for different value types
+
+## v1.8.8 - 12 May 2023
+- Added new Kargadian first names
+- Updated spellings of several male parent names
+- Added 3 new places to the Kargadian time channel
+
+## v1.8.9 - 18-19 May 2023
+- Added Kaltelan (North Regaazdallian) language to the name generator
+- Updated word-mix surnames for Nuunvallian (Central Regaazdallian) and updated the spellings for a few others
+
+## v1.8.10 - 26 May 2023
+- Once again updated spellings for names and surnames
+- Reduced duplicates in the first names pool
+- Added Munearan and Kovanerran names
+
+## v1.8.11 - 27-28 May 2023
+- Added Vaidanvallian names
+
+## v1.8.12 - 28-29 May 2023
+- Added Kaltanazdallian names
+
+## v1.8.13 - 8 June 2023
+- Updated discord.py to a new (alpha) version, so most commands should now behave better with Discord's new username system
+- Updated most commands to use display names in the output, where it makes sense to
+- Fixed Kargadian incorrectly declining "Regaus" in the lowercase
+
+## v1.8.13.1 - 15 June 2023
+- Updated the "translations may not be accurate" notice
+- Made the weather command translate to natural languages again (once Regaus.py v3 is made)
+
+## v1.8.14 - 21 August 2023
+- Updated the declensions command to new language codes and to include Larihalian declension
+
+## v1.8.15 - 8 September 2023
+- Added removeall command to prefixes
+
+## v1.9.0 - 9 September 2023
+- Updated to Regaus.py v3.0
+- Updated list of places used by the ka-time channels
+- Changed "Developers" in the bot stats command to "Developer"
+- Updated the hidden `..cobble` command to modern versions of Regaazdallian
+- Changed some of the statuses to Custom Status now that it is possible
+
+## v1.9.0.1 - 9 September 2023
+- Updated the code to new language codes
+
+## v1.9.0.2 - 24 September 2023
+- Fixed `..eval` crashing when the error traceback is very long

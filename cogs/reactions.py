@@ -27,6 +27,8 @@ class ReactionRoles(commands.Cog):
             return
         guild: discord.Guild = self.bot.get_guild(payload.guild_id)
         role: discord.Role = guild.get_role(roles["role"])
+        if not role:
+            return await guild.get_channel(payload.channel_id).send(f"The role {roles['role']} was not found...")
         member: discord.Member = guild.get_member(payload.user_id)
         if reacted:
             if group_type in [2, 4]:
@@ -45,15 +47,16 @@ class ReactionRoles(commands.Cog):
         else:
             if group_type in [3, 4]:  # For Types 3 and 4, you can't leave the role once you're in the group
                 return
-            if group_type == 2:
-                self.bot.db.execute("DELETE FROM reaction_tracking WHERE message=? AND uid=?", (payload.message_id, payload.user_id))
-            try:
-                await member.remove_roles(role, reason="Reaction Roles")
-            except discord.Forbidden:
+            if role in member.roles:  # Only try to take away the role if the member actually has it
+                if group_type == 2:
+                    self.bot.db.execute("DELETE FROM reaction_tracking WHERE message=? AND uid=?", (payload.message_id, payload.user_id))
                 try:
-                    await guild.get_channel(payload.channel_id).send(f"I can't take away the role {role}, because I don't have enough permissions.")
+                    await member.remove_roles(role, reason="Reaction Roles")
                 except discord.Forbidden:
-                    pass
+                    try:
+                        await guild.get_channel(payload.channel_id).send(f"I can't take away the role {role}, because I don't have enough permissions.")
+                    except discord.Forbidden:
+                        pass
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

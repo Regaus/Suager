@@ -6,7 +6,7 @@ from datetime import datetime, time as dt_time
 import jstyleson
 import pytz
 from dateutil.relativedelta import relativedelta
-from regaus import languages, time, version_info as regaus_version_info
+from regaus import languages, time
 from regaus.conworlds import Place
 
 from utils import database, emotes
@@ -46,18 +46,28 @@ db = database.Database()
 
 class Language(languages.Language):
     @classmethod
-    def get(cls, ctx):
+    def get(cls, ctx, personal: bool = False):
         """ Find the language of the server """
+        is_guild = hasattr(ctx, "guild") and ctx.guild is not None  # Whether we are in a guild or not
+        if (personal and hasattr(ctx, "author")) or not is_guild:
+            # Let users set their personal language (this behaviour is disabled by default, the command has to explicitly enable the personal languages)
+            # The personal language is, however, always used in the DMs.
+            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (ctx.author.id, ctx.bot.name))
+            if data:
+                return cls(data["locale"])
         if hasattr(ctx, "channel"):
-            # Channel:            secret-room-8,      secret-room-15
-            if ctx.channel.id in [725835449502924901, 969720792457822219]:
-                return cls("ne_rc")
-            # Channels:             rsl-1,              secret-room-11,     secret-room-1
-            elif ctx.channel.id in [787340111963881472, 799714065256808469, 671520521174777869]:
-                return cls("ne_rn")
+            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='channel'", (ctx.channel.id, ctx.bot.name))
+            if data:
+                return cls(data["locale"])
+            # # Channel:            secret-room-8,      secret-room-15
+            # if ctx.channel.id in [725835449502924901, 969720792457822219]:
+            #     return cls("ne_rc")
+            # # Channels:             rsl-1,              secret-room-11,     secret-room-1
+            # elif ctx.channel.id in [787340111963881472, 799714065256808469, 671520521174777869]:
+            #     return cls("ne_rn")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
-        if ctx.guild is not None:
-            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE gid=? AND bot=?", (ctx.guild.id, ctx.bot.name))
+        if is_guild:
+            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='guild'", (ctx.guild.id, ctx.bot.name))
             if data:
                 return cls(data["locale"])
         return cls(ctx.bot.local_config["default_locale"])
@@ -78,15 +88,16 @@ class Language(languages.Language):
             return time.KargadianTimezone(time.timedelta(), "Virsetgar", "VSG")
         return time.timezone.utc
 
-    def number(self, value: int | float, *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True, positives: bool = False) -> str:
+    def number(self, value: int | float, *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True, positives: bool = False, zws_end: bool = False) -> str:
         # Surround the full stops and spaces by "zero width non-joiners" to prevent Android from treating the number outputs like links (Why does this even have to be a problem?)
-        return super().number(value, precision=precision, fill=fill, percentage=percentage, commas=commas, positives=positives).replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c")
+        return super().number(value, precision=precision, fill=fill, percentage=percentage, commas=commas, positives=positives)\
+            .replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c") + ("\u200c" if zws_end else "")
 
     def string(self, string: str, *values, **kwargs) -> str:
-        if regaus_version_info >= 8589959430:  # Regaus.py v2.0.0a5 doesn't add the emotes anymore
+        try:
             return super().string(string, *values, **kwargs, emotes=emotes)
-        else:
-            return super().string(string, *values, **kwargs)
+        except AttributeError:
+            return super().string(string, *values, **kwargs)  # If the emote is not available, just unload them
 
     def delta_rd(self, delta: time.relativedelta | relativedelta, *, accuracy: int = 3, brief: bool = True, affix: bool = False, case: str = "default") -> str:
         if isinstance(delta, relativedelta):
@@ -137,10 +148,3 @@ class Language(languages.Language):
             return self.string("time_at", date=_date, time=_time)
         else:
             return f"{_date}, {_time}"
-
-
-class FakeContext:
-    """ Build a fake Context instead of commands.Context to pass on to Language.get() """
-    def __init__(self, guild, bot):
-        self.guild = guild
-        self.bot = bot

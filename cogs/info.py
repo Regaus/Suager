@@ -23,8 +23,8 @@ class BotInformation(commands.Cog, name="Bot Information"):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("info_stats_about", bot=self.bot.user, version=version_data["version"])
         embed.set_thumbnail(url=str(self.bot.user.display_avatar.replace(size=1024)))
-        owners = "\n".join([str(self.bot.get_user(i)) for i in config["owners"]])
-        embed.add_field(name=language.string("info_stats_developers"), value=f"**{owners}**", inline=True)
+        owners = "\n".join([general.username(self.bot.get_user(i)) for i in config["owners"]])
+        embed.add_field(name=language.string("info_stats_developer"), value=f"**{owners}**", inline=True)
         if self.bot.uptime is None:
             uptime = "Unknown"
         else:
@@ -135,7 +135,7 @@ class CobbleInformation(BotInformation, name="Bot Information"):
     @commands.command(name="cobble", aliases=["kaivallus"], hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cobble(self, ctx: commands.Context):
-        return await ctx.send("Vuu Käivallus. Vu ju zäide, via te av Kaagadian kuvalsen zäivan mäikah <:SenkoWatch:739242217666904165>")
+        return await ctx.send("Mu ja Kaivallus. Mu ja zeide, la tet av Kargadian kuvalsen zaivan maikan. <a:SenkoWatch2:801408192785547264>")
 
 
 async def setup(bot: bot_data.Bot):

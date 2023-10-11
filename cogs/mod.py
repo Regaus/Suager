@@ -8,7 +8,7 @@ from typing import Literal, Union
 import discord
 
 from utils import bot_data, commands, general, logger, permissions, settings, time
-from utils.languages import FakeContext, Language
+from utils.languages import Language
 
 
 async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: int = None, after: int = None, message: bool = True):
@@ -41,7 +41,7 @@ async def do_removal(ctx: commands.Context, limit: int, predicate, *, before: in
         # await general.send(f"🚮 Successfully removed {_deleted:,} messages", ctx.channel, delete_after=10)
 
 
-async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member,
+async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | commands.FakeContext, user: discord.User | discord.Member,
                       action: str, reason: str, duration: str = None, auto: bool = False, original_warning: str = None):
     """ Try to send the user a DM that they've been warned/muted/kicked/banned """
     try:
@@ -101,7 +101,7 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | FakeContext, us
         logger.log(bot.name, "errors", message)
 
 
-async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member | discord.ClientUser,
+async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | commands.FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member | discord.ClientUser,
                        entry_id: int, action: str, reason: str, duration: str = None, original_warning: str = None):
     """ Try to send a mod log message about the punishment """
     try:
@@ -169,6 +169,123 @@ class Moderation(commands.Cog):
         self.bot = bot
         # self.admins = self.bot.config["owners"]
 
+        # Regex for a discord invite link
+        # Detected links: https://discord.gg/, https://discord.com/invite/, https://discord.com/servers/ (Public servers list),
+        # Listing sites: https://disboard.org/server/(join/), https://top.gg/servers/, https://discadia.com/, https://discadia.com/servers/,
+        # Listing sites: https://discordservers.com/server/, https://discordbotlist.com/servers/, https://disforge.com/server/, https://discord.me/, https://discords.com/servers/
+        self.discord_link = re.compile(r"(?:https://)?(discord\.gg/|discord(?:app)?\.com/(?:invite/|servers/)|disboard.org/server/(?:join/)?|"
+                                       r"top.gg/servers/|discadia.com/(?!add|emojis|\?)|discordservers.com/server/|discordbotlist.com/servers/|"
+                                       r"disforge.com/server/|discord.me/(?!bots)|discords.com/servers/)\S+")
+
+        # Formats for images and videos, that are allowed to be used in image-only channels
+        # I might adjust this as time goes on, if we find file formats that might not be as popular but still images/videos
+        self.image_formats = ["jpg", "jpeg", "jfif", "png", "gif", "webp", "tiff", "psd", "pdn",
+                              "mp4", "mov", "wmv", "avi", "flv", "mkv", "webm"]
+        self.image_link = re.compile(r"https?://\S+")
+        # self.exceptions = ["https://tenor.com/", "https://imgur.com/", "https://youtu.be/", "https://www.youtube.com/watch?"]
+
+    @commands.Cog.listener(name="on_message")
+    async def on_message(self, ctx: discord.Message):
+        """ A message is sent """
+        return await self.moderate_message(ctx)
+
+    @commands.Cog.listener(name="on_message_edit")
+    async def on_message_edit(self, _: discord.Message, after: discord.Message):
+        """ A message is edited - We still run all the checks """
+        return await self.moderate_message(after)
+
+    async def moderate_message(self, ctx: discord.Message):
+        """ This function will call all the moderation checks for every message """
+        if ctx.author.bot:  # Ignore bots for image-only and anti-ads... I don't think bots would be sending discord links anyways
+            return
+        if self.bot.name in ["suager", "kyomi"]:
+            # Load settings json
+            _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+            if not _data:
+                return  # No data found means disabled
+            data = json.loads(_data["data"])
+
+            # Image-only channels
+            # Note: With this implementation, it does not prevent bot commands from being run in such channels, although the input would still get deleted.
+            # The only way to fix that would be to run this check before the message is scanned for commands in bot_data
+            async def do_image_only():
+                image_only = data["image_only"]
+                if ctx.channel.id in image_only["channels"]:
+                    valid = False
+                    # Scan if either there is a valid image file, or if there is a valid image link
+                    if ctx.attachments:
+                        # Bitwise or: change to True if valid, else keep at current value
+                        valid |= any(any(att.filename.endswith(ext) for ext in self.image_formats) for att in ctx.attachments)
+                    # if links := re.findall(self.image_link, ctx.content):  # If there are any links present
+                    #     valid |= any((any(link.endswith(ext) for ext in self.image_formats) or any(link.startswith(exc) for exc in self.exceptions)) for link in links)
+                    if re.findall(self.image_link, ctx.content):  # Ignore what the link points to, always count links as valid: it would be easier to moderate manually
+                        valid = True
+
+                    if not valid:
+                        try:
+                            await ctx.delete()
+                            if permissions.can_send(ctx):
+                                await ctx.channel.send("This channel is image-only. No valid image file or link was found.", delete_after=10)
+                        except (discord.Forbidden, discord.HTTPException):
+                            if permissions.can_send(ctx):
+                                await ctx.reply("This message does not contain a valid image file, but I seem to be unable to delete it...")
+                # If the channel doesn't qualify for image-only, do nothing and go to the next section
+
+            if "image_only" in data:
+                try:
+                    await do_image_only()
+                except Exception as e:
+                    general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Image-only channels > {type(e).__name__}: {str(e)}")
+                    # print(general.traceback_maker(e, code_block=False))
+
+            # Anti-ads
+            async def do_anti_ads():
+                anti_ads = data["anti_ads"]
+                if not anti_ads["enabled"]:
+                    return
+                # Channel is in whitelist or channel is not in blacklist
+                channel_valid = (anti_ads["whitelist"] and ctx.channel.id in anti_ads["channels"]) or (not anti_ads["whitelist"] and ctx.channel.id not in anti_ads["channels"])
+                if not channel_valid:
+                    return
+                matches = re.findall(self.discord_link, ctx.content)
+                if matches:
+                    message = None  # If the message can't be sent
+                    try:
+                        await ctx.delete()
+                        if permissions.can_send(ctx):
+                            message = await ctx.channel.send(f"{ctx.author.mention} It would be preferable if you don't advertise here...", delete_after=20)
+                    except (discord.Forbidden, discord.HTTPException):
+                        if permissions.can_send(ctx):
+                            message = await ctx.reply("This message contains an advertisement, but I seem to be unable to delete it...")
+
+                    # Now we will try to warn the person
+                    # Generate a context from our response message, just so that the author is set to us
+                    if message is not None:
+                        response_ctx: commands.Context = await self.bot.get_context(message, cls=commands.Context)  # type: ignore
+                    else:
+                        response_ctx: commands.FakeContext = commands.FakeContext(ctx.guild, self.bot, ctx.guild.me)
+                    language = self.bot.language(response_ctx)
+                    warn_settings, missing = self.get_warn_settings(response_ctx, language)
+                    if missing:
+                        await response_ctx.send(missing)
+
+                    _, delta, expiry, error = await self.get_duration(response_ctx, anti_ads.get("warning", ""), language, "mod_warn_limit")
+                    reason = "[Automatic] Advertising"
+                    # We don't need to clutter the chat with the statement that the person has been muted, that should be obvious enough to begin with
+                    if not error:
+                        duration = language.delta_rd(delta, accuracy=7, brief=False, affix=False, case="for")
+                        # out = language.string("mod_warn_timed", user=ctx.author, duration=duration, reason=reason)
+                        await self.warn_user(response_ctx, ctx.author, warn_settings, reason, language, expiry, duration)
+                    else:
+                        # out = language.string("mod_warn", user=ctx.author, reason=reason)
+                        await self.warn_user(response_ctx, ctx.author, warn_settings, reason, language, None, None)
+
+            if "anti_ads" in data:
+                try:
+                    await do_anti_ads()
+                except Exception as e:
+                    general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Anti-ads > {type(e).__name__}: {str(e)}")
+
     def kick_check(self, ctx: commands.Context, member: discord.Member, language: Language):
         if member == ctx.author:
             return language.string("mod_kick_self")
@@ -179,7 +296,7 @@ class Moderation(commands.Cog):
         elif member.top_role.position >= ctx.guild.me.top_role.position:  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_kick_forbidden2", member=member)
         elif member.id == self.bot.user.id:
-            return language.string("mod_ban_suager", author=ctx.author.name)
+            return language.string("mod_ban_suager", author=general.username(ctx.author))
         return True
 
     async def kick_user(self, ctx: commands.Context, member: discord.Member, reason: str):
@@ -194,7 +311,7 @@ class Moderation(commands.Cog):
     @commands.command(name="kick")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Kick a user from the server """
@@ -212,7 +329,7 @@ class Moderation(commands.Cog):
     @commands.command(name="masskick")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_kick(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass kick users from the server """
@@ -256,7 +373,7 @@ class Moderation(commands.Cog):
         elif member is not None and (member.top_role.position >= ctx.guild.me.top_role.position):  # The bot can't bypass this unless it's the guild owner, which is unlikely
             return language.string("mod_ban_forbidden2", member=member)
         elif user == self.bot.user.id:
-            return language.string("mod_ban_suager", author=ctx.author.name)
+            return language.string("mod_ban_suager", author=general.username(ctx.author))
         return True
 
     @staticmethod
@@ -279,7 +396,7 @@ class Moderation(commands.Cog):
     @commands.command(name="ban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
         """ Ban a user from the server """
@@ -302,7 +419,7 @@ class Moderation(commands.Cog):
     @commands.command(name="massban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_ban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass ban users from the server """
@@ -353,7 +470,7 @@ class Moderation(commands.Cog):
     @commands.command(name="unban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
         """ Unban a user """
@@ -373,7 +490,7 @@ class Moderation(commands.Cog):
     @commands.command(name="massunban")
     @commands.guild_only()
     @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_unban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass unban users from the server """
@@ -428,13 +545,13 @@ class Moderation(commands.Cog):
         return True
 
     @staticmethod
-    async def get_duration(ctx: commands.Context, reason: str, language: Language):
+    async def get_duration(ctx: commands.Context, reason: str, language: Language, overflow_response: str = "mod_mute_limit"):
         reason = reason[:400] if reason else language.string("mod_reason_none")
         _duration = reason.split(" ")[0]
         delta = time.interpret_time(_duration)
         expiry, error = time.add_time(delta)
         if time.rd_is_above_5y(delta):
-            await ctx.send(language.string("mod_mute_limit"), delete_after=15)
+            await ctx.send(language.string(overflow_response), delete_after=15)
             error = True
         return reason, delta, expiry, error
 
@@ -465,7 +582,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="mute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def mute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Mute someone
@@ -494,7 +611,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="massmute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def mass_mute(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-mute multiple members """
@@ -561,7 +678,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="unmute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def unmute(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Unmute someone """
@@ -578,7 +695,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="massunmute")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_roles=True)
     async def mass_unmute(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-unmute multiple members """
@@ -617,7 +734,7 @@ class Moderation(commands.Cog):
     @commands.command(name="mutes")
     @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def mute_list(self, ctx: commands.Context):
         """ See a list of the currently active mutes """
         language = self.bot.language(ctx)
@@ -657,7 +774,7 @@ class Moderation(commands.Cog):
             "kyomi":  settings.template_mizuki,
         }.get(self.bot.name)
 
-    def get_warn_settings(self, ctx: commands.Context, language: Language):
+    def get_warn_settings(self, ctx: commands.Context, language: Language) -> tuple[dict, str | None]:
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not _data:
             return self.settings_template["warnings"], language.string("mod_warn_settings", ctx.prefix)
@@ -720,7 +837,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="warn", aliases=["warning"])
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def warn(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
         """ Warn a user
 
@@ -734,7 +851,7 @@ class Moderation(commands.Cog):
         warn_check = self.warn_check(ctx, member, language)
         if warn_check is not True:
             return await ctx.send(warn_check)
-        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language, "mod_warn_limit")
         if not error:
             reason = " ".join(reason.split(" ")[1:])
             reason = reason or language.string("mod_reason_none")
@@ -748,14 +865,14 @@ class Moderation(commands.Cog):
 
     @commands.command(name="masswarn")
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def mass_warn(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
         """ Mass-warn multiple users """
         language = self.bot.language(ctx)
         warn_settings, missing = self.get_warn_settings(ctx, language)
         if missing:
             await ctx.send(missing)
-        reason, delta, expiry, error = await self.get_duration(ctx, reason, language)
+        reason, delta, expiry, error = await self.get_duration(ctx, reason, language, "mod_warn_limit")
         duration = None
         if not error:
             reason = " ".join(reason.split(" ")[1:])
@@ -815,7 +932,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="pardon", aliases=["forgive", "unwarn"])
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def pardon(self, ctx: commands.Context, member: discord.Member, warning_id: Union[int, Literal["all"]], *, reason: str = None):
         """ Remove someone's warning
 
@@ -841,8 +958,8 @@ class Moderation(commands.Cog):
         # This also has the side effect of showing active permanent warnings first, as their "expiry" value is set to the time the mute was issued, which is in the past.
         warns = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='warn' AND handled=0 ORDER BY expiry", (member.id, ctx.guild.id))
         if not warns:
-            return await ctx.send(language.string("mod_warn_list_none", user=member.name))
-        output = language.string("mod_warn_list", user=member.name, server=ctx.guild.name)
+            return await ctx.send(language.string("mod_warn_list_none", user=general.username(member)))
+        output = language.string("mod_warn_list", user=general.username(member), server=ctx.guild.name)
         outputs = []
         for item, warning in enumerate(warns, start=1):
             text = general.reason(ctx.guild.get_member(warning["author"]), warning["reason"])
@@ -865,7 +982,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="modlog", aliases=["punishments", "infractions"])
     @commands.guild_only()
-    @permissions.has_permissions(kick_members=True)
+    @permissions.has_permissions(kick_members=True, owner_bypass=False)
     async def mod_log(self, ctx: commands.Context, *, member: discord.Member = None):
         """ See the log of all punishments ever applied against the user in this server """
         member = member or ctx.author
@@ -873,8 +990,8 @@ class Moderation(commands.Cog):
         # Show all actions taken against the user, in chronological order (ie. sorted by punishment ID)
         punishments = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? ORDER BY id", (member.id, ctx.guild.id))
         if not punishments:
-            return await ctx.send(language.string("mod_log_none", user=member.name))
-        output = language.string("mod_log", user=member.name, server=ctx.guild.name)
+            return await ctx.send(language.string("mod_log_none", user=general.username(member)))
+        output = language.string("mod_log", user=general.username(member), server=ctx.guild.name)
         outputs = []
         for item, entry in enumerate(punishments, start=1):
             author = ctx.guild.get_member(entry["author"])
@@ -911,7 +1028,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
-    @permissions.has_permissions(manage_nicknames=True)
+    @permissions.has_permissions(manage_nicknames=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_user(self, ctx: commands.Context, member: discord.Member, *, name: str = None):
         """ Sets a user's nickname """
@@ -934,7 +1051,7 @@ class Moderation(commands.Cog):
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
-    @permissions.has_permissions(change_nickname=True)
+    @permissions.has_permissions(change_nickname=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_self(self, ctx: commands.Context, *, name: str = None):
         """ Change your own nickname """
@@ -955,7 +1072,7 @@ class Moderation(commands.Cog):
 
     @commands.group(name="find")
     @commands.guild_only()
-    @permissions.has_permissions(ban_members=True)
+    @permissions.has_permissions(ban_members=True, owner_bypass=False)
     async def find(self, ctx: commands.Context):
         """ Finds a server member within your search term """
         if ctx.invoked_subcommand is None:
@@ -986,7 +1103,7 @@ class Moderation(commands.Cog):
 
     @commands.group(name="purge", aliases=["prune", "delete"])
     @commands.guild_only()
-    @permissions.has_permissions(manage_messages=True)
+    @permissions.has_permissions(manage_messages=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_messages=True, read_message_history=True)
     async def prune(self, ctx: commands.Context):
         """ Removes messages from the current server. """
@@ -1099,7 +1216,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()
-    @permissions.has_permissions(manage_nicknames=True)
+    @permissions.has_permissions(manage_nicknames=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_user(self, ctx: commands.Context, member: discord.Member, design: int, *, name: str = None):
         """ Sets a user's nickname """
@@ -1109,7 +1226,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
                 return await ctx.send(language.string("mod_nick_owner"))
             if (member.top_role.position >= ctx.author.top_role.position and member != ctx.author) and ctx.author != ctx.guild.owner:
                 return await ctx.send(language.string("mod_nick_forbidden2"))
-            name = name or member.name
+            name = name or general.username(member)
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await member.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
@@ -1122,7 +1239,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
 
     @commands.command(name="nicknameme", aliases=["nickme", "nameme"])
     @commands.guild_only()
-    @permissions.has_permissions(change_nickname=True)
+    @permissions.has_permissions(change_nickname=True, owner_bypass=False)
     @commands.bot_has_permissions(manage_nicknames=True)
     async def nickname_self(self, ctx: commands.Context, design: int, *, name: str = None):
         """ Change your own nickname """
@@ -1130,7 +1247,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
         try:
             if ctx.author.id == ctx.guild.owner.id:
                 return await ctx.send(language.string("mod_nick_owner"))
-            name = name or ctx.author.name
+            name = name or general.username(ctx.author)
             _design, length = self.designs[design - 1].split(" // ")
             name = _design.replace('<nick>', name[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
@@ -1154,7 +1271,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
             if ctx.author.id == ctx.guild.owner.id:
                 return await ctx.send(language.string("mod_nick_owner"))
             _design, length = self.designs[design - 1].split(" // ")
-            name = _design.replace('<nick>', ctx.author.name[:int(length)])
+            name = _design.replace('<nick>', general.username(ctx.author)[:int(length)])
             await ctx.author.edit(nick=name, reason=general.reason(ctx.author, "Changed by command"))
             message = language.string("mod_nick_self", name=name)
             return await ctx.send(message)
@@ -1172,7 +1289,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
         output = "Here are the designs available in Midnight Dessert:\n\n"
         for i, _design in enumerate(self.designs, start=1):
             design, length = _design.split(" // ")
-            output += f"{i}) {design.replace('<nick>', ctx.author.name[:int(length)])}\n"
+            output += f"{i}) {design.replace('<nick>', general.username(ctx.author)[:int(length)])}\n"
         output += "\nUse `m!nickdesigns` to see the nicknames applied to your username\n" \
                   "\nUse `m!nickdesign <design_number>` to apply a design to your name\n" \
                   "  - Note: This command will use your username (and therefore reset any nickname you have)\n" \
@@ -1180,7 +1297,7 @@ class ModerationKyomi(Moderation, name="Moderation"):
                   "  - Example: `m!nickdesign 7`\n" \
                   "\nUse `m!nickme <design_number> <nickname>` to apply a design to a nickname of your choice\n" \
                   "  - Note: Requires permission to change your nickname\n" \
-                  f"  - Example: `m!nickme 7 {ctx.author.name}`\n" \
+                  f"  - Example: `m!nickme 7 {general.username(ctx.author)}`\n" \
                   "\nNote: If you boost this server, you will get a special nickname design. It is not included here, " \
                   "so if you change it, only the admins will be able to change it back.\n" \
                   "\nWarning: these designs are NF2U, you may not copy these for your own servers."

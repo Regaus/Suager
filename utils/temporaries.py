@@ -12,12 +12,19 @@ import pytz
 from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import birthday, bot_data, general, http, languages, lists, logger, time
+from utils import birthday, bot_data, commands, dcu, general, http, images, lists, logger, time
 
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
     now = time2.datetime.now(time_class=time_class)
-    then = time2.datetime.from_timestamp(((now.timestamp // update_speed) + 1) * update_speed + adjustment, time2.timezone.utc, time_class)
+    # Funny behaviour with adjustments:
+    # If the update speed is 3600s (1 hour) and the adjustment is +5 minutes
+    # Current time 20:40:00 -> Wait until 21:05:00
+    # Current time 21:01:00 -> Wait until 21:05:00 (Instead of 22:05:00, like it would have before this change)
+    # Current time 21:05:01 -> Wait until 22:05:00
+    then = time2.datetime.from_timestamp((((now.timestamp - adjustment) // update_speed) + 1) * update_speed + adjustment, time2.timezone.utc, time_class)
+    # if time_class.__name__ != "Earth":
+    #     print("Time adjustments: Waiting for", str(then.to_earth_time() - now.to_earth_time()))
     await asyncio.sleep((then.to_earth_time() - now.to_earth_time()).total_seconds())
 
 
@@ -37,7 +44,7 @@ async def handle_reminder(bot: bot_data.Bot, entry: dict, retry: bool = False):
     else:
         try:
             await user.send(f"⏰ **Reminder**:\n\n{entry['message']}")
-            expiry = bot.language2("english").time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, uid=user.id)
+            expiry = bot.language2("en").time(entry["expiry"], short=1, dow=False, seconds=True, tz=True, uid=user.id)
             logger.log(bot.name, "reminders", f"{time.time()} > {bot.full_name} > Reminders > Successfully sent {user} ({user.id}) the reminder for {expiry} ({entry_id})")
             handled = 1
         except Exception as e:
@@ -53,12 +60,18 @@ async def reminders(bot: bot_data.Bot):
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Handler")
     while True:
-        expired = bot.db.fetch("SELECT * FROM reminders WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
-        bot.db.execute("DELETE FROM reminders WHERE handled=1", ())  # We don't need to keep reminders after they expire and are dealt with
-        if expired:
-            for entry in expired:
-                await handle_reminder(bot, entry, False)
-        await asyncio.sleep(1)
+        try:
+            expired = bot.db.fetch("SELECT * FROM reminders WHERE DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
+            bot.db.execute("DELETE FROM reminders WHERE handled=1", ())  # We don't need to keep reminders after they expire and are dealt with
+            if expired:
+                for entry in expired:
+                    await handle_reminder(bot, entry, False)
+            await asyncio.sleep(1)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def reminders_errors(bot: bot_data.Bot):
@@ -69,13 +82,19 @@ async def reminders_errors(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Reminders Errors Handler")
 
     while True:
-        # If it's errored out, it must've expired already...
-        expired = bot.db.fetch("SELECT * FROM reminders WHERE handled=2 AND bot=?", (bot.name,))
-        if expired:
-            for entry in expired:
-                await handle_reminder(bot, entry, True)
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 0)
+        try:
+            # If it's errored out, it must've expired already...
+            expired = bot.db.fetch("SELECT * FROM reminders WHERE handled=2 AND bot=?", (bot.name,))
+            if expired:
+                for entry in expired:
+                    await handle_reminder(bot, entry, True)
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 0)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -137,7 +156,7 @@ async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False)
         return
     logger.log(bot.name, "moderation", f"{time.time()} > {bot.full_name} > Punishments > Successfully unmuted the user {member} ({member.id}) from guild {guild} ({entry_id})")
     save_handle(1, entry_id)
-    fake_ctx = languages.FakeContext(guild, bot)
+    fake_ctx = commands.FakeContext(guild, bot)
     language = bot.language(fake_ctx)
     reason = language.string("mod_unmute_auto_reason")
     await send_mod_dm(bot, fake_ctx, member, "unmute", reason, None, True)
@@ -151,11 +170,17 @@ async def punishments(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Handler")
 
     while True:
-        expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
-        if expired:
-            for entry in expired:
-                await handle_punishment(bot, entry, False)
-        await asyncio.sleep(1)
+        try:
+            expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND DATETIME(expiry) < DATETIME('now') AND handled=0 AND bot=?", (bot.name,))
+            if expired:
+                for entry in expired:
+                    await handle_punishment(bot, entry, False)
+            await asyncio.sleep(1)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def punishments_errors(bot: bot_data.Bot):
@@ -165,23 +190,29 @@ async def punishments_errors(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Punishments Errors Handler")
 
     while True:
-        # If it's errored out, it must've expired already...
-        expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND handled=2 AND bot=?", (bot.name,))
-        if expired:
-            for entry in expired:
-                await handle_punishment(bot, entry, True)
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 0)
+        try:
+            # If it's errored out, it must've expired already...
+            expired = bot.db.fetch("SELECT * FROM punishments WHERE temp=1 AND handled=2 AND bot=?", (bot.name,))
+            if expired:
+                for entry in expired:
+                    await handle_punishment(bot, entry, True)
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 0)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 def process_birthday(bot: bot_data.Bot, entry: dict) -> birthday.Birthday:
     uid = entry["uid"]
     if bot.name == "cobble":
         date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
-        if entry["location"]:
+        try:
             tz = conworlds.Place(entry["location"]).tz
-        else:
-            tz = time2.timezone.utc
+        except (ValueError, AttributeError, KeyError):  # Place does not exist or is not specified (null -> AttError)
+            tz = time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG")  # Since they have Virsetgar instead of UTC
     else:
         date = time2.date.from_datetime(entry["birthday"])  # although the birthday is stored as a datetime, the converter only takes in the date part
         tz_entry = bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (uid,))
@@ -220,10 +251,14 @@ def prep_birthdays(bot: bot_data.Bot):
                 if bot.name == "cobble":
                     if data[uid].birthday_date.iso() != entry["birthday"]:
                         data[uid].birthday_date = time2.date.from_iso(entry["birthday"], time2.Kargadia)
+
                     if entry["location"] and str(data[uid].tz) != entry["location"]:
-                        data[uid].tz = conworlds.Place(entry["location"]).tz
+                        try:
+                            data[uid].tz = conworlds.Place(entry["location"]).tz
+                        except (ValueError, AttributeError, KeyError):  # Place does not exist or is not specified (null -> AttError)
+                            data[uid].tz = time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG")
                     elif not entry["location"]:
-                        data[uid].tz = time2.timezone.utc
+                        data[uid].tz = time2.KargadianTimezone(time2.timedelta(), "Virsetgar", "VSG")
                 else:
                     if data[uid].birthday_date.iso() != entry["birthday"].strftime("%Y-%m-%d"):
                         data[uid].birthday_date = time2.date.from_datetime(entry["birthday"])
@@ -254,79 +289,85 @@ async def birthdays(bot: bot_data.Bot):
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Birthdays")
 
     while True:
-        guilds = {}
-        settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
-        for entry in settings:
-            data = json.loads(entry["data"])
-            if "birthdays" in data:
-                if data["birthdays"]["enabled"]:
-                    out = [data["birthdays"]["role"], data["birthdays"]["channel"], data["birthdays"]["message"]]
-                    guilds[entry["gid"]] = out
+        try:
+            guilds = {}
+            settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
+            for entry in settings:
+                data = json.loads(entry["data"])
+                if "birthdays" in data:
+                    if data["birthdays"]["enabled"]:
+                        out = [data["birthdays"]["role"], data["birthdays"]["channel"], data["birthdays"]["message"]]
+                        guilds[entry["gid"]] = out
 
-        prep_birthdays(bot)
-        # birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
-        birthday_today = birthday.birthdays_today(bot.name)
-        if birthday_today:
-            for person in birthday_today:
-                # dm = True
+            prep_birthdays(bot)
+            # birthday_today = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=0 AND strftime('%m-%d', birthday) = strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+            birthday_today = birthday.birthdays_today(bot.name)
+            if birthday_today:
+                for person in birthday_today:
+                    # dm = True
+                    for gid, data in guilds.items():
+                        # guild = guilds[i]
+                        guild: discord.Guild = bot.get_guild(gid)
+                        if guild is not None:
+                            user: discord.Member = guild.get_member(person.uid)
+                            if user is not None:
+                                # dm = False
+                                if data[1] and data[2]:
+                                    channel: discord.TextChannel = guild.get_channel(data[1])
+                                    message = data[2].replace("[MENTION]", user.mention).replace("[USER]", general.username(user))
+                                    try:
+                                        await channel.send(message)
+                                        print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
+                                    except Exception as e:
+                                        out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed sending birthday message (Guild {gid}, User {user.id}): {e}"
+                                        general.print_error(out)
+                                        logger.log(bot.name, "errors", out)
+                                if data[0]:
+                                    role: discord.Role = guild.get_role(data[0])
+                                    try:
+                                        await user.add_roles(role, reason=f"[Birthdays] It is {user}'s birthday")
+                                        print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave {user} the birthday role")
+                                    except Exception as e:
+                                        out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
+                                        general.print_error(out)
+                                        logger.log(bot.name, "errors", out)
+                    person.has_role = True
+                    if bot.name == "cobble":
+                        bot.db.execute("UPDATE kargadia SET has_role=1 WHERE uid=?", (person.uid,))
+                    else:
+                        bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
+
+            # birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
+            birthday_over = birthday.birthdays_ended(bot.name)
+            for person in birthday_over:
+                if bot.name == "cobble":
+                    bot.db.execute("UPDATE kargadia SET has_role=0 WHERE uid=?", (person.uid,))
+                else:
+                    bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
+                person.has_role = False
+                person.push_birthday()
                 for gid, data in guilds.items():
                     # guild = guilds[i]
                     guild: discord.Guild = bot.get_guild(gid)
                     if guild is not None:
                         user: discord.Member = guild.get_member(person.uid)
                         if user is not None:
-                            # dm = False
-                            if data[1] and data[2]:
-                                channel: discord.TextChannel = guild.get_channel(data[1])
-                                message = data[2].replace("[MENTION]", user.mention).replace("[USER]", user.name)
-                                try:
-                                    await channel.send(message)
-                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Told {user} happy birthday")
-                                except Exception as e:
-                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed sending birthday message (Guild {gid}, User {user.id}): {e}"
-                                    general.print_error(out)
-                                    logger.log(bot.name, "errors", out)
                             if data[0]:
                                 role: discord.Role = guild.get_role(data[0])
                                 try:
-                                    await user.add_roles(role, reason=f"[Birthdays] It is {user}'s birthday")
-                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Gave {user} the birthday role")
+                                    await user.remove_roles(role, reason=f"[Birthdays] It is no longer {user}'s birthday")
+                                    print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user}")
                                 except Exception as e:
-                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed giving birthday role (Guild {gid}, User {user.id}): {e}"
+                                    out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed taking away birthday role (Guild {gid}, User {user.id}): {e}"
                                     general.print_error(out)
                                     logger.log(bot.name, "errors", out)
-                person.has_role = True
-                if bot.name == "cobble":
-                    bot.db.execute("UPDATE kargadia SET has_role=1 WHERE uid=?", (person.uid,))
-                else:
-                    bot.db.execute(f"UPDATE birthdays SET has_role=1 WHERE uid=? AND bot=?", (person.uid, bot.name))
-
-        # birthday_over = bot.db.fetch("SELECT * FROM birthdays WHERE has_role=1 AND strftime('%m-%d', birthday) != strftime('%m-%d', 'now') AND bot=?", (bot.name,))
-        birthday_over = birthday.birthdays_ended(bot.name)
-        for person in birthday_over:
-            if bot.name == "cobble":
-                bot.db.execute("UPDATE kargadia SET has_role=0 WHERE uid=?", (person.uid,))
-            else:
-                bot.db.execute(f"UPDATE birthdays SET has_role=0 WHERE uid=? AND bot=?", (person.uid, bot.name))
-            person.has_role = False
-            person.push_birthday()
-            for gid, data in guilds.items():
-                # guild = guilds[i]
-                guild: discord.Guild = bot.get_guild(gid)
-                if guild is not None:
-                    user: discord.Member = guild.get_member(person.uid)
-                    if user is not None:
-                        if data[0]:
-                            role: discord.Role = guild.get_role(data[0])
-                            try:
-                                await user.remove_roles(role, reason=f"[Birthdays] It is no longer {user}'s birthday")
-                                print(f"{time.time()} > {bot.full_name} > {guild.name} > Removed birthday role from {user}")
-                            except Exception as e:
-                                out = f"{time.time()} > {bot.full_name} > Birthdays Handler > Failed taking away birthday role (Guild {gid}, User {user.id}): {e}"
-                                general.print_error(out)
-                                logger.log(bot.name, "errors", out)
-                # except Exception as e:
-                #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+                    # except Exception as e:
+                    #     general.print_error(f"{time.time()} > {bot.full_name} > Birthdays Handler > {e}")
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # birthday.save()
         await asyncio.sleep(1)
@@ -335,116 +376,129 @@ async def birthdays(bot: bot_data.Bot):
 
 ka_places = {
     "Regaazdall": {
-        "Munearan Köreldaivus": {"data": "", "weight": 30},
-        "Regavall":             {"data": "", "weight": 40},
-        "Reggar":               {"data": "", "weight": 50},
-        "Suvagar":              {"data": "", "weight": 40},
-        "Vaidangar":            {"data": "", "weight": 25},
-        "Vakungar":             {"data": "", "weight": 25},
+        "Jostungar":            {"data": "", "weight": 30},  # -03
+        "Lehtingar":            {"data": "", "weight": 30},  # -03
+        "Leksinsalte":          {"data": "", "weight": 30},  # -03
+        "Munearan Köreldaivus": {"data": "", "weight": 30},  # -03
+        "Nuugar":               {"data": "", "weight": 30},  # -03
+        "Regavall":             {"data": "", "weight": 40},  # -03
+        "Reggar":               {"data": "", "weight": 50},  # -03
+        "Suvagar":              {"data": "", "weight": 40},  # -03
+        "Vaidangar":            {"data": "", "weight": 25},  # -03
+        "Vakungar":             {"data": "", "weight": 25},  # -03
     },
     "Nehtivia": {
-        "Ekspigar":           {"data": "", "weight": 35},
-        "Kollugar":           {"data": "", "weight": 35},
-        "Leitagar":           {"data": "", "weight": 35},
-        "Pakigar":            {"data": "", "weight": 35},
-        "Steirigar":          {"data": "", "weight": 35},
-        "Sunmagar":           {"data": "", "weight": 25},
-        "Tenmagar":           {"data": "", "weight": 30},
-        "Runnegar":           {"data": "", "weight": 25},
-        "Lurvugar":           {"data": "", "weight": 25},
-        "Peaskar":            {"data": "", "weight": 25},
-        "Sulingar":           {"data": "", "weight": 30},
-        "Alexandris":         {"data": "", "weight": 35},
-        "Drippangar":         {"data": "", "weight": 35},
-        "Joptanagar":         {"data": "", "weight": 35},
-        "Läkingar":           {"data": "", "weight": 25},
-        "Leogar":             {"data": "", "weight": 35},
-        "Menenvallus":        {"data": "", "weight": 30},
-        "Melligar":           {"data": "", "weight": 35},
-        "Tevivall":           {"data": "", "weight": 30},
-        # "Watsangar":          {"data": "", "weight": 35},
-        "Chakkangar":         {"data": "", "weight": 35},
-        "Kamikawa":           {"data": "", "weight": 35},
-        "Kiomigar":           {"data": "", "weight": 35},
-        "Lailagar":           {"data": "", "weight": 35},
-        "Koutun Köreldaivus": {"data": "", "weight": 30},
+        "Ekspigar":             {"data": "", "weight": 35},  # -10
+        "Kollugar":             {"data": "", "weight": 35},  # -10
+        "Leitagar":             {"data": "", "weight": 35},  # -10
+        "Pakigar":              {"data": "", "weight": 35},  # -10
+        "Sadagar":              {"data": "", "weight": 35},  # -10
+        "Stardew Valley":       {"data": "", "weight": 35},  # -10
+        "Steirigar":            {"data": "", "weight": 35},  # -10
+        "Tenmagar":             {"data": "", "weight": 30},  # -10
+        "Runnegar":             {"data": "", "weight": 25},  # -09
+        "Sunmagar":             {"data": "", "weight": 25},  # -09
+        "Lurvugar":             {"data": "", "weight": 25},  # -08
+        "Peaskar":              {"data": "", "weight": 25},  # -08
+        "Sulingar":             {"data": "", "weight": 30},  # -08
+        "Alexandris":           {"data": "", "weight": 35},  # -07
+        "Joptanagar":           {"data": "", "weight": 35},  # -07
+        "Läkingar":             {"data": "", "weight": 25},  # -07
+        "Leogar":               {"data": "", "weight": 35},  # -07
+        "Menenvallus":          {"data": "", "weight": 30},  # -07
+        "Bakkangar":            {"data": "", "weight": 30},  # -06
+        "Mel's Twin Mountains": {"data": "", "weight": 35},  # -06
+        "Chakkangar":           {"data": "", "weight": 35},  # -05
+        "Kamikawa":             {"data": "", "weight": 35},  # -05
+        "Kiomigar":             {"data": "", "weight": 35},  # -05
+        "Kionagar":             {"data": "", "weight": 35},  # -05
+        "Lailagar":             {"data": "", "weight": 35},  # -05
+        "Melligar":             {"data": "", "weight": 35},  # -05
+        "Tevivall":             {"data": "", "weight": 30},  # -05
+        "Koutun Köreldaivus":   {"data": "", "weight": 30},  # -04
+        "Reksigar":             {"data": "", "weight": 35},  # -04
     },
     "Nittavia": {
-        "Erdagar":     {"data": "", "weight": 25},
-        "Ammugar":     {"data": "", "weight": 25},
-        "Körevallus":  {"data": "", "weight": 30},
-        "Saikovallus": {"data": "", "weight": 30},
+        "Erdagar":     {"data": "", "weight": 25},  # -09
+        "Ammugar":     {"data": "", "weight": 25},  # -08
+        "Körevallus":  {"data": "", "weight": 30},  # -07
+        "Saikovallus": {"data": "", "weight": 30},  # -07
     },
     "Tebaria": {
-        "Kianta":       {"data": "", "weight": 25},
-        "Kuntuma":      {"data": "", "weight": 25},
-        "Sentatebaria": {"data": "", "weight": 30},
-        "Nilli":        {"data": "", "weight": 25},
-        "Nilligar":     {"data": "", "weight": 25},
-        "Hantia":       {"data": "", "weight": 25},
-        "Hantisgar":    {"data": "", "weight": 25},
-        "Tahda":        {"data": "", "weight": 25},
-        "Kaivalgard":   {"data": "", "weight": 35},
-        "Kuvul-Ghuzu":  {"data": "", "weight": 25},
-        "Harvugar":     {"data": "", "weight": 30},
-        "Urum":         {"data": "", "weight": 30},
-        "Kullivi":      {"data": "", "weight": 25},
-        "Nurvut":       {"data": "", "weight": 25},
-        "Vallangar":    {"data": "", "weight": 25},
-        "Kaltagar":     {"data": "", "weight": 25},
-        "Noqqo":        {"data": "", "weight": 25},
-        "Qeshte":       {"data": "", "weight": 25},
-        "Kainedungar":  {"data": "", "weight": 25},
-        "Suttulu":      {"data": "", "weight": 25},
-        "Usmutgar":     {"data": "", "weight": 25},
-        "Bylkangar":    {"data": "", "weight": 30},
-        "Kaltatebaria": {"data": "", "weight": 25},
-        "Sittegar":     {"data": "", "weight": 25},
-        "Keltagar":     {"data": "", "weight": 25},
-        "Sadegar":      {"data": "", "weight": 25},
-        "Tenkigar":     {"data": "", "weight": 25},
-        "Vadertebaria": {"data": "", "weight": 25},
-        "Istagar":      {"data": "", "weight": 25},
-        "Lervagar":     {"data": "", "weight": 25},
-        "Simmagar":     {"data": "", "weight": 25},
-        "Hinnegar":     {"data": "", "weight": 25},
+        "Kianta":       {"data": "", "weight": 25},  # -11
+        "Kuntuma":      {"data": "", "weight": 25},  # -10
+        "Sentatebaria": {"data": "", "weight": 30},  # -08
+        "Nilli":        {"data": "", "weight": 25},  # -06
+        "Nilligar":     {"data": "", "weight": 25},  # -06
+        "Hantia":       {"data": "", "weight": 25},  # -05
+        "Hantisgar":    {"data": "", "weight": 25},  # -04
+        "Tahda":        {"data": "", "weight": 25},  # -04
+        "Kaivalgard":   {"data": "", "weight": 35},  # -02
+        "Kuvul-Ghuzu":  {"data": "", "weight": 25},  # -02
+        "Harvugar":     {"data": "", "weight": 30},  # -01
+        "Urum":         {"data": "", "weight": 30},  # -01
+        "Kullivi":      {"data": "", "weight": 25},  # +00
+        "Nurvut":       {"data": "", "weight": 25},  # +00
+        "Vallangar":    {"data": "", "weight": 25},  # +01
+        "Kaltagar":     {"data": "", "weight": 25},  # +01
+        "Noqqo":        {"data": "", "weight": 25},  # +02
+        "Qeshte":       {"data": "", "weight": 25},  # +02
+        "Kainedungar":  {"data": "", "weight": 25},  # +03
+        "Suttulu":      {"data": "", "weight": 25},  # +03
+        "Usmutgar":     {"data": "", "weight": 25},  # +03
+        "Bylkangar":    {"data": "", "weight": 30},  # +04
+        "Kaltatebaria": {"data": "", "weight": 25},  # +04
+        "Sittegar":     {"data": "", "weight": 25},  # +04
+        "Keltagar":     {"data": "", "weight": 25},  # +05
+        "Sadegar":      {"data": "", "weight": 25},  # +06
+        "Tenkigar":     {"data": "", "weight": 25},  # +07
+        "Vadertebaria": {"data": "", "weight": 25},  # +09
+        "Istagar":      {"data": "", "weight": 25},  # +11
+        "Lervagar":     {"data": "", "weight": 25},  # +12
+        "Simmagar":     {"data": "", "weight": 25},  # +13
+        "Hinnegar":     {"data": "", "weight": 25},  # +14
     },
     "Kaltar Azdall": {
-        "Kalta Centeria": {"data": "", "weight": 25},
-        "Kalta Mainta":   {"data": "", "weight": 25},
-        "Kaltar Kainead": {"data": "", "weight": 20},
-        "Kaltarena":      {"data": "", "weight": 25},
-        "Küangar":        {"data": "", "weight": 25},
+        "Kalta Centeria": {"data": "", "weight": 25},  # -01
+        "Kalta Mainta":   {"data": "", "weight": 25},  # -01
+        "Kaltar Kainead": {"data": "", "weight": 20},  # -01
+        "Kaltarena":      {"data": "", "weight": 25},  # -01
+        "Küangar":        {"data": "", "weight": 25},  # -01
     },
     "Arnattia": {
-        "Mahatarna":   {"data": "", "weight": 25},
-        "Vainararna":  {"data": "", "weight": 25},
-        "Ezmetarna":   {"data": "", "weight": 25},
-        "Tuhtun Arna": {"data": "", "weight": 25},
-        "Avikarna":    {"data": "", "weight": 25},
-        "Kanerarna":   {"data": "", "weight": 25},
-        "Terra Arna":  {"data": "", "weight": 25},
+        "Mahatarna":   {"data": "", "weight": 25},  # -13
+        "Vainararna":  {"data": "", "weight": 25},  # -13
+        "Ezmetarna":   {"data": "", "weight": 25},  # -12
+        "Tuhtun Arna": {"data": "", "weight": 25},  # -12
+        "Avikarna":    {"data": "", "weight": 25},  # -11
+        "Kanerarna":   {"data": "", "weight": 25},  # -11
+        "Terra Arna":  {"data": "", "weight": 25},  # -11
     },
     "Erellia": {
-        "Itta":      {"data": "", "weight": 25},
-        "Rankadus":  {"data": "", "weight": 20},
-        "Raagar":    {"data": "", "weight": 25},
-        "Orlagar":   {"data": "", "weight": 35},
-        "Shonangar": {"data": "", "weight": 35},
+        "Itta":                 {"data": "", "weight": 25},  # -05
+        "Senka's Lair":         {"data": "", "weight": 30},  # -05
+        "Shankiranköde":        {"data": "", "weight": 30},  # -05
+        "Rankadus":             {"data": "", "weight": 20},  # -04
+        "Erellian Köreldaivus": {"data": "", "weight": 35},  # -03
+        "Larihalus":            {"data": "", "weight": 35},  # -03
+        "Orlagar":              {"data": "", "weight": 35},  # -03
+        "Raagar":               {"data": "", "weight": 25},  # -03
+        "Shonangar":            {"data": "", "weight": 35},  # -03
     },
     "Centeria": {
-        "Kalagar":   {"data": "", "weight": 25},
-        "Sukugar":   {"data": "", "weight": 30},
-        "Virsetgar": {"data": "", "weight": 30},
+        "Mügoslavia": {"data": "", "weight": 25},  # -01
+        "Kalagar":    {"data": "", "weight": 25},  # +00
+        "Sukugar":    {"data": "", "weight": 30},  # +00
+        "Virsetgar":  {"data": "", "weight": 30},  # +00
     },
     "Verlennia": {
     },
     "Inhattia": {
     },
     "Other Areas": {
-        "Rakka's Volcano":     {"data": "", "weight": 35},
-        "Vintelingar":         {"data": "", "weight": 35},
-        "North Pole Kargadia": {"data": "", "weight": 20},
+        "Rakka's Volcano":     {"data": "", "weight": 35},  # -05
+        "Vintelingar":         {"data": "", "weight": 35},  # -02
+        "North Pole Kargadia": {"data": "", "weight": 20},  # +00
     }
 }
 _places = {}  # Since the playing status won't be able to read through a 2-layer dict...
@@ -454,76 +508,38 @@ _places = {}  # Since the playing status won't be able to read through a 2-layer
 
 ka_time: ...  # Current time in Virsetgar, used to determine time until next holiday
 
-# The key is the timestamp as mm-dd, the value is the date instance | Defaults to 2151/2022 if somehow not overwritten
-ka_holidays: dict[str, time2.date] = {
-    "01-01": time2.date(2151,  1,  1, time2.Kargadia),
-    "01-06": time2.date(2151,  1,  6, time2.Kargadia),
-    "02-09": time2.date(2151,  2,  9, time2.Kargadia),
-    "02-14": time2.date(2151,  2, 14, time2.Kargadia),
-    "02-15": time2.date(2151,  2, 15, time2.Kargadia),
-    "03-07": time2.date(2151,  3,  7, time2.Kargadia),
-    "03-12": time2.date(2151,  3, 12, time2.Kargadia),
-    "04-08": time2.date(2151,  4,  8, time2.Kargadia),
-    "05-07": time2.date(2151,  5,  7, time2.Kargadia),
-    "06-02": time2.date(2151,  6,  2, time2.Kargadia),
-    "06-08": time2.date(2151,  6,  8, time2.Kargadia),
-    "07-01": time2.date(2151,  7,  1, time2.Kargadia),
-    "07-09": time2.date(2151,  7,  9, time2.Kargadia),
-    "08-11": time2.date(2151,  8, 11, time2.Kargadia),
-    "09-09": time2.date(2151,  9,  9, time2.Kargadia),
-    "10-01": time2.date(2151, 10,  1, time2.Kargadia),
-    "11-02": time2.date(2151, 11,  2, time2.Kargadia),
-    "11-03": time2.date(2151, 11,  3, time2.Kargadia),
-    "12-05": time2.date(2151, 12,  5, time2.Kargadia),
-    "12-11": time2.date(2151, 12, 11, time2.Kargadia),
-    "13-01": time2.date(2151, 13,  1, time2.Kargadia),
-    "13-03": time2.date(2151, 13,  3, time2.Kargadia),
-    "14-01": time2.date(2151, 14,  1, time2.Kargadia),
-    "15-07": time2.date(2151, 15,  7, time2.Kargadia),
-    "15-15": time2.date(2151, 15, 15, time2.Kargadia),
-    "15-16": time2.date(2151, 15, 16, time2.Kargadia),
-    "16-01": time2.date(2151, 16,  1, time2.Kargadia),
-    "16-05": time2.date(2151, 16,  5, time2.Kargadia),
-}
-sl_holidays: dict[str, time2.date] = {
-    "01-01": time2.date(2022,  1,  1),
-    "01-27": time2.date(2022,  1, 27),
-    "02-14": time2.date(2022,  2, 14),
-    "03-17": time2.date(2022,  3, 17),
-    "04-17": time2.date(2022,  4, 17),
-    "05-13": time2.date(2022,  5, 13),
-    "06-20": time2.date(2022,  6, 20),
-    "06-25": time2.date(2022,  6, 25),
-    "07-27": time2.date(2022,  7, 27),
-    "08-08": time2.date(2022,  8,  8),
-    "09-01": time2.date(2022,  9,  1),
-    "10-03": time2.date(2022, 10,  3),
-    "10-22": time2.date(2022, 10, 22),
-    "10-31": time2.date(2022, 10, 31),
-    "11-19": time2.date(2022, 11, 19),
-    "12-05": time2.date(2022, 12,  5),
-}
+# The key is the timestamp as mm-dd, the value is the date instance
+# Lists are used to store the holidays in a shorter way, then the dicts store the times
+ka_holidays_list = ["01-01", "01-06", "01-07", "02-06", "02-14", "03-07", "03-12", "03-13", "04-08", "05-07", "05-13", "06-02",
+                    "07-01", "07-09", "08-01", "08-02", "08-11", "08-16", "09-09", "10-09", "11-02", "11-03", "11-04", "12-05",
+                    "12-11", "13-01", "13-03", "14-01", "14-02", "14-03", "14-04", "15-16", "16-05", "16-07", "16-08"]
+ka_holidays: dict[str, time2.date] = {}
+sl_holidays_list = ["01-01", "01-27", "02-14", "03-03", "03-17", "04-17", "05-13", "06-03", "06-20", "06-25", "08-08",
+                    "09-01", "10-03", "10-22", "10-31", "11-19", "12-05"]
+sl_holidays: dict[str, time2.date] = {}
 
 
 def get_time_ka():
     now = time2.date.today(time2.Kargadia)
     year = now.year
-    for key in ka_holidays.keys():
+    for key in ka_holidays_list:
         month, day = key.split("-", 1)
         holiday_time = time2.date(year, int(month), int(day), time2.Kargadia)
         if now > holiday_time:  # if the holiday already passed this year, skip to next year
-            holiday_time = (holiday_time + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
+            holiday_time = holiday_time.replace(year=holiday_time.year + 1)
+            # holiday_time = (holiday_time + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
         ka_holidays[key] = holiday_time
 
 
 def get_time_sl():
     now = time2.date.today(time2.Earth)
     year = now.year
-    for key in sl_holidays.keys():
+    for key in sl_holidays_list:
         month, day = key.split("-", 1)
         holiday_time = time2.date(year, int(month), int(day), time2.Earth)
         if now > holiday_time:  # if the holiday already passed this year, skip to next year
-            holiday_time = (holiday_time + time2.relativedelta(years=1)).date()
+            holiday_time = holiday_time.replace(year=holiday_time.year + 1)
+            # holiday_time = (holiday_time + time2.relativedelta(years=1)).date()
         sl_holidays[key] = holiday_time
 
 
@@ -546,9 +562,9 @@ def ka_data_updater(bot: bot_data.Bot):
                     place: conworlds.Place = _places[city]["place"]
                     place.update_time()
                 en = bot.language2("en")
-                ka = bot.language2("ne_rc")
+                ka = bot.language2("re_nu")
                 kargadian = f"{place.name_translation(ka)}: "
-                kargadian += place.time.strftime("%d %b %Y, %H:%M", "ne_rc")
+                kargadian += place.time.strftime("%d %b %Y, %H:%M", "re_nu")
                 english = f"{place.name_translation(en):<20} - "
                 english += place.time.strftime("%d %b %Y, %H:%M", "en")
                 if place.weather is not None:
@@ -567,7 +583,17 @@ def ka_data_updater(bot: bot_data.Bot):
                     global ka_time
                     ka_time = place.time
                 # logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > Updated data for {city}")
+            except conworlds.PlaceDoesNotExist:
+                ka_places[area_name][city]["data"] = f"{city:<20} - No data available"
+                # _places[city]["text"] = f"{city} - Zaita de jortalla"  # _places seems to only account for places that already exist
+                log_out = f"{time.time()} > {bot.full_name} > Place {city} is not available"
+                general.print_error(log_out)
+                logger.log(bot.name, "kargadia", log_out)
+                logger.log(bot.name, "errors", log_out)
             except Exception as e:
+                if not ka_places[area_name][city]["data"]:  # If the place data is still empty, add a space to it, else don't update it
+                    ka_places[area_name][city]["data"] = " "
+                    # _places[city]["text"] = " "
                 general.print_error(f"{time.time()} > {bot.full_name} > City Data Updater > {type(e).__name__}: {e}")
                 log_out = f"{time.time()} > {bot.full_name} > Error updating data for {city} - {type(e).__name__}: {e}"
                 logger.log(bot.name, "kargadia", log_out)
@@ -599,8 +625,29 @@ async def ka_time_updater(bot: bot_data.Bot):
                 messages[line[:-1]] = msg  # The message's instance is then stored into its appropriate dict
         return messages
 
-    messages_ka = await get_data(channel_ka)
-    messages_rk = await get_data(channel_rk)
+    try:
+        messages_ka = await get_data(channel_ka)
+        messages_rk = await get_data(channel_rk)
+    except (aiohttp.ClientConnectorError, ConnectionError):
+        general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Error with connection.")
+        await bot.wait_until_ready()
+        await asyncio.sleep(10)
+
+        # Try again, whatever...
+        try:
+            messages_ka = await get_data(channel_ka)
+            messages_rk = await get_data(channel_rk)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > Discord.py is weird.")
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Messages broken, relaunching function in 5 minutes...")
+            await asyncio.sleep(300)
+            return await ka_time_updater(bot)
+    except Exception as e:
+        general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater (Message Loader) > {type(e).__name__}: {e}")
+        general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Messages broken, relaunching function in 1 minute...")
+        await asyncio.sleep(60)
+        return await ka_time_updater(bot)
 
     async def update_message(name: str, content: str):
         async def edit_message(messages_dict: dict, channel: discord.abc.Messageable):
@@ -613,8 +660,8 @@ async def ka_time_updater(bot: bot_data.Bot):
                 message = await channel.send(content)  # Send a new message
                 messages_dict[name] = message  # Store the new message
                 logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > Message not found, sending new one")
-            except Exception as e:  # Any other error
-                out = f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > {type(e).__name__}: {e}"
+            except Exception as _e:  # Any other error
+                out = f"{time.time()} > {bot.full_name} > City Time Updater > {channel} > {name} > {type(_e).__name__}: {_e}"
                 general.print_error(out)
                 logger.log(bot.name, "kargadia", out)
                 logger.log(bot.name, "errors", out)
@@ -623,19 +670,25 @@ async def ka_time_updater(bot: bot_data.Bot):
         await edit_message(messages_rk, channel_rk)
 
     while True:
-        ka_data_updater(bot)
+        try:
+            ka_data_updater(bot)
 
-        for area_name, area in ka_places.items():
-            data = [f"{area_name}:"]
-            for _data in area.values():
-                data.append(f"`{_data['data']}`")
-            await update_message(area_name, "\n".join(data))
-        logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
+            for area_name, area in ka_places.items():
+                data = [f"{area_name}:"]
+                for _data in area.values():
+                    data.append(f"`{_data['data']}`")
+                await update_message(area_name, "\n".join(data))
+            logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
 
-        # This should make it adjust itself for lag caused
-        await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(update_speed, 1, time2.Kargadia)
-        # await asyncio.sleep(update_speed)
+            # This should make it adjust itself for lag caused
+            await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
+            await wait_until_next_iter(update_speed, 1, time2.Kargadia)
+            # await asyncio.sleep(update_speed)
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
 
 async def playing(bot: bot_data.Bot):
@@ -645,13 +698,9 @@ async def playing(bot: bot_data.Bot):
     await asyncio.sleep(1)  # So that the new status isn't immediately overwritten with the "Loading..." status if the status change time is hit during loading
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Playing updater")
 
-    def error(text: str):
-        general.print_error(text)
-        logger.log(bot.name, "errors", text)
-
     # It would be funnier to set it to Cobbletopia Tebarian, but that language will not be made anytime soon,
     # and it would also be even less likely to be understood by anyone, so it's better off to leave the language as Regaazdall Nehtivian
-    language = bot.language2("ne_rc")
+    language = bot.language2("re_nu")
     holiday_names_ka = language.data("data_holidays_ka")
     holiday_names_sl = language.data("data_holidays_sl")
 
@@ -665,15 +714,28 @@ async def playing(bot: bot_data.Bot):
         days = (when - time2.date.today(when.time_class)).days
         if rsl:
             s = "in" if days != 1 else ""
-            v = "at" if days == 1 else "an"
-            return f"{days} sea{s} astall{v}"
+            # v = "at" if days == 1 else "an"
+            return f"{days} sea{s}"
         else:
             s = "s" if days != 1 else ""
             return f"{days} day{s}"
 
+    def get_activity(_data: dict):
+        if _data["type"] == 0:  # Game
+            __activity = discord.Game(name=_data["name"])
+        elif _data["type"] == 1:  # Streaming
+            __name = _activity["name"]
+            __activity = discord.Streaming(name=__name, details=__name, url=_data["url"])
+        elif _data["type"] == 4:  # Custom Status
+            __name = _activity["name"]
+            __activity = discord.CustomActivity(name=__name)
+        else:
+            __activity = discord.Activity(type=_data["type"], name=_data["name"])
+        return __activity
+
     while True:
         try:
-            version = general.get_version()[bot.name]
+            version = general.get_version().get(bot.name, {"version": "Unknown version", "short_version": "Unknown"})
             fv, sv = f"v{version['version']}", f"v{version['short_version']}"
             today = time2.date.today()
             year = today.year
@@ -687,15 +749,15 @@ async def playing(bot: bot_data.Bot):
                 if status_type == 1:
                     cobble = get_date(12, 5)
                     is_cobble = today == cobble
-                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} mun reideseat"
-                    status_regaus = f"🎉 Esea jat Regaus'ta reidesea!" if is_regaus else f"{until(regaus, True)} Regaus'tat reideseat"
+                    status_cobble = f"🎉 Esea jat mun reidesea!" if is_cobble else f"{until(cobble, True)} ta mun reidesean"
+                    status_regaus = f"🎉 Esea jat Regausan reidesea!" if is_regaus else f"{until(regaus, True)} ta Regausan reidesean"
                     random.seed()
                     status = random.choice([status_cobble, status_regaus])
                     activity = discord.Game(name=status)
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
                 elif status_type == 2:
                     activities = [
-                        {"type": 0, "name": fv},
+                        {"type": 0, "name": fv},  # These could be custom statuses, but I decided to let them stay as Playing so it's not too short
                         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                         {"type": 0, "name": "ka Regausan"},
                         {"type": 0, "name": "ka dekedan"},
@@ -704,26 +766,21 @@ async def playing(bot: bot_data.Bot):
                         {"type": 0, "name": "denedan"},
                         {"type": 3, "name": "ten"},
                         {"type": 3, "name": "ten sevartan"},
-                        {"type": 2, "name": "ut penat"},
+                        {"type": 2, "name": "un penan"},
                         {"type": 3, "name": "na meitan"},
                         {"type": 2, "name": "na deinettat"},
-                        {"type": 0, "name": "inkorra kiinan seldevanvarkan an ten eivarkaivanan"},
+                        {"type": 4, "name": "Inkorra kiinan seldevanvarkan an ten eivarkaivanan"},
                     ]
                     random.seed()
                     _activity = random.choice(activities)
-                    if _activity["type"] == 0:  # Game
-                        activity = discord.Game(name=_activity["name"])
-                    elif _activity["type"] == 1:  # Streaming
-                        name = _activity["name"]
-                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-                    else:
-                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    activity = get_activity(_activity)
                     name = _activity["name"]
                     status = {
                         0: "Koa",
                         1: "Eimia",
                         2: "Sanna",
                         3: "Veitea",
+                        4: "Custom status:",
                         5: "Ahmura sen"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
@@ -734,7 +791,7 @@ async def playing(bot: bot_data.Bot):
                     for key, holiday in ka_holidays.items():
                         if holiday == ka_day:
                             # name = language.case(holiday_names_ka.get(key), "genitive", "singular")
-                            _name = holiday_names_ka.get(key)
+                            _name = holiday_names_ka.get(key, key)
                             if _name == "Nuar Kad":
                                 name = "Nuan Kadan"
                             else:
@@ -746,7 +803,7 @@ async def playing(bot: bot_data.Bot):
                         random.seed()
                         key, holiday = random.choice(list(ka_holidays.items()))
                         # name = language.case(holiday_names_ka.get(key), "dative", "singular")
-                        _name = holiday_names_ka.get(key)
+                        _name = holiday_names_ka.get(key, key)
                         if _name == "Nuar Kad":
                             name = "Nuart Kadut"
                         else:
@@ -760,7 +817,7 @@ async def playing(bot: bot_data.Bot):
                     for key, holiday in sl_holidays.items():
                         if holiday == today:
                             # name = language.case(holiday_names_sl.get(key), "genitive", "singular")
-                            _name = holiday_names_sl.get(key)
+                            _name = holiday_names_sl.get(key, key)
                             if _name == "Nuar Kad":
                                 name = "Nuan Kadan"
                             elif _name == "Hallauvin":
@@ -774,7 +831,7 @@ async def playing(bot: bot_data.Bot):
                         random.seed()
                         key, holiday = random.choice(list(sl_holidays.items()))
                         # name = language.case(holiday_names_sl.get(key), "dative", "singular")
-                        _name = holiday_names_sl.get(key)
+                        _name = holiday_names_sl.get(key, key)
                         if _name == "Nuar Kad":
                             name = "Nuart Kadut"
                         elif _name == "Hallauvin":
@@ -815,44 +872,39 @@ async def playing(bot: bot_data.Bot):
                     activities = [
                         {"type": 0, "name": fv},
                         {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                        {"type": 0, "name": "Snuggling with Mochi"},
-                        {"type": 0, "name": "Feeding Mochi"},
-                        {"type": 0, "name": "Petting Mochi"},
-                        {"type": 0, "name": "Snuggling with Matsu"},
-                        {"type": 0, "name": "Feeding Matsu"},
-                        {"type": 0, "name": "Petting Matsu"},
-                        {"type": 0, "name": "Eating pineapples"},
-                        {"type": 0, "name": "Eating pineapple pizza"},
-                        {"type": 0, "name": "Stealing pineapples"},
-                        {"type": 0, "name": "Stealing star cookies"},
-                        {"type": 0, "name": "Praying to the Pineapple God"},
+                        {"type": 4, "name": "Snuggling with Mochi"},
+                        {"type": 4, "name": "Feeding Mochi"},
+                        {"type": 4, "name": "Petting Mochi"},
+                        {"type": 4, "name": "Snuggling with Matsu"},
+                        {"type": 4, "name": "Feeding Matsu"},
+                        {"type": 4, "name": "Petting Matsu"},
+                        {"type": 4, "name": "Eating pineapples"},
+                        {"type": 4, "name": "Eating pineapple pizza"},
+                        {"type": 4, "name": "Stealing pineapples"},
+                        {"type": 4, "name": "Stealing star cookies"},
+                        {"type": 4, "name": "Praying to the Pineapple God"},
                         {"type": 3, "name": "you"},
                     ]
                     random.seed()
                     _activity = random.choice(activities)
-                    if _activity["type"] == 0:  # Game
-                        activity = discord.Game(name=_activity["name"])
-                    elif _activity["type"] == 1:  # Streaming
-                        name = _activity["name"]
-                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-                    else:
-                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    activity = get_activity(_activity)
                     name = _activity["name"]
                     status = {
                         0: "Playing",
                         1: "Streaming",
                         2: "Listening to",
                         3: "Watching",
+                        4: "Custom status:",
                         5: "Competing in"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
 
             elif bot.name == "kyomi2":  # Mochi
                 activities = [
-                    {"type": 0, "name": "Looking for cookies"},
-                    {"type": 0, "name": "Snuggling with Mizuki"},
-                    {"type": 0, "name": "Stealing cookies from Mizuki"},
-                    {"type": 0, "name": "Eating cookies"},
+                    {"type": 4, "name": "Looking for cookies"},
+                    {"type": 4, "name": "Snuggling with Mizuki"},
+                    {"type": 4, "name": "Stealing cookies from Mizuki"},
+                    {"type": 4, "name": "Eating cookies"},
                 ]
                 random.seed()
                 _activity = random.choice(activities)
@@ -860,15 +912,16 @@ async def playing(bot: bot_data.Bot):
                 name = _activity["name"]
                 status = {
                     0: "Playing",
+                    4: "Custom status:",
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
             elif bot.name == "kyomi3":  # Matsu
                 activities = [
-                    {"type": 0, "name": "Looking for cheese"},
-                    {"type": 0, "name": "Snuggling with Mizuki"},
-                    {"type": 0, "name": "Stealing cheese from Mizuki"},
-                    {"type": 0, "name": "Eating cheese"},
+                    {"type": 4, "name": "Looking for cheese"},
+                    {"type": 4, "name": "Snuggling with Mizuki"},
+                    {"type": 4, "name": "Stealing cheese from Mizuki"},
+                    {"type": 4, "name": "Eating cheese"},
                 ]
                 random.seed()
                 _activity = random.choice(activities)
@@ -876,6 +929,7 @@ async def playing(bot: bot_data.Bot):
                 name = _activity["name"]
                 status = {
                     0: "Playing",
+                    4: "Custom status:",
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
@@ -892,7 +946,8 @@ async def playing(bot: bot_data.Bot):
                 name = _activity["name"]
                 status = {
                     0: "Playing",
-                    3: "Watching"
+                    3: "Watching",
+                    4: "Custom status:",
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
@@ -921,7 +976,7 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 0, "name": "Custom Status"},
                         {"type": 0, "name": "Discord"},
                         {"type": 3, "name": "Senko"},
-                        {"type": 5, "name": "uselessness"},
+                        # {"type": 5, "name": "uselessness"},
                         # {"type": 0, "name": "nothing"},
                         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=qD_CtEX5OuA"},
                         {"type": 3, "name": "you"},
@@ -946,34 +1001,32 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 0, "name": "something"},
                         # {"type": 0, "name": "sentience"},
                         # {"type": 0, "name": "RIP discord.py"},
+                        {"type": 4, "name": "Acquiring sentience..."}
                     ]
                     random.seed()
                     _activity = random.choice(activities)
-                    if _activity["type"] == 0:  # Game
-                        activity = discord.Game(name=_activity["name"])
-                    elif _activity["type"] == 1:  # Streaming
-                        name = _activity["name"]
-                        activity = discord.Streaming(name=name, details=name, url=_activity["url"])
-                    else:
-                        activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                    activity = get_activity(_activity)
                     name = _activity["name"]
                     status = {
                         0: "Playing",
                         1: "Streaming",
                         2: "Listening to",
                         3: "Watching",
+                        4: "Custom status:",
                         5: "Competing in"
                     }.get(_activity["type"], "Undefined")
                     logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
             _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
+            if time.april_fools():
+                activity.name = activity.name[::-1]
             await bot.change_presence(activity=activity, status=_status)
         except PermissionError:
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Failed to save changes.")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
         except Exception as e:
-            error(f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
-            error(general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
@@ -985,28 +1038,28 @@ async def avatars(bot: bot_data.Bot):
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
 
-    def error(text: str):
-        general.print_error(text)
-        logger.log(bot.name, "errors", text)
-
     while True:
         try:
             avatar = random.choice(lists.avatars)
             e = False
             s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
             try:
-                bio = await http.get(avatar, res_method="read")
+                bio: bytes = await http.get(avatar, res_method="read")
+                # Flip the avatar during 1st April
+                if time.april_fools():
+                    bio = images.april_fools_avatar(bio)
                 await bot.user.edit(avatar=bio)
             except discord.errors.HTTPException:
                 e = True
             send = s2 if e else s1
             logger.log(bot.name, "avatar", send)
         except PermissionError:
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
         except (aiohttp.ClientConnectorError, ConnectionError):
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
         except Exception as e:
-            error(f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
 
         await asyncio.sleep(1)
         await wait_until_next_iter(3600, 1)
@@ -1031,7 +1084,7 @@ async def polls(bot: bot_data.Bot):
             try:
                 guild: discord.Guild = bot.get_guild(guild_id)
                 if guild:
-                    language = bot.language(languages.FakeContext(guild, bot))
+                    language = bot.language(commands.FakeContext(guild, bot))
                     channel: discord.TextChannel = guild.get_channel(poll["channel_id"])
                     if channel:
                         embed = discord.Embed()
@@ -1116,7 +1169,7 @@ async def trials(bot: bot_data.Bot):
             try:
                 guild: discord.Guild = bot.get_guild(trial["guild_id"])
                 if guild:
-                    language = bot.language(languages.FakeContext(guild, bot))
+                    language = bot.language(commands.FakeContext(guild, bot))
                     yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
                     total = yes + neutral + no
                     score = yes - no
@@ -1204,7 +1257,7 @@ async def trials(bot: bot_data.Bot):
                                                         general.print_error(out)
                                                         logger.log(bot.name, "errors", out)
                                                 if duration:
-                                                    duration_text = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
+                                                    duration_text = bot.language2("en").delta_int(duration, accuracy=3, brief=False, affix=False)
                                                     # try:
                                                     #     if duration:
                                                     #         _duration2 = bot.language2("english").delta_int(duration, accuracy=3, brief=False, affix=False)
@@ -1284,7 +1337,7 @@ async def trials(bot: bot_data.Bot):
                             out = f"{time.time()} > {bot.full_name} > Trials > Trial {trial_id} > Action type detection went wrong."
                             general.print_error(out)
                             logger.log(bot.name, "errors", out)
-                        await send_mod_dm(bot, languages.FakeContext(guild, bot), member, action, f"Trial results (Score: {score:+}, {upvotes:.2%} voted yes)", duration_text)
+                        await send_mod_dm(bot, commands.FakeContext(guild, bot), member, action, f"Trial results (Score: {score:+}, {upvotes:.2%} voted yes)", duration_text)
                     else:  # The trial has failed, so restore the member's anarchist roles
                         if guild.id == 869975256566210641 and member:  # Nuriki's anarchy server
                             try:
@@ -1358,18 +1411,27 @@ async def trials(bot: bot_data.Bot):
 
 async def new_year(bot: bot_data.Bot):
     await bot.wait_until_ready()
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised 2022 New Year Script")
-    ny = time.dt(2022)
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised 2023 New Year Script")
+    # ny = time.dt(2022, 12, 31, 17, 22)
+    ny = time.dt(2023)
     now = time.now()
     if now > ny:
-        logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > It is already 2022...")
+        logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > It is already 2023...")
         return
 
-    channel = bot.get_channel(572857995852251169)  # 742885168997466196 Secretive-commands | Announcements channel: 572857995852251169
+    # Testing channels: 742885168997466196 Secretive-commands, 753000962297299005 SC2 | Announcements channels: 572857995852251169 SL, 970756319164399656 Ka
+    # channels = [bot.get_channel(742885168997466196)]
+    channels = [bot.get_channel(572857995852251169), bot.get_channel(970756319164399656)]
     delay = ny - now
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Waiting {delay} until midnight...")
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Waiting for {delay} until midnight...")
     await asyncio.sleep(delay.total_seconds())
-    await channel.send("It is now 2022. Congrats, you have all survived yet another year. Now it's time to see what kind of shitshow this year will bring...")
+    for channel in channels:
+        await channel.send("The year 2022 has finally come to an end.\n"
+                           "Another year has passed, and another has begun.\n"
+                           "This was overall quite a challenging year. Many bad things happened, albeit with some occasional good news inbetween.\n"
+                           "Now we can look back at this year and hope the next one will be better.\n"
+                           "Happy New Year, fellow members of Senko Lair and the Kargadia cult! "
+                           "Welcome to 2023, and let's see what this year will bring us...")
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > New Year script > Sent the New Year message. Exiting.")
     return
 
@@ -1379,7 +1441,7 @@ async def sl_holidays_updater(bot: bot_data.Bot):
     await wait_until_next_iter(update_speed, 1)  # Wait until midnight of the next day, to prevent sending holidays twice when restarting
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Senko Lair Holidays")
-    # Servers:  Senko Lair general, Kargadia BD & Hols, RK general
+    # Servers:  Senko Lair general, Kargadia Eve Earth, RK general
     channels = [568148147457490958, 974071578918785024, 738425419325243424]
     # Kargadia server temporarily excluded to not look weird while I test this stuff
     for ch in channels:
@@ -1398,9 +1460,10 @@ async def sl_holidays_updater(bot: bot_data.Bot):
                 if holiday == today:
                     for ch in channels:
                         channel = bot.get_channel(ch)
-                        await channel.send(f"Happy {holiday_names.get(key)}!")
+                        await channel.send(f"Happy {holiday_names.get(key, key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    sl_holidays[key] = (sl_holidays[key] + time2.relativedelta(years=1, time_class=time2.Earth)).date()
+                    # sl_holidays[key] = (sl_holidays[key] + time2.relativedelta(years=1, time_class=time2.Earth)).date()
+                    sl_holidays[key] = holiday.replace(year=holiday.year + 1)
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
@@ -1412,12 +1475,13 @@ async def sl_holidays_updater(bot: bot_data.Bot):
 
 async def ka_holidays_updater(bot: bot_data.Bot):
     update_speed = 86400
-    await wait_until_next_iter(update_speed, 1, time2.Kargadia)  # Update this every Kargadian midnight
+    update_delay = 21601  # Kargadian days start at 06:00, and so should their holidays
+    await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Kargadian Holidays")
     # I don't think Kargadian holidays need to be sent into SL
-    # Servers:  Kargadia BD & Hols, RK general
-    channels = [974071578918785024, 738425419325243424]
+    # Servers:  Kargadia Eve Karg,   RK general
+    channels = [1051868654037389342, 738425419325243424]
     for ch in channels:
         channel = bot.get_channel(ch)
         if channel is None or not can_send(channel):
@@ -1435,13 +1499,32 @@ async def ka_holidays_updater(bot: bot_data.Bot):
                 if holiday == ka_day:
                     for ch in channels:
                         channel = bot.get_channel(ch)
-                        await channel.send(f"Happy {holiday_names.get(key)}!")
+                        await channel.send(f"Happy {holiday_names.get(key, key)}!")
                     logger.log(bot.name, "holidays", f"{time.time()} > {bot.full_name} > Kargadia Holidays > It is now {holiday_names.get(key)}")
-                    ka_holidays[key] = (ka_holidays[key] + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
+                    ka_holidays[key] = holiday.replace(year=holiday.year + 1)
+                    # ka_holidays[key] = (ka_holidays[key] + time2.relativedelta(years=1, time_class=time2.Kargadia)).date()
                     break
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
             logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
 
         await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 1, time2.Kargadia)
+        await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
+
+
+async def dcu_calendar_updater(bot: bot_data.Bot):
+    update_speed = 604800  # 7 days / 1 week
+    update_delay = 345600  # 4 days -> Restart every Monday
+    await wait_until_next_iter(update_speed, update_delay)  # Wait until the start of next week
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised DCU Calendar Updater")
+    while True:
+        try:
+            await dcu.generate_ical()
+            logger.log(bot.name, "dcu", f"{time.time()} > {bot.full_name} > DCU Calendar > Fetched new timetable information and generated new .ics file")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > DCU Calendar > {type(e).__name__}: {e}")
+            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > DCU Calendar > {type(e).__name__}: {e}")
+
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, update_delay)

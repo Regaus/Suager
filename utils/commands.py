@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Type, TypeVar
 
 from discord.ext.commands import *
@@ -16,20 +17,22 @@ HookT = TypeVar("HookT", bound="Hook")
 ErrorT = TypeVar("ErrorT", bound="Error")
 
 
-def command(name: str = MISSING, cls: Type[CommandT] = MISSING, **attrs: Any):
+def command(name: str = MISSING, cls: Type[CommandT] = MISSING, nsfw: bool = False, **attrs: Any):
     if cls is MISSING:
         cls = Command  # type: ignore
 
     def decorator(func) -> CommandT:
         if isinstance(func, Command):
             raise TypeError("Callback is already a command.")
-        return cls(func, name=name, **attrs)
+        return cls(func, nsfw=nsfw, name=name, **attrs)
 
     return decorator
 
 
 class Command(Command):
-    pass
+    def __init__(self, func, nsfw: bool = False, *args, **kwargs):
+        self.nsfw: bool = nsfw
+        super().__init__(func, **kwargs)
 
 
 def group(name: str = MISSING, cls: Type[GroupT] = MISSING, **attrs: Any):
@@ -94,3 +97,11 @@ class UserID(MemberID):
                 return int(argument, base=10)  # For Kargadia citizen profiles, this should therefore accept citizen IDs
             except ValueError:
                 raise UserNotFound(argument) from None
+
+
+@dataclass
+class FakeContext:
+    """ Build a fake Context instead of commands.Context to pass on to Language.get() or other things """
+    guild: Any
+    bot: Bot
+    author: Any = None

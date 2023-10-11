@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import random
+from collections.abc import Callable, Awaitable
 from datetime import timedelta
 from io import BytesIO
 
@@ -10,11 +11,15 @@ import pytz
 from PIL import Image, ImageDraw, ImageFont
 from regaus import conworlds, time as time2
 
-from utils import arg_parser, bases, bot_data, commands, emotes, general, http, permissions, time
+from utils import arg_parser, bases, bot_data, commands, dcu, emotes, general, http, images, permissions, time, paginators
 
 
 def custom_role_enabled(ctx):
     return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473, 759095477979054081]
+
+
+def dcu_data_access(ctx):
+    return ctx.author.id in [302851022790066185, 942829514457755738]
 
 
 class Utility(commands.Cog):
@@ -45,7 +50,7 @@ class Utility(commands.Cog):
         if user.id == ctx.author.id:
             send += language.string("util_time_custom", time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
         else:
-            send += language.string("util_time_custom2", user=user.name, time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id))
+            send += language.string("util_time_custom2", user=general.username(user), time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id))
         return await ctx.send(send)
 
     @commands.command(name="base", aliases=["bases", "bc"])
@@ -71,11 +76,11 @@ class Utility(commands.Cog):
                 mid = bases.from_base_float(number, base_from, 160) if float_conv else bases.from_base(number, base_from)
             caps = caps.lower() == "caps"
             end = bases.to_base_float(mid, base_to, float_precision, caps) if float_conv else bases.to_base(mid, base_to, caps)
-            return await ctx.send(f"{ctx.author.name}: {number} (base {base_from}) -> {end} (base {base_to})")
+            return await ctx.send(f"{general.username(ctx.author)}: {number} (base {base_from}) -> {end} (base {base_to})")
         except ValueError:
-            return await ctx.send(f"{ctx.author.name}, this number is invalid.")
+            return await ctx.send(f"{general.username(ctx.author)}, this number is invalid.")
         except OverflowError:
-            return await ctx.send(f"{ctx.author.name}, the number specified is too large to convert to a proper value.")
+            return await ctx.send(f"{general.username(ctx.author)}, the number specified is too large to convert to a proper value.")
 
     @commands.command(name="settz", aliases=["tz", "settimezone", "timezone"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -132,7 +137,7 @@ class Utility(commands.Cog):
             if _date is None:
                 def dt(_month, _day):
                     return time2.datetime(now.year, _month, _day, tz=tz)
-                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(7, 27), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
+                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
                          time2.datetime(now.year + 1, 1, 1, tz=tz)]
                 for _date in dates:
                     if now < _date:
@@ -165,8 +170,9 @@ class Utility(commands.Cog):
     async def time_diff(ctx: commands.Context, string: str, multiplier: int):
         language = ctx.language()
         try:
-            _delta = time.interpret_time(string) * multiplier
-            delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds)
+            # _delta = time.interpret_time(string) * multiplier
+            # delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds)
+            delta = time.interpret_time(string, time2.relativedelta, time2.Earth) * multiplier
             now = time2.datetime.now()
             then = now + delta
         except (ValueError, OverflowError) as e:
@@ -193,7 +199,7 @@ class Utility(commands.Cog):
     async def weather(self, ctx: commands.Context, *, place: str):
         """ Check weather in a place """
         language = self.bot.language(ctx)
-        lang = "en" if language.data("_conlang") is not False else language.string("_short")
+        lang = "en" if language.data("_conlang") else language.string("_short")
         a = await ctx.send(f"{emotes.Loading} Loading weather for {place}...")
         try:
             token = self.bot.config["weather_api_token"]
@@ -339,7 +345,7 @@ class Utility(commands.Cog):
         font_size = 48
         size = 256
         try:
-            font = ImageFont.truetype("assets/font.ttf", size=font_size)
+            font = ImageFont.truetype(images.font_files["jetbrains mono"], size=font_size)
         except ImportError:
             await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font = None
@@ -361,14 +367,16 @@ class Utility(commands.Cog):
             draw2b = ImageDraw.Draw(image2b)
             hex2a = "#" + _hex(red2a) + _hex(green2a) + _hex(blue2a)
             hex2b = "#" + _hex(red2b) + _hex(green2b) + _hex(blue2b)
-            width2a, height2a = draw2a.textsize(hex2a, font)
-            width2b, height2b = draw2b.textsize(hex2b, font)
+            # width2a, height2a = draw2a.textsize(hex2a, font)
+            # width2b, height2b = draw2b.textsize(hex2b, font)
             sum2a = (red2a + green2a + blue2a) // 3
             sum2b = (red2b + green2b + blue2b) // 3
             fill2a = (0, 0, 0, 255) if sum2a >= 128 or green2a >= 224 else (255, 255, 255, 255)
             fill2b = (0, 0, 0, 255) if sum2b >= 128 or green2b >= 224 else (255, 255, 255, 255)
-            draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
-            draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
+            draw2a.text((size // 2, size), hex2a, font=font, fill=fill2a, anchor="md")
+            draw2b.text((size // 2, size), hex2b, font=font, fill=fill2b, anchor="md")
+            # draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
+            # draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
             image2.paste(image2a, start2a)
             image2.paste(image2b, start2b)
 
@@ -389,14 +397,14 @@ class Utility(commands.Cog):
             v1, v2 = [num1, num2]
         r = random.randint(v1, v2)
         n1, n2, no = language.number(v1), language.number(v2), language.number(r)
-        return await ctx.send(language.string("fun_roll", name=ctx.author.name, num1=n1, num2=n2, output=no))
+        return await ctx.send(language.string("fun_roll", name=general.username(ctx.author), num1=n1, num2=n2, output=no))
 
     @commands.command(name="reverse")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def reverse_text(self, ctx: commands.Context, *, text: str):
         """ Reverses text """
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
-        return await ctx.send(f"🔁 {ctx.author.name}:\n{reverse}")
+        return await ctx.send(f"🔁 {general.username(ctx.author)}:\n{reverse}")
 
     @commands.command(name="dm")
     @commands.is_owner()
@@ -454,7 +462,7 @@ class Utility(commands.Cog):
     async def vote(self, ctx: commands.Context, *, text: str):
         """ Start a vote """
         language = self.bot.language(ctx)
-        message = await ctx.send(language.string("fun_vote", name=ctx.author.name, text=text))
+        message = await ctx.send(language.string("fun_vote", name=general.username(ctx.author), text=text))
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
         await message.add_reaction(emotes.Deny)
@@ -464,7 +472,7 @@ class Utility(commands.Cog):
     async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
         """ Get someone's avatar """
         user: discord.User | discord.Member = who or ctx.author
-        return await ctx.send(self.bot.language(ctx).string("discord_avatar", user=user.name, avatar=str(user.display_avatar.replace(size=4096, static_format='png'))))
+        return await ctx.send(self.bot.language(ctx).string("discord_avatar", user=general.username(user), avatar=str(user.display_avatar.replace(size=4096, static_format='png'))))
 
     @commands.command(name="avatar2", aliases=["av2", "a2", "ay"])
     @commands.is_owner()
@@ -563,9 +571,10 @@ class Utility(commands.Cog):
         user: discord.Member = who or ctx.author
         language = self.bot.language(ctx)
         embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("discord_user_about", name=user.name)
+        embed.title = language.string("discord_user_about", name=general.username(user))
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
-        embed.add_field(name=language.string("discord_user_username"), value=user, inline=True)
+        embed.add_field(name=language.string("discord_user_username"), value=user.name, inline=True)
+        embed.add_field(name=language.string("discord_user_display_name"), value=user.global_name, inline=True)
         embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
         embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=False)
@@ -595,7 +604,8 @@ class Utility(commands.Cog):
         embed = discord.Embed(colour=general.random_colour())
         embed.title = language.string("discord_user_about", name=user.name)
         embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
-        embed.add_field(name=language.string("discord_user_username"), value=str(user), inline=True)
+        embed.add_field(name=language.string("discord_user_username"), value=user.name, inline=True)
+        embed.add_field(name=language.string("discord_user_display_name"), value=user.global_name, inline=True)
         embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
         embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=True)
         return await ctx.send(embed=embed)
@@ -610,7 +620,7 @@ class Utility(commands.Cog):
         embed.description = language.string("discord_emoji", name=emoji.name, id=emoji.id, animated=language.yes(emoji.animated), server=server,
                                             created_at=language.time(emoji.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), url=emoji.url)
         embed.set_image(url=emoji.url)
-        return await ctx.send(f"{ctx.author.name}:", embed=embed)
+        return await ctx.send(f"{general.username(ctx.author)}:", embed=embed)
 
     @commands.group(name="server", aliases=["guild"], invoke_without_command=True)
     @commands.guild_only()
@@ -710,6 +720,7 @@ class Utility(commands.Cog):
         -c/--colour: A hex code for embed's colour
 
         All of the arguments are optional, so if you don't fill them they will simply be empty.
+        Use "\n" to add newlines - The current implementation of the code doesn't insert them otherwise
         Example: //embed --title Good evening --description Some very interesting text --colour ff0057"""
         embed = discord.Embed()
         parser = arg_parser.Arguments()
@@ -782,7 +793,7 @@ class Reminders(Utility, name="Utility"):
         #     random_id = general.random_id()
         # self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False, self.bot.name))
         self.bot.db.execute("INSERT INTO reminders(uid, expiry, message, handled, bot) VALUES (?, ?, ?, ?, ?)", (ctx.author.id, expiry, reminder, 0, self.bot.name))
-        return await ctx.send(language.string("util_reminders_success", author=ctx.author.name, delta=diff, time=when))
+        return await ctx.send(language.string("util_reminders_success", author=general.username(ctx.author), delta=diff, time=when, p=ctx.prefix))
         # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
 
     @commands.group(name="reminders", aliases=["reminder"])
@@ -794,9 +805,9 @@ class Reminders(Utility, name="Utility"):
             # reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
             reminders = self.bot.db.fetch("SELECT * FROM reminders WHERE uid=? AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
             if not reminders:
-                return await ctx.send(language.string("util_reminders_none", author=ctx.author.name))
+                return await ctx.send(language.string("util_reminders_none", author=general.username(ctx.author)))
                 # return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
-            output = language.string("util_reminders_list", author=ctx.author)
+            output = language.string("util_reminders_list", author=general.username(ctx.author))
             # output = f"**{ctx.author}**, here is the list of your currently active reminders"
             outputs = []
             _reminder = 0
@@ -808,11 +819,12 @@ class Reminders(Utility, name="Utility"):
                 outputs.append(language.string("util_reminders_item", i=_reminder, message=reminder["message"], id=reminder["id"], time=expires_on, delta=expires_in))
                 # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
             output2 = "\n\n".join(outputs)
+            output3 = language.string("util_reminders_list_end", p=ctx.prefix)
             if len(output2) > 1900:
                 _data = BytesIO(str(output2).encode('utf-8'))
-                return await ctx.send(output, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
+                return await ctx.send(output + output3, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
             else:
-                return await ctx.send(f"{output}\n\n{output2}")
+                return await ctx.send(f"{output}\n\n{output2}{output3}")
 
     @reminders.command(name="edit")
     async def reminders_edit(self, ctx: commands.Context, reminder_id: int, *, args: str):
@@ -893,7 +905,7 @@ class UtilitySuager(Reminders, name="Utility"):
         Example: //customrole --name Role Name --colour ff0057"""
         data = self.bot.db.fetchrow("SELECT * FROM custom_role WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
         if not data:
-            return await ctx.send(f"Doesn't seem like you have a custom role in this server, {ctx.author.name}")
+            return await ctx.send(f"Doesn't seem like you have a custom role in this server, {general.username(ctx.author)}")
         parser = arg_parser.Arguments()
         parser.add_argument('-c', '--colour', '--color', nargs=1)
         parser.add_argument('-n', '--name', nargs="+")
@@ -928,7 +940,7 @@ class UtilitySuager(Reminders, name="Utility"):
             await role.edit(name=name, colour=colour, reason="Custom Role change")
         except Exception as e:
             return await ctx.send(f"An error occurred while updating custom role: {type(e).__name__}: {e}")
-        return await ctx.send(f"Successfully updated your custom role, {ctx.author.name}")
+        return await ctx.send(f"Successfully updated your custom role, {general.username(ctx.author)}")
 
     @commands.command(name="grantrole")
     @commands.guild_only()
@@ -941,12 +953,106 @@ class UtilitySuager(Reminders, name="Utility"):
             self.bot.db.execute("INSERT INTO custom_role VALUES (?, ?, ?)", (user.id, role.id, ctx.guild.id))
             try:
                 await user.add_roles(role, reason="Custom Role grant")
-                return await ctx.send(f"Granted {role.name} to {user.name}")
+                return await ctx.send(f"Granted {role.name} to {general.username(ctx.author)}")
             except discord.Forbidden:
-                return await ctx.send(f"{role.name} could not be granted to {user.name}. It has, however, been saved to the database.")
+                return await ctx.send(f"{role.name} could not be granted to {general.username(ctx.author)}. It has, however, been saved to the database.")
         else:
             self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
-            return await ctx.send(f"Updated custom role of {user.name} to {role.name}")
+            return await ctx.send(f"Updated custom role of {general.username(ctx.author)} to {role.name}")
+
+    @commands.group(name="dcu", case_insensitive=True)
+    @commands.check(dcu_data_access)
+    async def dcu_stuff(self, ctx: commands.Context):
+        """ Access stuff related to DCU and its timetables """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True)
+    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1", custom_week: str = ""):
+        """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
+        if ctx.invoked_subcommand is None:
+            try:
+                date = None
+                if custom_week:
+                    date = time2.date.from_iso(custom_week)
+                    date = time2.datetime.combine(date, time2.time(), dcu.TZ)
+                return await ctx.send(embed=await dcu.get_timetable_course(course_code, date))
+            except KeyError as e:
+                return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
+            except Exception as e:
+                # await ctx.send(general.traceback_maker(e))
+                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_timetable.command(name="modules", aliases=["module", "m"])
+    async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
+        """ Fetch DCU timetables for specified modules for the current week"""
+        try:
+            date = None
+            try:
+                date = time2.date.from_iso(module_codes[-1])
+                date = time2.datetime.combine(date, time2.time(), dcu.TZ)
+                module_codes = module_codes[:-1]
+            except ValueError:
+                pass
+            return await ctx.send(embed=await dcu.get_timetable_module(module_codes, date))
+        except KeyError as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
+        except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
+            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_timetable.command(name="room", aliases=["rooms", "r"])
+    async def dcu_timetable_room(self, ctx: commands.Context, room_code: str, custom_week: str = ""):
+        """ Fetch DCU timetables for a given room for the current week"""
+        try:
+            date = None
+            if custom_week:
+                date = time2.date.from_iso(custom_week)
+                date = time2.datetime.combine(date, time2.time(), dcu.TZ)
+            return await ctx.send(embed=await dcu.get_timetable_room(room_code, date))
+        except KeyError as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search rooms` to find your room code.")
+        except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
+            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_stuff.group(name="search", aliases=["list"], case_insensitive=True)
+    async def dcu_search(self, ctx: commands.Context):
+        """ Find a course, module or room """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    async def dcu_list(self, ctx: commands.Context, get_function: Callable[[str | None], Awaitable[list[str]]], title: str, search: str, *, notes: str = None):
+        data = await get_function(search)
+        if not data:
+            return await ctx.send("No data has been found. Try a different search?")
+        paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
+        for line in data:
+            paginator.add_line(line)
+        embed = discord.Embed(title=title, colour=general.random_colour())
+        if notes is not None:
+            embed.set_footer(text=notes)
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.send_to(ctx)
+
+    @dcu_search.command(name="courses", aliases=["course", "courselist"])
+    async def dcu_courses(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU course list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_courses, "DCU Course Codes", search)
+
+    @dcu_search.command(name="modules", aliases=["module", "modulelist"])
+    async def dcu_modules(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU module list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_modules, "DCU Module Codes", search,
+                                       notes="Note: Some of the modules may have been parsed incorrectly, however I tried to reduce the chance of this happening")
+
+    @dcu_search.command(name="rooms", aliases=["room", "roomlist", "locations", "location", "locationlist"])
+    async def dcu_rooms(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU module list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_rooms, "DCU Room Codes", search)
 
 
 class UtilityCobble(Utility, name="Utility"):

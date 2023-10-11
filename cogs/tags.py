@@ -21,8 +21,8 @@ class Tags(commands.Cog):
             if tag:
                 self.bot.db.execute("UPDATE tags SET usage=usage+1 WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
                 content = tag["content"]\
-                    .replace("[USERNAME]", ctx.author.name)\
-                    .replace("[USER]", str(ctx.author))\
+                    .replace("[USERNAME]", general.username(ctx.author))\
+                    .replace("[USER]", general.username(ctx.author))\
                     .replace("[USER_ID]", str(ctx.author.id))\
                     .replace("[AVATAR]", str(ctx.author.display_avatar.replace(static_format="png", size=1024)))\
                     .replace("[JOINED]", language.time(ctx.author.joined_at, short=0, dow=False, seconds=True, tz=True))\
@@ -44,7 +44,7 @@ class Tags(commands.Cog):
     async def tag_variables(self, ctx: commands.Context):
         """ Lists all available tag variables """
         variables = {
-            "USERNAME": f"Your username (e.g. {ctx.author.name})",
+            "USERNAME": f"Your username (e.g. {general.username(ctx.author)})",
             "USER": f"Your name and tag (e.g. {ctx.author})",
             "USER_ID": "Your user ID",
             "AVATAR": "URL to your avatar/profile picture",
@@ -72,7 +72,7 @@ class Tags(commands.Cog):
             return await ctx.send(language.string("tags_create_already", tag=tag_name.lower()))
         self.bot.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                              (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0))
-        return await ctx.send(language.string("tags_create_success", tag=tag_name.lower(), author=ctx.author.name))
+        return await ctx.send(language.string("tags_create_success", tag=tag_name.lower(), author=general.username(ctx.author)))
 
     async def try_get(self, uid: int):
         try:
@@ -82,7 +82,7 @@ class Tags(commands.Cog):
 
     async def get_user(self, guild: discord.Guild, uid: int, language: languages.Language) -> str:
         user = guild.get_member(uid)
-        return str(user) if user is not None else str(await self.try_get(uid)) + f" | {language.string('tags_user_guild')}"
+        return general.username(user) if user is not None else str(await self.try_get(uid)) + f" | {language.string('tags_user_guild')}"
 
     @tags.command(name="info")
     async def tag_info(self, ctx: commands.Context, *, tag_name: str):
@@ -117,7 +117,7 @@ class Tags(commands.Cog):
                     return True
             return False
         if tag["owner"] == ctx.author.id or (await permissions.check_permissions(ctx, perms={'kick_members': True})):
-            confirm_msg = await ctx.send(language.string("tags_delete_confirm", author=ctx.author.name, tag=tag["name"]))
+            confirm_msg = await ctx.send(language.string("tags_delete_confirm", author=general.username(ctx.author), tag=tag["name"]))
             try:
                 await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
             except asyncio.TimeoutError:
@@ -183,7 +183,7 @@ class Tags(commands.Cog):
             return await ctx.send(language.string("tags_claim_server"))
         else:
             self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (ctx.author.id, ctx.guild.id, tag["name"]))
-            return await ctx.send(language.string("tags_claim_success", author=ctx.author.name, tag=tag["name"]))
+            return await ctx.send(language.string("tags_claim_success", author=general.username(ctx.author), tag=tag["name"]))
 
     @tags.command(name="user")
     async def tags_user(self, ctx: commands.Context, who: discord.Member = None, page: int = 1):
@@ -192,11 +192,11 @@ class Tags(commands.Cog):
         user = who or ctx.author
         tags = self.bot.db.fetch("SELECT * FROM tags WHERE owner=? AND gid=? ORDER BY name", (user.id, ctx.guild.id))
         if not tags:
-            return await ctx.send(language.string("tags_user_none", user=user.name))
+            return await ctx.send(language.string("tags_user_none", user=general.username(user)))
         block = "```fix"
         for i, d in enumerate(tags[(page - 1) * 20:page * 20], start=(page - 1) * 20 + 1):
             block += f"\n{i:02d}) {d['name']} | {language.plural(d['usage'], 'tags_list_uses')}"
-        return await ctx.send(language.string("tags_user", user=user.name, page=language.number(page), max=language.number(ceil(len(tags) / 20)), data=block))
+        return await ctx.send(language.string("tags_user", user=general.username(user), page=language.number(page), max=language.number(ceil(len(tags) / 20)), data=block))
 
     @tags.command(name="all")
     async def tags_all(self, ctx: commands.Context, page: int = 1):

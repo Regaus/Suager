@@ -7,7 +7,7 @@ from typing import List
 import discord
 from regaus import time as time2
 
-from utils import bot_data, commands, general, languages, logger, time
+from utils import bot_data, commands, general, logger, time, cpu_burner
 
 
 class Events(commands.Cog):
@@ -15,10 +15,17 @@ class Events(commands.Cog):
         self.bot = bot
         self.db = self.bot.db
         self.local_config = self.bot.local_config
+        # Watched blocked users
         self.blocked = [667187968145883146, 852695205073125376]
+        # Watched ignored chans: none
+        self.watch_channels = []
         self.bad = ["reg", "reag", "302851022790066185"]
+        self.bad2 = ["rega", "reag", "regg", "302851022790066185"]
         self.blocked_logs = 739183533792297164
-        self.updates = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713]
+        # Suager updates:      SL announcements,   3tk4 updates,       mimohome suwu,      Chill Crew updates, 1337xp updates,     # Kargadia updates
+        self.updates_suager = [572857995852251169, 740665941712568340, 786008719657664532, 796755072427360256, 843876833221148713, 1051869244771549314]
+        # Cobble updates:      Kargadia updates
+        self.updates_cobble = [1051869244771549314]
         self.dm_logger = 806884278037643264  # DM logs channel
 
     @commands.Cog.listener()
@@ -48,28 +55,44 @@ class Events(commands.Cog):
                         extra.extend(file_links)
                 extra_str = "\n\n" + "\n".join(extra) if extra else ""
 
-                await channel.send(f"{ctx.author} ({ctx.author.id}) | {now}\n{ctx.content[:limit]}{extra_str}", embeds=embeds, files=files)
+                await channel.send(f"{general.username(ctx.author)} ({ctx.author.name} - {ctx.author.id}) | {now}\n{ctx.content[:limit]}{extra_str}", embeds=embeds, files=files)
 
         if ctx.author.id in self.blocked:
             for word in self.bad:
                 if word in ctx.content.lower():
-                    channel = self.bot.get_channel(self.blocked_logs)
-                    gid = ctx.guild.id if ctx.guild is not None else "not a guild"
-                    await channel.send(f"{ctx.author} ({ctx.author.id}) | {ctx.guild} ({gid}) | {ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id}) | {time.time()}\n{ctx.content}")
+                    await self.handle_logged_message(ctx, 1)
+                    break
+        if ctx.channel.id in self.watch_channels:
+            for word in self.bad2:
+                if word in ctx.content.lower():
+                    await self.handle_logged_message(ctx, 2)
                     break
 
-        if self.bot.name == "suager":
-            if ctx.channel.id == 742886280911913010:
-                for channel_id in self.updates:
+        await self.update_message(ctx, "suager",  742886280911913010, self.updates_suager)  # Update channel: RK suager-updates
+        await self.update_message(ctx, "cobble", 1051871739879116821, self.updates_cobble)  # Update channel: RK cobble-updates
+
+    async def handle_logged_message(self, ctx: discord.Message, msg_type: int):
+        channel = self.bot.get_channel(self.blocked_logs)
+        gid = ctx.guild.id if ctx.guild is not None else "not a guild"
+        types = {1: "User", 2: "Channel"}
+        _author = f"{general.username(ctx.author)} ({ctx.author.name} - {ctx.author.id})"
+        _server = f"{ctx.guild} ({gid})"
+        _channel = f"{ctx.channel.mention} ({ctx.channel.name} - {ctx.channel.id})"
+        return await channel.send(f"{_author} | {_server} | {_channel} | {time.time()} | Type: {types[msg_type]}\n{ctx.content}")
+
+    async def update_message(self, ctx: discord.Message, bot_name: str, update_channel: int, channel_ids: list[int]):
+        if self.bot.name == bot_name:
+            if ctx.channel.id == update_channel:
+                for channel_id in channel_ids:
                     channel = self.bot.get_channel(channel_id)
                     # These don't need to be logged because nobody cares
                     try:
                         if channel is not None:
-                            await channel.send(f"{ctx.author} | Suager updates | {time.time()}\n{ctx.content}")
+                            await channel.send(f"{general.username(ctx.author)} | {self.bot.full_name} updates | {time.time()}\n{ctx.content}")
                         else:
                             general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} was not found...")
                     except Exception as e:
-                        general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > {channel_id} > {type(e).__name__}: {e}")
+                        general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} > {type(e).__name__}: {e}")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
@@ -177,6 +200,12 @@ class Events(commands.Cog):
         logger.log(self.bot.name, "errors", error_message)
 
     @commands.Cog.listener()
+    async def on_command(self, _ctx):
+        """ Triggered when a command is run """
+        cpu_burner.run = False
+        cpu_burner.last_command = time.now_ts()
+
+    @commands.Cog.listener()
     async def on_command_completion(self, ctx):
         """ Triggered when a command successfully completes """
         guild = getattr(ctx.guild, "name", "Private Message")
@@ -244,8 +273,8 @@ class Events(commands.Cog):
                         logger.log(self.bot.name, "errors", out)
 
         if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
-            if member.name[0] < "A":
-                await member.edit(reason="De-hoist", nick=f"\u17b5{member.name[:31]}")
+            if member.display_name[0] < "A":
+                await member.edit(reason="De-hoist", nick=f"\u17b5{member.display_name[:31]}")
 
         if data:
             settings = json.loads(data["data"])
@@ -272,10 +301,10 @@ class Events(commands.Cog):
                 if welcome["channel"]:
                     channel = self.bot.get_channel(welcome["channel"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         message = welcome["message"] \
                             .replace("[MENTION]", member.mention)\
-                            .replace("[USER]", member.name)\
+                            .replace("[USER]", general.username(member))\
                             .replace("[SERVER]", member.guild.name)\
                             .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=True))\
                             .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=True))\
@@ -293,9 +322,9 @@ class Events(commands.Cog):
                 if user_logs["join"]:
                     channel = self.bot.get_channel(user_logs["join"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         embed = discord.Embed(title=language.string("events_user_joined"), colour=general.green2)
-                        embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
+                        embed.add_field(name=language.string("discord_user_username"), value=f"{member} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
                         embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True, tz=True), inline=False)
                         embed.set_thumbnail(url=str(member.display_avatar.replace(size=1024, static_format="png")))
@@ -325,8 +354,9 @@ class Events(commands.Cog):
         if self.bot.name == "suager":
             if member.guild.id == 568148147457490954:  # Senko Lair
                 role_ids = {
-                    2021: 794699877325471776,
-                    2022: 922602168010309732
+                    2021:  794699877325471776,
+                    2022:  922602168010309732,
+                    2023: 1091828639940747274,
                 }
                 role_id = role_ids[time.now().year]
                 await member.add_roles(member.guild.get_role(role_id))
@@ -358,7 +388,7 @@ class Events(commands.Cog):
 
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
-                await member.edit(nick=f"✧₊˚🍰⌇{member.name[:23]}🌙⋆｡˚", reason="Joining the server")
+                await member.edit(nick=f"✧₊˚🍰⌇{general.username(member)[:23]}🌙⋆｡˚", reason="Joining the server")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
@@ -383,10 +413,10 @@ class Events(commands.Cog):
                 if goodbye["channel"]:
                     channel = self.bot.get_channel(goodbye["channel"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         message = goodbye["message"] \
                             .replace("[MENTION]", member.mention)\
-                            .replace("[USER]", member.name)\
+                            .replace("[USER]", general.username(member))\
                             .replace("[SERVER]", member.guild.name)\
                             .replace("[CREATED_AT]", language.time(member.created_at, short=1, dow=False, seconds=False, tz=True))\
                             .replace("[JOINED_AT]", language.time(member.joined_at, short=1, dow=False, seconds=False, tz=True))\
@@ -405,9 +435,9 @@ class Events(commands.Cog):
                 if user_logs["leave"]:
                     channel = self.bot.get_channel(user_logs["leave"])
                     if channel:
-                        language = self.bot.language(languages.FakeContext(member.guild, self.bot))
+                        language = self.bot.language(commands.FakeContext(member.guild, self.bot))
                         embed = discord.Embed(title=language.string("events_user_left"), colour=general.red3)
-                        embed.add_field(name=language.string("discord_user_username"), value=f"{member.name} ({member.mention})", inline=False)
+                        embed.add_field(name=language.string("discord_user_username"), value=f"{member} ({member.mention})", inline=False)
                         embed.add_field(name=language.string("discord_user_id"), value=str(member.id), inline=False)
                         embed.add_field(name=language.string("discord_created_at"), value=language.time(member.created_at, short=0, dow=False, seconds=True, tz=True), inline=False)
                         joined = language.time(member.joined_at, short=0, dow=False, seconds=True, tz=True)
@@ -432,7 +462,10 @@ class Events(commands.Cog):
             self.bot.uptime = time.now(None)
 
         print(f"{time.time()} > {self.bot.full_name} > Ready: {self.bot.user} - {len(self.bot.guilds)} servers, {len(self.bot.users)} users")
-        playing = f"Good morning | v{general.get_version()[self.bot.name]['short_version']}"
+        try:
+            playing = f"Good morning | v{general.get_version()[self.bot.name]['short_version']}"
+        except KeyError:
+            playing = "Good morning | Version unknown"
         await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.full_name} > Bot is online")
 
@@ -570,7 +603,7 @@ class Events(commands.Cog):
                     enabled: bool = logs_settings.get("enabled", False)
                     if not enabled:
                         return
-                    delete_id: int = logs_settings.get("delete", 0)
+                    delete_id: int = logs_settings.get("edit", 0)
                     if delete_id == 0:
                         return
                     ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
@@ -591,13 +624,13 @@ class Events(commands.Cog):
                 await after.edit(nick=None)
 
         # Some people don't learn
-        if after.guild.id == 378586302703992835 and after.id == 302851022790066185 and after.nick is not None:
-            try:
-                await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
-            except discord.Forbidden:
-                message = f"{time.time()} > {self.bot.full_name} > Nickname Change > Can't revert nickname change for {after.name} in {after.guild.name} - Forbidden"
-                general.print_error(message)
-                logger.log(self.bot.name, "errors", message)
+        # if after.guild.id == 378586302703992835 and after.id == 302851022790066185 and after.nick is not None:
+        #     try:
+        #         await after.edit(nick=None, reason="De skullar mun tekinaan jollaan")
+        #     except discord.Forbidden:
+        #         message = f"{time.time()} > {self.bot.full_name} > Nickname Change > Can't revert nickname change for {after.name} in {after.guild.name} - Forbidden"
+        #         general.print_error(message)
+        #         logger.log(self.bot.name, "errors", message)
 
         # Roles - boosters in Kyomi's server
         if self.bot.name == "kyomi" and after.guild.id == 693948857939132478:  # Midnight Dessert
@@ -614,10 +647,10 @@ class Events(commands.Cog):
 
                 booster_role = after.guild.get_role(716324385119535168)
                 if booster_role in roles_gained:  # User started boosting MD
-                    await after.edit(nick=f"⁀➷Booster!🧁 ☆ {after.name[:14]} 🍩 ✦", reason="Applying booster nick design")
+                    await after.edit(nick=f"⁀➷Booster!🧁 ☆ {general.username(after)[:14]} 🍩 ✦", reason="Applying booster nick design")
                 if booster_role in roles_lost:  # User no longer boosts MD
                     if "⁀➷Booster!🧁 ☆" in after.nick:  # If they still have "Booster" in their nickname
-                        await after.edit(nick=f"✧₊˚🍰⌇{after.name[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
+                        await after.edit(nick=f"✧₊˚🍰⌇{general.username(after)[:23]}🌙⋆｡˚", reason="Removing booster nick design")  # Default nickname design
 
 
 async def setup(bot: bot_data.Bot):

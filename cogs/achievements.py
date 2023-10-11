@@ -3,7 +3,8 @@ from io import BytesIO
 import discord
 from PIL import Image, ImageDraw, ImageFont
 
-from utils import bot_data, commands, emotes
+from utils import bot_data, commands, emotes, images
+from utils.general import username
 
 achievement_colours = [
     (96, 96, 96),     # Tier 0
@@ -53,7 +54,8 @@ class Achievements(commands.Cog):
         large_size = 96
         img = Image.new("RGBA", ((width + 20) * shelves - 20, 256 * rows + large_size), color=(0, 0, 0, 64))
         dr = ImageDraw.Draw(img)
-        font_dir = "assets/font.ttf"
+        # font_dir = "assets/font.ttf"
+        font_dir = images.font_files["whitney"]
         try:
             font = ImageFont.truetype(font_dir, size=large_size)
             font_med = ImageFont.truetype(font_dir, size=64)
@@ -61,7 +63,7 @@ class Achievements(commands.Cog):
         except ImportError:
             await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font, font_med, font_small = None, None, None
-        w, _ = dr.textsize(str(user), font=font)
+        w, _ = dr.textsize(username(user), font=font)
         max_description = language.string("achievements_highest")
         # max_description = "Highest achievement tier reached!"
 
@@ -151,12 +153,12 @@ class Achievements(commands.Cog):
         max_tier = max(tiers)
         # req = min_tier + 1 if min_tier < 12 else 12
         # generate_box(2, 5, min_tier, 12, "Achievements", f"Reach tier {req} on all achievements", min_tier, req, min_tier)
-        dr.text(((((width + 20) * shelves - 20) - w) / 2, -15), str(user), font=font, fill=achievement_colours[max_tier])
+        dr.text(((((width + 20) * shelves - 20) - w) / 2, -15), username(user), font=font, fill=achievement_colours[max_tier])
         bio = BytesIO()
         img.save(bio, "PNG")
         bio.seek(0)
         # f"This is what **{user}** has accomplished so far."
-        return await ctx.send(language.string("achievements_achievements", user=str(user)), file=discord.File(bio, filename="achievements.png"))
+        return await ctx.send(language.string("achievements_achievements", user=username(user)), file=discord.File(bio, filename="achievements.png"))
 
     @commands.command(name="tiers")
     @commands.is_owner()
@@ -166,7 +168,7 @@ class Achievements(commands.Cog):
         from io import BytesIO
         img = Image.new("RGBA", (2000, 200 * len(achievement_colours)), color=(0, 0, 0, 0))
         dr = ImageDraw.Draw(img)
-        font = ImageFont.truetype("assets/font.ttf", size=128)
+        font = ImageFont.truetype(images.font_files["whitney"], size=128)  # "assets/font.ttf"
         for i in range(len(achievement_colours)):
             paste = Image.new("RGBA", (1500, 150), color=achievement_colours[i])
             img.paste(paste, (500, 200 * i + 25))

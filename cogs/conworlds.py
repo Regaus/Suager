@@ -3,9 +3,10 @@ import re
 from math import atan2, ceil, cos, radians as rad, sin, sqrt
 
 import discord
+from pytz.tzinfo import DstTzInfo
 from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
 
-from utils import bot_data, commands, conlangs
+from utils import bot_data, commands, conlangs, conworlds as conworlds2, views, general
 
 longest_city = {
     "Virkada": 15,
@@ -27,7 +28,7 @@ class Conworlds(commands.Cog):
 
         Example: ..time78 Reggar 2021-07-18 20:00"""
         if _date is None:
-            dt = time.datetime.now()
+            dt = time.datetime.now(tz=self.bot.timezone(ctx.author.id, time_class="Earth"))
         else:
             try:
                 if not _time:
@@ -40,13 +41,17 @@ class Conworlds(commands.Cog):
                 y, m, d = int(_y), int(_m), int(_d)
                 date_part = time.date(y, m, d, time.Earth)
                 dt = time.datetime.combine(date_part, time_part, time.utc)
-                dt2 = dt.as_timezone(self.bot.timezone(ctx.author.id))
+                dt2 = dt.as_timezone(self.bot.timezone(ctx.author.id, time_class="Earth"))
                 dt.replace(tz=dt2.tzinfo)
                 _expiry = dt.to_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
         # time_earth = self.bot.language2("english").time(dt, short=0, dow=True, seconds=True, tz=False)  # True, False, True, True, False
-        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S ", "en") + dt.tzinfo._tzname  # type: ignore
+        if isinstance(dt.tzinfo, DstTzInfo):
+            tz_name = dt.tzinfo._tzname  # type: ignore
+        else:
+            tz_name = dt.tz_name()
+        time_earth = dt.strftime("%A, %d %B %Y, %H:%M:%S ", "en") + tz_name
         output = f"Time on Earth: **{time_earth}**"
         _pre = "on"
         if place_name == "Kargadia":
@@ -100,10 +105,12 @@ class Conworlds(commands.Cog):
                     # LOD 2 Channel Names:  hidden-commands,  secretive-commands-2
                     elif ctx.channel.id in [610482988123422750, 753000962297299005]:
                         lod = 2
-                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10      secret-room-13      Kargadia commands,
-                    #                       secret-room-14,     secret-room-15,     secret-room-16,     secret-room-17
+                    # LOD 1 Channel Names:  secret-room-1,      secret-room-2,      secret-room-3,      secret-room-8,      secret-room-10,     secret-room-13,     Kargadia commands,
+                    #                       secret-room-14,     secret-room-15,     secret-room-16,     secret-room-17      secret-room-18,     secret-room-21,     secret-room-22,
+                    #                       secret-room-24
                     elif ctx.channel.id in [671520521174777869, 672535025698209821, 681647810357362786, 725835449502924901, 798513492697153536, 958489459672891452, 938582514166034514,
-                                            965801985716666428, 969720792457822219, 971195522830442527, 972112792624726036]:
+                                            965801985716666428, 969720792457822219, 971195522830442527, 972112792624726036, 999750177181147246, 999750231539335338, 999750252775084122,
+                                            999750295095623753]:
                         lod = 1
                     else:
                         lod = 0  # All other channels are "untrusted", so default to LOD 0
@@ -249,7 +256,7 @@ class Conworlds(commands.Cog):
     async def rsl_encode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattart Sintuvut """
         if not (1 <= s <= 8700):
-            return await ctx.send("De tuava eden, var te en de kihteral.")
+            return await ctx.send("De tuava eden, ta te en kihteravas.")
         shift = s * 128
         _code = "--code" in t
         code = ""
@@ -260,7 +267,7 @@ class Conworlds(commands.Cog):
         try:
             text = "".join([chr(ord(letter) + shift) for letter in t])
         except ValueError:
-            return await ctx.send(f"Si valse, alteknaar ka un kudalsan kihteran")
+            return await ctx.send(f"Si valse, altekaar ka un kudalsan kihteran")
         return await ctx.send(f"{code} {text}")
 
     @commands.command("rslf")
@@ -268,7 +275,7 @@ class Conworlds(commands.Cog):
     async def rsl_decode(self, ctx: commands.Context, s: int, *, t: str):
         """ Laikattarad Sintuvuad """
         if not (1 <= s <= 8700):
-            return await ctx.send("De tuava eden, var te en de kihteral.")
+            return await ctx.send("De tuava eden, ta te en kihteravas.")
         shift = s * 128
         text = ""
         for letter in t:
@@ -327,14 +334,75 @@ class Conworlds(commands.Cog):
         output += f"Year length: {year:,.2f} Earth days ({years:,.2f} Earth years) | {local:,.2f} local solar days"
         return await ctx.send(f"Information on planet `87.78.{ss}.{p}`:", embed=discord.Embed(colour=0xff0057, description=output))
 
-    @commands.group(name="citizenship", aliases=["citizen", "kaprofile", "kargadia"], case_insensitive=True)
+    @commands.group(name="kargadiaprofile", aliases=["kargadianprofile", "kargadia", "kp", "citizen", "citizenship", "profile"], case_insensitive=True, invoke_without_command=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def ka_citizenship(self, ctx: commands.Context):
+    async def kargadia_profile(self, ctx: commands.Context, _user: commands.UserID = None):
         """ Your Kargadian citizen ID """
         if ctx.invoked_subcommand is None:
-            return await ctx.send_help(ctx.command)
+            # return await ctx.send_help(ctx.command)
+            language = ctx.language2("en")
+            if _user is None:
+                _user = ctx.author.id
+            # if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
+            #     return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
+            data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
+            if not data:
+                return await ctx.send("A citizen profile is not available for this user.")
 
-    @ka_citizenship.command(name="add")
+            if data["protected"] and ctx.author.id not in [302851022790066185, data["uid"]]:
+                return await ctx.send("You may not view this user's citizen profile.")
+
+            embed = discord.Embed(colour=random_colour())
+            name = " ".join([n for n in [data["name"], data["name2"], data["name3"]] if n is not None])
+
+            try:
+                user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
+                username = general.username(user)
+                embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
+            except discord.NotFound:
+                username = data["name"]
+
+            embed.title = f"{username}'s Kargadian Citizen Profile"
+            embed.add_field(name="Citizen ID", value=data["id"], inline=True)
+            # embed.add_field(name="User ID", value=data["uid"], inline=True)
+
+            embed.add_field(name="Kargadian Name", value=name, inline=False)
+
+            genders = {"m": "Male", "f": "Female", "n": "Non-binary or other", "u": "Unknown"}
+            embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
+
+            if data["birthday"]:
+                birthday = time.date.from_iso(data["birthday"], time.Kargadia)
+                birthday_text = language.date(birthday, short=1, dow=False, year=True)
+                age = language.delta_dt(time.datetime.combine(birthday, time.time()), accuracy=2, brief=False, affix=False)
+                embed.add_field(name="Birthday and Age", value=f"{birthday_text} - {age}", inline=False)
+            else:
+                embed.add_field(name="Birthday", value="Unavailable", inline=False)
+
+            if data["location"]:
+                try:
+                    place = conworlds.Place(data["location"])
+                    location = place.name_translation(language)
+
+                    if place.state:
+                        regions = language.data("weather78_regions")
+                        state_data = regions.get(place.state)
+                        state = state_data["_self"] if state_data is not None else place.state
+                        location += ", " + state
+                except PlaceDoesNotExist:
+                    location = data["location"]
+                embed.add_field(name="Location", value=location, inline=False)
+            else:
+                embed.add_field(name="Location", value="Unavailable", inline=False)
+
+            if data["joined"]:
+                joined = time.date.from_iso(data["joined"], time.Earth)
+                embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
+            else:
+                embed.add_field(name="Joined the cult on", value="Not a cult member", inline=False)
+            return await ctx.send(embed=embed)
+
+    @kargadia_profile.command(name="add")
     @commands.is_owner()
     async def ka_citizen_add(self, ctx: commands.Context, _id: int, uid: int, name: str = None, name2: str = None, gender: str = None, birthday: str = None, location: str = None, joined: str = None):
         """ Add a new Kargadian citizen to the database """
@@ -342,72 +410,19 @@ class Conworlds(commands.Cog):
                                      (_id, uid, name, name2, gender, birthday, False, location, joined))
         return await ctx.send(output)
 
-    @ka_citizenship.command(name="edit", aliases=["update"])
+    @kargadia_profile.command(name="edit", aliases=["update"])
     @commands.is_owner()
     async def ka_citizen_edit(self, ctx: commands.Context, _id: int, key: str, value: str):
         """ Edit a Kargadian citizen's profile """
         output = self.bot.db.execute(f"UPDATE kargadia SET {key}=? WHERE id=? OR uid=?", (value, _id, _id))
         return await ctx.send(output)
 
-    @ka_citizenship.command(name="delete", aliases=["del", "remove"])
+    @kargadia_profile.command(name="delete", aliases=["del", "remove"])
     @commands.is_owner()
     async def ka_citizen_delete(self, ctx: commands.Context, _id: int):
         """ Delete a Kargadian citizen's profile """
         output = self.bot.db.execute("DELETE FROM kargadia WHERE id=?", (_id,))
         return await ctx.send(output)
-
-    @ka_citizenship.command(name="see", aliases=["view", "profile", "id"])
-    async def ka_citizen_profile(self, ctx: commands.Context, _user: commands.UserID = None):
-        """ See your or someone else's profile """
-        language = ctx.language2("en")
-        if _user is None:
-            _user = ctx.author.id
-        # if not (await ctx.bot.is_owner(ctx.author)) and user.id not in [ctx.author.id, 302851022790066185, 609423646347231282, 577608850316853251]:
-        #     return await ctx.send("Locked for now - You can only access your own profile, as well as Regaus's, Suager's, and CobbleBot's...")
-        data = self.bot.db.fetchrow("SELECT * FROM kargadia WHERE uid=? OR id=?", (_user, _user))
-        if not data:
-            return await ctx.send("A citizen profile is not available for this user.")
-
-        embed = discord.Embed(colour=random_colour())
-        name = data["name"]
-        if data["name2"]:
-            name += f" {data['name2']}"
-
-        try:
-            user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
-            username = user.name
-            embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
-        except discord.NotFound:
-            username = data["name"]
-
-        embed.title = f"{username}'s Kargadian citizen ID"
-        embed.add_field(name="Citizen ID", value=data["id"], inline=True)
-        # embed.add_field(name="User ID", value=data["uid"], inline=True)
-
-        genders = {"m": "Male", "f": "Female"}
-        embed.add_field(name="Gender", value=genders.get(data["gender"]), inline=True)
-
-        embed.add_field(name="Kargadian Name", value=name, inline=False)
-
-        if data["birthday"]:
-            birthday = time.date.from_iso(data["birthday"], time.Kargadia)
-            embed.add_field(name="Birthday", value=language.date(birthday, short=1, dow=False, year=True), inline=False)
-        else:
-            embed.add_field(name="Birthday", value="Unavailable", inline=False)
-
-        if data["location"]:
-            try:
-                place = conworlds.Place(data["location"])
-                location = place.name_translation(language)
-            except PlaceDoesNotExist:
-                location = data["location"]
-            embed.add_field(name="Location", value=location, inline=False)
-        else:
-            embed.add_field(name="Location", value="Unavailable", inline=False)
-
-        joined = time.date.from_iso(data["joined"], time.Earth)
-        embed.add_field(name="Joined the cult on", value=language.date(joined, short=1, dow=False, year=True), inline=False)
-        return await ctx.send(embed=embed)
 
     # def check_birthday(self, user_id):
     #     data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=? OR id=?", (user_id, user_id))
@@ -429,7 +444,7 @@ class Conworlds(commands.Cog):
             return await ctx.send(language.string("birthdays_birthday_not_saved", user=self.bot.get_user(_user)))
         try:
             user = await self.bot.fetch_user(data["uid"])  # Since we don't know if _user is a user ID or a citizen ID
-            username = user.name
+            username = general.username(user)
         except discord.NotFound:
             username = data["name"]
             user = self.bot.user  # Use the bot's user account so the tz check doesn't fail
@@ -438,17 +453,51 @@ class Conworlds(commands.Cog):
         birthday_date = time.date.from_iso(data["birthday"], time.Kargadia)
         birthday = language.date(birthday_date, short=0, dow=False, year=False)
         tz = language.get_timezone(user.id, "Kargadia")
-        now = time.datetime.now(tz, time.Kargadia)
-        if now.day == birthday_date.day and now.month == birthday_date.month:
-            today = "_today"
+        now = time.datetime.now(tz, time.Kargadia) - time.timedelta(hours=6)  # Kargadian birthdays pass at 6am, and this is a crutchy way to reflect that here
+        if now.date() == birthday_date:
+            today = True
             delta = None
+            birthday_date.replace(year=now.year)
+            birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
         else:
-            today = ""
-            year = now.year + 1 if (now.day > birthday_date.day and now.month == birthday_date.month) or now.month > birthday_date.month else now.year
-            delta = language.delta_dt(time.datetime.combine(birthday_date, time.time(), tz).replace(year=year), accuracy=2, brief=False, affix=True)
-        if user == ctx.author:
-            return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
-        return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username, date=birthday, delta=delta))
+            today = False
+            birthday_date.replace(year=now.year)  # Set the date to the current year, then add another one if it's already passed
+            if now.date() > birthday_date:
+                birthday_date.replace(year=now.year + 1)
+            birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
+            delta = language.delta_dt(birthday_time, accuracy=2, brief=False, affix=True)
+        _user = "your" if user == ctx.author else "general"
+        if today:
+            return await ctx.send(language.string(f"birthdays_birthday_{_user}_today", user=username, date=birthday))
+        earth_time = birthday_time.to_earth_time()  # .to_tz(language.get_timezone(user.id, "Earth"))
+        earth = language.time(earth_time, short=1, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        return await ctx.send(language.string(f"birthdays_birthday_{_user}_ka", user=username, date=birthday, delta=delta, earth=earth))
+
+    @commands.group(name="generate", aliases=["gen"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def generate(self, ctx: commands.Context):
+        """ Generate a random Kargadian citizen"""
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @generate.command(name="name", aliases=["names"])
+    async def generate_name(self, ctx: commands.Context, language: str = "re_nu"):
+        """ Generate a couple random Kargadian names """
+        message = await ctx.send(conworlds2.generate_citizen_names(language))
+        view = views.GenerateNamesView(sender=ctx.author, message=message, language=language)
+        await message.edit(view=view)
+        return message
+
+    @generate.command(name="citizen")
+    async def generate_citizen(self, ctx: commands.Context, citizen_language: str = None):
+        """ Generate an entire citizen
+        If no language is specified, a random available language will be used """
+        embed = await conworlds2.generate_citizen_embed(ctx, citizen_language)
+
+        message = await ctx.send(embed=embed)
+        view = views.GenerateCitizenView(sender=ctx.author, message=message, language=citizen_language)
+        await message.edit(view=view)
+        return message
 
 
 async def setup(bot: bot_data.Bot):

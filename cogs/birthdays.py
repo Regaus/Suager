@@ -1,9 +1,11 @@
 import re
-from datetime import datetime
+from datetime import datetime, date as _date, time as _time
+from typing import Union
 
 import discord
 
 from utils import bot_data, commands
+from utils.general import username
 
 
 class Birthdays(commands.Cog):
@@ -12,7 +14,7 @@ class Birthdays(commands.Cog):
         self.timestamp_regex = re.compile(r"^([0-2]?\d|3[0-1])/((1[0-2])|(0?[1-9]))$")
         self.birthday_self = "birthdays_birthday_mizuki" if bot.name == "kyomi" else "birthdays_birthday_suager"
 
-    def check_birthday(self, user_id):
+    def check_birthday(self, user_id) -> Union[_date, None]:
         data = self.bot.db.fetchrow(f"SELECT * FROM birthdays WHERE uid=? AND bot=?", (user_id, self.bot.name))
         return data["birthday"] if data else None
 
@@ -26,9 +28,10 @@ class Birthdays(commands.Cog):
             user = user or ctx.author
             if user.id == self.bot.user.id:
                 return await ctx.send(language.string(self.birthday_self))
-            birthday_date = self.check_birthday(user.id)
-            if not birthday_date:
+            _birthday_date = self.check_birthday(user.id)
+            if not _birthday_date:
                 return await ctx.send(language.string("birthdays_birthday_not_saved", user=user.name))
+            birthday_date = datetime.combine(_birthday_date, _time(0, 0, 0))
             birthday = language.date(birthday_date, short=0, dow=False, year=False)
             tz = language.get_timezone(user.id, "Earth")
             now = datetime.now(tz=tz)
@@ -41,7 +44,7 @@ class Birthdays(commands.Cog):
                 delta = language.delta_dt(birthday_date.replace(year=year, tzinfo=tz), accuracy=2, brief=False, affix=True)
             if user == ctx.author:
                 return await ctx.send(language.string(f"birthdays_birthday_your{today}", date=birthday, delta=delta))
-            return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=str(user), date=birthday, delta=delta))
+            return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username(user), date=birthday, delta=delta))
 
     @birthday.command(name="set")
     async def set(self, ctx: commands.Context, date: str):
@@ -53,7 +56,7 @@ class Birthdays(commands.Cog):
         if self.timestamp_regex.search(date):
             try:
                 d, m = date.split("/", 1)
-                timestamp = datetime(2020, int(m), int(d))
+                timestamp = _date(2020, int(m), int(d))
                 # timestamp = datetime.strptime(date + "/2020", "%d/%m/%Y")
             except ValueError:
                 return await ctx.send(language.string("birthdays_set_invalid", p=ctx.clean_prefix))
@@ -64,10 +67,10 @@ class Birthdays(commands.Cog):
         if has_birthday is not None:
             self.bot.db.execute(f"UPDATE birthdays SET birthday=? WHERE uid=? AND bot=?", (timestamp, ctx.author.id, self.bot.name))
             old_date = language.date(has_birthday, short=0, dow=False, year=False)
-            return await ctx.send(language.string("birthdays_set_already", user=ctx.author.name, new=date, old=old_date))
+            return await ctx.send(language.string("birthdays_set_already", user=username(ctx.author), new=date, old=old_date))
         else:
             self.bot.db.execute(f"INSERT INTO birthdays VALUES (?, ?, ?, ?)", (ctx.author.id, timestamp, False, self.bot.name))
-            return await ctx.send(language.string("birthdays_set_set", user=ctx.author.name, date=date))
+            return await ctx.send(language.string("birthdays_set_set", user=username(ctx.author), date=date))
 
     @birthday.command(name="clear", aliases=["reset", "delete"])
     async def delete(self, ctx: commands.Context):

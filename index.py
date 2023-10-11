@@ -1,10 +1,11 @@
 import asyncio
 import json
 from sqlite3 import OperationalError
+from sys import platform
 
 import discord
 
-from utils import bot_data, database, general, temporaries, time
+from utils import bot_data, database, general, temporaries, time, cpu_burner
 from utils.help_utils import HelpFormat
 
 # import logging
@@ -58,7 +59,7 @@ for i in range(len(config["bots"])):
                        command_prefix=get_prefix, prefix=get_prefix, command_attrs=dict(hidden=True), help_command=HelpFormat(),
                        case_insensitive=True, owner_ids=config["owners"], activity=discord.Game(name="Starting up..."), status=discord.Status.dnd, intents=intents,
                        allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True), message_commands=True, slash_commands=False)
-    load = bot_data.load[name]
+    load = bot_data.load.get(name, ["events"])
     for name in load:
         tasks.append(loop.create_task(bot.load_extension(f"cogs.{name}")))
     tasks.append(loop.create_task(bot.load_extension("jishaku")))
@@ -74,6 +75,8 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
             tasks.append(loop.create_task(temporaries.polls(bot)))
             tasks.append(loop.create_task(temporaries.trials(bot)))
+            # tasks.append(loop.create_task(temporaries.dcu_calendar_updater(bot)))
+            # tasks.append(loop.create_task(temporaries.new_year(bot)))
         elif bot.name == "cobble":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.ka_time_updater(bot)))
@@ -86,7 +89,16 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.punishments(bot)))
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
 
-try:
-    loop.run_until_complete(asyncio.gather(*tasks))
-except (KeyboardInterrupt, asyncio.CancelledError):
-    loop.close()
+if __name__ == '__main__':
+    if platform.startswith("linux"):
+        cpu_burner.enabled = True
+        cpu_burner.setup()
+        tasks.append(loop.create_task(cpu_burner.cpu_burner()))
+    else:
+        cpu_burner.enabled = False
+
+    try:
+        loop.run_until_complete(asyncio.gather(*tasks))
+    except (KeyboardInterrupt, asyncio.CancelledError, SystemExit):
+        loop.close()
+        cpu_burner.arr[1] = True

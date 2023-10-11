@@ -91,8 +91,10 @@ def file_ts(name: str, ext: str = "txt") -> str:
 def interpret_time(period: str, cls=relativedelta, time_class=None) -> relativedelta:
     """Convert str to relativedelta - may be changed to use another class, eg r.py delta"""
     matches = re.findall(r"(\d+(y|mo|w|d|h|m|s))", period)
-    if not matches:
-        return cls(seconds=0)  # Because fuck you
+    if not matches:  # No matches found - not a valid relative time
+        if time_class:
+            return cls(seconds=0, time_class=time_class)  # type: ignore
+        return cls(seconds=0)
     else:
         try:
             _td = {}
@@ -110,6 +112,8 @@ def interpret_time(period: str, cls=relativedelta, time_class=None) -> relatived
             return cls(**_td)
         except Exception as e:
             type(e)  # ignore haha yes
+            if time_class:
+                return cls(seconds=0, time_class=time_class)  # type: ignore
             return cls(seconds=0)
 
 
@@ -139,23 +143,15 @@ def rd_is_zero(delta: relativedelta) -> bool:
 
 def rd_is_above_1w(delta: relativedelta) -> bool:
     try:
-        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        delta2 = ((datetime.min + delta) - datetime.min).total_seconds()
         return delta2 > 7 * 86400
-        # no = False
-        # if delta2.days > 7:
-        #     no = True
-        # elif delta2.days == 7:
-        #     delta2.days -= 7
-        #     if not rd_is_zero(delta2):
-        #         no = True
-        # return no
     except (ValueError, OverflowError):
         return True  # Errors out, assume something is wrong anyways
 
 
 def rd_is_above_30d(delta: relativedelta) -> bool:
     try:
-        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        delta2 = ((datetime.min + delta) - datetime.min).total_seconds()
         return delta2 > 30 * 86400
     except (ValueError, OverflowError):
         return True
@@ -163,7 +159,7 @@ def rd_is_above_30d(delta: relativedelta) -> bool:
 
 def rd_is_below_15m(delta: relativedelta) -> bool:
     try:
-        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        delta2 = ((datetime.min + delta) - datetime.min).total_seconds()
         return delta2 < 899
     except (ValueError, OverflowError):
         return True
@@ -171,7 +167,7 @@ def rd_is_below_15m(delta: relativedelta) -> bool:
 
 def rd_is_below_1h(delta: relativedelta) -> bool:
     try:
-        delta2 = ((now(None) + delta) - now(None)).total_seconds()
+        delta2 = ((datetime.min + delta) - datetime.min).total_seconds()
         return delta2 < 3599
     except (ValueError, OverflowError):
         return True
@@ -179,7 +175,7 @@ def rd_is_below_1h(delta: relativedelta) -> bool:
 
 def rd_is_above_5y(delta: relativedelta) -> bool:
     try:
-        delta2 = relativedelta(now(None) + delta, now(None))
+        delta2 = relativedelta(datetime.min + delta, datetime.min)
         no = False
         if delta2.years > 5:
             no = True
@@ -200,3 +196,8 @@ def rd_future(delta: relativedelta) -> bool:
         return True
     except (ValueError, OverflowError):
         return False
+
+
+def april_fools():
+    _now = now2().date()
+    return _now.day == 1 and _now.month == 4

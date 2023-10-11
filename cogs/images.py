@@ -7,6 +7,7 @@ import discord
 from PIL import Image, UnidentifiedImageError
 
 from utils import bot_data, commands, emotes, http
+from utils.general import username
 
 
 async def af_image_gen(ctx: commands.Context, user: discord.User | discord.Member, link, filename=None, extra_args=None):
@@ -133,12 +134,14 @@ class Images(commands.Cog):
         av1 = str(user1.display_avatar.replace(size=512, format="png"))
         av2 = str(user2.display_avatar.replace(size=512, format="png"))
         # link = f"https://api.alexflipnote.dev/ship?user={av1}&user2={av2}"
-        __names = [len(user1.name), len(user2.name)]
+        name1 = username(user1)
+        name2 = username(user2)
+        __names = [len(name1), len(name2)]
         _names = [int(x / 2) for x in __names]
-        n1 = user1.name[:_names[0]]
-        n2 = user1.name[_names[0]:]
-        n3 = user2.name[:_names[1]]
-        n4 = user2.name[_names[1]:]
+        n1 = name1[:_names[0]]
+        n2 = name1[_names[0]:]
+        n3 = name2[:_names[1]]
+        n4 = name2[_names[1]:]
         names = [f"{n1}{n3}", f"{n1}{n4}", f"{n2}{n3}", f"{n2}{n4}", f"{n3}{n1}", f"{n4}{n1}", f"{n3}{n2}", f"{n4}{n2}"]
         message = language.string("social_ship", name=random.choice(names))
         # for i, j in enumerate(names, start=1):
@@ -172,7 +175,7 @@ class Images(commands.Cog):
 
 
 class ImagesSuager(Images, name="Images"):
-    @commands.command(name="russia")
+    @commands.command(name="russia", hidden=True)
     async def russia(self, ctx: commands.Context, user: discord.User = None):
         """ Put a Russian flag over your avatar """
         user = user or ctx.author

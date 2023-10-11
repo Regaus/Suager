@@ -10,7 +10,7 @@ from io import BytesIO
 import aiohttp
 import discord
 
-from utils import bot_data, commands, data_io, database, general, http, logger, time
+from utils import bot_data, commands, data_io, database, general, http, logger, time, cpu_burner
 
 
 def insert_returns(body):
@@ -77,7 +77,22 @@ async def eval_fn(ctx: commands.Context, cmd):
             tb.insert(i + 1, "    " + code)  # We insert a line before the exception, which shows the code actually run, indented properly
         else:
             await ctx.send("Error line number not found...")
-        return await ctx.send("\n".join(tb))
+
+        traceback = "\n".join(tb)
+
+        if len(traceback) == 0 or traceback is None:
+            return await ctx.send("An error has occurred. No traceback is available.")
+        elif 2000 < len(traceback) <= 8000000:
+            async with ctx.typing():
+                data = BytesIO(traceback.encode('utf-8'))
+                return await ctx.send(f"An error has occurred. The traceback is a bit too long... ({len(traceback):,} chars)", file=discord.File(data, filename=f"{time.file_ts('Traceback')}"))
+        elif len(traceback) > 8000000:
+            async with ctx.typing():
+                data = BytesIO(traceback[-8000000:].encode('utf-8'))
+                return await ctx.send(f"An error has occurred. The traceback is a bit too long... ({len(traceback):,} chars)\nSending last {8000000:,} chars",
+                                      file=discord.File(data, filename=f"{time.file_ts('Traceback')}"))
+        return await ctx.send(traceback)
+        # return await ctx.send("\n".join(tb))
 
 
 def reload_util(name: str, bot: bot_data.Bot):
@@ -160,32 +175,30 @@ class Admin(commands.Cog):
         """ Get logs """
         try:
             data = ""
-            for path, _, __ in os.walk(f"data/logs/{self.bot.name}"):
+            for path, dirs, __ in os.walk(f"data/logs/{self.bot.name}"):
+                dirs.sort()  # Sort the folder names, this should make them appear alphabetically
                 if re.compile(r"(\d{4})-(\d{2})-(\d{2})").search(path):
                     filename = os.path.join(path, f"{log}.rsf")
                     # _path = path.replace("\\", "/")
                     # filename = f"{_path}/{log}.rsf"
                     try:
-                        file = open(filename, "r", encoding="utf-8")
+                        file = open(filename, "r", encoding="utf-8", errors="replace")
                     except FileNotFoundError:
                         # await general.send(f"File `{filename}` not found.", ctx.channel)
                         continue
-                    if search is None:
-                        try:
+                    try:
+                        if search is None:
                             result = file.read()
                             data += f"{result}"  # Put a newline in the end, just in case
-                        except UnicodeDecodeError as e:
-                            await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
-                    else:
-                        try:
+                        else:
                             stuff = file.readlines()
                             result = ""
                             for line in stuff:
                                 if search in line:
                                     result += line
                             data += f"{result}"
-                        except UnicodeDecodeError as e:
-                            await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
+                    except UnicodeDecodeError as e:
+                        await ctx.send(f"`{filename}`: Encoding broke - `{e}`")
             if ctx.guild is None:
                 limit = 8000000
             else:
@@ -213,7 +226,7 @@ class Admin(commands.Cog):
         """ Get logs """
         try:
             filename = f"data/logs/{self.bot.name}/{date}/{log_file}.rsf"
-            file = open(filename, "r", encoding="utf-8")
+            file = open(filename, "r", encoding="utf-8", errors="replace")
             if search is None:
                 result = file.read()
                 data = f"{result}"  # Put a newline in the end, just in case
@@ -347,6 +360,7 @@ class Admin(commands.Cog):
         import sys
         await ctx.send("Shutting down...")
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.full_name} > Shutting down...")
+        cpu_burner.arr[1] = True
         _time.sleep(1)
         sys.stderr.close()
         sys.exit(0)
