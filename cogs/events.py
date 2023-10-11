@@ -175,7 +175,7 @@ class Events(commands.Cog):
         elif isinstance(err, commands.CommandInvokeError):
             # An error occurred while invoking the command
             error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
-            if "2000 or fewer" in str(err) and len(ctx.message.content) > 1900:
+            if ("2000 or fewer" in str(err.original) or "4000 or fewer" in str(err.original)) and len(ctx.message.content) > 1900:
                 await ctx.send(language.string("events_error_message_length"))
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
             else:

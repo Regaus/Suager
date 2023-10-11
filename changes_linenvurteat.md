@@ -28,3 +28,9 @@
 ## v0.0.6.1 - 11 October 2023
 - Merged the Linenvürteat bot to the main branch
 - Added reprs to the dataclasses for static GTFS
+
+## v0.0.7 - 11 October 2023
+- The static GTFS data will now expire after two weeks
+- If the GTFS data can't be loaded or has expired, the bot will download the new data and try to load it again
+- Added a method for loading the GTFS data if the bot is not yet initialised and tell the user to wait
+- The method will crash the current command if an error occurs while loading the data (this is intended behaviour)

@@ -19,7 +19,7 @@ def load_gtfs_r_data(data: dict) -> GTFSRData:
         return GTFSRData.load(data)
     except Exception as e:
         from utils import general
-        general.print_error(general.traceback_maker(e))
+        general.print_error(general.traceback_maker(e, code_block=False))
 
 
 @dataclass()
@@ -310,6 +310,16 @@ def save_gtfs_data_to_pickle(data: GTFSData):
 
 def load_gtfs_data(*, write: bool = True) -> GTFSData:
     """ Load available GTFS data """
+    # Read the expiry file. If it does not exist, FileNotFoundError will be thrown and caught by self.load_data()
+    with open("assets/gtfs/expiry.txt", "r", encoding="utf-8") as file:
+        try:
+            expiry_ts = int(file.read())
+            expiry = time.datetime.from_timestamp(expiry_ts)
+            if time.datetime.now() > expiry:  # The data has expired
+                raise RuntimeError(f"GTFS Data expired on {expiry:%Y-%m-%d at %H:%M:%S}")
+        except ValueError as e:
+            raise RuntimeError(f"Encountered an error while trying to read expiry data: {type(e).__name__}: {e}") from e
+
     agencies: dict[int, Agency] = {}
     calendars: dict[int, Calendar] = {}
     calendar_exceptions: dict[int, dict[time.date, CalendarException]] = {}
