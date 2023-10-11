@@ -1418,7 +1418,10 @@
 ## v7.5.18.4 - 15 November 2022
 - Database errors will now be logged instead of getting silently ignored
 
-## v7.5.18.5 - 3 December 2022
+## v7.5.18.5 - 28 November 2022
+- Better database error logging
+
+## v7.5.18.6 - 3 December 2022
 - Updated printing method for `print_error()`
 
 ## v7.5.19 - 5 December 2022

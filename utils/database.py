@@ -63,7 +63,10 @@ class Database:
         try:
             data = self.db.execute(sql, prepared)
         except Exception as e:
-            msg = f"{datetime.now():%d %b %Y, %H:%M:%S} > Database > {type(e).__name__}: {e}"
+            now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
+            msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
+                  f"{now} > Database > SQL statement: {sql}\n" \
+                  f"{now} > Database > Values given: {prepared}"
             general.print_error(msg)
             logger.log("suager", "database", msg)
             return f"{type(e).__name__}: {e}"

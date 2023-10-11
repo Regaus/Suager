@@ -9,7 +9,7 @@ class Placeholder(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def placeholder(self, ctx: commands.Context):
         """ Placeholder """
-        language = self.bot.language(ctx)
+        language = ctx.language()
         return await ctx.send(language.string("placeholder"))
 
 

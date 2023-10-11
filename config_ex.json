@@ -47,6 +47,18 @@
       ],
       "error_channel": 738442483591151638,
       "default_locale": "en"
+    },
+    {
+      "name": "Linenvürteat",
+      "internal_name": "linenvurteat",
+      "token": "token",
+      "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:762336598645407785>",
+      "prefixes": [
+        "i.",
+        "I."
+      ],
+      "error_channel": 738442483591151638,
+      "default_locale": "en"
     }
   ],
   "owner_prefixes": [
@@ -55,5 +67,6 @@
   ],
   "owners": [],
   "weather_api_token": "token",
-  "alex_api_token": "token"
+  "alex_api_token": "token",
+  "gtfsr_api_token": "token"
 }

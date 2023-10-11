@@ -33,6 +33,12 @@ load = {
     ],
     "kyomi2": [],
     "kyomi3": [],
+    "linenvurteat": [
+        "admin",
+        "events",
+        "info",
+        "linenvurteat"
+    ],
     "pretender": [
         "admin",
         "events",

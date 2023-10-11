@@ -25,6 +25,7 @@ def create_dirs():
     config = get_config()
     for bot in config["bots"]:
         make_dir(f"data/logs/{bot['internal_name']}")
+    make_dir("data/gtfs")
     make_dir("data/dcu")
 
 
