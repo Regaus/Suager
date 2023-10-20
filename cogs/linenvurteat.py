@@ -3,6 +3,7 @@ import json
 from io import BytesIO
 from zipfile import ZipFile
 
+import discord
 from regaus import time
 
 from utils import bot_data, commands, http, linenvurteat, logger, emotes
@@ -94,19 +95,23 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
         self.updating = False
 
-    async def wait_for_initialisation(self, ctx: commands.Context):
+    async def wait_for_initialisation(self, ctx: commands.Context) -> discord.Message:
         """ Initialise the data before letting the actual command execute """
         if not self.initialised and not self.updating:  # If self.updating is True, then the data is already being loaded
-            await ctx.send(f"{emotes.Loading} The GTFS data has not been initialised yet. This may take a few minutes...")
+            message = await ctx.send(f"{emotes.Loading} The GTFS data has not been initialised yet. This may take a few minutes...")
             await self.load_data()
         elif self.updating:
-            await ctx.send(f"{emotes.Loading} The GTFS data used by this bot is currently being updated and is therefore unavailable. This may take a few minutes...")
+            message = await ctx.send(f"{emotes.Loading} The GTFS data used by this bot is currently being updated and is therefore unavailable. This may take a few minutes...")
+        else:
+            message = await ctx.send(f"{emotes.Loading} Loading the response...")
 
         # Keep the function alive until the bot is initialised and the data has been updated
         while not self.initialised or self.updating:
             if self.loader_error is not None:
                 raise RuntimeError("Detected that an error was raised while loading GTFS data, crashing this loop...")
             await asyncio.sleep(5)
+
+        return message
 
     @commands.command(name="placeholder")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -116,9 +121,75 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         if action == "write":
             await self.get_real_time_data(debug=self._DEBUG, write=True)
         elif action == "load":
-            await self.wait_for_initialisation(ctx)
-            return await ctx.send(f"{print_current_time()} > Data has been loaded")
+            message = await self.wait_for_initialisation(ctx)
+            return await message.edit(content=f"{print_current_time()} > Data has been loaded")
         return await ctx.send("Placeholder")
+
+    def find_stop(self, query: str) -> list[linenvurteat.Stop]:
+        """ Find a specific stop """
+        output = []
+        query = query.lower()
+        for stop in self.static_data.stops.values():
+            # Make the search case-insensitive
+            if query in stop.id.lower() or query in stop.code.lower() or query in stop.name.lower():
+                output.append(stop)
+        return output
+
+    def find_route(self, query: str) -> list[linenvurteat.Route]:
+        """ Find a specific route """
+        output = []
+        query = query.lower()
+        for route in self.static_data.routes.values():
+            # Make the search case-insensitive
+            if query in route.id.lower() or query in route.short_name.lower() or query in route.long_name.lower():
+                output.append(route)
+        return output
+
+    @commands.group(name="tfi")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def tfi(self, ctx: commands.Context):
+        """ Base command for TFI-related things """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @tfi.group(name="search")
+    async def tfi_search(self, ctx: commands.Context):
+        """ Search for a stop or route """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @tfi_search.command(name="stop")
+    async def tfi_search_stop(self, ctx: commands.Context, query: str):
+        """ Search for a specific stop """
+        message = await self.wait_for_initialisation(ctx)
+        stops = self.find_stop(query=query)
+        output = []
+        for stop in stops:
+            if stop.code:
+                output.append(f"`{stop.id}` (Stop code `{stop.code}`) - {stop.name}")
+            else:
+                output.append(f"`{stop.id}` - {stop.name}")
+        output_content = ("Here are the stops found for your query:\n\n" + "\n".join(output) +
+                          "\n\n*Note that if more than one stop is found for your search, then the schedule and real-time commands will need a more precise query to function.*")
+        return await message.edit(content=output_content)
+
+    @tfi_search.command(name="route")
+    async def tfi_search_route(self, ctx: commands.Context, query: str):
+        """ Search for a specific route """
+        message = await self.wait_for_initialisation(ctx)
+        routes = self.find_route(query=query)
+        output = []
+        route_types = {
+            0: "Tram",
+            1: "Subway",
+            2: "Rail",
+            3: "Bus"
+        }
+        for route in routes:
+            output.append(f"`{route.id}` (Route {route.short_name}) - {route.long_name} ({route_types[route.route_type]})")
+        output_content = ("Here are the routes found for your query:\n\n" + "\n".join(output) +
+                          "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*")
+        return await message.edit(content=output_content)
 
 
 async def setup(bot: bot_data.Bot):
