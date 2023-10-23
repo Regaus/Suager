@@ -37,3 +37,10 @@
 
 ## v0.1.0 - 20 October 2023
 - Added a command to search stops and routes
+
+## v0.1.1 - 22 October 2023
+- Made it possible to forcibly redownload the realtime and static data
+
+## v0.2.0 - 23 October 2023
+- Added a command to view the next 6 departures at a given stop
+- Added classes and functions to use real-time trip information to view a stop's departures

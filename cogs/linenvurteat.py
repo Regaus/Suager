@@ -1,9 +1,10 @@
 import asyncio
 import json
 from io import BytesIO
-from zipfile import ZipFile
+from zipfile import ZipFile, BadZipFile
 
 import discord
+from aiohttp import ClientError
 from regaus import time
 
 from utils import bot_data, commands, http, linenvurteat, logger, emotes
@@ -34,6 +35,12 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
             # json.dump(data, open(linenvurteat.real_time_filename, "w+"), indent=2)
         return data
 
+    async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
+        data = await self.get_real_time_data(debug=debug, write=write)
+        self.real_time_data = linenvurteat.load_gtfs_r_data(data)
+        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
+        return self.real_time_data  # just in case
+
     async def get_real_time_data(self, debug: bool = False, *, write: bool = True):
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
         if debug:
@@ -49,23 +56,34 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
     # async def on_ready(self):
     #     await asyncio.sleep(60)  # To let the other bots load before we freeze the machine for half a minute
 
-    async def load_data(self):
+    async def load_data(self, *, force_redownload: bool = False):
         """ Load the GTFS-R and static GTFS data only when needed """
         try:
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
             if self.real_time_data is None:
-                data = await self.get_real_time_data(debug=True, write=True)
-                self.real_time_data = linenvurteat.load_gtfs_r_data(data)
-                logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
+                # data = await self.get_real_time_data(debug=True, write=True)
+                # self.real_time_data = linenvurteat.load_gtfs_r_data(data)
+                # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
+                await self.load_real_time_data(debug=True, write=True)
             if self.static_data is None:
                 try:
-                    self.static_data = linenvurteat.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
-                    logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
-                except (FileNotFoundError, RuntimeError) as e:
-                    # If the static GTFS data is not available or is expired, download new data and then extract and load.
-                    logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
-                    await self.download_new_static_gtfs()
+                    if force_redownload:
+                        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Received force download call, re-downloading static GTFS data")
+                        await self.download_new_static_gtfs()
+                    else:
+                        try:
+                            self.static_data = linenvurteat.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
+                            logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
+                        except (FileNotFoundError, RuntimeError) as e:
+                            # If the static GTFS data is not available or is expired, download new data and then extract and load.
+                            logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
+                            await self.download_new_static_gtfs()
+                except (ClientError, BadZipFile):
+                    # If the GTFS data cannot be downloaded due to an error with the powers above, try to load from existing data while ignoring expiry errors
+                    logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Can't download data, falling back to existing dataset.")
+                    self.static_data = linenvurteat.load_gtfs_data_from_pickle(write=not self._DEBUG, ignore_expiry=True)
+                    # If we crash here yet again, then it would make sense to give up and catch on fire.
             self.initialised = True
         except Exception as e:
             self.loader_error = e
@@ -95,11 +113,11 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
         self.updating = False
 
-    async def wait_for_initialisation(self, ctx: commands.Context) -> discord.Message:
+    async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False) -> discord.Message:
         """ Initialise the data before letting the actual command execute """
         if not self.initialised and not self.updating:  # If self.updating is True, then the data is already being loaded
             message = await ctx.send(f"{emotes.Loading} The GTFS data has not been initialised yet. This may take a few minutes...")
-            await self.load_data()
+            await self.load_data(force_redownload=force_redownload)
         elif self.updating:
             message = await ctx.send(f"{emotes.Loading} The GTFS data used by this bot is currently being updated and is therefore unavailable. This may take a few minutes...")
         else:
@@ -116,12 +134,16 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
     @commands.command(name="placeholder")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.is_owner()
-    async def placeholder(self, ctx: commands.Context, action: str = None):
+    async def placeholder(self, ctx: commands.Context, action: str = None, force_redownload: str = None):
         """ Placeholder """
         if action == "write":
-            await self.get_real_time_data(debug=self._DEBUG, write=True)
+            if force_redownload == "force-redownload":
+                debug = False
+            else:
+                debug = self._DEBUG
+            await self.get_real_time_data(debug=debug, write=True)
         elif action == "load":
-            message = await self.wait_for_initialisation(ctx)
+            message = await self.wait_for_initialisation(ctx, force_redownload=force_redownload == "force-redownload")
             return await message.edit(content=f"{print_current_time()} > Data has been loaded")
         return await ctx.send("Placeholder")
 
@@ -190,6 +212,97 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         output_content = ("Here are the routes found for your query:\n\n" + "\n".join(output) +
                           "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*")
         return await message.edit(content=output_content)
+
+    @tfi.group(name="data", aliases=["schedule", "info", "rtpi"])
+    async def tfi_schedules(self, ctx: commands.Context):
+        """ Commands that deal with schedules and real-time information """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @tfi_schedules.command(name="stop")
+    async def tfi_schedules_stop(self, ctx: commands.Context, stop_query: str):
+        """ Show the next departures for a specific stop """
+        message = await self.wait_for_initialisation(ctx)
+        stops = self.find_stop(stop_query)
+        if len(stops) > 1:
+            return await message.edit(content=f"More than one stop was found for your search query ({stop_query})."
+                                              f"Use `{ctx.prefix}tfi search stop` to find the specific stop ID or provide a more specific query.")
+        stop = stops[0]
+        await self.load_real_time_data(debug=self._DEBUG, write=True)
+        schedule = linenvurteat.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data)
+        real_stop_times = schedule.real_stop_times()
+
+        # now = time.datetime(2023, 10, 23, 18, 0, 0, 0, tz=linenvurteat.TIMEZONE)
+        now = time.datetime.now(tz=linenvurteat.TIMEZONE)
+
+        start_idx = 0
+        for idx, stop_time in enumerate(real_stop_times):  # type: int, linenvurteat.RealStopTime
+            # Start at the first departure after right now
+            if (stop_time.departure_time or stop_time.scheduled_departure_time) >= now:
+                start_idx = idx
+                break
+        end_idx = start_idx + 7  # Leave this hardcoded for now
+
+        output_data: list[list[str]] = [["Route", "Destination", "Schedule", "RealTime"]]
+        column_sizes = [5, 11, 8, 8]  # Longest member of the column
+        for stop_time in real_stop_times[start_idx:end_idx]:
+            if stop_time.schedule_relationship == "CANCELED":
+                departure_time = "CANCELLED"
+            elif stop_time.schedule_relationship == "SKIPPED":
+                departure_time = "SKIPPED"
+            elif stop_time.departure_time is not None:
+                departure_time = stop_time.departure_time.format("%H:%M")  # :%S
+            else:
+                departure_time = "Unknown"
+
+            if stop_time.scheduled_departure_time is not None:
+                scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
+            else:
+                scheduled_departure_time = "Unknown"
+
+            if stop_time.route is None:
+                route = "Unknown"
+            else:
+                route = stop_time.route.short_name
+
+            destination = stop_time.destination
+
+            # Update column_sizes if needed
+            column_sizes[0] = max(column_sizes[0], len(route))
+            column_sizes[1] = max(column_sizes[1], len(destination))
+            column_sizes[2] = max(column_sizes[2], len(scheduled_departure_time))
+            column_sizes[3] = max(column_sizes[3], len(departure_time))
+
+            output_data.append([route, destination, scheduled_departure_time, departure_time])
+
+        # Calculate the last line first, in case we need more characters for the destination field
+        line_length = sum(column_sizes) + len(column_sizes) - 1
+        spaces = line_length - len(stop.name) - 18
+        extra = 0
+        # Add more spaces to destination if there's too few between stop name and current time
+        if spaces < 8:
+            extra = 8 - spaces
+            spaces = 8
+        # Example:   "Ballinacurra Close       23 Oct 2023, 18:00"
+        last_line = f"{stop.name}{' ' * spaces}{now:%d %b %Y, %H:%M}```"
+        column_sizes[1] += extra  # [1] is destination
+
+        stop_code = f"Code `{stop.code}`, " if stop.code else ""
+        stop_id = f"ID `{stop.id}`"
+        output = f"Real-Time Data for Stop {stop.name} ({stop_code}{stop_id})\n```fix\n"
+        for line in output_data:
+            assert len(column_sizes) == len(line)
+            line_data = []
+            for i in range(len(line)):
+                size = column_sizes[i]
+                line_part = line[i]
+                # Left-align route and destination to fixed number of spaces
+                # Right-align the schedule and real-time info
+                alignment = "<" if i < 2 else ">"
+                line_data.append(f"{line_part:{alignment}{size}}")
+            output += f"{' '.join(line_data)}\n"
+        output += last_line
+        return await message.edit(content=output)
 
 
 async def setup(bot: bot_data.Bot):

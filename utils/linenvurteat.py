@@ -25,7 +25,7 @@ def load_gtfs_r_data(data: dict) -> GTFSRData:
 @dataclass()
 class GTFSRData:
     header: Header
-    entities: list[...]
+    entities: list[Entity]
 
     @classmethod
     def load(cls, data: dict):
@@ -77,7 +77,7 @@ class RealTimeTrip:
     trip_id: str
     route_id: str
     start_time: time.datetime
-    schedule: str
+    schedule_relationship: str  # SCHEDULED, ADDED, UNSCHEDULED, CANCELED, DUPLICATED, DELETED
     direction_id: int
 
     @classmethod
@@ -96,21 +96,30 @@ class RealTimeTrip:
 class StopTimeUpdate:
     stop_sequence: int
     stop_id: str
-    schedule: str
+    schedule_relationship: str  # SCHEDULED, SKIPPED, NO_DATA, or UNSCHEDULED
     arrival_delay: time.timedelta = None
     departure_delay: time.timedelta = None
+    arrival_time: time.datetime = None
+    departure_time: time.datetime = None
 
     @classmethod
     def load(cls, data: dict):
-        try:
-            arrival = time.timedelta(seconds=data["arrival"]["delay"]) if "arrival" in data else None
-        except KeyError:
-            arrival = None
-        try:
-            departure = time.timedelta(seconds=data["departure"]["delay"]) if "departure" in data else None
-        except KeyError:
-            departure = None
-        return cls(data["stop_sequence"], data.get("stop_id", "Unknown"), data.get("schedule_relationship", "Unknown"), arrival, departure)
+        arrival_delay = arrival_time = departure_delay = departure_time = None
+        if "arrival" in data:
+            _arrival_delay = data["arrival"].get("delay")
+            if _arrival_delay is not None:
+                arrival_delay = time.timedelta(seconds=_arrival_delay)
+            _arrival_time = data["arrival"].get("time")
+            if _arrival_time is not None:
+                arrival_time = time.datetime.from_timestamp(int(_arrival_time), tz=TIMEZONE)
+        if "departure" in data:
+            _departure_delay = data["departure"].get("delay")
+            if _departure_delay is not None:
+                departure_delay = time.timedelta(seconds=_departure_delay)
+            _departure_time = data["departure"].get("time")
+            if _departure_time is not None:
+                departure_time = time.datetime.from_timestamp(int(_departure_time), tz=TIMEZONE)
+        return cls(data["stop_sequence"], data.get("stop_id", "Unknown"), data.get("schedule_relationship", "Unknown"), arrival_delay, departure_delay, arrival_time, departure_time)
 
 
 # These classes handle the GTFS static information
@@ -248,8 +257,8 @@ class StopTime:
     def __repr__(self):
         # This basically returns the time of departure modulo 24 hours
         departure_time = time.time.from_microsecond(self.departure_time * 1000000)
-        # "02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
-        return f"{departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
+        # "StopTime - 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
+        return f"StopTime - {departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
 
 
 class SpecificStopTime:
@@ -257,6 +266,7 @@ class SpecificStopTime:
     def __init__(self, stop_time: StopTime, date: time.date):
         self.raw_stop_time = stop_time
         self.trip = stop_time.trip
+        self.route = stop_time.trip.route
         self.stop = stop_time.stop
         self.sequence = stop_time.sequence
         self.stop_headsign = stop_time.stop_headsign
@@ -272,9 +282,135 @@ class SpecificStopTime:
         self.departure_time = _date + time.timedelta(seconds=self.raw_departure_time)
 
     def __repr__(self):
-        # "2023-10-14 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
-        return f"{self.departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
+        # "SpecificStopTime - 2023-10-14 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
+        return f"SpecificStopTime - {self.departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
 
+
+class AddedStopTime:
+    """ A stop from an ADDED trip """
+    def __init__(self, stop_time_update: StopTimeUpdate, trip_id: str | None, route: Route | None, stop: Stop, destination: str = None):  # stops: dict[str, Stop]
+        self.stop_time = stop_time_update
+        self.trip_id = trip_id
+        self.route = route
+        self.stop = stop  # Has to be provided manually
+        # self.stop = stops.get(stop_time_update.stop_id)
+        self.sequence = stop_time_update.stop_sequence
+        self.arrival_time = stop_time_update.arrival_time
+        self.departure_time = stop_time_update.departure_time
+        self.destination = destination
+
+    def __repr__(self):
+        # "AddedStopTime - 2023-10-14 02:00:00 (Stop D'Olier Street - #1, Trip ID T130)"
+        return f"AddedStopTime - {self.departure_time} (Stop {self.stop.name} - #{self.sequence}, Trip ID {self.trip_id})"
+
+
+class RealStopTime:
+    """ A SpecificStopTime with real-time information applied """
+    stop_time: SpecificStopTime | AddedStopTime
+    trip: Trip | None
+    trip_id: str
+    route: Route
+    stop: Stop
+    sequence: int
+    stop_headsign: str | None
+    pickup_type: int | None
+    drop_off_type: int | None
+    timepoint: int | None
+    scheduled_arrival_time: time.datetime | None
+    scheduled_departure_time: time.datetime | None
+    real_time: bool
+    real_trip: TripUpdate | None
+    schedule_relationship: str | None
+    arrival_time: time.datetime | None
+    departure_time: time.datetime | None
+    destination: str
+
+    def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None):
+        if isinstance(stop_time, SpecificStopTime):
+            self.stop_time = stop_time
+            self.trip = stop_time.trip
+            self.trip_id = stop_time.trip.trip_id
+            self.route = stop_time.route
+            self.stop = stop_time.stop
+            self.sequence = stop_time.sequence
+            self.stop_headsign = stop_time.stop_headsign
+            self.pickup_type = stop_time.pickup_type
+            self.drop_off_type = stop_time.drop_off_type
+            self.timepoint = stop_time.timepoint
+            self.scheduled_arrival_time = stop_time.arrival_time
+            self.scheduled_departure_time = stop_time.departure_time
+            self.destination = stop_time.trip.headsign
+
+            self.real_time = False
+            self.real_trip = None
+            self.schedule_relationship = None
+            self.arrival_time = None
+            self.departure_time = None
+
+            # Check if the real_trips actually contains this Trip ID
+            if real_trips is None:
+                raise TypeError("real_trips cannot be None for a SpecificStopTime")
+            if self.trip.trip_id in real_trips:
+                self.real_time = True
+                self.real_trip = real_trips[self.trip.trip_id]
+                self.schedule_relationship = self.real_trip.trip.schedule_relationship
+                arrival_delay = None
+                departure_delay = None
+                if self.real_trip.stop_times is not None:
+                    for stop_time_update in self.real_trip.stop_times:
+                        # if stop_time_update.stop_id == self.stop.id:
+                        #     arrival_delay = stop_time_update.arrival_delay
+                        #     departure_delay = stop_time_update.departure_delay
+                        #     break
+                        if stop_time_update.stop_sequence <= self.sequence:
+                            _arrival_delay = stop_time_update.arrival_delay
+                            _departure_delay = stop_time_update.departure_delay
+                            if _arrival_delay is not None:
+                                arrival_delay = _arrival_delay
+                                departure_delay = _departure_delay
+                            # The schedule relationship should only matter for this stop
+                            if stop_time_update.stop_sequence == self.sequence:
+                                self.schedule_relationship = stop_time_update.schedule_relationship
+                        else:
+                            break  # We reached the desired point
+                else:
+                    pass
+                if arrival_delay is not None:
+                    self.arrival_time = self.scheduled_arrival_time + arrival_delay
+                else:
+                    self.arrival_time = self.scheduled_arrival_time
+                if departure_delay is not None:
+                    self.departure_time = self.scheduled_departure_time + departure_delay
+                else:
+                    self.departure_time = self.scheduled_departure_time
+        elif isinstance(stop_time, AddedStopTime):
+            self.stop_time = stop_time
+            self.trip = None
+            self.trip_id = stop_time.trip_id
+            self.route = stop_time.route
+            self.stop = stop_time.stop
+            self.sequence = stop_time.sequence
+            self.stop_headsign = None
+            self.pickup_type = None
+            self.drop_off_type = None
+            self.timepoint = None
+            self.scheduled_arrival_time = None
+            self.scheduled_departure_time = None
+            self.arrival_time = stop_time.arrival_time
+            self.departure_time = stop_time.departure_time
+            self.real_time = True
+            self.real_trip = None
+            self.schedule_relationship = "ADDED"
+            self.destination = stop_time.destination
+        else:
+            raise TypeError(f"Unexpected StopTime type {type(stop_time).__name__} received")
+
+    def __repr__(self):
+        # "RealStopTime - [SCHEDULED] 2023-10-14 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
+        if self.trip is not None:
+            departure_time = self.departure_time or self.scheduled_departure_time
+            return f"RealStopTime - [{self.schedule_relationship}] {departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip_id})"
+        return f"RealStopTime - [{self.schedule_relationship}] {self.departure_time} to <Unknown> (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip_id})"
 
 # @dataclass()
 # class TripSchedule:
@@ -296,8 +432,22 @@ def time_to_int(value: str) -> int:
     return int(h) * 3600 + int(m) * 60 + int(s)
 
 
-def load_gtfs_data_from_pickle(*, write: bool = True) -> GTFSData:
+def check_gtfs_data_expiry():
+    # Read the expiry file. If it does not exist, FileNotFoundError will be thrown and caught by self.load_data()
+    with open("assets/gtfs/expiry.txt", "r", encoding="utf-8") as file:
+        try:
+            expiry_ts = int(file.read())
+            expiry = time.datetime.from_timestamp(expiry_ts)
+            if time.datetime.now() > expiry:  # The data has expired
+                raise RuntimeError(f"GTFS Data expired on {expiry:%Y-%m-%d at %H:%M:%S}")
+        except ValueError as e:
+            raise RuntimeError(f"Encountered an error while trying to read expiry data: {type(e).__name__}: {e}") from e
+
+
+def load_gtfs_data_from_pickle(*, write: bool = True, ignore_expiry: bool = False) -> GTFSData:
     try:
+        if not ignore_expiry:
+            check_gtfs_data_expiry()
         data = pickle.load(open(static_filename, "rb"))
     except FileNotFoundError:
         data = load_gtfs_data(write=write)
@@ -308,17 +458,10 @@ def save_gtfs_data_to_pickle(data: GTFSData):
     return pickle.dump(data, open(static_filename, "wb+"))
 
 
-def load_gtfs_data(*, write: bool = True) -> GTFSData:
+def load_gtfs_data(*, write: bool = True, ignore_expiry: bool = False) -> GTFSData:
     """ Load available GTFS data """
-    # Read the expiry file. If it does not exist, FileNotFoundError will be thrown and caught by self.load_data()
-    with open("assets/gtfs/expiry.txt", "r", encoding="utf-8") as file:
-        try:
-            expiry_ts = int(file.read())
-            expiry = time.datetime.from_timestamp(expiry_ts)
-            if time.datetime.now() > expiry:  # The data has expired
-                raise RuntimeError(f"GTFS Data expired on {expiry:%Y-%m-%d at %H:%M:%S}")
-        except ValueError as e:
-            raise RuntimeError(f"Encountered an error while trying to read expiry data: {type(e).__name__}: {e}") from e
+    if not ignore_expiry:
+        check_gtfs_data_expiry()
 
     agencies: dict[int, Agency] = {}
     calendars: dict[int, Calendar] = {}
@@ -498,3 +641,54 @@ class StopSchedule:
 
     def __repr__(self):
         return f"Stop Schedule for {self.stop}"
+
+
+def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: str) -> tuple[dict[str, TripUpdate], dict[str, TripUpdate]]:
+    output = {}
+    added = {}
+    for entity in real_time_data.entities:
+        trip = entity.trip_update
+        if trip.trip.trip_id in trip_ids:
+            output[trip.trip.trip_id] = trip
+
+        # Check ADDED trips, as they may include our stop
+        if trip.trip.schedule_relationship == "ADDED":
+            for stop_time_update in trip.stop_times:
+                if stop_time_update.stop_id == stop_id:
+                    added[entity.id] = trip
+    return output, added
+
+
+# Stuff for real-time schedules
+class RealTimeStopSchedule:
+    def __init__(self, data: GTFSData, stop_id: str, real_time_data: GTFSRData):
+        self.stop_schedule = StopSchedule(data, stop_id)
+        self.stop = self.stop_schedule.stop
+        self.stop_id = self.stop_schedule.stop.id
+        self.stop_times = self.stop_schedule.relevant_stop_times(time.date.today())
+        self.trip_ids = {stop_time.trip.trip_id for stop_time in self.stop_times}  # Exclude duplicates
+
+        self.real_trips, self.added_trips = real_trip_updates(real_time_data, self.trip_ids, self.stop_id)
+
+    def real_stop_times(self):
+        output = []
+        for stop_time in self.stop_times:
+            output.append(RealStopTime(stop_time, self.real_trips))
+
+        for trip_id, added_trip in self.added_trips.items():
+            for stop_time in added_trip.stop_times:
+                if stop_time.stop_id == self.stop_id:
+                    last_stop = self.stop_schedule.data.stops.get(added_trip.stop_times[-1].stop_id)
+                    if last_stop is not None:
+                        destination = last_stop.name
+                    else:
+                        destination = "Unknown"
+                    route = self.stop_schedule.data.routes.get(added_trip.trip.route_id)
+                    added_stop_time = AddedStopTime(stop_time, trip_id, route, self.stop_schedule.stop, destination)
+                    output.append(RealStopTime(added_stop_time, None))
+
+        output.sort(key=lambda st: st.departure_time or st.scheduled_departure_time)
+        return output
+
+    def __repr__(self):
+        return f"Real-Time Stop Schedule for {self.stop}"
