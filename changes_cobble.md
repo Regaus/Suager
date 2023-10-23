@@ -749,3 +749,6 @@
 
 ## v1.9.0.2 - 24 September 2023
 - Fixed `..eval` crashing when the error traceback is very long
+
+## v1.9.0.3 - 23 October 2023
+- Fixed Larihalian calendar not applying Kargadian timezone

@@ -78,7 +78,7 @@ class Language(languages.Language):
             data = db.fetchrow("SELECT * FROM timezones WHERE uid=?", (uid,))
             if data:
                 return pytz.timezone(data["tz"])
-        elif time_class in ("Kargadia", "Arnattia"):
+        elif time_class in ("Kargadia", "Arnattia", "Larihalia"):
             data = db.fetchrow("SELECT location FROM kargadia WHERE uid=?", (uid,))
             if data:
                 try:
