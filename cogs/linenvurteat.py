@@ -14,7 +14,7 @@ from utils.time import time as print_current_time
 class Linenvurteat(commands.Cog, name="Linenvürteat"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
-        self._DEBUG = True  # Disables sending API requests for GTFS-R and disables pickling the static data
+        self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
         self.headers = {
@@ -115,7 +115,9 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
 
     async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False) -> discord.Message:
         """ Initialise the data before letting the actual command execute """
-        if not self.initialised and not self.updating:  # If self.updating is True, then the data is already being loaded
+        # If self.updating is True, then the data is already being loaded
+        # If force_redownload is True, then we need to reload regardless of the status
+        if (not self.initialised and not self.updating) or force_redownload:
             message = await ctx.send(f"{emotes.Loading} The GTFS data has not been initialised yet. This may take a few minutes...")
             await self.load_data(force_redownload=force_redownload)
         elif self.updating:
@@ -232,7 +234,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         schedule = linenvurteat.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data)
         real_stop_times = schedule.real_stop_times()
 
-        # now = time.datetime(2023, 10, 23, 18, 0, 0, 0, tz=linenvurteat.TIMEZONE)
+        # now = time.datetime(2023, 10, 23, 5, 0, 0, 0, tz=linenvurteat.TIMEZONE)
         now = time.datetime.now(tz=linenvurteat.TIMEZONE)
 
         start_idx = 0
@@ -253,12 +255,12 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
             elif stop_time.departure_time is not None:
                 departure_time = stop_time.departure_time.format("%H:%M")  # :%S
             else:
-                departure_time = "Unknown"
+                departure_time = "--:--"  # "Unknown"
 
             if stop_time.scheduled_departure_time is not None:
                 scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
             else:
-                scheduled_departure_time = "Unknown"
+                scheduled_departure_time = "--:--"  # "Unknown"
 
             if stop_time.route is None:
                 route = "Unknown"
@@ -289,7 +291,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
 
         stop_code = f"Code `{stop.code}`, " if stop.code else ""
         stop_id = f"ID `{stop.id}`"
-        output = f"Real-Time Data for Stop {stop.name} ({stop_code}{stop_id})\n```fix\n"
+        output = f"Real-Time data for the stop {stop.name} ({stop_code}{stop_id})\n```fix\n"
         for line in output_data:
             assert len(column_sizes) == len(line)
             line_data = []

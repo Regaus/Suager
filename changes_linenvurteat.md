@@ -44,3 +44,7 @@
 ## v0.2.0 - 23 October 2023
 - Added a command to view the next 6 departures at a given stop
 - Added classes and functions to use real-time trip information to view a stop's departures
+
+## v0.2.1 - 23 October 2023
+- The time now shows "--:--" instead of "Unknown" if the data is unavailable
+- Disabled Debug Mode
