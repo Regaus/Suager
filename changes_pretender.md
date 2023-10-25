@@ -76,3 +76,6 @@
 
 ## v1.2.2.1 - 24 September 2023
 - Fixed `a.eval` crashing when the error traceback is very long
+
+## v1.2.2.2 - 25 October 2023
+- Fixed the `a.optout` command crashing

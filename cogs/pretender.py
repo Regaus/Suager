@@ -139,7 +139,7 @@ class Pretender(commands.Cog):
         except TimeoutError:
             return await message.edit(content="Didn't get a reaction in time, so you're still opted in.")
 
-        await self.messages.remove(ctx.author)
+        self.messages.remove(ctx.author)
         self.bot.db.execute("INSERT INTO pretender_blacklist VALUES (?)", (ctx.author.id,))
         await message.delete()
         return await ctx.send("Successfully deleted all message data from you and added you to the log blacklist.")
