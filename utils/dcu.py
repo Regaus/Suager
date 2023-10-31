@@ -518,7 +518,10 @@ class Event(object):
         if rooms[0][:3] == "GLA":
             building_code = rooms[0][4:-3]  # Assume the building is the same for all labs
             rooms_list = ", ".join([room[4:] for room in rooms])  # Include building code, e.g. HG20, since most signs have that room code included
-            return f"{BUILDINGS_SHORT[building_code]} {rooms_list}"
+            try:
+                return f"{BUILDINGS_SHORT[building_code]} {rooms_list}"
+            except KeyError:
+                return f"{rooms_list}"
         else:
             rooms_list = ", ".join([room[4:] for room in rooms])
             return f"{CAMPUSES[rooms[0][:3]]} {rooms_list}"

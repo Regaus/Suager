@@ -1689,3 +1689,6 @@
 
 ## v7.7.5.8 - 9 October 2023
 - Removed cherrypy from requirements
+
+## v7.7.5.9 - 31 October 2023
+- Fixed the DCU timetable room parsing breaking on weird room names

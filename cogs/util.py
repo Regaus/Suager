@@ -978,7 +978,8 @@ class UtilitySuager(Reminders, name="Utility"):
                     date = time2.datetime.combine(date, time2.time(), dcu.TZ)
                 return await ctx.send(embed=await dcu.get_timetable_course(course_code, date))
             except KeyError as e:
-                return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
+                # await ctx.send(general.traceback_maker(e))
+                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
             except Exception as e:
                 # await ctx.send(general.traceback_maker(e))
                 return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
