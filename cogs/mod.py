@@ -928,7 +928,7 @@ class Moderation(commands.Cog):
                             (member.id, ctx.guild.id, "pardon", ctx.author.id, reason_log, False, time.now2(), 1, self.bot.name))
         entry_id = self.bot.db.db.lastrowid
         await send_mod_dm(self.bot, ctx, member, "pardon", reason, original_warning=original_warning)
-        await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "warn", reason, original_warning=original_warning)
+        await send_mod_log(self.bot, ctx, member, ctx.author, entry_id, "pardon", reason, original_warning=original_warning)
 
     @commands.command(name="pardon", aliases=["forgive", "unwarn"])
     @commands.guild_only()
