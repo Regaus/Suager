@@ -264,6 +264,12 @@ class Admin(commands.Cog):
         """ Evaluates input. """
         return await eval_fn(ctx, cmd)
 
+    @commands.command(name="error")
+    @commands.is_owner()
+    async def simulate_error(self, ctx: commands.Context):
+        """ Simulate an unhandled error """
+        raise RuntimeError("This is an example error")
+
     @commands.command(name="reload", aliases=["re", "r"])
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, name: str):

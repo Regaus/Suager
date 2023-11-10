@@ -1694,4 +1694,7 @@
 - Fixed the DCU timetable room parsing breaking on weird room names
 
 ## v7.7.5.10 - 10 November 2023
-- Fixed pardons being treated as warnings in the modlogs
+- Fixed pardons being treated as warnings in the mod logs
+
+## v7.7.5.11 - 10 November 2023
+- Added a command to simulate an error occurring
