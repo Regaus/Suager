@@ -1281,7 +1281,7 @@ class Settings(commands.Cog):
         """ Give this role to new human members """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["members"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["members"] = []
             else:
@@ -1294,7 +1294,7 @@ class Settings(commands.Cog):
         """ Don't give this role new human members """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["members"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["members"] = []
             else:
@@ -1323,7 +1323,7 @@ class Settings(commands.Cog):
         """ Give this role to new bots """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["bots"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["bots"] = []
             else:
@@ -1336,7 +1336,7 @@ class Settings(commands.Cog):
         """ Don't give this role new bots """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["bots"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["bots"] = []
             else:

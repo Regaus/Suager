@@ -1698,3 +1698,8 @@
 
 ## v7.7.5.11 - 10 November 2023
 - Added a command to simulate an error occurring
+
+## v7.7.6 - 11 November 2023
+- Upgraded to Python 3.12
+- Improved type-checking on some settings
+- Replaced deprecated `datetime.utcnow()` function with a stupider workaround
