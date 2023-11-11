@@ -1,16 +1,3 @@
-# Code copied from jishaku.shim.paginator_170.py
-
-"""
-jishaku.paginators (shim for discord.py 1.7.x)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Paginator-related tools and interfaces for Jishaku.
-
-:copyright: (c) 2021 Devon (Gorialis) R
-:license: MIT, see LICENSE for more details.
-
-"""
-
 import asyncio
 import discord
 from discord.ext import commands
@@ -30,6 +17,52 @@ EMOJI_DEFAULT = EmojiSettings(
 )
 
 
+class LinePaginator(commands.Paginator):
+    """ Paginator that separates based on the line count rather than on the character length
+
+     max_lines is the maximum amount of lines per page (default 10)
+     max_size is the maximum amount of characters per page (default 2000) """
+    def __init__(self, prefix: str | None = None, suffix: str | None = None, max_lines: int = 10, max_size: int = 2000, linesep: str = "\n"):
+        super().__init__(prefix, suffix, max_size, linesep)
+        self.prefix = prefix
+        self.suffix = suffix
+        self.max_lines = max_lines
+        self.max_size = max_size
+        self.linesep = linesep
+        self.clear()
+        # self._current_page is [self.prefix] and contains nothing else
+        # self._count is len(prefix) + len(linesep) or zero if no prefix
+        # self._pages is []
+
+    def add_line(self, line: str = '', *, empty: bool = False) -> None:
+        """ Adds a line to the current page """
+        max_page_size = self.max_size - self._prefix_len - self._suffix_len - 2 * self._linesep_len
+        if len(line) > max_page_size:
+            raise RuntimeError(f'Line exceeds maximum page size {max_page_size}')
+
+        # If the length of the page exceeds self.max_size, end the current page early
+        if self._count + len(line) + self._linesep_len > self.max_size - self._suffix_len:
+            self.close_page()
+
+        self._count += len(line) + self._linesep_len
+        self._current_page.append(line)
+
+        if empty:
+            self._current_page.append('')
+            self._count += self._linesep_len
+
+        # If the line count reaches self.max_lines, finish the page after we're done
+        if self._line_count() + empty >= self.max_lines:
+            self.close_page()
+
+    def _line_count(self):
+        """ Amount of lines in the current page """
+        # Don't subtract anything if prefix is None or empty, else subtract 1
+        return len(self._current_page) - bool(self.prefix)
+
+
+# Code copied from jishaku.shim.paginator_170.py
+# (c) 2021 Devon (Gorialis) R
 # This code is for the reaction-based paginator, used in the help command and stuff like that
 class ReactionPaginatorInterface:  # pylint: disable=too-many-instance-attributes
     """
@@ -382,5 +415,64 @@ class ReactionPaginatorEmbedInterface(ReactionPaginatorInterface):
         return self.paginator.max_size
 
 
-PaginatorInterface = paginators.PaginatorInterface
-PaginatorEmbedInterface = paginators.PaginatorEmbedInterface
+class PaginatorInterface(paginators.PaginatorInterface):
+    def __init__(self, bot: commands.Bot, paginator: commands.Paginator, **kwargs):
+        timeout = kwargs.pop("timeout", 600)  # Set default timeout to 10 minutes rather than 2 hours
+        super().__init__(bot, paginator, timeout=timeout, **kwargs)
+
+    # @property
+    # def display_page(self):
+    #     """ Returns the current page the paginator interface is on. """
+    #     self._display_page = max(0, min(self.page_count - 1, self._display_page))
+    #     return self._display_page
+
+    # @display_page.setter
+    # def display_page(self, value: int):
+    #     """ Set the current display page to the supplied value (1 = first page) """
+    #     self._display_page = max(0, min(self.page_count - 1, value - 1))
+
+    def remove_buttons(self):
+        """ Remove all buttons except "Close Paginator" if there is only one page """
+        if len(self.pages) <= 1:
+            self.remove_item(self.button_start)     # type: ignore
+            self.remove_item(self.button_previous)  # type: ignore
+            self.remove_item(self.button_current)   # type: ignore
+            self.remove_item(self.button_next)      # type: ignore
+            self.remove_item(self.button_last)      # type: ignore
+            self.remove_item(self.button_goto)      # type: ignore
+
+    @property
+    def send_kwargs(self) -> dict:
+        """ Returns the kwards forwarded to send/edit when updating the page """
+        # Don't crash if we have an empty paginator
+        if self.pages:
+            content = self.pages[self.display_page]
+        else:
+            content = "No data available"
+        self.remove_buttons()
+        return {"content": content, "view": self}
+
+
+# Code adapted from jishaku.shim.paginator_200.py
+# (c) 2021 Devon (Gorialis) R
+class PaginatorEmbedInterface(PaginatorInterface):
+    """ A subclass of PaginatorInterface that encloses content in an Embed """
+    def __init__(self, *args, **kwargs):
+        self._embed = kwargs.pop('embed', None) or discord.Embed()
+        super().__init__(*args, **kwargs)
+
+    @property
+    def send_kwargs(self) -> dict:
+        # Don't crash if we have an empty paginator
+        if self.pages:
+            self._embed.description = self.pages[self.display_page]
+        else:
+            self._embed.description = "No data available"
+        self.remove_buttons()
+        return {'embed': self._embed, 'view': self}
+
+    max_page_size = 2048
+
+    @property
+    def page_size(self) -> int:
+        return self.paginator.max_size

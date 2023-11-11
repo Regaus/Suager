@@ -172,8 +172,8 @@
   "info_stats_users_data2": "Total members: **{members}**\nUnique users: **{users}**",
 
   "leaderboards_no_data": "No data is available for this server at the moment.",
-  "leaderboards_levels": "Top users in **{server}** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
-  "leaderboards_levels_global": "Top users **globally** by **XP**\nYour place: **{place}**\nShowing places **{start}** to **{end}** of **{total}**\n{data}```",
+  "leaderboards_levels": "Top users in **{server}** by **XP**\nYour place: **{place}** of **{total}**",  // Showing places **{start}** to **{end}** of **{total}**\n{data}```
+  "leaderboards_levels_global": "Top users **globally** by **XP**\nYour place: **{place}** of **{total}**",  // Showing places **{start}** to **{end}** of **{total}**\n{data}```
   "leaderboards_place": "#{val}",
 
   "leveling_next_level": "**{user}** - You have **{xp}/{next} XP**.\nYou need **{left}** more to reach **level {level}** (Progress: **{prog}**)\nNon-stop activity to level up: **{min} to {max}**",

@@ -1698,3 +1698,8 @@
 
 ## v7.7.5.11 - 10 November 2023
 - Added a command to simulate an error occurring
+
+## v7.7.6 - 10 November 2023
+- Added a paginator with a fixed amount of lines per page, rather than max characters
+- Paginated `//levels` and `//glevels`
+- Made the `//dcu search` commands only show up to 15 lines per page
