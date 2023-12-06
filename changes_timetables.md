@@ -48,3 +48,6 @@
 ## v0.2.1 - 23 October 2023
 - The time now shows "--:--" instead of "Unknown" if the data is unavailable
 - Disabled Debug Mode
+
+## v0.2.2 - 6 December 2023
+- Changed internal name from "Linenvürteat" to "Timetables"

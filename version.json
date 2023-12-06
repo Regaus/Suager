@@ -41,12 +41,12 @@
     "major_release": 1658357872,
     "last_update": 1698248946
   },
-  "linenvurteat": {
+  "timetables": {
     "short_version": "0.2",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1698055460
+    "last_update": 1701880925
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

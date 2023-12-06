@@ -33,11 +33,11 @@ load = {
     ],
     "kyomi2": [],
     "kyomi3": [],
-    "linenvurteat": [
+    "timetables": [
         "admin",
         "events",
         "info",
-        "linenvurteat"
+        "timetables"
     ],
     "pretender": [
         "admin",

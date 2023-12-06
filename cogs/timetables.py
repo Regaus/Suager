@@ -7,11 +7,11 @@ import discord
 from aiohttp import ClientError
 from regaus import time
 
-from utils import bot_data, commands, http, linenvurteat, logger, emotes
+from utils import bot_data, commands, http, timetables, logger, emotes
 from utils.time import time as print_current_time
 
 
-class Linenvurteat(commands.Cog, name="Linenvürteat"):
+class Timetables(commands.Cog, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
         self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
@@ -21,8 +21,8 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
             "Cache-Control": "no-cache",
             "x-api-key": self.bot.config["gtfsr_api_token"]
         }
-        self.real_time_data: linenvurteat.GTFSRData | None = None
-        self.static_data: linenvurteat.GTFSData | None = None
+        self.real_time_data: timetables.GTFSRData | None = None
+        self.static_data: timetables.GTFSData | None = None
         self.initialised = False
         self.updating = False
         self.loader_error: Exception | None = None
@@ -30,14 +30,14 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
     async def get_data_from_api(self, *, write: bool = True):
         data: bytes = await http.get(self.url, headers=self.headers, res_method="read")
         if write:
-            with open(linenvurteat.real_time_filename, "wb+") as file:
+            with open(timetables.real_time_filename, "wb+") as file:
                 file.write(data)
-            # json.dump(data, open(linenvurteat.real_time_filename, "w+"), indent=2)
+            # json.dump(data, open(timetables.real_time_filename, "w+"), indent=2)
         return data
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
         data = await self.get_real_time_data(debug=debug, write=write)
-        self.real_time_data = linenvurteat.load_gtfs_r_data(data)
+        self.real_time_data = timetables.load_gtfs_r_data(data)
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
         return self.real_time_data  # just in case
 
@@ -45,7 +45,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
         if debug:
             try:
-                data: str = open(linenvurteat.real_time_filename, "r").read()
+                data: str = open(timetables.real_time_filename, "r").read()
             except FileNotFoundError:
                 data: bytes = await self.get_data_from_api(write=write)
         else:
@@ -63,7 +63,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
             self.updating = True
             if self.real_time_data is None:
                 # data = await self.get_real_time_data(debug=True, write=True)
-                # self.real_time_data = linenvurteat.load_gtfs_r_data(data)
+                # self.real_time_data = timetables.load_gtfs_r_data(data)
                 # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
                 await self.load_real_time_data(debug=True, write=True)
             if self.static_data is None:
@@ -73,7 +73,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
                         await self.download_new_static_gtfs()
                     else:
                         try:
-                            self.static_data = linenvurteat.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
+                            self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
                         except (FileNotFoundError, RuntimeError) as e:
                             # If the static GTFS data is not available or is expired, download new data and then extract and load.
@@ -82,7 +82,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
                 except (ClientError, BadZipFile):
                     # If the GTFS data cannot be downloaded due to an error with the powers above, try to load from existing data while ignoring expiry errors
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Can't download data, falling back to existing dataset.")
-                    self.static_data = linenvurteat.load_gtfs_data_from_pickle(write=not self._DEBUG, ignore_expiry=True)
+                    self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG, ignore_expiry=True)
                     # If we crash here yet again, then it would make sense to give up and catch on fire.
             self.initialised = True
         except Exception as e:
@@ -109,7 +109,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
         with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
             file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
         # Update the loaded data
-        self.static_data = linenvurteat.load_gtfs_data(write=not self._DEBUG)
+        self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
         self.updating = False
 
@@ -149,7 +149,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
             return await message.edit(content=f"{print_current_time()} > Data has been loaded")
         return await ctx.send("Placeholder")
 
-    def find_stop(self, query: str) -> list[linenvurteat.Stop]:
+    def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
         output = []
         query = query.lower()
@@ -159,7 +159,7 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
                 output.append(stop)
         return output
 
-    def find_route(self, query: str) -> list[linenvurteat.Route]:
+    def find_route(self, query: str) -> list[timetables.Route]:
         """ Find a specific route """
         output = []
         query = query.lower()
@@ -231,14 +231,14 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
                                               f"Use `{ctx.prefix}tfi search stop` to find the specific stop ID or provide a more specific query.")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=True)
-        schedule = linenvurteat.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data)
+        schedule = timetables.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data)
         real_stop_times = schedule.real_stop_times()
 
-        # now = time.datetime(2023, 10, 23, 5, 0, 0, 0, tz=linenvurteat.TIMEZONE)
-        now = time.datetime.now(tz=linenvurteat.TIMEZONE)
+        # now = time.datetime(2023, 10, 23, 5, 0, 0, 0, tz=timetables.TIMEZONE)
+        now = time.datetime.now(tz=timetables.TIMEZONE)
 
         start_idx = 0
-        for idx, stop_time in enumerate(real_stop_times):  # type: int, linenvurteat.RealStopTime
+        for idx, stop_time in enumerate(real_stop_times):  # type: int, timetables.RealStopTime
             # Start at the first departure after right now
             if (stop_time.departure_time or stop_time.scheduled_departure_time) >= now:
                 start_idx = idx
@@ -308,4 +308,4 @@ class Linenvurteat(commands.Cog, name="Linenvürteat"):
 
 
 async def setup(bot: bot_data.Bot):
-    await bot.add_cog(Linenvurteat(bot))
+    await bot.add_cog(Timetables(bot))
