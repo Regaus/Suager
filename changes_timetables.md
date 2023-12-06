@@ -54,3 +54,6 @@
 
 ## v0.2.3 - 6 December 2023
 - Added statuses to the bot, instead of just defaulting to the statuses from Suager
+
+## v0.2.3.1 - 6 December 2023
+- Fixed glitchy custom statuses

@@ -397,3 +397,6 @@
 
 ## v1.4.1.1 - 24 September 2023
 - Fixed `m!eval` crashing when the error traceback is very long
+
+## v1.4.1.2 - 6 December 2023
+- Fixed glitchy custom statuses

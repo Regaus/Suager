@@ -15,10 +15,10 @@
   },
   "kyomi": {
     "short_version": "1.4",
-    "version": "1.4.1.1",
+    "version": "1.4.1.2",
     "first_version": 1623891776,
     "major_release": 1642621994,
-    "last_update": 1695591020
+    "last_update": 1701886294
   },
   "kyomi2": {
     "short_version": "1.0",
@@ -36,17 +36,17 @@
   },
   "pretender": {
     "short_version": "1.2",
-    "version": "1.2.2.2",
+    "version": "1.2.2.3",
     "first_version": 1658334660,
     "major_release": 1658357872,
-    "last_update": 1698248946
+    "last_update": 1701886290
   },
   "timetables": {
     "short_version": "0.2",
-    "version": "0.2.2",
+    "version": "0.2.3.1",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1701880925
+    "last_update": 1701886302
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

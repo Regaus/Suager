@@ -79,3 +79,6 @@
 
 ## v1.2.2.2 - 25 October 2023
 - Fixed the `a.optout` command crashing
+
+## v1.2.2.3 - 6 December 2023
+- Fixed glitchy custom statuses

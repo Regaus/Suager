@@ -908,7 +908,7 @@ async def playing(bot: bot_data.Bot):
                 ]
                 random.seed()
                 _activity = random.choice(activities)
-                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                activity = get_activity(_activity)
                 name = _activity["name"]
                 status = {
                     0: "Playing",
@@ -925,7 +925,7 @@ async def playing(bot: bot_data.Bot):
                 ]
                 random.seed()
                 _activity = random.choice(activities)
-                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                activity = get_activity(_activity)
                 name = _activity["name"]
                 status = {
                     0: "Playing",
@@ -942,7 +942,7 @@ async def playing(bot: bot_data.Bot):
                 ]
                 random.seed()
                 _activity = random.choice(activities)
-                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                activity = get_activity(_activity)
                 name = _activity["name"]
                 status = {
                     0: "Playing",
@@ -962,7 +962,7 @@ async def playing(bot: bot_data.Bot):
                 ]
                 random.seed()
                 _activity = random.choice(activities)
-                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                activity = get_activity(_activity)
                 name = _activity["name"]
                 status = {
                     0: "Playing",
@@ -1046,7 +1046,7 @@ async def playing(bot: bot_data.Bot):
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > Error with connection.")
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
-            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+            general.log_error(bot, general.traceback_maker(e, code_block=False))  # Remove the codeblock markdown and extra newlines
 
         # This should make it adjust itself for lag caused
         await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
