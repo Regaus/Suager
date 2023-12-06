@@ -951,6 +951,26 @@ async def playing(bot: bot_data.Bot):
                 }.get(_activity["type"], "Undefined")
                 logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
 
+            elif bot.name == "timetables":
+                activities = [
+                    {"type": 0, "name": fv},
+                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 3, "name": "Timetables"},
+                    {"type": 4, "name": "Building new timetables"},
+                    {"type": 4, "name": "Observing the endless delays"},
+                    {"type": 4, "name": "Testing the limits of your patience"}
+                ]
+                random.seed()
+                _activity = random.choice(activities)
+                activity = discord.Activity(type=_activity["type"], name=_activity["name"])
+                name = _activity["name"]
+                status = {
+                    0: "Playing",
+                    3: "Watching",
+                    4: "Custom status:",
+                }.get(_activity["type"], "Undefined")
+                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+
             else:  # Suager
                 status_type = random.random()
                 if status_type <= 0.2:  # 20% chance of being a birthday status

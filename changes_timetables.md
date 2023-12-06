@@ -51,3 +51,6 @@
 
 ## v0.2.2 - 6 December 2023
 - Changed internal name from "Linenvürteat" to "Timetables"
+
+## v0.2.3 - 6 December 2023
+- Added statuses to the bot, instead of just defaulting to the statuses from Suager
