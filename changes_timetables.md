@@ -57,3 +57,8 @@
 
 ## v0.2.3.1 - 6 December 2023
 - Fixed glitchy custom statuses
+
+## v0.2.4 - 7 December 2023
+- Improved the code for choosing a status
+- Turned version and countdown statuses into custom status
+- Added some new statuses

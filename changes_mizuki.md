@@ -400,3 +400,7 @@
 
 ## v1.4.1.2 - 6 December 2023
 - Fixed glitchy custom statuses
+
+## v1.4.2 - 7 December 2023
+- Improved the code for choosing a status
+- Turned version and countdown statuses into custom status

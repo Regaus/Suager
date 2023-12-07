@@ -135,7 +135,7 @@ class CobbleInformation(BotInformation, name="Bot Information"):
     @commands.command(name="cobble", aliases=["kaivallus"], hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     async def cobble(self, ctx: commands.Context):
-        return await ctx.send("Mu ja Kaivallus. Mu ja zeide, la tet av Kargadian kuvalsen zaivan maikan. <a:SenkoWatch2:801408192785547264>")
+        return await ctx.send("Mu ja Kaivallus. Mu ja zeide, la te av Kargadian kuvalsen zaivan maikava. <a:SenkoWatch2:801408192785547264>")
 
 
 async def setup(bot: bot_data.Bot):

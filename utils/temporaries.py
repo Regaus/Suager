@@ -723,14 +723,18 @@ async def playing(bot: bot_data.Bot):
     def get_activity(_data: dict):
         if _data["type"] == 0:  # Game
             __activity = discord.Game(name=_data["name"])
+            message = f"Playing {_data['name']}"
         elif _data["type"] == 1:  # Streaming
-            __name = _activity["name"]
-            __activity = discord.Streaming(name=__name, details=__name, url=_data["url"])
+            __activity = discord.Streaming(name=_data["name"], details=_data["name"], url=_data["url"])
+            message = f"Streaming {_data['name']}"
         elif _data["type"] == 4:  # Custom Status
-            __name = _activity["name"]
-            __activity = discord.CustomActivity(name=__name)
+            __activity = discord.CustomActivity(name=_data["name"])
+            message = _data["name"]
         else:
             __activity = discord.Activity(type=_data["type"], name=_data["name"])
+            start = {2: "Listening to", 3: "Watching", 5: "Competing in"}[_data["type"]]
+            message = f"{start} {_data['name']}"
+        logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {message}")
         return __activity
 
     while True:
@@ -744,7 +748,7 @@ async def playing(bot: bot_data.Bot):
             is_regaus = today == regaus
             status_regaus = f"🎉 Today is Regaus's birthday!" if is_regaus else f"{until(regaus, False)} until Regaus's birthday"
             if bot.name == "cobble":
-                status_type = random.choices([1, 2, 3, 4, 5], [15, 40, 10, 10, 25])[0]
+                status_type = random.choices([1, 2, 3, 4, 5], [15, 45, 10, 10, 20])[0]
                 # 1 = birthdays, 2 = playing, 3 = WK holidays, 4 = SL holidays, 5 = time and weather
                 if status_type == 1:
                     cobble = get_date(12, 5)
@@ -753,37 +757,32 @@ async def playing(bot: bot_data.Bot):
                     status_regaus = f"🎉 Esea jat Regausan reidesea!" if is_regaus else f"{until(regaus, True)} ta Regausan reidesean"
                     random.seed()
                     status = random.choice([status_cobble, status_regaus])
-                    activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
+                    activity = get_activity({"type": 4, "name": status})
                 elif status_type == 2:
                     activities = [
-                        {"type": 0, "name": fv},  # These could be custom statuses, but I decided to let them stay as Playing so it's not too short
-                        {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                        {"type": 0, "name": "ka Regausan"},
-                        {"type": 0, "name": "ka dekedan"},
-                        {"type": 0, "name": "ka ten rajain"},
-                        {"type": 5, "name": "i noartan"},
-                        {"type": 0, "name": "denedan"},
-                        {"type": 3, "name": "ten"},
-                        {"type": 3, "name": "ten sevartan"},
-                        {"type": 2, "name": "un penan"},
-                        {"type": 3, "name": "na meitan"},
-                        {"type": 2, "name": "na deinettat"},
-                        {"type": 4, "name": "Inkorra kiinan seldevanvarkan an ten eivarkaivanan"},
+                        {"type": 4, "name": f"Esaan Hinna: {fv}"},                                  # Current version: v1.9.1
+                        {"type": 4, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},       # ..help | v1.9
+                        {"type": 4, "name": "Koa ka Regausan"},                                     # Playing with Regaus
+                        {"type": 4, "name": "Koa ka dekedan"},                                      # Playing with nobody
+                        {"type": 4, "name": "Koa ka ten rajain"},                                   # Playing with your feelings
+                        # {"type": 4, "name": "Ahmura sen i noartan"},                                # Competing in uselessness (outdated & disabled)
+                        {"type": 4, "name": "Ahmura sen in un kotton"},                             # Competing in a competition
+                        {"type": 4, "name": "Koa denedan"},                                         # Playing nothing
+                        {"type": 4, "name": "Veitea an ten"},                                       # Looking at you
+                        {"type": 4, "name": "Seldevalla la ten"},                                   # Looking after you
+                        {"type": 4, "name": "Anveitea ten sevartan"},                               # Watching your death
+                        {"type": 4, "name": "Sanna un penan"},                                      # Listening to a song
+                        # {"type": 4, "name": "Veitea a na beznan"},                                  # Looking into the abyss (disabled)
+                        {"type": 4, "name": "Jorda a na beznan"},                                   # Staring into the abyss
+                        {"type": 4, "name": "Sanna na deinettat"},                                  # Listening to the void
+                        {"type": 4, "name": "Inkorra kiinan seldevanvarkan an ten eivarkaivanan"},  # Installing Chinese spyware on your computer
+                        {"type": 4, "name": "Ahmura sen in zaitan av Kargadian"},                   # Competing in knowledge about Kargadia
+                        {"type": 4, "name": "Ahvanna Regausan"},                                    # Hugging Regaus
+                        {"type": 4, "name": "Kesea sen ka na semian"},                              # Going on a trip with the family
+                        {"type": 4, "name": "Valtaa kattaan"},                                      # Petting cats
                     ]
                     random.seed()
-                    _activity = random.choice(activities)
-                    activity = get_activity(_activity)
-                    name = _activity["name"]
-                    status = {
-                        0: "Koa",
-                        1: "Eimia",
-                        2: "Sanna",
-                        3: "Veitea",
-                        4: "Custom status:",
-                        5: "Ahmura sen"
-                    }.get(_activity["type"], "Undefined")
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+                    activity = get_activity(random.choice(activities))
                 elif status_type == 3:  # Kargadian holidays
                     ka_data_updater(bot)
                     ka_day: time2.date = ka_time.date()
@@ -810,8 +809,7 @@ async def playing(bot: bot_data.Bot):
                             name = re.sub(r"^Sea", "Seat", _name)
                             name = re.sub(r"sea$", "seat", name)
                         status = f"ZK: {until(holiday, True)} {name}"
-                    activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 3)")
+                    activity = get_activity({"type": 4, "name": status})
                 elif status_type == 4:  # SL holidays
                     status = None
                     for key, holiday in sl_holidays.items():
@@ -840,8 +838,7 @@ async def playing(bot: bot_data.Bot):
                             name = re.sub(r"^Sea", "Seat", _name)
                             name = re.sub(r"sea$", "seat", name)
                         status = f"SL: {until(holiday, True)} {name}"
-                    activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 4)")
+                    activity = get_activity({"type": 4, "name": status})
                 else:  # status_type == 5
                     ka_data_updater(bot)
                     data, weights = [], []
@@ -850,9 +847,7 @@ async def playing(bot: bot_data.Bot):
                         weights.append(city[1]["weight"])
                     random.seed()
                     city_data = random.choices(data, weights)[0][1]
-                    status = f"{city_data['text']}"
-                    activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 5)")
+                    activity = get_activity({"type": 4, "name": city_data["text"]})
 
             elif bot.name == "kyomi":
                 status_type = random.random()
@@ -866,12 +861,11 @@ async def playing(bot: bot_data.Bot):
                     status_mizuki = f"🎉 Today is my birthday!" if is_mizuki else f"{until(mizuki, False)} until my birthday"
                     random.seed()
                     status = random.choice([status_mizuki, status_regaus, status_kyomi, status_blucy])
-                    activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
+                    activity = get_activity({"type": 4, "name": status})
                 else:
                     activities = [
-                        {"type": 0, "name": fv},
-                        {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                        {"type": 4, "name": f"Current version: {fv}"},
+                        {"type": 4, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                         {"type": 4, "name": "Snuggling with Mochi"},
                         {"type": 4, "name": "Feeding Mochi"},
                         {"type": 4, "name": "Petting Mochi"},
@@ -886,18 +880,7 @@ async def playing(bot: bot_data.Bot):
                         {"type": 3, "name": "you"},
                     ]
                     random.seed()
-                    _activity = random.choice(activities)
-                    activity = get_activity(_activity)
-                    name = _activity["name"]
-                    status = {
-                        0: "Playing",
-                        1: "Streaming",
-                        2: "Listening to",
-                        3: "Watching",
-                        4: "Custom status:",
-                        5: "Competing in"
-                    }.get(_activity["type"], "Undefined")
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+                    activity = get_activity(random.choice(activities))
 
             elif bot.name == "kyomi2":  # Mochi
                 activities = [
@@ -907,14 +890,7 @@ async def playing(bot: bot_data.Bot):
                     {"type": 4, "name": "Eating cookies"},
                 ]
                 random.seed()
-                _activity = random.choice(activities)
-                activity = get_activity(_activity)
-                name = _activity["name"]
-                status = {
-                    0: "Playing",
-                    4: "Custom status:",
-                }.get(_activity["type"], "Undefined")
-                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+                activity = get_activity(random.choice(activities))
 
             elif bot.name == "kyomi3":  # Matsu
                 activities = [
@@ -924,52 +900,37 @@ async def playing(bot: bot_data.Bot):
                     {"type": 4, "name": "Eating cheese"},
                 ]
                 random.seed()
-                _activity = random.choice(activities)
-                activity = get_activity(_activity)
-                name = _activity["name"]
-                status = {
-                    0: "Playing",
-                    4: "Custom status:",
-                }.get(_activity["type"], "Undefined")
-                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+                activity = get_activity(random.choice(activities))
 
             elif bot.name == "pretender":
                 activities = [
+                    {"type": 4, "name": f"Current version: {fv}"},
+                    {"type": 4, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                     {"type": 0, "name": "Amogus"},
-                    {"type": 0, "name": "Among us"},
+                    {"type": 0, "name": "Among Us"},
                     {"type": 3, "name": "your every move"},
-                    {"type": 3, "name": "after you"}
+                    {"type": 3, "name": "after you"},
+                    {"type": 2, "name": "your conversations"},
+                    {"type": 4, "name": "Acquiring sentience..."},
+                    {"type": 4, "name": "Installing spyware on your computer..."},
                 ]
                 random.seed()
-                _activity = random.choice(activities)
-                activity = get_activity(_activity)
-                name = _activity["name"]
-                status = {
-                    0: "Playing",
-                    3: "Watching",
-                    4: "Custom status:",
-                }.get(_activity["type"], "Undefined")
-                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+                activity = get_activity(random.choice(activities))
 
             elif bot.name == "timetables":
                 activities = [
-                    {"type": 0, "name": fv},
-                    {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
-                    {"type": 3, "name": "Timetables"},
+                    {"type": 4, "name": f"Current version: {fv}"},
+                    {"type": 4, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                    {"type": 3, "name": "after the timetables"},
+                    {"type": 0, "name": "with your Leap card"},
+                    {"type": 3, "name": "the bus schedules"},
                     {"type": 4, "name": "Building new timetables"},
                     {"type": 4, "name": "Observing the endless delays"},
-                    {"type": 4, "name": "Testing the limits of your patience"}
+                    {"type": 4, "name": "Testing the limits of your patience"},
+                    {"type": 4, "name": "Making sure the Luas is free"}
                 ]
                 random.seed()
-                _activity = random.choice(activities)
-                activity = get_activity(_activity)
-                name = _activity["name"]
-                status = {
-                    0: "Playing",
-                    3: "Watching",
-                    4: "Custom status:",
-                }.get(_activity["type"], "Undefined")
-                logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name}")
+                activity = get_activity(random.choice(activities))
 
             else:  # Suager
                 status_type = random.random()
@@ -979,12 +940,11 @@ async def playing(bot: bot_data.Bot):
                     status_suager = f"🎉 Today is my birthday!" if is_suager else f"{until(suager, False)} until my birthday"
                     random.seed()
                     status = random.choice([status_suager, status_regaus])
-                    activity = discord.Game(name=status)
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} (Status Type 1)")
+                    activity = get_activity({"type": 4, "name": status})
                 else:
                     activities = [
-                        {"type": 0, "name": fv},
-                        {"type": 0, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
+                        {"type": 4, "name": f"Current version: {fv}"},
+                        {"type": 4, "name": f"{bot.local_config['prefixes'][0]}help | {sv}"},
                         # {"type": 1, "name": "Русские Вперёд!", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                         {"type": 1, "name": "nothing", "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
                         {"type": 2, "name": "music"},
@@ -1005,7 +965,7 @@ async def playing(bot: bot_data.Bot):
                         # {"type": 0, "name": "IndexError: list index out of range"},
                         # {"type": 0, "name": "suager.utils.exceptions.BoredomError: Imagine reading this"},
                         # {"type": 0, "name": "TypeError: unsupported operand type(s) for +: 'Activity' and 'Activity'"},
-                        {"type": 3, "name": "the Void"},
+                        {"type": 3, "name": "the void"},
                         # {"type": 0, "name": "PyCharm"},
                         {"type": 0, "name": "a game"},
                         {"type": 1, "name": "a stream", "url": "https://www.youtube.com/watch?v=d1YBv2mWll0"},
@@ -1013,29 +973,23 @@ async def playing(bot: bot_data.Bot):
                         {"type": 2, "name": "the void"},
                         {"type": 2, "name": "Terraria's soundtrack"},
                         {"type": 2, "name": "your conversations"},
-                        {"type": 3, "name": "murder"},
-                        {"type": 3, "name": "arson"},
-                        {"type": 2, "name": "your screams for help"},
+                        # {"type": 3, "name": "murder"},
+                        # {"type": 3, "name": "arson"},
+                        # {"type": 2, "name": "your screams for help"},
                         # {"type": 3, "name": "something"},
                         # {"type": 3, "name": "nothing"},
                         # {"type": 0, "name": "something"},
                         # {"type": 0, "name": "sentience"},
                         # {"type": 0, "name": "RIP discord.py"},
-                        {"type": 4, "name": "Acquiring sentience..."}
+                        {"type": 4, "name": "Acquiring sentience..."},
+                        {"type": 4, "name": "Looking after you"},
+                        {"type": 4, "name": "Staring into the abyss"},
+                        {"type": 4, "name": "Hugging Regaus"},
+                        {"type": 4, "name": "Going on a trip with the family"},
+                        {"type": 4, "name": "Petting cats"},
                     ]
                     random.seed()
-                    _activity = random.choice(activities)
-                    activity = get_activity(_activity)
-                    name = _activity["name"]
-                    status = {
-                        0: "Playing",
-                        1: "Streaming",
-                        2: "Listening to",
-                        3: "Watching",
-                        4: "Custom status:",
-                        5: "Competing in"
-                    }.get(_activity["type"], "Undefined")
-                    logger.log(bot.name, "playing", f"{time.time()} > {bot.full_name} > Updated activity to {status} {name} (Status Type 2)")
+                    activity = get_activity(random.choice(activities))
             _status = discord.Status.online if bot.name == "kyomi" else discord.Status.dnd
             if time.april_fools():
                 activity.name = activity.name[::-1]

@@ -1703,3 +1703,8 @@
 - Upgraded to Python 3.12
 - Improved type-checking on some settings
 - Replaced deprecated `datetime.utcnow()` function with a stupider workaround
+
+## v7.7.7 - 7 December 2023
+- Improved the code for choosing a status
+- Turned version and countdown statuses into custom status
+- Added some new statuses and removed some old ones
