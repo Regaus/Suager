@@ -172,8 +172,8 @@
   "info_stats_users_data2": "Saiderain i veisen: **{members}**\nTäävain nottarain: **{users}**",
 
   "leaderboards_no_data": "Mu ihwa den zaitan av edan salhan esaa.",
-  "leaderboards_levels": "Igjaran nottarat in **{server}**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun\nVeiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```",
-  "leaderboards_levels_global": "Igjaran nottarat **veide**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun\nVeiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```",
+  "leaderboards_levels": "Igjaran nottarat in **{server}**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun iad **{total}**",  // Veiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```
+  "leaderboards_levels_global": "Igjaran nottarat **veide**, shiraman **Aivir**\nTe jas a na **{place}**'dan kadun iad **{total}**",  // Veiteas ad **{start}**'dan ta **{end}**'dan kadun iad **{total}**\n{data}```
   "leaderboards_place": "{val}",
 
   "leveling_next_level": "**{user}** - Te ihwas **{xp}/{next} Aivin**.\nTe nittaras **{left}** kuvalse, vir **Koon {level}** sekean (Eskyta: **{prog}**)\nTikimar kairanänmis la sekean seldan koon: **ad {min} ta {max}**",

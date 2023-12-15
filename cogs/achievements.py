@@ -63,7 +63,7 @@ class Achievements(commands.Cog):
         except ImportError:
             await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
             font, font_med, font_small = None, None, None
-        w, _ = dr.textsize(username(user), font=font)
+        w = dr.textlength(username(user), font=font)
         max_description = language.string("achievements_highest")
         # max_description = "Highest achievement tier reached!"
 

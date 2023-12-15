@@ -1027,7 +1027,8 @@ class UtilitySuager(Reminders, name="Utility"):
         data = await get_function(search)
         if not data:
             return await ctx.send("No data has been found. Try a different search?")
-        paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
+        # paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
+        paginator = paginators.LinePaginator(prefix=None, suffix=None, max_lines=15, max_size=1000)
         for line in data:
             paginator.add_line(line)
         embed = discord.Embed(title=title, colour=general.random_colour())

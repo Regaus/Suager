@@ -7,7 +7,7 @@ from typing import Literal, Union
 
 import discord
 
-from utils import bot_data, commands, general, logger, permissions, settings, time
+from utils import bot_data, commands, general, logger, permissions, settings, time, paginators
 from utils.languages import Language
 
 
@@ -959,8 +959,9 @@ class Moderation(commands.Cog):
         warns = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='warn' AND handled=0 ORDER BY expiry", (member.id, ctx.guild.id))
         if not warns:
             return await ctx.send(language.string("mod_warn_list_none", user=general.username(member)))
-        output = language.string("mod_warn_list", user=general.username(member), server=ctx.guild.name)
-        outputs = []
+        header = language.string("mod_warn_list", user=general.username(member), server=ctx.guild.name)
+        paginator = paginators.LinePaginator(prefix=header, suffix=None, max_lines=5, max_size=2000, linesep="\n\n")
+        # outputs = []
         for item, warning in enumerate(warns, start=1):
             text = general.reason(ctx.guild.get_member(warning["author"]), warning["reason"])
             expiry = warning["expiry"]
@@ -969,16 +970,19 @@ class Moderation(commands.Cog):
             if warning["temp"]:
                 expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=False, uid=ctx.author.id)
                 expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
-                outputs.append(language.string("mod_warn_list_item", i=i, id=case_id, text=text, time=expires_on, delta=expires_in))
+                paginator.add_line(language.string("mod_warn_list_item", i=i, id=case_id, text=text, time=expires_on, delta=expires_in))
             else:
                 delta = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
-                outputs.append(language.string("mod_warn_list_item2", i=i, id=case_id, text=text, delta=delta))
-        output2 = "\n\n".join(outputs)
-        if len(output2) > 1900:
-            _data = BytesIO(str(output2).encode('utf-8'))
-            return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Warnings')))
-        else:
-            return await ctx.send(f"{output}\n{output2}")
+                paginator.add_line(language.string("mod_warn_list_item2", i=i, id=case_id, text=text, delta=delta))
+        interface = paginators.PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
+        interface.display_page = len(interface.pages)  # Set to last page (i.e. show latest punishments first)
+        return await interface.send_to(ctx)
+        # output2 = "\n\n".join(outputs)
+        # if len(output2) > 1900:
+        #     _data = BytesIO(str(output2).encode('utf-8'))
+        #     return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Warnings')))
+        # else:
+        #     return await ctx.send(f"{output}\n{output2}")
 
     @commands.command(name="modlog", aliases=["punishments", "infractions"])
     @commands.guild_only()
@@ -987,12 +991,13 @@ class Moderation(commands.Cog):
         """ See the log of all punishments ever applied against the user in this server """
         member = member or ctx.author
         language = self.bot.language(ctx)
-        # Show all actions taken against the user, in chronological order (ie. sorted by punishment ID)
+        # Show all actions taken against the user, in chronological order (i.e. sorted by punishment ID)
         punishments = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? ORDER BY id", (member.id, ctx.guild.id))
         if not punishments:
             return await ctx.send(language.string("mod_log_none", user=general.username(member)))
-        output = language.string("mod_log", user=general.username(member), server=ctx.guild.name)
-        outputs = []
+        header = language.string("mod_log", user=general.username(member), server=ctx.guild.name)
+        paginator = paginators.LinePaginator(prefix=header, suffix=None, max_lines=5, max_size=2000, linesep="\n\n")
+        # outputs = []
         for item, entry in enumerate(punishments, start=1):
             author = ctx.guild.get_member(entry["author"])
             extra = ""
@@ -1018,13 +1023,16 @@ class Moderation(commands.Cog):
                 key = "mod_log_item_time"
             base = language.string("mod_log_item_base", i=i, id=case_id, text=text)
             times = language.string(key, time=expiry, delta=delta)
-            outputs.append(base + extra + times)
-        output2 = "\n\n".join(outputs)
-        if len(output2) > 1900:
-            _data = BytesIO(str(output2).encode('utf-8'))
-            return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Punishments')))
-        else:
-            return await ctx.send(f"{output}\n{output2}")
+            paginator.add_line(base + extra + times)
+        interface = paginators.PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
+        interface.display_page = len(interface.pages)  # Set to last page (i.e. show latest punishments first)
+        return await interface.send_to(ctx)
+        # output2 = "\n\n".join(outputs)
+        # if len(output2) > 1900:
+        #     _data = BytesIO(str(output2).encode('utf-8'))
+        #     return await ctx.send(output, file=discord.File(_data, filename=time.file_ts('Punishments')))
+        # else:
+        #     return await ctx.send(f"{output}\n{output2}")
 
     @commands.command(name="nickname", aliases=["nick"])
     @commands.guild_only()

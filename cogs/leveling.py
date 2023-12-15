@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import random
 from io import BytesIO
+from typing import Literal
 
 import discord
 from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
@@ -840,15 +841,14 @@ class Leveling(commands.Cog):
     @commands.command(name="levels", aliases=["ranks", "lb"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def levels_lb(self, ctx: commands.Context, top: str = ""):
+    async def levels_lb(self, ctx: commands.Context, top: int | Literal["top"] = None):
         """ Server's XP Leaderboard """
         language = self.bot.language(ctx)
-        return await leaderboard(self, ctx, sql_server, (ctx.guild.id, self.bot.name),
-                                 top, "leaderboards_levels", language, ctx.guild.name)
+        return await leaderboard(self, ctx, sql_server, (ctx.guild.id, self.bot.name), top, "leaderboards_levels", language, ctx.guild.name)
 
     @commands.command(name="levelsglobal", aliases=["levelsg", "glevels"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def global_levels(self, ctx: commands.Context, top: str = ""):
+    async def global_levels(self, ctx: commands.Context, top: int | Literal["top"] = None):
         """ Global XP Leaderboard """
         language = self.bot.language(ctx)
         return await leaderboard2(self, ctx, sql_global, (self.bot.name,), top, "leaderboards_levels_global", language)
