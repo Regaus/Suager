@@ -1712,3 +1712,6 @@
 
 ## v7.7.7.1 - 15 December 2023
 - Fixed `//achievements` breaking due to using a method that no longer exists
+
+## v7.7.7.2 - 15 December 2023
+- Added a zero width non-joiner between place and XP on `//levels` and `//glevels` to prevent weird highlighting that sometimes on Android

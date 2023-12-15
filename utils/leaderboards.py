@@ -43,8 +43,8 @@ async def leaderboard(self, ctx: commands.Context, query: str, statement: tuple,
         current_page = k // 10
         spaces = max(xpl[current_page*10:(current_page + 1)*10])
         pad = len(str((current_page + 1) * 10)) + (_af < 0)  # This later part adds an extra padding point if it's april fools
-        # Place -> 2 spaces -> XP (aligned right) -> 4 spaces -> Name
-        paginator.add_line(f"{i * _af:0{pad}d})  {xp[k]:>{spaces}}    {who}")
+        # Place -> ZWNJ -> 2 spaces -> XP (aligned right) -> 4 spaces -> Name
+        paginator.add_line(f"{i * _af:0{pad}d})\u200c  {xp[k]:>{spaces}}    {who}")
     interface = paginators.PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
     interface.display_page = page  # Set the page to the user's current or chosen page
     return await interface.send_to(ctx)
@@ -93,8 +93,8 @@ async def leaderboard2(self, ctx: commands.Context, query: str, statement: tuple
         current_page = k // 10
         spaces = max(xpl[current_page*10:(current_page + 1)*10])
         pad = len(str((current_page + 1) * 10)) + (_af < 0)  # This later part adds an extra padding point if it's april fools
-        # Place -> 2 spaces -> XP (aligned right) -> 4 spaces -> Name
-        paginator.add_line(f"{i * _af:0{pad}d})  {xp[k]:>{spaces}}    {who}")
+        # Place -> ZWNJ -> 2 spaces -> XP (aligned right) -> 4 spaces -> Name
+        paginator.add_line(f"{i * _af:0{pad}d})\u200c  {xp[k]:>{spaces}}    {who}")
     interface = paginators.PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
     interface.display_page = page  # Set the page to the user's current or chosen page
     return await interface.send_to(ctx)
