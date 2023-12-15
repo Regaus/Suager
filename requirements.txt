@@ -1,12 +1,14 @@
-git+https://github.com/Rapptz/discord.py.git@master  # Update to alpha v2.3 versions to support Discord's new username systems
+# git+https://github.com/Rapptz/discord.py.git@master  # Update to alpha v2.3 versions to support Discord's new username systems
+discord.py[speed]
 git+https://github.com/Regaus/Regaus.py.git@stable#egg=regaus.py
 anytree  # This is used in Regaus.py, but I'll add it here just in case it decides to be stupid
 Pillow
-aiohttp
+aiohttp>=3.9.0b0
 python-dateutil
 asyncio
 pytz
-git+https://github.com/Gorialis/jishaku.git@master#egg=jishaku  # Use github version of jishaku because it doesn't use line-profiler, which is broken on py3.11
+jishaku
+# git+https://github.com/Gorialis/jishaku.git@master#egg=jishaku  # Use github version of jishaku because it doesn't use line-profiler, which is broken on py3.11
 luas.py
 jstyleson
 markovify

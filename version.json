@@ -1,52 +1,52 @@
 {
   "suager": {
     "short_version": "7.7",
-    "version": "7.7.8",
+    "version": "7.7.10",
     "first_version": 1557781320,
     "major_release": 1608495933,
     "last_update": 1702680470
   },
   "cobble": {
     "short_version": "1.9",
-    "version": "1.9.1",
+    "version": "1.9.2",
     "first_version": 1607190007,
     "major_release": 1608495933,
     "last_update": 1702680474
   },
   "kyomi": {
     "short_version": "1.4",
-    "version": "1.4.3",
+    "version": "1.4.4",
     "first_version": 1623891776,
     "major_release": 1642621994,
     "last_update": 1702680478
   },
   "kyomi2": {
     "short_version": "1.0",
-    "version": "1.0",
+    "version": "1.0.1",
     "first_version": 1652828637,
     "major_release": 1652828637,
-    "last_update": 1652828637
+    "last_update": 1701973095
   },
   "kyomi3": {
     "short_version": "1.0",
-    "version": "1.0",
+    "version": "1.0.1",
     "first_version": 1652828637,
     "major_release": 1652828637,
-    "last_update": 1652828637
+    "last_update": 1701973095
   },
   "pretender": {
     "short_version": "1.2",
-    "version": "1.2.2.2",
+    "version": "1.2.3",
     "first_version": 1658334660,
     "major_release": 1658357872,
-    "last_update": 1698248946
+    "last_update": 1701973095
   },
-  "linenvurteat": {
+  "timetables": {
     "short_version": "0.2",
-    "version": "0.2.1",
+    "version": "0.2.4",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1698055460
+    "last_update": 1701973095
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

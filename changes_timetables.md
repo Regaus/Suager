@@ -48,3 +48,17 @@
 ## v0.2.1 - 23 October 2023
 - The time now shows "--:--" instead of "Unknown" if the data is unavailable
 - Disabled Debug Mode
+
+## v0.2.2 - 6 December 2023
+- Changed internal name from "Linenvürteat" to "Timetables"
+
+## v0.2.3 - 6 December 2023
+- Added statuses to the bot, instead of just defaulting to the statuses from Suager
+
+## v0.2.3.1 - 6 December 2023
+- Fixed glitchy custom statuses
+
+## v0.2.4 - 7 December 2023
+- Improved the code for choosing a status
+- Turned version and countdown statuses into custom status
+- Added some new statuses

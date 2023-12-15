@@ -49,8 +49,8 @@
       "default_locale": "en"
     },
     {
-      "name": "Linenvürteat",
-      "internal_name": "linenvurteat",
+      "name": "Timetables",
+      "internal_name": "timetables",
       "token": "token",
       "join_message": "Oh, hi! Thanks for adding me to your server <:eyesog:762336598645407785>",
       "prefixes": [

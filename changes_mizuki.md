@@ -398,10 +398,17 @@
 ## v1.4.1.1 - 24 September 2023
 - Fixed `m!eval` crashing when the error traceback is very long
 
-## v1.4.2 - 15 December 2023
+## v1.4.1.2 - 6 December 2023
+- Fixed glitchy custom statuses
+
+## v1.4.2 - 7 December 2023
+- Improved the code for choosing a status
+- Turned version and countdown statuses into custom status
+
+## v1.4.3 - 15 December 2023
 - Added a paginator with a fixed amount of lines per page, rather than max characters
 - Added paginators to `m!warns` and `m!punishments`
   - These will default to the last page, thereby showing the latest warnings/punishments first
 
-## v1.4.3 - 15 December 2023
+## v1.4.4 - 15 December 2023
 - Paginated the embed for the server's current settings (Embeds for subcategories, e.g. leveling, keep their normal embeds)

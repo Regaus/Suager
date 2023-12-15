@@ -27,7 +27,7 @@ async def af_img_creator(ctx: commands.Context, url, filename, content=None):
     await lag.delete()
     if req is None:
         return await ctx.send("No response was received, try again later.")
-    if type(req) == str:
+    if isinstance(req, str):
         bio = BytesIO(req.encode("utf-8"))
         filename = filename[:-3] + "json"
     else:

@@ -1699,24 +1699,34 @@
 ## v7.7.5.11 - 10 November 2023
 - Added a command to simulate an error occurring
 
-## v7.7.6 - 10 November 2023
+## v7.7.6 - 11 November 2023
+- Upgraded to Python 3.12
+- Improved type-checking on some settings
+- Replaced deprecated `datetime.utcnow()` function with a stupider workaround
+
+## v7.7.7 - 7 December 2023
+- Improved the code for choosing a status
+- Turned version and countdown statuses into custom status
+- Added some new statuses and removed some old ones
+
+## v7.7.8 - 10 November 2023
 - Added a paginator with a fixed amount of lines per page, rather than max characters
 - Paginated `//levels` and `//glevels`
 - Made the `//dcu search` commands only show up to 15 lines per page
 
-## v7.7.7 - 15 December 2023
+## v7.7.9 - 15 December 2023
 - Fixed PaginatorInterface breaking when max_size > 1991 (instead of only throwing an error above 2000)
 - Fixed PaginatorInterface and its subclasses incorrectly showing the last page
 - Added paginators to `//warns` and `//punishments`
   - These will default to the last page, thereby showing the latest warnings/punishments first
 
-## v7.7.7.1 - 15 December 2023
+## v7.7.9.1 - 15 December 2023
 - Fixed `//achievements` breaking due to using a method that no longer exists
 
-## v7.7.7.2 - 15 December 2023
+## v7.7.9.2 - 15 December 2023
 - Added a zero width non-joiner between place and XP on `//levels` and `//glevels` to prevent weird highlighting that sometimes on Android
 
-## v7.7.8 - 15 December 2023
+## v7.7.10 - 15 December 2023
 - Paginated the embed for the server's current settings
   - Embeds for subcategories (like leveling or birthdays) keep their normal embeds, as they're not big enough to be difficult to navigate to begin with
 - Updated the code checking for some old setting values to use isinstance() instead of `type() == int`

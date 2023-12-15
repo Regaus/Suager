@@ -753,8 +753,15 @@
 ## v1.9.0.3 - 23 October 2023
 - Fixed Larihalian calendar not applying Kargadian timezone
 
-## v1.9.0.4 - 15 December 2023
+## v1.9.1 - 7 December 2023
+- Improved the code for choosing a status
+- Switched all statuses to CustomActivity so they show up completely in Regaazdallian
+- Added some new statuses
+- Rearranged the chances so that 45% of the statuses are playing statuses while 20% are time and weather (instead of 40% and 25% respectively)
+- Improved grammar on the hidden `..cobble` command
+
+## v1.9.1.1 - 15 December 2023
 - Fixed `..achievements` breaking due to using a method that no longer exists
 
-## v1.9.1 - 15 December 2023
+## v1.9.2 - 15 December 2023
 - Paginated the embed for the server's current settings

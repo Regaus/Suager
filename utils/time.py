@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta as td, timezone
+from datetime import datetime, timedelta as td, timezone, UTC
 
 import pytz
 from dateutil.relativedelta import relativedelta
@@ -26,7 +26,7 @@ def now(tz: str = None):
 
 
 def now2():
-    return datetime.utcnow()
+    return datetime.now(tz=UTC).replace(tzinfo=None)
 
 
 def set_tz(when: datetime, tz: str):
@@ -121,7 +121,7 @@ def add_time(delta: relativedelta):
     if rd_is_zero(delta):
         return "No time was specified, or an error has occurred.", True
     try:
-        return datetime.utcnow() + delta, False
+        return now2() + delta, False
     except Exception as e:
         return f"{type(e).__name__}: {str(e)}", True
 
