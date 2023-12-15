@@ -1709,3 +1709,6 @@
 - Fixed PaginatorInterface and its subclasses incorrectly showing the last page
 - Added paginators to `//warns` and `//punishments`
   - These will default to the last page, thereby showing the latest warnings/punishments first
+
+## v7.7.7.1 - 15 December 2023
+- Fixed `//achievements` breaking due to using a method that no longer exists

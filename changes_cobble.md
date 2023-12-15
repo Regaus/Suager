@@ -752,3 +752,6 @@
 
 ## v1.9.0.3 - 23 October 2023
 - Fixed Larihalian calendar not applying Kargadian timezone
+
+## v1.9.0.4 - 15 December 2023
+- Fixed `..achievements` breaking due to using a method that no longer exists
