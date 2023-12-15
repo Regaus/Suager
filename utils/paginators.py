@@ -1,4 +1,6 @@
 import asyncio
+from typing import override
+
 import discord
 from discord.ext import commands
 import collections
@@ -34,6 +36,7 @@ class LinePaginator(commands.Paginator):
         # self._count is len(prefix) + len(linesep) or zero if no prefix
         # self._pages is []
 
+    @override
     def add_line(self, line: str = '', *, empty: bool = False) -> None:
         """ Adds a line to the current page """
         max_page_size = self.max_size - self._prefix_len - self._suffix_len - 2 * self._linesep_len
@@ -131,19 +134,23 @@ class ReactionPaginatorInterface:  # pylint: disable=too-many-instance-attribute
             )
 
     @property
-    def pages(self):
-        """
-        Returns the paginator's pages without prematurely closing the active page.
-        """
-        # protected access has to be permitted here to not close the paginator's pages
+    def pages(self) -> list[str]:
+        return self.paginator.pages
 
-        # pylint: disable=protected-access
-        paginator_pages = list(self.paginator._pages)
-        if len(self.paginator._current_page) > 1:
-            paginator_pages.append('\n'.join(self.paginator._current_page) + '\n' + (self.paginator.suffix or ''))
-        # pylint: enable=protected-access
-
-        return paginator_pages
+    # @property
+    # def pages(self):
+    #     """
+    #     Returns the paginator's pages without prematurely closing the active page.
+    #     """
+    #     # protected access has to be permitted here to not close the paginator's pages
+    #
+    #     # pylint: disable=protected-access
+    #     paginator_pages = list(self.paginator._pages)
+    #     if len(self.paginator._current_page) > 1:
+    #         paginator_pages.append('\n'.join(self.paginator._current_page) + '\n' + (self.paginator.suffix or ''))
+    #     # pylint: enable=protected-access
+    #
+    #     return paginator_pages
 
     @property
     def page_count(self):
@@ -402,6 +409,7 @@ class ReactionPaginatorEmbedInterface(ReactionPaginatorInterface):
         super().__init__(*args, **kwargs)
 
     @property
+    @override
     def send_kwargs(self) -> dict:
         display_page = self.display_page
         self._embed.description = self.pages[display_page]
@@ -411,6 +419,7 @@ class ReactionPaginatorEmbedInterface(ReactionPaginatorInterface):
     max_page_size = 2048
 
     @property
+    @override
     def page_size(self) -> int:
         return self.paginator.max_size
 
@@ -431,6 +440,16 @@ class PaginatorInterface(paginators.PaginatorInterface):
     #     """ Set the current display page to the supplied value (1 = first page) """
     #     self._display_page = max(0, min(self.page_count - 1, value - 1))
 
+    @property
+    @override
+    def pages(self) -> list[str]:
+        return self.paginator.pages  # We don't need to have custom behaviour for the last page ???
+
+    @property
+    @override
+    def page_size(self) -> int:
+        return self.paginator.max_size  # We don't need to add "Page 1/x", as it's not actually appended anywhere
+
     def remove_buttons(self):
         """ Remove all buttons except "Close Paginator" if there is only one page """
         if len(self.pages) <= 1:
@@ -442,6 +461,7 @@ class PaginatorInterface(paginators.PaginatorInterface):
             self.remove_item(self.button_goto)      # type: ignore
 
     @property
+    @override
     def send_kwargs(self) -> dict:
         """ Returns the kwards forwarded to send/edit when updating the page """
         # Don't crash if we have an empty paginator
@@ -462,6 +482,7 @@ class PaginatorEmbedInterface(PaginatorInterface):
         super().__init__(*args, **kwargs)
 
     @property
+    @override
     def send_kwargs(self) -> dict:
         # Don't crash if we have an empty paginator
         if self.pages:
@@ -474,5 +495,6 @@ class PaginatorEmbedInterface(PaginatorInterface):
     max_page_size = 2048
 
     @property
+    @override
     def page_size(self) -> int:
         return self.paginator.max_size

@@ -1703,3 +1703,9 @@
 - Added a paginator with a fixed amount of lines per page, rather than max characters
 - Paginated `//levels` and `//glevels`
 - Made the `//dcu search` commands only show up to 15 lines per page
+
+## v7.7.7 - 15 December 2023
+- Fixed PaginatorInterface breaking when max_size > 1991 (instead of only throwing an error above 2000)
+- Fixed PaginatorInterface and its subclasses incorrectly showing the last page
+- Added paginators to `//warns` and `//punishments`
+  - These will default to the last page, thereby showing the latest warnings/punishments first
