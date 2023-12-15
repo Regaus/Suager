@@ -1,10 +1,10 @@
 import asyncio
+import collections
+import dataclasses
 from typing import override
 
 import discord
 from discord.ext import commands
-import collections
-
 from jishaku import paginators
 
 # emoji settings, this sets what emoji are used for PaginatorInterface
@@ -62,6 +62,97 @@ class LinePaginator(commands.Paginator):
         """ Amount of lines in the current page """
         # Don't subtract anything if prefix is None or empty, else subtract 1
         return len(self._current_page) - bool(self.prefix)
+
+    def __repr__(self) -> str:
+        fmt = '<LinePaginator prefix: {0.prefix!r} suffix: {0.suffix!r} linesep: {0.linesep!r} max_size: {0.max_size} count: {0._count}>'
+        return fmt.format(self)
+
+
+@dataclasses.dataclass
+class EmbedField:
+    """ Represents a field for an Embed, used by the EmbedFieldPaginator """
+    name: str
+    value: str
+    inline: bool = False
+
+    def __len__(self) -> int:
+        return len(self.name) + len(self.value)
+
+
+# This does not inherit from commands.Paginator
+# Code loosely based on the main Paginator code (from discord/ext/commands/help.py)
+class EmbedFieldPaginator:
+    """ Paginator that separates based on field count rather than max page length
+
+    max_fields is the maximum amount of fields per page (default 10)
+    max_size is the maximum amount of characters in the total embed (default 6000)
+      Note that this does not take into account the length of the rest of the contents (e.g. title or description)"""
+    def __init__(self, max_fields: int = 10, max_size: int = 3000) -> None:
+        # super().__init__(prefix, suffix, max_size, linesep)
+        if max_fields > 25:
+            raise ValueError("There can only be up to 25 fields in an Embed.")
+        if max_size > 6000:
+            raise ValueError("There can only be up to 6000 characters in an Embed.")
+        self.max_fields = max_fields
+        self.max_size = max_size
+        self._current_page: list[EmbedField] = []
+        self._count: int = 0
+        self._pages: list[list[EmbedField]] = []
+        # self._current_page is [self.prefix] and contains nothing else
+        # self._count is len(prefix) + len(linesep) or zero if no prefix
+        # self._pages is []
+
+    def clear(self) -> None:
+        """Clears the paginator to have no pages."""
+        self._current_page: discord.Embed = discord.Embed()
+        self._count: int = 0
+        self._pages: list[discord.Embed] = []
+
+    def add_field(self, *, name: str, value: str, inline: bool = False) -> None:
+        """ Adds a field to the current page. Follows the parameters of Embed.add_field() """
+        if len(name) > 256:
+            raise ValueError("The name cannot be longer than 256 characters.")
+        elif len(value) > 1024:
+            raise ValueError("The value cannot be longer than 1024 characters.")
+        field = EmbedField(name=name, value=value, inline=inline)
+
+        # If the length of the page exceeds self.max_size, end the current page early
+        if self._count + len(field) > self.max_size:
+            self.close_page()
+
+        self._count += len(field)
+        self._current_page.append(field)
+
+        # If the field count reaches self.max_lines, finish the page after we're done
+        if self._field_count() >= self.max_fields:
+            self.close_page()
+
+    def _field_count(self) -> int:
+        """ Return the amount of fields on the current page """
+        return len(self._current_page)
+
+    def close_page(self) -> None:
+        """ Prematurely terminate a page. """
+        self._pages.append(self._current_page)
+        self._current_page = []
+        self._count = 0
+
+    def __len__(self) -> int:
+        total = sum(sum(len(field) for field in page) for page in self._pages)
+        return total + self._count
+
+    @property
+    def pages(self) -> list[list[EmbedField]]:
+        """ Returns the rendered list of pages. """
+        # If the current page is not empty, include it without closing
+        # Else, return the current list of pages
+        if self._current_page:
+            return [*self._pages, self._current_page]
+        return self._pages
+
+    def __repr__(self) -> str:
+        fmt = '<EmbedFieldPaginator prefix: {0.prefix!r} suffix: {0.suffix!r} linesep: {0.linesep!r} max_size: {0.max_size} count: {0._count}>'
+        return fmt.format(self)
 
 
 # Code copied from jishaku.shim.paginator_170.py
@@ -478,7 +569,7 @@ class PaginatorInterface(paginators.PaginatorInterface):
 class PaginatorEmbedInterface(PaginatorInterface):
     """ A subclass of PaginatorInterface that encloses content in an Embed """
     def __init__(self, *args, **kwargs):
-        self._embed = kwargs.pop('embed', None) or discord.Embed()
+        self._embed = kwargs.pop('embed', discord.Embed())
         super().__init__(*args, **kwargs)
 
     @property
@@ -494,7 +585,55 @@ class PaginatorEmbedInterface(PaginatorInterface):
 
     max_page_size = 2048
 
+
+class EmbedFieldPaginatorInterface(PaginatorEmbedInterface):
+    """ A version of PaginatorInterface that supports EmbedFieldPaginator instead of the regular Paginator """
+    def __init__(self, *args, paginator: EmbedFieldPaginator, **kwargs):
+        # This is done to pass the isinstance() check inside jishaku.paginators.PaginatorInterface
+        self.max_page_size = 6000
+        super().__init__(paginator=commands.Paginator(), *args, **kwargs)
+
+        self._embed = kwargs.pop('embed', discord.Embed())
+        self._embed.clear_fields()
+        self.max_page_size -= len(self._embed)  # This won't account for the embed being updated afterwards, but that shouldn't happen
+        self.paginator = paginator
+
+        if self.page_size > self.max_page_size:
+            raise ValueError(f"Paginator passed has too large of a page size for this embed. "
+                             f"(Max page size: {self.page_size} > {self.max_page_size}; Embed length: {len(self._embed)})")
+
     @property
     @override
-    def page_size(self) -> int:
-        return self.paginator.max_size
+    def pages(self) -> list[list[EmbedField]]:
+        return self.paginator.pages  # This is purely here for type hinting purposes
+
+    @property
+    @override
+    def send_kwargs(self) -> dict:
+        # Don't crash if we have an empty paginator
+        if self.pages:
+            page: list[EmbedField] = self.pages[self.display_page]
+            self._embed.clear_fields()
+            for field in page:
+                self._embed.add_field(name=field.name, value=field.value, inline=field.inline)
+        self.remove_buttons()
+        return {'embed': self._embed, 'view': self}
+
+    @override
+    async def add_line(self, *, name: str, value: str, inline: bool = False):
+        """ A function that allows the PaginatorInterface to remain locked to the last page if already on it.
+
+        This class overrides it to follow the signature of EmbedFieldPaginator. """
+        display_page = self.display_page
+        page_count = self.page_count
+
+        self.paginator.add_field(name=name, value=value, inline=inline)
+
+        new_page_count = self.page_count
+        if display_page + 1 == page_count:
+            self._display_page = new_page_count
+
+        # "Unconditionally set send lock to try to guarantee page updates on unfocused pages"
+        self.send_lock.set()
+
+    add_field = add_line

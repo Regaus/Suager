@@ -1715,3 +1715,8 @@
 
 ## v7.7.7.2 - 15 December 2023
 - Added a zero width non-joiner between place and XP on `//levels` and `//glevels` to prevent weird highlighting that sometimes on Android
+
+## v7.7.8 - 15 December 2023
+- Paginated the embed for the server's current settings
+  - Embeds for subcategories (like leveling or birthdays) keep their normal embeds, as they're not big enough to be difficult to navigate to begin with
+- Updated the code checking for some old setting values to use isinstance() instead of `type() == int`

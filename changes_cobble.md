@@ -755,3 +755,6 @@
 
 ## v1.9.0.4 - 15 December 2023
 - Fixed `..achievements` breaking due to using a method that no longer exists
+
+## v1.9.1 - 15 December 2023
+- Paginated the embed for the server's current settings

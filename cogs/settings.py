@@ -5,7 +5,7 @@ from typing import Tuple
 import discord
 
 from cogs.leveling import max_level
-from utils import bot_data, commands, general, languages, permissions, settings, time
+from utils import bot_data, commands, general, languages, permissions, settings, time, paginators
 
 
 class Settings(commands.Cog):
@@ -136,13 +136,15 @@ class Settings(commands.Cog):
         if ctx.guild.icon:
             embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
         embed.set_footer(text=language.string("settings_current_footer", p=ctx.prefix))
+        interface = paginators.EmbedFieldPaginatorInterface(paginator=paginators.EmbedFieldPaginator(max_fields=7, max_size=3000),
+                                                            bot=ctx.bot, owner=ctx.author, embed=embed)
 
         # Language
-        embed.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
+        await interface.add_field(name=language.string("settings_current_language"), value=language.string("_self"), inline=False)
 
         # Prefix
         dp, cp = self.prefix_list(ctx)
-        embed.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
+        await interface.add_field(name=language.string("settings_current_prefix"), value=f"`{'`, `'.join(dp + cp)}`", inline=False)
 
         def channel(cid: int):
             if cid == 0:
@@ -155,7 +157,7 @@ class Settings(commands.Cog):
             if "leveling" in setting:
                 if setting["leveling"]["enabled"]:
                     lvl = language.string("settings_current_leveling2", p=ctx.prefix)
-            embed.add_field(name=language.string("settings_current_leveling"), value=lvl, inline=False)
+            await interface.add_field(name=language.string("settings_current_leveling"), value=lvl, inline=False)
 
         # Starboard
         if self.bot.name in ["kyomi", "suager"]:
@@ -164,14 +166,14 @@ class Settings(commands.Cog):
                 starboard = setting["starboard"]
                 if starboard["enabled"]:
                     sb = language.string("settings_current_starboard2", stars=language.number(starboard["minimum"]), channel=starboard["channel"])
-            embed.add_field(name=language.string("settings_current_starboard"), value=sb, inline=False)
+            await interface.add_field(name=language.string("settings_current_starboard"), value=sb, inline=False)
 
         # Birthdays
         bd = language.string("settings_current_disabled")
         if "birthdays" in setting:
             if setting["birthdays"]["enabled"]:
                 bd = language.string("settings_current_birthdays2", p=ctx.prefix)
-        embed.add_field(name=language.string("settings_current_birthdays"), value=bd, inline=False)
+        await interface.add_field(name=language.string("settings_current_birthdays"), value=bd, inline=False)
 
         if self.bot.name in ["kyomi", "suager"]:
             # Polls
@@ -182,8 +184,8 @@ class Settings(commands.Cog):
                     if polls["channel"]:
                         polls_channel = f"<#{polls['channel']}>"
                     polls_anonymity = language.yes(polls["voter_anonymity"])
-                embed.add_field(name=language.string("settings_current_polls"), inline=False,
-                                value=language.string("settings_current_polls2", channel=polls_channel, anon=polls_anonymity))
+                await interface.add_field(name=language.string("settings_current_polls"), inline=False,
+                                          value=language.string("settings_current_polls2", channel=polls_channel, anon=polls_anonymity))
 
             # Join roles
             members, bots = language.string("generic_none"), language.string("generic_none")
@@ -197,7 +199,7 @@ class Settings(commands.Cog):
                     bots = language.join([f"<@&{role}>" for role in join_roles["bots"]])
                 else:
                     bots = language.string("generic_none")
-            embed.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", humans=members, bots=bots), inline=False)
+            await interface.add_field(name=language.string("settings_current_join_roles"), value=language.string("settings_current_join_roles2", humans=members, bots=bots), inline=False)
 
             # Welcomes
             welcome_channel, welcome_message = language.string("settings_current_disabled"), None
@@ -206,9 +208,9 @@ class Settings(commands.Cog):
                 if welcome["channel"]:
                     welcome_channel = language.string("settings_current_welcome_channel", channel=welcome["channel"])
                     welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
-            embed.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
+            await interface.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
             if welcome_message:
-                embed.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
+                await interface.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
 
             # Goodbyes
             goodbye_channel, goodbye_message = language.string("settings_current_disabled"), None
@@ -217,16 +219,16 @@ class Settings(commands.Cog):
                 if goodbye["channel"]:
                     goodbye_channel = language.string("settings_current_goodbye_channel", channel=goodbye["channel"])
                     goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
-            embed.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
+            await interface.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
             if goodbye_message:
-                embed.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
+                await interface.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
 
             # Mute role
             mute_role = language.string("generic_none")
             if "mute_role" in setting:
                 if setting["mute_role"] != 0:
                     mute_role = f"<@&{setting['mute_role']}>"
-            embed.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
+            await interface.add_field(name=language.string("settings_current_mute"), value=mute_role, inline=False)
 
             # Warnings
             warnings = language.string("settings_current_warnings_disabled", p=ctx.prefix)
@@ -236,7 +238,7 @@ class Settings(commands.Cog):
                 mute_length = warning["mute_length"]  # Starting mute length
                 scaling = warning["scaling"]  # The multiplier for mute length
                 warnings = language.string("settings_current_warnings2", mute_req=mute_requirement, mute_len=mute_length, scaling=language.number(scaling))
-            embed.add_field(name=language.string("settings_current_warnings"), value=warnings, inline=False)
+            await interface.add_field(name=language.string("settings_current_warnings"), value=warnings, inline=False)
 
             # Message Logs
             msg = language.string("settings_current_messages_disabled", p=ctx.prefix)
@@ -256,7 +258,7 @@ class Settings(commands.Cog):
                         ignored_channels += language.string("settings_leveling_ignored_many", val=language.number(length - 12))
                 msg = language.string("settings_current_messages2", enabled=language.yes(enabled), edit=channel(edit), delete=channel(delete),
                                       ignore_bots=language.yes(ignore_bots), ignored_channels=ignored_channels)
-            embed.add_field(name=language.string("settings_current_messages"), value=msg, inline=False)
+            await interface.add_field(name=language.string("settings_current_messages"), value=msg, inline=False)
 
             # Mod DMs
             mod_dms_text = language.string("settings_current_mod_dms_disabled", p=ctx.prefix)
@@ -264,7 +266,7 @@ class Settings(commands.Cog):
                 mod_dms = setting["mod_dms"]
                 warn, mute, kick, ban = mod_dms["warn"], mod_dms["mute"], mod_dms["kick"], mod_dms["ban"]
                 mod_dms_text = language.string("settings_current_mod_dms2", warn=language.yes(warn), mute=language.yes(mute), kick=language.yes(kick), ban=language.yes(ban))
-            embed.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
+            await interface.add_field(name=language.string("settings_current_mod_dms"), value=mod_dms_text, inline=False)
 
             # Mod Logs
             mod_logs_text = language.string("settings_current_mod_logs_disabled", p=ctx.prefix)
@@ -272,7 +274,7 @@ class Settings(commands.Cog):
                 mod_logs = setting["mod_logs"]
                 warn, mute, kick, ban, roles = mod_logs["warn"], mod_logs["mute"], mod_logs["kick"], mod_logs["ban"], mod_logs["roles"]
                 mod_logs_text = language.string("settings_current_mod_logs2", warn=channel(warn), mute=channel(mute), kick=channel(kick), ban=channel(ban), roles=channel(roles))
-            embed.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
+            await interface.add_field(name=language.string("settings_current_mod_logs"), value=mod_logs_text, inline=False)
 
             # User Logs
             user_logs_text = language.string("settings_current_user_logs_disabled", p=ctx.prefix)
@@ -280,21 +282,21 @@ class Settings(commands.Cog):
                 user_logs = setting["user_logs"]
                 join, leave = user_logs["join"], user_logs["leave"]
                 user_logs_text = language.string("settings_current_user_logs2", join=channel(join), leave=channel(leave))
-            embed.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
+            await interface.add_field(name=language.string("settings_current_user_logs"), value=user_logs_text, inline=False)
 
             # Role Preservation
             role_preservation_text = language.string("settings_current_roles_disabled", p=ctx.prefix)
             if "user_logs" in setting:
                 if setting["user_logs"]["preserve_roles"]:
                     role_preservation_text = language.string("settings_current_roles_enabled", p=ctx.prefix)
-            embed.add_field(name=language.string("settings_current_roles"), value=role_preservation_text, inline=False)
+            await interface.add_field(name=language.string("settings_current_roles"), value=role_preservation_text, inline=False)
 
             # Image-only channels settings
             image_only_text = language.string("settings_current_image_only_disabled", p=ctx.prefix)
             if "image_only" in setting:
                 image_only = setting["image_only"]
                 image_only_text = ", ".join([channel(c) for c in image_only["channels"]]) or language.string("generic_none")
-            embed.add_field(name=language.string("settings_current_image_only"), value=image_only_text, inline=False)
+            await interface.add_field(name=language.string("settings_current_image_only"), value=image_only_text, inline=False)
 
             # Anti-ads
             anti_ads_text = language.string("settings_current_anti_ads_disabled", p=ctx.prefix)
@@ -309,9 +311,11 @@ class Settings(commands.Cog):
                 anti_ads_text = language.string(f"settings_current_anti_ads{idx}", enabled=language.yes(anti_ads["enabled"]),
                                                 channels=", ".join([channel(c) for c in anti_ads["channels"]]) or language.string("generic_none"),
                                                 warning=warning_length)
-            embed.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
+            await interface.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
 
-        return await ctx.send(embed=embed)
+        interface.display_page = 0  # Start from first page
+        return await interface.send_to(ctx)
+        # return await ctx.send(embed=embed)
 
     # @commands.hybrid_group(name="settings", aliases=["set"], case_insensitive=True, fallback="current")
     # @app_commands.guilds(738425418637639775)
@@ -1281,7 +1285,7 @@ class Settings(commands.Cog):
         """ Give this role to new human members """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["members"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["members"] = []
             else:
@@ -1294,7 +1298,7 @@ class Settings(commands.Cog):
         """ Don't give this role new human members """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["members"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["members"] = []
             else:
@@ -1323,7 +1327,7 @@ class Settings(commands.Cog):
         """ Give this role to new bots """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["bots"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["bots"] = []
             else:
@@ -1336,7 +1340,7 @@ class Settings(commands.Cog):
         """ Don't give this role new bots """
         _settings, existent = await self.settings_start(ctx, "join_roles")
         members = _settings["join_roles"]["bots"]
-        if type(members) == int:  # If it is old
+        if isinstance(members, int):  # If it is old
             if members == 0:
                 _settings["join_roles"]["bots"] = []
             else:
