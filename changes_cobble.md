@@ -765,3 +765,9 @@
 
 ## v1.9.2 - 15 December 2023
 - Paginated the embed for the server's current settings
+
+## v1.9.3 - 22 December 2023
+- Made it possible to hide your age on the Kargadian profile (Enabled by default)
+- Added commands to show or hide your age from the Kargadian profile
+- Made the Kargadian birthdays say when it is your birthday instead of saying "your next birthday is 1 minute ago"
+- Fixed the age shown on the Kargadian profile not taking the user's timezone into account

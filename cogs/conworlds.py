@@ -349,7 +349,12 @@ class Conworlds(commands.Cog):
             if not data:
                 return await ctx.send("A citizen profile is not available for this user.")
 
-            if data["protected"] and ctx.author.id not in [302851022790066185, data["uid"]]:
+            # 1 - Protected profiles may only be seen by me and the user themselves
+            protection_check = ctx.author.id in [302851022790066185, data["uid"]]
+            # 2 - Age can only be seen by me and the user themselves within my testing server or in DMs.
+            age_check = protection_check and ((ctx.guild is not None and ctx.guild.id == 738425418637639775) or ctx.guild is None)
+
+            if data["protected"] & 1 and not protection_check:  # 1 = Protected, 3 = Protected + Age hidden
                 return await ctx.send("You may not view this user's citizen profile.")
 
             embed = discord.Embed(colour=random_colour())
@@ -373,9 +378,14 @@ class Conworlds(commands.Cog):
 
             if data["birthday"]:
                 birthday = time.date.from_iso(data["birthday"], time.Kargadia)
-                birthday_text = language.date(birthday, short=1, dow=False, year=True)
-                age = language.delta_dt(time.datetime.combine(birthday, time.time()), accuracy=2, brief=False, affix=False)
-                embed.add_field(name="Birthday and Age", value=f"{birthday_text} - {age}", inline=False)
+                if data["protected"] & 2 and not age_check:  # Age privacy is the "2" bit
+                    birthday_text = language.date(birthday, short=0, dow=False, year=False)
+                    embed.add_field(name="Birthday", value=birthday_text, inline=False)
+                else:
+                    birthday_text = language.date(birthday, short=1, dow=False, year=True)
+                    birthday_time = time.datetime.combine(birthday, time.time(6, 0, 0), tz=language.get_timezone(data["uid"], "Kargadia"))
+                    age = language.delta_dt(birthday_time, accuracy=2, brief=False, affix=False)
+                    embed.add_field(name="Birthday and Age", value=f"{birthday_text} - {age}", inline=False)
             else:
                 embed.add_field(name="Birthday", value="Unavailable", inline=False)
 
@@ -404,10 +414,11 @@ class Conworlds(commands.Cog):
 
     @kargadia_profile.command(name="add")
     @commands.is_owner()
-    async def ka_citizen_add(self, ctx: commands.Context, _id: int, uid: int, name: str = None, name2: str = None, gender: str = None, birthday: str = None, location: str = None, joined: str = None):
+    async def ka_citizen_add(self, ctx: commands.Context, _id: int, uid: int, name: str = None, name2: str = None, name3: str = None, gender: str = None,
+                             birthday: str = None, location: str = None, joined: str = None):
         """ Add a new Kargadian citizen to the database """
-        output = self.bot.db.execute("INSERT INTO kargadia(id, uid, name, name2, gender, birthday, has_role, location, joined) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                     (_id, uid, name, name2, gender, birthday, False, location, joined))
+        output = self.bot.db.execute("INSERT INTO kargadia(id, uid, protected, name, name2, name3, gender, birthday, has_role, location, joined) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                     (_id, uid, 2, name, name2, name3, gender, birthday, False, location, joined))  # Hide age by default
         return await ctx.send(output)
 
     @kargadia_profile.command(name="edit", aliases=["update"])
@@ -423,6 +434,32 @@ class Conworlds(commands.Cog):
         """ Delete a Kargadian citizen's profile """
         output = self.bot.db.execute("DELETE FROM kargadia WHERE id=?", (_id,))
         return await ctx.send(output)
+
+    @kargadia_profile.group(name="age", aliases=["birthdate"])
+    async def ka_citizen_age(self, ctx: commands.Context):
+        """ Controls for whether your age is shown or not """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @ka_citizen_age.command(name="show", aliases=["enable", "optin"])
+    async def ka_citizen_age_enable(self, ctx: commands.Context):
+        """ Show your age in your Kargadian profile """
+        profile = self.bot.db.fetchrow("SELECT protected FROM kargadia WHERE uid=?", (ctx.author.id,))
+        if profile["protected"] & 2:
+            self.bot.db.execute("UPDATE kargadia SET protected=protected-2 WHERE uid=?", (ctx.author.id,))
+            return await ctx.send("Your age will now be displayed on your Kargadian profile.")
+        else:
+            return await ctx.send("Your age is already being displayed on your Kargadian profile.")
+
+    @ka_citizen_age.command(name="hide", aliases=["disable", "optout"])
+    async def ka_citizen_age_disable(self, ctx: commands.Context):
+        """ Hide your age from your Kargadian profile """
+        profile = self.bot.db.fetchrow("SELECT protected FROM kargadia WHERE uid=?", (ctx.author.id,))
+        if not profile["protected"] & 2:
+            self.bot.db.execute("UPDATE kargadia SET protected=protected+2 WHERE uid=?", (ctx.author.id,))
+            return await ctx.send("Your age will no longer be displayed on your Kargadian profile. Note that you can still see your age if you look at your profile in DMs.")
+        else:
+            return await ctx.send("Your age is already hidden from your Kargadian profile.")
 
     # def check_birthday(self, user_id):
     #     data = self.bot.db.fetchrow(f"SELECT * FROM kargadia WHERE uid=? OR id=?", (user_id, user_id))
@@ -450,26 +487,21 @@ class Conworlds(commands.Cog):
             user = self.bot.user  # Use the bot's user account so the tz check doesn't fail
         if data["birthday"] is None:
             return await ctx.send(language.string("birthdays_birthday_not_saved", user=username))
+        _user = "your" if user == ctx.author else "general"
         birthday_date = time.date.from_iso(data["birthday"], time.Kargadia)
         birthday = language.date(birthday_date, short=0, dow=False, year=False)
         tz = language.get_timezone(user.id, "Kargadia")
-        now = time.datetime.now(tz, time.Kargadia) - time.timedelta(hours=6)  # Kargadian birthdays pass at 6am, and this is a crutchy way to reflect that here
-        if now.date() == birthday_date:
-            today = True
-            delta = None
-            birthday_date.replace(year=now.year)
-            birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
-        else:
-            today = False
-            birthday_date.replace(year=now.year)  # Set the date to the current year, then add another one if it's already passed
-            if now.date() > birthday_date:
-                birthday_date.replace(year=now.year + 1)
-            birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
-            delta = language.delta_dt(birthday_time, accuracy=2, brief=False, affix=True)
-        _user = "your" if user == ctx.author else "general"
-        if today:
+        now = time.datetime.now(tz, time.Kargadia)  # - time.timedelta(hours=6)  # Kargadian birthdays pass at 6am, and this is a crutchy way to reflect that here
+        birthday_start = time.datetime.combine(birthday_date.replace(year=now.year), time.time(6, 0, 0), tz)
+        is_birthday = now > birthday_start and (now - birthday_start) < time.timedelta(days=1)
+        if is_birthday:
             return await ctx.send(language.string(f"birthdays_birthday_{_user}_today", user=username, date=birthday))
-        earth_time = birthday_time.to_earth_time()  # .to_tz(language.get_timezone(user.id, "Earth"))
+        birthday_start.replace(year=now.year)  # Set the date to the current year, then add another one if it's already passed
+        if now > birthday_start:
+            birthday_start.replace(year=now.year + 1)
+        # birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
+        delta = language.delta_dt(birthday_start, accuracy=2, brief=False, affix=True)
+        earth_time = birthday_start.to_earth_time()  # .to_tz(language.get_timezone(user.id, "Earth"))
         earth = language.time(earth_time, short=1, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
         return await ctx.send(language.string(f"birthdays_birthday_{_user}_ka", user=username, date=birthday, delta=delta, earth=earth))
 

@@ -176,7 +176,7 @@ tables = [
     Table("kargadia", [
         Column("id", "INTEGER", True, True),   # Citizen ID
         Column("uid", "INTEGER", True),        # Discord User ID
-        Column("protected", "BOOLEAN", True),  # Whether a profile is "Protected" (only viewable by me and that user)
+        Column("protected", "INTEGER", True),  # Privacy enum: 0 = Show all, 1 = "Protected" (only viewable by me and that user), 2 = Hide age, 3 = Protected + Age hidden
         Column("name", "TEXT", True),          # First Name
         Column("name2", "TEXT", False),        # Parent Name
         Column("name3", "TEXT", False),        # Surname
