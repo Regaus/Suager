@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from collections.abc import Callable, Awaitable
@@ -8,7 +9,7 @@ from typing import Type, TypeVar
 import discord
 import pytz
 from icalendar import Calendar, Event as CalendarEvent
-from regaus import time, print_error
+from regaus import time
 
 from utils import http, logger, general
 from utils.time import time as now_time
@@ -36,7 +37,7 @@ BUILDINGS_SHORT = {
     "GA": "NRF",
     "H": "Nursing",
     "J": "Hamilton",
-    "KA": "Student Centre",
+    "KA": "U Building",
     "L": "McNulty",
     "N": "Marconi",
     "Q": "Business",
@@ -101,19 +102,68 @@ BUILDINGS = {
 }
 # Shortened module names
 MODULES = {
+    # Year 1
     # Semester 1
     "CA103": "Computer Systems",
     "CA106": "Web Design",
-    "CA116": "Computer Programming",
-    "CA172": "Problem-Solving & Critical Thinking",
-    "MS134": "IT Mathematics",
+    "CA116": "Computer Programming 1",
+    "CA172": "Problem-Solving",
+    "MS134": "IT Mathematics 1",
 
     # Semester 2
-    "CA115": "Digital Innovation Management",
-    "CA117": "Computer Programming",
+    "CA115": "Digital Innovation",
+    "CA117": "Computer Programming 2",
     "CA169": "Networks & Internet",
-    "CA170": "Operating Systems",
-    "MS135": "IT Mathematics"
+    "CA170": "Intro to Operating Systems",
+    "MS135": "IT Mathematics 2",
+
+    # Year 2
+    # Semester 1
+    "CA214": "Systems Analysis",
+    "CA266": "Probability & Statistics",
+    "CA268": "Computer Programming 3",
+    "CA282": "Intro to DevOps",
+    "CA284": "Systems Programming",
+    "MS200": "Linear Algebra",
+
+    # Semester 2
+    "CA208": "Logic",
+    "CA216": "Operating Systems",
+    "CA218": "Intro to Databases",
+    "CA267": "Software Testing",
+    "CA269": "Computer Programming 4",
+    "CA298": "Full Stack Development",
+
+    # Year 3
+    # Semester 1
+    "CA304": "Computer Networks 2",
+    "CA314": "OO Analysis and Design",
+    "CA318": "Advanced Algorithms & AI",
+    "CA320": "Computability and Complexity",
+    "CA341": "Comparative Programming Langs",
+    "CA357": "UI Design & Implementation",
+    "CA369": "Semester 1 Abroad",
+
+    # Semester 2
+    "CA326": "Year 3 Project",
+    "CA366": "INTRA",
+    "CA360": "Communication Skills",
+    "CA361": "IT Architecture",
+    "CA3109": "Machine Learning",
+
+    # Year 4
+    # Semester 1
+    "CA400": "Year 4 Project",
+    "CA4003": "Compiler Construction",
+    "CA4009": "Search Technologies",
+    "CA4010": "Data Warehousing & Data Mining",
+    "CA4005": "Cryptography & Security Protocols",
+
+    # Semester 2
+    "CA4004": "Software Engineering",
+    "CA4006": "Concurrent & Distributed Programming",
+    "CA4007": "Computer Graphics & Image Processing",
+    "CA4012": "Machine Translation"
 }
 # Campus Codes
 CAMPUSES = {
@@ -191,28 +241,32 @@ async def get_data(url: str, headers: dict, json_data: dict = None, name: str = 
         return data
 
 
-async def get_list_from_api(total_pages: int, count: int, identity: str, name: str) -> dict:
+async def get_list_from_api(identity: str, name: str) -> dict:
     """ Common function to get the list of courses, modules, or rooms currently available """
-    output = {"TotalPages": total_pages, "CurrentPage": 1, "Results": [], "Count": count}
-    i = 0
-    while i < total_pages:
-        i += 1
-        data = await get_data(
-            f"{BASE_URL}/CategoryTypes/{identity}/Categories/FilterWithCache/{INSTITUTION_IDENTITY}?pageNumber={i}&query=",
+    output = {"TotalPages": 0, "CurrentPage": 1, "Results": [], "Count": 0}
+
+    async def make_request(_i: int) -> int:
+        _data = await get_data(
+            f"{BASE_URL}/CategoryTypes/{identity}/Categories/FilterWithCache/{INSTITUTION_IDENTITY}?pageNumber={_i}&query=",
             headers={
                 "Authorization": "Anonymous",
                 "Content-type": "application/json"
             },
             name=name
         )
-        if data["TotalPages"] != total_pages:
-            print_error(f"There are {data['TotalPages']} pages of data, expected {total_pages}. Update the hardcoded limit.")
-            output["TotalPages"] = data["TotalPages"]
-        output["CurrentPage"] = data["CurrentPage"]
-        output["Count"] = data["Count"]
-        output["Results"] += data["Results"]  # This should make it so that the returned results are the complete list of courses
-    if output["CurrentPage"] != output["TotalPages"]:
-        raise ValueError(f"Current page does not equal total pages: {output['CurrentPages']} != {output['TotalPages']}")
+        # _data = {"TotalPages": 92, "CurrentPage": 92, "Count": 4552, "Results": []}
+        output["TotalPages"] = _data["TotalPages"]
+        output["CurrentPage"] = _data["CurrentPage"]
+        output["Count"] = _data["Count"]
+        output["Results"] += _data["Results"]  # This should make it so that the returned results are the complete list of courses
+        # print(f"{_i=}, time={time.datetime.now().iso(ms=True)}")
+        return _data["TotalPages"]
+
+    total_pages = await make_request(1)
+    tasks = []
+    for i in range(2, total_pages + 1):
+        tasks.append(make_request(i))
+    await asyncio.gather(*tasks)
     logger.log("Suager", "dcu", f"{now_time()} > Suager > {name} > Downloaded new data from API")
     return output
 
@@ -263,7 +317,7 @@ async def get_list(identities_function: Callable[[], Awaitable[dict[str, BaseID]
 
 async def get_courses_from_api() -> dict:
     """ Get the list of courses currently available """
-    return await get_list_from_api(28, 554, PROGRAMMES_OF_STUDY, "DCU Course List Fetcher")
+    return await get_list_from_api(PROGRAMMES_OF_STUDY, "DCU Course List Fetcher")
 
 
 async def get_courses_from_cache() -> dict:
@@ -283,7 +337,7 @@ async def get_courses(search: str = None) -> list[str]:
 
 async def get_modules_from_api() -> dict:
     """ Get the list of modules currently available """
-    return await get_list_from_api(92, 4552, MODULES_CATEGORY, "DCU Module List Fetcher")
+    return await get_list_from_api(MODULES_CATEGORY, "DCU Module List Fetcher")
 
 
 async def get_modules_from_cache() -> dict:
@@ -303,7 +357,7 @@ async def get_modules(search: str = None) -> list[str]:
 
 async def get_rooms_from_api() -> dict:
     """ Get the list of rooms currently available """
-    return await get_list_from_api(2, 349, LOCATIONS_CATEGORY, "DCU Room List Fetcher")
+    return await get_list_from_api(LOCATIONS_CATEGORY, "DCU Room List Fetcher")
 
 
 async def get_rooms_from_cache() -> dict:

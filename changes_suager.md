@@ -1730,3 +1730,7 @@
 - Paginated the embed for the server's current settings
   - Embeds for subcategories (like leveling or birthdays) keep their normal embeds, as they're not big enough to be difficult to navigate to begin with
 - Updated the code checking for some old setting values to use isinstance() instead of `type() == int`
+
+## v7.7.10.1 - 23 December 2023
+- Improved code for fetching data from the DCU timetables
+- Added custom module names for 2nd, 3rd, and 4th years
