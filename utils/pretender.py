@@ -20,10 +20,10 @@ def separation_condition(channel: discord.TextChannel | discord.Thread):
 
 
 class MessageManager:
-    def __init__(self, min_limit: int = 500, max_limit: int = 10000, length: int = 200, tries: int = 100):
+    def __init__(self, db: Database, min_limit: int = 500, max_limit: int = 10000, length: int = 200, tries: int = 100):
         # The original had the min_limit set to 1000, but let's have it at 500 here since a lot of users might not have that many
         # The original had the max_limit set to 25000, used to be 50000, now I set it to 10000 in hopes of reducing lag upon loading the messages
-        self.db = Database()
+        self.db = db
 
         self.min_limit = min_limit
         self.max_limit = max_limit
@@ -99,8 +99,8 @@ class MessageManager:
 
 
 class WebhookManager:
-    def __init__(self):
-        self.db = Database()
+    def __init__(self, db: Database):
+        self.db = db
 
     # methods for interacting with a specific webhook in a collection
     async def get(self, channel: discord.TextChannel, session: ClientSession) -> discord.Webhook:

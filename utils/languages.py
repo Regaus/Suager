@@ -41,7 +41,7 @@ for _name, _data in _cases.items():
 del _languages, _countries, _cases, _name, _data, _read_dir
 
 
-db = database.Database()
+db = database.Database("database.db")
 
 
 class Language(languages.Language):

@@ -21,7 +21,7 @@ general.create_dirs()
 tables = database.creation()
 loop = asyncio.get_event_loop_policy().get_event_loop()
 tasks = []
-db = database.Database()  # The database is the same for all bots anyways, so no point in initialising it thrice...
+db = database.Database("database.db")  # The database is the same for all bots anyways, so no point in initialising it thrice...
 
 
 async def get_prefix(_bot, ctx):

@@ -51,8 +51,8 @@ def april_fools_multiplier():
 
 
 class Database:
-    def __init__(self):
-        self.conn = sqlite3.connect(f"data/database.db", isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
+    def __init__(self, filename: str = "database.db"):
+        self.conn = sqlite3.connect(f"data/{filename}", isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES)
         self.conn.row_factory = dict_factory
         self.conn.create_function("REGEXP", 2, regex_function)
         self.conn.create_function("APRILMULT", 0, april_fools_multiplier)
@@ -101,8 +101,9 @@ class Column:
 
 
 class Table:
-    def __init__(self, name: str, columns: list):
+    def __init__(self, name: str, filename: str, columns: list):
         self.name = name
+        self.filename = filename  # Filename for the database
         self.columns = columns
 
     def create(self):
@@ -111,7 +112,7 @@ class Table:
         middle = ",\n".join(strings)
         end = "\n);"
         command = f"{start}{middle}{end}"
-        db = Database()
+        db = Database(self.filename)
         result = db.execute(command)
         if result != "CREATE 0":
             print(f"{self.name} > {result}")
@@ -127,13 +128,13 @@ def creation():
 
 # Column types: Real = float, Text = str, Timestamp = datetime
 tables = [
-    Table("birthdays", [
+    Table("birthdays", "database.db", [
         Column("uid", "INTEGER", True),
         Column("birthday", "DATE", True),
         Column("has_role", "BOOLEAN", True),
         Column("bot", "TEXT", True),
     ]),
-    Table("counters", [
+    Table("counters", "database.db", [
         Column("uid1", "INTEGER", True),       # 00 - Author
         Column("uid2", "INTEGER", True),       # 01 - Target
         Column("bot", "TEXT", True),           # 02 - Bot Name
@@ -161,19 +162,19 @@ tables = [
         Column("tuck", "INTEGER", True),       # 24
         Column("wave", "INTEGER", True),       # 25
     ]),
-    Table("custom_rank", [
+    Table("custom_rank", "database.db", [
         Column("uid", "INTEGER", True),
         Column("font", "INTEGER", False),        # Text colour
         Column("progress", "INTEGER", False),    # Progress bar colour
         Column("background", "INTEGER", False),  # Background colour
         Column("custom_font", "TEXT", False),    # Font to use
     ]),
-    Table("custom_role", [
+    Table("custom_role", "database.db", [
         Column("uid", "INTEGER", True),
         Column("rid", "INTEGER", True),
         Column("gid", "INTEGER", True)
     ]),
-    Table("kargadia", [
+    Table("kargadia", "database.db", [
         Column("id", "INTEGER", True, True),   # Citizen ID
         Column("uid", "INTEGER", True),        # Discord User ID
         Column("protected", "INTEGER", True),  # Privacy enum: 0 = Show all, 1 = "Protected" (only viewable by me and that user), 2 = Hide age, 3 = Protected + Age hidden
@@ -186,7 +187,7 @@ tables = [
         Column("location", "TEXT", False),     # Kargadian location - can also be used to determine timezone
         Column("joined", "TEXT", False),       # When the user joined as an Earth date
     ]),
-    Table("leveling", [
+    Table("leveling", "database.db", [
         Column("uid", "INTEGER", True),
         Column("gid", "INTEGER", True),
         Column("level", "INTEGER", True),
@@ -197,13 +198,13 @@ tables = [
         Column("disc", "INTEGER", True),
         Column("bot", "TEXT", True),
     ]),
-    Table("locales", [    # Language settings for servers
+    Table("locales", "database.db", [    # Language settings for servers
         Column("id", "INTEGER", True),   # ID of the guild, channel, or user
         Column("locale", "TEXT", True),  # Language chosen
         Column("bot", "TEXT", True),     # Name of the bot
         Column("type", "TEXT", True),    # Type: "guild", "channel", or "user"
     ]),
-    Table("polls", [
+    Table("polls", "database.db", [
         Column("guild_id", "INTEGER", True),     # The Guild ID where the poll was started
         Column("channel_id", "INTEGER", True),   # The Channel ID of the poll status message
         Column("message_id", "INTEGER", True),   # The Message ID of the poll status message
@@ -215,21 +216,7 @@ tables = [
         Column("expiry", "TIMESTAMP", True),     # When the poll ends
         Column("anonymous", "BOOLEAN", True),    # Whether the poll is anonymous or not
     ]),
-    Table("pretender_blacklist", [       # Users ignored for message logging
-        Column("uid", "INTEGER", True),  # Blacklisted User's ID
-    ]),
-    Table("pretender_messages", [             # All the messages
-        Column("id", "INTEGER", True, True),  # Message ID
-        Column("author", "INTEGER", True),    # Message author ID
-        Column("channel", "INTEGER", False),  # Message channel ID
-        Column("content", "TEXT", True)       # Message content
-    ]),
-    Table("pretender_webhooks", [           # Stores webhooks for channels
-        Column("id", "INTEGER", True),      # Webhook ID
-        Column("token", "TEXT", True),      # Webhook's token
-        Column("channel", "INTEGER", True)  # Webhook's channel ID
-    ]),
-    Table("punishments", [
+    Table("punishments", "database.db", [
         Column("id", "INTEGER", True, True),   # Case ID
         Column("uid", "INTEGER", True),        # User ID, the punished
         Column("gid", "INTEGER", True),        # Guild ID
@@ -241,21 +228,21 @@ tables = [
         Column("handled", "INTEGER", True),    # Handled value (0 = Unhandled, 1 = Expired, 2 = Error, 3 = User left, 4 = Pardoned/Manually unmuted)
         Column("bot", "TEXT", True)            # Bot used for punishment
     ]),
-    Table("reaction_groups", [
+    Table("reaction_groups", "database.db", [
         Column("gid", "INTEGER", True),      # Guild ID
         Column("message", "INTEGER", True),  # Message ID
         Column("type", "INTEGER", True)      # Reaction Type (1-4)
     ]),
-    Table("reaction_roles", [
+    Table("reaction_roles", "database.db", [
         Column("message", "INTEGER", True),   # Message ID (Group)
         Column("reaction", "TEXT", True),     # Reaction Emoji
         Column("role", "INTEGER", True)       # Role ID
     ]),
-    Table("reaction_tracking", [              # Track if someone already has a role (dType 2 and 4 reaction groups)
+    Table("reaction_tracking", "database.db", [  # Track if someone already has a role (Type 2 and 4 reaction groups)
         Column("message", "INTEGER", True),   # Message ID (Group)
         Column("uid", "INTEGER", True),       # User ID
     ]),
-    Table("reminders", [
+    Table("reminders", "database.db", [
         Column("id", "INTEGER", True, True),  # Reminder ID
         Column("uid", "INTEGER", True),       # User ID
         Column("expiry", "TIMESTAMP", True),  # Expiry (as datetime string)
@@ -263,12 +250,12 @@ tables = [
         Column("handled", "INTEGER", True),   # Handled value (0 = Unhandled, 1 = Expired, 2 = Error)
         Column("bot", "TEXT", True)           # Bot used for reminder
     ]),
-    Table("settings", [
+    Table("settings", "database.db", [
         Column("gid", "INTEGER", True),
         Column("bot", "TEXT", True),  # The name of the bot to which the settings belong
         Column("data", "TEXT", True)
     ]),
-    Table("starboard", [
+    Table("starboard", "database.db", [
         Column("message", "INTEGER", True),        # Original message ID
         Column("channel", "INTEGER", True),        # Original message's channel ID
         Column("author", "INTEGER", True),         # Original message's author's user ID
@@ -277,7 +264,7 @@ tables = [
         Column("star_message", "INTEGER", False),  # Starboard message ID
         Column("bot", "TEXT", True),               # The bot tracking the message
     ]),
-    Table("tags", [
+    Table("tags", "database.db", [
         Column("gid", "INTEGER", True),
         Column("creator", "INTEGER", True),
         Column("owner", "INTEGER", True),
@@ -287,11 +274,11 @@ tables = [
         Column("edited", "INTEGER", True),
         Column("usage", "INTEGER", True)
     ]),
-    Table("timezones", [
+    Table("timezones", "database.db", [
         Column("uid", "INTEGER", True),
         Column("tz", "TEXT", True)
     ]),
-    Table("trials", [
+    Table("trials", "database.db", [
         Column("guild_id", "INTEGER", True),        # The Guild ID where the trial was started
         Column("channel_id", "INTEGER", True),      # The Channel ID of the trial status message
         Column("message_id", "INTEGER", True),      # The Message ID of the trial status message
@@ -309,9 +296,25 @@ tables = [
         Column("anonymous", "BOOLEAN", True),       # Whether the poll is anonymous or not
         Column("required_score", "INTEGER", True),  # Score required for the trial to pass
     ]),
-    Table("user_roles", [                 # We should only need to log people who left with roles, so we only need this much data
+    Table("user_roles", "database.db", [                 # We should only need to log people who left with roles, so we only need this much data
         Column("gid", "INTEGER", True),   # Guild ID
         Column("uid", "INTEGER", True),   # User ID
         Column("roles", "TEXT", True)     # JSON list of role IDs the user had
+    ]),
+
+    # Pretender database
+    Table("pretender_blacklist", "pretender.db", [  # Users ignored for message logging
+        Column("uid", "INTEGER", True),  # Blacklisted User's ID
+    ]),
+    Table("pretender_messages", "pretender.db", [  # All the messages
+        Column("id", "INTEGER", True, True),  # Message ID
+        Column("author", "INTEGER", True),    # Message author ID
+        Column("channel", "INTEGER", False),  # Message channel ID
+        Column("content", "TEXT", True)       # Message content
+    ]),
+    Table("pretender_webhooks", "pretender.db", [  # Stores webhooks for channels
+        Column("id", "INTEGER", True),      # Webhook ID
+        Column("token", "TEXT", True),      # Webhook's token
+        Column("channel", "INTEGER", True)  # Webhook's channel ID
     ]),
 ]
