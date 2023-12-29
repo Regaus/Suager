@@ -1734,3 +1734,6 @@
 ## v7.7.10.1 - 23 December 2023
 - Improved code for fetching data from the DCU timetables
 - Added custom module names for 2nd, 3rd, and 4th years
+
+## v7.7.10.2 - 28 December 2023
+- Enabled the script for New Year's and updated the message for 2024
