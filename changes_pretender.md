@@ -87,3 +87,6 @@
 - Improved the code for choosing a status
 - Turned version and countdown statuses into custom status
 - Added some new statuses
+
+## v1.3.0 - 26 December 2023
+- Separated the Pretender database into a separate file

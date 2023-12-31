@@ -2,12 +2,13 @@
 import discord
 from aiohttp import ClientSession
 
-from utils import bot_data, commands, general, pretender
+from utils import bot_data, commands, general, pretender, database
 
 
 class Pretender(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        self.db = database.Database("pretender.db")  # Pretender uses a separate database
         # Whitelist:      SL: general,        elite-lounge,       secret-room-2,      secret-room-3,      secret-room-8,      secret-room-15
         # Whitelist:      RK general,         Alex: general,      gamer-hub,          Satan Rib general
         # Whitelist:      SPHG: general,      memes,              computers-and-int,  software-and-junk,  animation,          random-art
@@ -24,8 +25,8 @@ class Pretender(commands.Cog):
                           1020374953956233327, 1047557126907777024, 1051896581571477524, 1063979467510390834, 1069642573611815033,
                           895443182798663743, 823730078507728918, 823727366852968529, 727244938277945415, 889536962044784710, 1072881977872613376,
                           823730477538082826, 1097933031081259138, 951605898546135060, 873829544325427200, 1003129070793535520, 1061449765004529715, 1067994081210421259]
-        self.messages = pretender.MessageManager()
-        self.webhooks = pretender.WebhookManager()
+        self.messages = pretender.MessageManager(self.db)
+        self.webhooks = pretender.WebhookManager(self.db)
 
     def check_ignore(self, message: discord.Message) -> bool:
         if message.author.bot:
@@ -34,7 +35,7 @@ class Pretender(commands.Cog):
             return True
         if message.channel.id not in self.whitelist:
             return True
-        if self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (message.author.id,)):
+        if self.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (message.author.id,)):
             return True
         return False
 
@@ -71,7 +72,7 @@ class Pretender(commands.Cog):
         keyword = content.lower()
         occurrences = {}
         # Ignore the secret room messages for counting (For future self, maybe do the same behaviour as impersonate command?)
-        messages = self.bot.db.fetch("SELECT * FROM pretender_messages WHERE content REGEXP ? AND channel IS NULL", (keyword,))
+        messages = self.db.fetch("SELECT * FROM pretender_messages WHERE content REGEXP ? AND channel IS NULL", (keyword,))
 
         for message in messages:
             text = message.get("content")
@@ -112,16 +113,16 @@ class Pretender(commands.Cog):
     @commands.command(name="optin")
     async def opt_in(self, ctx: commands.Context):
         """ Opts back into the message collection process, if you are in the blacklist. """
-        if not self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (ctx.author.id,)):
+        if not self.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (ctx.author.id,)):
             return await ctx.send("You're already opted in.")
 
-        self.bot.db.execute("DELETE FROM pretender_blacklist WHERE uid=?", (ctx.author.id,))
+        self.db.execute("DELETE FROM pretender_blacklist WHERE uid=?", (ctx.author.id,))
         return await ctx.send("You're now opted in.")
 
     @commands.command(name="optout")
     async def opt_out(self, ctx: commands.Context):
         """ Opts out of the message collection process, which will all you to the blacklist for message logging. """
-        if self.bot.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (ctx.author.id,)):
+        if self.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (ctx.author.id,)):
             return await ctx.send("You're already opted out.")
 
         def check(reaction, user):
@@ -140,7 +141,7 @@ class Pretender(commands.Cog):
             return await message.edit(content="Didn't get a reaction in time, so you're still opted in.")
 
         self.messages.remove(ctx.author)
-        self.bot.db.execute("INSERT INTO pretender_blacklist VALUES (?)", (ctx.author.id,))
+        self.db.execute("INSERT INTO pretender_blacklist VALUES (?)", (ctx.author.id,))
         await message.delete()
         return await ctx.send("Successfully deleted all message data from you and added you to the log blacklist.")
 
