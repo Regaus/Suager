@@ -1743,3 +1743,6 @@
 
 ## v7.7.10.4 - 8 January 2024
 - Moved `//dcu` into the Timetables cog and made it accessible by the Timetables bot
+
+## v7.7.10.5 - 8 January 2024
+- Removed the cherry.py server code from this codebase
