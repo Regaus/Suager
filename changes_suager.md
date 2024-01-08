@@ -1740,3 +1740,6 @@
 
 ## v7.7.10.3 - 8 January 2024
 - Fixed certain functions to work with Regaus.py v3.1 (after the change of behaviour in `.replace()` methods)
+
+## v7.7.10.4 - 8 January 2024
+- Moved `//dcu` into the Timetables cog and made it accessible by the Timetables bot

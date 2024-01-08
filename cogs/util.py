@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import random
-from collections.abc import Callable, Awaitable
 from datetime import timedelta
 from io import BytesIO
 
@@ -11,15 +10,11 @@ import pytz
 from PIL import Image, ImageDraw, ImageFont
 from regaus import conworlds, time as time2
 
-from utils import arg_parser, bases, bot_data, commands, dcu, emotes, general, http, images, permissions, time, paginators
+from utils import arg_parser, bases, bot_data, commands, emotes, general, http, images, permissions, time
 
 
 def custom_role_enabled(ctx):
     return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473, 759095477979054081]
-
-
-def dcu_data_access(ctx):
-    return ctx.author.id in [302851022790066185, 942829514457755738]
 
 
 class Utility(commands.Cog):
@@ -960,122 +955,8 @@ class UtilitySuager(Reminders, name="Utility"):
             self.bot.db.execute("UPDATE custom_role SET rid=? WHERE uid=? AND gid=?", (role.id, user.id, ctx.guild.id))
             return await ctx.send(f"Updated custom role of {general.username(ctx.author)} to {role.name}")
 
-    @commands.group(name="dcu", case_insensitive=True)
-    @commands.check(dcu_data_access)
-    async def dcu_stuff(self, ctx: commands.Context):
-        """ Access stuff related to DCU and its timetables """
-        if ctx.invoked_subcommand is None:
-            return await ctx.send_help(ctx.command)
-
-    @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True)
-    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1", custom_week: str = ""):
-        """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
-        if ctx.invoked_subcommand is None:
-            try:
-                date = None
-                if custom_week:
-                    date = time2.date.from_iso(custom_week)
-                    date = time2.datetime.combine(date, time2.time(), dcu.TZ)
-                return await ctx.send(embed=await dcu.get_timetable_course(course_code, date))
-            except KeyError as e:
-                # await ctx.send(general.traceback_maker(e))
-                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
-            except Exception as e:
-                # await ctx.send(general.traceback_maker(e))
-                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
-
-    @dcu_timetable.command(name="modules", aliases=["module", "m"])
-    async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
-        """ Fetch DCU timetables for specified modules for the current week"""
-        try:
-            date = None
-            try:
-                date = time2.date.from_iso(module_codes[-1])
-                date = time2.datetime.combine(date, time2.time(), dcu.TZ)
-                module_codes = module_codes[:-1]
-            except ValueError:
-                pass
-            return await ctx.send(embed=await dcu.get_timetable_module(module_codes, date))
-        except KeyError as e:
-            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
-        except Exception as e:
-            # await ctx.send(general.traceback_maker(e))
-            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
-
-    @dcu_timetable.command(name="room", aliases=["rooms", "r"])
-    async def dcu_timetable_room(self, ctx: commands.Context, room_code: str, custom_week: str = ""):
-        """ Fetch DCU timetables for a given room for the current week"""
-        try:
-            date = None
-            if custom_week:
-                date = time2.date.from_iso(custom_week)
-                date = time2.datetime.combine(date, time2.time(), dcu.TZ)
-            return await ctx.send(embed=await dcu.get_timetable_room(room_code, date))
-        except KeyError as e:
-            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search rooms` to find your room code.")
-        except Exception as e:
-            # await ctx.send(general.traceback_maker(e))
-            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
-
-    @dcu_stuff.group(name="search", aliases=["list"], case_insensitive=True)
-    async def dcu_search(self, ctx: commands.Context):
-        """ Find a course, module or room """
-        if ctx.invoked_subcommand is None:
-            return await ctx.send_help(ctx.command)
-
-    async def dcu_list(self, ctx: commands.Context, get_function: Callable[[str | None], Awaitable[list[str]]], title: str, search: str, *, notes: str = None):
-        data = await get_function(search)
-        if not data:
-            return await ctx.send("No data has been found. Try a different search?")
-        # paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
-        paginator = paginators.LinePaginator(prefix=None, suffix=None, max_lines=15, max_size=1000)
-        for line in data:
-            paginator.add_line(line)
-        embed = discord.Embed(title=title, colour=general.random_colour())
-        if notes is not None:
-            embed.set_footer(text=notes)
-        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
-        return await interface.send_to(ctx)
-
-    @dcu_search.command(name="courses", aliases=["course", "courselist"])
-    async def dcu_courses(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU course list """
-        async with ctx.typing():
-            return await self.dcu_list(ctx, dcu.get_courses, "DCU Course Codes", search)
-
-    @dcu_search.command(name="modules", aliases=["module", "modulelist"])
-    async def dcu_modules(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU module list """
-        async with ctx.typing():
-            return await self.dcu_list(ctx, dcu.get_modules, "DCU Module Codes", search,
-                                       notes="Note: Some of the modules may have been parsed incorrectly, however I tried to reduce the chance of this happening")
-
-    @dcu_search.command(name="rooms", aliases=["room", "roomlist", "locations", "location", "locationlist"])
-    async def dcu_rooms(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU module list """
-        async with ctx.typing():
-            return await self.dcu_list(ctx, dcu.get_rooms, "DCU Room Codes", search)
-
 
 class UtilityCobble(Utility, name="Utility"):
-    @commands.command(name="luas")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
-        """ Data for Luas """
-        import luas.api
-        client = luas.api.LuasClient()
-        _place = str(place).title() if len(str(place)) != 3 else str(place)
-        data = client.stop_details(_place)
-        status = data['status']
-        trams = ''
-        for i in data['trams']:
-            if i['due'] == 'DUE':
-                _time = 'DUE'
-            else:
-                _time = f"{i['due']} mins"
-            trams += f"{i['destination']}: {_time}\n"
-        return await ctx.send(f"Data for {_place}:\n{status}\n{trams}")
-
     @commands.command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None, _time_class: str = "Kargadia"):

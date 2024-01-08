@@ -774,3 +774,6 @@
 
 ## v1.9.3.1 - 8 January 2024
 - Fixed certain functions to work with Regaus.py v3.1 (after the change of behaviour in `.replace()` methods)
+
+## v1.9.3.2 - 8 January 2024
+- Moved `..luas` into the Timetables cog and made it accessible by the Timetables bot

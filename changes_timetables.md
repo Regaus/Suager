@@ -62,3 +62,6 @@
 - Improved the code for choosing a status
 - Turned version and countdown statuses into custom status
 - Added some new statuses
+
+## v0.2.5 - 8 January 2024
+- Added `i.dcu` and `i.luas` into the Timetables cog from Suager and CobbleBot respectively

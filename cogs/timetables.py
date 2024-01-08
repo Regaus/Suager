@@ -1,19 +1,151 @@
 import asyncio
 import json
 from io import BytesIO
+from collections.abc import Callable, Awaitable
 from zipfile import ZipFile, BadZipFile
 
 import discord
 from aiohttp import ClientError
 from regaus import time
 
-from utils import bot_data, commands, http, timetables, logger, emotes
+from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general
 from utils.time import time as print_current_time
 
 
-class Timetables(commands.Cog, name="Timetables"):
+def dcu_data_access(ctx):
+    return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
+
+
+# Cog for university timetables - loaded by Suager
+class University(commands.Cog, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+
+    @commands.group(name="dcu", case_insensitive=True)
+    @commands.check(dcu_data_access)
+    async def dcu_stuff(self, ctx: commands.Context):
+        """ Access stuff related to DCU and its timetables """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True)
+    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1", custom_week: str = ""):
+        """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
+        if ctx.invoked_subcommand is None:
+            try:
+                date = None
+                if custom_week:
+                    date = time.date.from_iso(custom_week)
+                    date = time.datetime.combine(date, time.time(), dcu.TZ)
+                return await ctx.send(embed=await dcu.get_timetable_course(course_code, date))
+            except KeyError as e:
+                # await ctx.send(general.traceback_maker(e))
+                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}\nUse `{ctx.prefix}dcu search courses` to find your course code.")
+            except Exception as e:
+                # await ctx.send(general.traceback_maker(e))
+                return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_timetable.command(name="modules", aliases=["module", "m"])
+    async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
+        """ Fetch DCU timetables for specified modules for the current week"""
+        try:
+            date = None
+            try:
+                date = time.date.from_iso(module_codes[-1])
+                date = time.datetime.combine(date, time.time(), dcu.TZ)
+                module_codes = module_codes[:-1]
+            except ValueError:
+                pass
+            return await ctx.send(embed=await dcu.get_timetable_module(module_codes, date))
+        except KeyError as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
+        except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
+            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_timetable.command(name="room", aliases=["rooms", "r"])
+    async def dcu_timetable_room(self, ctx: commands.Context, room_code: str, custom_week: str = ""):
+        """ Fetch DCU timetables for a given room for the current week"""
+        try:
+            date = None
+            if custom_week:
+                date = time.date.from_iso(custom_week)
+                date = time.datetime.combine(date, time.time(), dcu.TZ)
+            return await ctx.send(embed=await dcu.get_timetable_room(room_code, date))
+        except KeyError as e:
+            return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search rooms` to find your room code.")
+        except Exception as e:
+            # await ctx.send(general.traceback_maker(e))
+            return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_stuff.group(name="search", aliases=["list"], case_insensitive=True)
+    async def dcu_search(self, ctx: commands.Context):
+        """ Find a course, module or room """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    async def dcu_list(self, ctx: commands.Context, get_function: Callable[[str | None], Awaitable[list[str]]], title: str, search: str, *, notes: str = None):
+        data = await get_function(search)
+        if not data:
+            return await ctx.send("No data has been found. Try a different search?")
+        # paginator = commands.Paginator(prefix="", suffix="", max_size=1000)
+        paginator = paginators.LinePaginator(prefix=None, suffix=None, max_lines=15, max_size=1000)
+        for line in data:
+            paginator.add_line(line)
+        embed = discord.Embed(title=title, colour=general.random_colour())
+        if notes is not None:
+            embed.set_footer(text=notes)
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.send_to(ctx)
+
+    @dcu_search.command(name="courses", aliases=["course", "courselist"])
+    async def dcu_courses(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU course list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_courses, "DCU Course Codes", search)
+
+    @dcu_search.command(name="modules", aliases=["module", "modulelist"])
+    async def dcu_modules(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU module list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_modules, "DCU Module Codes", search,
+                                       notes="Note: Some of the modules may have been parsed incorrectly, however I tried to reduce the chance of this happening")
+
+    @dcu_search.command(name="rooms", aliases=["room", "roomlist", "locations", "location", "locationlist"])
+    async def dcu_rooms(self, ctx: commands.Context, search: str = None):
+        """ Fetch DCU module list """
+        async with ctx.typing():
+            return await self.dcu_list(ctx, dcu.get_rooms, "DCU Room Codes", search)
+
+
+# Cog for Luas timetables - loaded by Cobble
+class Luas(commands.Cog, name="Timetables"):
+    def __init__(self, bot: bot_data.Bot):
+        self.bot = bot
+
+    @commands.command(name="luas")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
+        """ Data for Luas """
+        import luas.api
+        client = luas.api.LuasClient()
+        _place = str(place).title() if len(str(place)) != 3 else str(place)
+        data = client.stop_details(_place)
+        status = data['status']
+        trams = ''
+        for i in data['trams']:
+            if i['due'] == 'DUE':
+                _time = 'DUE'
+            else:
+                _time = f"{i['due']} mins"
+            trams += f"{i['destination']}: {_time}\n"
+        return await ctx.send(f"Data for {_place}:\n{status}\n{trams}")
+
+
+# Cog for GTFS timetables - loaded by Linenvürteat
+class Timetables(University, Luas, name="Timetables"):
+    def __init__(self, bot: bot_data.Bot):
+        super().__init__(bot)
         self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
@@ -308,4 +440,9 @@ class Timetables(commands.Cog, name="Timetables"):
 
 
 async def setup(bot: bot_data.Bot):
-    await bot.add_cog(Timetables(bot))
+    if bot.name == "suager":
+        await bot.add_cog(University(bot))
+    elif bot.name == "cobble":
+        await bot.add_cog(Luas(bot))
+    else:
+        await bot.add_cog(Timetables(bot))
