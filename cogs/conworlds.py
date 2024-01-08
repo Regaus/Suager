@@ -42,7 +42,7 @@ class Conworlds(commands.Cog):
                 date_part = time.date(y, m, d, time.Earth)
                 dt = time.datetime.combine(date_part, time_part, time.utc)
                 dt2 = dt.as_timezone(self.bot.timezone(ctx.author.id, time_class="Earth"))
-                dt.replace(tz=dt2.tzinfo)
+                dt.replace_self(tz=dt2.tzinfo)
                 _expiry = dt.to_timezone(time.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
@@ -496,9 +496,9 @@ class Conworlds(commands.Cog):
         is_birthday = now > birthday_start and (now - birthday_start) < time.timedelta(days=1)
         if is_birthday:
             return await ctx.send(language.string(f"birthdays_birthday_{_user}_today", user=username, date=birthday))
-        birthday_start.replace(year=now.year)  # Set the date to the current year, then add another one if it's already passed
+        birthday_start.replace_self(year=now.year)  # Set the date to the current year, then add another one if it's already passed
         if now > birthday_start:
-            birthday_start.replace(year=now.year + 1)
+            birthday_start.replace_self(year=now.year + 1)
         # birthday_time = time.datetime.combine(birthday_date, time.time(6, 0, 0), tz)
         delta = language.delta_dt(birthday_start, accuracy=2, brief=False, affix=True)
         earth_time = birthday_start.to_earth_time()  # .to_tz(language.get_timezone(user.id, "Earth"))

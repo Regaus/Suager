@@ -871,7 +871,7 @@ class Reminders(Utility, name="Utility"):
 
                 _expiry = time2.datetime.combine(date_part, time_part, time2.utc)
                 _expiry2 = _expiry.as_timezone(self.bot.timezone(ctx.author.id))
-                _expiry.replace(tz=_expiry2.tzinfo)
+                _expiry.replace_self(tz=_expiry2.tzinfo)
                 _expiry = _expiry.to_timezone(time2.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
                 # _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
                 # _expiry = _expiry.replace(tzinfo=self.bot.timezone(ctx.author.id)).astimezone(time2.timezone.utc).replace(tzinfo=None)
@@ -1205,7 +1205,7 @@ class UtilityCobble(Utility, name="Utility"):
                 date_part = time2.date(y, m, d, time_class1)
                 date1 = time2.datetime.combine(date_part, time_part, time2.utc)
                 date1b = date1.as_timezone(self.bot.timezone(ctx.author.id, _time_class1))
-                date1.replace(tz=date1b.tzinfo)
+                date1.replace_self(tz=date1b.tzinfo)
                 # date1 = time2.datetime.combine(date_part, time_part, language.get_timezone(ctx.author.id, _time_class1)).to_timezone(time2.timezone.utc)
             except ValueError:
                 return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")

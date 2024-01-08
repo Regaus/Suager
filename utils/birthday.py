@@ -1,3 +1,5 @@
+from typing import Type
+
 from regaus import time
 
 
@@ -20,7 +22,7 @@ class Birthday:
         self.uid: int = uid
         self.birthday_date: time.date = birthday
         self.tz: time.tzinfo = tz
-        self.time_class: time.Earth = self.birthday_date.time_class
+        self.time_class: Type[time.Earth] = self.birthday_date.time_class
         self.has_role: bool = has_role  # This is only used to store whether the person's birthday has been noticed by the bots, so it's False by default
         self.bot: str = bot
         self.start_time = time.time(6, 0, 0) if self.bot == "cobble" else time.time()  # Kargadian birthdays start at 6:00
@@ -46,7 +48,7 @@ class Birthday:
 
     def push_birthday(self):
         while self.now() > self.birthday_end:
-            self.birthday_date.replace(year=self.birthday_date.year + 1)
+            self.birthday_date.replace_self(year=self.birthday_date.year + 1)
 
     def __repr__(self):
         return f"{self.__class__.__module__}.{self.__class__.__qualname__}({self.uid}, {self.birthday_date!r}, {self.tz!r}, {self.bot!r})"

@@ -771,3 +771,6 @@
 - Added commands to show or hide your age from the Kargadian profile
 - Made the Kargadian birthdays say when it is your birthday instead of saying "your next birthday is 1 minute ago"
 - Fixed the age shown on the Kargadian profile not taking the user's timezone into account
+
+## v1.9.3.1 - 8 January 2024
+- Fixed certain functions to work with Regaus.py v3.1 (after the change of behaviour in `.replace()` methods)

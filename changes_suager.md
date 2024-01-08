@@ -1737,3 +1737,6 @@
 
 ## v7.7.10.2 - 28 December 2023
 - Enabled the script for New Year's and updated the message for 2024
+
+## v7.7.10.3 - 8 January 2024
+- Fixed certain functions to work with Regaus.py v3.1 (after the change of behaviour in `.replace()` methods)
