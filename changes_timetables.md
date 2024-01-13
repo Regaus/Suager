@@ -65,3 +65,6 @@
 
 ## v0.2.5 - 8 January 2024
 - Added `i.dcu` and `i.luas` into the Timetables cog from Suager and CobbleBot respectively
+
+## v0.3.0a - 8-9 January 2024
+- [Incomplete] Rewrote the code to store static GTFS data in an SQL database when it's not loaded in memory

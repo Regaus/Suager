@@ -146,6 +146,7 @@ class Luas(commands.Cog, name="Timetables"):
 class Timetables(University, Luas, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         super().__init__(bot)
+        self.db = timetables.db
         self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
@@ -241,7 +242,7 @@ class Timetables(University, Luas, name="Timetables"):
         with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
             file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
         # Update the loaded data
-        self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
+        self.static_data = timetables.load_gtfs_data()
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
         self.updating = False
 

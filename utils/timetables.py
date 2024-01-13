@@ -1,16 +1,28 @@
 from __future__ import annotations
 
 import csv
-import pickle
 from dataclasses import dataclass
+from typing import Any, Type
 
 import pytz
 from regaus import time
 
+from utils import database
 
 real_time_filename = "data/gtfs/real_time.json"
-static_filename = "data/gtfs/static.pickle"
+# static_filename = "data/gtfs/static.pickle"
+db = database.Database("gtfs/static.db")
 TIMEZONE = pytz.timezone("Europe/Dublin")
+
+
+def _weekdays_to_int(weekdays: list[bool]) -> int:
+    """ For Calendars - converts the weekdays list to a single integer """
+    return sum(map(lambda x: x[1] << x[0], enumerate(weekdays)))
+
+
+def _int_to_weekdays(weekdays: int) -> list[bool]:
+    """ For Calendars - converts the single integer into a weekdays list """
+    return list(bool(weekdays & (1 << n)) for n in range(7))
 
 
 # These classes handle the GTFS-R Real time information
@@ -144,6 +156,25 @@ class GTFSData:
         return "This string is too large to be feasible to render."
 
 
+def load_something(data: GTFSData, cls: Type[Any], key: str, _id: str | int) -> Any:
+    """ Load an instance of a provided class from the given values """
+    # Attempt 1: Return an existing instance from GTFSData
+    values: dict = getattr(data, key)
+    loaded = values.get(_id)
+    if loaded:
+        return loaded
+    # Attempt 2: Return an instance from SQL
+    try:
+        new = cls.from_sql(_id)  # type: ignore
+        if new:
+            values[_id] = new
+            return new
+        else:
+            raise ValueError
+    except (KeyError, ValueError):
+        raise KeyError(f"Could not find an instance for key {key} and ID {_id}") from None
+
+
 @dataclass()
 class Agency:
     id: int
@@ -154,6 +185,20 @@ class Agency:
     def __repr__(self):
         # "Agency 7778019 - Bus Átha Cliath / Dublin Bus"
         return f"Agency {self.id} - {self.name}"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Agency:
+        """ Construct a new Agency object from a dictionary """
+        return cls(data["id"], data["name"], data["url"], data["timezone"])
+
+    @classmethod
+    def from_sql(cls, agency_id: int) -> Agency:
+        """ Load an Agency from the SQL database """
+        return cls.from_dict(db.fetchrow("SELECT * FROM agencies WHERE id=?", (agency_id,)))
+
+    def save_to_sql(self):
+        """ Save the Agency to the SQL database"""
+        return db.execute("INSERT OR IGNORE INTO agencies VALUES (?, ?, ?, ?)", (self.id, self.name, self.url, self.timezone))
 
 
 @dataclass()
@@ -168,6 +213,22 @@ class Calendar:
     def __repr__(self):
         # "Calendar 3 - [True, True, True, True, True, False, False]"
         return f"Calendar {self.service_id} - {self.data}"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Calendar:
+        """ Construct a new Calendar object from a dictionary """
+        return cls(data["service_id"], _int_to_weekdays(data["data"]),
+                   time.date.from_datetime(data["start_date"]), time.date.from_datetime(data["end_date"]))
+
+    @classmethod
+    def from_sql(cls, service_id: int) -> Calendar:
+        """ Load a Calendar object from the SQL database """
+        return cls.from_dict(db.fetchrow("SELECT * FROM calendars WHERE service_id=?", (service_id,)))
+
+    def save_to_sql(self):
+        """ Save the Calendar to the SQL database """
+        return db.execute("INSERT OR IGNORE INTO calendars VALUES (?, ?, ?, ?)",
+                          (self.service_id, _weekdays_to_int(self.data), self.start_date.to_datetime(), self.end_date.to_datetime()))
 
 
 @dataclass()
@@ -185,11 +246,26 @@ class CalendarException:
         # "Exception for Calendar 343 - 2023-10-13 -> False"
         return f"Exception for Calendar {self.service_id} - {self.date} -> {self.exception}"
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CalendarException:
+        """ Construct a new CalendarException object from a dictionary """
+        return cls(data["service_id"], time.date.from_datetime(data["date"]), data["exception"])
+
+    @classmethod
+    def from_sql(cls, service_id: int) -> list[CalendarException]:
+        """ Load all CalendarExceptions from the SQL database for a given service ID """
+        return list(map(cls.from_dict, db.fetch("SELECT * FROM calendar_exceptions WHERE service_id=?", (service_id,))))
+
+    def save_to_sql(self):
+        """ Save the CalendarException to the SQL database """
+        return db.execute("INSERT OR IGNORE INTO calendar_exceptions VALUES (?, ?, ?)", (self.service_id, self.date.to_datetime(), self.exception))
+
 
 @dataclass()
 class Route:
     id: str
-    agency: Agency
+    agency_id: int
+    # agency: Agency
     short_name: str  # Usually something like "145", "39A", "DART"
     long_name: str   # Usually something like "Ballywaltrim - Heuston Station"
     route_desc: str  # Description - Doesn't seem to be provided by Irish public transport
@@ -203,9 +279,30 @@ class Route:
     route_colour: str
     route_text_colour: str
 
+    @property
+    def agency(self):
+        return Agency.from_sql(self.agency_id)
+
     def __repr__(self):
         # "Route 3643_54890 (DART) - Bray - Howth - Operated by Agency 7778017 - Iardród Éireann / Irish Rail"
         return f"Route {self.id} ({self.short_name}) - {self.route_desc} - Operated by {self.agency}"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Route:
+        """ Construct a new Route object from a dictionary """
+        return cls(data["id"], data["agency_id"], data["short_name"], data["long_name"], data["route_desc"],
+                   data["route_type"], data["route_url"], data["route_colour"], data["route_text_colour"])
+
+    @classmethod
+    def from_sql(cls, route_id: str) -> Route:
+        """ Load a Route from the SQL database """
+        return cls.from_dict(db.fetchrow("SELECT * FROM routes WHERE id=?", (route_id,)))
+
+    def save_to_sql(self):
+        """ Save the Route to the SQL database """
+        return db.execute("INSERT OR IGNORE INTO routes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (self.id, self.agency_id, self.short_name, self.long_name, self.route_desc,
+                           self.route_type, self.route_url, self.route_colour, self.route_text_colour))
 
 
 @dataclass()
@@ -225,11 +322,30 @@ class Stop:
         # "Stop 8220DB000334 (334) - D'Olier Street"
         return f"Stop {self.id} ({self.code}) - {self.name}"
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Stop:
+        """ Construct a new Stop object from a dictionary """
+        return cls(data["id"], data["code"], data["name"], data["description"], data["latitude"], data["longitude"],
+                   data["zone_id"], data["stop_url"], data["location_type"], data["parent_station"])
+
+    @classmethod
+    def from_sql(cls, stop_id: str) -> Stop:
+        """ Load a Stop from the SQL database """
+        return cls.from_dict(db.fetchrow("SELECT * FROM stops WHERE id=?", (stop_id,)))
+
+    def save_to_sql(self):
+        """ Save the Stop to the SQL database """
+        return db.execute("INSERT OR IGNORE INTO stops VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (self.id, self.code, self.name, self.description, self.latitude, self.longitude,
+                           self.zone_id, self.stop_url, self.location_type, self.parent_station))
+
 
 @dataclass()
 class Trip:
-    route: Route
-    calendar: Calendar
+    route_id: str
+    # route: Route
+    calendar_id: int
+    # calendar: Calendar
     trip_id: str
     headsign: str      # What is shown as the destination, can be overridden by StopTime.stop_headsign
     short_name: str    # Supposed to be text identifying the trip to riders - in reality, useless gibberish
@@ -237,28 +353,79 @@ class Trip:
     block_id: str      # "A block consists of a single trip or many sequential trips made using the same vehicle"
     shape_id: str      # ID of geospatial shape (not really useful for my case)
 
+    @property
+    def route(self) -> Route:
+        return Route.from_sql(self.route_id)
+
+    @property
+    def calendar(self) -> Calendar:
+        return Calendar.from_sql(self.calendar_id)
+
     def __repr__(self):
         # "Trip 3626_209 to Charlesland, stop 7462 - Route 3626_39040 (84n)"
         return f"Trip {self.trip_id} to {self.headsign} - Route {self.route.id} ({self.route.short_name})"
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Trip:
+        """ Construct a new Trip object from a dictionary """
+        return cls(data["route_id"], data["calendar_id"], data["trip_id"], data["headsign"],
+                   data["short_name"], data["direction_id"], data["block_id"], data["shape_id"])
+
+    @classmethod
+    def from_sql(cls, trip_id: str) -> Trip:
+        """ Load a Trip from the SQL database """
+        return cls.from_dict(db.fetchrow("SELECT * FROM trips WHERE trip_id=?", (trip_id,)))
+
+    def save_to_sql(self):
+        """ Save the Trip to the SQL database """
+        return db.execute("INSERT OR IGNORE INTO TRIPS VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                          (self.route_id, self.calendar_id, self.trip_id, self.headsign, self.short_name, self.direction_id, self.block_id, self.shape_id))
+
 
 @dataclass()
 class StopTime:
-    trip: Trip
+    trip_id: str
+    # trip: Trip
     arrival_time: int   # Return the number of seconds since midnight, to avoid breaking with their silly "28:30:00"
     departure_time: int
-    stop: Stop
+    stop_id: str
+    # stop: Stop
     sequence: int       # Order of the stop along the route
     stop_headsign: str  # I guess this is in case the "headsign" changes after a certain stop?
     pickup_type: int    # 0 or empty -> Pickup, 1 -> No pickup
     drop_off_type: int  # 0 or empty -> Drop off, 1 -> No drop off
     timepoint: int      # 0 -> Times are approximate, 1 or empty -> Time are exact (this is factually incorrect)
 
+    @property
+    def trip(self) -> Trip:
+        return Trip.from_sql(self.trip_id)
+
+    @property
+    def stop(self) -> Stop:
+        return Stop.from_sql(self.stop_id)
+
     def __repr__(self):
         # This basically returns the time of departure modulo 24 hours
         departure_time = time.time.from_microsecond(self.departure_time * 1000000)
         # "StopTime - 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
         return f"StopTime - {departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StopTime:
+        """ Construct a new StopTime object from a dictionary """
+        return cls(data["trip_id"], data["arrival_time"], data["departure_time"], data["stop_id"],
+                   data["sequence"], data["stop_headsign"], data["pickup_type"], data["drop_off_type"], data["timepoint"])
+
+    @classmethod
+    def from_sql(cls, trip_id: str) -> list[StopTime]:
+        """ Load all StopTimes associated with a given Trip ID, sorted by sequence """
+        return sorted(list(map(cls.from_dict, db.fetch("SELECT * FROM stop_times WHERE trip_id=?", (trip_id,)))), key=lambda s: s.sequence)
+
+    def save_to_sql(self):
+        """ Save the StopTime into the SQL database """
+        return db.execute("INSERT OR IGNORE INTO stop_times VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (self.trip_id, self.arrival_time, self.departure_time, self.stop_id, self.sequence,
+                           self.stop_headsign, self.pickup_type, self.drop_off_type, self.timepoint))
 
 
 class SpecificStopTime:
@@ -441,25 +608,25 @@ def check_gtfs_data_expiry():
             if time.datetime.now() > expiry:  # The data has expired
                 raise RuntimeError(f"GTFS Data expired on {expiry:%Y-%m-%d at %H:%M:%S}")
         except ValueError as e:
-            raise RuntimeError(f"Encountered an error while trying to read expiry data: {type(e).__name__}: {e}") from e
+            raise RuntimeError(f"Encountered an error while trying to read expiry data: {type(e).__name__}: {e}") from None
 
 
-def load_gtfs_data_from_pickle(*, write: bool = True, ignore_expiry: bool = False) -> GTFSData:
-    try:
-        if not ignore_expiry:
-            check_gtfs_data_expiry()
-        data = pickle.load(open(static_filename, "rb"))
-    except FileNotFoundError:
-        data = load_gtfs_data(write=write)
-    return data
+# def load_gtfs_data_from_pickle(*, write: bool = True, ignore_expiry: bool = False) -> GTFSData:
+#     try:
+#         if not ignore_expiry:
+#             check_gtfs_data_expiry()
+#         data = pickle.load(open(static_filename, "rb"))
+#     except FileNotFoundError:
+#         data = load_gtfs_data(write=write)
+#     return data
 
 
-def save_gtfs_data_to_pickle(data: GTFSData):
-    return pickle.dump(data, open(static_filename, "wb+"))
+# def save_gtfs_data_to_pickle(data: GTFSData):
+#     return pickle.dump(data, open(static_filename, "wb+"))
 
 
-def load_gtfs_data(*, write: bool = True, ignore_expiry: bool = False) -> GTFSData:
-    """ Load available GTFS data """
+def load_gtfs_data(*, ignore_expiry: bool = False, read_from_files: bool = False) -> GTFSData:
+    """ Read the GTFS data from the files and save into the database if required, else just return an empty GTFSData object """
     if not ignore_expiry:
         check_gtfs_data_expiry()
 
@@ -471,122 +638,145 @@ def load_gtfs_data(*, write: bool = True, ignore_expiry: bool = False) -> GTFSDa
     schedules: dict[str, list[StopTime]] = {}
     trips: dict[str, Trip] = {}
 
-    with open("assets/gtfs/agency.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["agency_id", "agency_name", "agency_url", "agency_timezone"]
-        # Sample row: ['7778000', 'Citylink', 'https://www.citylink.ie/', 'Europe/London']
-        for i, row in enumerate(reader):
-            if i > 0:  # Skip the first line, since it contains headers
-                agency_id = int(row[0])
-                # int(ID) -> Name -> URL -> Timezone
-                agency = Agency(agency_id, row[1], row[2], row[3])
-                agencies[agency_id] = agency
-            else:
-                if headers != row:
-                    raise ValueError(f"agency.txt: unexpected headers expected: {row}")
+    if read_from_files:
+        # noinspection SqlWithoutWhere
+        db.executescript("BEGIN;"
+                         "DELETE FROM agencies;"
+                         "DELETE FROM calendars;"
+                         "DELETE FROM calendar_exceptions;"
+                         "DELETE FROM routes;"
+                         "DELETE FROM stops;"
+                         "DELETE FROM trips;"
+                         "DELETE FROM stop_times;"
+                         "COMMIT;")
 
-    with open("assets/gtfs/calendar.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date"]
-        for i, row in enumerate(reader):
-            if i > 0:
-                service_id = int(row[0])
-                mon = bool(int(row[1]))
-                tue = bool(int(row[2]))
-                wed = bool(int(row[3]))
-                thu = bool(int(row[4]))
-                fri = bool(int(row[5]))
-                sat = bool(int(row[6]))
-                sun = bool(int(row[7]))
-                start_date = str_to_date(row[8])
-                end_date = str_to_date(row[9])
-                calendar = Calendar(service_id, [mon, tue, wed, thu, fri, sat, sun], start_date, end_date)
-                calendars[service_id] = calendar
-            else:
-                if headers != row:
-                    raise ValueError(f"calendar.txt: unexpected headers expected: {row}")
-
-    with open("assets/gtfs/calendar_dates.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["service_id", "date", "exception_type"]
-        for i, row in enumerate(reader):
-            if i > 0:
-                service_id = int(row[0])
-                date = str_to_date(row[1])
-                exc_type = int(row[2])
-                # 1 -> Service is added (-> return True when checking if trip is applicable today)
-                # 2 -> Service is removed (-> return False when checking if trip is applicable today)
-                calendar_date = CalendarException(service_id, date, exc_type == 1)
-                if service_id in calendar_exceptions:
-                    calendar_exceptions[service_id][date] = calendar_date
+        with open("assets/gtfs/agency.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["agency_id", "agency_name", "agency_url", "agency_timezone"]
+            # Sample row: ['7778000', 'Citylink', 'https://www.citylink.ie/', 'Europe/London']
+            for i, row in enumerate(reader):
+                if i > 0:  # Skip the first line, since it contains headers
+                    agency_id = int(row[0])
+                    # int(ID) -> Name -> URL -> Timezone
+                    agency = Agency(agency_id, row[1], row[2], row[3])
+                    agencies[agency_id] = agency
+                    # TODO: Turn this into an .executemany() so that we don't have to waste as much time
+                    agency.save_to_sql()
                 else:
-                    calendar_exceptions[service_id] = {}
-                    calendar_exceptions[service_id][date] = calendar_date
-            else:
-                if headers != row:
-                    raise ValueError(f"calendar_dates.txt: unexpected headers expected: {row}")
+                    if headers != row:
+                        raise ValueError(f"agency.txt: unexpected headers expected: {row}")
 
-    with open("assets/gtfs/routes.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["route_id", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type", "route_url", "route_color", "route_text_color"]
-        for i, row in enumerate(reader):
-            if i > 0:
-                route_id = row[0]
-                agency_id = int(row[1])
-                route = Route(route_id, agencies[agency_id], row[2], row[3], row[4], int(row[5]), row[6], row[7], row[8])
-                routes[route_id] = route
-            else:
-                if headers != row:
-                    raise ValueError(f"routes.txt: unexpected headers expected: {row}")
-
-    with open("assets/gtfs/stops.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["stop_id", "stop_code", "stop_name", "stop_desc", "stop_lat", "stop_lon", "zone_id", "stop_url", "location_type", "parent_station"]
-        for i, row in enumerate(reader):
-            if i > 0:
-                stop_id = row[0]
-                stop = Stop(stop_id, row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9])
-                stops[stop_id] = stop
-            else:
-                if headers != row:
-                    raise ValueError(f"stops.txt: unexpected headers expected: {row}")
-
-    with open("assets/gtfs/trips.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["route_id", "service_id", "trip_id", "trip_headsign", "trip_short_name", "direction_id", "block_id", "shape_id"]
-        for i, row in enumerate(reader):
-            if i > 0:
-                route_id = row[0]
-                service_id = int(row[1])
-                trip_id = row[2]
-                trip = Trip(routes[route_id], calendars[service_id], trip_id, row[3], row[4], int(row[5]), row[6], row[7])
-                trips[trip_id] = trip
-            else:
-                if headers != row:
-                    raise ValueError(f"trips.txt: unexpected headers expected: {row}")
-
-    with open("assets/gtfs/stop_times.txt", "r", encoding="utf-8") as file:
-        reader = csv.reader(file, delimiter=",", quotechar="\"")
-        headers = ["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "stop_headsign", "pickup_type", "drop_off_type", "timepoint"]
-        for i, row in enumerate(reader):
-            if i > 0:
-                trip_id = row[0]
-                arrival = time_to_int(row[1])
-                departure = time_to_int(row[2])
-                stop = stops[row[3]]
-                stop_seq = int(row[4])
-                stop_time = StopTime(trips[trip_id], arrival, departure, stop, stop_seq, row[5], int(row[6]), int(row[7]), int(row[8]))
-                if trip_id in schedules:
-                    schedules[trip_id].append(stop_time)
+        with open("assets/gtfs/calendar.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["service_id", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "start_date", "end_date"]
+            for i, row in enumerate(reader):
+                if i > 0:
+                    service_id = int(row[0])
+                    mon = bool(int(row[1]))
+                    tue = bool(int(row[2]))
+                    wed = bool(int(row[3]))
+                    thu = bool(int(row[4]))
+                    fri = bool(int(row[5]))
+                    sat = bool(int(row[6]))
+                    sun = bool(int(row[7]))
+                    start_date = str_to_date(row[8])
+                    end_date = str_to_date(row[9])
+                    calendar = Calendar(service_id, [mon, tue, wed, thu, fri, sat, sun], start_date, end_date)
+                    calendars[service_id] = calendar
+                    calendar.save_to_sql()
                 else:
-                    schedules[trip_id] = [stop_time]
-            else:
-                if headers != row:
-                    raise ValueError(f"stop_times.txt: unexpected headers expected: {row}")
+                    if headers != row:
+                        raise ValueError(f"calendar.txt: unexpected headers expected: {row}")
+
+        with open("assets/gtfs/calendar_dates.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["service_id", "date", "exception_type"]
+            for i, row in enumerate(reader):
+                if i > 0:
+                    service_id = int(row[0])
+                    date = str_to_date(row[1])
+                    exc_type = int(row[2])
+                    # 1 -> Service is added (-> return True when checking if trip is applicable today)
+                    # 2 -> Service is removed (-> return False when checking if trip is applicable today)
+                    calendar_date = CalendarException(service_id, date, exc_type == 1)
+                    if service_id in calendar_exceptions:
+                        calendar_exceptions[service_id][date] = calendar_date
+                    else:
+                        calendar_exceptions[service_id] = {}
+                        calendar_exceptions[service_id][date] = calendar_date
+                    calendar_date.save_to_sql()
+                else:
+                    if headers != row:
+                        raise ValueError(f"calendar_dates.txt: unexpected headers expected: {row}")
+
+        with open("assets/gtfs/routes.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["route_id", "agency_id", "route_short_name", "route_long_name", "route_desc", "route_type", "route_url", "route_color", "route_text_color"]
+            for i, row in enumerate(reader):
+                if i > 0:
+                    route_id = row[0]
+                    agency_id = int(row[1])
+                    route = Route(route_id, agency_id, row[2], row[3], row[4], int(row[5]), row[6], row[7], row[8])
+                    # route = Route(route_id, agencies[agency_id], row[2], row[3], row[4], int(row[5]), row[6], row[7], row[8])
+                    # routes[route_id] = route
+                    route.save_to_sql()
+                else:
+                    if headers != row:
+                        raise ValueError(f"routes.txt: unexpected headers expected: {row}")
+
+        with open("assets/gtfs/stops.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["stop_id", "stop_code", "stop_name", "stop_desc", "stop_lat", "stop_lon", "zone_id", "stop_url", "location_type", "parent_station"]
+            for i, row in enumerate(reader):
+                if i > 0:
+                    stop_id = row[0]
+                    stop = Stop(stop_id, row[1], row[2], row[3], float(row[4]), float(row[5]), row[6], row[7], row[8], row[9])
+                    # stops[stop_id] = stop
+                    stop.save_to_sql()
+                else:
+                    if headers != row:
+                        raise ValueError(f"stops.txt: unexpected headers expected: {row}")
+
+        with open("assets/gtfs/trips.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["route_id", "service_id", "trip_id", "trip_headsign", "trip_short_name", "direction_id", "block_id", "shape_id"]
+            for i, row in enumerate(reader):
+                if i > 0:
+                    route_id = row[0]
+                    service_id = int(row[1])
+                    trip_id = row[2]
+                    trip = Trip(route_id, service_id, trip_id, row[3], row[4], int(row[5]), row[6], row[7])
+                    # trip = Trip(routes[route_id], calendars[service_id], trip_id, row[3], row[4], int(row[5]), row[6], row[7])
+                    # trips[trip_id] = trip
+                    trip.save_to_sql()
+                else:
+                    if headers != row:
+                        raise ValueError(f"trips.txt: unexpected headers expected: {row}")
+
+        with open("assets/gtfs/stop_times.txt", "r", encoding="utf-8") as file:
+            reader = csv.reader(file, delimiter=",", quotechar="\"")
+            headers = ["trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence", "stop_headsign", "pickup_type", "drop_off_type", "timepoint"]
+            for i, row in enumerate(reader):
+                if i > 0:
+                    trip_id = row[0]
+                    arrival = time_to_int(row[1])
+                    departure = time_to_int(row[2])
+                    # stop = stops[row[3]]
+                    stop_seq = int(row[4])
+                    stop_time = StopTime(trip_id, arrival, departure, row[3], stop_seq, row[5], int(row[6]), int(row[7]), int(row[8]))
+                    # stop_time = StopTime(trips[trip_id], arrival, departure, stop, stop_seq, row[5], int(row[6]), int(row[7]), int(row[8]))
+                    # if trip_id in schedules:
+                    #     schedules[trip_id].append(stop_time)
+                    # else:
+                    #     schedules[trip_id] = [stop_time]
+                    stop_time.save_to_sql()
+                else:
+                    if headers != row:
+                        raise ValueError(f"stop_times.txt: unexpected headers expected: {row}")
 
     gtfs_data = GTFSData(agencies, calendars, calendar_exceptions, routes, stops, schedules, trips)
-    if write:
-        save_gtfs_data_to_pickle(gtfs_data)
+    # if write:
+    #     save_gtfs_data_to_pickle(gtfs_data)
     return gtfs_data
 
 

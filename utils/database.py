@@ -1,6 +1,7 @@
 import re
 import sqlite3
 from datetime import datetime, date
+from typing import Any
 
 from utils import general, logger, time
 
@@ -58,15 +59,15 @@ class Database:
         self.conn.create_function("APRILMULT", 0, april_fools_multiplier)
         self.db = self.conn.cursor()
 
-    def execute(self, sql: str, prepared: tuple = ()):
+    def execute(self, sql: str, parameters: tuple[Any, ...] = ()) -> str:
         """ Execute SQL command """
         try:
-            data = self.db.execute(sql, prepared)
+            data = self.db.execute(sql, parameters)
         except Exception as e:
             now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
             msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
                   f"{now} > Database > SQL statement: {sql}\n" \
-                  f"{now} > Database > Values given: {prepared}"
+                  f"{now} > Database > Values given: {parameters}"
             general.print_error(msg)
             logger.log("suager", "database", msg)
             return f"{type(e).__name__}: {e}"
@@ -76,14 +77,45 @@ class Database:
             status_code = len(data.fetchall())
         return f"{status_word} {status_code}"
 
-    def fetch(self, sql: str, prepared: tuple = ()):
+    def executemany(self, sql: str, parameters_iter: list[tuple[Any, ...]]) -> str:
+        """ Execute the same SQL command over multiple different values """
+        try:
+            data = self.db.executemany(sql, parameters_iter)
+        except Exception as e:
+            now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
+            msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
+                  f"{now} > Database > SQL statement (many): {sql}\n" \
+                  f"{now} > Database > Values given: {parameters_iter}"
+            general.print_error(msg)
+            logger.log("suager", "database", msg)
+            return f"{type(e).__name__}: {e}"
+        status_word = sql.split(' ')[0].upper()
+        status_code = data.rowcount if data.rowcount > 0 else 0
+        if status_word == "SELECT":
+            status_code = len(data.fetchall())
+        return f"{status_word} {status_code}"
+
+    def executescript(self, sql: str) -> str:
+        """ Execute an entire SQL script """
+        try:
+            data = self.db.executescript(sql)
+        except Exception as e:
+            now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
+            msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
+                  f"{now} > Database > SQL Script: {sql}\n"
+            general.print_error(msg)
+            logger.log("suager", "database", msg)
+            return f"{type(e).__name__}: {e}"
+        return "SUCCESS"
+
+    def fetch(self, sql: str, parameters: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
         """ Fetch data from DB """
-        data = self.db.execute(sql, prepared).fetchall()
+        data = self.db.execute(sql, parameters).fetchall()
         return data
 
-    def fetchrow(self, sql: str, prepared: tuple = ()):
+    def fetchrow(self, sql: str, parameters: tuple[Any, ...] = ()) -> dict[str, Any]:
         """ Fetch one row of data from DB """
-        data = self.db.execute(sql, prepared).fetchone()
+        data = self.db.execute(sql, parameters).fetchone()
         return data
 
 
@@ -101,14 +133,17 @@ class Column:
 
 
 class Table:
-    def __init__(self, name: str, filename: str, columns: list):
+    def __init__(self, name: str, filename: str, columns: list, extra_sql: str = ""):
         self.name = name
         self.filename = filename  # Filename for the database
         self.columns = columns
+        self.extra_sql = extra_sql
 
     def create(self):
         start = f"CREATE TABLE IF NOT EXISTS {self.name} (\n"
         strings = [str(column) for column in self.columns]
+        if self.extra_sql:
+            strings.append(self.extra_sql)
         middle = ",\n".join(strings)
         end = "\n);"
         command = f"{start}{middle}{end}"
@@ -317,4 +352,67 @@ tables = [
         Column("token", "TEXT", True),      # Webhook's token
         Column("channel", "INTEGER", True)  # Webhook's channel ID
     ]),
+
+    # GTFS database
+    Table("agencies", "gtfs/static.db", [
+        Column("id", "INTEGER", True, True),  # Primary key: Agency ID
+        Column("name", "TEXT", True),
+        Column("url", "TEXT", True),
+        Column("timezone", "TEXT", True),
+    ]),
+    Table("calendars", "gtfs/static.db", [
+        Column("service_id", "INTEGER", True, True),  # Primary key: Service ID
+        Column("data", "INTEGER", True),     # An integer storing 7 booleans corresponding to whether the service runs on each weekday
+        Column("start_date", "DATE", True),  # Note: this will store as datetime.date
+        Column("end_date", "DATE", True),    # Note: this will store as datetime.date
+    ]),
+    Table("calendar_exceptions", "gtfs/static.db", [
+        Column("service_id", "INTEGER", True),  # Should match Calendar.service_id
+        Column("date", "DATE", True),           # Note: this will store as datetime.date
+        Column("exception", "BOOLEAN", True),   # True -> Added, False -> Removed
+    ], "UNIQUE(service_id, date)"),             # Constraint: Service ID + date
+    Table("routes", "gtfs/static.db", [
+        Column("id", "TEXT", True, True),        # Primary key: Route ID
+        Column("agency_id", "INTEGER", True),    # Route operator
+        Column("short_name", "TEXT", True),      # Route name for people
+        Column("long_name", "TEXT", True),       # Route description for people
+        Column("route_desc", "TEXT", True),      # Route Description - usually empty
+        Column("route_type", "INTEGER", True),   # Tram/Subway/Rail/Bus
+        Column("route_url", "TEXT", True),       # Route URL - Not provided by Irish public transport
+        Column("route_colour", "TEXT", True),
+        Column("route_text_colour", "TEXT", True),
+    ]),
+    Table("stops", "gtfs/static.db", [
+        Column("id", "TEXT", True, True),        # Primary key: Full Stop ID
+        Column("code", "TEXT", True),            # Short code (Dublin Bus / Bus Éireann)
+        Column("name", "TEXT", True),            # Stop name
+        Column("description", "TEXT", True),     # Stop description - usually empty
+        Column("latitude", "REAL", True),
+        Column("longitude", "REAL", True),
+        Column("zone_id", "TEXT", True),         # Fare zone
+        Column("stop_url", "TEXT", True),        # URL to a webpage about the location
+        Column("location_type", "TEXT", True),   # Stop, Station or whatever else - empty
+        Column("parent_station", "TEXT", True),  # Empty in our case
+    ]),
+    Table("trips", "gtfs/static.db", [
+        Column("route_id", "TEXT", True),         # Route served by the Trip
+        Column("calendar_id", "INTEGER", True),   # Schedule followed by the Trip
+        Column("trip_id", "TEXT", True, True),    # Primary key: Trip ID
+        Column("headsign", "TEXT", True),         # Destination shown
+        Column("short_name", "TEXT", True),
+        Column("direction_id", "INTEGER", True),  # 0 -> outbound, 1 -> inbound
+        Column("block_id", "TEXT", True),
+        Column("shape_id", "TEXT", True),         # ID of geospatial shape of the trip
+    ]),
+    Table("stop_times", "gtfs/static.db", [
+        Column("trip_id", "TEXT", True),            # Trip ID this stop time belongs to
+        Column("arrival_time", "INTEGER", True),    # Arrival time as number of seconds since midnight
+        Column("departure_time", "INTEGER", True),  # Departure time as number of seconds since midnight
+        Column("stop_id", "TEXT", True),            # Stop ID served by this stop time
+        Column("sequence", "INTEGER", True),        # Order of the stop along the route
+        Column("stop_headsign", "TEXT", True),      # In case the headsign changes at a certain stop
+        Column("pickup_type", "INTEGER", True),     # 0 or empty -> Pickup, 1 -> No pickup
+        Column("drop_off_type", "INTEGER", True),   # 0 or empty -> Drop off, 1 -> No drop off
+        Column("timepoint", "INTEGER", True),       # 0 -> Times are approximate, 1 -> Times are exact
+    ], "UNIQUE(trip_id, sequence)"),                 # Constraint: Trip ID + Sequence
 ]
