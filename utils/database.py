@@ -1,6 +1,7 @@
 import re
 import sqlite3
 from datetime import datetime, date
+from typing import Any
 
 from utils import general, logger, time
 
@@ -58,15 +59,15 @@ class Database:
         self.conn.create_function("APRILMULT", 0, april_fools_multiplier)
         self.db = self.conn.cursor()
 
-    def execute(self, sql: str, prepared: tuple = ()):
+    def execute(self, sql: str, parameters: tuple[Any, ...] = (), /) -> str:
         """ Execute SQL command """
         try:
-            data = self.db.execute(sql, prepared)
+            data = self.db.execute(sql, parameters)
         except Exception as e:
             now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
             msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
                   f"{now} > Database > SQL statement: {sql}\n" \
-                  f"{now} > Database > Values given: {prepared}"
+                  f"{now} > Database > Values given: {parameters}"
             general.print_error(msg)
             logger.log("suager", "database", msg)
             return f"{type(e).__name__}: {e}"
@@ -76,14 +77,45 @@ class Database:
             status_code = len(data.fetchall())
         return f"{status_word} {status_code}"
 
-    def fetch(self, sql: str, prepared: tuple = ()):
+    def executemany(self, sql: str, parameters_iter: list[tuple[Any, ...]], /) -> str:
+        """ Execute the same SQL command over multiple different values """
+        try:
+            data = self.db.executemany(sql, parameters_iter)
+        except Exception as e:
+            now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
+            msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
+                  f"{now} > Database > SQL statement (many): {sql}\n" \
+                  f"{now} > Database > Values given: {parameters_iter}"
+            general.print_error(msg)
+            logger.log("suager", "database", msg)
+            return f"{type(e).__name__}: {e}"
+        status_word = sql.split(' ')[0].upper()
+        status_code = data.rowcount if data.rowcount > 0 else 0
+        if status_word == "SELECT":
+            status_code = len(data.fetchall())
+        return f"{status_word} {status_code}"
+
+    def executescript(self, sql: str, /) -> str:
+        """ Execute an entire SQL script """
+        try:
+            data = self.db.executescript(sql)
+        except Exception as e:
+            now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
+            msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
+                  f"{now} > Database > SQL Script: {sql}\n"
+            general.print_error(msg)
+            logger.log("suager", "database", msg)
+            return f"{type(e).__name__}: {e}"
+        return "SUCCESS"
+
+    def fetch(self, sql: str, parameters: tuple[Any, ...] = (), /) -> list[dict[str, Any]]:
         """ Fetch data from DB """
-        data = self.db.execute(sql, prepared).fetchall()
+        data = self.db.execute(sql, parameters).fetchall()
         return data
 
-    def fetchrow(self, sql: str, prepared: tuple = ()):
+    def fetchrow(self, sql: str, parameters: tuple[Any, ...] = (), /) -> dict[str, Any]:
         """ Fetch one row of data from DB """
-        data = self.db.execute(sql, prepared).fetchone()
+        data = self.db.execute(sql, parameters).fetchone()
         return data
 
 
@@ -317,4 +349,20 @@ tables = [
         Column("token", "TEXT", True),      # Webhook's token
         Column("channel", "INTEGER", True)  # Webhook's channel ID
     ]),
+
+    # GTFS database
+    Table("data", "gtfs/static.db", [
+        Column("filename", "TEXT", True),     # Data filename (e.g. agency.txt)
+        Column("id", "TEXT", True),           # ID (stored as a string) - Agency ID, Route ID, Trip ID, etc.
+        Column("start", "INTEGER", True),     # Start offset: Number of rows to skip to get to this data
+        Column("length", "INTEGER", True),    # Length of the data (in lines)
+        Column("search_key", "TEXT", False),  # Search query (for stops and routes)
+    ]),
+    Table("expiry", "gtfs/static.db", [
+        Column("expiry", "TIMESTAMP", True)  # Stores the data expiry timestamp
+    ]),
+    Table("schedules", "gtfs/static.db", [
+        Column("stop_id", "TEXT", True),   # Stop ID
+        Column("trip_ids", "TEXT", True),  # Space-separated IDs of trips that pass by this stop
+    ])
 ]

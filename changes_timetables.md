@@ -65,3 +65,10 @@
 
 ## v0.2.5 - 8 January 2024
 - Added `i.dcu` and `i.luas` into the Timetables cog from Suager and CobbleBot respectively
+
+## v0.3.0a1 - 13-15 January 2024
+- The location of GTFS data is now stored in a database and only loaded into memory on demand
+- GTFS dataclasses now don't reference each other, instead only providing the ID and a method to load the actual instance if needed
+- Fixed real-time GTFS data crashing when the hour is 24 or higher
+- Fixed ADDED trips crashing the feed if they have an arrival time but no departure time
+- Fixed various other issues, although most of them were caused by this rewrite to begin with

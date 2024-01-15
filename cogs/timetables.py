@@ -146,6 +146,7 @@ class Luas(commands.Cog, name="Timetables"):
 class Timetables(University, Luas, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         super().__init__(bot)
+        self.db = timetables.db
         self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
@@ -205,22 +206,29 @@ class Timetables(University, Luas, name="Timetables"):
                         await self.download_new_static_gtfs()
                     else:
                         try:
-                            self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
+                            self.static_data = timetables.init_gtfs_data()
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
-                        except (FileNotFoundError, RuntimeError) as e:
-                            # If the static GTFS data is not available or is expired, download new data and then extract and load.
+                        except RuntimeError as e:
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
                             await self.download_new_static_gtfs()
+                        # try:
+                        #     self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
+                        #     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
+                        # except (FileNotFoundError, RuntimeError) as e:
+                        #     # If the static GTFS data is not available or is expired, download new data and then extract and load.
+                        #     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
+                        #     await self.download_new_static_gtfs()
                 except (ClientError, BadZipFile):
                     # If the GTFS data cannot be downloaded due to an error with the powers above, try to load from existing data while ignoring expiry errors
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Can't download data, falling back to existing dataset.")
-                    self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG, ignore_expiry=True)
+                    self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
+                    # self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG, ignore_expiry=True)
                     # If we crash here yet again, then it would make sense to give up and catch on fire.
             self.initialised = True
         except Exception as e:
             self.loader_error = e
             self.initialised = False
-            raise e from e
+            raise e from None
         finally:
             self.updating = False
 
@@ -237,11 +245,13 @@ class Timetables(University, Luas, name="Timetables"):
         # Extract the data
         zip_file = ZipFile(BytesIO(data))
         zip_file.extractall("assets/gtfs")
-        # Set the data to expire two weeks from now
-        with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
-            file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
+        # Set the data to expire two weeks from now - This is now handled in the updater
+        # with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
+        #     file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
         # Update the loaded data
-        self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
+        timetables.read_and_store_gtfs_data()
+        self.static_data = timetables.init_gtfs_data()
+        # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
         self.updating = False
 
@@ -283,23 +293,26 @@ class Timetables(University, Luas, name="Timetables"):
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
-        output = []
-        query = query.lower()
-        for stop in self.static_data.stops.values():
-            # Make the search case-insensitive
-            if query in stop.id.lower() or query in stop.code.lower() or query in stop.name.lower():
-                output.append(stop)
-        return output
+        return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower())
+        # output = []
+        # query = query.lower()
+        # for stop in self.static_data.stops.values():
+        #     # Make the search case-insensitive
+        #     if query in stop.id.lower() or query in stop.code.lower() or query in stop.name.lower():
+        #         output.append(stop)
+        # return output
 
     def find_route(self, query: str) -> list[timetables.Route]:
         """ Find a specific route """
-        output = []
-        query = query.lower()
-        for route in self.static_data.routes.values():
-            # Make the search case-insensitive
-            if query in route.id.lower() or query in route.short_name.lower() or query in route.long_name.lower():
-                output.append(route)
-        return output
+        # This might be a bit less effective at catching routes than the previous examples, but it's possible to do it on-database this way
+        return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower())
+        # output = []
+        # query = query.lower()
+        # for route in self.static_data.routes.values():
+        #     # Make the search case-insensitive
+        #     if query in route.id.lower() or query in route.short_name.lower() or query in route.long_name.lower():
+        #         output.append(route)
+        # return output
 
     @commands.group(name="tfi")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -315,7 +328,7 @@ class Timetables(University, Luas, name="Timetables"):
             return await ctx.send_help(ctx.command)
 
     @tfi_search.command(name="stop")
-    async def tfi_search_stop(self, ctx: commands.Context, query: str):
+    async def tfi_search_stop(self, ctx: commands.Context, *, query: str):
         """ Search for a specific stop """
         message = await self.wait_for_initialisation(ctx)
         stops = self.find_stop(query=query)
@@ -330,7 +343,7 @@ class Timetables(University, Luas, name="Timetables"):
         return await message.edit(content=output_content)
 
     @tfi_search.command(name="route")
-    async def tfi_search_route(self, ctx: commands.Context, query: str):
+    async def tfi_search_route(self, ctx: commands.Context, *, query: str):
         """ Search for a specific route """
         message = await self.wait_for_initialisation(ctx)
         routes = self.find_route(query=query)
@@ -354,12 +367,12 @@ class Timetables(University, Luas, name="Timetables"):
             return await ctx.send_help(ctx.command)
 
     @tfi_schedules.command(name="stop")
-    async def tfi_schedules_stop(self, ctx: commands.Context, stop_query: str):
+    async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str):
         """ Show the next departures for a specific stop """
         message = await self.wait_for_initialisation(ctx)
         stops = self.find_stop(stop_query)
         if len(stops) > 1:
-            return await message.edit(content=f"More than one stop was found for your search query ({stop_query})."
+            return await message.edit(content=f"More than one stop was found for your search query ({stop_query}).\n"
                                               f"Use `{ctx.prefix}tfi search stop` to find the specific stop ID or provide a more specific query.")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=True)
@@ -394,12 +407,13 @@ class Timetables(University, Luas, name="Timetables"):
             else:
                 scheduled_departure_time = "--:--"  # "Unknown"
 
-            if stop_time.route is None:
+            _route = stop_time.route(schedule.data)
+            if _route is None:
                 route = "Unknown"
             else:
-                route = stop_time.route.short_name
+                route = _route.short_name
 
-            destination = stop_time.destination
+            destination = stop_time.destination(schedule.data)
 
             # Update column_sizes if needed
             column_sizes[0] = max(column_sizes[0], len(route))

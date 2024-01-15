@@ -1746,3 +1746,6 @@
 
 ## v7.7.10.5 - 8 January 2024
 - Removed the cherry.py server code from this codebase
+
+## v7.7.10.6 - 8 January 2024
+- Added `executemany()` and `executescript()` to the database
