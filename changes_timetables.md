@@ -76,4 +76,11 @@
 ## v0.3.0a2 - 21 January 2024
 - Changed agencies, calendars, and calendar exceptions to use string IDs for consistency (and to not have to cast ints to strs and vice versa)
 - Stop times are now stored in the database individually
+- Greatly optimised the loading of StopSchedule
 - Stopped reloading of GTFS data from blocking the rest of the bots' activity by putting it in a separate thread
+
+## v0.3.0a3 - 21 January 2024
+- Improved the "placeholder" debug/control command 
+- Made it possible to load data from the Vehicles API endpoint
+- Made it possible to get the straight-line distance between a vehicle and the current stop (if available)
+- Fixed the loader getting stuck in an infinite loop if the static GTFS data was not being reloaded

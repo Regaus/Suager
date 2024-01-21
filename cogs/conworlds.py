@@ -1,6 +1,6 @@
 import json
 import re
-from math import atan2, ceil, cos, radians as rad, sin, sqrt
+from math import ceil
 
 import discord
 from pytz.tzinfo import DstTzInfo
@@ -163,12 +163,6 @@ class Conworlds(commands.Cog):
 
         Example using place name: `..distance Reggar "Rakkan Lintina"`
         Example using coordinates: `..distance "60.00,-53.48" "22.00,-77.48" Kargadia` """
-        radii = {
-            "Virkada": 5224.22,
-            "Zeivela": 7008.10,
-            "Kargadia": 7326.65,
-            "Qevenerus": 14016.20,
-        }
         lat_long_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,3}\.?\d*)$")
         coordinate_check = re.compile(r"^c(\d{1,4}\.?\d*),(\s?)(\d{1,4}\.?\d*)$")
 
@@ -226,16 +220,15 @@ class Conworlds(commands.Cog):
             planet = planet1
         del planet1, planet2
 
-        try:
-            radius = radii[planet]
-        except KeyError:
-            return await ctx.send(f"{planet!r} is not a valid planet.")
+        # try:
+        #     radius = radii[planet]
+        # except KeyError:
+        #     return await ctx.send(f"{planet!r} is not a valid planet.")
 
-        la1, la2 = rad(lat1), rad(lat2)  # Latitudes expressed in radians
-        dla, dlo = rad(lat2 - lat1), rad(long2 - long1)  # Delta of latitudes, delta of longitudes expressed in radians
-        a = sin(dla / 2) ** 2 + cos(la1) * cos(la2) * (sin(dlo / 2) ** 2)
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        distance = radius * c  # km
+        try:
+            distance = conworlds2.distance_between_places(lat1, long1, lat2, long2, planet)
+        except ValueError as e:
+            return await ctx.send(str(e))
         metric, imperial = ctx.language2("en").length(distance * 1000, precision=2).split(" | ")
         return await ctx.send(f"The distance between **{name1}** and **{name2}** is **{metric}** (**{imperial}**).")
 

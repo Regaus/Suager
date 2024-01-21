@@ -777,3 +777,6 @@
 
 ## v1.9.3.2 - 8 January 2024
 - Moved `..luas` into the Timetables cog and made it accessible by the Timetables bot
+
+## v1.9.3.3 - 21 January 2024
+- Separated the distance calculations into a separate function so that it can be used by the Timetables bot

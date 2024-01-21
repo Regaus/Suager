@@ -10,6 +10,7 @@ import pytz
 from regaus import time
 
 from utils import database
+from utils.errors import GTFSAPIError
 
 
 def get_database() -> database.Database:
@@ -17,6 +18,7 @@ def get_database() -> database.Database:
 
 
 real_time_filename = "data/gtfs/real_time.json"
+vehicles_filename = "data/gtfs/vehicles.json"
 # static_filename = "data/gtfs/static.pickle"
 db = get_database()
 # db = database.Database("gtfs/static.db")
@@ -25,9 +27,9 @@ CHUNK_SIZE = 256
 
 
 # These classes handle the GTFS-R Real time information
-def load_gtfs_r_data(data: dict) -> GTFSRData:
+def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFSRData, VehicleData]:
     try:
-        return GTFSRData.load(data)
+        return GTFSRData.load(data), VehicleData.load(vehicle_data)
     except Exception as e:
         from utils import general
         general.print_error(general.traceback_maker(e, code_block=False))
@@ -40,11 +42,37 @@ class GTFSRData:
     entities: list[Entity]
 
     @classmethod
-    def load(cls, data: dict):
+    def load(cls, data: dict | None):
         # If no data is available, keep self.data null until we do get some data
         if data is None:
             return None
+        # See if the API returned any errors
+        if "status_code" in data and "message" in data:
+            raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "real-time")
+        if "entity" not in data:
+            return None
         return cls(Header.load(data["header"]), [Entity.load(e) for e in data["entity"]])
+
+
+@dataclass()
+class VehicleData:
+    header: Header
+    entities: dict[str, Vehicle]
+
+    @classmethod
+    def load(cls, data: dict | None):
+        if data is None:
+            return None
+        # See if the API returned any errors
+        if "status_code" in data and "message" in data:
+            raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "vehicles")
+        if "entity" not in data:
+            return None
+        vehicles = {}
+        for entity in data["entity"]:
+            vehicle = Vehicle.load(entity)
+            vehicles[vehicle.vehicle_id] = vehicle
+        return cls(Header.load(data["header"]), vehicles)
 
 
 @dataclass()
@@ -77,11 +105,16 @@ class Entity:
 class TripUpdate:
     trip: RealTimeTrip
     stop_times: list[StopTimeUpdate] | None
+    vehicle_id: str | None
 
     @classmethod
     def load(cls, data: dict):
         stop_times = [StopTimeUpdate.load(i) for i in data["stop_time_update"]] if "stop_time_update" in data else None
-        return cls(RealTimeTrip.load(data["trip"]), stop_times)
+        if "vehicle" in data:
+            vehicle_id = data["vehicle"]["id"]
+        else:
+            vehicle_id = None
+        return cls(RealTimeTrip.load(data["trip"]), stop_times, vehicle_id)
 
 
 @dataclass()
@@ -134,6 +167,24 @@ class StopTimeUpdate:
             if _departure_time is not None:
                 departure_time = time.datetime.from_timestamp(int(_departure_time), tz=TIMEZONE)
         return cls(data["stop_sequence"], data.get("stop_id", "Unknown"), data.get("schedule_relationship", "Unknown"), arrival_delay, departure_delay, arrival_time, departure_time)
+
+
+@dataclass()
+class Vehicle:
+    entity_id: str
+    trip: RealTimeTrip
+    latitude: float
+    longitude: float
+    vehicle_id: str
+
+    @classmethod
+    def load(cls, data: dict):
+        entity_id = data["id"]
+        vehicle_data = data["vehicle"]
+        trip = RealTimeTrip.load(vehicle_data["trip"])
+        position = vehicle_data["position"]
+        vehicle_id = vehicle_data["vehicle"]["id"]
+        return cls(entity_id, trip, position["latitude"], position["longitude"], vehicle_id)
 
 
 # These classes handle the GTFS static information
@@ -426,7 +477,7 @@ class SpecificStopTime:
 
 class AddedStopTime:
     """ A stop from an ADDED trip """
-    def __init__(self, stop_time_update: StopTimeUpdate, trip_id: str | None, route: Route | None, stop: Stop, destination: str = None):  # stops: dict[str, Stop]
+    def __init__(self, stop_time_update: StopTimeUpdate, trip_id: str | None, route: Route | None, stop: Stop, destination: str = None, vehicle: Vehicle = None):  # stops: dict[str, Stop]
         self.stop_time = stop_time_update
         self.trip_id = trip_id
         self.route = route
@@ -437,6 +488,11 @@ class AddedStopTime:
         self.arrival_time = stop_time_update.arrival_time
         self.departure_time = stop_time_update.departure_time or self.arrival_time  # If the departure time is unknown, show the arrival time
         self.destination = destination
+        if vehicle:
+            self.vehicle = vehicle
+            self.vehicle_id = vehicle.vehicle_id
+        else:
+            self.vehicle = self.vehicle_id = None
 
     def __repr__(self):
         # "AddedStopTime - 2023-10-14 02:00:00 (Stop D'Olier Street - #1, Trip ID T130)"
@@ -463,8 +519,10 @@ class RealStopTime:
     arrival_time: time.datetime | None
     departure_time: time.datetime | None
     destination: str | None
+    vehicle: Vehicle | None
+    vehicle_id: str | None
 
-    def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None):
+    def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None, vehicles: VehicleData | None):
         if isinstance(stop_time, SpecificStopTime):
             self.stop_time = stop_time
             # self.trip = stop_time.trip
@@ -496,6 +554,7 @@ class RealStopTime:
                 self.real_time = True
                 self.real_trip = real_trips[self.trip_id]
                 self.schedule_relationship = self.real_trip.trip.schedule_relationship
+                # Calculate arrival and departure times
                 arrival_delay = None
                 departure_delay = None
                 if self.real_trip.stop_times is not None:
@@ -525,6 +584,15 @@ class RealStopTime:
                     self.departure_time = self.scheduled_departure_time + departure_delay
                 else:
                     self.departure_time = self.scheduled_departure_time
+                # Find the vehicle
+                vehicle_id = self.real_trip.vehicle_id
+                if vehicle_id is not None:
+                    self.vehicle_id = vehicle_id
+                    self.vehicle = vehicles.entities.get(vehicle_id)  # In case there somehow doesn't exist a value
+                else:
+                    self.vehicle = self.vehicle_id = None
+            else:
+                self.vehicle = self.vehicle_id = None
         elif isinstance(stop_time, AddedStopTime):
             self.stop_time = stop_time
             # self.trip = None
@@ -545,6 +613,8 @@ class RealStopTime:
             self.real_trip = None
             self.schedule_relationship = "ADDED"
             self._destination = stop_time.destination
+            self.vehicle = stop_time.vehicle
+            self.vehicle_id = stop_time.vehicle_id
         else:
             raise TypeError(f"Unexpected StopTime type {type(stop_time).__name__} received")
 
@@ -799,7 +869,6 @@ def read_and_store_gtfs_data(self=None):
 
     if hasattr(self, "updating"):
         self.updating = False
-    return 0
 
 
 def init_gtfs_data(*, ignore_expiry: bool = False) -> GTFSData:
@@ -1041,7 +1110,7 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
 
 # Stuff for real-time schedules
 class RealTimeStopSchedule:
-    def __init__(self, data: GTFSData, stop_id: str, real_time_data: GTFSRData):
+    def __init__(self, data: GTFSData, stop_id: str, real_time_data: GTFSRData, vehicle_data: VehicleData):
         self.data = data
         self.stop_schedule = StopSchedule(data, stop_id)
         self.stop = self.stop_schedule.stop
@@ -1051,10 +1120,12 @@ class RealTimeStopSchedule:
 
         self.real_trips, self.added_trips = real_trip_updates(real_time_data, self.trip_ids, self.stop_id)
 
+        self.vehicle_data = vehicle_data
+
     def real_stop_times(self):
         output = []
         for stop_time in self.stop_times:
-            output.append(RealStopTime(stop_time, self.real_trips))
+            output.append(RealStopTime(stop_time, self.real_trips, self.vehicle_data))
 
         for trip_id, added_trip in self.added_trips.items():
             for stop_time in added_trip.stop_times:
@@ -1075,8 +1146,13 @@ class RealTimeStopSchedule:
                     except KeyError:
                         route = None
                     # route = self.stop_schedule.data.routes.get(added_trip.trip.route_id)
-                    added_stop_time = AddedStopTime(stop_time, trip_id, route, self.stop_schedule.stop, destination)
-                    output.append(RealStopTime(added_stop_time, None))
+                    if added_trip.vehicle_id:
+                        vehicle_id = added_trip.vehicle_id
+                        vehicle = self.vehicle_data.entities[vehicle_id]
+                    else:
+                        vehicle = None
+                    added_stop_time = AddedStopTime(stop_time, trip_id, route, self.stop_schedule.stop, destination, vehicle)
+                    output.append(RealStopTime(added_stop_time, None, None))
 
         output.sort(key=lambda st: st.available_departure_time)
         return output
