@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import json
 from io import BytesIO
 from collections.abc import Callable, Awaitable
@@ -189,7 +190,7 @@ class Timetables(University, Luas, name="Timetables"):
     # async def on_ready(self):
     #     await asyncio.sleep(60)  # To let the other bots load before we freeze the machine for half a minute
 
-    async def load_data(self, *, force_redownload: bool = False):
+    async def load_data(self, *, force_redownload: bool = False, force_reload: bool = False):
         """ Load the GTFS-R and static GTFS data only when needed """
         try:
             self.loader_error = None  # Reset any previous error encountered
@@ -199,13 +200,15 @@ class Timetables(University, Luas, name="Timetables"):
                 # self.real_time_data = timetables.load_gtfs_r_data(data)
                 # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
                 await self.load_real_time_data(debug=True, write=True)
-            if self.static_data is None:
+            if force_redownload or force_reload or self.static_data is None:
                 try:
                     if force_redownload:
                         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Received force download call, re-downloading static GTFS data")
                         await self.download_new_static_gtfs()
                     else:
                         try:
+                            if force_reload:
+                                await self.reload_static_gtfs()
                             self.static_data = timetables.init_gtfs_data()
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
                         except RuntimeError as e:
@@ -229,8 +232,9 @@ class Timetables(University, Luas, name="Timetables"):
             self.loader_error = e
             self.initialised = False
             raise e from None
-        finally:
-            self.updating = False
+        # This can't be called yet, as we can only be sure the data is finished updating after the function returns
+        # finally:
+        #     self.updating = False
 
     async def download_new_static_gtfs(self):
         """ Download new static GTFS data and extract them, overwriting the existing data, then refresh loaded data """
@@ -249,19 +253,26 @@ class Timetables(University, Luas, name="Timetables"):
         # with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
         #     file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
         # Update the loaded data
-        timetables.read_and_store_gtfs_data()
+        # timetables.read_and_store_gtfs_data()
+        result = asyncio.get_running_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
         self.static_data = timetables.init_gtfs_data()
         # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
-        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
-        self.updating = False
+        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it. Function output: {result=}")
+        # self.updating = False
 
-    async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False) -> discord.Message:
+    async def reload_static_gtfs(self):
+        self.updating = True
+        result = asyncio.get_running_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
+        self.static_data = timetables.init_gtfs_data()
+        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Reloaded static GTFS data. Function output: {result=}")
+
+    async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False, force_reload: bool = False) -> discord.Message:
         """ Initialise the data before letting the actual command execute """
         # If self.updating is True, then the data is already being loaded
         # If force_redownload is True, then we need to reload regardless of the status
-        if (not self.initialised and not self.updating) or force_redownload:
+        if force_redownload or force_reload or (not self.initialised and not self.updating):
             message = await ctx.send(f"{emotes.Loading} The GTFS data has not been initialised yet. This may take a few minutes...")
-            await self.load_data(force_redownload=force_redownload)
+            await self.load_data(force_redownload=force_redownload, force_reload=force_reload)
         elif self.updating:
             message = await ctx.send(f"{emotes.Loading} The GTFS data used by this bot is currently being updated and is therefore unavailable. This may take a few minutes...")
         else:
@@ -275,21 +286,37 @@ class Timetables(University, Luas, name="Timetables"):
 
         return message
 
-    @commands.command(name="placeholder")
+    @commands.group(name="placeholder", invoke_without_command=True, case_insensitive=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.is_owner()
     async def placeholder(self, ctx: commands.Context, action: str = None, force_redownload: str = None):
         """ Placeholder """
-        if action == "write":
-            if force_redownload == "force-redownload":
-                debug = False
-            else:
-                debug = self._DEBUG
-            await self.get_real_time_data(debug=debug, write=True)
-        elif action == "load":
-            message = await self.wait_for_initialisation(ctx, force_redownload=force_redownload == "force-redownload")
-            return await message.edit(content=f"{print_current_time()} > Data has been loaded")
-        return await ctx.send("Placeholder")
+        if ctx.invoked_subcommand is None:
+            if action == "write":
+                if force_redownload == "force-redownload":
+                    debug = False
+                else:
+                    debug = self._DEBUG
+                await self.get_real_time_data(debug=debug, write=True)
+            return await ctx.send("Placeholder")
+
+    @placeholder.command(name="load")
+    async def load_gtfs(self, ctx: commands.Context):
+        """ Load GTFS data """
+        message = await self.wait_for_initialisation(ctx)
+        return await message.edit(content=f"{print_current_time()} > Data has been loaded")
+
+    @placeholder.command(name="reload")
+    async def reload_gtfs(self, ctx: commands.Context):
+        """ Reload static GTFS data without downloading updates from the server """
+        message = await self.wait_for_initialisation(ctx, force_redownload=False, force_reload=True)
+        return await message.edit(content=f"{print_current_time()} > Data has been reloaded")
+
+    @placeholder.command(name="redownload")
+    async def redownload_gtfs(self, ctx: commands.Context):
+        """ Download new static GTFS data and reload it """
+        message = await self.wait_for_initialisation(ctx, force_redownload=True)
+        return await message.edit(content=f"{print_current_time()} > Data has been re-downloaded")
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """

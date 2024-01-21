@@ -72,3 +72,8 @@
 - Fixed real-time GTFS data crashing when the hour is 24 or higher
 - Fixed ADDED trips crashing the feed if they have an arrival time but no departure time
 - Fixed various other issues, although most of them were caused by this rewrite to begin with
+
+## v0.3.0a2 - 21 January 2024
+- Changed agencies, calendars, and calendar exceptions to use string IDs for consistency (and to not have to cast ints to strs and vice versa)
+- Stop times are now stored in the database individually
+- Stopped reloading of GTFS data from blocking the rest of the bots' activity by putting it in a separate thread
