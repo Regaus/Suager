@@ -188,6 +188,9 @@ def distance_between_places(lat1: float, long1: float, lat2: float, long2: float
 
      The formula used here assumes the planet is a perfect sphere, and as such can result in errors of up to 0.5%,
      however I don't think this is a particularly big deal at the moment. """
+    # TODO: Consider updating the formula used here to a more accurate one (or put it as an optional separate function)
+    # https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude/43211266#43211266
+    # https://en.wikipedia.org/wiki/Vincenty%27s_formulae
     radii = {
         "Earth": 6378.137,
 
