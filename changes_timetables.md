@@ -84,3 +84,8 @@
 - Made it possible to load data from the Vehicles API endpoint
 - Made it possible to get the straight-line distance between a vehicle and the current stop (if available)
 - Fixed the loader getting stuck in an infinite loop if the static GTFS data was not being reloaded
+
+## v0.3.0a4 - 22-23 January 2024
+- Static Trips can now be looked up by Route ID
+- Fixed the code breaking when an ADDED trip has no trip information (how is this even possible?)
+- Fixed the code crashing when the vehicles data is not available (due to an API ratelimit or otherwise)

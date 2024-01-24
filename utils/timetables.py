@@ -586,7 +586,7 @@ class RealStopTime:
                     self.departure_time = self.scheduled_departure_time
                 # Find the vehicle
                 vehicle_id = self.real_trip.vehicle_id
-                if vehicle_id is not None:
+                if vehicle_id is not None and vehicles is not None:
                     self.vehicle_id = vehicle_id
                     self.vehicle = vehicles.entities.get(vehicle_id)  # In case there somehow doesn't exist a value
                 else:
@@ -854,7 +854,7 @@ def read_and_store_gtfs_data(self=None):
     #     store.append(("stop_times.txt", row.stop_id, row.Index, 1, row.trip_id))
 
     for row in iterate_over_csv_full("trips.txt"):
-        store.append(("trips.txt", row.trip_id, row.Index, 1, None))
+        store.append(("trips.txt", row.trip_id, row.Index, 1, row.route_id))
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved trips")
 
@@ -1101,7 +1101,7 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
             output[trip.trip.trip_id] = trip
 
         # Check ADDED trips, as they may include our stop
-        if trip.trip.schedule_relationship == "ADDED":
+        if trip.trip.schedule_relationship == "ADDED" and trip.stop_times is not None:
             for stop_time_update in trip.stop_times:
                 if stop_time_update.stop_id == stop_id:
                     added[entity.id] = trip
