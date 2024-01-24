@@ -376,6 +376,7 @@ async def birthdays(bot: bot_data.Bot):
 
 ka_places = {
     "Regaazdall": {
+        "Fanfe Kade":           {"data": "", "weight": 30},  # -03
         "Jostungar":            {"data": "", "weight": 30},  # -03
         "Lehtingar":            {"data": "", "weight": 30},  # -03
         "Leksinsalte":          {"data": "", "weight": 30},  # -03
@@ -408,6 +409,7 @@ ka_places = {
         "Menenvallus":          {"data": "", "weight": 30},  # -07
         "Bakkangar":            {"data": "", "weight": 30},  # -06
         "Mel's Twin Mountains": {"data": "", "weight": 35},  # -06
+        "Akuseru":              {"data": "", "weight": 35},  # -05
         "Chakkangar":           {"data": "", "weight": 35},  # -05
         "Kamikawa":             {"data": "", "weight": 35},  # -05
         "Kiomigar":             {"data": "", "weight": 35},  # -05

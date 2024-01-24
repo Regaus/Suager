@@ -780,3 +780,6 @@
 
 ## v1.9.3.3 - 21 January 2024
 - Separated the distance calculations into a separate function so that it can be used by the Timetables bot
+
+## v1.9.3.4 - 24 January 2024
+- Added Akuseru and Fanfe Kade to the places list for ka-time
