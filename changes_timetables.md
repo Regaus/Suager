@@ -89,3 +89,10 @@
 - Static Trips can now be looked up by Route ID
 - Fixed the code breaking when an ADDED trip has no trip information (how is this even possible?)
 - Fixed the code crashing when the vehicles data is not available (due to an API ratelimit or otherwise)
+
+## v0.3.0a5 - 24 January 2024
+- Locked the `i.tfi` command to be owner-only until it is ready for production
+- Added a command to toggle debug mode
+- Fixed the code crashing when a trip is loaded into memory, but the specific StopTime for a stop is not available
+- Fixed `i.tfi search stop` breaking if no stop was found for the query
+- Added a hint that you can use both stop code and stop name together to search for a stop or route

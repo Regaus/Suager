@@ -316,7 +316,7 @@ class Timetables(University, Luas, name="Timetables"):
         return message
 
     @commands.group(name="placeholder", invoke_without_command=True, case_insensitive=True)
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.is_owner()
     async def placeholder(self, ctx: commands.Context, action: str = None, force_redownload: str = None):
         """ Placeholder """
@@ -328,6 +328,12 @@ class Timetables(University, Luas, name="Timetables"):
                     debug = self._DEBUG
                 await self.get_real_time_data(debug=debug, write=True)
             return await ctx.send("Placeholder")
+
+    @placeholder.command(name="debug", aliases=["toggledebug"])
+    async def toggle_debug_mode(self, ctx: commands.Context):
+        """ Toggle Debug Mode """
+        self._DEBUG ^= True
+        return await ctx.send(f"{self._DEBUG=}")
 
     @placeholder.command(name="load")
     async def load_gtfs(self, ctx: commands.Context):
@@ -377,6 +383,7 @@ class Timetables(University, Luas, name="Timetables"):
         # return output
 
     @commands.group(name="tfi")
+    @commands.is_owner()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def tfi(self, ctx: commands.Context):
         """ Base command for TFI-related things """
@@ -401,7 +408,8 @@ class Timetables(University, Luas, name="Timetables"):
             else:
                 output.append(f"`{stop.id}` - {stop.name}")
         output_content = ("Here are the stops found for your query:\n\n" + "\n".join(output) +
-                          "\n\n*Note that if more than one stop is found for your search, then the schedule and real-time commands will need a more precise query to function.*")
+                          "\n\n*Note that if more than one stop is found for your search, then the schedule and real-time commands will need a more precise query to function.*\n"
+                          "*You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`. However, the words have to match the beginning of the stop's name.*")
         return await message.edit(content=output_content)
 
     @tfi_search.command(name="route")
@@ -419,7 +427,9 @@ class Timetables(University, Luas, name="Timetables"):
         for route in routes:
             output.append(f"`{route.id}` (Route {route.short_name}) - {route.long_name} ({route_types[route.route_type]})")
         output_content = ("Here are the routes found for your query:\n\n" + "\n".join(output) +
-                          "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*")
+                          "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*\n"
+                          "*You can use both the route number and route destinations in your query, e.g. `155 Bray` or `4 Monkstown`. "
+                          "However, the words have to match the beginning of the route's description (i.e. if it says \"Bray - IKEA Ballymun\", you cannot use `155 IKEA`).*")
         return await message.edit(content=output_content)
 
     @tfi.group(name="data", aliases=["schedule", "info", "rtpi"])
@@ -434,9 +444,11 @@ class Timetables(University, Luas, name="Timetables"):
         message = await self.wait_for_initialisation(ctx)
         language = ctx.language2("en")
         stops = self.find_stop(stop_query)
-        if len(stops) > 1:
-            return await message.edit(content=f"More than one stop was found for your search query ({stop_query}).\n"
-                                              f"Use `{ctx.prefix}tfi search stop` to find the specific stop ID or provide a more specific query.")
+        if len(stops) != 1:
+            start = "No stops were found" if len(stops) < 1 else "More than one stop was found"
+            return await message.edit(content=f"{start} for your search query ({stop_query}).\n"
+                                              f"Use `{ctx.prefix}tfi search stop` to find the specific stop code or provide a more specific query.\n"
+                                              "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=True)
         schedule = timetables.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data, self.vehicle_data)

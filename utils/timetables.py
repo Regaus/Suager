@@ -969,11 +969,12 @@ class StopSchedule:
 
         # Load stop times from trips that were already loaded into memory
         schedule_ids_inter = trip_ids_full.intersection(self.data.stop_times.keys())
+        schedule_ids_copy = schedule_ids_inter.copy()
         for key in schedule_ids_inter:  # key1 = trip_id, key2 = stop_id
             if stop_id in self.data.stop_times[key]:
                 self.stop_times[key] = self.data.stop_times[key][stop_id]
             else:
-                schedule_ids_inter.remove(key)
+                schedule_ids_copy.remove(key)  # False positive: Trip ID exists in memory but this stop's StopTime is not loaded
         # schedule_ids_inter = trip_ids_full.intersection(self.data.schedules.keys())
         # for key in schedule_ids_inter:
         #     schedule = self.data.schedules[key]
@@ -983,9 +984,9 @@ class StopSchedule:
         #                 self.stop_times[stop_time.trip_id] = stop_time
 
         # Add stop times from trips that are not yet loaded in memory
-        schedule_ids = trip_ids_full.difference(schedule_ids_inter)
+        schedule_ids = trip_ids_full.difference(schedule_ids_copy)
         if schedule_ids:
-            lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key = trip_id
+            lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key is trip_id
             skipped = set(range(1, max(lines))).difference(lines)
             # rows = set()
             for row in iterate_over_csv_partial("stop_times.txt", skipped):
@@ -1093,6 +1094,8 @@ class StopSchedule:
 
 
 def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: str) -> tuple[dict[str, TripUpdate], dict[str, TripUpdate]]:
+    if real_time_data is None:
+        return {}, {}
     output = {}
     added = {}
     for entity in real_time_data.entities:
