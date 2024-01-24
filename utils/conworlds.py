@@ -1,4 +1,5 @@
 import random
+from math import atan2, cos, radians as rad, sin, sqrt
 from os import listdir
 from os.path import isfile, join
 
@@ -180,3 +181,32 @@ async def generate_citizen_embed(ctx, citizen_language: str) -> discord.Embed:
     residence = conworlds.Place(citizen["residence"])
     embed.add_field(name="Place of Residence", value=f"{residence.name_translation(language)}, {residence.state}", inline=True)
     return embed
+
+
+def distance_between_places(lat1: float, long1: float, lat2: float, long2: float, planet: str = "Kargadia") -> float:
+    """ Return the distance between two coordinates on the given planet, in kilometres.
+
+     The formula used here assumes the planet is a perfect sphere, and as such can result in errors of up to 0.5%,
+     however I don't think this is a particularly big deal at the moment. """
+    # TODO: Consider updating the formula used here to a more accurate one (or put it as an optional separate function)
+    # https://stackoverflow.com/questions/19412462/getting-distance-between-two-points-based-on-latitude-longitude/43211266#43211266
+    # https://en.wikipedia.org/wiki/Vincenty%27s_formulae
+    radii = {
+        "Earth": 6378.137,
+
+        "Virkada": 5224.22,
+        "Zeivela": 7008.10,
+        "Kargadia": 7326.65,
+        "Qevenerus": 14016.20,
+    }
+    try:
+        radius = radii[planet]
+    except KeyError:
+        raise ValueError(f"{planet!r} is not a valid planet.") from None
+
+    la1, la2 = rad(lat1), rad(lat2)  # Latitudes expressed in radians
+    dla, dlo = rad(lat2 - lat1), rad(long2 - long1)  # Delta of latitudes, delta of longitudes expressed in radians
+    a = sin(dla / 2) ** 2 + cos(la1) * cos(la2) * (sin(dlo / 2) ** 2)
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = radius * c  # km
+    return distance

@@ -62,3 +62,37 @@
 - Improved the code for choosing a status
 - Turned version and countdown statuses into custom status
 - Added some new statuses
+
+## v0.2.5 - 8 January 2024
+- Added `i.dcu` and `i.luas` into the Timetables cog from Suager and CobbleBot respectively
+
+## v0.3.0a1 - 13-15 January 2024
+- The location of GTFS data is now stored in a database and only loaded into memory on demand
+- GTFS dataclasses now don't reference each other, instead only providing the ID and a method to load the actual instance if needed
+- Fixed real-time GTFS data crashing when the hour is 24 or higher
+- Fixed ADDED trips crashing the feed if they have an arrival time but no departure time
+- Fixed various other issues, although most of them were caused by this rewrite to begin with
+
+## v0.3.0a2 - 21 January 2024
+- Changed agencies, calendars, and calendar exceptions to use string IDs for consistency (and to not have to cast ints to strs and vice versa)
+- Stop times are now stored in the database individually
+- Greatly optimised the loading of StopSchedule
+- Stopped reloading of GTFS data from blocking the rest of the bots' activity by putting it in a separate thread
+
+## v0.3.0a3 - 21 January 2024
+- Improved the "placeholder" debug/control command 
+- Made it possible to load data from the Vehicles API endpoint
+- Made it possible to get the straight-line distance between a vehicle and the current stop (if available)
+- Fixed the loader getting stuck in an infinite loop if the static GTFS data was not being reloaded
+
+## v0.3.0a4 - 22-23 January 2024
+- Static Trips can now be looked up by Route ID
+- Fixed the code breaking when an ADDED trip has no trip information (how is this even possible?)
+- Fixed the code crashing when the vehicles data is not available (due to an API ratelimit or otherwise)
+
+## v0.3.0a5 - 24 January 2024
+- Locked the `i.tfi` command to be owner-only until it is ready for production
+- Added a command to toggle debug mode
+- Fixed the code crashing when a trip is loaded into memory, but the specific StopTime for a stop is not available
+- Fixed `i.tfi search stop` breaking if no stop was found for the query
+- Added a hint that you can use both stop code and stop name together to search for a stop or route

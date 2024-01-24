@@ -14,7 +14,8 @@ load = {
         "kuastall",
         "placeholder",
         "settings",
-        "util"
+        "util",
+        "timetables"
     ],
     "kyomi": [
         "admin",
@@ -63,6 +64,7 @@ load = {
         "starboard",
         "tags",
         "util",
+        "timetables"
     ]
 }
 

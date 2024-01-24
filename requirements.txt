@@ -15,4 +15,4 @@ markovify
 scipy
 numpy
 icalendar
-# cherrypy
+pandas
