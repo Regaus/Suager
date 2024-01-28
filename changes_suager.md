@@ -1749,3 +1749,6 @@
 
 ## v7.7.10.6 - 8 January 2024
 - Added `executemany()` and `executescript()` to the database
+
+## v7.7.10.7 - 28 January 2024
+- Added a warning that `//poll` and `//trial` will be disabled on 1 March 2024

@@ -20,6 +20,7 @@ class Polls(commands.Cog):
         Duration: s = seconds, m = minutes, h = hours, d = days, w = weeks
         Example: 2d12h = 2 days and 12 hours | 15m = 15 minutes
         Recommended duration: 1-6 hours | Limit: 1 week"""
+        await ctx.send("Warning: This command will be disabled on 1 March 2024!")
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
             delta = time.interpret_time(duration)
@@ -233,6 +234,7 @@ class Polls(commands.Cog):
         //trial 30m mute @user 1h Spamming
 
         You can only start a new trial once every 5 minutes."""
+        await ctx.send("Warning: This command will be disabled on 1 March 2024!")
         if ctx.invoked_subcommand is None:
             language = self.bot.language(ctx)
 
