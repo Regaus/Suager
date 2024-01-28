@@ -96,3 +96,8 @@
 - Fixed the code crashing when a trip is loaded into memory, but the specific StopTime for a stop is not available
 - Fixed `i.tfi search stop` breaking if no stop was found for the query
 - Added a hint that you can use both stop code and stop name together to search for a stop or route
+
+## v0.3.0a6 - 28 January 2024
+- All timetable-related functions now load the database themselves
+- Removed Route ID from the "search key" for routes
+- Made the process of loading the schedule asynchronous so the rest of the bots don't freeze

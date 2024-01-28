@@ -13,21 +13,21 @@ from utils import database
 from utils.errors import GTFSAPIError
 
 
-def get_database() -> database.Database:
-    return database.Database("gtfs/static.db")
-
-
 real_time_filename = "data/gtfs/real_time.json"
 vehicles_filename = "data/gtfs/vehicles.json"
 # static_filename = "data/gtfs/static.pickle"
-db = get_database()
+# db = get_database()
 # db = database.Database("gtfs/static.db")
 TIMEZONE = pytz.timezone("Europe/Dublin")
 CHUNK_SIZE = 256
 
 
+def get_database() -> database.Database:
+    return database.Database("gtfs/static.db")
+
+
 # These classes handle the GTFS-R Real time information
-def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFSRData, VehicleData]:
+def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFSRData | None, VehicleData | None]:
     try:
         return GTFSRData.load(data), VehicleData.load(vehicle_data)
     except Exception as e:
@@ -308,7 +308,7 @@ class Route:
     route_text_colour: str
 
     def agency(self, data: GTFSData) -> Agency:
-        return load_value_from_id(data, "agency.txt", str(self.agency_id))
+        return load_value_from_id(data, "agency.txt", str(self.agency_id), None)
 
     # @property
     # def agency(self) -> Agency:
@@ -365,14 +365,14 @@ class Trip:
     shape_id: str      # ID of geospatial shape (not really useful for my case)
 
     def route(self, data: GTFSData) -> Route:
-        return load_value_from_id(data, "routes.txt", self.route_id)
+        return load_value_from_id(data, "routes.txt", self.route_id, None)
 
     # @property
     # def route(self) -> Route:
     #     return load_value_from_id(None, "routes.txt", self.route_id)
 
     def calendar(self, data: GTFSData) -> Calendar:
-        return load_value_from_id(data, "calendar.txt", str(self.calendar_id))
+        return load_value_from_id(data, "calendar.txt", str(self.calendar_id), None)
 
     # @property
     # def calendar(self) -> Calendar:
@@ -405,7 +405,7 @@ class StopTime:
     timepoint: int      # 0 -> Times are approximate, 1 or empty -> Time are exact (this is factually incorrect)
 
     def trip(self, data: GTFSData) -> Trip:
-        return load_value_from_id(data, "trips.txt", self.trip_id)
+        return load_value_from_id(data, "trips.txt", self.trip_id, None)
 
     def route(self, data: GTFSData) -> Route:
         return self.trip(data).route(data)
@@ -415,7 +415,7 @@ class StopTime:
     #     return load_value_from_id(None, "trips.txt", self.trip_id)
 
     def stop(self, data: GTFSData) -> Stop:
-        return load_value_from_id(data, "stops.txt", self.stop_id)
+        return load_value_from_id(data, "stops.txt", self.stop_id, None)
 
     # @property
     # def stop(self) -> Stop:
@@ -463,7 +463,7 @@ class SpecificStopTime:
         self.departure_time = _date + time.timedelta(seconds=self.raw_departure_time)
 
     def trip(self, data: GTFSData) -> Trip:
-        return load_value_from_id(data, "trips.txt", self.trip_id)
+        return load_value_from_id(data, "trips.txt", self.trip_id, None)
 
     def route(self, data: GTFSData) -> Route:
         return self.trip(data).route(data)
@@ -620,7 +620,7 @@ class RealStopTime:
 
     def trip(self, data: GTFSData) -> Optional[Trip]:
         try:
-            return load_value_from_id(data, "trips.txt", self.trip_id)
+            return load_value_from_id(data, "trips.txt", self.trip_id, None)
         except KeyError:
             return None
 
@@ -639,7 +639,7 @@ class RealStopTime:
 
     def stop(self, data: GTFSData) -> Optional[Stop]:
         try:
-            return load_value_from_id(data, "stops.txt", self.stop_id)
+            return load_value_from_id(data, "stops.txt", self.stop_id, None)
         except KeyError:
             return None
 
@@ -710,7 +710,7 @@ def load_csv_lines(filename: str, start_line: int, length: int) -> list[tuple[An
     return list(pandas.read_csv("assets/gtfs/" + filename, skiprows=start_line + 1, nrows=length, header=None, na_filter=False).itertuples(index=False, name=None))
 
 
-def check_gtfs_data_expiry():
+def check_gtfs_data_expiry(db: database.Database):
     """ Check for GTFS data expiry """
     expiry = db.fetchrow("SELECT * FROM expiry")
     if expiry is None:
@@ -762,21 +762,21 @@ def iterate_over_csv_multiline(filename: str, key: str) -> Generator[tuple[str, 
     yield tuple(data)  # type: ignore  # Save the last piece of information
 
 
-def store_trips_per_stop():
-    """ Store what trips are hit at a particular stop ID """
-    schedules: dict[str, list[str]] = {}
-    for row in iterate_over_csv_full("stop_times.txt"):
-        stop_id = row.stop_id
-        trip_id = row.trip_id
-        if stop_id not in schedules:
-            schedules[stop_id] = [trip_id]
-        else:
-            schedules[stop_id].append(trip_id)
-
-    statements = []
-    for stop_id, trips in schedules.items():
-        statements.append(f"INSERT INTO schedules VALUES ({stop_id!r}, \"{" ".join(trips)}\");")
-    db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
+#  def store_trips_per_stop(db: database.Database):
+#     """ Store what trips are hit at a particular stop ID """
+#     schedules: dict[str, list[str]] = {}
+#     for row in iterate_over_csv_full("stop_times.txt"):
+#         stop_id = row.stop_id
+#         trip_id = row.trip_id
+#         if stop_id not in schedules:
+#             schedules[stop_id] = [trip_id]
+#         else:
+#             schedules[stop_id].append(trip_id)
+#
+#     statements = []
+#     for stop_id, trips in schedules.items():
+#         statements.append(f"INSERT INTO schedules VALUES ({stop_id!r}, \"{" ".join(trips)}\");")
+#     db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
 
 
 def read_and_store_gtfs_data(self=None):
@@ -785,12 +785,12 @@ def read_and_store_gtfs_data(self=None):
      This uses its own SQL database instance because it's intended to be run in a different thread """
     if hasattr(self, "updating"):
         self.updating = True
-    _db = get_database()
+    db = get_database()
     # Start by deleting previous data
     # noinspection SqlWithoutWhere
-    _db.execute("DELETE FROM data")
+    db.execute("DELETE FROM data")
     # noinspection SqlWithoutWhere
-    _db.execute("DELETE FROM schedules")
+    db.execute("DELETE FROM schedules")
 
     def save_to_sql():
         nonlocal store
@@ -799,7 +799,7 @@ def read_and_store_gtfs_data(self=None):
             search_key = repr(values[4]) if values[4] is not None else "NULL"
             statements.append(f"INSERT INTO data VALUES ({values[0]!r}, {values[1]!r}, {values[2]}, {values[3]}, {search_key});")
         # noinspection SqlCommit
-        _db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
+        db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
         # db.executemany(statement, store)
         store = []
 
@@ -827,7 +827,8 @@ def read_and_store_gtfs_data(self=None):
     print(f"{now()} > Static GTFS Loader > Saved calendar exceptions")
 
     for row in iterate_over_csv_full("routes.txt"):
-        store.append(("routes.txt", row.route_id, row.Index, 1, f"{row.route_id} {row.route_short_name} {row.route_long_name}"))
+        # All routes have a "short name", so this shouldn't need to be updated unless they add a route without a name
+        store.append(("routes.txt", row.route_id, row.Index, 1, f"{row.route_short_name} {row.route_long_name}"))  # f"{row.route_id} {row.route_short_name} {row.route_long_name}"
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved routes")
 
@@ -858,27 +859,29 @@ def read_and_store_gtfs_data(self=None):
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved trips")
 
-    # store_trips_per_stop()
+    # store_trips_per_stop(db)
     # print(f"{now()} > Static GTFS Loader > Saved stop-to-trip correlations")
 
     # Delete old expiry and set the new one
     # noinspection SqlWithoutWhere
-    _db.execute("DELETE FROM expiry")
-    _db.execute("INSERT INTO expiry VALUES (?)", ((time.date.today().replace(day=1) + time.relativedelta(months=1)).to_datetime(),))
+    db.execute("DELETE FROM expiry")
+    db.execute("INSERT INTO expiry VALUES (?)", ((time.date.today().replace(day=1) + time.relativedelta(months=1)).to_datetime(),))
     print(f"{now()} > Static GTFS Loader > Saved expiry data")
 
     if hasattr(self, "updating"):
         self.updating = False
 
 
-def init_gtfs_data(*, ignore_expiry: bool = False) -> GTFSData:
+def init_gtfs_data(*, ignore_expiry: bool = False, db: database.Database = None) -> GTFSData:
     """ Initialise GTFS Data and check for expiry """
     if not ignore_expiry:
-        check_gtfs_data_expiry()
+        if db is None:
+            db = get_database()
+        check_gtfs_data_expiry(db)
     return GTFSData({}, {}, {}, {}, {}, {}, {})
 
 
-def load_value_from_id(data: GTFSData | None, filename: str, _id: str) -> Optional[Any]:
+def load_value_from_id(data: GTFSData | None, filename: str, _id: str, db: database.Database | None) -> Optional[Any]:
     """ Load a value from the static GTFS data by ID """
     # Return None if no ID is provided
     if not _id:
@@ -892,6 +895,8 @@ def load_value_from_id(data: GTFSData | None, filename: str, _id: str) -> Option
         # print(filename, "Value", _id, "not loaded")
     # Attempt 2: Load from files
     try:
+        if db is None:
+            db = get_database()
         sql_data = db.fetchrow("SELECT * FROM data WHERE filename=? AND id=?", (filename, _id))
         if not sql_data:
             raise KeyError
@@ -908,8 +913,10 @@ def load_value_from_id(data: GTFSData | None, filename: str, _id: str) -> Option
         raise KeyError(f"Could not find any data from {filename} with ID {_id}") from None
 
 
-def load_values_from_key(data: GTFSData | None, filename: str, search_key: str) -> list[Any]:
+def load_values_from_key(data: GTFSData | None, filename: str, search_key: str, db: database.Database | None) -> list[Any]:
     """ Load values from the static GTFS data by search key """
+    if db is None:
+        db = get_database()
     # Convert into SQL's search pattern
     _search = "%" + search_key.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
     # Search the database for any data that is similar to the query
@@ -940,8 +947,9 @@ def load_values_from_key(data: GTFSData | None, filename: str, search_key: str) 
 class StopSchedule:
     """ Get the stop's schedule """
     def __init__(self, data: GTFSData, stop_id: str):
+        self.db = get_database()
         self.data = data
-        self.stop = load_value_from_id(data, "stops.txt", stop_id)
+        self.stop = load_value_from_id(data, "stops.txt", stop_id, self.db)
         self.stop_id = self.stop.id
         # self.stop = self.data.stops[stop_id]
         # self.all_stop_times = []
@@ -952,7 +960,7 @@ class StopSchedule:
         # Load all schedules (trips) that will pass through this stop
         # sql_data = db.fetchrow("SELECT * FROM schedules WHERE stop_id=?", (self.stop_id,))
         # trip_ids_full = set(sql_data["trip_ids"].split(" "))
-        sql_data = db.fetch("SELECT * FROM data WHERE filename=? AND id=?", ("stop_times.txt", stop_id))
+        sql_data = self.db.fetch("SELECT * FROM data WHERE filename=? AND id=?", ("stop_times.txt", stop_id))
         trip_ids_full = set(entry["search_key"] for entry in sql_data)
         trip_ids_inter = trip_ids_full.intersection(self.data.trips.keys())
         for key in trip_ids_inter:
@@ -1043,6 +1051,7 @@ class StopSchedule:
 
     def relevant_stop_times_one_day(self, date: time.date) -> list[SpecificStopTime]:
         """ Get the stop times for one day """
+        db = get_database()  # This may get called in a separate thread than the one where the schedule was created
         output = []
         weekday = date.weekday
         # for stop_time in self.all_stop_times:
@@ -1053,7 +1062,7 @@ class StopSchedule:
 
             # Check if the calendar has exceptions for today
             try:
-                calendar_exceptions = load_value_from_id(self.data, "calendar_dates.txt", calendar.service_id)
+                calendar_exceptions = load_value_from_id(self.data, "calendar_dates.txt", calendar.service_id, db)
                 exception = calendar_exceptions.get(date)
                 if exception is not None:
                     valid = exception.exception
@@ -1113,17 +1122,35 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
 
 # Stuff for real-time schedules
 class RealTimeStopSchedule:
-    def __init__(self, data: GTFSData, stop_id: str, real_time_data: GTFSRData, vehicle_data: VehicleData):
-        self.data = data
-        self.stop_schedule = StopSchedule(data, stop_id)
+    def __init__(self, data: GTFSData | None, stop_id: str | None, real_time_data: GTFSRData, vehicle_data: VehicleData,
+                 existing_schedule: StopSchedule | None = None, stop_times: list[SpecificStopTime] | None = None):
+        self.db = get_database()
+        if existing_schedule is not None:
+            self.stop_schedule = existing_schedule
+            self.data = existing_schedule.data
+        else:
+            if data is None:
+                raise ValueError("data cannot be None if existing_schedule is not provided")
+            if stop_id is None:
+                raise ValueError("stop_id cannot be None if existing_schedule is not provided")
+            self.data = data
+            self.stop_schedule = StopSchedule(data, stop_id)
         self.stop = self.stop_schedule.stop
-        self.stop_id = self.stop_schedule.stop.id
-        self.stop_times = self.stop_schedule.relevant_stop_times(time.date.today())
+        self.stop_id = self.stop_schedule.stop_id
+        if stop_times is not None:
+            self.stop_times = stop_times
+        else:
+            self.stop_times = self.stop_schedule.relevant_stop_times(time.date.today())
         self.trip_ids = {stop_time.trip_id for stop_time in self.stop_times}  # Exclude duplicates
 
         self.real_trips, self.added_trips = real_trip_updates(real_time_data, self.trip_ids, self.stop_id)
 
         self.vehicle_data = vehicle_data
+
+    @classmethod
+    def from_existing_schedule(cls, existing_schedule: StopSchedule, real_time_data: GTFSRData, vehicle_data: VehicleData, stop_times: list[SpecificStopTime] | None = None):
+        """ Load a RealTimeStopSchedule from an existing StopSchedule, so that the operation need not be repeated """
+        return cls(None, None, real_time_data, vehicle_data, existing_schedule, stop_times)
 
     def real_stop_times(self):
         output = []
@@ -1134,7 +1161,7 @@ class RealTimeStopSchedule:
             for stop_time in added_trip.stop_times:
                 if stop_time.stop_id == self.stop_id:
                     try:
-                        last_stop = load_value_from_id(self.data, "stops.txt", added_trip.stop_times[-1].stop_id)
+                        last_stop = load_value_from_id(self.data, "stops.txt", added_trip.stop_times[-1].stop_id, self.db)
                         destination = last_stop.name
                     except KeyError:
                         # last_stop = None
@@ -1145,7 +1172,7 @@ class RealTimeStopSchedule:
                     # else:
                     #     destination = "Unknown"
                     try:
-                        route = load_value_from_id(self.data, "routes.txt", added_trip.trip.route_id)
+                        route = load_value_from_id(self.data, "routes.txt", added_trip.trip.route_id, self.db)
                     except KeyError:
                         route = None
                     # route = self.stop_schedule.data.routes.get(added_trip.trip.route_id)

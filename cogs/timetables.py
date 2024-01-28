@@ -148,7 +148,8 @@ class Luas(commands.Cog, name="Timetables"):
 class Timetables(University, Luas, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         super().__init__(bot)
-        self.db = timetables.db
+        # self.db = timetables.db
+        self.db = timetables.get_database()
         self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
@@ -163,6 +164,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.initialised = False
         self.updating = False
         self.loader_error: Exception | None = None
+        self.last_updated: time.datetime | None = None
 
     async def get_data_from_api(self, *, write: bool = True):
         data: bytes = await http.get(self.url, headers=self.headers, res_method="read")
@@ -180,9 +182,16 @@ class Timetables(University, Luas, name="Timetables"):
         return data
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
+        # Only refresh the data once in 30 seconds
+        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 30:
+            return self.real_time_data, self.vehicle_data
         data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
         try:
-            self.real_time_data, self.vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
+            new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
+            if new_real_time_data:
+                self.real_time_data = new_real_time_data
+            if new_vehicle_data:
+                self.vehicle_data = new_vehicle_data
         except GTFSAPIError as e:
             error_place = e.error_place
             # Load new data for the valid part, and leave the other one as-is
@@ -192,6 +201,7 @@ class Timetables(University, Luas, name="Timetables"):
                 self.real_time_data = timetables.load_gtfs_r_data(data, None)[0]
             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Real-Time API Error for {error_place}: {type(e).__name__}: {str(e)}")
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
+        self.last_updated = time.datetime.now()
         return self.real_time_data, self.vehicle_data  # just in case
 
     async def get_real_time_data(self, debug: bool = False, *, write: bool = True):
@@ -224,7 +234,8 @@ class Timetables(University, Luas, name="Timetables"):
                 # data = await self.get_real_time_data(debug=True, write=True)
                 # self.real_time_data = timetables.load_gtfs_r_data(data)
                 # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
-                await self.load_real_time_data(debug=True, write=True)
+                # await self.load_real_time_data(debug=True, write=True)
+                await self.load_real_time_data(debug=self._DEBUG, write=True)
             if force_redownload or force_reload or self.static_data is None:
                 try:
                     if force_redownload:
@@ -283,7 +294,7 @@ class Timetables(University, Luas, name="Timetables"):
         #     file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
         # Update the loaded data
         # timetables.read_and_store_gtfs_data()
-        asyncio.get_running_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
+        await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
         self.static_data = timetables.init_gtfs_data()
         # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
@@ -291,7 +302,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     async def reload_static_gtfs(self):
         self.updating = True
-        asyncio.get_running_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
+        await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
         self.static_data = timetables.init_gtfs_data()
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Reloaded static GTFS data")
 
@@ -361,7 +372,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
-        return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower())
+        return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower(), self.db)
         # output = []
         # query = query.lower()
         # for stop in self.static_data.stops.values():
@@ -373,7 +384,7 @@ class Timetables(University, Luas, name="Timetables"):
     def find_route(self, query: str) -> list[timetables.Route]:
         """ Find a specific route """
         # This might be a bit less effective at catching routes than the previous examples, but it's possible to do it on-database this way
-        return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower())
+        return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower(), self.db)
         # output = []
         # query = query.lower()
         # for route in self.static_data.routes.values():
@@ -451,7 +462,11 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=True)
-        schedule = timetables.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data, self.vehicle_data)
+        loop = asyncio.get_event_loop()
+        base_schedule: timetables.StopSchedule = await loop.run_in_executor(None, functools.partial(timetables.StopSchedule, self.static_data, stop.id))
+        stop_times: list[timetables.SpecificStopTime] = await loop.run_in_executor(None, functools.partial(base_schedule.relevant_stop_times, time.date.today()))
+        schedule = timetables.RealTimeStopSchedule.from_existing_schedule(base_schedule, self.real_time_data, self.vehicle_data, stop_times)
+        # schedule = timetables.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data, self.vehicle_data)
         real_stop_times = schedule.real_stop_times()
         lat1, long1 = stop.latitude, stop.longitude
 
