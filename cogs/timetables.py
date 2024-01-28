@@ -151,6 +151,7 @@ class Timetables(University, Luas, name="Timetables"):
         # self.db = timetables.db
         self.db = timetables.get_database()
         self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
+        self._WRITE = True   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
@@ -235,7 +236,7 @@ class Timetables(University, Luas, name="Timetables"):
                 # self.real_time_data = timetables.load_gtfs_r_data(data)
                 # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
                 # await self.load_real_time_data(debug=True, write=True)
-                await self.load_real_time_data(debug=self._DEBUG, write=True)
+                await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:
                     if force_redownload:
@@ -332,25 +333,39 @@ class Timetables(University, Luas, name="Timetables"):
 
         return message
 
-    @commands.group(name="placeholder", invoke_without_command=True, case_insensitive=True)
+    @commands.group(name="placeholder", case_insensitive=True)  # , invoke_without_command=True
     # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.is_owner()
-    async def placeholder(self, ctx: commands.Context, action: str = None, force_redownload: str = None):
+    async def placeholder(self, ctx: commands.Context):  # , action: str = None, force_redownload: str = None
         """ Placeholder """
         if ctx.invoked_subcommand is None:
-            if action == "write":
-                if force_redownload == "force-redownload":
-                    debug = False
-                else:
-                    debug = self._DEBUG
-                await self.get_real_time_data(debug=debug, write=True)
-            return await ctx.send("Placeholder")
+            return await ctx.send_help(ctx.command)
+            # if action == "write":
+            #     if force_redownload == "force-redownload":
+            #         debug = False
+            #     else:
+            #         debug = self._DEBUG
+            #     await self.get_real_time_data(debug=debug, write=self._WRITE)
+            # return await ctx.send("Placeholder")
 
     @placeholder.command(name="debug", aliases=["toggledebug"])
     async def toggle_debug_mode(self, ctx: commands.Context):
         """ Toggle Debug Mode """
         self._DEBUG ^= True
         return await ctx.send(f"{self._DEBUG=}")
+
+    @placeholder.command(name="write", aliases=["togglewrite"])
+    async def toggle_write_mode(self, ctx: commands.Context):
+        """ Toggle Write Mode """
+        self._WRITE ^= True
+        return await ctx.send(f"{self._WRITE=}")
+
+    @placeholder.command(name="refresh")
+    async def refresh_real_time_data(self, ctx: commands.Context, force_redownload: bool = False):
+        """ Refresh real-time GTFS data """
+        debug = False if force_redownload else self._DEBUG
+        await self.get_real_time_data(debug=debug, write=self._WRITE)
+        return await ctx.send(f"Refreshed real-time data. {debug=}")
 
     @placeholder.command(name="load")
     async def load_gtfs(self, ctx: commands.Context):
@@ -467,7 +482,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               f"Use `{ctx.prefix}tfi search stop` to find the specific stop code or provide a more specific query.\n"
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
-        await self.load_real_time_data(debug=self._DEBUG, write=True)
+        await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
         loop = asyncio.get_event_loop()
         base_schedule: timetables.StopSchedule = await loop.run_in_executor(None, functools.partial(timetables.StopSchedule, self.static_data, stop.id))
         stop_times: list[timetables.SpecificStopTime] = await loop.run_in_executor(None, functools.partial(base_schedule.relevant_stop_times, time.date.today()))

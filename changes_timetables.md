@@ -106,3 +106,8 @@
 - Removed the `self` parameter from `timetables.read_and_store_gtfs_data()`, as you can just use `await` instead
 - Optimised `self.download_new_static_data()` to simply call `self.reload_static_gtfs()` instead of repeating the code
 - Fixed `luas.api` failing to load because a dependency could not be loaded
+
+## v0.3.0a8 - 28 January 2024
+- Made it possible to toggle "write mode" for real-time data
+- Added a command to toggle write mode
+- Added a command to refresh the real-time data and removed that functionality from the base `i.placeholder` command
