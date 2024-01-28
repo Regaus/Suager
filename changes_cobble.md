@@ -783,3 +783,6 @@
 
 ## v1.9.3.4 - 24 January 2024
 - Added Akuseru and Fanfe Kade to the places list for ka-time
+
+## v1.9.3.5 - 28 January 2024
+- Fixed `luas.api` failing to load because a dependency could not be loaded

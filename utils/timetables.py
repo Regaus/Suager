@@ -779,12 +779,12 @@ def iterate_over_csv_multiline(filename: str, key: str) -> Generator[tuple[str, 
 #     db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
 
 
-def read_and_store_gtfs_data(self=None):
+def read_and_store_gtfs_data():  # self=None
     """ Read static GTFS data and store it into the database
 
      This uses its own SQL database instance because it's intended to be run in a different thread """
-    if hasattr(self, "updating"):
-        self.updating = True
+    # if hasattr(self, "updating"):
+    #     self.updating = True
     db = get_database()
     # Start by deleting previous data
     # noinspection SqlWithoutWhere
@@ -868,8 +868,8 @@ def read_and_store_gtfs_data(self=None):
     db.execute("INSERT INTO expiry VALUES (?)", ((time.date.today().replace(day=1) + time.relativedelta(months=1)).to_datetime(),))
     print(f"{now()} > Static GTFS Loader > Saved expiry data")
 
-    if hasattr(self, "updating"):
-        self.updating = False
+    # if hasattr(self, "updating"):
+    #     self.updating = False
 
 
 def init_gtfs_data(*, ignore_expiry: bool = False, db: database.Database = None) -> GTFSData:

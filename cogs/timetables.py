@@ -6,6 +6,7 @@ from collections.abc import Callable, Awaitable
 from zipfile import ZipFile, BadZipFile
 
 import discord
+import luas.api
 from aiohttp import ClientError
 from regaus import time
 
@@ -129,7 +130,6 @@ class Luas(commands.Cog, name="Timetables"):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
         """ Data for Luas """
-        import luas.api
         client = luas.api.LuasClient()
         _place = str(place).title() if len(str(place)) != 3 else str(place)
         data = client.stop_details(_place)
@@ -294,17 +294,23 @@ class Timetables(University, Luas, name="Timetables"):
         #     file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
         # Update the loaded data
         # timetables.read_and_store_gtfs_data()
-        await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
-        self.static_data = timetables.init_gtfs_data()
-        # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
-        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
+        # await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
+        # loop = asyncio.get_event_loop()
+        # await loop.run_in_executor(None, timetables.read_and_store_gtfs_data)
+        # self.static_data = timetables.init_gtfs_data()
+        # # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
+        # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
         # self.updating = False
+        await self.reload_static_gtfs(message="Downloaded new GTFS data and successfully loaded it")
 
-    async def reload_static_gtfs(self):
+    async def reload_static_gtfs(self, message: str = "Reloaded static GTFS data"):
         self.updating = True
-        await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
+        # await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, timetables.read_and_store_gtfs_data)
         self.static_data = timetables.init_gtfs_data()
-        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Reloaded static GTFS data")
+        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > {message}")
+        self.updating = False
 
     async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False, force_reload: bool = False) -> discord.Message:
         """ Initialise the data before letting the actual command execute """

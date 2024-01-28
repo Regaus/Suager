@@ -101,3 +101,8 @@
 - All timetable-related functions now load the database themselves
 - Removed Route ID from the "search key" for routes
 - Made the process of loading the schedule asynchronous so the rest of the bots don't freeze
+
+## v0.3.0a7 - 28 January 2024
+- Removed the `self` parameter from `timetables.read_and_store_gtfs_data()`, as you can just use `await` instead
+- Optimised `self.download_new_static_data()` to simply call `self.reload_static_gtfs()` instead of repeating the code
+- Fixed `luas.api` failing to load because a dependency could not be loaded
