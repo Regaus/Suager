@@ -504,6 +504,16 @@ class Timetables(University, Luas, name="Timetables"):
 
         output_data: list[list[str]] = [["Route", "Destination", "Schedule", "RealTime", "Distance"]]
         column_sizes = [5, 11, 8, 8, 8]  # Longest member of the column
+        extras = False
+
+        # def update_outputs():
+        #     """ Add an extra space at the end of the schedule and realtime entries if we have drop-off only or pickup only stops """
+        #     for data in output_data:
+        #         if data[2] != " ":
+        #             data[2] += " "
+        #         elif data[3] != " ":
+        #             data[3] += " "
+
         for stop_time in real_stop_times[start_idx:end_idx]:
             if stop_time.schedule_relationship == "CANCELED":
                 departure_time = "CANCELLED"
@@ -518,6 +528,21 @@ class Timetables(University, Luas, name="Timetables"):
                 scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
             else:
                 scheduled_departure_time = "--:--"  # "Unknown"
+
+            if stop_time.pickup_type == 1:
+                scheduled_departure_time = "D " + scheduled_departure_time
+                # scheduled_departure_time += "D"  # Drop-off Only
+                # if not extras:
+                #     update_outputs()
+                extras = True
+            elif stop_time.drop_off_type == 1:
+                scheduled_departure_time = "P " + scheduled_departure_time
+                # scheduled_departure_time += "P"  # Pick Up only
+                # if not extras:
+                #     update_outputs()
+                extras = True
+            # elif extras:
+            #     scheduled_departure_time += " "
 
             _route = stop_time.route(schedule.data)
             if _route is None:
@@ -561,9 +586,12 @@ class Timetables(University, Luas, name="Timetables"):
 
         stop_code = f"Code `{stop.code}`, " if stop.code else ""
         stop_id = f"ID `{stop.id}`"
+        additional_text = ""
+        if extras:
+            additional_text += "*D = Drop-off only; P = Pick-up only*\n"
         output = f"Real-Time data for the stop {stop.name} ({stop_code}{stop_id})\n" \
                  "*Please note that the distance shown is straight-line distance and as such may not be accurate*\n" \
-                 "```fix\n"
+                 f"{additional_text}```fix\n"
         for line in output_data:
             assert len(column_sizes) == len(line)
             line_data = []

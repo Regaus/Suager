@@ -111,3 +111,6 @@
 - Made it possible to toggle "write mode" for real-time data
 - Added a command to toggle write mode
 - Added a command to refresh the real-time data and removed that functionality from the base `i.placeholder` command
+
+## v0.3.0a9 - 30 January 2024
+- The stop schedule now shows when a stop is drop-off only or pick-up only
