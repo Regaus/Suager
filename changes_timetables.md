@@ -114,3 +114,6 @@
 
 ## v0.3.0a9 - 30 January 2024
 - The stop schedule now shows when a stop is drop-off only or pick-up only
+
+## v0.3.0 - 30 January 2024
+- Separated the real-time, static, and schedule code into separate files for better readability and navigability of code

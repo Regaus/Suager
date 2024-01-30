@@ -11,7 +11,6 @@ from aiohttp import ClientError
 from regaus import time
 
 from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, conworlds
-from utils.errors import GTFSAPIError
 from utils.time import time as print_current_time
 
 
@@ -193,7 +192,7 @@ class Timetables(University, Luas, name="Timetables"):
                 self.real_time_data = new_real_time_data
             if new_vehicle_data:
                 self.vehicle_data = new_vehicle_data
-        except GTFSAPIError as e:
+        except timetables.GTFSAPIError as e:
             error_place = e.error_place
             # Load new data for the valid part, and leave the other one as-is
             if error_place == "real-time":
