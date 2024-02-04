@@ -29,6 +29,7 @@ class SpecificStopTime:
         self.timepoint = stop_time.timepoint
         self.raw_arrival_time = stop_time.arrival_time
         self.raw_departure_time = stop_time.departure_time
+        self._destination: str | None = None
 
         self.date = date
         _date = time.datetime.combine(date, time.time(tz=TIMEZONE))
@@ -40,6 +41,14 @@ class SpecificStopTime:
 
     def route(self, data: GTFSData) -> Route:
         return self.trip(data).route(data)
+
+    def destination(self, data: GTFSData) -> str:
+        """ Get the destination of the StopTime """
+        if self._destination:
+            return self._destination
+        destination = self.trip(data).headsign
+        self._destination = destination
+        return destination
 
     def __repr__(self):
         # "SpecificStopTime - 2023-10-14 02:00:00 - Stop #1 for trip 3626_214"
@@ -91,7 +100,7 @@ class RealStopTime:
     schedule_relationship: str | None
     arrival_time: time.datetime | None
     departure_time: time.datetime | None
-    destination: str | None
+    _destination: str | None
     vehicle: Vehicle | None
     vehicle_id: str | None
 
@@ -293,8 +302,10 @@ class StopSchedule:
         # Add stop times from trips that are not yet loaded in memory
         schedule_ids = trip_ids_full.difference(schedule_ids_copy)
         if schedule_ids:
-            lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key is trip_id
-            skipped = set(range(1, max(lines))).difference(lines)
+            lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key is the trip_id
+            skipped = [i for i in range(1, max(lines)) if i not in lines]
+            # lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key is trip_id
+            # skipped = set(range(1, max(lines))).difference(lines)
             # rows = set()
             for row in iterate_over_csv_partial("stop_times.txt", skipped):
                 if row.stop_id == stop_id and row.trip_id in schedule_ids:
@@ -452,6 +463,7 @@ class RealTimeStopSchedule:
         return cls(None, None, real_time_data, vehicle_data, existing_schedule, stop_times)
 
     def real_stop_times(self):
+        """ Get the real-time stop times for this schedule """
         output = []
         for stop_time in self.stop_times:
             output.append(RealStopTime(stop_time, self.real_trips, self.vehicle_data))

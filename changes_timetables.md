@@ -117,3 +117,7 @@
 
 ## v0.3.0 - 30 January 2024
 - Separated the real-time, static, and schedule code into separate files for better readability and navigability of code
+
+## v0.4.0a1 - 3 February 2024
+- Changed the skipped lines on the stop schedule loader to be a list rather than a set
+- Moved the real-time stop schedule code into a View, so that I can later add buttons to it

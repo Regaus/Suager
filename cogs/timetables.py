@@ -473,7 +473,7 @@ class Timetables(University, Luas, name="Timetables"):
     async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str):
         """ Show the next departures for a specific stop """
         message = await self.wait_for_initialisation(ctx)
-        language = ctx.language2("en")
+        # language = ctx.language2("en")
         stops = self.find_stop(stop_query)
         if len(stops) != 1:
             start = "No stops were found" if len(stops) < 1 else "More than one stop was found"
@@ -482,128 +482,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        loop = asyncio.get_event_loop()
-        base_schedule: timetables.StopSchedule = await loop.run_in_executor(None, functools.partial(timetables.StopSchedule, self.static_data, stop.id))
-        stop_times: list[timetables.SpecificStopTime] = await loop.run_in_executor(None, functools.partial(base_schedule.relevant_stop_times, time.date.today()))
-        schedule = timetables.RealTimeStopSchedule.from_existing_schedule(base_schedule, self.real_time_data, self.vehicle_data, stop_times)
-        # schedule = timetables.RealTimeStopSchedule(self.static_data, stop.id, self.real_time_data, self.vehicle_data)
-        real_stop_times = schedule.real_stop_times()
-        lat1, long1 = stop.latitude, stop.longitude
-
-        # now = time.datetime(2023, 10, 23, 5, 0, 0, 0, tz=timetables.TIMEZONE)
-        now = time.datetime.now(tz=timetables.TIMEZONE)
-
-        start_idx = 0
-        for idx, stop_time in enumerate(real_stop_times):  # type: int, timetables.RealStopTime
-            # Start at the first departure after right now
-            if (stop_time.departure_time or stop_time.scheduled_departure_time) >= now:
-                start_idx = idx
-                break
-        end_idx = start_idx + 7  # Leave this hardcoded for now
-
-        output_data: list[list[str]] = [["Route", "Destination", "Schedule", "RealTime", "Distance"]]
-        column_sizes = [5, 11, 8, 8, 8]  # Longest member of the column
-        extras = False
-
-        # def update_outputs():
-        #     """ Add an extra space at the end of the schedule and realtime entries if we have drop-off only or pickup only stops """
-        #     for data in output_data:
-        #         if data[2] != " ":
-        #             data[2] += " "
-        #         elif data[3] != " ":
-        #             data[3] += " "
-
-        for stop_time in real_stop_times[start_idx:end_idx]:
-            if stop_time.schedule_relationship == "CANCELED":
-                departure_time = "CANCELLED"
-            elif stop_time.schedule_relationship == "SKIPPED":
-                departure_time = "SKIPPED"
-            elif stop_time.departure_time is not None:
-                departure_time = stop_time.departure_time.format("%H:%M")  # :%S
-            else:
-                departure_time = "--:--"  # "Unknown"
-
-            if stop_time.scheduled_departure_time is not None:
-                scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
-            else:
-                scheduled_departure_time = "--:--"  # "Unknown"
-
-            if stop_time.pickup_type == 1:
-                scheduled_departure_time = "D " + scheduled_departure_time
-                # scheduled_departure_time += "D"  # Drop-off Only
-                # if not extras:
-                #     update_outputs()
-                extras = True
-            elif stop_time.drop_off_type == 1:
-                scheduled_departure_time = "P " + scheduled_departure_time
-                # scheduled_departure_time += "P"  # Pick Up only
-                # if not extras:
-                #     update_outputs()
-                extras = True
-            # elif extras:
-            #     scheduled_departure_time += " "
-
-            _route = stop_time.route(schedule.data)
-            if _route is None:
-                route = "Unknown"
-            else:
-                route = _route.short_name
-
-            destination = stop_time.destination(schedule.data)
-
-            if stop_time.vehicle is not None:
-                lat2, long2 = stop_time.vehicle.latitude, stop_time.vehicle.longitude
-                distance_km = conworlds.distance_between_places(lat1, long1, lat2, long2, "Earth")
-                if distance_km >= 1:  # > 1 km
-                    distance = language.length(distance_km * 1000, precision=2).split(" | ")[0]
-                else:  # < 1 km
-                    distance = language.length(round(distance_km * 1000, -2), precision=0).split(" | ")[0]
-                distance = distance.replace("\u200c", "")  # Remove ZWS
-            else:
-                distance = "-"  # "Unknown"
-
-            # Update column_sizes if needed
-            column_sizes[0] = max(column_sizes[0], len(route))
-            column_sizes[1] = max(column_sizes[1], len(destination))
-            column_sizes[2] = max(column_sizes[2], len(scheduled_departure_time))
-            column_sizes[3] = max(column_sizes[3], len(departure_time))
-            column_sizes[4] = max(column_sizes[4], len(distance))
-
-            output_data.append([route, destination, scheduled_departure_time, departure_time, distance])
-
-        # Calculate the last line first, in case we need more characters for the destination field
-        line_length = sum(column_sizes) + len(column_sizes) - 1
-        spaces = line_length - len(stop.name) - 18
-        extra = 0
-        # Add more spaces to destination if there's too few between stop name and current time
-        if spaces < 8:
-            extra = 8 - spaces
-            spaces = 8
-        # Example:   "Ballinacurra Close       23 Oct 2023, 18:00"
-        last_line = f"{stop.name}{' ' * spaces}{now:%d %b %Y, %H:%M}```"
-        column_sizes[1] += extra  # [1] is destination
-
-        stop_code = f"Code `{stop.code}`, " if stop.code else ""
-        stop_id = f"ID `{stop.id}`"
-        additional_text = ""
-        if extras:
-            additional_text += "*D = Drop-off only; P = Pick-up only*\n"
-        output = f"Real-Time data for the stop {stop.name} ({stop_code}{stop_id})\n" \
-                 "*Please note that the distance shown is straight-line distance and as such may not be accurate*\n" \
-                 f"{additional_text}```fix\n"
-        for line in output_data:
-            assert len(column_sizes) == len(line)
-            line_data = []
-            for i in range(len(line)):
-                size = column_sizes[i]
-                line_part = line[i]
-                # Left-align route and destination to fixed number of spaces
-                # Right-align the schedule, real-time info, and distance
-                alignment = "<" if i < 2 else ">"
-                line_data.append(f"{line_part:{alignment}{size}}")
-            output += f"{' '.join(line_data)}\n"
-        output += last_line
-        return await message.edit(content=output)
+        return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
 
 async def setup(bot: bot_data.Bot):

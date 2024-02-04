@@ -324,10 +324,10 @@ def check_gtfs_data_expiry(db: database.Database):
         raise RuntimeError(f"GTFS Data expired on {expiry['expiry']:%Y-%m-%d at %H:%M:%S}")
 
 
-def iterate_over_csv_partial(filename: str, skip_lines: set[int]) -> Generator[namedtuple, Any, None]:
+def iterate_over_csv_partial(filename: str, skip_lines: list[int]) -> Generator[namedtuple, Any, None]:
     """ Iterates over a CSV file while skipping certain lines """
     with open("assets/gtfs/" + filename, "r", encoding="utf-8") as file:
-        for chunk in pandas.read_csv(file, chunksize=CHUNK_SIZE, na_filter=False, skiprows=list(skip_lines)):
+        for chunk in pandas.read_csv(file, chunksize=CHUNK_SIZE, na_filter=False, skiprows=skip_lines):
             for row in chunk.itertuples():
                 yield row
 
