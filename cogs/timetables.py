@@ -1,8 +1,7 @@
 import asyncio
-import functools
 import json
-from io import BytesIO
 from collections.abc import Callable, Awaitable
+from io import BytesIO
 from zipfile import ZipFile, BadZipFile
 
 import discord
@@ -10,7 +9,7 @@ import luas.api
 from aiohttp import ClientError
 from regaus import time
 
-from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, conworlds
+from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general
 from utils.time import time as print_current_time
 
 
@@ -482,7 +481,9 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
+        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data)
+        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
+        # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
 
 async def setup(bot: bot_data.Bot):
