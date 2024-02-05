@@ -624,7 +624,7 @@ class Social(commands.Cog):
                 embed.title = language.string("social_laugh_at_self", author=general.username(ctx.author))
             if at.id == self.bot.user.id:
                 return await ctx.send(language.string("social_laugh_at_suager"))
-            embed.title = language.string("social_laugh_at", author=general.username(ctx.author), target=language.case(general.username(ctx.at), "laugh_at"))
+            embed.title = language.string("social_laugh_at", author=general.username(ctx.author), target=language.case(general.username(at), "laugh_at"))
         return await ctx.send(embed=embed)
 
     @commands.command(name="smug")

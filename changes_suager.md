@@ -1752,3 +1752,6 @@
 
 ## v7.7.10.7 - 28 January 2024
 - Added a warning that `//poll` and `//trial` will be disabled on 1 March 2024
+
+## v7.7.10.8 - 5 February 2024
+- Fixed the `//laugh` command not working when a user was mentioned
