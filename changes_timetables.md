@@ -131,3 +131,6 @@
   - Note: Timetables Bot currently has no slash commands
 - Fixed the header of the changelog file to say "Timetables Bot" instead of the old "Linenvürteat"
 - Changed the access requirements for the DCU command: only accessible in Regaus'tar Koankadu, or by Regaus anywhere
+
+## v0.4.0a4 - 6 February 2024
+- Made it possible to specify a timestamp for `i.tfi schedule stop` (shows departures at that time, instead of now)

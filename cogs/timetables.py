@@ -11,7 +11,7 @@ from discord import app_commands
 from regaus import time
 from thefuzz import process
 
-from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general
+from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser
 from utils.time import time as print_current_time
 
 
@@ -235,6 +235,46 @@ class Timetables(University, Luas, name="Timetables"):
         self.updating = False
         self.loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
+
+    @staticmethod
+    def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool]:
+        """ Split the query and timestamp using argparse """
+        parser = arg_parser.Arguments()
+        parser.add_argument("--time", nargs="+")
+        parser.add_argument("query", nargs="+")
+        args, valid_check = parser.parse_args(query)
+        if not valid_check:
+            return args, None, False
+        query = " ".join(args.query)
+        if args.time is not None:
+            timestamp = " ".join(args.time)
+        else:
+            timestamp = None
+        return query, timestamp, True
+
+    @staticmethod
+    def parse_timestamp(timestamp: str | None) -> tuple[time.datetime | None, bool]:
+        """ Parse a timestamp """
+        if timestamp is not None:
+            data = timestamp.split(" ", 1)
+            if len(data) == 1:
+                date_str = data[0]
+                time_str = ""
+            elif len(data) == 2:
+                date_str, time_str = data
+            else:
+                return None, False
+            if not time_str:
+                time_part = time.time()  # 0:00:00
+            else:
+                _h, _m, *_s = time_str.split(":")
+                h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+                time_part = time.time(h, m, s, 0)
+            _y, _m, _d = date_str.split("-")
+            y, m, d = int(_y), int(_m), int(_d)
+            date_part = time.date(y, m, d)
+            return time.datetime.combine(date_part, time_part, timetables.TIMEZONE), True
+        return None, True
 
     async def get_data_from_api(self, *, write: bool = True):
         data: bytes = await http.get(self.url, headers=self.headers, res_method="read")
@@ -540,10 +580,17 @@ class Timetables(University, Luas, name="Timetables"):
             return await ctx.send_help(ctx.command)
 
     @tfi_schedules.command(name="stop")
-    async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str):
+    async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str, timestamp: str = None):  # timestamp arg will be used by the slash command
         """ Show the next departures for a specific stop """
         message = await self.wait_for_initialisation(ctx)
         # language = ctx.language2("en")
+        if ctx.interaction is None:
+            stop_query, timestamp, valid_check = self.get_query_and_timestamp(stop_query)
+            if not valid_check:
+                return await ctx.send(stop_query)
+        now, valid_check = self.parse_timestamp(timestamp)
+        if not valid_check:
+            return await ctx.send("Invalid timestamp. Make sure it is in the following format: `YYYY-MM-DD HH:MM:SS`.")
         stops = self.find_stop(stop_query)
         if len(stops) != 1:
             start = "No stops were found" if len(stops) < 1 else "More than one stop was found"
@@ -552,7 +599,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data)
+        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, now=now)
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
