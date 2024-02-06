@@ -19,12 +19,13 @@ class StopScheduleViewer:
     def __init__(self, data: GTFSData, now: time.datetime, real_time: bool, fixed: bool, today: time.date,
                  stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, lines: int,
                  base_schedule: StopSchedule, base_stop_times: list[SpecificStopTime],
-                 real_schedule: RealTimeStopSchedule | None, real_stop_times: list[RealStopTime] | None):
+                 real_schedule: RealTimeStopSchedule | None, real_stop_times: list[RealStopTime] | None, cog):
         self.data = data
         self.now = now
         self.today = today
         self.real_time = real_time
         self.fixed = fixed
+        self.fixed_time = fixed
         self.stop = stop
         self.latitude = stop.latitude
         self.longitude = stop.longitude
@@ -35,12 +36,13 @@ class StopScheduleViewer:
         self.base_stop_times = base_stop_times
         self.real_schedule = real_schedule
         self.real_stop_times = real_stop_times
+        self.cog = cog  # The Timetables cog
 
         self.start_idx, self.end_idx = self.get_indexes()
         self.output = self.create_output()
 
     @classmethod
-    async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData,
+    async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, cog,
                    now: time.datetime | None = None, lines: int = 6):
         """ Load the data and return a working instance """
         if now is not None:
@@ -57,7 +59,7 @@ class StopScheduleViewer:
             real_schedule, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedule, base_schedule, real_time_data, vehicle_data, base_stop_times)
         else:
             real_schedule = real_stop_times = None
-        return cls(data, now, real_time, fixed, today, stop, real_time_data, vehicle_data, lines, base_schedule, base_stop_times, real_schedule, real_stop_times)
+        return cls(data, now, real_time, fixed, today, stop, real_time_data, vehicle_data, lines, base_schedule, base_stop_times, real_schedule, real_stop_times, cog)
 
     @staticmethod
     def load_base_schedule(data: GTFSData, stop_id: str, today: time.date):
@@ -72,6 +74,15 @@ class StopScheduleViewer:
         real_schedule = RealTimeStopSchedule.from_existing_schedule(base_schedule, real_time_data, vehicle_data, base_stop_times)
         real_stop_times = real_schedule.real_stop_times()
         return real_schedule, real_stop_times
+
+    async def refresh_real_schedule(self):
+        """ Refresh the RealTimeStopSchedule """
+        event_loop = asyncio.get_event_loop()
+        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=False, write=False)
+        self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
+        if not self.fixed_time:
+            self.now = time.datetime.now()
+            self.today = self.now.date()
 
     def get_indexes(self):
         """ Get the value of start_idx and end_idx for the output """
@@ -188,9 +199,25 @@ class StopScheduleViewer:
             output = output[:2000]
         return output
 
+    def update_output(self):
+        self.output = self.create_output()
+
 
 class StopScheduleView(views.InteractiveView):
     """ A view for displaying stop schedules for a given stop """
     def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer):
         super().__init__(sender=sender, message=message, timeout=900)
         self.schedule = schedule
+
+    async def refresh(self):
+        """ Refresh the real-time data """
+        await self.schedule.refresh_real_schedule()
+        self.schedule.update_output()
+        return await self.message.edit(content=self.schedule.output)
+
+    @discord.ui.button(label="🔄 Refresh", style=discord.ButtonStyle.primary)
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Refresh the real-time data """
+        await interaction.response.defer()
+        await self.refresh()
+        await self.disable_button(self.message, button, cooldown=30)

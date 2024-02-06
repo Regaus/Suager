@@ -134,3 +134,6 @@
 
 ## v0.4.0a4 - 6 February 2024
 - Made it possible to specify a timestamp for `i.tfi schedule stop` (shows departures at that time, instead of now)
+
+## v0.4.0a5 - 6 February 2024
+- Made it possible to refresh the bus stop departures

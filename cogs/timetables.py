@@ -599,7 +599,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, now=now)
+        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 

@@ -34,6 +34,11 @@ class InteractiveView(View):
         self.sender = sender
         self.message = message
 
+    async def validate_sender(self, interaction: discord.Interaction):
+        """ Make sure that the person clicking on the button is also the author of the message """
+        if interaction.user.id != self.sender.id:
+            return await interaction.response.send(f"{emotes.Deny} This interaction is not from you.", ephemeral=True)
+
 
 class GenerateNamesView(InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, language: str):
