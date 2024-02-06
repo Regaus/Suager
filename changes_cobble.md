@@ -786,3 +786,8 @@
 
 ## v1.9.3.5 - 28 January 2024
 - Fixed `luas.api` failing to load because a dependency could not be loaded
+
+## v1.9.4 - 5 February 2024
+- Added a command to sync slash commands (`..sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+  - Note: CobbleBot currently has no slash commands

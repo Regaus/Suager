@@ -90,3 +90,8 @@
 
 ## v1.3.0 - 26 December 2023
 - Separated the Pretender database into a separate file
+
+## v1.3.1 - 5 February 2024
+- Added a command to sync slash commands (`a.sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+  - Note: Pretender currently has no slash commands

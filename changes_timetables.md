@@ -1,4 +1,4 @@
-# Changelog for Linenvürteat
+# Changelog for Timetables Bot
 
 ## v0.0.1 - 20 November 2022
 - Initial setup for the bot to get it to load
@@ -124,3 +124,10 @@
 
 ## v0.4.0a2 - 3 February 2024
 - Made a better way to load the real-time schedule
+
+## v0.4.0a3 - 5 February 2024
+- Added a command to sync slash commands (`i.sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+  - Note: Timetables Bot currently has no slash commands
+- Fixed the header of the changelog file to say "Timetables Bot" instead of the old "Linenvürteat"
+- Changed the access requirements for the DCU command: only accessible in Regaus'tar Koankadu, or by Regaus anywhere

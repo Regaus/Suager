@@ -5,6 +5,7 @@ from io import BytesIO
 from typing import List
 
 import discord
+from discord import app_commands
 from regaus import time as time2
 
 from utils import bot_data, commands, general, logger, time, cpu_burner
@@ -97,8 +98,13 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
         """ Triggered when a command fails for any reason """
+        if ctx.interaction is None:
+            content = ctx.message.clean_content
+        else:
+            content = general.build_interaction_content(ctx.interaction)
         guild = getattr(ctx.guild, "name", "Private Message")
-        error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > {type(err).__name__}: {str(err)}"
+        error_msg = f"{type(err).__name__}: {str(err)}"
+        error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
         language = ctx.language()
         if isinstance(err, commands.MissingRequiredArgument):
             # A required argument is missing
@@ -174,7 +180,6 @@ class Events(commands.Cog):
 
         elif isinstance(err, commands.CommandInvokeError):
             # An error occurred while invoking the command
-            error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
             if ("2000 or fewer" in str(err.original) or "4000 or fewer" in str(err.original)) and len(ctx.message.content) > 1900:
                 await ctx.send(language.string("events_error_message_length"))
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
@@ -182,40 +187,77 @@ class Events(commands.Cog):
                 await ctx.send(language.string("events_error_error", err=f"{type(err.original).__name__}: {str(err.original)}"))
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
+                    full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+                    error = general.traceback_maker(err.original, full_content[:750], ctx.guild, ctx.author)
                     await ec.send(error)
-                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > " \
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > " \
                                 f"{type(err.original).__name__}: {str(err.original)}"
                 general.print_error(error_message)
+
+        elif isinstance(err, (app_commands.AppCommandError, commands.HybridCommandError)):
+            # An error occurred with a slash command
+            if isinstance(err, commands.HybridCommandError):
+                err = err.original  # Access the actual app command error
+                # print(type(err).__module__, type(err).__name__)
+
+            if isinstance(err, app_commands.CommandInvokeError):  # This includes InteractionResponded errors
+                # print("hi3", err)
+                err = err.original
+                error_msg = f"{type(err).__name__}: {str(err)}"
+                # await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
+                # await ctx.interaction.followup.send(language.string("events_error_error", err=error_msg))
+                # If the interaction had not yet been responded, respond. If it has, send to followup. If the interaction expired, send regular message.
+                await ctx.send(language.string("events_error_error", err=error_msg))
+                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
+                if ec is not None:
+                    full_content = general.build_interaction_content(ctx.interaction)
+                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                    await ec.send(error)
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
+                general.print_error(error_message)
+
+            else:
+                # Catch-all error statement for other slash-command related errors
+                error_msg = f"{type(err).__name__}: {str(err)}"
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
+                general.print_error(error_message)
+                await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
+                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
+                if ec is not None:
+                    full_content = general.build_interaction_content(ctx.interaction)
+                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                    await ec.send(error)
 
         else:
             # Catch-all error statement. This shouldn't ever get called, but who knows...
             general.print_error(error_message)
-            await ctx.send(language.string("events_error_error", type(err).__name__))
+            await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:
-                error = general.traceback_maker(err, ctx.message.content[:750], ctx.guild, ctx.author)
+                full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+                error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
                 await ec.send(error)
 
         logger.log(self.bot.name, "commands", error_message)
         logger.log(self.bot.name, "errors", error_message)
 
     @commands.Cog.listener()
-    async def on_command(self, _ctx):
+    async def on_command(self, _ctx: commands.Context):
         """ Triggered when a command is run """
         cpu_burner.run = False
         cpu_burner.last_command = time.now_ts()
 
     @commands.Cog.listener()
-    async def on_command_completion(self, ctx):
+    async def on_command_completion(self, ctx: commands.Context):
         """ Triggered when a command successfully completes """
         guild = getattr(ctx.guild, "name", "Private Message")
-        content = ctx.message.clean_content
+        content = ctx.message.clean_content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
         send = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content}"
         logger.log(self.bot.name, "commands", send)
         print(send)
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: discord.Guild):
         send = f"{time.time()} > {self.bot.full_name} > Joined {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
@@ -230,7 +272,7 @@ class Events(commands.Cog):
             await to_send.send(self.local_config["join_message"])
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild):
         send = f"{time.time()} > {self.bot.full_name} > Left {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)

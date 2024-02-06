@@ -7,32 +7,82 @@ from zipfile import ZipFile, BadZipFile
 import discord
 import luas.api
 from aiohttp import ClientError
+from discord import app_commands
 from regaus import time
+from thefuzz import process
 
 from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general
 from utils.time import time as print_current_time
 
 
 def dcu_data_access(ctx):
-    return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
+    return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
+    # return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
 
 
 # Cog for university timetables - loaded by Suager
 class University(commands.Cog, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        self.cache_sync = {
+            "courses": dcu.get_course_identities,
+            "modules": dcu.get_module_identities,
+            "rooms": dcu.get_room_identities
+        }
 
-    @commands.group(name="dcu", case_insensitive=True)
+    @commands.hybrid_group(name="dcu", case_insensitive=True)
     @commands.check(dcu_data_access)
+    @app_commands.guilds(738425418637639775)
     async def dcu_stuff(self, ctx: commands.Context):
         """ Access stuff related to DCU and its timetables """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True)
-    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "COMSCI1", custom_week: str = ""):
-        """ Fetch DCU timetables for current week - Defaults to COMSCI1 course """
+    async def dcu_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for course/module/room searches """
+        cache_type = interaction.command.name.split()[-1]
+        if not cache_type.endswith("s"):
+            cache_type += "s"
+        cache = dcu.cache[cache_type]
+        # If the cache is empty, call the function to load all courses/modules/rooms from cache
+        if len(cache) == 0:
+            await self.cache_sync[cache_type]()
+            cache = dcu.cache[cache_type]
+        # results: [(code, full_name, similarity), ...]
+        results: list[tuple[str, str, int]] = []
+        for code, full_name in cache.items():
+            ratios = [process.default_scorer(current, code), process.default_scorer(current, full_name)]
+            results.append((code, full_name, max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        # print(results)
+        return [app_commands.Choice(name=result[1], value=result[0]) for result in results][:25]
+
+    # TODO: Try to implement an autocomplete for module codes
+    # async def module_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    #     """ Autocomplete function for module searches, as these are different """
+    #     pass
+
+    @dcu_stuff.group(name="timetable", aliases=["timetables", "tt"], case_insensitive=True, invoke_without_command=True, fallback="course")
+    @app_commands.autocomplete(course_code=dcu_autocomplete)
+    @app_commands.describe(
+        course_code="The code for the course whose timetable you want to see.",  # Defaults to the COMSCI course for my current year (first year in 2023/2024).
+        custom_week="The week for which you want to see the timetable. Defaults to current week."  # (or next week if it's Saturday or Sunday)
+    )
+    async def dcu_timetable(self, ctx: commands.Context, course_code: str = "", custom_week: str = ""):
+        """ Fetch DCU timetables for a given course for the current week
+
+        If no course code provided, defaults to COMSCI course for my current year (first year in 2023/2024) """
         if ctx.invoked_subcommand is None:
+            await ctx.defer()
+            if not course_code:
+                course_code = "COMSCI"
+                # Push September 2023 to be "January 2024", so that we can start defaulting to COMSCI 2 in Sep 2024
+                # Sep 2023 - Aug 2024 -> 1, Sep 2024 - Aug 2025 -> 2, etc.
+                year = (time.date.today() + time.relativedelta(months=4, time_class=time.Earth)).year - 2023
+                if year > 4:
+                    # After I graduate, fall back to COMSCI1
+                    year = 1
+                course_code += str(year)
             try:
                 date = None
                 if custom_week:
@@ -47,16 +97,28 @@ class University(commands.Cog, name="Timetables"):
                 return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_timetable.command(name="modules", aliases=["module", "m"])
-    async def dcu_timetable_modules(self, ctx: commands.Context, *module_codes: str):
+    # @app_commands.autocomplete(module_codes=dcu_autocomplete)
+    @app_commands.describe(
+        module_codes="List of all modules whose timetables you want to see, separated by space. No autocomplete yet.",  # Make sure to include semester number, e.g. CA116[1] or CA170[2].
+        custom_week="The week for which you want to see the timetable. Defaults to current week."
+        # (or next week if it's Saturday or Sunday). May also be provided as the last argument in `module_codes`
+    )
+    async def dcu_timetable_modules(self, ctx: commands.Context, *, module_codes: str, custom_week: str = ""):
         """ Fetch DCU timetables for specified modules for the current week"""
         try:
+            await ctx.defer()
+            module_codes = module_codes.split()
             date = None
-            try:
-                date = time.date.from_iso(module_codes[-1])
+            if custom_week:
+                date = time.date.from_iso(custom_week)
                 date = time.datetime.combine(date, time.time(), dcu.TZ)
-                module_codes = module_codes[:-1]
-            except ValueError:
-                pass
+            else:
+                try:
+                    date = time.date.from_iso(module_codes[-1])
+                    date = time.datetime.combine(date, time.time(), dcu.TZ)
+                    module_codes = module_codes[:-1]
+                except ValueError:
+                    pass
             return await ctx.send(embed=await dcu.get_timetable_module(module_codes, date))
         except KeyError as e:
             return await ctx.send(f"{emotes.Deny} An error occurred: {str(e)}\nUse `{ctx.prefix}dcu search modules` to find your module code(s).")
@@ -65,9 +127,15 @@ class University(commands.Cog, name="Timetables"):
             return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
 
     @dcu_timetable.command(name="room", aliases=["rooms", "r"])
+    @app_commands.autocomplete(room_code=dcu_autocomplete)
+    @app_commands.describe(
+        room_code="The code for the room whose timetable you want to see.",
+        custom_week="The week for which you want to see the timetable. Defaults to current week."  # (or next week if it's Saturday or Sunday)
+    )
     async def dcu_timetable_room(self, ctx: commands.Context, room_code: str, custom_week: str = ""):
         """ Fetch DCU timetables for a given room for the current week"""
         try:
+            await ctx.defer()
             date = None
             if custom_week:
                 date = time.date.from_iso(custom_week)
@@ -100,21 +168,24 @@ class University(commands.Cog, name="Timetables"):
         return await interface.send_to(ctx)
 
     @dcu_search.command(name="courses", aliases=["course", "courselist"])
+    @app_commands.describe(search="The code of the course you're looking for")
     async def dcu_courses(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU course list """
+        """ Fetch DCU course list or look for a specific course """
         async with ctx.typing():
             return await self.dcu_list(ctx, dcu.get_courses, "DCU Course Codes", search)
 
     @dcu_search.command(name="modules", aliases=["module", "modulelist"])
+    @app_commands.describe(search="The code of the module you're looking for")
     async def dcu_modules(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU module list """
+        """ Fetch DCU module list or look for a specific module """
         async with ctx.typing():
             return await self.dcu_list(ctx, dcu.get_modules, "DCU Module Codes", search,
                                        notes="Note: Some of the modules may have been parsed incorrectly, however I tried to reduce the chance of this happening")
 
     @dcu_search.command(name="rooms", aliases=["room", "roomlist", "locations", "location", "locationlist"])
+    @app_commands.describe(search="The code of the room you're looking for")
     async def dcu_rooms(self, ctx: commands.Context, search: str = None):
-        """ Fetch DCU module list """
+        """ Fetch DCU room list or look for a specific room """
         async with ctx.typing():
             return await self.dcu_list(ctx, dcu.get_rooms, "DCU Room Codes", search)
 

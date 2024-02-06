@@ -610,6 +610,26 @@ class Admin(commands.Cog):
         open("config.json", "w").write(stuff_str)
         return await ctx.send("Config file updated.")
 
+    @commands.command(name="sync")
+    @commands.is_owner()
+    async def sync_slash_commands(self, ctx: commands.Context, action: str = ""):
+        """ Synchronise slash commands """
+        async with ctx.typing():
+            if not action:
+                result = await self.bot.tree.sync()
+                return await ctx.send(f"Synchronised {len(result)} slash commands")
+            if action == "local":
+                result = await self.bot.tree.sync(guild=ctx.guild)
+                return await ctx.send(f"Synchronised {len(result)} local slash commands in this server")
+            if action == "global":
+                self.bot.tree.copy_global_to(guild=ctx.guild)
+                result = await self.bot.tree.sync(guild=ctx.guild)
+                return await ctx.send(f"Copied {len(result)} global slash commands to this server")
+            if action == "clear":
+                self.bot.tree.clear_commands(guild=ctx.guild)
+                result = await self.bot.tree.sync(guild=ctx.guild)
+                return await ctx.send(f"Cleared {len(result)} guild-specific slash commands from this server")
+
 
 async def setup(bot: bot_data.Bot):
     await bot.add_cog(Admin(bot))

@@ -1755,3 +1755,10 @@
 
 ## v7.7.10.8 - 5 February 2024
 - Fixed the `//laugh` command not working when a user was mentioned
+
+## v7.7.11 - 5 February 2024
+- Added a command to sync slash commands (`//sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+- Turned the DCU command into a hybrid command group
+- Added autocomplete to DCU timetables for courses and rooms
+- Changed the access requirements for the DCU command: only accessible in Regaus'tar Koankadu, or by Regaus anywhere
