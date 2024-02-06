@@ -1762,3 +1762,6 @@
 - Turned the DCU command into a hybrid command group
 - Added autocomplete to DCU timetables for courses and rooms
 - Changed the access requirements for the DCU command: only accessible in Regaus'tar Koankadu, or by Regaus anywhere
+
+## v7.7.12 - 6 February 2024
+- Added `//threesome` command

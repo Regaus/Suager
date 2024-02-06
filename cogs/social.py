@@ -857,6 +857,33 @@ class SocialSuager(Social, name="Social"):
         # _given, _received = language.frequency(given), language.frequency(received)
         # return await ctx.send(f"**{t1}** is now face-fucking **{t2}**...\n{t1} face-fucked {t2} {_given}\n{t2} face-fucked {t1} {_received}")
 
+    @commands.command(name="threesome", nsfw=True)
+    @commands.guild_only()
+    @commands.is_nsfw()
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    async def threesome(self, ctx: commands.Context, user1: discord.Member, user2: discord.Member):
+        """ Have a threesome with two other people """
+        language = ctx.language()
+        for user in (user1, user2):
+            if user.id in self.protected and ctx.channel.id != 764528556507922442:
+                return await ctx.send(language.string("social_forbidden"))
+            if user.id == self.bot.user.id:
+                return await ctx.send(language.string("social_nsfw_fuck_suager"))
+            if user.bot:
+                return await ctx.send(language.string("social_nsfw_fuck_bot"))
+            if user == ctx.author:
+                return await ctx.send(emotes.UmmOK)
+        # No counters for this command, at least currently
+        author = language.case(general.username(ctx.author), "nominative")
+        target_case = "accusative"
+        if language.is_in_family("kai"):  # -> "ka target'n"
+            target_case = "genitive"
+        elif language.is_in_family("ru"):
+            target_case = "instrumental"
+        target1 = language.case(general.username(user1), target_case)
+        target2 = language.case(general.username(user2), target_case)
+        return await ctx.send(language.string("social_nsfw_threesome", author=author, target1=target1, target2=target2))
+
 
 async def setup(bot: bot_data.Bot):
     if bot.name == "suager":
