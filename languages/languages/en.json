@@ -370,7 +370,7 @@
   "ratings_baby_rate": "The chance of **{name1}** and **{name2}** having a baby is **{value}**.",
   "ratings_baby_rate_bot": "Bots can't do that.",
   "ratings_baby_rate_self": "I don't think that's how it works.",
-  "ratings_baby_rate_suager": "I'm not programmed to do things like that. Don't even think about it.",
+  "ratings_baby_rate_suager": "Don't even think about it.",  // Removed from start: "I'm not programmed to do things like that."
   "ratings_friend": "**{name1}** and **{name2}** are **{value}** friends.",
   "ratings_friend_bots": "How does one become friends with a bot?",
   "ratings_friend_self": "You better be a friend to at least yourself {emotes.KannaSpook}",

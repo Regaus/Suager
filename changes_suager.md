@@ -1765,3 +1765,9 @@
 
 ## v7.7.12 - 6 February 2024
 - Added `//threesome` command
+
+## v7.7.13 - 10 February 2024
+- Updated the custom output values for most of the Ratings commands
+- Fixed `//love` not giving the custom output when you pinged Regaus and one of my bots
+- Changed `//hotness`'s ranges for emotes: 0-40%, 40-70%, and 70-100% (instead of 0-50%, 50-75%, and 75-100%)
+- Changed the seed modifier on `//pickle` to troll some of my friends
