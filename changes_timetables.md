@@ -137,3 +137,8 @@
 
 ## v0.4.0a5 - 6 February 2024
 - Made it possible to refresh the bus stop departures
+
+## v0.4.0a6 - 11 February 2024
+- Made it possible to show when a bus terminates early
+- Made it possible to shorten the destinations (so it fits in one line on my phone)
+- Made it possible to stop the view from updating the index and time when refreshed

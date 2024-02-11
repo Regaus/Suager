@@ -156,6 +156,19 @@ class RealStopTime:
                                 self.schedule_relationship = stop_time_update.schedule_relationship
                         else:
                             break  # We reached the desired point
+                    if self.real_trip.stop_times[-1].schedule_relationship == "SKIPPED":
+                        i = len(self.real_trip.stop_times) - 1
+                        stop_time_update = self.real_trip.stop_times[i]
+                        while stop_time_update.schedule_relationship == "SKIPPED" and i > 0:
+                            i -= 1
+                            stop_time_update = self.real_trip.stop_times[i]
+                        stop_id = self.real_trip.stop_times[i + 1].stop_id
+                        try:
+                            destination_stop: Stop = load_value_from_id(None, "stops.txt", stop_id, None)
+                            # The warning sign doesn't fit properly on desktop, but oh well. It's more noticeable than putting two exclamation marks
+                            self._destination = f"⚠️ {destination_stop.name}, stop {destination_stop.code_or_id}"
+                        except KeyError:
+                            self._destination = f"Unknown Stop {stop_id}"
                 else:
                     pass
                 if arrival_delay is not None:

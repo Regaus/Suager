@@ -188,6 +188,11 @@ class Stop:
     location_type: str   # Type: stop, station, or something else - Empty in our case
     parent_station: str  # Empty in our case
 
+    @property
+    def code_or_id(self):
+        """ Returns the stop code if available, else stop ID """
+        return self.code or self.id
+
     def __repr__(self):
         # "Stop 8220DB000334 (334) - D'Olier Street"
         return f"Stop {self.id} ({self.code}) - {self.name}"

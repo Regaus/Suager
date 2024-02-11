@@ -25,7 +25,7 @@ class StopScheduleViewer:
         self.today = today
         self.real_time = real_time
         self.fixed = fixed
-        self.fixed_time = fixed
+        # self.fixed_time = fixed
         self.stop = stop
         self.latitude = stop.latitude
         self.longitude = stop.longitude
@@ -37,6 +37,9 @@ class StopScheduleViewer:
         self.real_schedule = real_schedule
         self.real_stop_times = real_stop_times
         self.cog = cog  # The Timetables cog
+
+        self.truncate_destination = False  # Don't cut off destinations by default
+        self.index_offset = 0
 
         self.start_idx, self.end_idx = self.get_indexes()
         self.output = self.create_output()
@@ -80,7 +83,7 @@ class StopScheduleViewer:
         event_loop = asyncio.get_event_loop()
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=False, write=False)
         self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
-        if not self.fixed_time:
+        if not self.fixed:  # _time:
             self.now = time.datetime.now()
             self.today = self.now.date()
 
@@ -98,6 +101,7 @@ class StopScheduleViewer:
                 if stop_time.departure_time >= self.now:
                     start_idx = idx
                     break
+        start_idx += self.index_offset
         end_idx = start_idx + self.lines + 1
         return start_idx, end_idx
 
@@ -165,6 +169,11 @@ class StopScheduleViewer:
 
         # Calculate the last line first, in case we need more characters for the destination field
         line_length = sum(column_sizes) + len(column_sizes) - 1
+        cutoff = 0
+        if self.truncate_destination:
+            if line_length > 50:
+                cutoff = column_sizes[1] - (line_length - 50)  # Max length of the destination to fit the line
+                line_length = 50
         spaces = line_length - len(self.stop.name) - 18
         extra = 0
         # Add more spaces to destination if there's too few between stop name and current time
@@ -189,6 +198,9 @@ class StopScheduleViewer:
             for i in range(len(line)):
                 size = column_sizes[i]
                 line_part = line[i]
+                if i == 1 and cutoff:
+                    size = cutoff
+                    line_part = line_part[:cutoff]
                 # Left-align route and destination to fixed number of spaces
                 # Right-align the schedule, real-time info, and distance
                 alignment = "<" if i < 2 else ">"
@@ -203,11 +215,15 @@ class StopScheduleViewer:
         self.output = self.create_output()
 
 
+# noinspection PyUnresolvedReferences
 class StopScheduleView(views.InteractiveView):
     """ A view for displaying stop schedules for a given stop """
     def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer):
         super().__init__(sender=sender, message=message, timeout=900)
         self.schedule = schedule
+
+        self.remove_item(self.unfreeze_schedule)  # Hide the "unfreeze schedule" button
+        self.remove_item(self.desktop_view)  # Hide the "desktop view" button
 
     async def refresh(self):
         """ Refresh the real-time data """
@@ -215,9 +231,65 @@ class StopScheduleView(views.InteractiveView):
         self.schedule.update_output()
         return await self.message.edit(content=self.schedule.output)
 
-    @discord.ui.button(label="🔄 Refresh", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Purple, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
         await interaction.response.defer()
         await self.refresh()
         await self.disable_button(self.message, button, cooldown=30)
+
+    @discord.ui.button(label="Freeze schedule", emoji="🕒", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def freeze_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Freeze the schedule at the current time and index """
+        await interaction.response.defer()
+        self.schedule.fixed = True
+        self.schedule.update_output()
+        self.remove_item(button)
+        self.add_item(self.unfreeze_schedule)
+        # TODO: Make this stop moving the other button to the right
+        await self.message.edit(content=self.schedule.output, view=self)
+
+    @discord.ui.button(label="Unfreeze schedule", emoji="🕒", style=discord.ButtonStyle.primary, row=0)  # Red, first row
+    async def unfreeze_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Unfreeze the schedule """
+        await interaction.response.defer()
+        self.schedule.fixed = False
+        self.schedule.update_output()
+        self.remove_item(button)
+        self.add_item(self.freeze_schedule)
+        await self.message.edit(content=self.schedule.output, view=self)
+
+    # @discord.ui.button(label="Freeze time", emoji="", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    # async def freeze_time(self, interaction: discord.Interaction, button: discord.ui.Button):
+    #     """ Freeze the time being shown """
+    #     await interaction.response.defer()
+    #     self.schedule.fixed_time = True
+    #     self.update_output()
+    #     await self.message.edit(content=self.schedule.output, view=self)
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        await interaction.response.defer()
+        await self.message.edit(view=None)
+        return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
+
+    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=1)  # Grey, last row
+    async def mobile_view(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Mobile-optimised view: Make the text cut off so that it fits on mobile screens """
+        await interaction.response.defer()
+        self.schedule.truncate_destination = True
+        self.schedule.update_output()
+        self.remove_item(button)
+        self.add_item(self.desktop_view)
+        return await self.message.edit(content=self.schedule.output, view=self)
+
+    @discord.ui.button(label="Show full destinations", style=discord.ButtonStyle.secondary, row=1)  # Grey, last row
+    async def desktop_view(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Desktop-optimised view: Stop cutting off text (default behaviour) """
+        await interaction.response.defer()
+        self.schedule.truncate_destination = False
+        self.schedule.update_output()
+        self.remove_item(button)
+        self.add_item(self.mobile_view)
+        return await self.message.edit(content=self.schedule.output, view=self)
