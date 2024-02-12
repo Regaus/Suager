@@ -142,3 +142,6 @@
 - Made it possible to show when a bus terminates early
 - Made it possible to shorten the destinations (so it fits in one line on my phone)
 - Made it possible to stop the view from updating the index and time when refreshed
+
+## v0.4.0a7 - 12 February 2024
+- Made the default button be "unfreeze schedule" when a specific time is specified (i.e. the view is already frozen at the start)

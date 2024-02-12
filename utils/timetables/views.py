@@ -222,7 +222,10 @@ class StopScheduleView(views.InteractiveView):
         super().__init__(sender=sender, message=message, timeout=900)
         self.schedule = schedule
 
-        self.remove_item(self.unfreeze_schedule)  # Hide the "unfreeze schedule" button
+        if not self.schedule.fixed:
+            self.remove_item(self.unfreeze_schedule)  # Hide the "unfreeze schedule" button
+        else:
+            self.remove_item(self.freeze_schedule)
         self.remove_item(self.desktop_view)  # Hide the "desktop view" button
 
     async def refresh(self):
@@ -245,8 +248,9 @@ class StopScheduleView(views.InteractiveView):
         self.schedule.fixed = True
         self.schedule.update_output()
         self.remove_item(button)
+        self.remove_item(self.close_view)
         self.add_item(self.unfreeze_schedule)
-        # TODO: Make this stop moving the other button to the right
+        self.add_item(self.close_view)
         await self.message.edit(content=self.schedule.output, view=self)
 
     @discord.ui.button(label="Unfreeze schedule", emoji="🕒", style=discord.ButtonStyle.primary, row=0)  # Red, first row
@@ -256,7 +260,9 @@ class StopScheduleView(views.InteractiveView):
         self.schedule.fixed = False
         self.schedule.update_output()
         self.remove_item(button)
+        self.remove_item(self.close_view)
         self.add_item(self.freeze_schedule)
+        self.add_item(self.close_view)
         await self.message.edit(content=self.schedule.output, view=self)
 
     # @discord.ui.button(label="Freeze time", emoji="", style=discord.ButtonStyle.danger, row=0)  # Red, first row
