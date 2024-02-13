@@ -159,3 +159,6 @@
 - Changed the distance to round to the nearest 10m instead of 100m
 - Fixed internal code saying there are 6 departure lines when there was actually 7
 - Changed the cooldown of the `i.tfi` command to 4 seconds (instead of 5)
+
+## v0.4.0a10 - 13 February 2024
+- Added buttons to move the offset by a custom amount or set the offset to a custom number

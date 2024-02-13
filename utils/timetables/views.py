@@ -1,4 +1,5 @@
 import asyncio
+from typing import override
 
 import discord
 from regaus import time
@@ -108,6 +109,11 @@ class StopScheduleViewer:
         end_idx = start_idx + self.lines  # We don't need the + 1 here
         return start_idx, end_idx
 
+    @property
+    def iterable_stop_times(self):
+        """ Returns the stop times we can iterate over """
+        return self.real_stop_times if self.real_time else self.base_stop_times
+
     def create_output(self):
         """ Create the output from available information and send it to the user """
         language = languages.Language("en")
@@ -116,8 +122,8 @@ class StopScheduleViewer:
         extras = False
         if not self.fixed:
             self.start_idx, self.end_idx = self.get_indexes()
-        iterable_stop_times = self.real_stop_times if self.real_time else self.base_stop_times
-        for stop_time in iterable_stop_times[self.start_idx:self.end_idx]:
+        # iterable_stop_times = self.real_stop_times if self.real_time else self.base_stop_times
+        for stop_time in self.iterable_stop_times[self.start_idx:self.end_idx]:
             if self.real_time:
                 if stop_time.scheduled_departure_time is not None:
                     scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
@@ -296,6 +302,10 @@ class StopScheduleView(views.InteractiveView):
         await self.message.edit(view=None)
         return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
 
+    async def disable_offset_buttons(self):
+        """ Put all the buttons on cooldown at the same time """
+        await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, cooldown=3)
+
     async def move_indexes(self, interaction: discord.Interaction, indexes: int):
         """ Move the departures by the provided amount of indexes (Wrapper function) """
         await interaction.response.defer()
@@ -311,8 +321,22 @@ class StopScheduleView(views.InteractiveView):
             offset_explanation = f"{abs(offset)} {word2}"
         _s = "s" if abs(indexes) != 1 else ""
         await interaction.followup.send(f"Moved the schedule {word} by {abs(indexes)} departure{_s}. Total offset: {offset_explanation}.", ephemeral=True)
-        # Put all the buttons on cooldown at the same time
-        await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, cooldown=3)
+        await self.disable_offset_buttons()
+
+    async def set_offset(self, interaction: discord.Interaction, offset: int):
+        """ Set the index offset to a specific value (Wrapper function) """
+        await interaction.response.defer()
+        self.schedule.index_offset = offset
+        self.schedule.update_output()
+        await self.message.edit(content=self.schedule.output, view=self)
+        if offset == 0:
+            content = "The offset has been reset to zero."
+        else:
+            word = "down" if offset > 0 else "up"
+            _s = "s" if abs(offset) != 1 else ""
+            content = f"Set the offset to {abs(offset)} departure{_s} {word}."
+        await interaction.followup.send(content, ephemeral=True)
+        await self.disable_offset_buttons()
 
     @discord.ui.button(label="Move up 1", emoji="🔼", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_up_1(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -324,6 +348,11 @@ class StopScheduleView(views.InteractiveView):
         """ Show 1 departure above the current """
         return await self.move_indexes(interaction, -6)
 
+    @discord.ui.button(label="Move offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def move_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Move offset by a custom amount provided by the user """
+        return await interaction.response.send_modal(MoveOffsetModal(self))
+
     @discord.ui.button(label="Move down 1", emoji="🔽", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def move_down_1(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
@@ -333,6 +362,16 @@ class StopScheduleView(views.InteractiveView):
     async def move_down_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
         return await self.move_indexes(interaction, 6)
+
+    @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
+    async def set_offset_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Set offset to a custom amount provided by the user """
+        return await interaction.response.send_modal(SetOffsetModal(self))
+
+    @discord.ui.button(label="Reset offset", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
+    async def reset_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the offset to zero """
+        return await self.set_offset(interaction, 0)
 
     @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, last row
     async def mobile_view(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -353,3 +392,67 @@ class StopScheduleView(views.InteractiveView):
         self.remove_item(button)
         self.add_item(self.mobile_view)
         return await self.message.edit(content=self.schedule.output, view=self)
+
+
+class InputModal(discord.ui.Modal):
+    """Modal that prompts users for the page number to change to"""
+    text_input: discord.ui.TextInput[discord.ui.Modal] = discord.ui.TextInput(label="Enter value", style=discord.TextStyle.short, placeholder="0")
+
+    def __init__(self, interface: StopScheduleView, title: str = "Modal"):
+        super().__init__(title=title, timeout=interface.timeout)
+        self.interface = interface
+        self.minimum = 0  # Override this in subclasses
+        self.maximum = 0  # Override this in subclasses
+
+    async def submit_handler(self, interaction: discord.Interaction, value: int):
+        """ Handle the user input """
+        raise NotImplementedError("This method must be implemented by subclasses")
+
+    # noinspection PyUnresolvedReferences
+    async def on_submit(self, interaction: discord.Interaction):
+        """ This is called when a value is submitted to this modal """
+        try:
+            if not self.text_input.value:
+                raise ValueError("Value was not filled")
+            value = int(self.text_input.value)
+            if value < self.minimum:
+                return await interaction.response.send_message(f"Value must be greater than {self.minimum}.", ephemeral=True)
+            if value > self.maximum:
+                return await interaction.response.send_message(f"Value must be less than {self.maximum}.", ephemeral=True)
+            return await self.submit_handler(interaction, value)
+        except ValueError:
+            if self.text_input.value:
+                content = f"`{self.text_input.value}` could not be converted to a valid number."
+            else:
+                content = f"You need to enter a value."
+            await interaction.response.send_message(content=content, ephemeral=True)
+
+
+class MoveOffsetModal(InputModal):
+    def __init__(self, interface: StopScheduleView):
+        super().__init__(interface, "Move Offset")
+        self.schedule = self.interface.schedule
+        self.minimum = -self.schedule.start_idx  # + self.schedule.index_offset
+        self.maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines
+        self.text_input.label = f"Amount to move offset by ({self.minimum} - {self.maximum}):"
+        self.text_input.min_length = 1
+        self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))
+
+    @override
+    async def submit_handler(self, interaction: discord.Interaction, value: int):
+        return await self.interface.move_indexes(interaction, value)
+
+
+class SetOffsetModal(InputModal):
+    def __init__(self, interface: StopScheduleView):
+        super().__init__(interface, "Set Offset")
+        self.schedule = self.interface.schedule
+        self.minimum = -self.schedule.start_idx + self.schedule.index_offset
+        self.maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines + self.schedule.index_offset
+        self.text_input.label = f"Set new offset to ({self.minimum} - {self.maximum}):"
+        self.text_input.min_length = 1
+        self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))
+
+    @override
+    async def submit_handler(self, interaction: discord.Interaction, value: int):
+        return await self.interface.set_offset(interaction, value)
