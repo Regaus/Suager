@@ -153,3 +153,9 @@
 - Changed the stop schedule view to timeout after 1 hour (instead of 15 minutes)
 - Changed the refresh button cooldown to 30 seconds (instead of 60 seconds)
 - Added buttons to move up and down the schedule
+
+## v0.4.0a9 - 12 February 2024
+- The schedule now shows when a trip is supposed to happen on a different date (e.g. before/after midnight)
+- Changed the distance to round to the nearest 10m instead of 100m
+- Fixed internal code saying there are 6 departure lines when there was actually 7
+- Changed the cooldown of the `i.tfi` command to 4 seconds (instead of 5)

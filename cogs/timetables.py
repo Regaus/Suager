@@ -525,7 +525,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     @commands.group(name="tfi")
     @commands.is_owner()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     async def tfi(self, ctx: commands.Context):
         """ Base command for TFI-related things """
         if ctx.invoked_subcommand is None:

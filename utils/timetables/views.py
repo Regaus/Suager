@@ -13,6 +13,9 @@ from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSched
 __all__ = ["StopScheduleViewer", "StopScheduleView"]
 
 
+WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+
+
 # TODO: Link these to the real_time_data and vehicle_data of the Timetables cog, so that it can be updated properly
 class StopScheduleViewer:
     """ A loader for stop schedules"""
@@ -46,7 +49,7 @@ class StopScheduleViewer:
 
     @classmethod
     async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, cog,
-                   now: time.datetime | None = None, lines: int = 6):
+                   now: time.datetime | None = None, lines: int = 7):
         """ Load the data and return a working instance """
         if now is not None:
             real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
@@ -102,7 +105,7 @@ class StopScheduleViewer:
                     start_idx = idx
                     break
         start_idx += self.index_offset
-        end_idx = start_idx + self.lines + 1
+        end_idx = start_idx + self.lines  # We don't need the + 1 here
         return start_idx, end_idx
 
     def create_output(self):
@@ -117,7 +120,8 @@ class StopScheduleViewer:
         for stop_time in iterable_stop_times[self.start_idx:self.end_idx]:
             if self.real_time:
                 if stop_time.scheduled_departure_time is not None:
-                    scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
+                    scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
+                    # scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
                 else:
                     scheduled_departure_time = "--:--"  # "Unknown"
 
@@ -126,11 +130,13 @@ class StopScheduleViewer:
                 elif stop_time.schedule_relationship == "SKIPPED":
                     real_departure_time = "SKIPPED"
                 elif stop_time.departure_time is not None:
-                    real_departure_time = stop_time.departure_time.format("%H:%M")  # :%S
+                    real_departure_time = self.format_time(stop_time.departure_time)
+                    # real_departure_time = stop_time.departure_time.format("%H:%M")  # :%S
                 else:
                     real_departure_time = "--:--"
             else:
-                scheduled_departure_time = stop_time.departure_time.format("%H:%M")
+                scheduled_departure_time = self.format_time(stop_time.departure_time)
+                # scheduled_departure_time = stop_time.departure_time.format("%H:%M")
                 real_departure_time = "N/A"
 
             if stop_time.pickup_type == 1:
@@ -150,9 +156,9 @@ class StopScheduleViewer:
             if self.real_time and stop_time.vehicle is not None:
                 distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
                 if distance_km >= 1:  # > 1 km
-                    distance = language.length(distance_km * 1000, precision=2).split(" | ")[0]
+                    distance = language.length(distance_km * 1000, precision=2).split(" | ")[0]  # Precision: 0.01km (=10m)
                 else:  # < 1 km
-                    distance = language.length(round(distance_km * 1000, -2), precision=0).split(" | ")[0]
+                    distance = language.length(round(distance_km * 1000, -1), precision=0).split(" | ")[0]  # Round to nearest 10m
                 distance = distance.replace("\u200c", "")  # Remove ZWS
             elif not self.real_time:
                 distance = "N/A"
@@ -213,6 +219,16 @@ class StopScheduleViewer:
 
     def update_output(self):
         self.output = self.create_output()
+
+    def format_time(self, provided_time: time.datetime):
+        """ Format the provided time, showing when a given trip happens outside the current day """
+        formatted = provided_time.format("%H:%M")
+        # If the date is not the date of the lookup, then append the weekday of the time
+        # If self.now is Tuesday 23:59, then trips at Wednesday 00:00 will be treated as "tomorrow"
+        # If self.now is Wednesday 00:00, then trips at Wednesday 00:00 will be treated as "today"
+        if provided_time.date() != self.today:
+            formatted = f"{WEEKDAYS[provided_time.weekday]} {formatted}"
+        return formatted
 
 
 # noinspection PyUnresolvedReferences
