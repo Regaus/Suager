@@ -377,20 +377,31 @@ class StopSchedule:
         db = get_database()  # This may get called in a separate thread than the one where the schedule was created
         output = []
         weekday = date.weekday
-        # for stop_time in self.all_stop_times:
+        calendars = self.data.calendars
+        calendar_exceptions = self.data.calendar_exceptions
+        if not calendars:  # calendars empty = no calendars have been loaded yet
+            load_calendars(self.data)
         for trip in self.all_trips:
-            calendar = trip.calendar(self.data)
+            if trip.calendar_id in calendars:
+                calendar = calendars[trip.calendar_id]
+            else:  # Weird but just in case
+                calendar = trip.calendar(self.data)
             # calendar = stop_time.trip(self.data).calendar(self.data)
             valid = None  # Whether the trip is valid for the given day
 
             # Check if the calendar has exceptions for today
-            try:
-                calendar_exceptions = load_value_from_id(self.data, "calendar_dates.txt", calendar.service_id, db)
-                exception = calendar_exceptions.get(date)
-                if exception is not None:
+            if trip.calendar_id in calendar_exceptions:
+                exception = calendar_exceptions[trip.calendar_id].get(date)
+                if exception:
                     valid = exception.exception
-            except KeyError:
-                self.data.calendar_exceptions[calendar.service_id] = {}
+            else:  # Weird but just in case
+                try:
+                    calendar_exceptions = load_value_from_id(self.data, "calendar_dates.txt", calendar.service_id, db)
+                    exception = calendar_exceptions.get(date)
+                    if exception is not None:
+                        valid = exception.exception
+                except KeyError:
+                    self.data.calendar_exceptions[calendar.service_id] = {}
 
             # Check that the current date is within the dates range
             if valid is None:

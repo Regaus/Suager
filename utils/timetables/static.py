@@ -16,7 +16,7 @@ __all__ = [
     "str_to_date", "time_to_int",
     "GTFSData", "Agency", "Calendar", "CalendarException", "Route", "Stop", "Trip", "StopTime",
     "class_mapping", "key_mapping",
-    "load_csv_lines", "check_gtfs_data_expiry", "iterate_over_csv_partial", "iterate_over_csv_full", "iterate_over_csv_multiline",
+    "load_csv_lines", "check_gtfs_data_expiry", "iterate_over_csv_partial", "iterate_over_csv_full", "iterate_over_csv_multiline", "load_calendars",
     "read_and_store_gtfs_data", "init_gtfs_data",
     "load_value_from_id", "load_values_from_key"
 ]
@@ -489,6 +489,25 @@ def init_gtfs_data(*, ignore_expiry: bool = False, db: database.Database = None)
             db = get_database()
         check_gtfs_data_expiry(db)
     return GTFSData({}, {}, {}, {}, {}, {}, {})
+
+
+def load_calendars(data: GTFSData):
+    for row in iterate_over_csv_full("calendar.txt"):
+        calendar = Calendar.parse([row[1:]])
+        data.calendars[calendar.service_id] = calendar
+    _id = None
+    exception_data = []
+    for row in iterate_over_csv_full("calendar_dates.txt"):
+        if _id == row.service_id:
+            exception_data.append(row[1:])
+        else:
+            if _id is not None:
+                exceptions = CalendarException.parse(exception_data)
+                data.calendar_exceptions[_id] = exceptions
+            _id = row.service_id
+            exception_data = []
+    exceptions = CalendarException.parse(exception_data)
+    data.calendar_exceptions[_id] = exceptions
 
 
 def load_value_from_id(data: GTFSData | None, filename: str, _id: str, db: database.Database | None) -> Optional[Any]:

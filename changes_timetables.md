@@ -145,3 +145,11 @@
 
 ## v0.4.0a7 - 12 February 2024
 - Made the default button be "unfreeze schedule" when a specific time is specified (i.e. the view is already frozen at the start)
+
+## v0.4.0a8 - 12 February 2024
+- Changed the "button on cooldown" prompt to be grey instead of red
+- Added a way to put a button on cooldown without changing its name
+- Heavily improved the amount of time it takes to load stop information by optimising the schedule load function
+- Changed the stop schedule view to timeout after 1 hour (instead of 15 minutes)
+- Changed the refresh button cooldown to 30 seconds (instead of 60 seconds)
+- Added buttons to move up and down the schedule

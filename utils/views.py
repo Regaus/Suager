@@ -9,16 +9,44 @@ class View(discord.ui.View):
         super().__init__(timeout=timeout)
 
     async def disable_button(self, message: discord.Message, button: discord.Button, cooldown: int = 2):
+        """ Disable the button for the specified amount of seconds, replace the label to state that the button is on cooldown """
         original_label = button.label
+        original_style = button.style
         button.label = "Button on cooldown..."
-        button.style = discord.ButtonStyle.danger
+        button.style = discord.ButtonStyle.grey  # used to be danger
         button.disabled = True
         await message.edit(view=self)
 
         await asyncio.sleep(cooldown)
         button.label = original_label
-        button.style = discord.ButtonStyle.primary
+        button.style = original_style
         button.disabled = False
+        await message.edit(view=self)
+
+    async def disable_button_light(self, message: discord.Message, button: discord.Button, cooldown: int = 2):
+        """ Disable the button for the specified amount of seconds, but don't do anything with the label """
+        original_style = button.style
+        button.style = discord.ButtonStyle.grey
+        button.disabled = True
+        await message.edit(view=self)
+
+        await asyncio.sleep(cooldown)
+        button.style = original_style
+        button.disabled = False
+        await message.edit(view=self)
+
+    async def disable_buttons_light(self, message: discord.Message, *buttons: discord.Button, cooldown: int = 2):
+        """ Disable multiple buttons at once (without changing their names) """
+        original_styles = []
+        for button in buttons:
+            original_styles.append(button.style)
+            button.disabled = True
+        await message.edit(view=self)
+
+        await asyncio.sleep(cooldown)
+        for i, button in enumerate(buttons):
+            button.style = original_styles[i]
+            button.disabled = False
         await message.edit(view=self)
 
     async def on_timeout(self):

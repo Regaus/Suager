@@ -219,7 +219,7 @@ class StopScheduleViewer:
 class StopScheduleView(views.InteractiveView):
     """ A view for displaying stop schedules for a given stop """
     def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer):
-        super().__init__(sender=sender, message=message, timeout=900)
+        super().__init__(sender=sender, message=message, timeout=3600)
         self.schedule = schedule
 
         if not self.schedule.fixed:
@@ -280,7 +280,45 @@ class StopScheduleView(views.InteractiveView):
         await self.message.edit(view=None)
         return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
 
-    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=1)  # Grey, last row
+    async def move_indexes(self, interaction: discord.Interaction, indexes: int):
+        """ Move the departures by the provided amount of indexes (Wrapper function) """
+        await interaction.response.defer()
+        self.schedule.index_offset += indexes
+        self.schedule.update_output()
+        await self.message.edit(content=self.schedule.output, view=self)
+        word = "down" if indexes > 0 else "up"
+        offset = self.schedule.index_offset
+        if offset == 0:
+            offset_explanation = "zero"
+        else:
+            word2 = "down" if offset > 0 else "up"
+            offset_explanation = f"{abs(offset)} {word2}"
+        _s = "s" if abs(indexes) != 1 else ""
+        await interaction.followup.send(f"Moved the schedule {word} by {abs(indexes)} departure{_s}. Total offset: {offset_explanation}.", ephemeral=True)
+        # Put all the buttons on cooldown at the same time
+        await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, cooldown=3)
+
+    @discord.ui.button(label="Move up 1", emoji="🔼", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def move_up_1(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Show 1 departure above the current """
+        return await self.move_indexes(interaction, -1)
+
+    @discord.ui.button(label="Move up 6", emoji="⏫", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def move_up_6(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Show 1 departure above the current """
+        return await self.move_indexes(interaction, -6)
+
+    @discord.ui.button(label="Move down 1", emoji="🔽", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
+    async def move_down_1(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Show 1 departure above the current """
+        return await self.move_indexes(interaction, 1)
+
+    @discord.ui.button(label="Move down 6", emoji="⏬", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
+    async def move_down_6(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Show 1 departure above the current """
+        return await self.move_indexes(interaction, 6)
+
+    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, last row
     async def mobile_view(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Mobile-optimised view: Make the text cut off so that it fits on mobile screens """
         await interaction.response.defer()
@@ -290,7 +328,7 @@ class StopScheduleView(views.InteractiveView):
         self.add_item(self.desktop_view)
         return await self.message.edit(content=self.schedule.output, view=self)
 
-    @discord.ui.button(label="Show full destinations", style=discord.ButtonStyle.secondary, row=1)  # Grey, last row
+    @discord.ui.button(label="Show full destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, last row
     async def desktop_view(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Desktop-optimised view: Stop cutting off text (default behaviour) """
         await interaction.response.defer()

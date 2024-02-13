@@ -791,3 +791,6 @@
 - Added a command to sync slash commands (`..sync`)
 - Made command completion and command error handlers deal with the existence of slash commands
   - Note: CobbleBot currently has no slash commands
+
+## v1.9.4.1 - 12 February 2024
+- Changed the "button on cooldown" prompt to be grey instead of red
