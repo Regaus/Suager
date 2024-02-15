@@ -1771,3 +1771,8 @@
 - Fixed `//love` not giving the custom output when you pinged Regaus and one of my bots
 - Changed `//hotness`'s ranges for emotes: 0-40%, 40-70%, and 70-100% (instead of 0-50%, 50-75%, and 75-100%)
 - Changed the seed modifier on `//pickle` to troll some of my friends
+
+## v7.7.13.1 - 14 February 2024
+- Made `Language.get()` be able to deal with slash commands and interactions
+- Made buttons on interactive views automatically detect whether the person is allowed to use that button
+- Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging

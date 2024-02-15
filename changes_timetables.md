@@ -162,3 +162,8 @@
 
 ## v0.4.0a10 - 13 February 2024
 - Added buttons to move the offset by a custom amount or set the offset to a custom number
+
+## v0.4.0a11 - 14 February 2024
+- Made `Language.get()` be able to deal with slash commands and interactions
+- Made buttons on interactive views automatically detect whether the person is allowed to use that button
+- Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging

@@ -98,6 +98,8 @@ def username(user: discord.User | discord.Member) -> str:
 def build_interaction_content(interaction: discord.Interaction) -> str:
     """ Build fake message content that displays interaction data """
     data: dict = interaction.data
+    if "name" not in data:
+        return "Unknown slash command"
     content = f"Slash command: /"
     elements = [data["name"]]
     # Dig through subcommands - Check that the first "option" is not a command/subcommand
@@ -108,4 +110,3 @@ def build_interaction_content(interaction: discord.Interaction) -> str:
     for option in data.get("options", []):
         elements.append(f"{option['name']}={str(option.get('value', None))}")
     return content + " ".join(elements)
-

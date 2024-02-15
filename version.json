@@ -1,17 +1,17 @@
 {
   "suager": {
     "short_version": "7.7",
-    "version": "7.7.13",
+    "version": "7.7.13.1",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1707597493
+    "last_update": 1707957642
   },
   "cobble": {
     "short_version": "1.9",
-    "version": "1.9.4.1",
+    "version": "1.9.4.2",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1707782797
+    "last_update": 1707957642
   },
   "kyomi": {
     "short_version": "1.4",
@@ -43,10 +43,10 @@
   },
   "timetables": {
     "short_version": "0.3",
-    "version": "0.4.0a10",
+    "version": "0.4.0a11",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1707819308
+    "last_update": 1707957642
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

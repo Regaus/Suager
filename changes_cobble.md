@@ -794,3 +794,8 @@
 
 ## v1.9.4.1 - 12 February 2024
 - Changed the "button on cooldown" prompt to be grey instead of red
+
+## v1.9.4.2 - 14 February 2024
+- Made `Language.get()` be able to deal with slash commands and interactions
+- Made buttons on interactive views automatically detect whether the person is allowed to use that button
+- Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging

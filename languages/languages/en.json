@@ -1,5 +1,15 @@
 {
   "generic_timed_out": "~~{text}~~\nCommand timed out with no response.",
+  "generic_component_type": {  // Names for the discord.ComponentType enum (for view errors)
+    "action_row": "Action Row",
+    "button": "Button",
+    "text_input": "Text Input",
+    "select": "Select",
+    "user_select": "User Select",
+    "role_select": "Role Select",
+    "mentionable_select": "User/Role Select"
+  },
+  "generic_component_unknown": "Unknown view component", // Unknown component (no type, no label)
 
   "achievements_achievements": "This is what **{user}** has accomplished so far.",
   "achievements_current": "Current Level: {current} of {max}",
@@ -76,9 +86,11 @@
   "discord_user_roles_overall": "\nTotal: {total} roles",
   "discord_user_username": "Username",
 
+  "events_error_author": "{emotes.Deny} Only the author of the command can use this interaction.",
   "events_error_bad_argument": "{emotes.Deny} One of the arguments received an invalid value...",
   "events_error_channel_access": "{emotes.Deny} I cannot access that channel.",
   "events_error_check": "{emotes.Deny} You can't use this command here...",
+  "events_error_check2": "{emotes.Deny} You can't use this action...",
   "events_error_concurrency": "{emotes.Deny} Maximum concurrency for command reached ({rate} per {per}). Try again later...",
   "events_error_cooldown": "{emotes.Deny} This command is currently on cooldown ({rate} per {per}s). Retry in {time} seconds...",
   "events_error_error": "{emotes.Deny} An error occurred:\n{err}",
