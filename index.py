@@ -67,7 +67,7 @@ for i in range(len(config["bots"])):
         tasks.append(loop.create_task(bot.start(local_config["token"])))
         tasks.append(loop.create_task(temporaries.playing(bot)))
         if bot.name == "suager":
-            tasks.append(loop.create_task(temporaries.avatars(bot)))
+            # tasks.append(loop.create_task(temporaries.avatars(bot)))
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.reminders(bot)))
             tasks.append(loop.create_task(temporaries.reminders_errors(bot)))

@@ -36,13 +36,15 @@ def font_tester() -> BytesIO:
     return bio
 
 
-def april_fools_avatar(image: bytes) -> bytes:
-    """ Inverts the avatar on 1st April"""
-    img = load_from_bytes(image)
-    img = flip_image(img)
-    return save_to_bytes(img)
+# def april_fools_avatar(image: bytes) -> bytes:
+#     """ Inverts the avatar on 1st April"""
+#     img = load_from_bytes(image)
+#     img = flip_image(img)
+#     return save_to_bytes(img)
 
 
+# These were only used by april_fools_avatar(), which we no longer need
+# But I'll leave these functions here in case we ever need them again
 def flip_image(img: Image) -> Image:
     return img.rotate(180)
 

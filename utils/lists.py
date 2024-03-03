@@ -1,17 +1,17 @@
 hearts = list("❤️🧡💛💚💙💜🖤🤎🤍")
 
-avatars = ["https://cdn.discordapp.com/attachments/622949625204047872/622949729558593546/00.jpg",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949783165730878/01.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949803592122389/02.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949821057073182/03.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949843026968577/04.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949863101038653/05.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949882835238913/06.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949902753988614/07.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949921556922388/08.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949928938766336/09.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949934144028682/10.png",
-           "https://cdn.discordapp.com/attachments/622949625204047872/622949940049477663/11.png"]
+# avatars = ["https://cdn.discordapp.com/attachments/622949625204047872/622949729558593546/00.jpg",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949783165730878/01.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949803592122389/02.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949821057073182/03.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949843026968577/04.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949863101038653/05.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949882835238913/06.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949902753988614/07.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949921556922388/08.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949928938766336/09.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949934144028682/10.png",
+#            "https://cdn.discordapp.com/attachments/622949625204047872/622949940049477663/11.png"]
 # avatars = ["https://media.discordapp.net/attachments/753000962297299005/826960062928388116/Teletubbies_Square_2.png"]  # Regaus
 
 error = "https://cdn.discordapp.com/attachments/673650596913479710/673650677528133649/error.png"

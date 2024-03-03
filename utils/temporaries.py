@@ -1009,36 +1009,37 @@ async def playing(bot: bot_data.Bot):
         await wait_until_next_iter(update_speed, 0)
 
 
-async def avatars(bot: bot_data.Bot):
-    await wait_until_next_iter(3600, 1)
-    await bot.wait_until_ready()
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
-
-    while True:
-        try:
-            avatar = random.choice(lists.avatars)
-            e = False
-            s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
-            try:
-                bio: bytes = await http.get(avatar, res_method="read")
-                # Flip the avatar during 1st April
-                if time.april_fools():
-                    bio = images.april_fools_avatar(bio)
-                await bot.user.edit(avatar=bio)
-            except discord.errors.HTTPException:
-                e = True
-            send = s2 if e else s1
-            logger.log(bot.name, "avatar", send)
-        except PermissionError:
-            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
-        except (aiohttp.ClientConnectorError, ConnectionError):
-            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
-        except Exception as e:
-            general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
-            general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
-
-        await asyncio.sleep(1)
-        await wait_until_next_iter(3600, 1)
+# No longer needed: Suager now has an animated avatar
+# async def avatars(bot: bot_data.Bot):
+#     await wait_until_next_iter(3600, 1)
+#     await bot.wait_until_ready()
+#     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
+#
+#     while True:
+#         try:
+#             avatar = random.choice(lists.avatars)
+#             e = False
+#             s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
+#             try:
+#                 bio: bytes = await http.get(avatar, res_method="read")
+#                 # Flip the avatar during 1st April
+#                 if time.april_fools():
+#                     bio = images.april_fools_avatar(bio)
+#                 await bot.user.edit(avatar=bio)
+#             except discord.errors.HTTPException:
+#                 e = True
+#             send = s2 if e else s1
+#             logger.log(bot.name, "avatar", send)
+#         except PermissionError:
+#             general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
+#         except (aiohttp.ClientConnectorError, ConnectionError):
+#             general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
+#         except Exception as e:
+#             general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
+#             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+#
+#         await asyncio.sleep(1)
+#         await wait_until_next_iter(3600, 1)
 
 
 async def polls(bot: bot_data.Bot):
