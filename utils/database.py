@@ -310,24 +310,6 @@ tables = [
         Column("uid", "INTEGER", True),
         Column("tz", "TEXT", True)
     ]),
-    Table("trials", "database.db", [
-        Column("guild_id", "INTEGER", True),        # The Guild ID where the trial was started
-        Column("channel_id", "INTEGER", True),      # The Channel ID of the trial status message
-        Column("message_id", "INTEGER", True),      # The Message ID of the trial status message
-        Column("trial_id", "INTEGER", True),        # The Trial ID
-        Column("author_id", "INTEGER", True),       # The User ID of who started the trial
-        Column("user_id", "INTEGER", True),         # The User ID, to which the action will be done if the trial succeeds
-        Column("type", "TEXT", True),               # The type of trial (ban, unban, kick, mute, unmute)
-        Column("mute_length", "INTEGER", True),     # The mute length in seconds (if the trial type is mute)
-        Column("reason", "TEXT", True),             # The reason for starting the trial ([Author#1234] Reason)
-        Column("voters_yes", "TEXT", True),         # List of users who voted Yes
-        Column("voters_neutral", "TEXT", True),     # List of users who voted Neutral
-        Column("voters_no", "TEXT", True),          # List of users who voted No
-        Column("start_time", "REAL", True),         # Timestamp when the trial was started
-        Column("expiry", "TIMESTAMP", True),        # When the poll ends
-        Column("anonymous", "BOOLEAN", True),       # Whether the poll is anonymous or not
-        Column("required_score", "INTEGER", True),  # Score required for the trial to pass
-    ]),
     Table("user_roles", "database.db", [                 # We should only need to log people who left with roles, so we only need this much data
         Column("gid", "INTEGER", True),   # Guild ID
         Column("uid", "INTEGER", True),   # User ID

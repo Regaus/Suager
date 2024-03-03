@@ -1779,4 +1779,7 @@
 
 ## v7.7.14 - 3 March 2024
 - Disabled the avatar changer function as Suager now has an animated avatar
-- Disabled `//poll` and `//trial` until they are either rewritten or removed altogether
+
+## v7.7.14.1 - 3 March 2024
+- Removed trials altogether
+- Disabled the `//poll` command until I rewrite it
