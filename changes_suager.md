@@ -1783,3 +1783,7 @@
 ## v7.7.14.1 - 3 March 2024
 - Removed trials altogether
 - Disabled the `//poll` command until I rewrite it
+
+## v7.7.14.2 - 3 March 2024
+- Removed old strings that mentioned trials
+- Made the polls settings available to all guilds

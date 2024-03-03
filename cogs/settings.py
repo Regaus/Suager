@@ -27,7 +27,7 @@ class Settings(commands.Cog):
         # Get values that are valid to count for translation completion
         always_valid = ["_languages", "_language_alt", "generic", "frequency", "time", "discord", "events", "info", "settings"]
         valid_prefixes = {
-            "suager": ["achievements", "birthdays", "fun", "images", "leaderboards", "leveling", "mod", "polls", "ratings", "social", "starboard", "tags", "trials", "util"],
+            "suager": ["achievements", "birthdays", "fun", "images", "leaderboards", "leveling", "mod", "polls", "ratings", "social", "starboard", "tags", "util"],
             "cobble": ["weather78", "achievements", "birthdays", "kuastall", "leaderboards", "leveling", "placeholder", "util"],
             "kyomi":  ["birthdays", "fun", "images", "mod", "ratings", "social", "starboard", "util"]
         }
@@ -177,7 +177,7 @@ class Settings(commands.Cog):
 
         if self.bot.name in ["kyomi", "suager"]:
             # Polls
-            if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
+            if self.bot.name in ["suager"]:  # and ctx.guild.id in [869975256566210641, 738425418637639775]:
                 polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
                 if "polls" in setting:
                     polls = setting["polls"]
@@ -1227,7 +1227,7 @@ class Settings(commands.Cog):
         return await self.messages_ignore_bots_toggle(ctx, False)
 
     @settings.group(name="polls", case_insensitive=True)
-    @commands.check(lambda ctx: ctx.bot.name in ["suager"] and ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
+    @commands.check(lambda ctx: ctx.bot.name in ["suager"])  # and ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     async def set_polls(self, ctx: commands.Context):
         """ Polls settings """
         if ctx.invoked_subcommand is None:
