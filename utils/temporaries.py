@@ -1236,6 +1236,29 @@ async def ka_holidays_updater(bot: bot_data.Bot):
         await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
 
 
+async def data_remover(bot: bot_data.Bot):
+    update_speed = 86400
+    await wait_until_next_iter(update_speed, 1)
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Data Remover")
+
+    while True:
+        try:
+            # Remove any entries from these databases where the removal timestamp has now expired.
+            # It doesn't matter which bot the data belonged to, as the data is being deleted anyways.
+            bot.db.execute("DELETE FROM leveling    WHERE DATE(remove) <= DATE('now')")
+            bot.db.execute("DELETE FROM punishments WHERE DATE(remove) <= DATE('now')")
+            bot.db.execute("DELETE FROM settings    WHERE DATE(remove) <= DATE('now')")
+            bot.db.execute("DELETE FROM starboard   WHERE DATE(remove) <= DATE('now')")
+            bot.db.execute("DELETE FROM tags        WHERE DATE(remove) <= DATE('now')")
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > Data Remover > {type(e).__name__}: {e}")
+            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Data Remover > {type(e).__name__}: {e}")
+
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 1)
+
+
 async def dcu_calendar_updater(bot: bot_data.Bot):
     update_speed = 604800  # 7 days / 1 week
     update_delay = 345600  # 4 days -> Restart every Monday

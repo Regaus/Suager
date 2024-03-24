@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 from io import BytesIO
 from typing import List
 
@@ -261,6 +262,13 @@ class Events(commands.Cog):
         send = f"{time.time()} > {self.bot.full_name} > Joined {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
+        # Cancel the deletion of the server's data
+        self.bot.db.execute("UPDATE leveling    SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE punishments SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE settings    SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE starboard   SET remove=NULL WHERE guild=? AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE tags        SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+
         if not self.local_config["join_message"]:
             return
         try:
@@ -276,11 +284,20 @@ class Events(commands.Cog):
         send = f"{time.time()} > {self.bot.full_name} > Left {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
+        # Delete most of the data about the server in 90 days' time
+        removal_timestamp = date.today() + timedelta(days=90)  # 90 days from now
+        self.bot.db.execute("UPDATE leveling    SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE punishments SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE settings    SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE starboard   SET remove=? WHERE guild=? AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE tags        SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         # Load settings
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
+        # Cancel the deletion of the user's leveling data
+        self.bot.db.execute("UPDATE leveling SET remove=NULL WHERE uid=? AND gid=? AND bot=?", (member.id, member.guild.id, self.bot.name))
         # Push all "User left" status punishments back into normal mode
         self.bot.db.execute("UPDATE punishments SET handled=0 WHERE uid=? and gid=? AND handled=3 AND bot=?", (member.id, member.guild.id, self.bot.name))
         active_mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
@@ -399,6 +416,7 @@ class Events(commands.Cog):
                     2021:  794699877325471776,
                     2022:  922602168010309732,
                     2023: 1091828639940747274,
+                    2024: 1221468869282107612,
                 }
                 role_id = role_ids[time.now().year]
                 await member.add_roles(member.guild.get_role(role_id))
@@ -411,22 +429,22 @@ class Events(commands.Cog):
                         pass
                     await member.kick(reason="Users must be at least 30 days old to join the server.")
                     await member.guild.get_channel(870015339142996079).send(f"{member} has been kicked - account less than 30 days old...")
-                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
-                if trials:
-                    for trial in trials:
-                        if trial["type"] in ["mute", "kick", "ban"]:
-                            voters_yes: list = json.loads(trial["voters_yes"])
-                            voters_neutral: list = json.loads(trial["voters_neutral"])
-                            voters_no: list = json.loads(trial["voters_no"])
-                            yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
-                            try:
-                                upvotes = yes / (yes + no)
-                            except ZeroDivisionError:
-                                upvotes = 0
-                            if yes + neutral + no >= trial["required_score"] and upvotes >= 0.6:
-                                await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
-                                await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
-                                break
+                # trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
+                # if trials:
+                #     for trial in trials:
+                #         if trial["type"] in ["mute", "kick", "ban"]:
+                #             voters_yes: list = json.loads(trial["voters_yes"])
+                #             voters_neutral: list = json.loads(trial["voters_neutral"])
+                #             voters_no: list = json.loads(trial["voters_no"])
+                #             yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                #             try:
+                #                 upvotes = yes / (yes + no)
+                #             except ZeroDivisionError:
+                #                 upvotes = 0
+                #             if yes + neutral + no >= trial["required_score"] and upvotes >= 0.6:
+                #                 await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
+                #                 await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
+                #                 break
 
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
@@ -436,20 +454,26 @@ class Events(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         # Push all unhandled punishments to "User left" status
         self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? and gid=? AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
-        if self.bot.name == "suager":
-            uid, gid = member.id, member.guild.id
-            sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
-            if sel:
-                if sel["xp"] < 0:
-                    return
-                elif sel["level"] < 0:
-                    self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
-                else:
-                    self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
 
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
         if data:
             settings = json.loads(data["data"])
+            if self.bot.name == "suager":
+                # Reset the user's XP upon leaving, unless the server enabled data retention
+                if "leveling" in settings and not settings["leveling"].get("retain_data", False):
+                    removal_timestamp = date.today() + timedelta(days=30)  # 30 days from now
+                    self.bot.db.execute("UPDATE leveling SET remove=? WHERE uid=? AND gid=? AND bot=?", (removal_timestamp, member.id, member.guild.id, self.bot.name))
+                    # This code below is for the old behaviour, where members with negative levels or xp were not removed from the database
+                    # uid, gid = member.id, member.guild.id
+                    # sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
+                    # if sel:
+                    #     if sel["xp"] < 0:
+                    #         return
+                    #     elif sel["level"] < 0:
+                    #         self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
+                    #     else:
+                    #         self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
+
             if "goodbye" in settings:
                 goodbye = settings["goodbye"]
                 if goodbye["channel"]:

@@ -1783,3 +1783,12 @@
 ## v7.7.14.1 - 3 March 2024
 - Removed trials altogether
 - Disabled the `//poll` command until I rewrite it
+
+## v7.7.15 - 24 March 2024
+- Added a "Joined in 2024" role for Senko Lair
+- Leveling data is now removed when a user leaves regardless of negative XP or levels
+- Made it possible to retain a user's XP when they leave the server (`//settings leveling dataretention enable` - disabled by default)
+  - Their leveling data is now also only deleted 30 days after leaving
+- Made it possible to remove user data when the bot is kicked from the server
+  - The guild's data is removed 90 days after the bot is no longer in the server (to prevent data loss from a server outage or accidentally kicking the bot)
+- Added a `bot` field to tags to separate tags created by different bots (in case other bots ever get tag functionality)

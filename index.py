@@ -76,6 +76,7 @@ for i in range(len(config["bots"])):
             # tasks.append(loop.create_task(temporaries.polls(bot)))  # Leaving this here so I can re-enable once the code is updated/rebranded
             # tasks.append(loop.create_task(temporaries.dcu_calendar_updater(bot)))
             tasks.append(loop.create_task(temporaries.new_year(bot)))
+            tasks.append(loop.create_task(temporaries.data_remover(bot)))  # I should only have to run this on one bot, there's no point running deletes multiple times
         elif bot.name == "cobble":
             tasks.append(loop.create_task(temporaries.birthdays(bot)))
             tasks.append(loop.create_task(temporaries.ka_time_updater(bot)))
