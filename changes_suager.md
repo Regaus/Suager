@@ -1792,3 +1792,6 @@
 - Made it possible to remove user data when the bot is kicked from the server
   - The guild's data is removed 90 days after the bot is no longer in the server (to prevent data loss from a server outage or accidentally kicking the bot)
 - Added a `bot` field to tags to separate tags created by different bots (in case other bots ever get tag functionality)
+
+## v7.7.15.1 - 31 March 2024
+- Fixed `//timesince` not actually applying the local timezone

@@ -151,7 +151,7 @@ class Utility(commands.Cog):
                     date_part = time2.date(y, m, d, time2.Earth)
                     date = time2.datetime.combine(date_part, time_part, time2.utc)
                     date2 = date.as_timezone(tz)
-                    date.replace(tz=date2.tzinfo)
+                    date = date.replace(tz=date2.tzinfo)
                 except ValueError:
                     return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
