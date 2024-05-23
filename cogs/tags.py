@@ -16,10 +16,10 @@ class Tags(commands.Cog):
     async def tags(self, ctx: commands.Context, *, tag_name: str):
         """ Tags """
         if ctx.invoked_subcommand is None:
-            tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+            tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
             language = self.bot.language(ctx)
             if tag:
-                self.bot.db.execute("UPDATE tags SET usage=usage+1 WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+                self.bot.db.execute("UPDATE tags SET usage=usage+1 WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
                 content = tag["content"]\
                     .replace("[USERNAME]", general.username(ctx.author))\
                     .replace("[USER]", general.username(ctx.author))\
@@ -67,11 +67,11 @@ class Tags(commands.Cog):
     async def create_tag(self, ctx: commands.Context, tag_name: str, *, content: str):
         """ Create a new tag """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if tag:
             return await ctx.send(language.string("tags_create_already", tag=tag_name.lower()))
-        self.bot.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                             (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0))
+        self.bot.db.fetchrow("INSERT INTO tags VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                             (ctx.guild.id, ctx.author.id, ctx.author.id, tag_name.lower(), content, int(time.now_ts()), int(time.now_ts()), 0, self.bot.name, None))
         return await ctx.send(language.string("tags_create_success", tag=tag_name.lower(), author=general.username(ctx.author)))
 
     async def try_get(self, uid: int):
@@ -88,7 +88,7 @@ class Tags(commands.Cog):
     async def tag_info(self, ctx: commands.Context, *, tag_name: str):
         """ See info about a tag """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if not tag:
             return await ctx.send(language.string("tags_not_found", tag=tag_name.lower()))
         embed = discord.Embed(colour=general.random_colour())
@@ -99,7 +99,7 @@ class Tags(commands.Cog):
                                             edited=language.time(time.from_ts(tag["edited"]), tz=True, uid=ctx.author.id))
         c = tag["content"]
         if len(c) > 1024:
-            c = f"{c[:1021]}..."
+            c = f"{c[:1023]}…"
         embed.add_field(name=language.string("tags_info_content"), value=c)
         return await ctx.send(language.string("tags_info_about", tag=tag["name"]), embed=embed)
 
@@ -107,7 +107,7 @@ class Tags(commands.Cog):
     async def delete_tag(self, ctx: commands.Context, *, tag_name: str):
         """ Delete a tag """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if not tag:
             return await ctx.send(language.string("tags_not_found", tag=tag_name.lower()))
 
@@ -122,7 +122,7 @@ class Tags(commands.Cog):
                 await self.bot.wait_for('message', timeout=30.0, check=check_confirm)
             except asyncio.TimeoutError:
                 return await confirm_msg.edit(content=language.string("generic_timed_out", text=confirm_msg.clean_content))
-            self.bot.db.execute("DELETE FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag['name']))
+            self.bot.db.execute("DELETE FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag['name'], self.bot.name))
             await confirm_msg.delete()
             return await ctx.send(language.string("tags_delete_success", tag=tag["name"]))
         else:
@@ -132,49 +132,49 @@ class Tags(commands.Cog):
     async def edit_tag(self, ctx: commands.Context, tag_name: str, *, new_content: str):
         """ Edit a tag """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if not tag:
             return await ctx.send(language.string("tags_not_found", tag=tag_name.lower()))
         if tag["owner"] != ctx.author.id:
             return await ctx.send(language.string("tags_edit_deny"))
         else:
-            self.bot.db.execute("UPDATE tags SET content=?, edited=? WHERE gid=? AND name=?", (new_content, int(time.now_ts()), ctx.guild.id, tag_name.lower()))
+            self.bot.db.execute("UPDATE tags SET content=?, edited=? WHERE gid=? AND name=? AND bot=?", (new_content, int(time.now_ts()), ctx.guild.id, tag_name.lower(), self.bot.name))
             return await ctx.send(language.string("tags_edit_success", tag=tag["name"]))
 
     @tags.command(name="rename")
     async def rename_tag(self, ctx: commands.Context, tag_name: str, *, new_name: str):
         """ Rename a tag """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if not tag:
             return await ctx.send(language.string("tags_not_found", tag=tag_name.lower()))
-        _tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, new_name.lower()))
+        _tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, new_name.lower(), self.bot.name))
         if _tag:
             return await ctx.send(language.string("tags_rename_already", name=new_name.lower()))
         if tag["owner"] != ctx.author.id:
             return await ctx.send(language.string("tags_rename_deny"))
         else:
-            self.bot.db.execute("UPDATE tags SET name=?, edited=? WHERE gid=? AND name=?", (new_name.lower(), int(time.now_ts()), ctx.guild.id, tag['name']))
+            self.bot.db.execute("UPDATE tags SET name=?, edited=? WHERE gid=? AND name=? AND bot=?", (new_name.lower(), int(time.now_ts()), ctx.guild.id, tag['name'], self.bot.name))
             return await ctx.send(language.string("tags_rename_success", tag=tag["name"], name=new_name.lower()))
 
     @tags.command(name="transfer")
     async def transfer_tag(self, ctx: commands.Context, tag_name: str, *, user: discord.Member):
         """ Transfer your tag to someone else """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if not tag:
             return await ctx.send(language.string("tags_not_found", tag=tag_name.lower()))
         if tag["owner"] != ctx.author.id:
             return await ctx.send(language.string("tags_transfer_deny"))
         else:
-            self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (user.id, ctx.guild.id, tag_name.lower()))
+            self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=? AND bot=?", (user.id, ctx.guild.id, tag_name.lower(), self.bot.name))
             return await ctx.send(language.string("tags_transfer_success", tag=tag["name"], target=user))
 
     @tags.command(name="claim")
     async def claim_tag(self, ctx: commands.Context, *, tag_name: str):
         """ Claim a tag of a user who left the server """
         language = self.bot.language(ctx)
-        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=?", (ctx.guild.id, tag_name.lower()))
+        tag = self.bot.db.fetchrow("SELECT * FROM tags WHERE gid=? AND name=? AND bot=?", (ctx.guild.id, tag_name.lower(), self.bot.name))
         if not tag:
             return await ctx.send(language.string("tags_not_found", tag=tag_name.lower()))
         if tag["owner"] == ctx.author.id:
@@ -182,7 +182,7 @@ class Tags(commands.Cog):
         elif tag["owner"] in [u.id for u in ctx.guild.members]:
             return await ctx.send(language.string("tags_claim_server"))
         else:
-            self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=?", (ctx.author.id, ctx.guild.id, tag["name"]))
+            self.bot.db.execute("UPDATE tags SET owner=? WHERE gid=? AND name=? AND bot=?", (ctx.author.id, ctx.guild.id, tag["name"], self.bot.name))
             return await ctx.send(language.string("tags_claim_success", author=general.username(ctx.author), tag=tag["name"]))
 
     @tags.command(name="user")
@@ -190,7 +190,7 @@ class Tags(commands.Cog):
         """ See someone's tags """
         language = self.bot.language(ctx)
         user = who or ctx.author
-        tags = self.bot.db.fetch("SELECT * FROM tags WHERE owner=? AND gid=? ORDER BY name", (user.id, ctx.guild.id))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE owner=? AND gid=? AND bot=? ORDER BY name", (user.id, ctx.guild.id, self.bot.name))
         if not tags:
             return await ctx.send(language.string("tags_user_none", user=general.username(user)))
         block = "```fix"
@@ -202,7 +202,7 @@ class Tags(commands.Cog):
     async def tags_all(self, ctx: commands.Context, page: int = 1):
         """ See all tags sorted alphabetically """
         language = self.bot.language(ctx)
-        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? ORDER BY name", (ctx.guild.id,))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND bot=? ORDER BY name", (ctx.guild.id, self.bot.name))
         if not tags:
             return await ctx.send(language.string("tags_list_none", server=ctx.guild.name))
         block = "```fix"
@@ -214,7 +214,7 @@ class Tags(commands.Cog):
     async def tags_top(self, ctx: commands.Context, page: int = 1):
         """ See all tags sorted by usage """
         language = self.bot.language(ctx)
-        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? ORDER BY usage DESC", (ctx.guild.id,))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND bot=? ORDER BY usage DESC", (ctx.guild.id, self.bot.name))
         if not tags:
             return await ctx.send(language.string("tags_list_none", server=ctx.guild.name))
         block = "```fix"
@@ -228,8 +228,8 @@ class Tags(commands.Cog):
          Write search string "like this" if it contains 2 or more words"""
         language = self.bot.language(ctx)
         _search = "%" + search.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
-        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND (content LIKE ? ESCAPE '!' OR name LIKE ? ESCAPE '!') ORDER BY name",
-                                 (ctx.guild.id, _search, _search))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND (content LIKE ? ESCAPE '!' OR name LIKE ? ESCAPE '!') AND bot=? ORDER BY name",
+                                 (ctx.guild.id, _search, _search, self.bot.name))
         if not tags:
             return await ctx.send(language.string("tags_search_none", server=ctx.guild.name))
         block = "```fix"
@@ -245,7 +245,7 @@ class Tags(commands.Cog):
         self.bot.db.execute("CREATE TEMP TABLE tags_members (uid INTEGER NOT NULL)")
         for member in members:
             self.bot.db.execute("INSERT INTO tags_members VALUES (?)", (member,))
-        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND owner NOT IN (SELECT * FROM tags_members) ORDER BY name", (ctx.guild.id,))
+        tags = self.bot.db.fetch("SELECT * FROM tags WHERE gid=? AND owner NOT IN (SELECT * FROM tags_members) AND bot=? ORDER BY name", (ctx.guild.id, self.bot.name))
         self.bot.db.execute("DROP TABLE tags_members")
         if not tags:
             return await ctx.send(language.string("tags_search_none", server=ctx.guild.name))

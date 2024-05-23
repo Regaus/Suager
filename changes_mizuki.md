@@ -412,3 +412,11 @@
 
 ## v1.4.4 - 15 December 2023
 - Paginated the embed for the server's current settings (Embeds for subcategories, e.g. leveling, keep their normal embeds)
+
+## v1.4.4.1 - 5 February 2024
+- Fixed the `m!laugh` command not working when a user was mentioned
+
+## v1.4.5 - 5 February 2024
+- Added a command to sync slash commands (`m!sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+  - Note: Mizuki currently has no slash commands

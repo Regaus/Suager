@@ -207,7 +207,7 @@ class Settings(commands.Cog):
                 welcome = setting["welcome"]
                 if welcome["channel"]:
                     welcome_channel = language.string("settings_current_welcome_channel", channel=welcome["channel"])
-                    welcome_message = f"{welcome['message'][:1021]}..." if len(welcome["message"]) > 1024 else welcome["message"]
+                    welcome_message = f"{welcome['message'][:1023]}…" if len(welcome["message"]) > 1024 else welcome["message"]
             await interface.add_field(name=language.string("settings_current_welcome"), value=welcome_channel, inline=False)
             if welcome_message:
                 await interface.add_field(name=language.string("settings_current_welcome_message"), value=welcome_message, inline=False)
@@ -218,7 +218,7 @@ class Settings(commands.Cog):
                 goodbye = setting["goodbye"]
                 if goodbye["channel"]:
                     goodbye_channel = language.string("settings_current_goodbye_channel", channel=goodbye["channel"])
-                    goodbye_message = f"{goodbye['message'][:1021]}..." if len(goodbye["message"]) > 1024 else goodbye["message"]
+                    goodbye_message = f"{goodbye['message'][:1023]}…" if len(goodbye["message"]) > 1024 else goodbye["message"]
             await interface.add_field(name=language.string("settings_current_goodbye"), value=goodbye_channel, inline=False)
             if goodbye_message:
                 await interface.add_field(name=language.string("settings_current_goodbye_message"), value=goodbye_message, inline=False)
@@ -380,7 +380,7 @@ class Settings(commands.Cog):
         if data:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?, ?)", (ctx.guild.id, self.bot.name, stuff, None))
         return await ctx.send(f"Settings for {ctx.guild.name} have been updated.")
 
     @settings.group(name="language", aliases=["lang"])
@@ -418,7 +418,7 @@ class Settings(commands.Cog):
         if existent:
             self.bot.db.execute("UPDATE settings SET data=? WHERE gid=? AND bot=?", (stuff, ctx.guild.id, self.bot.name))
         else:
-            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?)", (ctx.guild.id, self.bot.name, stuff))
+            self.bot.db.execute("INSERT INTO settings VALUES (?, ?, ?, ?)", (ctx.guild.id, self.bot.name, stuff, None))
         # The "allowed mentions" is here just for settings like the level up message, to avoid sending unnecessary pings
         return await ctx.send(ctx.language().string(output_key, **kwargs), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
 
@@ -496,6 +496,7 @@ class Settings(commands.Cog):
             embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
         embed.set_footer(text=language.string("settings_leveling_footer", p=ctx.prefix))
         embed.add_field(name=language.string("settings_leveling_enabled2"), value=language.yes(leveling["enabled"]), inline=False)
+        embed.add_field(name=language.string("settings_leveling_data_retention"), value=language.yes(leveling.get("retain_data", False)), inline=False)
         embed.add_field(name=language.string("settings_leveling_multiplier"), value="x" + language.number(leveling["xp_multiplier"], precision=2), inline=False)
         ac = leveling["announce_channel"]
         if ac == -1:
@@ -505,19 +506,19 @@ class Settings(commands.Cog):
                 embed.add_field(name=language.string("settings_leveling_announcements"), value=language.string("settings_leveling_announcements_zero"), inline=False)
             else:
                 embed.add_field(name=language.string("settings_leveling_announcements"), value=f"<#{ac}>", inline=False)
-            message = f"{leveling['level_up_message'][:1021]}..." if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
+            message = f"{leveling['level_up_message'][:1023]}…" if len(leveling["level_up_message"]) > 1024 else leveling["level_up_message"]
             embed.add_field(name=language.string("settings_leveling_message"), value=message, inline=False)
             if "level_up_role" in leveling:
                 if leveling["level_up_role"]:
-                    message = f"{leveling['level_up_role'][:1021]}..." if len(leveling["level_up_role"]) > 1024 else leveling["level_up_role"]
+                    message = f"{leveling['level_up_role'][:1023]}…" if len(leveling["level_up_role"]) > 1024 else leveling["level_up_role"]
                     embed.add_field(name=language.string("settings_leveling_message_role"), value=message, inline=False)
             if "level_up_highest" in leveling:
                 if leveling["level_up_highest"]:
-                    message = f"{leveling['level_up_highest'][:1021]}..." if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
+                    message = f"{leveling['level_up_highest'][:1023]}…" if len(leveling["level_up_highest"]) > 1024 else leveling["level_up_highest"]
                     embed.add_field(name=language.string("settings_leveling_message_highest"), value=message, inline=False)
             if "level_up_max" in leveling:
                 if leveling["level_up_max"]:
-                    message = f"{leveling['level_up_max'][:1021]}..." if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
+                    message = f"{leveling['level_up_max'][:1023]}…" if len(leveling["level_up_max"]) > 1024 else leveling["level_up_max"]
                     embed.add_field(name=language.string("settings_leveling_message_max"), value=message, inline=False)
         if not leveling["ignored_channels"]:
             ignored = language.string("generic_none")
@@ -887,6 +888,31 @@ class Settings(commands.Cog):
         else:
             return await ctx.send(language.string("settings_leveling_rewards_edit_fail2", role=role.name))
 
+    @set_lvl.group(name="retaindata", aliases=["dataretention", "dr"], case_insensitive=True)
+    async def lvl_data_retention(self, ctx: commands.Context):
+        """ Set whether to keep a user's XP after they leave the server or not """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(str(ctx.command))
+
+    async def lvl_data_retention_toggle(self, ctx: commands.Context, toggle: bool):
+        """ Enable or disable leveling data retention """
+        _settings, existent = await self.settings_start(ctx, "leveling")
+        _settings["leveling"]["retain_data"] = toggle
+        output = "settings_leveling_data_retention_enable" if toggle else "settings_leveling_data_retention_disable"
+        return await self.settings_end(ctx, _settings, existent, output)
+
+    @lvl_data_retention.command(name="disable")
+    async def lvl_data_retention_disable(self, ctx: commands.Context):
+        """ Disable leveling data retention """
+        return await self.lvl_data_retention_toggle(ctx, False)
+
+    @lvl_data_retention.command(name="enable")
+    async def lvl_data_retention_enable(self, ctx: commands.Context):
+        """ Enable leveling data retention """
+        # Cancel the deletion of users' leveling data
+        self.bot.db.execute("UPDATE leveling SET remove=NULL WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
+        return await self.lvl_data_retention_toggle(ctx, True)
+
     @settings.command(name="muterole", aliases=["mutedrole", "muted", "mute"])
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])
     async def set_mute_role(self, ctx: commands.Context, role: discord.Role):
@@ -978,7 +1004,7 @@ class Settings(commands.Cog):
         if birthdays["channel"] != 0:
             embed.add_field(name=language.string("settings_birthdays_channel"), value=f"<#{birthdays['channel']}>", inline=False)
             if birthdays["message"] and len(birthdays["message"]) > 1024:
-                message = f"{birthdays['message'][:1021]}..."
+                message = f"{birthdays['message'][:1023]}…"
             else:
                 message = birthdays["message"]
             embed.add_field(name=language.string("settings_birthdays_message"), value=message, inline=False)

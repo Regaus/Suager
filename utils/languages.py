@@ -48,15 +48,21 @@ class Language(languages.Language):
     @classmethod
     def get(cls, ctx, personal: bool = False):
         """ Find the language of the server """
+        if hasattr(ctx, "bot"):
+            bot = ctx.bot
+        elif hasattr(ctx, "client"):
+            bot = ctx.client
+        else:
+            raise AttributeError(f"{type(ctx).__name__!r} object has no attributes 'bot' nor 'client'")
         is_guild = hasattr(ctx, "guild") and ctx.guild is not None  # Whether we are in a guild or not
         if (personal and hasattr(ctx, "author")) or not is_guild:
             # Let users set their personal language (this behaviour is disabled by default, the command has to explicitly enable the personal languages)
             # The personal language is, however, always used in the DMs.
-            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (ctx.author.id, ctx.bot.name))
+            data = bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (ctx.author.id, bot.name))
             if data:
                 return cls(data["locale"])
         if hasattr(ctx, "channel"):
-            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='channel'", (ctx.channel.id, ctx.bot.name))
+            data = bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='channel'", (ctx.channel.id, bot.name))
             if data:
                 return cls(data["locale"])
             # # Channel:            secret-room-8,      secret-room-15
@@ -67,10 +73,10 @@ class Language(languages.Language):
             #     return cls("ne_rn")
         # ex = ctx.bot.db.fetch("SELECT * FROM sqlite_master WHERE type='table' AND name='locales'")
         if is_guild:
-            data = ctx.bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='guild'", (ctx.guild.id, ctx.bot.name))
+            data = bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='guild'", (ctx.guild.id, bot.name))
             if data:
                 return cls(data["locale"])
-        return cls(ctx.bot.local_config["default_locale"])
+        return cls(bot.local_config["default_locale"])
 
     @staticmethod
     def get_timezone(uid: int, time_class: str = "Earth"):

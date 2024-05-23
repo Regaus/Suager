@@ -86,7 +86,7 @@ class Starboard(commands.Cog):
             else:
                 minimum = __settings["starboard"]["minimum"]
             if new and stars != 0:
-                self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None, self.bot.name))
+                self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None, self.bot.name, None))
             else:
                 self.bot.db.execute("UPDATE starboard SET stars=? WHERE message=? AND bot=?", (stars, message, self.bot.name))
             logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {message} in #{_channel.name} ({guild.name}) now has {stars} stars.")

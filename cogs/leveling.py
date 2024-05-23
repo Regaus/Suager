@@ -366,8 +366,8 @@ class Leveling(commands.Cog):
                                 (level, xp, last_send, minute, general.username(ctx.author), str(ctx.author), ctx.author.id, ctx.guild.id, self.bot.name))
         else:
             if xp != 0:  # No point in saving data if XP is zero...
-                self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, general.username(ctx.author), str(ctx.author), self.bot.name))
+                self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                    (ctx.author.id, ctx.guild.id, level, xp, now, now, general.username(ctx.author), str(ctx.author), self.bot.name, None))
 
     @commands.command(name="rewards")
     @commands.guild_only()

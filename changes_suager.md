@@ -1746,3 +1746,55 @@
 
 ## v7.7.10.5 - 8 January 2024
 - Removed the cherry.py server code from this codebase
+
+## v7.7.10.6 - 8 January 2024
+- Added `executemany()` and `executescript()` to the database
+
+## v7.7.10.7 - 28 January 2024
+- Added a warning that `//poll` and `//trial` will be disabled on 1 March 2024
+
+## v7.7.10.8 - 5 February 2024
+- Fixed the `//laugh` command not working when a user was mentioned
+
+## v7.7.11 - 5 February 2024
+- Added a command to sync slash commands (`//sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+- Turned the DCU command into a hybrid command group
+- Added autocomplete to DCU timetables for courses and rooms
+- Changed the access requirements for the DCU command: only accessible in Regaus'tar Koankadu, or by Regaus anywhere
+
+## v7.7.12 - 6 February 2024
+- Added `//threesome` command
+
+## v7.7.13 - 10 February 2024
+- Updated the custom output values for most of the Ratings commands
+- Fixed `//love` not giving the custom output when you pinged Regaus and one of my bots
+- Changed `//hotness`'s ranges for emotes: 0-40%, 40-70%, and 70-100% (instead of 0-50%, 50-75%, and 75-100%)
+- Changed the seed modifier on `//pickle` to troll some of my friends
+
+## v7.7.13.1 - 14 February 2024
+- Made `Language.get()` be able to deal with slash commands and interactions
+- Made buttons on interactive views automatically detect whether the person is allowed to use that button
+- Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging
+
+## v7.7.14 - 3 March 2024
+- Disabled the avatar changer function as Suager now has an animated avatar
+
+## v7.7.14.1 - 3 March 2024
+- Removed trials altogether
+- Disabled the `//poll` command until I rewrite it
+
+## v7.7.15 - 24 March 2024
+- Added a "Joined in 2024" role for Senko Lair
+- Leveling data is now removed when a user leaves regardless of negative XP or levels
+- Made it possible to retain a user's XP when they leave the server (`//settings leveling dataretention enable` - disabled by default)
+  - Their leveling data is now also only deleted 30 days after leaving
+- Made it possible to remove user data when the bot is kicked from the server
+  - The guild's data is removed 90 days after the bot is no longer in the server (to prevent data loss from a server outage or accidentally kicking the bot)
+- Added a `bot` field to tags to separate tags created by different bots (in case other bots ever get tag functionality)
+
+## v7.7.15.1 - 31 March 2024
+- Fixed `//timesince` not actually applying the local timezone
+
+## v7.7.16 - 6, 23 May 2024
+- Created a script to back up all of a server's messages, attachments, and embeds to a database.

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 from io import BytesIO
 from typing import List
 
 import discord
+from discord import app_commands
 from regaus import time as time2
 
 from utils import bot_data, commands, general, logger, time, cpu_burner
@@ -97,8 +99,13 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
         """ Triggered when a command fails for any reason """
+        if ctx.interaction is None:
+            content = ctx.message.clean_content
+        else:
+            content = general.build_interaction_content(ctx.interaction)
         guild = getattr(ctx.guild, "name", "Private Message")
-        error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > {type(err).__name__}: {str(err)}"
+        error_msg = f"{type(err).__name__}: {str(err)}"
+        error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
         language = ctx.language()
         if isinstance(err, commands.MissingRequiredArgument):
             # A required argument is missing
@@ -174,7 +181,6 @@ class Events(commands.Cog):
 
         elif isinstance(err, commands.CommandInvokeError):
             # An error occurred while invoking the command
-            error = general.traceback_maker(err.original, ctx.message.content[:750], ctx.guild, ctx.author)
             if ("2000 or fewer" in str(err.original) or "4000 or fewer" in str(err.original)) and len(ctx.message.content) > 1900:
                 await ctx.send(language.string("events_error_message_length"))
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
@@ -182,43 +188,87 @@ class Events(commands.Cog):
                 await ctx.send(language.string("events_error_error", err=f"{type(err.original).__name__}: {str(err.original)}"))
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
+                    full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+                    error = general.traceback_maker(err.original, full_content[:750], ctx.guild, ctx.author)
                     await ec.send(error)
-                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {ctx.message.clean_content} > " \
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > " \
                                 f"{type(err.original).__name__}: {str(err.original)}"
                 general.print_error(error_message)
+
+        elif isinstance(err, (app_commands.AppCommandError, commands.HybridCommandError)):
+            # An error occurred with a slash command
+            if isinstance(err, commands.HybridCommandError):
+                err = err.original  # Access the actual app command error
+                # print(type(err).__module__, type(err).__name__)
+
+            if isinstance(err, app_commands.CommandInvokeError):  # This includes InteractionResponded errors
+                # print("hi3", err)
+                err = err.original
+                error_msg = f"{type(err).__name__}: {str(err)}"
+                # await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
+                # await ctx.interaction.followup.send(language.string("events_error_error", err=error_msg))
+                # If the interaction had not yet been responded, respond. If it has, send to followup. If the interaction expired, send regular message.
+                await ctx.send(language.string("events_error_error", err=error_msg))
+                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
+                if ec is not None:
+                    full_content = general.build_interaction_content(ctx.interaction)
+                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                    await ec.send(error)
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
+                general.print_error(error_message)
+
+            else:
+                # Catch-all error statement for other slash-command related errors
+                error_msg = f"{type(err).__name__}: {str(err)}"
+                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
+                general.print_error(error_message)
+                await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
+                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
+                if ec is not None:
+                    full_content = general.build_interaction_content(ctx.interaction)
+                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                    await ec.send(error)
 
         else:
             # Catch-all error statement. This shouldn't ever get called, but who knows...
             general.print_error(error_message)
-            await ctx.send(language.string("events_error_error", type(err).__name__))
+            await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:
-                error = general.traceback_maker(err, ctx.message.content[:750], ctx.guild, ctx.author)
+                full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+                error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
                 await ec.send(error)
 
         logger.log(self.bot.name, "commands", error_message)
         logger.log(self.bot.name, "errors", error_message)
 
     @commands.Cog.listener()
-    async def on_command(self, _ctx):
+    async def on_command(self, _ctx: commands.Context):
         """ Triggered when a command is run """
         cpu_burner.run = False
         cpu_burner.last_command = time.now_ts()
 
     @commands.Cog.listener()
-    async def on_command_completion(self, ctx):
+    async def on_command_completion(self, ctx: commands.Context):
         """ Triggered when a command successfully completes """
         guild = getattr(ctx.guild, "name", "Private Message")
-        content = ctx.message.clean_content
+        content = ctx.message.clean_content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
         send = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content}"
         logger.log(self.bot.name, "commands", send)
         print(send)
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: discord.Guild):
         send = f"{time.time()} > {self.bot.full_name} > Joined {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
+        # Cancel the deletion of the server's data
+        self.bot.db.execute("UPDATE leveling    SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE punishments SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE settings    SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE starboard   SET remove=NULL WHERE guild=? AND bot=?", (guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE tags        SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
+
         if not self.local_config["join_message"]:
             return
         try:
@@ -230,15 +280,24 @@ class Events(commands.Cog):
             await to_send.send(self.local_config["join_message"])
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: discord.Guild):
         send = f"{time.time()} > {self.bot.full_name} > Left {guild.name} ({guild.id})"
         logger.log(self.bot.name, "guilds", send)
         print(send)
+        # Delete most of the data about the server in 90 days' time
+        removal_timestamp = date.today() + timedelta(days=90)  # 90 days from now
+        self.bot.db.execute("UPDATE leveling    SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE punishments SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE settings    SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE starboard   SET remove=? WHERE guild=? AND bot=?", (removal_timestamp, guild.id, self.bot.name))
+        self.bot.db.execute("UPDATE tags        SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         # Load settings
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
+        # Cancel the deletion of the user's leveling data
+        self.bot.db.execute("UPDATE leveling SET remove=NULL WHERE uid=? AND gid=? AND bot=?", (member.id, member.guild.id, self.bot.name))
         # Push all "User left" status punishments back into normal mode
         self.bot.db.execute("UPDATE punishments SET handled=0 WHERE uid=? and gid=? AND handled=3 AND bot=?", (member.id, member.guild.id, self.bot.name))
         active_mutes = self.bot.db.fetch("SELECT * FROM punishments WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
@@ -357,6 +416,7 @@ class Events(commands.Cog):
                     2021:  794699877325471776,
                     2022:  922602168010309732,
                     2023: 1091828639940747274,
+                    2024: 1221468869282107612,
                 }
                 role_id = role_ids[time.now().year]
                 await member.add_roles(member.guild.get_role(role_id))
@@ -369,22 +429,22 @@ class Events(commands.Cog):
                         pass
                     await member.kick(reason="Users must be at least 30 days old to join the server.")
                     await member.guild.get_channel(870015339142996079).send(f"{member} has been kicked - account less than 30 days old...")
-                trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
-                if trials:
-                    for trial in trials:
-                        if trial["type"] in ["mute", "kick", "ban"]:
-                            voters_yes: list = json.loads(trial["voters_yes"])
-                            voters_neutral: list = json.loads(trial["voters_neutral"])
-                            voters_no: list = json.loads(trial["voters_no"])
-                            yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
-                            try:
-                                upvotes = yes / (yes + no)
-                            except ZeroDivisionError:
-                                upvotes = 0
-                            if yes + neutral + no >= trial["required_score"] and upvotes >= 0.6:
-                                await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
-                                await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
-                                break
+                # trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
+                # if trials:
+                #     for trial in trials:
+                #         if trial["type"] in ["mute", "kick", "ban"]:
+                #             voters_yes: list = json.loads(trial["voters_yes"])
+                #             voters_neutral: list = json.loads(trial["voters_neutral"])
+                #             voters_no: list = json.loads(trial["voters_no"])
+                #             yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
+                #             try:
+                #                 upvotes = yes / (yes + no)
+                #             except ZeroDivisionError:
+                #                 upvotes = 0
+                #             if yes + neutral + no >= trial["required_score"] and upvotes >= 0.6:
+                #                 await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
+                #                 await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
+                #                 break
 
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert
@@ -394,20 +454,26 @@ class Events(commands.Cog):
     async def on_member_remove(self, member: discord.Member):
         # Push all unhandled punishments to "User left" status
         self.bot.db.execute("UPDATE punishments SET handled=3 WHERE uid=? and gid=? AND handled=0 AND bot=?", (member.id, member.guild.id, self.bot.name))
-        if self.bot.name == "suager":
-            uid, gid = member.id, member.guild.id
-            sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
-            if sel:
-                if sel["xp"] < 0:
-                    return
-                elif sel["level"] < 0:
-                    self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
-                else:
-                    self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
 
         data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (member.guild.id, self.bot.name))
         if data:
             settings = json.loads(data["data"])
+            if self.bot.name == "suager":
+                # Reset the user's XP upon leaving, unless the server enabled data retention
+                if "leveling" in settings and not settings["leveling"].get("retain_data", False):
+                    removal_timestamp = date.today() + timedelta(days=30)  # 30 days from now
+                    self.bot.db.execute("UPDATE leveling SET remove=? WHERE uid=? AND gid=? AND bot=?", (removal_timestamp, member.id, member.guild.id, self.bot.name))
+                    # This code below is for the old behaviour, where members with negative levels or xp were not removed from the database
+                    # uid, gid = member.id, member.guild.id
+                    # sel = self.db.fetchrow("SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
+                    # if sel:
+                    #     if sel["xp"] < 0:
+                    #         return
+                    #     elif sel["level"] < 0:
+                    #         self.db.execute("UPDATE leveling SET xp=0 WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
+                    #     else:
+                    #         self.db.execute("DELETE FROM leveling WHERE uid=? AND gid=? AND bot=?", (uid, gid, self.bot.name))
+
             if "goodbye" in settings:
                 goodbye = settings["goodbye"]
                 if goodbye["channel"]:

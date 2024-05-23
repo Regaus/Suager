@@ -171,7 +171,15 @@ CAMPUSES = {
     "GLA": "Glasnevin",
     "SPC": "St Patrick's"
 }
+# noinspection RegExpRedundantEscape
 MODULE_REGEX = re.compile(r"^(?:[A-Z]{2}\d+[A-Za-z]{0,2}(?:[\[\(]\d[\]\)])?/?){1,2}")
+
+
+cache = {
+    "courses": {},
+    "modules": {},
+    "rooms": {}
+}
 
 
 def get_module_name(name: str) -> tuple[str, str, int | None]:
@@ -297,9 +305,12 @@ async def get_list_from_cache(filename: str, renew_function: Callable[[], Awaita
 async def get_list_identities(cache_function: Callable[[], Awaitable[dict]], cls: Type[BaseID]) -> dict[str, BaseID]:
     """ Make a dict of course/module/room identities to be used by the timetables API """
     data = await cache_function()
+    cache_name = cls.__name__.lower() + "s"
     output = {}
     for entry in data["Results"]:
         result = cls(entry)
+        # TODO: Fix this creating repeated room names (e.g. GLA.LG25 - GLA.LG25)
+        cache[cache_name][result.code] = f"{result.code} - {result.name}"
         # Don't overwrite the data if there is a duplicate
         if result.code not in output:
             output[result.code] = result
@@ -556,6 +567,7 @@ class Event(object):
     @staticmethod
     def get_module_name(data: str) -> str:
         code, name, semester = get_module_name(data)
+        # noinspection RegExpRedundantEscape
         if re.search(r"[\[\(]\d[\]\)]$", code):
             code = code[:-3]  # Remove the semester information - [0], [1], [2]
         try:

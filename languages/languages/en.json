@@ -1,5 +1,15 @@
 {
   "generic_timed_out": "~~{text}~~\nCommand timed out with no response.",
+  "generic_component_type": {  // Names for the discord.ComponentType enum (for view errors)
+    "action_row": "Action Row",
+    "button": "Button",
+    "text_input": "Text Input",
+    "select": "Select",
+    "user_select": "User Select",
+    "role_select": "Role Select",
+    "mentionable_select": "User/Role Select"
+  },
+  "generic_component_unknown": "Unknown view component", // Unknown component (no type, no label)
 
   "achievements_achievements": "This is what **{user}** has accomplished so far.",
   "achievements_current": "Current Level: {current} of {max}",
@@ -76,9 +86,11 @@
   "discord_user_roles_overall": "\nTotal: {total} roles",
   "discord_user_username": "Username",
 
+  "events_error_author": "{emotes.Deny} Only the author of the command can use this interaction.",
   "events_error_bad_argument": "{emotes.Deny} One of the arguments received an invalid value...",
   "events_error_channel_access": "{emotes.Deny} I cannot access that channel.",
   "events_error_check": "{emotes.Deny} You can't use this command here...",
+  "events_error_check2": "{emotes.Deny} You can't use this action...",
   "events_error_concurrency": "{emotes.Deny} Maximum concurrency for command reached ({rate} per {per}). Try again later...",
   "events_error_cooldown": "{emotes.Deny} This command is currently on cooldown ({rate} per {per}s). Retry in {time} seconds...",
   "events_error_error": "{emotes.Deny} An error occurred:\n{err}",
@@ -370,7 +382,7 @@
   "ratings_baby_rate": "The chance of **{name1}** and **{name2}** having a baby is **{value}**.",
   "ratings_baby_rate_bot": "Bots can't do that.",
   "ratings_baby_rate_self": "I don't think that's how it works.",
-  "ratings_baby_rate_suager": "I'm not programmed to do things like that. Don't even think about it.",
+  "ratings_baby_rate_suager": "Don't even think about it.",  // Removed from start: "I'm not programmed to do things like that."
   "ratings_friend": "**{name1}** and **{name2}** are **{value}** friends.",
   "ratings_friend_bots": "How does one become friends with a bot?",
   "ratings_friend_self": "You better be a friend to at least yourself {emotes.KannaSpook}",
@@ -499,6 +511,9 @@
   "settings_leveling_announcements_set2": "Level ups are announced in {channel}.",
   "settings_leveling_announcements_zero": "Announced where the level up occurs",
   "settings_leveling_announcements_zero2": "Level ups are announced where the person levels up.",
+  "settings_leveling_data_retention": "Keep users' XP after they leave the server",
+  "settings_leveling_data_retention_disable": "Users' XP will now be deleted 30 days after leaving the server.",
+  "settings_leveling_data_retention_enable": "Users' XP will no longer be reset when they leave the server.",
   "settings_leveling_disabled": "Leveling is now disabled.",
   "settings_leveling_enabled": "Leveling is now enabled.",
   "settings_leveling_enabled2": "Leveling is enabled",
@@ -925,6 +940,7 @@
   "social_nsfw_suck_never1": "{author} has not sucked {target} off yet",
   "social_nsfw_suck_never2": "{author} has not sucked {target} off so far",
   "social_nsfw_suck_never5": "{author} has still never sucked {target} off so far",
+  "social_nsfw_threesome": "**{author}** is now having a threesome with **{target1}** and **{target2}**...",
 
   "starboard_attachments": "Attachments and Embeds",
   "starboard_attachment_audio": "Attached audio",

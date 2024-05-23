@@ -93,3 +93,20 @@ red3 = 0xff4040
 def username(user: discord.User | discord.Member) -> str:
     """ Return the user's display name. """
     return user.global_name or user.name
+
+
+def build_interaction_content(interaction: discord.Interaction) -> str:
+    """ Build fake message content that displays interaction data """
+    data: dict = interaction.data
+    if "name" not in data:
+        return "Unknown slash command"
+    content = f"Slash command: /"
+    elements = [data["name"]]
+    # Dig through subcommands - Check that the first "option" is not a command/subcommand
+    while (options := data.get("options", [])) and options[0]["type"] < 3:  # 1 = SUB_COMMAND, 2 = SUB_COMMAND_GROUP
+        data = data["options"][0]
+        elements.append(data["name"])
+    # Add option values
+    for option in data.get("options", []):
+        elements.append(f"{option['name']}={str(option.get('value', None))}")
+    return content + " ".join(elements)

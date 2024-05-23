@@ -10,9 +10,11 @@ pytz
 jishaku
 # git+https://github.com/Gorialis/jishaku.git@master#egg=jishaku  # Use github version of jishaku because it doesn't use line-profiler, which is broken on py3.11
 luas.py
+requests  # Requirement of luas.py: Why was it not installed automatically?
 jstyleson
 markovify
 scipy
 numpy
 icalendar
-# cherrypy
+pandas
+thefuzz

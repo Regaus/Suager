@@ -610,6 +610,95 @@ class Admin(commands.Cog):
         open("config.json", "w").write(stuff_str)
         return await ctx.send("Config file updated.")
 
+    @commands.command(name="sync")
+    @commands.is_owner()
+    async def sync_slash_commands(self, ctx: commands.Context, action: str = ""):
+        """ Synchronise slash commands """
+        async with ctx.typing():
+            if not action:
+                result = await self.bot.tree.sync()
+                return await ctx.send(f"Synchronised {len(result)} slash commands")
+            if action == "local":
+                result = await self.bot.tree.sync(guild=ctx.guild)
+                return await ctx.send(f"Synchronised {len(result)} local slash commands in this server")
+            if action == "global":
+                self.bot.tree.copy_global_to(guild=ctx.guild)
+                result = await self.bot.tree.sync(guild=ctx.guild)
+                return await ctx.send(f"Copied {len(result)} global slash commands to this server")
+            if action == "clear":
+                self.bot.tree.clear_commands(guild=ctx.guild)
+                result = await self.bot.tree.sync(guild=ctx.guild)
+                return await ctx.send(f"Cleared {len(result)} guild-specific slash commands from this server")
+
+    # noinspection SqlResolve
+    @commands.command(name="backup", hidden=True)
+    @commands.is_owner()
+    async def backup_image_server(self, ctx: commands.Command, guild_id: int, *, attachments_dir: str):
+        """ Back up everything from the Regaus Image Server """
+        server = self.bot.get_guild(guild_id)
+        db = database.Database("backup.db")
+        if server is None:
+            return await ctx.send("Server not found...")
+        await ctx.send(f"Starting backup for {server.name} ({server.id})")
+        for role in server.roles:
+            # We don't need to save information about the default role or bot roles.
+            if not role.is_default() and not role.managed:
+                # It seems like role position is not worth saving. I will just manually sort the positions afterwards.
+                role_members = str([m.id for m in role.members])
+                payload = (role.id, role.guild.id, role.name, role.hoist, role.permissions.value, role.colour.value, role_members)
+                check = db.fetchrow("SELECT * FROM roles WHERE id=?", (role.id,))
+                if check:
+                    # The server ID should never change, so we don't need to care about it.
+                    db.execute("UPDATE roles SET name=?, hoist=?, permissions=?, colour=?, members=? WHERE id=?", payload[2:] + payload[:1])  # id last
+                else:
+                    db.execute("INSERT INTO roles(id, guild_id, name, hoist, permissions, colour, members) VALUES (?, ?, ?, ?, ?, ?, ?)", payload)
+        await ctx.send("Backed up roles.")
+        for channel in server.channels:
+            if channel.category:
+                category_name = channel.category.name
+            else:
+                category_name = None
+
+            payload = (channel.id, channel.guild.id, channel.name, channel.type.value, channel.category_id, category_name, channel.nsfw, channel.position)
+            check = db.fetchrow("SELECT * FROM channels WHERE id=?", (channel.id,))
+            if check:
+                db.execute("UPDATE channels SET name=?, type=?, category_id=?, category_name=?, nsfw=?, position=? WHERE id=?", payload[2:] + payload[:1])
+            else:
+                db.execute("INSERT INTO channels(id, guild_id, name, type, category_id, category_name, nsfw, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", payload)
+
+            if channel.type == discord.ChannelType.text:
+                # It might make sense to just completely ignore already saved messages, but let's just go over them anyways in case something ever does change.
+                async for message in channel.history(limit=None, oldest_first=True):
+                    attachments_physical = []
+                    attachments_filenames = []
+                    for attachment in message.attachments:
+                        # extension = attachment.filename.split('.')[-1]
+                        extension = os.path.splitext(attachment.filename)[1]  # Get the extension, if any
+                        physical_filename = f"{attachment.id}{extension}"  # The extension variable includes the dot
+                        physical_path = os.path.join(attachments_dir, physical_filename)
+                        # This could've been physical_path for ease of access (albeit wasting storage space on the repetition), but it's too late now.
+                        # Just need to manually append attachment dir to path when creating the restoration messages.
+                        # I guess it also means that the files can end up in a different directory and still be accessible.
+                        attachments_physical.append(physical_filename)
+                        attachments_filenames.append(attachment.filename)
+                        if not os.path.isfile(physical_path):  # Only bother saving the attachment again if it does not already exist
+                            try:
+                                await attachment.save(physical_path)  # type: ignore
+                            except (discord.HTTPException, discord.NotFound):
+                                await ctx.send(f"{channel.name} -> Message {message.id} -> Attachment {attachment.filename} failed to download.")
+                    payload = (message.id, message.guild.id, message.author.id, general.username(message.author), str(message.author.display_avatar),
+                               message.channel.id, message.channel.name, message.system_content, message.type.value, message.pinned,  # type: ignore
+                               json.dumps(attachments_physical), json.dumps(attachments_filenames), json.dumps([e.to_dict() for e in message.embeds]))
+                    check = db.fetchrow("SELECT * FROM messages WHERE message_id=?", (message.id,))
+                    if check:
+                        db.execute("UPDATE messages SET author_id=?, author_name=?, author_avatar_url=?, channel_id=?, channel_name=?, contents=?,"
+                                   "type=?, pinned=?, attachments_physical=?, attachments_filenames=?, embeds=? WHERE message_id=?", payload[2:] + payload[:1])
+                    else:
+                        db.execute("INSERT INTO messages(message_id, guild_id, author_id, author_name, author_avatar_url, channel_id, channel_name, contents, "
+                                   "type, pinned, attachments_physical, attachments_filenames, embeds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", payload)
+            await ctx.send(f"Backed up channel {channel.mention}.")
+        return await ctx.send("Backup successful.")
+
 
 async def setup(bot: bot_data.Bot):
     await bot.add_cog(Admin(bot))

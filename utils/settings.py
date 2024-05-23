@@ -86,6 +86,7 @@ template_suager = {
     "use_default": True,
     "leveling": {
         "enabled": False,
+        "retain_data": False,
         "xp_multiplier": 1.0,
         "level_up_message": f"[MENTION] is now level **[LEVEL]**! {emotes.ForsenDiscoSnake}",  # General level up message
         "level_up_role": None,     # Level up message for when you reach a new level reward

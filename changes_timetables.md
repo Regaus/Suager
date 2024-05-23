@@ -1,4 +1,4 @@
-# Changelog for Linenvürteat
+# Changelog for Timetables Bot
 
 ## v0.0.1 - 20 November 2022
 - Initial setup for the bot to get it to load
@@ -66,5 +66,104 @@
 ## v0.2.5 - 8 January 2024
 - Added `i.dcu` and `i.luas` into the Timetables cog from Suager and CobbleBot respectively
 
-## v0.3.0a - 8-9 January 2024
-- [Incomplete] Rewrote the code to store static GTFS data in an SQL database when it's not loaded in memory
+## v0.3.0a1 - 13-15 January 2024
+- The location of GTFS data is now stored in a database and only loaded into memory on demand
+- GTFS dataclasses now don't reference each other, instead only providing the ID and a method to load the actual instance if needed
+- Fixed real-time GTFS data crashing when the hour is 24 or higher
+- Fixed ADDED trips crashing the feed if they have an arrival time but no departure time
+- Fixed various other issues, although most of them were caused by this rewrite to begin with
+
+## v0.3.0a2 - 21 January 2024
+- Changed agencies, calendars, and calendar exceptions to use string IDs for consistency (and to not have to cast ints to strs and vice versa)
+- Stop times are now stored in the database individually
+- Greatly optimised the loading of StopSchedule
+- Stopped reloading of GTFS data from blocking the rest of the bots' activity by putting it in a separate thread
+
+## v0.3.0a3 - 21 January 2024
+- Improved the "placeholder" debug/control command 
+- Made it possible to load data from the Vehicles API endpoint
+- Made it possible to get the straight-line distance between a vehicle and the current stop (if available)
+- Fixed the loader getting stuck in an infinite loop if the static GTFS data was not being reloaded
+
+## v0.3.0a4 - 22-23 January 2024
+- Static Trips can now be looked up by Route ID
+- Fixed the code breaking when an ADDED trip has no trip information (how is this even possible?)
+- Fixed the code crashing when the vehicles data is not available (due to an API ratelimit or otherwise)
+
+## v0.3.0a5 - 24 January 2024
+- Locked the `i.tfi` command to be owner-only until it is ready for production
+- Added a command to toggle debug mode
+- Fixed the code crashing when a trip is loaded into memory, but the specific StopTime for a stop is not available
+- Fixed `i.tfi search stop` breaking if no stop was found for the query
+- Added a hint that you can use both stop code and stop name together to search for a stop or route
+
+## v0.3.0a6 - 28 January 2024
+- All timetable-related functions now load the database themselves
+- Removed Route ID from the "search key" for routes
+- Made the process of loading the schedule asynchronous so the rest of the bots don't freeze
+
+## v0.3.0a7 - 28 January 2024
+- Removed the `self` parameter from `timetables.read_and_store_gtfs_data()`, as you can just use `await` instead
+- Optimised `self.download_new_static_data()` to simply call `self.reload_static_gtfs()` instead of repeating the code
+- Fixed `luas.api` failing to load because a dependency could not be loaded
+
+## v0.3.0a8 - 28 January 2024
+- Made it possible to toggle "write mode" for real-time data
+- Added a command to toggle write mode
+- Added a command to refresh the real-time data and removed that functionality from the base `i.placeholder` command
+
+## v0.3.0a9 - 30 January 2024
+- The stop schedule now shows when a stop is drop-off only or pick-up only
+
+## v0.3.0 - 30 January 2024
+- Separated the real-time, static, and schedule code into separate files for better readability and navigability of code
+
+## v0.4.0a1 - 3 February 2024
+- Changed the skipped lines on the stop schedule loader to be a list rather than a set
+- Moved the real-time stop schedule code into a View, so that I can later add buttons to it
+
+## v0.4.0a2 - 3 February 2024
+- Made a better way to load the real-time schedule
+
+## v0.4.0a3 - 5 February 2024
+- Added a command to sync slash commands (`i.sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+  - Note: Timetables Bot currently has no slash commands
+- Fixed the header of the changelog file to say "Timetables Bot" instead of the old "Linenvürteat"
+- Changed the access requirements for the DCU command: only accessible in Regaus'tar Koankadu, or by Regaus anywhere
+
+## v0.4.0a4 - 6 February 2024
+- Made it possible to specify a timestamp for `i.tfi schedule stop` (shows departures at that time, instead of now)
+
+## v0.4.0a5 - 6 February 2024
+- Made it possible to refresh the bus stop departures
+
+## v0.4.0a6 - 11 February 2024
+- Made it possible to show when a bus terminates early
+- Made it possible to shorten the destinations (so it fits in one line on my phone)
+- Made it possible to stop the view from updating the index and time when refreshed
+
+## v0.4.0a7 - 12 February 2024
+- Made the default button be "unfreeze schedule" when a specific time is specified (i.e. the view is already frozen at the start)
+
+## v0.4.0a8 - 12 February 2024
+- Changed the "button on cooldown" prompt to be grey instead of red
+- Added a way to put a button on cooldown without changing its name
+- Heavily improved the amount of time it takes to load stop information by optimising the schedule load function
+- Changed the stop schedule view to timeout after 1 hour (instead of 15 minutes)
+- Changed the refresh button cooldown to 30 seconds (instead of 60 seconds)
+- Added buttons to move up and down the schedule
+
+## v0.4.0a9 - 12 February 2024
+- The schedule now shows when a trip is supposed to happen on a different date (e.g. before/after midnight)
+- Changed the distance to round to the nearest 10m instead of 100m
+- Fixed internal code saying there are 6 departure lines when there was actually 7
+- Changed the cooldown of the `i.tfi` command to 4 seconds (instead of 5)
+
+## v0.4.0a10 - 13 February 2024
+- Added buttons to move the offset by a custom amount or set the offset to a custom number
+
+## v0.4.0a11 - 14 February 2024
+- Made `Language.get()` be able to deal with slash commands and interactions
+- Made buttons on interactive views automatically detect whether the person is allowed to use that button
+- Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging

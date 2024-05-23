@@ -777,3 +777,25 @@
 
 ## v1.9.3.2 - 8 January 2024
 - Moved `..luas` into the Timetables cog and made it accessible by the Timetables bot
+
+## v1.9.3.3 - 21 January 2024
+- Separated the distance calculations into a separate function so that it can be used by the Timetables bot
+
+## v1.9.3.4 - 24 January 2024
+- Added Akuseru and Fanfe Kade to the places list for ka-time
+
+## v1.9.3.5 - 28 January 2024
+- Fixed `luas.api` failing to load because a dependency could not be loaded
+
+## v1.9.4 - 5 February 2024
+- Added a command to sync slash commands (`..sync`)
+- Made command completion and command error handlers deal with the existence of slash commands
+  - Note: CobbleBot currently has no slash commands
+
+## v1.9.4.1 - 12 February 2024
+- Changed the "button on cooldown" prompt to be grey instead of red
+
+## v1.9.4.2 - 14 February 2024
+- Made `Language.get()` be able to deal with slash commands and interactions
+- Made buttons on interactive views automatically detect whether the person is allowed to use that button
+- Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging

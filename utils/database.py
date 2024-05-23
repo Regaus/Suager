@@ -59,7 +59,7 @@ class Database:
         self.conn.create_function("APRILMULT", 0, april_fools_multiplier)
         self.db = self.conn.cursor()
 
-    def execute(self, sql: str, parameters: tuple[Any, ...] = ()) -> str:
+    def execute(self, sql: str, parameters: tuple[Any, ...] = (), /) -> str:
         """ Execute SQL command """
         try:
             data = self.db.execute(sql, parameters)
@@ -77,7 +77,7 @@ class Database:
             status_code = len(data.fetchall())
         return f"{status_word} {status_code}"
 
-    def executemany(self, sql: str, parameters_iter: list[tuple[Any, ...]]) -> str:
+    def executemany(self, sql: str, parameters_iter: list[tuple[Any, ...]], /) -> str:
         """ Execute the same SQL command over multiple different values """
         try:
             data = self.db.executemany(sql, parameters_iter)
@@ -95,10 +95,10 @@ class Database:
             status_code = len(data.fetchall())
         return f"{status_word} {status_code}"
 
-    def executescript(self, sql: str) -> str:
+    def executescript(self, sql: str, /) -> str:
         """ Execute an entire SQL script """
         try:
-            data = self.db.executescript(sql)
+            self.db.executescript(sql)
         except Exception as e:
             now = f"{datetime.now():%d %b %Y, %H:%M:%S}"
             msg = f"{now} > Database > {type(e).__name__}: {e}\n" \
@@ -108,12 +108,12 @@ class Database:
             return f"{type(e).__name__}: {e}"
         return "SUCCESS"
 
-    def fetch(self, sql: str, parameters: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+    def fetch(self, sql: str, parameters: tuple[Any, ...] = (), /) -> list[dict[str, Any]]:
         """ Fetch data from DB """
         data = self.db.execute(sql, parameters).fetchall()
         return data
 
-    def fetchrow(self, sql: str, parameters: tuple[Any, ...] = ()) -> dict[str, Any]:
+    def fetchrow(self, sql: str, parameters: tuple[Any, ...] = (), /) -> dict[str, Any]:
         """ Fetch one row of data from DB """
         data = self.db.execute(sql, parameters).fetchone()
         return data
@@ -232,6 +232,7 @@ tables = [
         Column("name", "TEXT", True),
         Column("disc", "INTEGER", True),
         Column("bot", "TEXT", True),
+        Column("remove", "DATE", False),  # The date on which to delete the database entry
     ]),
     Table("locales", "database.db", [    # Language settings for servers
         Column("id", "INTEGER", True),   # ID of the guild, channel, or user
@@ -261,7 +262,8 @@ tables = [
         Column("temp", "BOOLEAN", True),       # Whether the action is temporary (warns and mutes)
         Column("expiry", "TIMESTAMP", False),  # When the punishment expires
         Column("handled", "INTEGER", True),    # Handled value (0 = Unhandled, 1 = Expired, 2 = Error, 3 = User left, 4 = Pardoned/Manually unmuted)
-        Column("bot", "TEXT", True)            # Bot used for punishment
+        Column("bot", "TEXT", True),           # Bot used for punishment
+        Column("remove", "DATE", False),       # The date on which to delete the database entry
     ]),
     Table("reaction_groups", "database.db", [
         Column("gid", "INTEGER", True),      # Guild ID
@@ -287,8 +289,9 @@ tables = [
     ]),
     Table("settings", "database.db", [
         Column("gid", "INTEGER", True),
-        Column("bot", "TEXT", True),  # The name of the bot to which the settings belong
-        Column("data", "TEXT", True)
+        Column("bot", "TEXT", True),      # The name of the bot to which the settings belong
+        Column("data", "TEXT", True),
+        Column("remove", "DATE", False),  # The date on which to delete the database entry
     ]),
     Table("starboard", "database.db", [
         Column("message", "INTEGER", True),        # Original message ID
@@ -298,6 +301,7 @@ tables = [
         Column("stars", "INTEGER", True),          # Star count
         Column("star_message", "INTEGER", False),  # Starboard message ID
         Column("bot", "TEXT", True),               # The bot tracking the message
+        Column("remove", "DATE", False),           # The date on which to delete the database entry
     ]),
     Table("tags", "database.db", [
         Column("gid", "INTEGER", True),
@@ -307,31 +311,15 @@ tables = [
         Column("content", "TEXT", True),
         Column("created", "INTEGER", True),
         Column("edited", "INTEGER", True),
-        Column("usage", "INTEGER", True)
+        Column("usage", "INTEGER", True),
+        Column("bot", "TEXT", True),      # The bot for which the tag was created
+        Column("remove", "DATE", False),  # The date on which to delete the database entry
     ]),
     Table("timezones", "database.db", [
         Column("uid", "INTEGER", True),
         Column("tz", "TEXT", True)
     ]),
-    Table("trials", "database.db", [
-        Column("guild_id", "INTEGER", True),        # The Guild ID where the trial was started
-        Column("channel_id", "INTEGER", True),      # The Channel ID of the trial status message
-        Column("message_id", "INTEGER", True),      # The Message ID of the trial status message
-        Column("trial_id", "INTEGER", True),        # The Trial ID
-        Column("author_id", "INTEGER", True),       # The User ID of who started the trial
-        Column("user_id", "INTEGER", True),         # The User ID, to which the action will be done if the trial succeeds
-        Column("type", "TEXT", True),               # The type of trial (ban, unban, kick, mute, unmute)
-        Column("mute_length", "INTEGER", True),     # The mute length in seconds (if the trial type is mute)
-        Column("reason", "TEXT", True),             # The reason for starting the trial ([Author#1234] Reason)
-        Column("voters_yes", "TEXT", True),         # List of users who voted Yes
-        Column("voters_neutral", "TEXT", True),     # List of users who voted Neutral
-        Column("voters_no", "TEXT", True),          # List of users who voted No
-        Column("start_time", "REAL", True),         # Timestamp when the trial was started
-        Column("expiry", "TIMESTAMP", True),        # When the poll ends
-        Column("anonymous", "BOOLEAN", True),       # Whether the poll is anonymous or not
-        Column("required_score", "INTEGER", True),  # Score required for the trial to pass
-    ]),
-    Table("user_roles", "database.db", [                 # We should only need to log people who left with roles, so we only need this much data
+    Table("user_roles", "database.db", [  # We should only need to log people who left with roles, so we only need this much data
         Column("gid", "INTEGER", True),   # Guild ID
         Column("uid", "INTEGER", True),   # User ID
         Column("roles", "TEXT", True)     # JSON list of role IDs the user had
