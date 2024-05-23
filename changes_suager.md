@@ -1795,3 +1795,6 @@
 
 ## v7.7.15.1 - 31 March 2024
 - Fixed `//timesince` not actually applying the local timezone
+
+## v7.7.16 - 6, 23 May 2024
+- Created a script to back up all of a server's messages, attachments, and embeds to a database.
