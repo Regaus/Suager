@@ -36,16 +36,16 @@ class SpecificStopTime:
         self.arrival_time = _date + time.timedelta(seconds=self.raw_arrival_time)
         self.departure_time = _date + time.timedelta(seconds=self.raw_departure_time)
 
-    def trip(self, data: GTFSData) -> Trip:
-        return load_value(data, Trip, self.trip_id)
+    def trip(self, data: GTFSData = None) -> Trip:
+        return load_value(data, Trip, self.trip_id, None)
 
-    # def trip(self, data: GTFSData) -> Trip:
-    #     return load_value_from_id(data, "trips.txt", self.trip_id, None)
+    def route(self, data: GTFSData = None) -> Route:
+        return self.trip(data).route(data)
 
-    def route(self, data: GTFSData) -> Route:
-        return self.trip(data).route()
+    def stop(self, data: GTFSData = None) -> Stop:
+        return load_value(data, Stop, self.stop_id, None)
 
-    def destination(self, data: GTFSData) -> str:
+    def destination(self, data: GTFSData = None) -> str:
         """ Get the destination of the StopTime """
         if self._destination:
             return self._destination
@@ -56,8 +56,11 @@ class SpecificStopTime:
     def __repr__(self):
         # "SpecificStopTime - 2023-10-14 02:00:00 - Stop #1 for trip 3626_214"
         return f"SpecificStopTime - {self.departure_time} - Stop #{self.sequence} for Trip {self.trip_id}"
+
         # "SpecificStopTime - 2023-10-14 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
-        # return f"SpecificStopTime - {self.departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
+        # trip = self.trip()
+        # stop = self.stop()
+        # return f"SpecificStopTime - {self.departure_time} to {trip.headsign} (Stop {stop.name} - #{self.sequence}, Trip {trip.trip_id})"
 
 
 class AddedStopTime:
@@ -111,6 +114,7 @@ class RealStopTime:
     def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None, vehicles: VehicleData | None):
         if isinstance(stop_time, SpecificStopTime):
             self.stop_time = stop_time
+            self._trip = None
             # self.trip = stop_time.trip
             self.trip_id = stop_time.trip_id
             self._route = None
@@ -195,6 +199,7 @@ class RealStopTime:
                 self.vehicle = self.vehicle_id = None
         elif isinstance(stop_time, AddedStopTime):
             self.stop_time = stop_time
+            self._trip = None
             # self.trip = None
             self.trip_id = stop_time.trip_id
             self._route = stop_time.route
@@ -218,34 +223,38 @@ class RealStopTime:
         else:
             raise TypeError(f"Unexpected StopTime type {type(stop_time).__name__} received")
 
-    def trip(self, data: GTFSData) -> Optional[Trip]:
+    def trip(self, data: GTFSData = None) -> Optional[Trip]:
+        if self._trip:
+            return self._trip
         try:
-            return load_value(data, Trip, self.trip_id)
+            trip = load_value(data, Trip, self.trip_id, None)
             # return load_value_from_id(data, "trips.txt", self.trip_id, None)
+            self._trip = trip
+            return trip
         except KeyError:
             return None
 
-    def route(self, data: GTFSData) -> Optional[Route]:
+    def route(self, data: GTFSData = None) -> Optional[Route]:
         if self._route:
             return self._route
         try:
             trip = self.trip(data)
             if trip is None:
                 return None
-            route = trip.route()
+            route = trip.route(data)
             self._route = route
             return route
         except KeyError:
             return None
 
-    def stop(self, data: GTFSData) -> Optional[Stop]:
+    def stop(self, data: GTFSData = None) -> Optional[Stop]:
         try:
-            return load_value(data, Stop, self.stop_id)
+            return load_value(data, Stop, self.stop_id, None)
             # return load_value_from_id(data, "stops.txt", self.stop_id, None)
         except KeyError:
             return None
 
-    def destination(self, data: GTFSData) -> str:
+    def destination(self, data: GTFSData = None) -> str:
         if self._destination:
             return self._destination
         destination = self.trip(data).headsign
@@ -259,11 +268,13 @@ class RealStopTime:
     def __repr__(self):
         # "RealStopTime - [SCHEDULED] 2023-10-14 02:00:00 - Stop #1 for Trip 3626_214"
         return f"RealStopTime - [{self.schedule_relationship}] {self.available_departure_time} - Stop #{self.sequence} for Trip {self.trip_id}"
+
         # "RealStopTime - [SCHEDULED] 2023-10-14 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
-        # if self.trip is not None:
-        #     departure_time = self.departure_time or self.scheduled_departure_time
-        #     return f"RealStopTime - [{self.schedule_relationship}] {departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip_id})"
-        # return f"RealStopTime - [{self.schedule_relationship}] {self.departure_time} to <Unknown> (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip_id})"
+        # trip = self.trip()
+        # stop = self.stop()
+        # if trip is not None:
+        #     return f"RealStopTime - [{self.schedule_relationship}] {self.available_departure_time} to {trip.headsign} (Stop {stop.name} - #{self.sequence}, Trip {self.trip_id})"
+        # return f"RealStopTime - [{self.schedule_relationship}] {self.available_departure_time} to <Unknown> (Stop {stop.name} - #{self.sequence}, Trip {self.trip_id})"
 
 
 # @dataclass()
@@ -282,17 +293,13 @@ class StopSchedule:
         self.stop = load_value(data, Stop, stop_id, self.db)
         # self.stop = load_value_from_id(data, "stops.txt", stop_id, self.db)
         self.stop_id = self.stop.id
-        # self.stop = self.data.stops[stop_id]
         # self.all_stop_times = []
         self.all_trips = []
+
         # self.stop_times[trip_id] = StopTime(stop_id=self.stop_id)
         self.stop_times: dict[str, StopTime] = {}
 
         # Load all schedules (trips) that will pass through this stop
-        # sql_data = db.fetchrow("SELECT * FROM schedules WHERE stop_id=?", (self.stop_id,))
-        # trip_ids_full = set(sql_data["trip_ids"].split(" "))
-        # sql_data = self.db.fetch("SELECT * FROM data WHERE filename=? AND id=?", ("stop_times.txt", stop_id))
-        # trip_ids_full = set(entry["search_key"] for entry in sql_data)
         sql_data = self.db.fetch("SELECT * FROM stop_times WHERE stop_id=?", (stop_id,))
         trip_ids_full = set(entry["trip_id"] for entry in sql_data)
         trip_ids_inter = trip_ids_full.intersection(self.data.trips.keys())
@@ -306,11 +313,6 @@ class StopSchedule:
                 trip = Trip.from_sql(trip_id, self.db)
                 self.all_trips.append(trip)
                 self.data.trips[trip_id] = trip
-            # for row in iterate_over_csv_full("trips.txt"):
-            #     if row.trip_id in trip_ids:
-            #         trip = Trip.parse([row[1:]])
-            #         self.all_trips.append(trip)
-            #         self.data.trips[row.trip_id] = trip
 
         # Load stop times from trips that were already loaded into memory
         schedule_ids_inter = trip_ids_full.intersection(self.data.stop_times.keys())
@@ -320,13 +322,6 @@ class StopSchedule:
                 self.stop_times[trip_id] = self.data.stop_times[trip_id][stop_id]
             else:
                 schedule_ids_copy.remove(trip_id)  # False positive: Trip ID exists in memory but this stop's StopTime is not loaded
-        # schedule_ids_inter = trip_ids_full.intersection(self.data.schedules.keys())
-        # for key in schedule_ids_inter:
-        #     schedule = self.data.schedules[key]
-        #     if schedule[0].trip_id in trip_ids_full:
-        #         for stop_time in schedule:
-        #             if self.stop_id == stop_time.stop_id:
-        #                 self.stop_times[stop_time.trip_id] = stop_time
 
         # Add stop times from trips that are not yet loaded in memory
         schedule_ids = trip_ids_full.difference(schedule_ids_copy)
@@ -342,62 +337,6 @@ class StopSchedule:
                 schedule_ids_copy.remove(trip_id)
         if schedule_ids_copy:
             print("Missed Trip IDs: ", schedule_ids_copy)
-            # lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key is the trip_id
-            # skipped = [i for i in range(1, max(lines)) if i not in lines]
-            # # lines = set(entry["start"] + 1 for entry in sql_data if entry["search_key"] in schedule_ids)  # search_key is trip_id
-            # # skipped = set(range(1, max(lines))).difference(lines)
-            # # rows = set()
-            # for row in iterate_over_csv_partial("stop_times.txt", skipped):
-            #     if row.stop_id == stop_id and row.trip_id in schedule_ids:
-            #         stop_time = StopTime.parse([row[1:]])[0]
-            #         self.stop_times[row.trip_id] = stop_time
-            #         if row.trip_id in self.data.stop_times:
-            #             self.data.stop_times[row.trip_id][row.stop_id] = stop_time
-            #         else:
-            #             self.data.stop_times[row.trip_id] = {row.stop_id: stop_time}
-            #         schedule_ids.remove(row.trip_id)
-            #     # Once all the trips we need have been loaded, exit the loop
-            #     if not schedule_ids:
-            #         break
-            #     else:
-            #         if row.trip_id not in schedule_ids:
-            #             print(row.Index, "Wrong trip")
-            #         else:
-            #             print(row.Index, "Wrong stop")
-            # print(row.Index, row.stop_id)
-            # rows.add(row.Index)
-            # if schedule_ids:
-            #     print("Missed IDs: ", schedule_ids)
-            # Maybe we can just skip the "ask the database" part, since we have to loop through the entire file anyways?
-            # stop_time_data = db.fetch(f"SELECT * FROM data WHERE filename=? AND id IN ({"?, " * (len(trip_ids) - 1)}?)", ("stop_times.txt", *schedule_ids))
-            # stop_time_data.sort(key=lambda x: x["start"])
-            # lines: set[int] = set()  # type: ignore
-            # for schedule in stop_time_data:
-            #     lines.update(range(schedule["start"], schedule["start"] + schedule["length"]))
-
-            # Maybe try to load the amount of lines and then just make a huge set/list with all the lines we need to skip?
-            # Or just skip all the lines until the last line in the set, at which point just break out of the loop?
-            # schedules = {}
-            # for row in iterate_over_csv_full("stop_times.txt"):
-            #     # if row.Index in lines:
-            #     if row.trip_id in schedule_ids:
-            #         stop_time = StopTime.parse([row[1:]])[0]
-            #         trip_id = stop_time.trip_id
-            #         if trip_id in schedules:
-            #             schedules[trip_id].append(stop_time)
-            #         else:
-            #             schedules[trip_id] = [stop_time]
-            #         if stop_time.stop_id == self.stop_id:
-            #             self.stop_times[trip_id] = stop_time
-
-            # self.data.schedules.update(schedules)
-
-        # self.all_stop_times = load_values_from_key(self.data, "stop_times.txt", self.stop.id)
-        # for schedule in self.data.schedules.values():
-        #     for stop_time in schedule:
-        #         # In case the stop objects happen to be different, ID should still be same
-        #         if self.stop.id == stop_time.stop_id:
-        #             self.all_stop_times.append(stop_time)
 
     def relevant_stop_times_one_day(self, date: time.date) -> list[SpecificStopTime]:
         """ Get the stop times for one day """
@@ -412,7 +351,7 @@ class StopSchedule:
             if trip.calendar_id in calendars:
                 calendar = calendars[trip.calendar_id]
             else:  # Weird but just in case
-                calendar = trip.calendar()  # self.data
+                calendar = trip.calendar(self.data)
             # calendar = stop_time.trip(self.data).calendar(self.data)
             valid = None  # Whether the trip is valid for the given day
 

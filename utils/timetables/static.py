@@ -136,7 +136,7 @@ class CalendarException:
     # Exception types:
     # 1 -> Service has been added for the specified date
     # 2 -> Service has been removed for the specified date
-    # My implementation returns a bool of (exception_type != 2)
+    # My implementation returns a bool where True == Service runs, False == service doesn't run
     exception: bool
 
     def __repr__(self):
@@ -175,23 +175,16 @@ class Route:
     route_colour: str
     route_text_colour: str
 
-    # @property
-    def agency(self) -> Agency:
-        return Agency.from_sql(self.agency_id)
-
-    # def agency(self, data: GTFSData) -> Agency:
-    #     return load_value_from_id(data, "agency.txt", str(self.agency_id), None)
-
-    # @property
-    # def agency(self) -> Agency:
-    #     return load_value_from_id(None, "agency.txt", str(self.agency_id))
+    def agency(self, data: GTFSData = None, db: database.Database = None) -> Agency:
+        return load_value(data, Agency, self.agency_id, db)
+        # return Agency.from_sql(self.agency_id)
 
     def __repr__(self):
-        # # "Route 3643_54890 (DART) - Bray - Howth - Operated by Agency 7778017"
-        # return f"Route {self.id} ({self.short_name}) - {self.long_name} - Operated by Agency {self.agency_id}"
+        # "Route 3643_54890 (DART) - Bray - Howth - Operated by Agency 7778017"
+        return f"Route {self.id} ({self.short_name}) - {self.long_name} - Operated by Agency {self.agency_id}"
 
         # "Route 3643_54890 (DART) - Bray - Howth - Operated by Agency 7778017 - Iardród Éireann / Irish Rail"
-        return f"Route {self.id} ({self.short_name}) - {self.route_desc} - Operated by {self.agency()!r}"
+        # return f"Route {self.id} ({self.short_name}) - {self.route_desc} - Operated by {self.agency()!r}"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Route:
@@ -268,31 +261,21 @@ class Trip:
     block_id: str      # "A block consists of a single trip or many sequential trips made using the same vehicle"
     shape_id: str      # ID of geospatial shape (not really useful for my case)
 
-    # @property
-    def route(self) -> Route:
-        return Route.from_sql(self.route_id)
+    def route(self, data: GTFSData = None, db: database.Database = None) -> Route:
+        return load_value(data, Route, self.route_id, db)
+        # return Route.from_sql(self.route_id)
 
-    # def route(self, data: GTFSData) -> Route:
-    #     return load_value_from_id(data, "routes.txt", self.route_id, None)
-
-    # @property
-    # def route(self) -> Route:
-    #     return load_value_from_id(None, "routes.txt", self.route_id)
-
-    # @property
-    def calendar(self) -> Calendar:
-        return Calendar.from_sql(self.calendar_id)
-
-    # def calendar(self, data: GTFSData) -> Calendar:
-    #     return load_value_from_id(data, "calendar.txt", str(self.calendar_id), None)
-
-    # @property
-    # def calendar(self) -> Calendar:
-    #     return load_value_from_id(None, "calendar.txt", str(self.calendar_id))
+    def calendar(self, data: GTFSData = None, db: database.Database = None) -> Calendar:
+        return load_value(data, Calendar, self.calendar_id, db)
+        # return Calendar.from_sql(self.calendar_id)
 
     def __repr__(self):
         # "Trip 3626_209 to Charlesland, stop 7462 - Route 3626_39040
         return f"Trip {self.trip_id} to {self.headsign} - Route {self.route_id}"
+
+        # "Trip 3626_209 to Charlesland, stop 7462 - Route 84n (Dublin City South, D'Olier Street - Charlesland Road (Seaborne View Apts))"
+        # route = self.route()
+        # return f"Trip {self.trip_id} to {self.headsign} - Route {route.short_name} ({route.long_name})"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Trip:
@@ -327,41 +310,29 @@ class StopTime:
     drop_off_type: int  # 0 or empty -> Drop off, 1 -> No drop off
     timepoint: int      # 0 -> Times are approximate, 1 or empty -> Time are exact (this is factually incorrect)
 
-    # @property
-    def trip(self) -> Trip:
-        return Trip.from_sql(self.trip_id)
+    def trip(self, data: GTFSData = None, db: database.Database = None) -> Trip:
+        return load_value(data, Trip, self.trip_id, db)
+        # return Trip.from_sql(self.trip_id)
 
-    # def trip(self, data: GTFSData) -> Trip:
-    #     return load_value_from_id(data, "trips.txt", self.trip_id, None)
+    def route(self, data: GTFSData = None, db: database.Database = None) -> Route:
+        return self.trip(data, db).route(data, db)
+        # return self.trip().route()
 
-    def route(self) -> Route:
-        return self.trip().route()
-
-    # def route(self, data: GTFSData) -> Route:
-    #     return self.trip(data).route(data)
-
-    # @property
-    # def trip(self) -> Trip:
-    #     return load_value_from_id(None, "trips.txt", self.trip_id)
-
-    # @property
-    def stop(self) -> Stop:
-        return Stop.from_sql(self.stop_id)
-
-    # def stop(self, data: GTFSData) -> Stop:
-    #     return load_value_from_id(data, "stops.txt", self.stop_id, None)
-
-    # @property
-    # def stop(self) -> Stop:
-    #     return load_value_from_id(None, "stops.txt", self.stop_id)
+    def stop(self, data: GTFSData = None, db: database.Database = None) -> Stop:
+        return load_value(data, Stop, self.stop_id, db)
+        # return Stop.from_sql(self.stop_id)
 
     def __repr__(self):
         # This basically returns the time of departure modulo 24 hours
         departure_time = time.time.from_microsecond(self.departure_time * 1000000)
+
         # "StopTime - 02:00:00 - Stop #1 for Trip 3626_214"
         return f"StopTime - {departure_time} - Stop #{self.sequence} for Trip {self.trip_id}"
+
         # "StopTime - 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
-        # return f"StopTime - {departure_time} to {self.trip.headsign} (Stop {self.stop.name} - #{self.sequence}, Trip {self.trip.trip_id})"
+        # trip = self.trip()
+        # stop = self.stop()
+        # return f"StopTime - {departure_time} to {trip.headsign} (Stop {stop.name} - #{self.sequence}, Trip {trip.trip_id})"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> StopTime:
@@ -475,23 +446,6 @@ def iterate_over_csv_full(filename: str) -> Generator[namedtuple, Any, None]:
 #     yield tuple(data)  # type: ignore  # Save the last piece of information
 
 
-#  def store_trips_per_stop(db: database.Database):
-#     """ Store what trips are hit at a particular stop ID """
-#     schedules: dict[str, list[str]] = {}
-#     for row in iterate_over_csv_full("stop_times.txt"):
-#         stop_id = row.stop_id
-#         trip_id = row.trip_id
-#         if stop_id not in schedules:
-#             schedules[stop_id] = [trip_id]
-#         else:
-#             schedules[stop_id].append(trip_id)
-#
-#     statements = []
-#     for stop_id, trips in schedules.items():
-#         statements.append(f"INSERT INTO schedules VALUES ({stop_id!r}, \"{" ".join(trips)}\");")
-#     db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
-
-
 def read_and_store_gtfs_data():  # self=None
     """ Read static GTFS data and store it into the database
 
@@ -499,11 +453,6 @@ def read_and_store_gtfs_data():  # self=None
     # if hasattr(self, "updating"):
     #     self.updating = True
     db = get_database()
-    # Start by deleting previous data
-    # noinspection SqlWithoutWhere
-    # db.execute("DELETE FROM data")
-    # noinspection SqlWithoutWhere
-    # db.execute("DELETE FROM schedules")
 
     # Delete the currently-existing records
     # noinspection SqlWithoutWhere
@@ -517,17 +466,6 @@ def read_and_store_gtfs_data():  # self=None
                      "DELETE FROM stop_times;"
                      "COMMIT;")
 
-    # def save_to_sql():
-    #     nonlocal store
-    #     statements = []
-    #     for values in store:
-    #         search_key = repr(values[4]) if values[4] is not None else "NULL"
-    #         statements.append(f"INSERT INTO data VALUES ({values[0]!r}, {values[1]!r}, {values[2]}, {values[3]}, {search_key});")
-    #     # noinspection SqlCommit
-    #     db.executescript(f"BEGIN; {" ".join(statements)} COMMIT;")
-    #     # db.executemany(statement, store)
-    #     store = []
-
     def save_to_sql():
         nonlocal statements
         db.executescript(f"BEGIN; {"; ".join(statements)}; COMMIT;")
@@ -538,25 +476,19 @@ def read_and_store_gtfs_data():  # self=None
 
     print(f"{now()} > Static GTFS Loader > Started reading new GTFS data")
 
-    # Structure: (filename, id, start, length, search_key)
-    # store: list[tuple[str, str, int, int, str | None]] = []
-    statements: list[str] = []
+    statements: list[str] = []  # List of SQL statements to execute
 
     for row in iterate_over_csv_full("agency.txt"):
         statements.append(Agency(row.agency_id, row.agency_name, row.agency_url, row.agency_timezone).save_to_sql())
-        # store.append(("agency.txt", row.agency_id, row.Index, 1, f"{row.agency_id} {row.agency_name}"))
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved agencies")
 
     for row in iterate_over_csv_full("calendar.txt"):
         statements.append(Calendar(row.service_id, (row.monday, row.tuesday, row.wednesday, row.thursday, row.friday, row.saturday, row.sunday),
                                    str_to_date(row.start_date), str_to_date(row.end_date)).save_to_sql())
-        # store.append(("calendar.txt", row.service_id, row.Index, 1, None))  # No special search identifier
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved calendars")
 
-    # for data in iterate_over_csv_multiline("calendar_dates.txt", "service_id"):
-    #     store.append(data)
     for row in iterate_over_csv_full("calendar_dates.txt"):
         statements.append(CalendarException(row.service_id, str_to_date(row.date), int(row.exception_type) == 1).save_to_sql())
     save_to_sql()
@@ -565,26 +497,18 @@ def read_and_store_gtfs_data():  # self=None
     for row in iterate_over_csv_full("routes.txt"):
         statements.append(Route(row.route_id, row.agency_id, row.route_short_name, row.route_long_name, row.route_desc,
                                 row.route_type, row.route_url, row.route_color, row.route_text_color).save_to_sql())
-        # All routes have a "short name", so this shouldn't need to be updated unless they add a route without a name
-        # store.append(("routes.txt", row.route_id, row.Index, 1, f"{row.route_short_name} {row.route_long_name}"))  # f"{row.route_id} {row.route_short_name} {row.route_long_name}"
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved routes")
 
     for row in iterate_over_csv_full("stops.txt"):
         statements.append(Stop(row.stop_id, row.stop_code, row.stop_name, row.stop_desc, row.stop_lat, row.stop_lon,
                                row.zone_id, row.stop_url, row.location_type, row.parent_station).save_to_sql())
-        # if row.stop_code:
-        #     key = f"{row.stop_code} {row.stop_name}"
-        # else:
-        #     key = f"{row.stop_id} {row.stop_name}"
-        # store.append(("stops.txt", row.stop_id, row.Index, 1, key))
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved stops")
 
     for row in iterate_over_csv_full("trips.txt"):
         statements.append(Trip(row.route_id, row.service_id, row.trip_id, row.trip_headsign, row.trip_short_name,
                                row.direction_id, row.block_id, row.shape_id).save_to_sql())
-        # store.append(("trips.txt", row.trip_id, row.Index, 1, row.route_id))
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved trips")
 
@@ -593,20 +517,8 @@ def read_and_store_gtfs_data():  # self=None
                                    row.stop_headsign, row.pickup_type, row.drop_off_type, row.timepoint).save_to_sql())
         if len(statements) >= 100000:
             save_to_sql()  # Don't overwhelm the memory with millions of these entries
-        # store.append(("stop_times.txt", row.stop_id, row.Index, 1, row.trip_id))
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved stop times")
-
-    # for data in iterate_over_csv_multiline("stop_times.txt", "trip_id"):
-    #     store.append(data)
-    # save_to_sql()
-    # print(f"{now()} > Static GTFS Loader > Saved stop times")
-
-    # for row in iterate_over_csv_full("stop_times.txt"):
-    #     store.append(("stop_times.txt", row.stop_id, row.Index, 1, row.trip_id))
-
-    # store_trips_per_stop(db)
-    # print(f"{now()} > Static GTFS Loader > Saved stop-to-trip correlations")
 
     # Delete old expiry and set the new one
     # noinspection SqlWithoutWhere
@@ -641,84 +553,6 @@ def load_calendars(data: GTFSData):
         for exception in exceptions:
             exceptions_dict[exception.date] = exception
         data.calendar_exceptions[calendar.service_id] = exceptions_dict
-    # for row in iterate_over_csv_full("calendar.txt"):
-    #     calendar = Calendar.parse([row[1:]])
-    #     data.calendars[calendar.service_id] = calendar
-    # _id = None
-    # exception_data = []
-    # for row in iterate_over_csv_full("calendar_dates.txt"):
-    #     if _id == row.service_id:
-    #         exception_data.append(row[1:])
-    #     else:
-    #         if _id is not None:
-    #             exceptions = CalendarException.parse(exception_data)
-    #             data.calendar_exceptions[_id] = exceptions
-    #         _id = row.service_id
-    #         exception_data = []
-    # exceptions = CalendarException.parse(exception_data)
-    # data.calendar_exceptions[_id] = exceptions
-
-
-# def load_value_from_id(data: GTFSData | None, filename: str, _id: str, db: database.Database | None) -> Optional[Any]:
-#     """ Load a value from the static GTFS data by ID """
-#     # Return None if no ID is provided
-#     if not _id:
-#         return None
-#     # Attempt 1: Load from GTFSData
-#     if data:
-#         values: dict = getattr(data, key_mapping[filename])
-#         loaded = values.get(_id)
-#         if loaded is not None:
-#             return loaded
-#         # print(filename, "Value", _id, "not loaded")
-#     # Attempt 2: Load from files
-#     try:
-#         if db is None:
-#             db = get_database()
-#         sql_data = db.fetchrow("SELECT * FROM data WHERE filename=? AND id=?", (filename, _id))
-#         if not sql_data:
-#             raise KeyError
-#         gtfs_values = load_csv_lines(filename, sql_data["start"], sql_data["length"])
-#         cls = class_mapping[filename]
-#         new = cls.parse(gtfs_values)
-#         if data:
-#             # noinspection PyUnboundLocalVariable
-#             values[_id] = new
-#             # getattr(data, key_mapping[filename])[_id] = new
-#             # print(filename, "Value", _id, "saved")
-#         return new
-#     except (KeyError, ValueError):
-#         raise KeyError(f"Could not find any data from {filename} with ID {_id}") from None
-#
-#
-# def load_values_from_key(data: GTFSData | None, filename: str, search_key: str, db: database.Database | None) -> list[Any]:
-#     """ Load values from the static GTFS data by search key """
-#     if db is None:
-#         db = get_database()
-#     # Convert into SQL's search pattern
-#     _search = "%" + search_key.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
-#     # Search the database for any data that is similar to the query
-#     sql_data = db.fetch("SELECT * FROM data WHERE filename=? AND search_key LIKE ? ESCAPE '!'", (filename, _search))
-#     if data:
-#         values = getattr(data, key_mapping[filename])
-#     cls = class_mapping[filename]
-#     output = []
-#     for value in sql_data:
-#         # Attempt 1: Load from GTFSData
-#         if data:
-#             # noinspection PyUnboundLocalVariable
-#             loaded = values.get(value["id"])
-#             if loaded:
-#                 output.append(loaded)
-#                 continue
-#         # Attempt 2: Load from files
-#         gtfs_values = load_csv_lines(filename, value["start"], value["length"])
-#         new = cls.parse(gtfs_values)
-#         if data:
-#             # noinspection PyUnboundLocalVariable
-#             values[value["id"]] = new
-#         output.append(new)
-#     return output
 
 
 # A map from class type to its key in GTFSData

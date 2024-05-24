@@ -173,3 +173,7 @@
 - Made errors upon loading the schedule no longer fail silently
 - Made there be a soft limit and a hard limit to the expiry of GTFS data (although the soft limit is currently not indicated to the end user)
 - Made the traceback maker function able to include further context even when code block mode is disabled
+
+## v0.5.0a2 - 24 May 2024
+- Cleaned some of the old commented-out code to make the modern code more readable
+- Made the functions that load supplementary information (such as the `Trip` associated with a `StopTime`) use the `load_value()` function instead of directly calling `cls.from_sql()`
