@@ -578,11 +578,12 @@ def load_value(data: GTFSData | None, cls: Type[Any], _id: str, db: database.Dat
     # Attempt 2: Return an instance from SQL
     try:
         new = cls.from_sql(_id, db)  # type: ignore
-        if data and new:
-            # noinspection PyUnboundLocalVariable
-            values[_id] = new
+        if new:
+            if data:
+                # noinspection PyUnboundLocalVariable
+                values[_id] = new
             return new
         else:
             raise ValueError
     except (KeyError, ValueError):
-        raise KeyError(f"Could not find an instance for key {key_mapping[cls]} and ID {_id}") from None  # type: ignore
+        raise KeyError(f"Could not find a {cls.__name__} instance for key {key_mapping[cls]} and ID {_id}") from None  # type: ignore

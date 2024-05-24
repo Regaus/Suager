@@ -165,19 +165,38 @@ class RealStopTime:
                         else:
                             break  # We reached the desired point
                     if self.real_trip.stop_times[-1].schedule_relationship == "SKIPPED":
-                        i = len(self.real_trip.stop_times) - 1
-                        stop_time_update = self.real_trip.stop_times[i]
-                        while stop_time_update.schedule_relationship == "SKIPPED" and i > 0:
-                            i -= 1
+                        skipped_sequence = self.real_trip.stop_times[-1].stop_sequence
+                        all_stops = StopTime.from_sql(self.trip_id)
+                        all_stops.sort(key=lambda st: st.sequence)
+                        last_stop = all_stops[-1].sequence
+                        # If the last skipped stop is not the last stop on the route, do nothing.
+                        if skipped_sequence == last_stop:
+                            i = len(self.real_trip.stop_times) - 1
                             stop_time_update = self.real_trip.stop_times[i]
-                        stop_id = self.real_trip.stop_times[i + 1].stop_id
-                        try:
-                            # destination_stop: Stop = load_value_from_id(None, "stops.txt", stop_id, None)
-                            destination_stop: Stop = load_value(None, Stop, stop_id)
-                            # The warning sign doesn't fit properly on desktop, but oh well. It's more noticeable than putting two exclamation marks
-                            self._destination = f"⚠️ {destination_stop.name}, stop {destination_stop.code_or_id}"
-                        except KeyError:
-                            self._destination = f"Unknown Stop {stop_id}"
+                            try:
+                                # Find the last stop sequence not skipped
+                                while stop_time_update.schedule_relationship == "SKIPPED" and i > 0:
+                                    i -= 1
+                                    stop_time_update = self.real_trip.stop_times[i]
+
+                                if stop_time_update.schedule_relationship == "SKIPPED":
+                                    sequence = stop_time_update.stop_sequence - 1
+                                else:
+                                    sequence = self.real_trip.stop_times[i + 1].stop_sequence - 1
+                                # sequence - 1 because the sequences start from 1.
+                                stop_id = all_stops[sequence - 1].stop_id
+                                # stop_id = self.real_trip.stop_times[i + 1].stop_id
+                            except IndexError:
+                                # It has happened before, but I don't fully understand why it does.
+                                pass
+                            else:
+                                try:
+                                    # destination_stop: Stop = load_value_from_id(None, "stops.txt", stop_id, None)
+                                    destination_stop: Stop = load_value(None, Stop, stop_id)
+                                    # The warning sign doesn't fit properly on desktop, but oh well. It's more noticeable than putting two exclamation marks
+                                    self._destination = f"⚠️ {destination_stop.name}, stop {destination_stop.code_or_id}"
+                                except KeyError:
+                                    self._destination = f"⚠️ Unknown Stop {stop_id}"
                 else:
                     pass
                 if arrival_delay is not None:

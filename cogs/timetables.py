@@ -292,8 +292,8 @@ class Timetables(University, Luas, name="Timetables"):
         return data
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
-        # Only refresh the data once in 30 seconds
-        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 30:
+        # Only refresh the data once in 60 seconds
+        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
             return self.real_time_data, self.vehicle_data
         data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
         try:
@@ -341,10 +341,6 @@ class Timetables(University, Luas, name="Timetables"):
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
             if self.real_time_data is None:
-                # data = await self.get_real_time_data(debug=True, write=True)
-                # self.real_time_data = timetables.load_gtfs_r_data(data)
-                # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
-                # await self.load_real_time_data(debug=True, write=True)
                 await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:
@@ -363,13 +359,6 @@ class Timetables(University, Luas, name="Timetables"):
                             static_reload = True
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
                             await self.download_new_static_gtfs()
-                        # try:
-                        #     self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
-                        #     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
-                        # except (FileNotFoundError, RuntimeError) as e:
-                        #     # If the static GTFS data is not available or is expired, download new data and then extract and load.
-                        #     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
-                        #     await self.download_new_static_gtfs()
                 except (ClientError, BadZipFile):
                     # If the GTFS data cannot be downloaded due to an error with the powers above, try to load from existing data while ignoring expiry errors
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Can't download data, falling back to existing dataset.")
@@ -399,18 +388,6 @@ class Timetables(University, Luas, name="Timetables"):
         # Extract the data
         zip_file = ZipFile(BytesIO(data))
         zip_file.extractall("assets/gtfs")
-        # Set the data to expire two weeks from now - This is now handled in the updater
-        # with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
-        #     file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
-        # Update the loaded data
-        # timetables.read_and_store_gtfs_data()
-        # await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
-        # loop = asyncio.get_event_loop()
-        # await loop.run_in_executor(None, timetables.read_and_store_gtfs_data)
-        # self.static_data = timetables.init_gtfs_data()
-        # # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
-        # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
-        # self.updating = False
         await self.reload_static_gtfs(message="Downloaded new GTFS data and successfully loaded it")
 
     async def reload_static_gtfs(self, message: str = "Reloaded static GTFS data"):
@@ -512,14 +489,6 @@ class Timetables(University, Luas, name="Timetables"):
                 output.append(stop)
                 self.static_data.stops[stop.id] = stop
         return output
-        # return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower(), self.db)
-        # output = []
-        # query = query.lower()
-        # for stop in self.static_data.stops.values():
-        #     # Make the search case-insensitive
-        #     if query in stop.id.lower() or query in stop.code.lower() or query in stop.name.lower():
-        #         output.append(stop)
-        # return output
 
     def find_route(self, query: str) -> list[timetables.Route]:
         """ Find a specific route """
@@ -533,15 +502,6 @@ class Timetables(University, Luas, name="Timetables"):
                 output.append(route)
                 self.static_data.routes[route.id] = route
         return output
-        # This might be a bit less effective at catching routes than the previous examples, but it's possible to do it on-database this way
-        # return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower(), self.db)
-        # output = []
-        # query = query.lower()
-        # for route in self.static_data.routes.values():
-        #     # Make the search case-insensitive
-        #     if query in route.id.lower() or query in route.short_name.lower() or query in route.long_name.lower():
-        #         output.append(route)
-        # return output
 
     @commands.group(name="tfi")
     @commands.is_owner()

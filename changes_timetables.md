@@ -177,3 +177,8 @@
 ## v0.5.0a2 - 24 May 2024
 - Cleaned some of the old commented-out code to make the modern code more readable
 - Made the functions that load supplementary information (such as the `Trip` associated with a `StopTime`) use the `load_value()` function instead of directly calling `cls.from_sql()`
+
+## v0.5.0a3 - 24 May 2024
+- Fixed the `load_value()` function breaking when `data` is None but the value is successfully retrieved from the database
+- Changed the ratelimit for requesting data from the live API to 60 seconds
+- (Hopefully) Fixed the real-time schedule sometimes incorrectly showing the last stop served by the bus
