@@ -369,7 +369,7 @@ class Timetables(University, Luas, name="Timetables"):
         except Exception as e:
             self.loader_error = e
             self.initialised = False
-            raise e from None
+            raise
         # This can only be called if we are not reloading GTFS data, as we can only be sure the data is finished updating after that function returns
         finally:
             if not static_reload:

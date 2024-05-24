@@ -560,7 +560,7 @@ class Moderation(commands.Cog):
             await member.add_roles(mute_role, reason=reason)
         except Exception as e:
             await ctx.send(ctx.language().string("mod_mute_error", error=f"{type(e).__name__}: {e}"))
-            raise e
+            raise
         # Overwrite all older still active mutes as 5 ("Handled Otherwise")
         self.bot.db.execute("UPDATE punishments SET handled=5 WHERE uid=? AND gid=? AND action='mute' AND handled=0 AND bot=?", (member.id, ctx.guild.id, self.bot.name))
 

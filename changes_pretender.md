@@ -95,3 +95,6 @@
 - Added a command to sync slash commands (`a.sync`)
 - Made command completion and command error handlers deal with the existence of slash commands
   - Note: Pretender currently has no slash commands
+
+## v1.3.1.1 - 24 May 2024
+- Changed the error re-raising statements to not modify error context when they don't need to

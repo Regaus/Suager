@@ -18,9 +18,10 @@ def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFS
     try:
         return GTFSRData.load(data), VehicleData.load(vehicle_data)
     except Exception as e:
+        # We print the error but re-raise it afterwards
         from utils import general
         general.print_error(general.traceback_maker(e, code_block=False))
-        raise e from None  # Propagate the error instead of just printing and ignoring it
+        raise
 
 
 @dataclass()

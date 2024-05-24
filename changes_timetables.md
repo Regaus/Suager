@@ -182,3 +182,6 @@
 - Fixed the `load_value()` function breaking when `data` is None but the value is successfully retrieved from the database
 - Changed the ratelimit for requesting data from the live API to 60 seconds
 - (Hopefully) Fixed the real-time schedule sometimes incorrectly showing the last stop served by the bus
+
+## v0.5.0a4 - 24 May 2024
+- Changed the error re-raising statements to not modify error context when they don't need to

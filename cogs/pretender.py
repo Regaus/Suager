@@ -164,8 +164,8 @@ class Pretender(commands.Cog):
                 await ctx.send("Failed to delete original message...", delete_after=5)
 
             await webhook.send(message, username=victim.display_name, avatar_url=str(victim.display_avatar), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
-        except Exception as e:
-            raise e
+        except Exception:
+            raise
         finally:
             await session.close()
 
