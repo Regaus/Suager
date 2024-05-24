@@ -167,3 +167,9 @@
 - Made `Language.get()` be able to deal with slash commands and interactions
 - Made buttons on interactive views automatically detect whether the person is allowed to use that button
 - Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging
+
+## v0.5.0a1 - 8-9 Jan 2024, 23 May 2024
+- Rewrote the code to store static GTFS data in an SQL database, instead of only storing the locations in the file on disk
+- Made errors upon loading the schedule no longer fail silently
+- Made there be a soft limit and a hard limit to the expiry of GTFS data (although the soft limit is currently not indicated to the end user)
+- Made the traceback maker function able to include further context even when code block mode is disabled

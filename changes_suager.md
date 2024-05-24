@@ -1798,3 +1798,6 @@
 
 ## v7.7.16 - 6, 23 May 2024
 - Created a script to back up all of a server's messages, attachments, and embeds to a database.
+
+## v7.7.16.1 - 23 May 2024
+- Made the traceback maker function able to include further context even when code block mode is disabled

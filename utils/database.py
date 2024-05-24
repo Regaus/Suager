@@ -343,19 +343,19 @@ tables = [
 
     # GTFS database
     Table("agencies", "gtfs/static.db", [
-        Column("id", "INTEGER", True, True),  # Primary key: Agency ID
+        Column("id", "TEXT", True, True),  # Primary key: Agency ID
         Column("name", "TEXT", True),
         Column("url", "TEXT", True),
         Column("timezone", "TEXT", True),
     ]),
     Table("calendars", "gtfs/static.db", [
-        Column("service_id", "INTEGER", True, True),  # Primary key: Service ID
+        Column("service_id", "TEXT", True, True),  # Primary key: Service ID
         Column("data", "INTEGER", True),     # An integer storing 7 booleans corresponding to whether the service runs on each weekday
         Column("start_date", "DATE", True),  # Note: this will store as datetime.date
         Column("end_date", "DATE", True),    # Note: this will store as datetime.date
     ]),
     Table("calendar_exceptions", "gtfs/static.db", [
-        Column("service_id", "INTEGER", True),  # Should match Calendar.service_id
+        Column("service_id", "TEXT", True),     # Should match Calendar.service_id
         Column("date", "DATE", True),           # Note: this will store as datetime.date
         Column("exception", "BOOLEAN", True),   # True -> Added, False -> Removed
     ], "UNIQUE(service_id, date)"),             # Constraint: Service ID + date
@@ -384,7 +384,7 @@ tables = [
     ]),
     Table("trips", "gtfs/static.db", [
         Column("route_id", "TEXT", True),         # Route served by the Trip
-        Column("calendar_id", "INTEGER", True),   # Schedule followed by the Trip
+        Column("calendar_id", "TEXT", True),      # Schedule followed by the Trip
         Column("trip_id", "TEXT", True, True),    # Primary key: Trip ID
         Column("headsign", "TEXT", True),         # Destination shown
         Column("short_name", "TEXT", True),
@@ -403,4 +403,8 @@ tables = [
         Column("drop_off_type", "INTEGER", True),   # 0 or empty -> Drop off, 1 -> No drop off
         Column("timepoint", "INTEGER", True),       # 0 -> Times are approximate, 1 -> Times are exact
     ], "UNIQUE(trip_id, sequence)"),                 # Constraint: Trip ID + Sequence
+    Table("expiry", "gtfs/static.db", [
+        Column("type", "INTEGER", True, True),  # 0 -> soft limit, 1 -> hard limit
+        Column("date", "DATE", True)            # Date when expiry limit is reached
+    ])
 ]

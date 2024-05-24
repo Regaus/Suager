@@ -502,7 +502,17 @@ class Timetables(University, Luas, name="Timetables"):
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
-        return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower(), self.db)
+        query = query.lower()
+        all_stops = self.db.fetch("SELECT id, code, name FROM stops")
+        output = []
+        for stop_dict in all_stops:
+            if query in stop_dict["id"].lower() or query in f"{stop_dict['code']} {stop_dict['name']}".lower():
+                stop = timetables.Stop.from_sql(stop_dict["id"], self.db)  # We need to fetch the rest of the data now
+                # stop = timetables.Stop.from_dict(stop_dict)
+                output.append(stop)
+                self.static_data.stops[stop.id] = stop
+        return output
+        # return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower(), self.db)
         # output = []
         # query = query.lower()
         # for stop in self.static_data.stops.values():
@@ -513,8 +523,18 @@ class Timetables(University, Luas, name="Timetables"):
 
     def find_route(self, query: str) -> list[timetables.Route]:
         """ Find a specific route """
+        query = query.lower()
+        all_routes = self.db.fetch("SELECT id, short_name, long_name FROM routes")
+        output = []
+        for route_dict in all_routes:
+            if query in route_dict["id"].lower() or query in f"{route_dict['short_name']} {route_dict['long_name']}".lower():
+                route = timetables.Route.from_sql(route_dict["id"], self.db)
+                # route = timetables.Route.from_dict(route_dict)
+                output.append(route)
+                self.static_data.routes[route.id] = route
+        return output
         # This might be a bit less effective at catching routes than the previous examples, but it's possible to do it on-database this way
-        return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower(), self.db)
+        # return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower(), self.db)
         # output = []
         # query = query.lower()
         # for route in self.static_data.routes.values():
@@ -599,7 +619,15 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
+        try:
+            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
+        except Exception as e:
+            await ctx.send(ctx.language2("en").string("events_error_error", err=f"{type(e).__name__}: {e}"))
+            error_message = (f"{time.datetime.now():%d %b %Y, %H:%M:%S} > {self.bot.full_name} > Error occurred while loading stop schedule\n"
+                             f"{general.traceback_maker(e, text=ctx.message.content, guild=ctx.guild, author=ctx.author, code_block=False)}")
+            general.print_error(error_message)
+            logger.log(self.bot.name, "errors", error_message)
+            return
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
