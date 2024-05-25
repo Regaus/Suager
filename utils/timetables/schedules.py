@@ -30,6 +30,9 @@ class SpecificStopTime:
         self.raw_arrival_time = stop_time.arrival_time
         self.raw_departure_time = stop_time.departure_time
         self._destination: str | None = None
+        # These will never be used here, but are there for parity with the RealStopTime
+        self.actual_destination = None
+        self.actual_start = None
 
         self.date = date
         _date = time.datetime.combine(date, time.time(tz=TIMEZONE))
@@ -130,6 +133,8 @@ class RealStopTime:
             self.scheduled_departure_time = stop_time.departure_time
             # self.destination = stop_time.trip.headsign
             self._destination = None
+            self.actual_destination = None
+            self.actual_start = None
 
             self.real_time = False
             self.real_trip = None
@@ -164,10 +169,16 @@ class RealStopTime:
                                 self.schedule_relationship = stop_time_update.schedule_relationship
                         else:
                             break  # We reached the desired point
+
+                    all_stops = []
+
+                    def load_stops():
+                        return sorted(StopTime.from_sql(self.trip_id), key=lambda st: st.sequence)
+
+                    # Handle the case where the bus terminates early
                     if self.real_trip.stop_times[-1].schedule_relationship == "SKIPPED":
                         skipped_sequence = self.real_trip.stop_times[-1].stop_sequence
-                        all_stops = StopTime.from_sql(self.trip_id)
-                        all_stops.sort(key=lambda st: st.sequence)
+                        all_stops = load_stops()
                         last_stop = all_stops[-1].sequence
                         # If the last skipped stop is not the last stop on the route, do nothing.
                         if skipped_sequence == last_stop:
@@ -191,12 +202,42 @@ class RealStopTime:
                                 pass
                             else:
                                 try:
-                                    # destination_stop: Stop = load_value_from_id(None, "stops.txt", stop_id, None)
                                     destination_stop: Stop = load_value(None, Stop, stop_id)
-                                    # The warning sign doesn't fit properly on desktop, but oh well. It's more noticeable than putting two exclamation marks
-                                    self._destination = f"⚠️ {destination_stop.name}, stop {destination_stop.code_or_id}"
+                                    self.actual_destination = f"Terminates at {destination_stop.name}, stop {destination_stop.code_or_id}"
                                 except KeyError:
-                                    self._destination = f"⚠️ Unknown Stop {stop_id}"
+                                    self.actual_destination = f"Terminates at unknown stop {stop_id}"
+
+                    # Handle the case where the bus departs later than scheduled
+                    if self.real_trip.stop_times[0].schedule_relationship == "SKIPPED":
+                        # skipped_sequence = self.real_trip.stop_times[0].stop_sequence
+                        length = len(self.real_trip.stop_times)
+                        # Apparently this doesn't necessarily have to be indicated from the first stop...
+                        # if skipped_sequence == 1:
+                        i = 0
+                        stop_time_update = self.real_trip.stop_times[i]
+                        try:
+                            # Find the first stop sequence not skipped
+                            while stop_time_update.schedule_relationship == "SKIPPED" and i < length - 1:
+                                i += 1
+                                stop_time_update = self.real_trip.stop_times[i]
+
+                            if stop_time_update.schedule_relationship == "SKIPPED":
+                                sequence = stop_time_update.stop_sequence
+                            else:
+                                sequence = self.real_trip.stop_times[i - 1].stop_sequence
+                            if not all_stops:
+                                all_stops = load_stops()
+                            stop_id = all_stops[sequence].stop_id
+                        except IndexError:
+                            # This shouldn't happen, but if it does, just ignore the departure text
+                            pass
+                        else:
+                            try:
+                                departure_stop: Stop = load_value(None, Stop, stop_id)
+                                self.actual_start = f"Departs from {departure_stop.name}, stop {departure_stop.code_or_id}"
+                            except KeyError:
+                                self.actual_start = f"Departs from unknown stop {stop_id}"
+
                 else:
                     pass
                 if arrival_delay is not None:

@@ -316,7 +316,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     async def get_real_time_data(self, debug: bool = False, *, write: bool = True):
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
-        if debug:
+        if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):
             try:
                 with open(timetables.real_time_filename, "rb") as file:
                     data: bytes = file.read()
@@ -325,9 +325,11 @@ class Timetables(University, Luas, name="Timetables"):
             except FileNotFoundError:
                 data: bytes = await self.get_data_from_api(write=write)
                 vehicles: bytes = await self.get_vehicles_from_api(write=write)
+                self.last_updated = time.datetime.now()
         else:
             data: bytes = await self.get_data_from_api(write=write)
             vehicles: bytes = await self.get_vehicles_from_api(write=write)
+            self.last_updated = time.datetime.now()
         return json.loads(data), json.loads(vehicles)
 
     # @commands.Cog.listener()

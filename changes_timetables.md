@@ -185,3 +185,11 @@
 
 ## v0.5.0a4 - 24 May 2024
 - Changed the error re-raising statements to not modify error context when they don't need to
+
+## v0.5.0a5 - 24 May 2024
+- Fixed direct calls to `self.get_real_time_data()` not checking for the ratelimit
+- Put the warning about a bus terminating early on a separate line
+- Added a warning about a bus departing from a later stop than scheduled
+- When the destination is truncated, an ellipsis is now added at the end to show that
+  - The warnings for buses not going the whole way are similarly truncated
+- Fixed the current time showing up in UTC after refreshing the view
