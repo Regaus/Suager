@@ -193,3 +193,7 @@
 - When the destination is truncated, an ellipsis is now added at the end to show that
   - The warnings for buses not going the whole way are similarly truncated
 - Fixed the current time showing up in UTC after refreshing the view
+
+## v0.5.0a6 - 25 May 2024
+- Added a warning for when the GTFS data has reached its soft expiry limit (shown only once per bot restart)
+- Changed the schedules command to simply forward any errors in the loading of the schedule to the `on_command_error()` event listener, instead of handling them separately

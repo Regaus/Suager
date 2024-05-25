@@ -235,6 +235,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.updating = False
         self.loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
+        self.soft_limit_warning: bool = False
 
     @staticmethod
     def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool]:
@@ -580,16 +581,27 @@ class Timetables(University, Luas, name="Timetables"):
                                               f"Use `{ctx.prefix}tfi search stop` to find the specific stop code or provide a more specific query.\n"
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
+
+        if not self.soft_limit_warning:
+            try:
+                data_valid = timetables.check_gtfs_data_expiry(self.db)
+                if not data_valid:
+                    await ctx.send("Warning: The GTFS data currently stored here has become more than a month old. It should be updated soon to prevent it from going out of date.")
+                self.soft_limit_warning = True  # The warning is shown only once per bot restart.
+            except RuntimeError:  # This should never happen by this stage, but better safe than sorry
+                return await ctx.send("The GTFS data available has expired.")
+
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
         try:
             schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
-        except Exception as e:
-            await ctx.send(ctx.language2("en").string("events_error_error", err=f"{type(e).__name__}: {e}"))
-            error_message = (f"{time.datetime.now():%d %b %Y, %H:%M:%S} > {self.bot.full_name} > Error occurred while loading stop schedule\n"
-                             f"{general.traceback_maker(e, text=ctx.message.content, guild=ctx.guild, author=ctx.author, code_block=False)}")
-            general.print_error(error_message)
-            logger.log(self.bot.name, "errors", error_message)
-            return
+        except Exception:
+            raise  # For some reason, without this block, exceptions raised are simply silently ignored, this will forward them to the on_command_error listener.
+            # await ctx.send(ctx.language2("en").string("events_error_error", err=f"{type(e).__name__}: {e}"))
+            # error_message = (f"{time.datetime.now():%d %b %Y, %H:%M:%S} > {self.bot.full_name} > Error occurred while loading stop schedule\n"
+            #                  f"{general.traceback_maker(e, text=ctx.message.content, guild=ctx.guild, author=ctx.author, code_block=False)}")
+            # general.print_error(error_message)
+            # logger.log(self.bot.name, "errors", error_message)
+            # return
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
