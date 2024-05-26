@@ -88,7 +88,7 @@ class StopScheduleViewer:
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=False, write=False)
         self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
         if not self.fixed:  # _time:
-            self.now = time.datetime.now()
+            self.now = time.datetime.now(tz=TIMEZONE)
             self.today = self.now.date()
 
     def get_indexes(self):
@@ -110,15 +110,15 @@ class StopScheduleViewer:
         return start_idx, end_idx
 
     @property
-    def iterable_stop_times(self):
+    def iterable_stop_times(self) -> list[RealStopTime] | list[SpecificStopTime]:
         """ Returns the stop times we can iterate over """
         return self.real_stop_times if self.real_time else self.base_stop_times
 
     def create_output(self):
         """ Create the output from available information and send it to the user """
         language = languages.Language("en")
-        output_data: list[list[str]] = [["Route", "Destination", "Schedule", "RealTime", "Distance"]]
-        column_sizes = [5, 11, 8, 8, 8]  # Longest member of the column
+        output_data: list[list[str | None]] = [["Route", "Destination", "Schedule", "RealTime", "Distance", None, None]]
+        column_sizes = [5, 11, 8, 8, 8, 0, 0]  # Longest member of the column
         extras = False
         if not self.fixed:
             self.start_idx, self.end_idx = self.get_indexes()
@@ -157,7 +157,11 @@ class StopScheduleViewer:
                 route = "Unknown"
             else:
                 route = _route.short_name
+
             destination = stop_time.destination(self.data)
+            # If the bus terminates early or departs later than scheduled, show a warning sign at the destination field
+            if stop_time.actual_destination is not None or stop_time.actual_start is not None:
+                destination = "⚠️ " + destination
 
             if self.real_time and stop_time.vehicle is not None:
                 distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
@@ -171,21 +175,37 @@ class StopScheduleViewer:
             else:
                 distance = "-"
 
+            actual_destination_line = stop_time.actual_destination or ""
+            actual_start_line = stop_time.actual_start or ""
+
             column_sizes[0] = max(column_sizes[0], len(route))
             column_sizes[1] = max(column_sizes[1], len(destination))
             column_sizes[2] = max(column_sizes[2], len(scheduled_departure_time))
             column_sizes[3] = max(column_sizes[3], len(real_departure_time))
             column_sizes[4] = max(column_sizes[4], len(distance))
+            column_sizes[5] = max(column_sizes[5], len(actual_destination_line))
+            column_sizes[6] = max(column_sizes[6], len(actual_start_line))
 
-            output_data.append([route, destination, scheduled_departure_time, real_departure_time, distance])
+            output_data.append([route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line])
 
         # Calculate the last line first, in case we need more characters for the destination field
-        line_length = sum(column_sizes) + len(column_sizes) - 1
+        line_length = sum(column_sizes[:-2]) + len(column_sizes) - 3
         cutoff = 0
+        skip = column_sizes[0] + 1
         if self.truncate_destination:
             if line_length > 50:
                 cutoff = column_sizes[1] - (line_length - 50)  # Max length of the destination to fit the line
                 line_length = 50
+        else:
+            # If the extra lines are too long, expand the normal lines to fit
+            if any(column_sizes[-2:]):  # Only do this if the lines are actually there
+                max_length = max(column_sizes[-2:]) + skip
+                if max_length > line_length:
+                    new_line_length = min(100, max_length)
+                    column_sizes[1] += new_line_length - line_length
+                    line_length = new_line_length
+                    del new_line_length
+        extra_line_length = line_length - skip
         spaces = line_length - len(self.stop.name) - 18
         extra = 0
         # Add more spaces to destination if there's too few between stop name and current time
@@ -195,6 +215,7 @@ class StopScheduleViewer:
         # Example:   "Ballinacurra Close       23 Oct 2023, 18:00"
         last_line = f"{self.stop.name}{' ' * spaces}{self.now:%d %b %Y, %H:%M}```"
         column_sizes[1] += extra  # [1] is destination
+        extra_line_length += extra
 
         stop_code = f"Code `{self.stop.code}`, " if self.stop.code else ""
         stop_id = f"ID `{self.stop.id}`"
@@ -202,22 +223,33 @@ class StopScheduleViewer:
         if extras:
             additional_text += "*D = Drop-off only; P = Pick-up only*\n"
         output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
-                 "*Please note that the distance shown is straight-line distance and as such may not be accurate*\n" \
+                 "*Please note that the vehicle locations and distances may not be accurate*\n" \
                  f"{additional_text}```fix\n"
+
         for line in output_data:
             assert len(column_sizes) == len(line)
             line_data = []
-            for i in range(len(line)):
+            for i in range(len(line) - 2):  # Excluding the "actual_destination" and "actual_start"
                 size = column_sizes[i]
                 line_part = line[i]
                 if i == 1 and cutoff:
                     size = cutoff
-                    line_part = line_part[:cutoff]
+                    if len(line_part) > cutoff:
+                        line_part = line_part[:cutoff - 1] + "…"  # Truncate destination field if necessary
                 # Left-align route and destination to fixed number of spaces
                 # Right-align the schedule, real-time info, and distance
                 alignment = "<" if i < 2 else ">"
                 line_data.append(f"{line_part:{alignment}{size}}")
             output += f"{' '.join(line_data)}\n"
+            # If actual_destination and actual_start are not empty, insert them at the line below
+            # These lines will start at the Destination field, and can occupy space up to the end of the line
+            for i in (-2, -1):
+                if line[i]:
+                    length = len(line[i])
+                    if length > extra_line_length:
+                        output += f"{' ' * column_sizes[0]} {line[i][:extra_line_length - 1]}…\n"
+                    else:
+                        output += f"{' ' * column_sizes[0]} {line[i]}\n"
         output += last_line
         if len(output) > 2000:
             output = output[:2000]

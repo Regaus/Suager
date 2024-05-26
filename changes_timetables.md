@@ -167,3 +167,39 @@
 - Made `Language.get()` be able to deal with slash commands and interactions
 - Made buttons on interactive views automatically detect whether the person is allowed to use that button
 - Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging
+
+## v0.5.0a1 - 8-9 Jan 2024, 23 May 2024
+- Rewrote the code to store static GTFS data in an SQL database, instead of only storing the locations in the file on disk
+- Made errors upon loading the schedule no longer fail silently
+- Made there be a soft limit and a hard limit to the expiry of GTFS data (although the soft limit is currently not indicated to the end user)
+- Made the traceback maker function able to include further context even when code block mode is disabled
+
+## v0.5.0a2 - 24 May 2024
+- Cleaned some of the old commented-out code to make the modern code more readable
+- Made the functions that load supplementary information (such as the `Trip` associated with a `StopTime`) use the `load_value()` function instead of directly calling `cls.from_sql()`
+
+## v0.5.0a3 - 24 May 2024
+- Fixed the `load_value()` function breaking when `data` is None but the value is successfully retrieved from the database
+- Changed the ratelimit for requesting data from the live API to 60 seconds
+- (Hopefully) Fixed the real-time schedule sometimes incorrectly showing the last stop served by the bus
+
+## v0.5.0a4 - 24 May 2024
+- Changed the error re-raising statements to not modify error context when they don't need to
+
+## v0.5.0a5 - 24 May 2024
+- Fixed direct calls to `self.get_real_time_data()` not checking for the ratelimit
+- Put the warning about a bus terminating early on a separate line
+- Added a warning about a bus departing from a later stop than scheduled
+- When the destination is truncated, an ellipsis is now added at the end to show that
+  - The warnings for buses not going the whole way are similarly truncated
+- Fixed the current time showing up in UTC after refreshing the view
+
+## v0.5.0a6 - 25 May 2024
+- Added a warning for when the GTFS data has reached its soft expiry limit (shown only once per bot restart)
+- Changed the schedules command to simply forward any errors in the loading of the schedule to the `on_command_error()` event listener, instead of handling them separately
+
+## v0.5.0a7 - 26 May 2024
+- The CPU burner module will be disabled while the GTFS data is being loaded, and will now only active 15 minutes after the last command usage
+
+## v0.5.0 - 26 May 2024
+- The `__repr__()` for StopTime will now show the stop ID

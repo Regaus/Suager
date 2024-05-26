@@ -11,7 +11,7 @@ from discord import app_commands
 from regaus import time
 from thefuzz import process
 
-from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser
+from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser, cpu_burner
 from utils.time import time as print_current_time
 
 
@@ -235,6 +235,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.updating = False
         self.loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
+        self.soft_limit_warning: bool = False
 
     @staticmethod
     def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool]:
@@ -292,8 +293,8 @@ class Timetables(University, Luas, name="Timetables"):
         return data
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
-        # Only refresh the data once in 30 seconds
-        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 30:
+        # Only refresh the data once in 60 seconds
+        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
             return self.real_time_data, self.vehicle_data
         data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
         try:
@@ -316,7 +317,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     async def get_real_time_data(self, debug: bool = False, *, write: bool = True):
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
-        if debug:
+        if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):
             try:
                 with open(timetables.real_time_filename, "rb") as file:
                     data: bytes = file.read()
@@ -325,9 +326,11 @@ class Timetables(University, Luas, name="Timetables"):
             except FileNotFoundError:
                 data: bytes = await self.get_data_from_api(write=write)
                 vehicles: bytes = await self.get_vehicles_from_api(write=write)
+                self.last_updated = time.datetime.now()
         else:
             data: bytes = await self.get_data_from_api(write=write)
             vehicles: bytes = await self.get_vehicles_from_api(write=write)
+            self.last_updated = time.datetime.now()
         return json.loads(data), json.loads(vehicles)
 
     # @commands.Cog.listener()
@@ -338,13 +341,10 @@ class Timetables(University, Luas, name="Timetables"):
         """ Load the GTFS-R and static GTFS data only when needed """
         static_reload = False
         try:
+            cpu_burner.arr[2] = False  # Disable the CPU burner function while loading the GTFS data
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
             if self.real_time_data is None:
-                # data = await self.get_real_time_data(debug=True, write=True)
-                # self.real_time_data = timetables.load_gtfs_r_data(data)
-                # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
-                # await self.load_real_time_data(debug=True, write=True)
                 await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:
@@ -363,13 +363,6 @@ class Timetables(University, Luas, name="Timetables"):
                             static_reload = True
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
                             await self.download_new_static_gtfs()
-                        # try:
-                        #     self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG)  # Don't write pickles while we're in Debug Mode
-                        #     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded static GTFS data")
-                        # except (FileNotFoundError, RuntimeError) as e:
-                        #     # If the static GTFS data is not available or is expired, download new data and then extract and load.
-                        #     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
-                        #     await self.download_new_static_gtfs()
                 except (ClientError, BadZipFile):
                     # If the GTFS data cannot be downloaded due to an error with the powers above, try to load from existing data while ignoring expiry errors
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Can't download data, falling back to existing dataset.")
@@ -380,9 +373,10 @@ class Timetables(University, Luas, name="Timetables"):
         except Exception as e:
             self.loader_error = e
             self.initialised = False
-            raise e from None
+            raise
         # This can only be called if we are not reloading GTFS data, as we can only be sure the data is finished updating after that function returns
         finally:
+            cpu_burner.arr[2] = True
             if not static_reload:
                 self.updating = False
 
@@ -399,18 +393,6 @@ class Timetables(University, Luas, name="Timetables"):
         # Extract the data
         zip_file = ZipFile(BytesIO(data))
         zip_file.extractall("assets/gtfs")
-        # Set the data to expire two weeks from now - This is now handled in the updater
-        # with open("assets/gtfs/expiry.txt", "w+", encoding="utf-8") as file:
-        #     file.write(str(int(time.datetime.now().timestamp) + 86400 * 14))
-        # Update the loaded data
-        # timetables.read_and_store_gtfs_data()
-        # await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
-        # loop = asyncio.get_event_loop()
-        # await loop.run_in_executor(None, timetables.read_and_store_gtfs_data)
-        # self.static_data = timetables.init_gtfs_data()
-        # # self.static_data = timetables.load_gtfs_data(write=not self._DEBUG)
-        # logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Downloaded new GTFS data and successfully loaded it")
-        # self.updating = False
         await self.reload_static_gtfs(message="Downloaded new GTFS data and successfully loaded it")
 
     async def reload_static_gtfs(self, message: str = "Reloaded static GTFS data"):
@@ -502,26 +484,29 @@ class Timetables(University, Luas, name="Timetables"):
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
-        return timetables.load_values_from_key(self.static_data, "stops.txt", query.lower(), self.db)
-        # output = []
-        # query = query.lower()
-        # for stop in self.static_data.stops.values():
-        #     # Make the search case-insensitive
-        #     if query in stop.id.lower() or query in stop.code.lower() or query in stop.name.lower():
-        #         output.append(stop)
-        # return output
+        query = query.lower()
+        all_stops = self.db.fetch("SELECT id, code, name FROM stops")
+        output = []
+        for stop_dict in all_stops:
+            if query in stop_dict["id"].lower() or query in f"{stop_dict['code']} {stop_dict['name']}".lower():
+                stop = timetables.Stop.from_sql(stop_dict["id"], self.db)  # We need to fetch the rest of the data now
+                # stop = timetables.Stop.from_dict(stop_dict)
+                output.append(stop)
+                self.static_data.stops[stop.id] = stop
+        return output
 
     def find_route(self, query: str) -> list[timetables.Route]:
         """ Find a specific route """
-        # This might be a bit less effective at catching routes than the previous examples, but it's possible to do it on-database this way
-        return timetables.load_values_from_key(self.static_data, "routes.txt", query.lower(), self.db)
-        # output = []
-        # query = query.lower()
-        # for route in self.static_data.routes.values():
-        #     # Make the search case-insensitive
-        #     if query in route.id.lower() or query in route.short_name.lower() or query in route.long_name.lower():
-        #         output.append(route)
-        # return output
+        query = query.lower()
+        all_routes = self.db.fetch("SELECT id, short_name, long_name FROM routes")
+        output = []
+        for route_dict in all_routes:
+            if query in route_dict["id"].lower() or query in f"{route_dict['short_name']} {route_dict['long_name']}".lower():
+                route = timetables.Route.from_sql(route_dict["id"], self.db)
+                # route = timetables.Route.from_dict(route_dict)
+                output.append(route)
+                self.static_data.routes[route.id] = route
+        return output
 
     @commands.group(name="tfi")
     @commands.is_owner()
@@ -598,8 +583,27 @@ class Timetables(University, Luas, name="Timetables"):
                                               f"Use `{ctx.prefix}tfi search stop` to find the specific stop code or provide a more specific query.\n"
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
+
+        if not self.soft_limit_warning:
+            try:
+                data_valid = timetables.check_gtfs_data_expiry(self.db)
+                if not data_valid:
+                    await ctx.send("Warning: The GTFS data currently stored here has become more than a month old. It should be updated soon to prevent it from going out of date.")
+                self.soft_limit_warning = True  # The warning is shown only once per bot restart.
+            except RuntimeError:  # This should never happen by this stage, but better safe than sorry
+                return await ctx.send("The GTFS data available has expired.")
+
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
+        try:
+            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
+        except Exception:
+            raise  # For some reason, without this block, exceptions raised are simply silently ignored, this will forward them to the on_command_error listener.
+            # await ctx.send(ctx.language2("en").string("events_error_error", err=f"{type(e).__name__}: {e}"))
+            # error_message = (f"{time.datetime.now():%d %b %Y, %H:%M:%S} > {self.bot.full_name} > Error occurred while loading stop schedule\n"
+            #                  f"{general.traceback_maker(e, text=ctx.message.content, guild=ctx.guild, author=ctx.author, code_block=False)}")
+            # general.print_error(error_message)
+            # logger.log(self.bot.name, "errors", error_message)
+            # return
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 

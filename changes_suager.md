@@ -1798,3 +1798,12 @@
 
 ## v7.7.16 - 6, 23 May 2024
 - Created a script to back up all of a server's messages, attachments, and embeds to a database.
+
+## v7.7.16.1 - 23 May 2024
+- Made the traceback maker function able to include further context even when code block mode is disabled
+
+## v7.7.16.2 - 24 May 2024
+- Changed the error re-raising statements to not modify error context when they don't need to
+
+## v7.7.16.3 - 26 May 2024
+- The CPU burner module will now only active 15 minutes after the last command usage

@@ -133,14 +133,17 @@ class Column:
 
 
 class Table:
-    def __init__(self, name: str, filename: str, columns: list):
+    def __init__(self, name: str, filename: str, columns: list, extra_sql: str = ""):
         self.name = name
         self.filename = filename  # Filename for the database
         self.columns = columns
+        self.extra_sql = extra_sql
 
     def create(self):
         start = f"CREATE TABLE IF NOT EXISTS {self.name} (\n"
         strings = [str(column) for column in self.columns]
+        if self.extra_sql:
+            strings.append(self.extra_sql)
         middle = ",\n".join(strings)
         end = "\n);"
         command = f"{start}{middle}{end}"
@@ -339,18 +342,69 @@ tables = [
     ]),
 
     # GTFS database
-    Table("data", "gtfs/static.db", [
-        Column("filename", "TEXT", True),     # Data filename (e.g. agency.txt)
-        Column("id", "TEXT", True),           # ID (stored as a string) - Agency ID, Route ID, Trip ID, etc.
-        Column("start", "INTEGER", True),     # Start offset: Number of rows to skip to get to this data
-        Column("length", "INTEGER", True),    # Length of the data (in lines)
-        Column("search_key", "TEXT", False),  # Search query (for stops and routes)
+    Table("agencies", "gtfs/static.db", [
+        Column("id", "TEXT", True, True),  # Primary key: Agency ID
+        Column("name", "TEXT", True),
+        Column("url", "TEXT", True),
+        Column("timezone", "TEXT", True),
     ]),
+    Table("calendars", "gtfs/static.db", [
+        Column("service_id", "TEXT", True, True),  # Primary key: Service ID
+        Column("data", "INTEGER", True),     # An integer storing 7 booleans corresponding to whether the service runs on each weekday
+        Column("start_date", "DATE", True),  # Note: this will store as datetime.date
+        Column("end_date", "DATE", True),    # Note: this will store as datetime.date
+    ]),
+    Table("calendar_exceptions", "gtfs/static.db", [
+        Column("service_id", "TEXT", True),     # Should match Calendar.service_id
+        Column("date", "DATE", True),           # Note: this will store as datetime.date
+        Column("exception", "BOOLEAN", True),   # True -> Added, False -> Removed
+    ], "UNIQUE(service_id, date)"),             # Constraint: Service ID + date
+    Table("routes", "gtfs/static.db", [
+        Column("id", "TEXT", True, True),        # Primary key: Route ID
+        Column("agency_id", "INTEGER", True),    # Route operator
+        Column("short_name", "TEXT", True),      # Route name for people
+        Column("long_name", "TEXT", True),       # Route description for people
+        Column("route_desc", "TEXT", True),      # Route Description - usually empty
+        Column("route_type", "INTEGER", True),   # Tram/Subway/Rail/Bus
+        Column("route_url", "TEXT", True),       # Route URL - Not provided by Irish public transport
+        Column("route_colour", "TEXT", True),
+        Column("route_text_colour", "TEXT", True),
+    ]),
+    Table("stops", "gtfs/static.db", [
+        Column("id", "TEXT", True, True),        # Primary key: Full Stop ID
+        Column("code", "TEXT", True),            # Short code (Dublin Bus / Bus Éireann)
+        Column("name", "TEXT", True),            # Stop name
+        Column("description", "TEXT", True),     # Stop description - usually empty
+        Column("latitude", "REAL", True),
+        Column("longitude", "REAL", True),
+        Column("zone_id", "TEXT", True),         # Fare zone
+        Column("stop_url", "TEXT", True),        # URL to a webpage about the location
+        Column("location_type", "TEXT", True),   # Stop, Station or whatever else - empty
+        Column("parent_station", "TEXT", True),  # Empty in our case
+    ]),
+    Table("trips", "gtfs/static.db", [
+        Column("route_id", "TEXT", True),         # Route served by the Trip
+        Column("calendar_id", "TEXT", True),      # Schedule followed by the Trip
+        Column("trip_id", "TEXT", True, True),    # Primary key: Trip ID
+        Column("headsign", "TEXT", True),         # Destination shown
+        Column("short_name", "TEXT", True),
+        Column("direction_id", "INTEGER", True),  # 0 -> outbound, 1 -> inbound
+        Column("block_id", "TEXT", True),
+        Column("shape_id", "TEXT", True),         # ID of geospatial shape of the trip
+    ]),
+    Table("stop_times", "gtfs/static.db", [
+        Column("trip_id", "TEXT", True),            # Trip ID this stop time belongs to
+        Column("arrival_time", "INTEGER", True),    # Arrival time as number of seconds since midnight
+        Column("departure_time", "INTEGER", True),  # Departure time as number of seconds since midnight
+        Column("stop_id", "TEXT", True),            # Stop ID served by this stop time
+        Column("sequence", "INTEGER", True),        # Order of the stop along the route
+        Column("stop_headsign", "TEXT", True),      # In case the headsign changes at a certain stop
+        Column("pickup_type", "INTEGER", True),     # 0 or empty -> Pickup, 1 -> No pickup
+        Column("drop_off_type", "INTEGER", True),   # 0 or empty -> Drop off, 1 -> No drop off
+        Column("timepoint", "INTEGER", True),       # 0 -> Times are approximate, 1 -> Times are exact
+    ], "UNIQUE(trip_id, sequence)"),                 # Constraint: Trip ID + Sequence
     Table("expiry", "gtfs/static.db", [
-        Column("expiry", "TIMESTAMP", True)  # Stores the data expiry timestamp
-    ]),
-    Table("schedules", "gtfs/static.db", [
-        Column("stop_id", "TEXT", True),   # Stop ID
-        Column("trip_ids", "TEXT", True),  # Space-separated IDs of trips that pass by this stop
+        Column("type", "INTEGER", True, True),  # 0 -> soft limit, 1 -> hard limit
+        Column("date", "DATE", True)            # Date when expiry limit is reached
     ])
 ]

@@ -38,13 +38,12 @@ def make_dir(dir_name):
 
 def traceback_maker(err: BaseException, text: str = None, guild=None, author=None, code_block: bool = True):
     _traceback = ''.join(traceback.format_tb(err.__traceback__))
-    e = f"{_traceback}{type(err).__name__}: {err}"
-    if not code_block:
-        return e
-    t = f"Command: {text}\n" if text is not None else ""
-    g = f"Guild: {guild.name}\n" if guild is not None else ""
-    a = f"User: {username(author)} ({author.name})\n" if author is not None else ""
-    error = f"{g}{a}{t}```py\n{e}\n```"
+    traceback_str = f"{_traceback}{type(err).__name__}: {err}"
+    _error = f"```py\n{traceback_str}\n```" if code_block else traceback_str
+    _text = f"Command: {text}\n" if text is not None else ""
+    _guild = f"Guild: {guild.name}\n" if guild is not None else ""
+    _author = f"User: {username(author)} ({author.name})\n" if author is not None else ""
+    error = f"{_guild}{_author}{_text}{_error}"
     return error
 
 
