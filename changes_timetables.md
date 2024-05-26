@@ -200,3 +200,6 @@
 
 ## v0.5.0a7 - 26 May 2024
 - The CPU burner module will be disabled while the GTFS data is being loaded, and will now only active 15 minutes after the last command usage
+
+## v0.5.0 - 26 May 2024
+- The `__repr__()` for StopTime will now show the stop ID

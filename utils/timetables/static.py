@@ -326,8 +326,8 @@ class StopTime:
         # This basically returns the time of departure modulo 24 hours
         departure_time = time.time.from_microsecond(self.departure_time * 1000000)
 
-        # "StopTime - 02:00:00 - Stop #1 for Trip 3626_214"
-        return f"StopTime - {departure_time} - Stop #{self.sequence} for Trip {self.trip_id}"
+        # "StopTime - 02:00:00 - Stop 8220DB000334 - #1 for Trip 3626_214"
+        return f"StopTime - {departure_time} - Stop {self.stop_id} - #{self.sequence} for Trip {self.trip_id}"
 
         # "StopTime - 02:00:00 to Charlesland, stop 7462 (Stop D'Olier Street - #1, Trip 3626_214)"
         # trip = self.trip()
