@@ -8,16 +8,15 @@ enabled = False
 run = False
 last_command = time.now_ts()
 pool = []
-arr = Array("b", (False, False))
+arr = Array("b", (False, False, True))
 
 
 async def f(x, _arr):
     while True:
-        _run = _arr[0]
-        if _run and enabled:
+        if _arr[0] and enabled and _arr[2]:
             (x * x)
         else:
-            # print(f"Loop: {enabled=} {_arr[0]=}")
+            # print(f"Loop: {enabled=} {list(_arr)=}")
             await asyncio.sleep(1)
 
         if _arr[1]:
@@ -41,8 +40,8 @@ def setup():
 
 async def cpu_burner():
     while True:
-        if time.now_ts() - last_command > 120:
-            global run
+        global run
+        if time.now_ts() - last_command > 900:
             run = True
         # if time.now_ts() - last_command > 30:
         #     arr[1] = True

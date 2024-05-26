@@ -11,7 +11,7 @@ from discord import app_commands
 from regaus import time
 from thefuzz import process
 
-from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser
+from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser, cpu_burner
 from utils.time import time as print_current_time
 
 
@@ -341,6 +341,7 @@ class Timetables(University, Luas, name="Timetables"):
         """ Load the GTFS-R and static GTFS data only when needed """
         static_reload = False
         try:
+            cpu_burner.arr[2] = False  # Disable the CPU burner function while loading the GTFS data
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
             if self.real_time_data is None:
@@ -375,6 +376,7 @@ class Timetables(University, Luas, name="Timetables"):
             raise
         # This can only be called if we are not reloading GTFS data, as we can only be sure the data is finished updating after that function returns
         finally:
+            cpu_burner.arr[2] = True
             if not static_reload:
                 self.updating = False
 

@@ -197,3 +197,6 @@
 ## v0.5.0a6 - 25 May 2024
 - Added a warning for when the GTFS data has reached its soft expiry limit (shown only once per bot restart)
 - Changed the schedules command to simply forward any errors in the loading of the schedule to the `on_command_error()` event listener, instead of handling them separately
+
+## v0.5.0a7 - 26 May 2024
+- The CPU burner module will be disabled while the GTFS data is being loaded, and will now only active 15 minutes after the last command usage
