@@ -120,8 +120,9 @@ class StopScheduleViewer:
         output_data: list[list[str | None]] = [["Route", "Destination", "Schedule", "RealTime", "Distance", None, None]]
         column_sizes = [5, 11, 8, 8, 8, 0, 0]  # Longest member of the column
         extras = False
-        if not self.fixed:
-            self.start_idx, self.end_idx = self.get_indexes()
+        # I don't think this should be there - for fixed schedules, self.now should not change
+        # if not self.fixed:
+        self.start_idx, self.end_idx = self.get_indexes()
         # iterable_stop_times = self.real_stop_times if self.real_time else self.base_stop_times
         for stop_time in self.iterable_stop_times[self.start_idx:self.end_idx]:
             if self.real_time:
@@ -143,7 +144,7 @@ class StopScheduleViewer:
             else:
                 scheduled_departure_time = self.format_time(stop_time.departure_time)
                 # scheduled_departure_time = stop_time.departure_time.format("%H:%M")
-                real_departure_time = "N/A"
+                real_departure_time = ""
 
             if stop_time.pickup_type == 1:
                 scheduled_departure_time = "D " + scheduled_departure_time
@@ -171,7 +172,7 @@ class StopScheduleViewer:
                     distance = language.length(round(distance_km * 1000, -1), precision=0).split(" | ")[0]  # Round to nearest 10m
                 distance = distance.replace("\u200c", "")  # Remove ZWS
             elif not self.real_time:
-                distance = "N/A"
+                distance = ""
             else:
                 distance = "-"
 
@@ -188,8 +189,12 @@ class StopScheduleViewer:
 
             output_data.append([route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line])
 
+        data_end = -2  # Last index with data to show
+        if not self.real_time:
+            data_end -= 2  # Hide real-time and distance data for non-real-time schedules
+
         # Calculate the last line first, in case we need more characters for the destination field
-        line_length = sum(column_sizes[:-2]) + len(column_sizes) - 3
+        line_length = sum(column_sizes[:data_end]) + len(column_sizes) - 1 + data_end
         cutoff = 0
         skip = column_sizes[0] + 1
         if self.truncate_destination:
@@ -229,7 +234,7 @@ class StopScheduleViewer:
         for line in output_data:
             assert len(column_sizes) == len(line)
             line_data = []
-            for i in range(len(line) - 2):  # Excluding the "actual_destination" and "actual_start"
+            for i in range(len(line) + data_end):  # Excluding the "actual_destination" and "actual_start"
                 size = column_sizes[i]
                 line_part = line[i]
                 if i == 1 and cutoff:
@@ -281,6 +286,10 @@ class StopScheduleView(views.InteractiveView):
         else:
             self.remove_item(self.freeze_schedule)
         self.remove_item(self.desktop_view)  # Hide the "desktop view" button
+
+        if not self.schedule.real_time:
+            self.remove_item(self.refresh_button)
+            self.remove_item(self.unfreeze_schedule)
 
     async def refresh(self):
         """ Refresh the real-time data """
@@ -336,7 +345,7 @@ class StopScheduleView(views.InteractiveView):
 
     async def disable_offset_buttons(self):
         """ Put all the buttons on cooldown at the same time """
-        await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, cooldown=3)
+        await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, self.set_offset_button, self.move_offset, self.reset_offset, cooldown=3)
 
     async def move_indexes(self, interaction: discord.Interaction, indexes: int):
         """ Move the departures by the provided amount of indexes (Wrapper function) """

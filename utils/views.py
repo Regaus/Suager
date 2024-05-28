@@ -25,7 +25,7 @@ class View(discord.ui.View):
         """ Disable the button for the specified amount of seconds, replace the label to state that the button is on cooldown """
         original_label = button.label
         original_style = button.style
-        button.label = "Button on cooldown..."
+        button.label = f"Cooldown ({cooldown}s)"  # "Button on cooldown..."
         button.style = discord.ButtonStyle.grey  # used to be danger
         button.disabled = True
         await message.edit(view=self)

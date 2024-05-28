@@ -203,3 +203,9 @@
 
 ## v0.5.0 - 26 May 2024
 - The `__repr__()` for StopTime will now show the stop ID
+
+## v0.5.1 - 29 May 2024
+- Hid the "real-time" and "distance" columns for non-real-time schedules
+- Hid "Refresh" and "Unfreeze schedule" buttons from non-real-time schedules
+- Fixed inability to change the offset for fixed schedules
+- Changed the "Button on Cooldown" text to be "Cooldown" followed by the length of the cooldown
