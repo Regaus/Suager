@@ -128,10 +128,14 @@ class HiddenView(View):
     def __init__(self, original_view: View):
         super().__init__(timeout=original_view.timeout)
         self.original_view = original_view
+
         if hasattr(self.original_view, "message"):
             self.message: discord.Message = self.original_view.message
         else:
             raise AttributeError("View passed as original_view must have a message attribute.")
+
+        if hasattr(self.original_view, "sender"):  # So that only the author can restore the original view
+            self.sender: discord.Member = self.original_view.sender
 
     @discord.ui.button(label="Restore view", emoji="🔄", style=discord.ButtonStyle.primary)
     async def restore_view(self, interaction: discord.Interaction, _: discord.ui.Button):

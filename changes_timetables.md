@@ -216,3 +216,6 @@
 
 ## v0.5.3 - 29 May 2024
 - Added buttons to shrink/expand the view to show 4, 7, or 10 departures at a time (By default, 7 departures are shown)
+
+## v0.5.3.1 - 29 May 2024
+- Fixed the issue where anyone could restore a hidden view (instead of only the original sender)
