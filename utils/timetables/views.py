@@ -285,6 +285,8 @@ class StopScheduleView(views.InteractiveView):
             self.remove_item(self.unfreeze_schedule)  # Hide the "unfreeze schedule" button
         else:
             self.remove_item(self.freeze_schedule)
+
+        self._is_desktop_view: bool = True
         self.remove_item(self.desktop_view)  # Hide the "desktop view" button
 
         if not self.schedule.real_time:
@@ -310,9 +312,12 @@ class StopScheduleView(views.InteractiveView):
         await interaction.response.defer()
         self.schedule.fixed = True
         self.schedule.update_output()
+        # TODO: Find a neater way to do this, perhaps?
         self.remove_item(button)
+        self.remove_item(self.hide_view)
         self.remove_item(self.close_view)
         self.add_item(self.unfreeze_schedule)
+        self.add_item(self.hide_view)
         self.add_item(self.close_view)
         await self.message.edit(content=self.schedule.output, view=self)
 
@@ -323,8 +328,10 @@ class StopScheduleView(views.InteractiveView):
         self.schedule.fixed = False
         self.schedule.update_output()
         self.remove_item(button)
+        self.remove_item(self.hide_view)
         self.remove_item(self.close_view)
         self.add_item(self.freeze_schedule)
+        self.add_item(self.hide_view)
         self.add_item(self.close_view)
         await self.message.edit(content=self.schedule.output, view=self)
 
@@ -336,12 +343,19 @@ class StopScheduleView(views.InteractiveView):
     #     self.update_output()
     #     await self.message.edit(content=self.schedule.output, view=self)
 
+    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Hide the view, instead of closing it altogether. """
+        await interaction.response.defer()
+        await self.message.edit(view=views.HiddenView(self))
+        # return await interaction.followup.send("The view has been hidden. Use the Restore button to restore this view.", ephemeral=True)
+
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
         await interaction.response.defer()
         await self.message.edit(view=None)
-        return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
+        # return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
 
     async def disable_offset_buttons(self):
         """ Put all the buttons on cooldown at the same time """
@@ -387,6 +401,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Move up 6", emoji="⏫", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_up_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
+        # TODO: Change the amount by which we move by based on the current amount of lines
         return await self.move_indexes(interaction, -6)
 
     @discord.ui.button(label="Move offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
@@ -414,22 +429,78 @@ class StopScheduleView(views.InteractiveView):
         """ Reset the offset to zero """
         return await self.set_offset(interaction, 0)
 
-    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, last row
+    @staticmethod
+    def change_departure_button_text(button: discord.ui.Button, next_lines: int):
+        """ Change the text of the Shrink/Expand departures buttons based on the current state """
+        emoji = {4: "4️⃣", 7: "7️⃣", 10: "🔟"}
+        button.label = f"Show {next_lines} departures"
+        button.emoji = emoji[next_lines]
+
+    @discord.ui.button(label="Show 4 departures", emoji="4️⃣", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
+    async def shrink_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Show less departures.
+
+         Behaviour depends on current state:
+         4 departures -> Expand to 7
+         7 departures -> Shrink to 4
+         10 departures -> Shrink to 4 """
+        await interaction.response.defer()
+        if self.schedule.lines == 4:
+            self.schedule.lines = 7
+            self.change_departure_button_text(button, 4)
+        else:
+            self.schedule.lines = 4
+            self.change_departure_button_text(button, 7)
+        self.change_departure_button_text(self.expand_departures, 10)
+        self.schedule.update_output()
+        await self.message.edit(content=self.schedule.output, view=self)
+
+    @discord.ui.button(label="Show 10 departures", emoji="🔟", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
+    async def expand_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Show more departures.
+
+         Behaviour depends on current state:
+         4 departures -> Expand to 10
+         7 departures -> Expand to 10
+         10 departures -> Shrink to 7 """
+        await interaction.response.defer()
+        if self.schedule.lines == 10:
+            self.schedule.lines = 7
+            self.change_departure_button_text(button, 10)
+        else:
+            self.schedule.lines = 10
+            self.change_departure_button_text(button, 7)
+        self.change_departure_button_text(self.shrink_departures, 4)
+        self.schedule.update_output()
+        await self.message.edit(content=self.schedule.output, view=self)
+
+    # TODO: Maybe turn this into one button with a change in behaviour based on current state?
+    def redraw_mobile_desktop_button(self):
+        if self._is_desktop_view:
+            self.remove_item(self.mobile_view)
+            self.add_item(self.mobile_view)
+        else:
+            self.remove_item(self.desktop_view)
+            self.add_item(self.desktop_view)
+
+    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
     async def mobile_view(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Mobile-optimised view: Make the text cut off so that it fits on mobile screens """
         await interaction.response.defer()
         self.schedule.truncate_destination = True
         self.schedule.update_output()
+        self._is_desktop_view = False
         self.remove_item(button)
         self.add_item(self.desktop_view)
         return await self.message.edit(content=self.schedule.output, view=self)
 
-    @discord.ui.button(label="Show full destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, last row
+    @discord.ui.button(label="Show full destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
     async def desktop_view(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Desktop-optimised view: Stop cutting off text (default behaviour) """
         await interaction.response.defer()
         self.schedule.truncate_destination = False
         self.schedule.update_output()
+        self._is_desktop_view = True
         self.remove_item(button)
         self.add_item(self.mobile_view)
         return await self.message.edit(content=self.schedule.output, view=self)

@@ -209,3 +209,10 @@
 - Hid "Refresh" and "Unfreeze schedule" buttons from non-real-time schedules
 - Fixed inability to change the offset for fixed schedules
 - Changed the "Button on Cooldown" text to be "Cooldown" followed by the length of the cooldown
+
+## v0.5.2 - 29 May 2024
+- Added a "hide view" button that replaces the view with a "restore" button (alternative to closing the view entirely)
+- The "close view" button no longer produces any output
+
+## v0.5.3 - 29 May 2024
+- Added buttons to shrink/expand the view to show 4, 7, or 10 departures at a time (By default, 7 departures are shown)

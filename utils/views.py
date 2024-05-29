@@ -17,7 +17,7 @@ class NotMessageAuthor(app_commands.CheckFailure):
 
 
 class View(discord.ui.View):
-    def __init__(self, timeout: int = 300):  # , bot: bot_data.Bot
+    def __init__(self, timeout: int | float = 300):  # , bot: bot_data.Bot
         super().__init__(timeout=timeout)
         # self.bot = bot
 
@@ -120,6 +120,25 @@ class View(discord.ui.View):
                 error = general.traceback_maker(error, content[:750], interaction.guild, interaction.user)
                 await ec.send(error)
         logger.log(bot.name, "commands", error_message)
+
+
+class HiddenView(View):
+    """ A View that replaces the original one with a simple Restore button. """
+
+    def __init__(self, original_view: View):
+        super().__init__(timeout=original_view.timeout)
+        self.original_view = original_view
+        if hasattr(self.original_view, "message"):
+            self.message: discord.Message = self.original_view.message
+        else:
+            raise AttributeError("View passed as original_view must have a message attribute.")
+
+    @discord.ui.button(label="Restore view", emoji="🔄", style=discord.ButtonStyle.primary)
+    async def restore_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        # noinspection PyUnresolvedReferences
+        await interaction.response.defer()
+        await self.message.edit(view=self.original_view)
+        # return await interaction.followup.send("The original view has now been restored.", ephemeral=True)
 
 
 class InteractiveView(View):
