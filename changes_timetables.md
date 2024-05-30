@@ -219,3 +219,8 @@
 
 ## v0.5.3.1 - 29 May 2024
 - Fixed the issue where anyone could restore a hidden view (instead of only the original sender)
+
+## v0.5.3.2 - 29 May 2024
+- Prevented the start and end indexes on the departures list from going out of bounds
+  - Sometimes the offset may still shoot out of bounds, however there still would be the same amount of departures shown
+- Fixed added trips breaking the schedule because they didn't have the "actual_destination" and "actual_start" attributes

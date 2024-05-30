@@ -115,6 +115,8 @@ class RealStopTime:
     vehicle_id: str | None
 
     def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None, vehicles: VehicleData | None):
+        self.actual_destination = None
+        self.actual_start = None
         if isinstance(stop_time, SpecificStopTime):
             self.stop_time = stop_time
             self._trip = None
@@ -133,8 +135,6 @@ class RealStopTime:
             self.scheduled_departure_time = stop_time.departure_time
             # self.destination = stop_time.trip.headsign
             self._destination = None
-            self.actual_destination = None
-            self.actual_start = None
 
             self.real_time = False
             self.real_trip = None

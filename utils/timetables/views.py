@@ -91,7 +91,7 @@ class StopScheduleViewer:
             self.now = time.datetime.now(tz=TIMEZONE)
             self.today = self.now.date()
 
-    def get_indexes(self):
+    def get_indexes(self) -> tuple[int, int]:
         """ Get the value of start_idx and end_idx for the output """
         start_idx = 0
         # Set start_idx to the first departure after now
@@ -105,8 +105,11 @@ class StopScheduleViewer:
                 if stop_time.departure_time >= self.now:
                     start_idx = idx
                     break
+        max_idx = len(self.iterable_stop_times)
         start_idx += self.index_offset
+        start_idx = max(0, min(start_idx, max_idx - self.lines))
         end_idx = start_idx + self.lines  # We don't need the + 1 here
+        end_idx = min(end_idx, max_idx)
         return start_idx, end_idx
 
     @property
@@ -179,15 +182,11 @@ class StopScheduleViewer:
             actual_destination_line = stop_time.actual_destination or ""
             actual_start_line = stop_time.actual_start or ""
 
-            column_sizes[0] = max(column_sizes[0], len(route))
-            column_sizes[1] = max(column_sizes[1], len(destination))
-            column_sizes[2] = max(column_sizes[2], len(scheduled_departure_time))
-            column_sizes[3] = max(column_sizes[3], len(real_departure_time))
-            column_sizes[4] = max(column_sizes[4], len(distance))
-            column_sizes[5] = max(column_sizes[5], len(actual_destination_line))
-            column_sizes[6] = max(column_sizes[6], len(actual_start_line))
+            output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
+            for i, element in enumerate(output_line):
+                column_sizes[i] = max(column_sizes[i], len(element))
 
-            output_data.append([route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line])
+            output_data.append(output_line)
 
         data_end = -2  # Last index with data to show
         if not self.real_time:
@@ -364,6 +363,16 @@ class StopScheduleView(views.InteractiveView):
     async def move_indexes(self, interaction: discord.Interaction, indexes: int):
         """ Move the departures by the provided amount of indexes (Wrapper function) """
         await interaction.response.defer()
+        limit_reached = False
+        _minimum = -self.schedule.start_idx
+        # When the start index moves into the future, the "maximum" value may become out of bounds... Is it worth investigating and fixing though?
+        _maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines
+        if indexes < _minimum:
+            indexes = _minimum
+            limit_reached = True
+        elif indexes > _maximum:
+            indexes = _maximum
+            limit_reached = True
         self.schedule.index_offset += indexes
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
@@ -375,12 +384,25 @@ class StopScheduleView(views.InteractiveView):
             word2 = "down" if offset > 0 else "up"
             offset_explanation = f"{abs(offset)} {word2}"
         _s = "s" if abs(indexes) != 1 else ""
-        await interaction.followup.send(f"Moved the schedule {word} by {abs(indexes)} departure{_s}. Total offset: {offset_explanation}.", ephemeral=True)
+        _limit = ""
+        if limit_reached:
+            _limit = " Maximum offset reached."
+        await interaction.followup.send(f"Moved the schedule {word} by {abs(indexes)} departure{_s}. Total offset: {offset_explanation}.{_limit}", ephemeral=True)
         await self.disable_offset_buttons()
 
     async def set_offset(self, interaction: discord.Interaction, offset: int):
         """ Set the index offset to a specific value (Wrapper function) """
         await interaction.response.defer()
+        # Realistically, this should never happen, since set_offset is only ever called by the modal, but let's leave it here just in case.
+        limit_reached = False
+        _minimum = -self.schedule.start_idx + self.schedule.index_offset
+        _maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines + self.schedule.index_offset
+        if offset < _minimum:
+            offset = _minimum
+            limit_reached = True
+        elif offset > _maximum:
+            offset = _maximum
+            limit_reached = True
         self.schedule.index_offset = offset
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
@@ -389,7 +411,10 @@ class StopScheduleView(views.InteractiveView):
         else:
             word = "down" if offset > 0 else "up"
             _s = "s" if abs(offset) != 1 else ""
-            content = f"Set the offset to {abs(offset)} departure{_s} {word}."
+            _limit = ""
+            if limit_reached:
+                _limit = " Maximum offset reached."
+            content = f"Set the offset to {abs(offset)} departure{_s} {word}.{_limit}"
         await interaction.followup.send(content, ephemeral=True)
         await self.disable_offset_buttons()
 
