@@ -393,16 +393,7 @@ class StopScheduleView(views.InteractiveView):
     async def set_offset(self, interaction: discord.Interaction, offset: int):
         """ Set the index offset to a specific value (Wrapper function) """
         await interaction.response.defer()
-        # Realistically, this should never happen, since set_offset is only ever called by the modal, but let's leave it here just in case.
-        limit_reached = False
-        _minimum = -self.schedule.start_idx + self.schedule.index_offset
-        _maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines + self.schedule.index_offset
-        if offset < _minimum:
-            offset = _minimum
-            limit_reached = True
-        elif offset > _maximum:
-            offset = _maximum
-            limit_reached = True
+        # The limit behaviour should not be implemented here - otherwise, the "Reset offset" will break for schedules that are too small (Example: stop 835000014)
         self.schedule.index_offset = offset
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
@@ -411,10 +402,7 @@ class StopScheduleView(views.InteractiveView):
         else:
             word = "down" if offset > 0 else "up"
             _s = "s" if abs(offset) != 1 else ""
-            _limit = ""
-            if limit_reached:
-                _limit = " Maximum offset reached."
-            content = f"Set the offset to {abs(offset)} departure{_s} {word}.{_limit}"
+            content = f"Set the offset to {abs(offset)} departure{_s} {word}."
         await interaction.followup.send(content, ephemeral=True)
         await self.disable_offset_buttons()
 
