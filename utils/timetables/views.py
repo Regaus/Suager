@@ -367,6 +367,8 @@ class StopScheduleView(views.InteractiveView):
         _minimum = -self.schedule.start_idx
         # When the start index moves into the future, the "maximum" value may become out of bounds... Is it worth investigating and fixing though?
         _maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines
+        if _maximum < _minimum:
+            _maximum = _minimum
         if indexes < _minimum:
             indexes = _minimum
             limit_reached = True
@@ -414,8 +416,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Move up 6", emoji="⏫", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_up_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
-        # TODO: Change the amount by which we move by based on the current amount of lines
-        return await self.move_indexes(interaction, -6)
+        return await self.move_indexes(interaction, -(self.schedule.lines - 1))
 
     @discord.ui.button(label="Move offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -430,7 +431,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Move down 6", emoji="⏬", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def move_down_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
-        return await self.move_indexes(interaction, 6)
+        return await self.move_indexes(interaction, self.schedule.lines - 1)
 
     @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def set_offset_button(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -449,6 +450,11 @@ class StopScheduleView(views.InteractiveView):
         button.label = f"Show {next_lines} departures"
         button.emoji = emoji[next_lines]
 
+    def change_move_button_text(self):
+        lines = self.schedule.lines - 1
+        self.move_up_6.label = f"Move up {lines}"
+        self.move_down_6.label = f"Move up {lines}"
+
     @discord.ui.button(label="Show 4 departures", emoji="4️⃣", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
     async def shrink_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Show less departures.
@@ -465,6 +471,7 @@ class StopScheduleView(views.InteractiveView):
             self.schedule.lines = 4
             self.change_departure_button_text(button, 7)
         self.change_departure_button_text(self.expand_departures, 10)
+        self.change_move_button_text()
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
 
@@ -484,6 +491,7 @@ class StopScheduleView(views.InteractiveView):
             self.schedule.lines = 10
             self.change_departure_button_text(button, 7)
         self.change_departure_button_text(self.shrink_departures, 4)
+        self.change_move_button_text()
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
 
@@ -559,6 +567,8 @@ class MoveOffsetModal(InputModal):
         self.schedule = self.interface.schedule
         self.minimum = -self.schedule.start_idx  # + self.schedule.index_offset
         self.maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines
+        if self.maximum < self.minimum:
+            self.maximum = self.minimum
         self.text_input.label = f"Amount to move offset by ({self.minimum} - {self.maximum}):"
         self.text_input.min_length = 1
         self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))
@@ -574,6 +584,8 @@ class SetOffsetModal(InputModal):
         self.schedule = self.interface.schedule
         self.minimum = -self.schedule.start_idx + self.schedule.index_offset
         self.maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines + self.schedule.index_offset
+        if self.maximum < self.minimum:
+            self.maximum = self.minimum
         self.text_input.label = f"Set new offset to ({self.minimum} - {self.maximum}):"
         self.text_input.min_length = 1
         self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))

@@ -224,3 +224,10 @@
 - Prevented the start and end indexes on the departures list from going out of bounds
   - Sometimes the offset may still shoot out of bounds, however there still would be the same amount of departures shown
 - Fixed added trips breaking the schedule because they didn't have the "actual_destination" and "actual_start" attributes
+
+## v0.5.4 - 30 May 2024
+- Fixed issue where the maximum offset value was smaller than the minimum offset
+- Made the "Move up/down 6" buttons respond to the current amount of departures shown
+  - 4 departures shown -> move up/down by 3
+  - 7 departures shown -> move up/down by 6
+  - 10 departures shown -> move up/down by 9
