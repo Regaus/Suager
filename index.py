@@ -88,6 +88,7 @@ for i in range(len(config["bots"])):
             tasks.append(loop.create_task(temporaries.reminders_errors(bot)))
             tasks.append(loop.create_task(temporaries.punishments(bot)))
             tasks.append(loop.create_task(temporaries.punishments_errors(bot)))
+            tasks.append(loop.create_task(temporaries.voice_channel_server_stats(bot)))
 
 if __name__ == '__main__':
     if platform.startswith("linux"):

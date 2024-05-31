@@ -420,3 +420,6 @@
 - Added a command to sync slash commands (`m!sync`)
 - Made command completion and command error handlers deal with the existence of slash commands
   - Note: Mizuki currently has no slash commands
+
+## v1.5.0 - 30 May 2024
+- Added ability to show certain stats about the server using voice channel names

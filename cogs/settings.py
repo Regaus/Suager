@@ -1,8 +1,10 @@
 import json
+from copy import deepcopy
 from io import BytesIO
 from typing import Tuple
 
 import discord
+from regaus import time as time2
 
 from cogs.leveling import max_level
 from utils import bot_data, commands, general, languages, permissions, settings, time, paginators
@@ -313,6 +315,22 @@ class Settings(commands.Cog):
                                                 warning=warning_length)
             await interface.add_field(name=language.string("settings_current_anti_ads"), value=anti_ads_text, inline=False)
 
+        if self.bot.name == "kyomi":
+            vc_server_stats_text = language.string("settings_current_server_stats_disabled", p=ctx.prefix)
+            if "vc_server_stats" in setting:
+                vc_server_stats: dict[str, dict[str, int | str]] = setting["vc_server_stats"]
+                outputs: dict[str, str] = {}  # outputs[category] = channel
+                for category, cat_data in vc_server_stats.items():
+                    channel = cat_data["channel"]
+                    if channel == 0:
+                        cat_text = language.string("settings_current_disabled")
+                    else:
+                        cat_text = f"<#{channel}>"
+                    outputs[category] = cat_text
+                    # Text is not shown in the summary
+                vc_server_stats_text = language.string("settings_current_server_stats2", **outputs)
+            await interface.add_field(name=language.string("settings_current_server_stats"), value=vc_server_stats_text, inline=False)
+
         interface.display_page = 0  # Start from first page
         return await interface.send_to(ctx)
         # return await ctx.send(embed=embed)
@@ -405,10 +423,10 @@ class Settings(commands.Cog):
         if data:
             _settings = json.loads(data["data"])
         else:
-            _settings = self.template.copy()
+            _settings = deepcopy(self.template)
 
         if key not in _settings:
-            _settings[key] = self.template[key].copy()
+            _settings[key] = deepcopy(self.template[key])
 
         return _settings, bool(data)
 
@@ -600,7 +618,7 @@ class Settings(commands.Cog):
             return await ctx.send(language.string(kwargs["output_current"], message=value+example), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
         # If the message is "reset", reset back to the default value
         if value.lower() == "reset":
-            _settings["leveling"][key] = self.template["leveling"][key]
+            _settings["leveling"][key] = self.template["leveling"][key].copy()
             return await self.settings_end(ctx, _settings, existent, kwargs["output_reset"])
         # If a new message was specified
         value = value.replace("\\n", "\n")
@@ -2003,7 +2021,7 @@ class Settings(commands.Cog):
         try:
             _settings["image_only"]["channels"].remove(channel.id)
         except ValueError:
-            return await ctx.send(ctx.language().string("settings_image_only_channel_invalid3"))
+            return await ctx.send(ctx.language().string("settings_image_only_channel_invalid"))
         return await self.settings_end(ctx, _settings, existent, "settings_image_only_channel_remove", channel=channel.mention)
 
     @set_image_only_channels.command(name="removeall", aliases=["deleteall", "rall", "dall"])
@@ -2012,6 +2030,221 @@ class Settings(commands.Cog):
         _settings, existent = await self.settings_start(ctx, "image_only")
         _settings["image_only"]["channels"] = []
         return await self.settings_end(ctx, _settings, existent, "settings_image_only_channel_remove2")
+
+    @settings.group(name="serverstats", aliases=["vcserverstats", "vcss", "ss"], case_insensitive=True)
+    @commands.check(lambda ctx: ctx.bot.name in ["kyomi"])
+    async def set_vc_server_stats(self, ctx: commands.Context):
+        """ Show server stats as voice channel names
+
+         Note: Channel names are only updated once in 6 hours and whenever the settings are changed.
+         Usage: `m!settings serverstats <category> <channel|text> [...]` """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    async def set_vc_server_stats_channel(self, ctx: commands.Context, category: str, channel: discord.VoiceChannel | None):
+        """ Wrapper function for setting a channel to use for VC server stats """
+        language = ctx.language()
+        if not isinstance(channel, (discord.VoiceChannel, type(None))):
+            return await ctx.send(language.string("settings_server_stats_channel_invalid"))
+        if channel is not None and channel.guild.id != ctx.guild.id:
+            return await ctx.send(language.string("settings_anti_ads_channel_invalid2"))
+        _settings, existent = await self.settings_start(ctx, "vc_server_stats")
+        if category not in _settings["vc_server_stats"]:
+            _settings["vc_server_stats"][category] = self.template["vc_server_stats"][category].copy()
+        if channel is not None:
+            channel_id = channel.id
+            channel_name = f"<#{channel_id}>"
+            mode = "set"
+        else:
+            channel_id = 0
+            channel_name = ""
+            mode = "disable"
+        _settings["vc_server_stats"][category]["channel"] = channel_id
+        if channel is not None:
+            name = self.format_server_stats_text(ctx, category, _settings["vc_server_stats"][category]["text"])
+            try:
+                await channel.edit(name=name)
+            except discord.Forbidden:
+                return await ctx.send(language.string("settings_server_stats_forbidden"))
+            except discord.HTTPException:  # This shouldn't happen, but if it does, ignore.
+                pass
+        return await self.settings_end(ctx, _settings, existent, f"settings_server_stats_{category}_channel_{mode}", channel=channel_name)
+
+    async def current_server_stats_channel(self, ctx: commands.Context, category: str):
+        _settings, _ = await self.settings_start(ctx, "vc_server_stats")
+        language = ctx.language()
+        if category not in _settings["vc_server_stats"]:
+            return await ctx.send(language.string(f"settings_server_stats_{category}_disabled"))
+        cat_settings = _settings["vc_server_stats"][category]
+        if cat_settings["channel"] == 0:
+            return await ctx.send(language.string(f"settings_server_stats_{category}_disabled"))
+        channel = f"<#{cat_settings['channel']}>"
+        return await ctx.send(language.string(f"settings_server_stats_{category}_channel_current", channel=channel))
+
+    @staticmethod
+    def format_server_stats_text(ctx: commands.Context, category: str, text: str):
+        match category:
+            case "total_members":
+                formatted = text.replace("[MEMBERS]", str(len(ctx.guild.members)))
+            case "human_members":
+                formatted = text.replace("[MEMBERS]", str(sum(1 for m in ctx.guild.members if not m.bot)))
+            case "bot_members":
+                formatted = text.replace("[MEMBERS]", str(sum(1 for m in ctx.guild.members if m.bot)))
+            case "today_date":
+                formatted = text.replace("[TODAY]", format(time2.date.today(), "%d %b %Y"))
+            case _:
+                formatted = text
+        return formatted
+
+    async def set_vc_server_stats_text(self, ctx: commands.Context, category: str, text: str | None):
+        """ Wrapper function for setting the text format to use on the voice channel """
+        _settings, existent = await self.settings_start(ctx, "vc_server_stats")
+        language = ctx.language()
+        if category not in _settings["vc_server_stats"]:
+            _settings["vc_server_stats"][category] = self.template["vc_server_stats"][category].copy()
+        if text is None:
+            text: str = self.template["vc_server_stats"][category]["text"]
+            mode = "reset"
+        else:
+            mode = "set"
+        _settings["vc_server_stats"][category]["text"] = text
+        formatted = self.format_server_stats_text(ctx, category, text)
+        text_and_formatted = language.string("settings_server_stats_text_and_formatted", text=text, formatted=formatted)
+        if _settings["vc_server_stats"][category]["channel"] != 0:
+            channel = ctx.guild.get_channel(_settings["vc_server_stats"][category]["channel"])
+            try:
+                await channel.edit(name=formatted)
+            except discord.Forbidden:
+                await ctx.send(language.string("settings_server_stats_forbidden2"))
+            except discord.HTTPException:  # This shouldn't happen, but if it does, ignore.
+                pass
+        return await self.settings_end(ctx, _settings, existent, f"settings_server_stats_{category}_text_{mode}", text_and_formatted=text_and_formatted)
+
+    async def current_server_stats_text(self, ctx: commands.Context, category: str):
+        _settings, _ = await self.settings_start(ctx, "vc_server_stats")
+        language = ctx.language()
+        if category not in _settings["vc_server_stats"]:
+            return await ctx.send(language.string(f"settings_server_stats_{category}_disabled"))
+        cat_settings = _settings["vc_server_stats"][category]
+        text = cat_settings["text"]
+        formatted = self.format_server_stats_text(ctx, category, text)
+        text_and_formatted = language.string("settings_server_stats_text_and_formatted", text=text, formatted=formatted)
+        return await ctx.send(language.string(f"settings_server_stats_{category}_text_current", text_and_formatted=text_and_formatted))
+
+    async def server_stats_channel_command(self, ctx: commands.Context, category: str, channel: discord.VoiceChannel = None):
+        if channel is not None:
+            return await self.set_vc_server_stats_channel(ctx, category, channel)
+        return await self.current_server_stats_channel(ctx, category)
+
+    async def server_stats_text_command(self, ctx: commands.Context, category: str, text: str = None):
+        if text is not None:
+            return await self.set_vc_server_stats_text(ctx, category, text)
+        return await self.current_server_stats_text(ctx, category)
+
+    # TODO: Find a way to do this without having to copy-paste identical subcommands for each category
+    @set_vc_server_stats.group(name="members", aliases=["total_members", "tm", "m"], case_insensitive=True)
+    async def vc_server_stats_total_members(self, ctx: commands.Context):
+        """ Show the total number of members in the server (humans and bots) """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @vc_server_stats_total_members.command(name="channel", aliases=["ch", "c"])
+    async def total_members_channel(self, ctx: commands.Context, channel: discord.VoiceChannel = None):
+        """ Set the voice channel to use to show the total number of members """
+        return await self.server_stats_channel_command(ctx, "total_members", channel)
+
+    @vc_server_stats_total_members.command(name="disable")
+    async def total_members_disable(self, ctx: commands.Context):
+        """ Disable showing the total number of members """
+        return await self.set_vc_server_stats_channel(ctx, "total_members", None)
+
+    @vc_server_stats_total_members.command(name="text", aliases=["format", "t", "f"])
+    async def total_members_text(self, ctx: commands.Context, *, text: str = None):
+        """ Set the format for the name of the voice channel """
+        return await self.server_stats_text_command(ctx, "total_members", text)
+
+    @vc_server_stats_total_members.command(name="reset")
+    async def total_members_reset(self, ctx: commands.Context):
+        """ Reset the format for the name of the voice channel back to the default """
+        return await self.set_vc_server_stats_text(ctx, "total_members", None)
+
+    @set_vc_server_stats.group(name="humans", aliases=["human_members", "hm", "h"], case_insensitive=True)
+    async def vc_server_stats_human_members(self, ctx: commands.Context):
+        """ Show the current number of human members in the server """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @vc_server_stats_human_members.command(name="channel", aliases=["ch", "c"])
+    async def human_members_channel(self, ctx: commands.Context, channel: discord.VoiceChannel = None):
+        """ Set the voice channel to use to show the number of human members """
+        return await self.server_stats_channel_command(ctx, "human_members", channel)
+
+    @vc_server_stats_human_members.command(name="disable")
+    async def human_members_disable(self, ctx: commands.Context):
+        """ Disable showing the number of human members """
+        return await self.set_vc_server_stats_channel(ctx, "human_members", None)
+
+    @vc_server_stats_human_members.command(name="text", aliases=["format", "t", "f"])
+    async def human_members_text(self, ctx: commands.Context, *, text: str = None):
+        """ Set the format for the name of the voice channel """
+        return await self.server_stats_text_command(ctx, "human_members", text)
+
+    @vc_server_stats_human_members.command(name="reset")
+    async def human_members_reset(self, ctx: commands.Context):
+        """ Reset the format for the name of the voice channel back to the default """
+        return await self.set_vc_server_stats_text(ctx, "human_members", None)
+
+    @set_vc_server_stats.group(name="bots", aliases=["bot_members", "bm", "b"], case_insensitive=True)
+    async def vc_server_stats_bot_members(self, ctx: commands.Context):
+        """ Show the current number of bots in the server """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @vc_server_stats_bot_members.command(name="channel", aliases=["ch", "c"])
+    async def _bot_members_channel(self, ctx: commands.Context, channel: discord.VoiceChannel = None):
+        """ Set the voice channel to use to show the number of bots """
+        return await self.server_stats_channel_command(ctx, "bot_members", channel)
+
+    @vc_server_stats_bot_members.command(name="disable")
+    async def _bot_members_disable(self, ctx: commands.Context):
+        """ Disable showing the number of bots """
+        return await self.set_vc_server_stats_channel(ctx, "bot_members", None)
+
+    @vc_server_stats_bot_members.command(name="text", aliases=["format", "t", "f"])
+    async def _bot_members_text(self, ctx: commands.Context, *, text: str = None):
+        """ Set the format for the name of the voice channel """
+        return await self.server_stats_text_command(ctx, "bot_members", text)
+
+    @vc_server_stats_bot_members.command(name="reset")
+    async def _bot_members_reset(self, ctx: commands.Context):
+        """ Reset the format for the name of the voice channel back to the default """
+        return await self.set_vc_server_stats_text(ctx, "bot_members", None)
+
+    @set_vc_server_stats.group(name="today", aliases=["today_date", "td", "t", "d"], case_insensitive=True)
+    async def vc_server_stats_today_date(self, ctx: commands.Context):
+        """ Show the current number of bots in the server """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @vc_server_stats_today_date.command(name="channel", aliases=["ch", "c"])
+    async def today_date_channel(self, ctx: commands.Context, channel: discord.VoiceChannel = None):
+        """ Set the voice channel to use to show today's date """
+        return await self.server_stats_channel_command(ctx, "today_date", channel)
+
+    @vc_server_stats_today_date.command(name="disable")
+    async def today_date_disable(self, ctx: commands.Context):
+        """ Disable showing today's date """
+        return await self.set_vc_server_stats_channel(ctx, "today_date", None)
+
+    @vc_server_stats_today_date.command(name="text", aliases=["format", "t", "f"])
+    async def today_date_text(self, ctx: commands.Context, *, text: str = None):
+        """ Set the format for the name of the voice channel """
+        return await self.server_stats_text_command(ctx, "today_date", text)
+
+    @vc_server_stats_today_date.command(name="reset")
+    async def today_date_reset(self, ctx: commands.Context):
+        """ Reset the format for the name of the voice channel back to the default """
+        return await self.set_vc_server_stats_text(ctx, "today_date", None)
 
     @commands.command(name="prefixes", aliases=["prefix"])
     @commands.guild_only()

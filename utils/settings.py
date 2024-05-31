@@ -78,6 +78,24 @@ template_mizuki = {
     },
     "image_only": {
         "channels": [],    # Channels to check for images
+    },
+    "vc_server_stats": {  # Server stats shown as voice channel names
+        "total_members": {
+            "channel": 0,                 # Channel where the stats are shown
+            "text": "Members: [MEMBERS]"  # Text to set the name to
+        },
+        "human_members": {
+            "channel": 0,
+            "text": "Human members: [MEMBERS]"
+        },
+        "bot_members": {
+            "channel": 0,
+            "text": "Bots: [MEMBERS]"
+        },
+        "today_date": {
+            "channel": 0,
+            "text": "[TODAY]"
+        }
     }
 }
 

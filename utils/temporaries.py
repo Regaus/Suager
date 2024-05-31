@@ -1133,6 +1133,62 @@ async def polls(bot: bot_data.Bot):
         await asyncio.sleep(1)
 
 
+async def voice_channel_server_stats(bot: bot_data.Bot):
+    update_speed = 21600  # 6 hours
+    await wait_until_next_iter(update_speed, 1)
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised VC Server Stats")
+
+    while True:
+        try:
+            # guilds[guild_id][category]["channel"|"text"]
+            guilds: dict[int, dict[str, dict[str, int | str]]] = {}
+            settings = bot.db.fetch("SELECT * FROM settings WHERE bot=?", (bot.name,))
+            for entry in settings:
+                data = json.loads(entry["data"])
+                if "vc_server_stats" in data:
+                    guilds[entry["gid"]] = data["vc_server_stats"]
+
+            for gid, guild_data in guilds.items():
+                guild = bot.get_guild(gid)
+                if guild is None:
+                    continue
+                for category, data in guild_data.items():
+                    if data["channel"] == 0:
+                        continue  # that particular entry is disabled
+                    channel: discord.VoiceChannel = guild.get_channel(data["channel"])
+                    if channel is None:
+                        general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {guild.name} > Category {category} > Category points to nonexistent channel {data['channel']}")
+                        continue
+                    text = data["text"]
+                    match category:
+                        case "total_members":
+                            text = text.replace("[MEMBERS]", str(len(guild.members)))
+                        case "human_members":
+                            text = text.replace("[MEMBERS]", str(sum(1 for m in guild.members if not m.bot)))
+                        case "bot_members":
+                            text = text.replace("[MEMBERS]", str(sum(1 for m in guild.members if m.bot)))
+                        case "today_date":
+                            text = text.replace("[TODAY]", format(time2.date.today(), "%d %b %Y"))
+                    try:
+                        await channel.edit(name=text)
+                    except discord.Forbidden:
+                        general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {guild.name} > Category {category} > Forbidden error trying to set name for channel {channel.id}")
+                    except discord.HTTPException as e:
+                        general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {guild.name} > Category {category} > Error updating channel {channel.id}: {type(e).__name__}: {e}")
+                    except Exception as e:
+                        general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {guild.name} > Category {category} > Error updating channel {channel.id}: {type(e).__name__}: {e}")
+                        general.log_error(bot, general.traceback_maker(e, code_block=False))
+        except (aiohttp.ClientConnectorError, ConnectionError):
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > Error with connection.")
+        except Exception as e:
+            general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {type(e).__name__}: {e}")
+            general.log_error(bot, general.traceback_maker(e, code_block=False))
+
+        await asyncio.sleep(1)
+        await wait_until_next_iter(update_speed, 1)
+
+
 async def new_year(bot: bot_data.Bot):
     await bot.wait_until_ready()
     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised New Year Script")
