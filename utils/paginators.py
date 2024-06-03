@@ -563,6 +563,15 @@ class PaginatorInterface(paginators.PaginatorInterface):
         self.remove_buttons()
         return {"content": content, "view": self}
 
+    async def set_message(self, message: discord.Message):
+        """ Make the paginator interface use an existing message """
+        self.message = await message.edit(**self.send_kwargs, allowed_mentions=discord.AllowedMentions.none())
+        self.send_lock.set()
+        if self.task:
+            self.task.cancel()
+        self.task = self.bot.loop.create_task(self.wait_loop())
+        return self
+
 
 # Code adapted from jishaku.shim.paginator_200.py
 # (c) 2021 Devon (Gorialis) R
@@ -584,6 +593,18 @@ class PaginatorEmbedInterface(PaginatorInterface):
         return {'embed': self._embed, 'view': self}
 
     max_page_size = 2048
+
+    @override
+    async def set_message(self, message: discord.Message, *, clear_content: bool = False):
+        if clear_content:
+            self.message = await message.edit(content=None, **self.send_kwargs, allowed_mentions=discord.AllowedMentions.none())
+        else:
+            self.message = await message.edit(**self.send_kwargs, allowed_mentions=discord.AllowedMentions.none())
+        self.send_lock.set()
+        if self.task:
+            self.task.cancel()
+        self.task = self.bot.loop.create_task(self.wait_loop())
+        return self
 
 
 class EmbedFieldPaginatorInterface(PaginatorEmbedInterface):

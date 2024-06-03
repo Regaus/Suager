@@ -2,6 +2,7 @@ import asyncio
 import json
 from collections.abc import Callable, Awaitable
 from io import BytesIO
+from typing import Any, Protocol
 from zipfile import ZipFile, BadZipFile
 
 import discord
@@ -18,6 +19,11 @@ from utils.time import time as print_current_time
 def dcu_data_access(ctx):
     return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
     # return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
+
+
+class GTFSSearchFunction(Protocol):
+    def __call__(self, query: str) -> list:
+        ...
 
 
 # Cog for university timetables - loaded by Suager
@@ -522,41 +528,47 @@ class Timetables(University, Luas, name="Timetables"):
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
+    async def tfi_search_function(self, ctx: commands.Context, query: str, search_function: GTFSSearchFunction, iteration_handler: Callable[[Any], str], title: str, footer: str):
+        """ Wrapper function for search commands """
+        message = await self.wait_for_initialisation(ctx)
+        iterable = search_function(query=query)  # (str) -> list[Stop | Route]
+        if not iterable:
+            return await message.edit(content=f"{emotes.Deny} No data was found for your query.")
+        paginator = paginators.LinePaginator(prefix=None, suffix=None, max_lines=20, max_size=1000)
+        for entry in iterable:  # Stop or Route
+            paginator.add_line(iteration_handler(entry))
+        embed = discord.Embed(title=title, colour=general.random_colour())
+        embed.set_footer(text=footer)
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.set_message(message, clear_content=True)
+
     @tfi_search.command(name="stop")
     async def tfi_search_stop(self, ctx: commands.Context, *, query: str):
         """ Search for a specific stop """
-        message = await self.wait_for_initialisation(ctx)
-        stops = self.find_stop(query=query)
-        output = []
-        for stop in stops:
+        def add_stop(stop: timetables.Stop) -> str:
             if stop.code:
-                output.append(f"`{stop.id}` (Stop code `{stop.code}`) - {stop.name}")
+                return f"`{stop.id}` (Stop code `{stop.code}`) - {stop.name}"
             else:
-                output.append(f"`{stop.id}` - {stop.name}")
-        output_content = ("Here are the stops found for your query:\n\n" + "\n".join(output) +
-                          "\n\n*Note that if more than one stop is found for your search, then the schedule and real-time commands will need a more precise query to function.*\n"
-                          "*You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`. However, the words have to match the beginning of the stop's name.*")
-        return await message.edit(content=output_content)
+                return f"`{stop.id}` - {stop.name}"
+        return await self.tfi_search_function(ctx, query, search_function=self.find_stop, iteration_handler=add_stop, title="Stops found for your query",
+                                              footer="Note: If more than one stop is found for your search, the schedule command will need a more precise query to function.\n"
+                                              "Try using both the stop code and stop name in your query, for example `17 Drumcondra`.")
 
     @tfi_search.command(name="route")
     async def tfi_search_route(self, ctx: commands.Context, *, query: str):
         """ Search for a specific route """
-        message = await self.wait_for_initialisation(ctx)
-        routes = self.find_route(query=query)
-        output = []
-        route_types = {
-            0: "Tram",
-            1: "Subway",
-            2: "Rail",
-            3: "Bus"
-        }
-        for route in routes:
-            output.append(f"`{route.id}` (Route {route.short_name}) - {route.long_name} ({route_types[route.route_type]})")
-        output_content = ("Here are the routes found for your query:\n\n" + "\n".join(output) +
-                          "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*\n"
-                          "*You can use both the route number and route destinations in your query, e.g. `155 Bray` or `4 Monkstown`. "
-                          "However, the words have to match the beginning of the route's description (i.e. if it says \"Bray - IKEA Ballymun\", you cannot use `155 IKEA`).*")
-        return await message.edit(content=output_content)
+        route_types = {0: "Tram", 1: "Subway", 2: "Rail", 3: "Bus", 4: "Ferry", 5: "Cable tram", 6: "Aerial lift", 7: "Funicular", 11: "Trolleybus", 12: "Monorail"}
+
+        def add_route(route: timetables.Route) -> str:
+            return f"`{route.id}` - Route {route.short_name} - {route.long_name} ({route_types[route.route_type]})"
+
+        return await self.tfi_search_function(ctx, query, search_function=self.find_route, iteration_handler=add_route, title="Routes found for your query",
+                                              footer="Note: If more than our route is found for your search, the schedule command will need a more precise query to function."
+                                                     "Try using the route ID or combining the route number with the origin point (e.g. `155 Bray` or `4 Monkstown`).")
+        # output_content = ("Here are the routes found for your query:\n\n" + "\n".join(output) +
+        #                   "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*\n"
+        #                   "*You can use both the route number and route destinations in your query, e.g. `155 Bray` or `4 Monkstown`. "
+        #                   "However, the words have to match the beginning of the route's description (i.e. if it says \"Bray - IKEA Ballymun\", you cannot use `155 IKEA`).*")
 
     @tfi.group(name="data", aliases=["schedule", "info", "rtpi"])
     async def tfi_schedules(self, ctx: commands.Context):

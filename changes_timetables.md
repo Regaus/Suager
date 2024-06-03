@@ -236,3 +236,9 @@
 - Added "Close view" button to HiddenView
 - Turned "swapping" buttons (such as freeze/unfreeze schedule) into one button whose behaviour depends on the current state
 - Moved the desktop/mobile view button on the first row
+
+## v0.6.0a1 - 3 June 2024
+- Added paginators to `i.tfi search` commands
+  - This means they can no longer go over the message length limit
+  - The output is now an embed
+  - There is now an intuitive message when no stop/route is found for the query
