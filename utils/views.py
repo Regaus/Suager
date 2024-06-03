@@ -144,6 +144,13 @@ class HiddenView(View):
         await self.message.edit(view=self.original_view)
         # return await interaction.followup.send("The original view has now been restored.", ephemeral=True)
 
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger)
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        # noinspection PyUnresolvedReferences
+        await interaction.response.defer()
+        await self.message.edit(view=None)
+
 
 class InteractiveView(View):
     def __init__(self, sender: discord.Member, message: discord.Message, timeout: int = 300):

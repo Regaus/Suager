@@ -280,13 +280,7 @@ class StopScheduleView(views.InteractiveView):
         super().__init__(sender=sender, message=message, timeout=3600)
         self.schedule = schedule
 
-        if not self.schedule.fixed:
-            self.remove_item(self.unfreeze_schedule)  # Hide the "unfreeze schedule" button
-        else:
-            self.remove_item(self.freeze_schedule)
-
-        self._is_desktop_view: bool = True
-        self.remove_item(self.desktop_view)  # Hide the "desktop view" button
+        self.update_freeze_button()
 
         if not self.schedule.real_time:
             self.remove_item(self.refresh_button)
@@ -305,42 +299,36 @@ class StopScheduleView(views.InteractiveView):
         await self.refresh()
         await self.disable_button(self.message, button, cooldown=30)
 
-    @discord.ui.button(label="Freeze schedule", emoji="🕒", style=discord.ButtonStyle.danger, row=0)  # Red, first row
-    async def freeze_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Freeze the schedule at the current time and index """
-        await interaction.response.defer()
-        self.schedule.fixed = True
-        self.schedule.update_output()
-        # TODO: Find a neater way to do this, perhaps?
-        self.remove_item(button)
-        self.remove_item(self.hide_view)
-        self.remove_item(self.close_view)
-        self.add_item(self.unfreeze_schedule)
-        self.add_item(self.hide_view)
-        self.add_item(self.close_view)
-        await self.message.edit(content=self.schedule.output, view=self)
+    def update_freeze_button(self):
+        if self.schedule.fixed:
+            self.freeze_unfreeze_schedule.label = "Unfreeze schedule"
+            self.freeze_unfreeze_schedule.style = discord.ButtonStyle.primary
+        else:
+            self.freeze_unfreeze_schedule.label = "Freeze schedule"
+            self.freeze_unfreeze_schedule.style = discord.ButtonStyle.danger
 
-    @discord.ui.button(label="Unfreeze schedule", emoji="🕒", style=discord.ButtonStyle.primary, row=0)  # Red, first row
-    async def unfreeze_schedule(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Unfreeze the schedule """
+    @discord.ui.button(label="Freeze schedule", emoji="🕒", style=discord.ButtonStyle.danger, row=0)  # Red/Blue, first row
+    async def freeze_unfreeze_schedule(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Freeze the schedule at the current time and index - or let it move again """
         await interaction.response.defer()
-        self.schedule.fixed = False
+        self.schedule.fixed ^= True
         self.schedule.update_output()
-        self.remove_item(button)
-        self.remove_item(self.hide_view)
-        self.remove_item(self.close_view)
-        self.add_item(self.freeze_schedule)
-        self.add_item(self.hide_view)
-        self.add_item(self.close_view)
-        await self.message.edit(content=self.schedule.output, view=self)
+        self.update_freeze_button()
+        return await self.message.edit(content=self.schedule.output, view=self)
 
-    # @discord.ui.button(label="Freeze time", emoji="", style=discord.ButtonStyle.danger, row=0)  # Red, first row
-    # async def freeze_time(self, interaction: discord.Interaction, button: discord.ui.Button):
-    #     """ Freeze the time being shown """
-    #     await interaction.response.defer()
-    #     self.schedule.fixed_time = True
-    #     self.update_output()
-    #     await self.message.edit(content=self.schedule.output, view=self)
+    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    async def mobile_desktop_view(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Toggle cutting off destination text to make sure that it fits on a mobile screen """
+        await interaction.response.defer()
+        self.schedule.truncate_destination ^= True
+        self.schedule.update_output()
+        if self.schedule.truncate_destination:
+            button.label = "Show full destinations"
+            # button.emoji = "➡️"  # If I ever decide to add an emoji to this button
+        else:
+            button.label = "Shorten destinations"
+            # button.emoji = "⬅️"
+        return await self.message.edit(content=self.schedule.output, view=self)
 
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -494,37 +482,6 @@ class StopScheduleView(views.InteractiveView):
         self.change_move_button_text()
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
-
-    # TODO: Maybe turn this into one button with a change in behaviour based on current state?
-    def redraw_mobile_desktop_button(self):
-        if self._is_desktop_view:
-            self.remove_item(self.mobile_view)
-            self.add_item(self.mobile_view)
-        else:
-            self.remove_item(self.desktop_view)
-            self.add_item(self.desktop_view)
-
-    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
-    async def mobile_view(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Mobile-optimised view: Make the text cut off so that it fits on mobile screens """
-        await interaction.response.defer()
-        self.schedule.truncate_destination = True
-        self.schedule.update_output()
-        self._is_desktop_view = False
-        self.remove_item(button)
-        self.add_item(self.desktop_view)
-        return await self.message.edit(content=self.schedule.output, view=self)
-
-    @discord.ui.button(label="Show full destinations", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
-    async def desktop_view(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Desktop-optimised view: Stop cutting off text (default behaviour) """
-        await interaction.response.defer()
-        self.schedule.truncate_destination = False
-        self.schedule.update_output()
-        self._is_desktop_view = True
-        self.remove_item(button)
-        self.add_item(self.mobile_view)
-        return await self.message.edit(content=self.schedule.output, view=self)
 
 
 class InputModal(discord.ui.Modal):

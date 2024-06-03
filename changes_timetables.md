@@ -231,3 +231,8 @@
   - 4 departures shown -> move up/down by 3
   - 7 departures shown -> move up/down by 6
   - 10 departures shown -> move up/down by 9
+
+## v0.5.5 - 3 June 2024
+- Added "Close view" button to HiddenView
+- Turned "swapping" buttons (such as freeze/unfreeze schedule) into one button whose behaviour depends on the current state
+- Moved the desktop/mobile view button on the first row
