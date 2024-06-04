@@ -1807,3 +1807,6 @@
 
 ## v7.7.16.3 - 26 May 2024
 - The CPU burner module will now only active 15 minutes after the last command usage
+
+## v7.7.16.4 - 4 June 2024
+- Made the `i.sync` command more intuitive

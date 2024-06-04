@@ -514,15 +514,16 @@ class Timetables(University, Luas, name="Timetables"):
                 self.static_data.routes[route.id] = route
         return output
 
-    @commands.group(name="tfi")
-    @commands.is_owner()
+    @commands.hybrid_group(name="tfi", case_insensitive=True)
+    # @commands.is_owner()
     @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
+    @app_commands.guilds(738425418637639775)
     async def tfi(self, ctx: commands.Context):
         """ Base command for TFI-related things """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
-    @tfi.group(name="search")
+    @tfi.group(name="search", case_insensitive=True)
     async def tfi_search(self, ctx: commands.Context):
         """ Search for a stop or route """
         if ctx.invoked_subcommand is None:
@@ -543,6 +544,7 @@ class Timetables(University, Luas, name="Timetables"):
         return await interface.set_message(message, clear_content=True)
 
     @tfi_search.command(name="stop")
+    @app_commands.describe(query="The ID, code, or name of the stop you want to look for")
     async def tfi_search_stop(self, ctx: commands.Context, *, query: str):
         """ Search for a specific stop """
         def add_stop(stop: timetables.Stop) -> str:
@@ -555,6 +557,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "Try using both the stop code and stop name in your query, for example `17 Drumcondra`.")
 
     @tfi_search.command(name="route")
+    @app_commands.describe(query="The ID, name, or end points of the route you want to look for")
     async def tfi_search_route(self, ctx: commands.Context, *, query: str):
         """ Search for a specific route """
         route_types = {0: "Tram", 1: "Subway", 2: "Rail", 3: "Bus", 4: "Ferry", 5: "Cable tram", 6: "Aerial lift", 7: "Funicular", 11: "Trolleybus", 12: "Monorail"}
@@ -570,13 +573,34 @@ class Timetables(University, Luas, name="Timetables"):
         #                   "*You can use both the route number and route destinations in your query, e.g. `155 Bray` or `4 Monkstown`. "
         #                   "However, the words have to match the beginning of the route's description (i.e. if it says \"Bray - IKEA Ballymun\", you cannot use `155 IKEA`).*")
 
-    @tfi.group(name="data", aliases=["schedule", "info", "rtpi"])
+    @tfi.group(name="schedule", aliases=["schedules", "data", "info", "rtpi"], case_insensitive=True)
     async def tfi_schedules(self, ctx: commands.Context):
         """ Commands that deal with schedules and real-time information """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
 
+    async def tfi_stop_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the stop search """
+        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
+        data = self.db.fetch("SELECT id, code, name FROM stops WHERE id LIKE ?1 ESCAPE '!' OR (code || ' ' || name) LIKE ?1 ESCAPE '!'", (search,))
+        # results: [(code, name, similarity), ...]
+        results: list[tuple[str, str, int]] = []
+        for entry in data:
+            ratios = (process.default_scorer(current, entry["id"]), process.default_scorer(current, f"{entry['code']} {entry['name']}"))
+            if entry["code"]:
+                stop_name = f"{entry['name']} (stop code {entry['code']})"
+            else:
+                stop_name = f"{entry['name']} (stop ID {entry['id']})"
+            results.append((entry["id"], stop_name, max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=result[1], value=result[0]) for result in results[:25]]
+
     @tfi_schedules.command(name="stop")
+    @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
+    @app_commands.describe(
+        stop_query="The ID, code, or name of the stop for which you want to see the schedule",
+        timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)"
+    )
     async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str, timestamp: str = None):  # timestamp arg will be used by the slash command
         """ Show the next departures for a specific stop """
         message = await self.wait_for_initialisation(ctx)

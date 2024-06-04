@@ -613,7 +613,12 @@ class Admin(commands.Cog):
     @commands.command(name="sync")
     @commands.is_owner()
     async def sync_slash_commands(self, ctx: commands.Context, action: str = ""):
-        """ Synchronise slash commands """
+        """ Synchronise slash commands
+
+         (Empty) -> sync global slash commands
+         local -> sync local slash commands for the current server
+         global -> copy global slash commands to this server
+         clear -> clear guild-specific slash commands from this server """
         async with ctx.typing():
             if not action:
                 result = await self.bot.tree.sync()

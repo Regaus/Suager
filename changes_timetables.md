@@ -242,3 +242,9 @@
   - This means they can no longer go over the message length limit
   - The output is now an embed
   - There is now an intuitive message when no stop/route is found for the query
+
+## v0.6.0 - 4 June 2024
+- Turned `i.tfi` into a hybrid command
+- The `i.tfi` command is no longer owner-only
+- Added autocomplete to the schedule command
+- Made the `i.sync` command more intuitive
