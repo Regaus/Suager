@@ -1,6 +1,7 @@
 import asyncio
 
 import discord
+import nest_asyncio
 from discord import app_commands, Interaction
 
 from utils import conworlds, emotes, languages, general, time, logger
@@ -153,10 +154,14 @@ class HiddenView(View):
 
 
 class InteractiveView(View):
-    def __init__(self, sender: discord.Member, message: discord.Message, timeout: int = 300):
+    def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage, timeout: int = 300):
         super().__init__(timeout=timeout)
         self.sender = sender
-        self.message = message
+        if isinstance(message, discord.InteractionMessage):  # Fetch the full Message from the partial InteractionMessage
+            nest_asyncio.apply()  # https://stackoverflow.com/a/56434301 - Patches asyncio to let the code below run properly
+            self.message = asyncio.get_event_loop().run_until_complete(asyncio.create_task(message.fetch()))
+        else:
+            self.message: discord.Message = message
 
     # async def validate_sender(self, interaction: discord.Interaction):
     #     """ Make sure that the person clicking on the button is also the author of the message """

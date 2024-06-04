@@ -248,3 +248,7 @@
 - The `i.tfi` command is no longer owner-only
 - Added autocomplete to the schedule command
 - Made the `i.sync` command more intuitive
+
+## v0.6.1 - 5 June 2024
+- InteractiveView now forces loading the full message when the view is created from a slash command interaction
+  - The way this is implemented may allegedly have side effects, but we'll see if this breaks anything
