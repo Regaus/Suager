@@ -38,15 +38,24 @@ class Utility(commands.Cog):
                     break
             if start is None:
                 start = "Virsetgar"
+            utc_name = f"Current time in {start}"
         else:
             now = time2.datetime.now()
-            start = "UTC/GMT"
-        send = f"{start}: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
-        if user.id == ctx.author.id:
-            send += language.string("util_time_custom", time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
-        else:
-            send += language.string("util_time_custom2", user=general.username(user), time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id))
-        return await ctx.send(send)
+            utc_name = language.string("util_time_utc")
+        embed = discord.Embed(colour=general.random_colour(), title=language.string("util_time_current"))
+        utc_time = language.time(now, short=0, dow=True, seconds=True, tz=True)
+        own_time = language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id)
+        user_time = language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id)
+        embed.add_field(name=utc_name, value=utc_time, inline=False)
+        embed.add_field(name=language.string("util_time_your"), value=own_time, inline=False)
+        if user.id != ctx.author.id:
+            embed.add_field(name=language.string("util_time_user", user=general.username(user)), value=user_time, inline=False)
+        # send = f"{start}: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
+        # if user.id == ctx.author.id:
+        #     send += language.string("util_time_custom", time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
+        # else:
+        #     send += language.string("util_time_custom2", user=general.username(user), time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id))
+        return await ctx.send(embed=embed)
 
     @commands.command(name="base", aliases=["bases", "bc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)

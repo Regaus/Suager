@@ -423,3 +423,6 @@
 
 ## v1.5.0 - 30 May 2024
 - Added ability to show certain stats about the server using voice channel names
+
+## v1.5.1 - 5 June 2024
+- Turned `m!time` into an embed

@@ -799,3 +799,6 @@
 - Made `Language.get()` be able to deal with slash commands and interactions
 - Made buttons on interactive views automatically detect whether the person is allowed to use that button
 - Added error handling to buttons, which should hopefully reduce the amount of silent errors during debugging
+
+## v1.9.5 - 5 June 2024
+- Turned `..time` into an embed
