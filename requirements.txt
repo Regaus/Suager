@@ -6,6 +6,7 @@ Pillow
 aiohttp>=3.9.0b0
 python-dateutil
 asyncio
+nest_asyncio  # asyncio patcher for Timetables bot
 pytz
 jishaku
 # git+https://github.com/Gorialis/jishaku.git@master#egg=jishaku  # Use github version of jishaku because it doesn't use line-profiler, which is broken on py3.11
