@@ -391,6 +391,7 @@ tables = [
         Column("direction_id", "INTEGER", True),  # 0 -> outbound, 1 -> inbound
         Column("block_id", "TEXT", True),
         Column("shape_id", "TEXT", True),         # ID of geospatial shape of the trip
+        Column("total_stops", "INTEGER", True),   # Total number of stop times associated with the trip
     ]),
     Table("stop_times", "gtfs/static.db", [
         Column("trip_id", "TEXT", True),            # Trip ID this stop time belongs to

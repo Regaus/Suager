@@ -260,6 +260,7 @@ class Trip:
     direction_id: int  # 0 -> outbound, 1 -> inbound
     block_id: str      # "A block consists of a single trip or many sequential trips made using the same vehicle"
     shape_id: str      # ID of geospatial shape (not really useful for my case)
+    total_stops: int   # Number of stop times associated with the trip
 
     def route(self, data: GTFSData = None, db: database.Database = None) -> Route:
         return load_value(data, Route, self.route_id, db)
@@ -270,8 +271,8 @@ class Trip:
         # return Calendar.from_sql(self.calendar_id)
 
     def __repr__(self):
-        # "Trip 3626_209 to Charlesland, stop 7462 - Route 3626_39040
-        return f"Trip {self.trip_id} to {self.headsign} - Route {self.route_id}"
+        # "Trip 3626_209 to Charlesland, stop 7462 (93 stops) - Route 3626_39040
+        return f"Trip {self.trip_id} to {self.headsign} ({self.total_stops} stops) - Route {self.route_id}"
 
         # "Trip 3626_209 to Charlesland, stop 7462 - Route 84n (Dublin City South, D'Olier Street - Charlesland Road (Seaborne View Apts))"
         # route = self.route()
@@ -281,7 +282,7 @@ class Trip:
     def from_dict(cls, data: dict[str, Any]) -> Trip:
         """ Construct a new Trip object from a dictionary """
         return cls(data["route_id"], data["calendar_id"], data["trip_id"], data["headsign"],
-                   data["short_name"], data["direction_id"], data["block_id"], data["shape_id"])
+                   data["short_name"], data["direction_id"], data["block_id"], data["shape_id"], data["total_stops"])
 
     @classmethod
     def from_sql(cls, trip_id: str, db: database.Database = None) -> Trip:
@@ -292,8 +293,9 @@ class Trip:
 
     def save_to_sql(self) -> str:
         """ Save the Trip to the SQL database """
-        return ("INSERT INTO trips(route_id, calendar_id, trip_id, headsign, short_name, direction_id, block_id, shape_id) VALUES "
-                f"({self.route_id!r}, {self.calendar_id!r}, {self.trip_id!r}, {self.headsign!r}, {self.short_name!r}, {self.direction_id!r}, {self.block_id!r}, {self.shape_id!r})")
+        return ("INSERT INTO trips(route_id, calendar_id, trip_id, headsign, short_name, direction_id, block_id, shape_id, total_stops) VALUES "
+                f"({self.route_id!r}, {self.calendar_id!r}, {self.trip_id!r}, {self.headsign!r}, {self.short_name!r}, "
+                f"{self.direction_id!r}, {self.block_id!r}, {self.shape_id!r}, {self.total_stops!r})")
 
 
 @dataclass()
@@ -506,19 +508,26 @@ def read_and_store_gtfs_data():  # self=None
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved stops")
 
-    for row in iterate_over_csv_full("trips.txt"):
-        statements.append(Trip(row.route_id, row.service_id, row.trip_id, row.trip_headsign, row.trip_short_name,
-                               row.direction_id, row.block_id, row.shape_id).save_to_sql())
-    save_to_sql()
-    print(f"{now()} > Static GTFS Loader > Saved trips")
+    # stops_per_trip[trip_id] = stop times for that trip
+    stops_per_trip: dict[str, int] = {}
 
     for row in iterate_over_csv_full("stop_times.txt"):
         statements.append(StopTime(row.trip_id, time_to_int(row.arrival_time), time_to_int(row.departure_time), row.stop_id, row.stop_sequence,
                                    row.stop_headsign, row.pickup_type, row.drop_off_type, row.timepoint).save_to_sql())
+        if row.trip_id not in stops_per_trip:
+            stops_per_trip[row.trip_id] = 1
+        else:
+            stops_per_trip[row.trip_id] += 1
         if len(statements) >= 100000:
             save_to_sql()  # Don't overwhelm the memory with millions of these entries
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved stop times")
+
+    for row in iterate_over_csv_full("trips.txt"):
+        statements.append(Trip(row.route_id, row.service_id, row.trip_id, row.trip_headsign, row.trip_short_name,
+                               row.direction_id, row.block_id, row.shape_id, stops_per_trip[row.trip_id]).save_to_sql())
+    save_to_sql()
+    print(f"{now()} > Static GTFS Loader > Saved trips")
 
     # Delete old expiry and set the new one
     # noinspection SqlWithoutWhere

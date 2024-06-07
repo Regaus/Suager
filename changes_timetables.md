@@ -252,3 +252,6 @@
 ## v0.6.1 - 5 June 2024
 - InteractiveView now forces loading the full message when the view is created from a slash command interaction
   - The way this is implemented may allegedly have side effects, but we'll see if this breaks anything
+
+## v0.7.0a1 - 7 June 2024
+- Trips now store the number of stops associated with it
