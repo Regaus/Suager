@@ -240,6 +240,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.initialised = False
         self.updating = False
         self.loader_error: Exception | None = None
+        self.soft_loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
         self.soft_limit_warning: bool = False
 
@@ -369,21 +370,24 @@ class Timetables(University, Luas, name="Timetables"):
                             static_reload = True
                             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Error loading static GTFS data: {type(e).__name__}: {e}")
                             await self.download_new_static_gtfs()
-                except (ClientError, BadZipFile):
+                except (ClientError, BadZipFile) as e:
                     # If the GTFS data cannot be downloaded due to an error with the powers above, try to load from existing data while ignoring expiry errors
+                    self.soft_loader_error = e
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Can't download data, falling back to existing dataset.")
                     self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
+                    self.updating = False
                     # self.static_data = timetables.load_gtfs_data_from_pickle(write=not self._DEBUG, ignore_expiry=True)
                     # If we crash here yet again, then it would make sense to give up and catch on fire.
             self.initialised = True
         except Exception as e:
             self.loader_error = e
             self.initialised = False
+            self.updating = False  # That should cause the waiting loop to exit, we are no longer updating data
             raise
         # This can only be called if we are not reloading GTFS data, as we can only be sure the data is finished updating after that function returns
         finally:
             cpu_burner.arr[2] = True
-            if not static_reload:
+            if not static_reload:  # I'm not sure why it's written like this. Should it be?
                 self.updating = False
 
     async def download_new_static_gtfs(self):
@@ -394,6 +398,7 @@ class Timetables(University, Luas, name="Timetables"):
         # Uncomment this to fake an error
         # await asyncio.sleep(10)
         # raise RuntimeError("This is a test")
+        # raise BadZipFile("This is a test")
         # Download the data
         data = await http.get(self.gtfs_data_url, res_method="read")
         # Extract the data
@@ -425,8 +430,25 @@ class Timetables(University, Luas, name="Timetables"):
         # Keep the function alive until the bot is initialised and the data has been updated
         while not self.initialised or self.updating:
             if self.loader_error is not None:
-                raise RuntimeError("Detected that an error was raised while loading GTFS data, crashing this loop...")
-            await asyncio.sleep(5)
+                raise RuntimeError("An error occurred while loading GTFS data, crashing initialisation loop.") from self.loader_error
+            await asyncio.sleep(1)
+
+        # Report soft errors loading data to the error logs channel instead of silently ignoring them
+        if self.soft_loader_error is not None:
+            prefix = "Non-critical error downloading GTFS data (existing static data loaded)"
+            command = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+            ec = self.bot.get_channel(self.bot.local_config["error_channel"])
+            if ec is not None:
+                error = general.traceback_maker(self.soft_loader_error, command[:750], ctx.guild, ctx.author)
+                await ec.send(f"{prefix}\n\n{error}")
+            error_message = (f"{print_current_time()} > {self.bot.full_name} > {ctx.guild} > {ctx.author} ({ctx.author.id}) > {command} > "
+                             f"{prefix}: {type(self.soft_loader_error).__name__}: {str(self.soft_loader_error)}")
+            general.print_error(error_message)
+            self.soft_loader_error = None
+
+        # Make sure an error is raised if it occurred above
+        if self.loader_error is not None:
+            raise self.loader_error from None
 
         return message
 
@@ -484,9 +506,20 @@ class Timetables(University, Luas, name="Timetables"):
 
     @placeholder.command(name="reset")
     async def reset_error(self, ctx: commands.Context):
-        """ Reset error status """
+        """ Reset the cog's flags to initial state """
         self.loader_error = None
-        return await ctx.send(f"{print_current_time()} > Reset the loader error status")
+        self.initialised = False
+        self.updating = False
+        return await ctx.send(f"{print_current_time()} > Reset the loader error status and reset the initialised and updating values to False.")
+
+    @placeholder.command(name="check")
+    async def check_error(self, ctx: commands.Context):
+        """ Check error status """
+        flags_status = f"{self.initialised=}\n{self.updating=}"
+        if self.loader_error is None:
+            return await ctx.send(f"{flags_status}\n{self.loader_error=}")
+        error = general.traceback_maker(self.loader_error)
+        return await ctx.send(f"{flags_status}\nself.loader_error has an error stored:\n{error[-1900:]}")
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """

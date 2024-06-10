@@ -255,3 +255,10 @@
 
 ## v0.7.0a1 - 7 June 2024
 - Trips now store the number of stops associated with it
+
+## v0.7.0a2 - 10 June 2024
+- Errors when loading static GTFS data are now more likely to be shown and be handled properly
+  - Errors when downloading data (ClientError or BadZipFile) will now be reported to the error logs channel, despite being non-critical (instead of being silently ignored)
+  - `self.loader_error` should always be raised if it is there and not handled yet (it should be reset to None the next time data is loaded when things are handled properly)
+- `i.placeholder reset` now resets the values of `self.initialised` and `self.updating` as well as setting the `self.loader_error` to None
+- Added `i.placeholder check` that sends the current state of the initialised and updating flags, and whether there is an error state stored
