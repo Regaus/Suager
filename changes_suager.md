@@ -1813,3 +1813,6 @@
 
 ## v7.7.17 - 5 June 2024
 - Turned `//time` into an embed
+
+## v7.7.17.1 - 11 June 2024
+- Fixed errors not being sent to the error logs channel when the traceback is very long

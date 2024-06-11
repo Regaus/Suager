@@ -245,20 +245,22 @@ class Timetables(University, Luas, name="Timetables"):
         self.soft_limit_warning: bool = False
 
     @staticmethod
-    def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool]:
+    def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool, bool]:
         """ Split the query and timestamp using argparse """
         parser = arg_parser.Arguments()
         parser.add_argument("--time", nargs="+")
+        parser.add_argument("--show-terminating", default=False, action="store_true")
+        parser.add_argument("--hide-terminating", dest="show-terminating", action="store_false")
         parser.add_argument("query", nargs="+")
         args, valid_check = parser.parse_args(query)
         if not valid_check:
-            return args, None, False
+            return args, None, False, False
         query = " ".join(args.query)
         if args.time is not None:
             timestamp = " ".join(args.time)
         else:
             timestamp = None
-        return query, timestamp, True
+        return query, timestamp, args.show_terminating, True
 
     @staticmethod
     def parse_timestamp(timestamp: str | None) -> tuple[time.datetime | None, bool]:
@@ -632,16 +634,19 @@ class Timetables(University, Luas, name="Timetables"):
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
     @app_commands.describe(
         stop_query="The ID, code, or name of the stop for which you want to see the schedule",
-        timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)"
+        timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)",
+        show_terminating="Leave empty to hide arrivals that terminate at this stop. Add any text here to show them."
     )
-    async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str, timestamp: str = None):  # timestamp arg will be used by the slash command
+    async def tfi_schedules_stop(self, ctx: commands.Context, *, stop_query: str, timestamp: str = None, show_terminating: str = None):  # timestamp arg will be used by the slash command
         """ Show the next departures for a specific stop """
         message = await self.wait_for_initialisation(ctx)
         # language = ctx.language2("en")
         if ctx.interaction is None:
-            stop_query, timestamp, valid_check = self.get_query_and_timestamp(stop_query)
+            stop_query, timestamp, show_terminating, valid_check = self.get_query_and_timestamp(stop_query)
             if not valid_check:
                 return await ctx.send(stop_query)
+        else:
+            show_terminating = bool(show_terminating)
         now, valid_check = self.parse_timestamp(timestamp)
         if not valid_check:
             return await ctx.send("Invalid timestamp. Make sure it is in the following format: `YYYY-MM-DD HH:MM:SS`.")
@@ -664,9 +669,10 @@ class Timetables(University, Luas, name="Timetables"):
 
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
         try:
-            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now)
+            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now, hide_terminating=not show_terminating)
         except Exception:
-            raise  # For some reason, without this block, exceptions raised are simply silently ignored, this will forward them to the on_command_error listener.
+            # For some reason, without this block, exceptions raised are simply silently ignored, this will forward them to the on_command_error listener.
+            raise
             # await ctx.send(ctx.language2("en").string("events_error_error", err=f"{type(e).__name__}: {e}"))
             # error_message = (f"{time.datetime.now():%d %b %Y, %H:%M:%S} > {self.bot.full_name} > Error occurred while loading stop schedule\n"
             #                  f"{general.traceback_maker(e, text=ctx.message.content, guild=ctx.guild, author=ctx.author, code_block=False)}")

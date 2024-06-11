@@ -50,7 +50,7 @@ class StopScheduleViewer:
 
     @classmethod
     async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, cog,
-                   now: time.datetime | None = None, lines: int = 7):
+                   now: time.datetime | None = None, lines: int = 7, hide_terminating: bool = True):
         """ Load the data and return a working instance """
         if now is not None:
             real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
@@ -61,7 +61,7 @@ class StopScheduleViewer:
             fixed = False
         today = now.date()
         event_loop = asyncio.get_event_loop()
-        base_schedule, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedule, data, stop.id, today)
+        base_schedule, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedule, data, stop.id, today, hide_terminating)
         if real_time:
             real_schedule, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedule, base_schedule, real_time_data, vehicle_data, base_stop_times)
         else:
@@ -69,9 +69,9 @@ class StopScheduleViewer:
         return cls(data, now, real_time, fixed, today, stop, real_time_data, vehicle_data, lines, base_schedule, base_stop_times, real_schedule, real_stop_times, cog)
 
     @staticmethod
-    def load_base_schedule(data: GTFSData, stop_id: str, today: time.date):
+    def load_base_schedule(data: GTFSData, stop_id: str, today: time.date, hide_terminating: bool = True):
         """ Load the static StopSchedule """
-        base_schedule = StopSchedule(data, stop_id)
+        base_schedule = StopSchedule(data, stop_id, hide_terminating=hide_terminating)
         base_stop_times = base_schedule.relevant_stop_times(today)
         return base_schedule, base_stop_times
 
@@ -184,6 +184,7 @@ class StopScheduleViewer:
 
             output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
             for i, element in enumerate(output_line):
+                # noinspection PyUnresolvedReferences
                 column_sizes[i] = max(column_sizes[i], len(element))
 
             output_data.append(output_line)
@@ -284,7 +285,7 @@ class StopScheduleView(views.InteractiveView):
 
         if not self.schedule.real_time:
             self.remove_item(self.refresh_button)
-            self.remove_item(self.unfreeze_schedule)
+            self.remove_item(self.freeze_unfreeze_schedule)
 
     async def refresh(self):
         """ Refresh the real-time data """

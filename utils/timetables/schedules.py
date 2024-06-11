@@ -347,14 +347,17 @@ class RealStopTime:
 class StopSchedule:
     """ Get the stop's schedule """
 
-    def __init__(self, data: GTFSData, stop_id: str):
+    def __init__(self, data: GTFSData, stop_id: str, hide_terminating: bool = True):
         self.db = get_database()
         self.data = data
         self.stop = load_value(data, Stop, stop_id, self.db)
         # self.stop = load_value_from_id(data, "stops.txt", stop_id, self.db)
         self.stop_id = self.stop.id
-        # self.all_stop_times = []
-        self.all_trips = []
+        self.all_trips: dict[str, Trip] = {}
+        self.hide_terminating = hide_terminating
+
+        # self.total_stops[trip_id] = Trip.total_stops
+        self.total_stops: dict[str, int] = {}
 
         # self.stop_times[trip_id] = StopTime(stop_id=self.stop_id)
         self.stop_times: dict[str, StopTime] = {}
@@ -364,22 +367,28 @@ class StopSchedule:
         trip_ids_full = set(entry["trip_id"] for entry in sql_data)
         trip_ids_inter = trip_ids_full.intersection(self.data.trips.keys())
         for key in trip_ids_inter:
-            self.all_trips.append(self.data.trips[key])
+            self.all_trips[key] = self.data.trips[key]
+            self.total_stops[key] = self.data.trips[key].total_stops
 
         # Add trips that are not yet loaded into memory
         trip_ids = trip_ids_full.difference(trip_ids_inter)
         if trip_ids:
             for trip_id in trip_ids:
                 trip = Trip.from_sql(trip_id, self.db)
-                self.all_trips.append(trip)
+                self.all_trips[trip_id] = trip
                 self.data.trips[trip_id] = trip
+                self.total_stops[trip_id] = trip.total_stops
 
         # Load stop times from trips that were already loaded into memory
         schedule_ids_inter = trip_ids_full.intersection(self.data.stop_times.keys())
         schedule_ids_copy = schedule_ids_inter.copy()
         for trip_id in schedule_ids_inter:  # key1 = trip_id, key2 = stop_id
             if stop_id in self.data.stop_times[trip_id]:
-                self.stop_times[trip_id] = self.data.stop_times[trip_id][stop_id]
+                stop_time = self.data.stop_times[trip_id][stop_id]
+                if not hide_terminating or (hide_terminating and stop_time.sequence < self.total_stops[trip_id]):  # Ignore if it's the last stop of the trip
+                    self.stop_times[trip_id] = stop_time
+                else:
+                    del self.all_trips[trip_id]
             else:
                 schedule_ids_copy.remove(trip_id)  # False positive: Trip ID exists in memory but this stop's StopTime is not loaded
 
@@ -389,7 +398,10 @@ class StopSchedule:
         if schedule_ids:
             for trip_id in schedule_ids:
                 stop_time = StopTime.from_sql_specific(trip_id, stop_id, self.db)
-                self.stop_times[trip_id] = stop_time
+                if not hide_terminating or (hide_terminating and stop_time.sequence < self.total_stops[trip_id]):  # Ignore if it's the last stop of the trip
+                    self.stop_times[trip_id] = stop_time
+                else:
+                    del self.all_trips[trip_id]
                 if trip_id in self.data.stop_times:
                     self.data.stop_times[trip_id][stop_id] = stop_time
                 else:
@@ -407,7 +419,7 @@ class StopSchedule:
         calendar_exceptions = self.data.calendar_exceptions
         if not calendars:  # calendars empty = no calendars have been loaded yet
             load_calendars(self.data)
-        for trip in self.all_trips:
+        for trip in self.all_trips.values():
             if trip.calendar_id in calendars:
                 calendar = calendars[trip.calendar_id]
             else:  # Weird but just in case
@@ -484,20 +496,21 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
 # Stuff for real-time schedules
 class RealTimeStopSchedule:
     def __init__(self, data: GTFSData | None, stop_id: str | None, real_time_data: GTFSRData, vehicle_data: VehicleData,
-                 existing_schedule: StopSchedule | None = None, stop_times: list[SpecificStopTime] | None = None):
+                 static_schedule: StopSchedule | None = None, stop_times: list[SpecificStopTime] | None = None, hide_terminating: bool = True):
         self.db = get_database()
-        if existing_schedule is not None:
-            self.stop_schedule = existing_schedule
-            self.data = existing_schedule.data
+        if static_schedule is not None:
+            self.stop_schedule = static_schedule
+            self.data = static_schedule.data
         else:
             if data is None:
                 raise ValueError("data cannot be None if existing_schedule is not provided")
             if stop_id is None:
                 raise ValueError("stop_id cannot be None if existing_schedule is not provided")
             self.data = data
-            self.stop_schedule = StopSchedule(data, stop_id)
+            self.stop_schedule = StopSchedule(data, stop_id, hide_terminating=hide_terminating)
         self.stop = self.stop_schedule.stop
         self.stop_id = self.stop_schedule.stop_id
+        self.hide_terminating = self.stop_schedule.hide_terminating
         if stop_times is not None:
             self.stop_times = stop_times
         else:

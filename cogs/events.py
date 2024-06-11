@@ -189,7 +189,7 @@ class Events(commands.Cog):
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
                     full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
-                    error = general.traceback_maker(err.original, full_content[:750], ctx.guild, ctx.author)
+                    error = general.traceback_maker(err.original, full_content[:750], ctx.guild, ctx.author, limit_text=True)
                     await ec.send(error)
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > " \
                                 f"{type(err.original).__name__}: {str(err.original)}"
@@ -212,7 +212,7 @@ class Events(commands.Cog):
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
                     full_content = general.build_interaction_content(ctx.interaction)
-                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author, limit_text=True)
                     await ec.send(error)
                 error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
                 general.print_error(error_message)
@@ -226,7 +226,7 @@ class Events(commands.Cog):
                 ec = self.bot.get_channel(self.bot.local_config["error_channel"])
                 if ec is not None:
                     full_content = general.build_interaction_content(ctx.interaction)
-                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author, limit_text=True)
                     await ec.send(error)
 
         else:
@@ -236,7 +236,7 @@ class Events(commands.Cog):
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:
                 full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
-                error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author)
+                error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author, limit_text=True)
                 await ec.send(error)
 
         logger.log(self.bot.name, "commands", error_message)

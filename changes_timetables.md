@@ -262,3 +262,8 @@
   - `self.loader_error` should always be raised if it is there and not handled yet (it should be reset to None the next time data is loaded when things are handled properly)
 - `i.placeholder reset` now resets the values of `self.initialised` and `self.updating` as well as setting the `self.loader_error` to None
 - Added `i.placeholder check` that sends the current state of the initialised and updating flags, and whether there is an error state stored
+
+## v0.7.0 - 11 June 2024
+- Made it possible to hide arrivals that terminate at the current stop
+- Fixed errors not being sent to the error logs channel when the traceback is very long
+- Fixed the schedule viewer raising an error when loading non-real-time schedules
