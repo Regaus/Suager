@@ -42,11 +42,11 @@
     "last_update": 1716585089
   },
   "timetables": {
-    "short_version": "0.7",
-    "version": "0.7.0",
+    "short_version": "0.8",
+    "version": "0.8.0",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1718142848
+    "last_update": 1718222853
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

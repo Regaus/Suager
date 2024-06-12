@@ -1,8 +1,9 @@
+import json
 from typing import Optional
 
 from regaus import time
 
-from utils.timetables.shared import TIMEZONE, get_database
+from utils.timetables.shared import TIMEZONE, get_database, get_data_database
 from utils.timetables.static import *
 from utils.timetables.realtime import *
 
@@ -347,12 +348,27 @@ class RealStopTime:
 class StopSchedule:
     """ Get the stop's schedule """
 
-    def __init__(self, data: GTFSData, stop_id: str, hide_terminating: bool = True):
+    def __init__(self, data: GTFSData, stop_id: str, hide_terminating: bool = True, route_filter_userid: int = None):
         self.db = get_database()
+        self.data_db = get_data_database()
         self.data = data
         self.stop = load_value(data, Stop, stop_id, self.db)
         # self.stop = load_value_from_id(data, "stops.txt", stop_id, self.db)
         self.stop_id = self.stop.id
+
+        # self._route_id_cache[route_id] = Route.filter_name()
+        self.route_filter_userid = route_filter_userid
+        self._route_id_cache: dict[str, str] = {}
+        self.route_filter: set[str] = set()
+        self.route_filter_exists: bool = False
+        if route_filter_userid is not None:
+            # noinspection SqlResolve
+            route_filter_data = self.data_db.fetchrow("SELECT routes FROM route_filters WHERE user_id=? AND stop_id=?", (route_filter_userid, self.stop_id))
+            if route_filter_data:
+                self.route_filter = set(json.loads(route_filter_data["routes"]))
+                self.route_filter_exists = True
+
+        self._all_routes: dict[str, Route] = {}  # All routes passing through the stop (Does not account for routes that only terminate at this stop)
         self.all_trips: dict[str, Trip] = {}
         self.hide_terminating = hide_terminating
 
@@ -362,22 +378,37 @@ class StopSchedule:
         # self.stop_times[trip_id] = StopTime(stop_id=self.stop_id)
         self.stop_times: dict[str, StopTime] = {}
 
+        def handle_trip(_trip: Trip) -> None:
+            self.all_trips[_trip.trip_id] = _trip
+            self.total_stops[_trip.trip_id] = _trip.total_stops
+            if _trip.route_id not in self._all_routes:
+                route = _trip.route(self.data, self.db)
+                self._all_routes[_trip.route_id] = route
+                self._route_id_cache[_trip.route_id] = route.filter_name()
+
+            route_name = self._route_id_cache.get(_trip.route_id, None)
+            if route_name is None:
+                route_name = _trip.route(self.data, self.db).filter_name()
+            # If route filter exists and the route name is not in the filter, delete it
+            if self.route_filter and route_name not in self.route_filter:
+                del self.all_trips[_trip.trip_id]
+                trip_ids_full.remove(_trip.trip_id)
+
         # Load all schedules (trips) that will pass through this stop
         sql_data = self.db.fetch("SELECT * FROM stop_times WHERE stop_id=?", (stop_id,))
         trip_ids_full = set(entry["trip_id"] for entry in sql_data)
         trip_ids_inter = trip_ids_full.intersection(self.data.trips.keys())
-        for key in trip_ids_inter:
-            self.all_trips[key] = self.data.trips[key]
-            self.total_stops[key] = self.data.trips[key].total_stops
+        for trip_id in trip_ids_inter:
+            trip = self.data.trips[trip_id]
+            handle_trip(trip)
 
         # Add trips that are not yet loaded into memory
         trip_ids = trip_ids_full.difference(trip_ids_inter)
         if trip_ids:
             for trip_id in trip_ids:
                 trip = Trip.from_sql(trip_id, self.db)
-                self.all_trips[trip_id] = trip
                 self.data.trips[trip_id] = trip
-                self.total_stops[trip_id] = trip.total_stops
+                handle_trip(trip)
 
         # Load stop times from trips that were already loaded into memory
         schedule_ids_inter = trip_ids_full.intersection(self.data.stop_times.keys())
@@ -409,6 +440,9 @@ class StopSchedule:
                 schedule_ids_copy.remove(trip_id)
         if schedule_ids_copy:
             print("Missed Trip IDs: ", schedule_ids_copy)
+
+        self.all_routes = list(self._all_routes.values())
+        del self._all_routes
 
     def relevant_stop_times_one_day(self, date: time.date) -> list[SpecificStopTime]:
         """ Get the stop times for one day """

@@ -179,6 +179,12 @@ class Route:
         return load_value(data, Agency, self.agency_id, db)
         # return Agency.from_sql(self.agency_id)
 
+    def filter_name(self) -> str:
+        """ The name of the route used for route filter """
+        if self.short_name == "rail":
+            return f"{self.short_name} {self.long_name}"
+        return self.short_name
+
     def __repr__(self):
         # "Route 3643_54890 (DART) - Bray - Howth - Operated by Agency 7778017"
         return f"Route {self.id} ({self.short_name}) - {self.long_name} - Operated by Agency {self.agency_id}"

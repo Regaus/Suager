@@ -1,11 +1,12 @@
 import asyncio
+import json
 from typing import override
 
 import discord
 from regaus import time
 
-from utils import views, conworlds, languages
-from utils.timetables.shared import TIMEZONE
+from utils import views, conworlds, emotes, languages
+from utils.timetables.shared import TIMEZONE, get_data_database
 from utils.timetables.realtime import GTFSRData, VehicleData
 from utils.timetables.static import GTFSData, Stop
 from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
@@ -50,7 +51,7 @@ class StopScheduleViewer:
 
     @classmethod
     async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, cog,
-                   now: time.datetime | None = None, lines: int = 7, hide_terminating: bool = True):
+                   now: time.datetime | None = None, lines: int = 7, hide_terminating: bool = True, user_id: int = None):
         """ Load the data and return a working instance """
         if now is not None:
             real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
@@ -61,17 +62,28 @@ class StopScheduleViewer:
             fixed = False
         today = now.date()
         event_loop = asyncio.get_event_loop()
-        base_schedule, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedule, data, stop.id, today, hide_terminating)
+        base_schedule, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedule, data, stop.id, today, hide_terminating, user_id)
         if real_time:
             real_schedule, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedule, base_schedule, real_time_data, vehicle_data, base_stop_times)
         else:
             real_schedule = real_stop_times = None
         return cls(data, now, real_time, fixed, today, stop, real_time_data, vehicle_data, lines, base_schedule, base_stop_times, real_schedule, real_stop_times, cog)
 
+    async def reload(self):
+        new_schedule = await self.load(self.data, self.stop, self.real_time_data, self.vehicle_data, self.cog, self.now, self.lines,
+                                       self.base_schedule.hide_terminating, self.base_schedule.route_filter_userid)
+        # These will change in the new_schedule because the "now" parameter is set
+        new_schedule.fixed = self.fixed
+        new_schedule.real_time = self.real_time
+        new_schedule.truncate_destination = self.truncate_destination
+        # new_schedule.index_offset = self.index_offset  # It's probably better to reset this to zero since we have changed the routes that appear here
+        new_schedule.update_output()
+        return new_schedule
+
     @staticmethod
-    def load_base_schedule(data: GTFSData, stop_id: str, today: time.date, hide_terminating: bool = True):
+    def load_base_schedule(data: GTFSData, stop_id: str, today: time.date, hide_terminating: bool = True, user_id: int = None):
         """ Load the static StopSchedule """
-        base_schedule = StopSchedule(data, stop_id, hide_terminating=hide_terminating)
+        base_schedule = StopSchedule(data, stop_id, hide_terminating=hide_terminating, route_filter_userid=user_id)
         base_stop_times = base_schedule.relevant_stop_times(today)
         return base_schedule, base_stop_times
 
@@ -280,12 +292,17 @@ class StopScheduleView(views.InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer):
         super().__init__(sender=sender, message=message, timeout=3600)
         self.schedule = schedule
+        self.data_db = get_data_database()
 
         self.update_freeze_button()
 
         if not self.schedule.real_time:
             self.remove_item(self.refresh_button)
             self.remove_item(self.freeze_unfreeze_schedule)
+
+        self.add_item(RouteFilterSelector(self))
+
+        self.reset_route_filter.disabled = not self.schedule.base_schedule.route_filter_exists  # Filter enabled -> button enabled
 
     async def refresh(self):
         """ Refresh the real-time data """
@@ -412,6 +429,13 @@ class StopScheduleView(views.InteractiveView):
         """ Move offset by a custom amount provided by the user """
         return await interaction.response.send_modal(MoveOffsetModal(self))
 
+    @discord.ui.button(label="Reset route filter", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def reset_route_filter(self, interaction: discord.Interaction, _: discord.Button):
+        """ Reset the route filter - Show all departures regardless of route """
+        if not self.schedule.base_schedule.route_filter_exists:
+            return await interaction.response.send_message("There is already no route filter applied to this stop!", ephemeral=True)
+        return await self.apply_route_filter(interaction, values=None)
+
     @discord.ui.button(label="Move down 1", emoji="🔽", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def move_down_1(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
@@ -484,6 +508,32 @@ class StopScheduleView(views.InteractiveView):
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
 
+    async def apply_route_filter(self, interaction: discord.Interaction, values: list[str] | None):
+        await interaction.response.defer()
+        await self.message.edit(content=f"{emotes.Loading} Updating the route filter for this stop... This may take up to a minute.", view=None)
+        user_id = self.sender.id
+        stop_id = self.schedule.stop.id
+        if values is not None:
+            db_values = json.dumps(values)
+            if self.schedule.base_schedule.route_filter_exists:
+                self.data_db.execute("UPDATE route_filters SET routes=? WHERE user_id=? AND stop_id=?", (db_values, user_id, stop_id))
+            else:
+                self.data_db.execute("INSERT INTO route_filters(user_id, stop_id, routes) VALUES (?, ?, ?)", (user_id, stop_id, db_values))
+            self.reset_route_filter.disabled = False
+        else:
+            self.data_db.execute("DELETE FROM route_filters WHERE user_id=? AND stop_id=?", (user_id, stop_id))
+            self.reset_route_filter.disabled = True
+        self.schedule = await self.schedule.reload()
+        await self.message.edit(content=self.schedule.output, view=self)
+        if values is not None:
+            return await interaction.followup.send(f"From now on, this stop will only show departures for the following routes: {', '.join(values)}.\n"
+                                                   f"Note: This setting will persist the next time you look up the schedule for this same stop.\n"
+                                                   f"To change the list of routes to filter, simply select your new choices in the menu.\n"
+                                                   f"To remove the filter, use the \"Reset route filter\" button.")
+        else:
+            return await interaction.followup.send("The route filter for this stop has been disabled, and all departures will be shown regardless of route.\n"
+                                                   "If you want to only see certain routes again, use the \"Filter Routes\" select menu to choose which routes you want to see.")
+
 
 class InputModal(discord.ui.Modal):
     """Modal that prompts users for the page number to change to"""
@@ -551,3 +601,37 @@ class SetOffsetModal(InputModal):
     @override
     async def submit_handler(self, interaction: discord.Interaction, value: int):
         return await self.interface.set_offset(interaction, value)
+
+
+class SelectMenu(discord.ui.Select):
+    def __init__(self, interface: views.InteractiveView, *, placeholder: str = None, min_values: int = 1, max_values: int = 1, options: list[discord.SelectOption] = None, row: int = None):
+        if options is None:
+            options = []
+        super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options, row=row)
+        self.interface = interface
+
+    def reset_options(self):
+        """ Reset the list of options to nothing """
+        self.options = []
+
+
+class RouteFilterSelector(SelectMenu):
+    interface: StopScheduleView
+
+    def __init__(self, interface: StopScheduleView):
+        super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=25, options=[], row=4)
+
+        for route in self.interface.schedule.base_schedule.all_routes:
+            name = f"Route {route.short_name}"
+            description = route.long_name
+            if route.short_name == "rail":
+                value = f"{route.short_name} {route.long_name}"
+            else:
+                value = route.short_name
+            self.add_option(value=value, label=name, description=description)
+
+        self.options.sort(key=lambda x: x.value)
+        self.max_values = len(self.options)
+
+    async def callback(self, interaction: discord.Interaction):
+        return await self.interface.apply_route_filter(interaction, self.values)

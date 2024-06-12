@@ -267,3 +267,6 @@
 - Made it possible to hide arrivals that terminate at the current stop
 - Fixed errors not being sent to the error logs channel when the traceback is very long
 - Fixed the schedule viewer raising an error when loading non-real-time schedules
+
+## v0.8.0 - 12 June 2024
+- Added ability to filter the routes for which to show departures at a given stop

@@ -669,7 +669,8 @@ class Timetables(University, Luas, name="Timetables"):
 
         await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
         try:
-            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now, hide_terminating=not show_terminating)
+            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now,
+                                                                hide_terminating=not show_terminating, user_id=ctx.author.id)
         except Exception:
             # For some reason, without this block, exceptions raised are simply silently ignored, this will forward them to the on_command_error listener.
             raise

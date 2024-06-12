@@ -3,7 +3,7 @@ import pytz
 from utils import database
 
 __all__ = [
-    "real_time_filename", "vehicles_filename", "TIMEZONE", "CHUNK_SIZE", "get_database", "GTFSAPIError"
+    "real_time_filename", "vehicles_filename", "TIMEZONE", "CHUNK_SIZE", "get_database", "get_data_database", "GTFSAPIError"
 ]
 
 
@@ -15,7 +15,13 @@ CHUNK_SIZE = 256
 
 
 def get_database() -> database.Database:
+    """ Returns the database for static GTFS data """
     return database.Database("gtfs/static.db")
+
+
+def get_data_database() -> database.Database:
+    """ Returns the database for general bot data (including Timetables bot's route filter) """
+    return database.Database("database.db")
 
 
 class GTFSAPIError(RuntimeError):

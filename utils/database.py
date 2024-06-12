@@ -324,6 +324,11 @@ tables = [
         Column("uid", "INTEGER", True),   # User ID
         Column("roles", "TEXT", True)     # JSON list of role IDs the user had
     ]),
+    Table("route_filters", "database.db", [  # Route filters for Timetables bot
+        Column("user_id", "INTEGER", True),  # The user for whom to filter departures
+        Column("stop_id", "TEXT", True),     # Stop ID at which to apply the filter
+        Column("routes", "TEXT", True),      # JSON list of routes to filter
+    ], "UNIQUE(user_id, stop_id)"),
 
     # Pretender database
     Table("pretender_blacklist", "pretender.db", [  # Users ignored for message logging
