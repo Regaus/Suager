@@ -310,7 +310,7 @@ class StopScheduleView(views.InteractiveView):
         self.schedule.update_output()
         return await self.message.edit(content=self.schedule.output)
 
-    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Purple, first row
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
         await interaction.response.defer()
@@ -414,6 +414,18 @@ class StopScheduleView(views.InteractiveView):
         await interaction.followup.send(content, ephemeral=True)
         await self.disable_offset_buttons()
 
+    @staticmethod
+    def change_departure_button_text(button: discord.ui.Button, next_lines: int):
+        """ Change the text of the Shrink/Expand departures buttons based on the current state """
+        emoji = {4: "4️⃣", 7: "7️⃣", 10: "🔟"}
+        button.label = f"Show {next_lines} departures"
+        button.emoji = emoji[next_lines]
+
+    def change_move_button_text(self):
+        lines = self.schedule.lines - 1
+        self.move_up_6.label = f"Move up {lines}"
+        self.move_down_6.label = f"Move up {lines}"
+
     @discord.ui.button(label="Move up 1", emoji="🔼", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_up_1(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
@@ -423,6 +435,26 @@ class StopScheduleView(views.InteractiveView):
     async def move_up_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
         return await self.move_indexes(interaction, -(self.schedule.lines - 1))
+
+    @discord.ui.button(label="Show 4 departures", emoji="4️⃣", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def shrink_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Show less departures.
+
+         Behaviour depends on current state:
+         4 departures -> Expand to 7
+         7 departures -> Shrink to 4
+         10 departures -> Shrink to 4 """
+        await interaction.response.defer()
+        if self.schedule.lines == 4:
+            self.schedule.lines = 7
+            self.change_departure_button_text(button, 4)
+        else:
+            self.schedule.lines = 4
+            self.change_departure_button_text(button, 7)
+        self.change_departure_button_text(self.expand_departures, 10)
+        self.change_move_button_text()
+        self.schedule.update_output()
+        await self.message.edit(content=self.schedule.output, view=self)
 
     @discord.ui.button(label="Move offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -446,49 +478,7 @@ class StopScheduleView(views.InteractiveView):
         """ Show 1 departure above the current """
         return await self.move_indexes(interaction, self.schedule.lines - 1)
 
-    @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
-    async def set_offset_button(self, interaction: discord.Interaction, _: discord.ui.Button):
-        """ Set offset to a custom amount provided by the user """
-        return await interaction.response.send_modal(SetOffsetModal(self))
-
-    @discord.ui.button(label="Reset offset", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
-    async def reset_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
-        """ Reset the offset to zero """
-        return await self.set_offset(interaction, 0)
-
-    @staticmethod
-    def change_departure_button_text(button: discord.ui.Button, next_lines: int):
-        """ Change the text of the Shrink/Expand departures buttons based on the current state """
-        emoji = {4: "4️⃣", 7: "7️⃣", 10: "🔟"}
-        button.label = f"Show {next_lines} departures"
-        button.emoji = emoji[next_lines]
-
-    def change_move_button_text(self):
-        lines = self.schedule.lines - 1
-        self.move_up_6.label = f"Move up {lines}"
-        self.move_down_6.label = f"Move up {lines}"
-
-    @discord.ui.button(label="Show 4 departures", emoji="4️⃣", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
-    async def shrink_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Show less departures.
-
-         Behaviour depends on current state:
-         4 departures -> Expand to 7
-         7 departures -> Shrink to 4
-         10 departures -> Shrink to 4 """
-        await interaction.response.defer()
-        if self.schedule.lines == 4:
-            self.schedule.lines = 7
-            self.change_departure_button_text(button, 4)
-        else:
-            self.schedule.lines = 4
-            self.change_departure_button_text(button, 7)
-        self.change_departure_button_text(self.expand_departures, 10)
-        self.change_move_button_text()
-        self.schedule.update_output()
-        await self.message.edit(content=self.schedule.output, view=self)
-
-    @discord.ui.button(label="Show 10 departures", emoji="🔟", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
+    @discord.ui.button(label="Show 10 departures", emoji="🔟", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def expand_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Show more departures.
 
@@ -507,6 +497,16 @@ class StopScheduleView(views.InteractiveView):
         self.change_move_button_text()
         self.schedule.update_output()
         await self.message.edit(content=self.schedule.output, view=self)
+
+    @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
+    async def set_offset_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Set offset to a custom amount provided by the user """
+        return await interaction.response.send_modal(SetOffsetModal(self))
+
+    @discord.ui.button(label="Reset offset", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
+    async def reset_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the offset to zero """
+        return await self.set_offset(interaction, 0)
 
     async def apply_route_filter(self, interaction: discord.Interaction, values: list[str] | None):
         await interaction.response.defer()
@@ -619,7 +619,7 @@ class RouteFilterSelector(SelectMenu):
     interface: StopScheduleView
 
     def __init__(self, interface: StopScheduleView):
-        super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=25, options=[], row=4)
+        super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=25, options=[], row=3)
 
         for route in self.interface.schedule.base_schedule.all_routes:
             name = f"Route {route.short_name}"

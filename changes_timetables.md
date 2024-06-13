@@ -270,3 +270,6 @@
 
 ## v0.8.0 - 12 June 2024
 - Added ability to filter the routes for which to show departures at a given stop
+
+## v0.9.0a1 - 13 June 2024
+- Rearranged the buttons in the schedule view to fit in just three rows (instead of four)
