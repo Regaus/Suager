@@ -149,11 +149,12 @@ class CalendarException:
         return cls(data["service_id"], time.date.from_datetime(data["date"]), data["exception"])
 
     @classmethod
-    def from_sql(cls, service_id: str, db: database.Database = None) -> list[CalendarException]:
+    def from_sql(cls, service_id: str, db: database.Database = None) -> dict[time.date, CalendarException]:
         """ Load all CalendarExceptions from the SQL database for a given service ID """
         if not db:
             db = get_database()
-        return list(map(cls.from_dict, db.fetch("SELECT * FROM calendar_exceptions WHERE service_id=?", (service_id,))))
+        exceptions = list(map(cls.from_dict, db.fetch("SELECT * FROM calendar_exceptions WHERE service_id=?", (service_id,))))
+        return {exc.date: exc for exc in exceptions}
 
     def save_to_sql(self) -> str:
         """ Save the CalendarException to the SQL database """
@@ -362,6 +363,13 @@ class StopTime:
             db = get_database()
         return cls.from_dict(db.fetchrow("SELECT * FROM stop_times WHERE trip_id=? AND stop_id=?", (trip_id, stop_id)))
 
+    @classmethod
+    def from_sql_sequence(cls, trip_id: str, sequence: int, db: database.Database = None) -> StopTime:
+        """ Load a specific StopTime for a given sequence number on a given Trip ID """
+        if not db:
+            db = get_database()
+        return cls.from_dict(db.fetchrow("SELECT * FROM stop_times WHERE trip_id=? AND sequence=?", (trip_id, sequence)))
+
     def save_to_sql(self) -> str:
         """ Save the StopTime into the SQL database """
         return ("INSERT INTO stop_times(trip_id, arrival_time, departure_time, stop_id, sequence, stop_headsign, pickup_type, drop_off_type, timepoint) VALUES "
@@ -564,10 +572,10 @@ def load_calendars(data: GTFSData):
         calendar = Calendar.from_dict(calendar_dict)
         data.calendars[calendar.service_id] = calendar
         exceptions = CalendarException.from_sql(calendar.service_id, db)
-        exceptions_dict = {}
-        for exception in exceptions:
-            exceptions_dict[exception.date] = exception
-        data.calendar_exceptions[calendar.service_id] = exceptions_dict
+        # exceptions_dict = {}
+        # for exception in exceptions:
+        #     exceptions_dict[exception.date] = exception
+        data.calendar_exceptions[calendar.service_id] = exceptions
 
 
 # A map from class type to its key in GTFSData

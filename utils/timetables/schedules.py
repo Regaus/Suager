@@ -171,18 +171,19 @@ class RealStopTime:
                         else:
                             break  # We reached the desired point
 
-                    all_stops = []
-
-                    def load_stops():
-                        return sorted(StopTime.from_sql(self.trip_id), key=lambda st: st.sequence)
+                    # all_stops = []
+                    #
+                    # def load_stops():
+                    #     return sorted(StopTime.from_sql(self.trip_id), key=lambda st: st.sequence)
+                    total_stops = self.trip().total_stops
 
                     # Handle the case where the bus terminates early
                     if self.real_trip.stop_times[-1].schedule_relationship == "SKIPPED":
                         skipped_sequence = self.real_trip.stop_times[-1].stop_sequence
-                        all_stops = load_stops()
-                        last_stop = all_stops[-1].sequence
+                        # all_stops = load_stops()
+                        # last_stop = all_stops[-1].sequence
                         # If the last skipped stop is not the last stop on the route, do nothing.
-                        if skipped_sequence == last_stop:
+                        if skipped_sequence == total_stops:
                             i = len(self.real_trip.stop_times) - 1
                             stop_time_update = self.real_trip.stop_times[i]
                             try:
@@ -196,17 +197,23 @@ class RealStopTime:
                                 else:
                                     sequence = self.real_trip.stop_times[i + 1].stop_sequence - 1
                                 # sequence - 1 because the sequences start from 1.
-                                stop_id = all_stops[sequence - 1].stop_id
+                                if sequence < 1:
+                                    sequence = 1
+                                if sequence > total_stops:
+                                    sequence = total_stops
+                                stop_id = StopTime.from_sql_sequence(self.trip_id, sequence).stop_id
+                                # stop_id = all_stops[sequence - 1].stop_id
                                 # stop_id = self.real_trip.stop_times[i + 1].stop_id
                             except IndexError:
                                 # It has happened before, but I don't fully understand why it does.
                                 pass
                             else:
-                                try:
-                                    destination_stop: Stop = load_value(None, Stop, stop_id)
-                                    self.actual_destination = f"Terminates at {destination_stop.name}, stop {destination_stop.code_or_id}"
-                                except KeyError:
-                                    self.actual_destination = f"Terminates at unknown stop {stop_id}"
+                                if 1 < sequence < total_stops:  # If it terminates at the first stop, something is probably wrong
+                                    try:
+                                        destination_stop: Stop = load_value(None, Stop, stop_id)
+                                        self.actual_destination = f"Terminates at {destination_stop.name}, stop {destination_stop.code_or_id}"
+                                    except KeyError:
+                                        self.actual_destination = f"Terminates at unknown stop {stop_id}"
 
                     # Handle the case where the bus departs later than scheduled
                     if self.real_trip.stop_times[0].schedule_relationship == "SKIPPED":
@@ -223,21 +230,27 @@ class RealStopTime:
                                 stop_time_update = self.real_trip.stop_times[i]
 
                             if stop_time_update.schedule_relationship == "SKIPPED":
-                                sequence = stop_time_update.stop_sequence
+                                sequence = stop_time_update.stop_sequence + 1
                             else:
-                                sequence = self.real_trip.stop_times[i - 1].stop_sequence
-                            if not all_stops:
-                                all_stops = load_stops()
-                            stop_id = all_stops[sequence].stop_id
+                                sequence = self.real_trip.stop_times[i - 1].stop_sequence + 1
+                            if sequence < 1:
+                                sequence = 1
+                            if sequence > total_stops:
+                                sequence = total_stops
+                            # if not all_stops:
+                            #     all_stops = load_stops()
+                            # stop_id = all_stops[sequence].stop_id
+                            stop_id = StopTime.from_sql_sequence(self.trip_id, sequence).stop_id
                         except IndexError:
                             # This shouldn't happen, but if it does, just ignore the departure text
                             pass
                         else:
-                            try:
-                                departure_stop: Stop = load_value(None, Stop, stop_id)
-                                self.actual_start = f"Departs from {departure_stop.name}, stop {departure_stop.code_or_id}"
-                            except KeyError:
-                                self.actual_start = f"Departs from unknown stop {stop_id}"
+                            if 1 < sequence < total_stops:  # If it thinks it's departing from the last stop, something is probably wrong
+                                try:
+                                    departure_stop: Stop = load_value(None, Stop, stop_id)
+                                    self.actual_start = f"Departs from {departure_stop.name}, stop {departure_stop.code_or_id}"
+                                except KeyError:
+                                    self.actual_start = f"Departs from unknown stop {stop_id}"
 
                 else:
                     pass
@@ -468,9 +481,9 @@ class StopSchedule:
                     valid = exception.exception
             else:  # Weird but just in case
                 try:
-                    calendar_exceptions = load_value(self.data, CalendarException, calendar.service_id, db)
+                    exceptions: dict[time.date, CalendarException] = load_value(self.data, CalendarException, calendar.service_id, db)
                     # calendar_exceptions = load_value_from_id(self.data, "calendar_dates.txt", calendar.service_id, db)
-                    exception = calendar_exceptions.get(date)
+                    exception = exceptions.get(date)
                     if exception is not None:
                         valid = exception.exception
                 except KeyError:

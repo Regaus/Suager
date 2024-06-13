@@ -273,3 +273,7 @@
 
 ## v0.9.0a1 - 13 June 2024
 - Rearranged the buttons in the schedule view to fit in just three rows (instead of four)
+
+## v0.9.0a2 - 13 June 2024
+- Improved the way the actual start/end of the trip is (for those that don't go the full way)
+- Improved handling of calendar exceptions
