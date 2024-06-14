@@ -6,6 +6,7 @@ import discord
 from regaus import time
 
 from utils import views, conworlds, emotes, languages
+from utils.general import alphanumeric_sort_string
 from utils.timetables.shared import TIMEZONE, get_data_database
 from utils.timetables.realtime import GTFSRData, VehicleData
 from utils.timetables.static import GTFSData, Stop
@@ -14,6 +15,7 @@ from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSched
 
 __all__ = ["StopScheduleViewer", "StopScheduleView"]
 
+from utils.views import NumericInputModal, SelectMenu
 
 WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
@@ -103,9 +105,10 @@ class StopScheduleViewer:
             self.now = time.datetime.now(tz=TIMEZONE)
             self.today = self.now.date()
 
-    def get_indexes(self) -> tuple[int, int]:
+    def get_indexes(self, custom_lines: int = None) -> tuple[int, int]:
         """ Get the value of start_idx and end_idx for the output """
         start_idx = 0
+        lines = custom_lines or self.lines
         # Set start_idx to the first departure after now
         if self.real_time:
             for idx, stop_time in enumerate(self.real_stop_times):
@@ -119,8 +122,8 @@ class StopScheduleViewer:
                     break
         max_idx = len(self.iterable_stop_times)
         start_idx += self.index_offset
-        start_idx = max(0, min(start_idx, max_idx - self.lines))
-        end_idx = start_idx + self.lines  # We don't need the + 1 here
+        start_idx = max(0, min(start_idx, max_idx - lines))
+        end_idx = start_idx + lines  # We don't need the + 1 here
         end_idx = min(end_idx, max_idx)
         return start_idx, end_idx
 
@@ -535,41 +538,9 @@ class StopScheduleView(views.InteractiveView):
                                                    "If you want to only see certain routes again, use the \"Filter Routes\" select menu to choose which routes you want to see.")
 
 
-class InputModal(discord.ui.Modal):
-    """Modal that prompts users for the page number to change to"""
-    text_input: discord.ui.TextInput[discord.ui.Modal] = discord.ui.TextInput(label="Enter value", style=discord.TextStyle.short, placeholder="0")
+class MoveOffsetModal(NumericInputModal):
+    interface: StopScheduleView
 
-    def __init__(self, interface: StopScheduleView, title: str = "Modal"):
-        super().__init__(title=title, timeout=interface.timeout)
-        self.interface = interface
-        self.minimum = 0  # Override this in subclasses
-        self.maximum = 0  # Override this in subclasses
-
-    async def submit_handler(self, interaction: discord.Interaction, value: int):
-        """ Handle the user input """
-        raise NotImplementedError("This method must be implemented by subclasses")
-
-    # noinspection PyUnresolvedReferences
-    async def on_submit(self, interaction: discord.Interaction):
-        """ This is called when a value is submitted to this modal """
-        try:
-            if not self.text_input.value:
-                raise ValueError("Value was not filled")
-            value = int(self.text_input.value)
-            if value < self.minimum:
-                return await interaction.response.send_message(f"Value must be greater than {self.minimum}.", ephemeral=True)
-            if value > self.maximum:
-                return await interaction.response.send_message(f"Value must be less than {self.maximum}.", ephemeral=True)
-            return await self.submit_handler(interaction, value)
-        except ValueError:
-            if self.text_input.value:
-                content = f"`{self.text_input.value}` could not be converted to a valid number."
-            else:
-                content = f"You need to enter a value."
-            await interaction.response.send_message(content=content, ephemeral=True)
-
-
-class MoveOffsetModal(InputModal):
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, "Move Offset")
         self.schedule = self.interface.schedule
@@ -586,7 +557,9 @@ class MoveOffsetModal(InputModal):
         return await self.interface.move_indexes(interaction, value)
 
 
-class SetOffsetModal(InputModal):
+class SetOffsetModal(NumericInputModal):
+    interface: StopScheduleView
+
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, "Set Offset")
         self.schedule = self.interface.schedule
@@ -601,18 +574,6 @@ class SetOffsetModal(InputModal):
     @override
     async def submit_handler(self, interaction: discord.Interaction, value: int):
         return await self.interface.set_offset(interaction, value)
-
-
-class SelectMenu(discord.ui.Select):
-    def __init__(self, interface: views.InteractiveView, *, placeholder: str = None, min_values: int = 1, max_values: int = 1, options: list[discord.SelectOption] = None, row: int = None):
-        if options is None:
-            options = []
-        super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options, row=row)
-        self.interface = interface
-
-    def reset_options(self):
-        """ Reset the list of options to nothing """
-        self.options = []
 
 
 class RouteFilterSelector(SelectMenu):
@@ -630,7 +591,7 @@ class RouteFilterSelector(SelectMenu):
                 value = route.short_name
             self.add_option(value=value, label=name, description=description)
 
-        self.options.sort(key=lambda x: x.value)
+        self.options.sort(key=lambda x: alphanumeric_sort_string(x.value))
         self.max_values = len(self.options)
 
     async def callback(self, interaction: discord.Interaction):

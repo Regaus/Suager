@@ -277,3 +277,7 @@
 ## v0.9.0a2 - 13 June 2024
 - Improved the way the actual start/end of the trip is (for those that don't go the full way)
 - Improved handling of calendar exceptions
+
+## v0.9.0a3 - 14 June 2024
+- Made the list of routes in the route filter select menu sorted in a more human-friendly way
+- Separated the base class for the numeric input modal and select menu into the general views utility, so that they can be reused by other views if needed

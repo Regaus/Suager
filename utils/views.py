@@ -199,3 +199,49 @@ class GenerateCitizenView(InteractiveView):
         new_embed = await conworlds.generate_citizen_embed(interaction.response, self.language)
         await self.message.edit(embed=new_embed)
         await self.disable_button(self.message, button, cooldown=3)
+
+
+class NumericInputModal(discord.ui.Modal):
+    """ A modal that asks the user to enter a number (e.g. for changing pages) """
+    text_input: discord.ui.TextInput[discord.ui.Modal] = discord.ui.TextInput(label="Enter value", style=discord.TextStyle.short, placeholder="0")
+
+    def __init__(self, interface: InteractiveView, title: str = "Modal"):
+        super().__init__(title=title, timeout=interface.timeout)
+        self.interface = interface
+        self.minimum = 0  # Override this in subclasses
+        self.maximum = 0  # Override this in subclasses
+
+    async def submit_handler(self, interaction: discord.Interaction, value: int):
+        """ Handle the user input """
+        raise NotImplementedError("This method must be implemented by subclasses")
+
+    # noinspection PyUnresolvedReferences
+    async def on_submit(self, interaction: discord.Interaction):
+        """ This is called when a value is submitted to this modal """
+        try:
+            if not self.text_input.value:
+                raise ValueError("Value was not filled")
+            value = int(self.text_input.value)
+            if value < self.minimum:
+                return await interaction.response.send_message(f"Value must be greater than {self.minimum}.", ephemeral=True)
+            if value > self.maximum:
+                return await interaction.response.send_message(f"Value must be less than {self.maximum}.", ephemeral=True)
+            return await self.submit_handler(interaction, value)
+        except ValueError:
+            if self.text_input.value:
+                content = f"`{self.text_input.value}` could not be converted to a valid number."
+            else:
+                content = f"You need to enter a value."
+            await interaction.response.send_message(content=content, ephemeral=True)
+
+
+class SelectMenu(discord.ui.Select):
+    def __init__(self, interface: InteractiveView, *, placeholder: str = None, min_values: int = 1, max_values: int = 1, options: list[discord.SelectOption] = None, row: int = None):
+        if options is None:
+            options = []
+        super().__init__(placeholder=placeholder, min_values=min_values, max_values=max_values, options=options, row=row)
+        self.interface = interface
+
+    def reset_options(self):
+        """ Reset the list of options to nothing """
+        self.options = []
