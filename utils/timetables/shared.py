@@ -3,7 +3,10 @@ import pytz
 from utils import database
 
 __all__ = [
-    "real_time_filename", "vehicles_filename", "TIMEZONE", "CHUNK_SIZE", "get_database", "get_data_database", "GTFSAPIError"
+    "real_time_filename", "vehicles_filename",
+    "TIMEZONE", "CHUNK_SIZE", "WEEKDAYS", "NUMBERS", "WARNING",
+    "get_database", "get_data_database",
+    "GTFSAPIError"
 ]
 
 
@@ -12,6 +15,10 @@ real_time_filename = "data/gtfs/real_time.json"
 vehicles_filename = "data/gtfs/vehicles.json"
 TIMEZONE = pytz.timezone("Europe/Dublin")
 CHUNK_SIZE = 256
+
+WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+NUMBERS = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+WARNING = "⚠️ "
 
 
 def get_database() -> database.Database:

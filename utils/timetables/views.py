@@ -1,292 +1,15 @@
-import asyncio
 import json
 from typing import override
 
 import discord
-from regaus import time
 
-from utils import views, conworlds, emotes, languages
+from utils import views, emotes
 from utils.general import alphanumeric_sort_string
-from utils.timetables.shared import TIMEZONE, get_data_database
-from utils.timetables.realtime import GTFSRData, VehicleData
-from utils.timetables.static import GTFSData, Stop
-from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
-
-
-__all__ = ["StopScheduleViewer", "StopScheduleView"]
-
+from utils.timetables.shared import get_data_database, NUMBERS
+from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer
 from utils.views import NumericInputModal, SelectMenu
 
-WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-
-
-# TODO: Link these to the real_time_data and vehicle_data of the Timetables cog, so that it can be updated properly
-class StopScheduleViewer:
-    """ A loader for stop schedules"""
-    def __init__(self, data: GTFSData, now: time.datetime, real_time: bool, fixed: bool, today: time.date,
-                 stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, lines: int,
-                 base_schedule: StopSchedule, base_stop_times: list[SpecificStopTime],
-                 real_schedule: RealTimeStopSchedule | None, real_stop_times: list[RealStopTime] | None, cog):
-        self.data = data
-        self.now = now
-        self.today = today
-        self.real_time = real_time
-        self.fixed = fixed
-        # self.fixed_time = fixed
-        self.stop = stop
-        self.latitude = stop.latitude
-        self.longitude = stop.longitude
-        self.real_time_data = real_time_data
-        self.vehicle_data = vehicle_data
-        self.lines = lines
-        self.base_schedule = base_schedule
-        self.base_stop_times = base_stop_times
-        self.real_schedule = real_schedule
-        self.real_stop_times = real_stop_times
-        self.cog = cog  # The Timetables cog
-
-        self.truncate_destination = False  # Don't cut off destinations by default
-        self.index_offset = 0
-
-        self.start_idx, self.end_idx = self.get_indexes()
-        self.output = self.create_output()
-
-    @classmethod
-    async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, cog,
-                   now: time.datetime | None = None, lines: int = 7, hide_terminating: bool = True, user_id: int = None):
-        """ Load the data and return a working instance """
-        if now is not None:
-            real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
-            fixed = True
-        else:
-            now = time.datetime.now(tz=TIMEZONE)
-            real_time = True
-            fixed = False
-        today = now.date()
-        event_loop = asyncio.get_event_loop()
-        base_schedule, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedule, data, stop.id, today, hide_terminating, user_id)
-        if real_time:
-            real_schedule, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedule, base_schedule, real_time_data, vehicle_data, base_stop_times)
-        else:
-            real_schedule = real_stop_times = None
-        return cls(data, now, real_time, fixed, today, stop, real_time_data, vehicle_data, lines, base_schedule, base_stop_times, real_schedule, real_stop_times, cog)
-
-    async def reload(self):
-        new_schedule = await self.load(self.data, self.stop, self.real_time_data, self.vehicle_data, self.cog, self.now, self.lines,
-                                       self.base_schedule.hide_terminating, self.base_schedule.route_filter_userid)
-        # These will change in the new_schedule because the "now" parameter is set
-        new_schedule.fixed = self.fixed
-        new_schedule.real_time = self.real_time
-        new_schedule.truncate_destination = self.truncate_destination
-        # new_schedule.index_offset = self.index_offset  # It's probably better to reset this to zero since we have changed the routes that appear here
-        new_schedule.update_output()
-        return new_schedule
-
-    @staticmethod
-    def load_base_schedule(data: GTFSData, stop_id: str, today: time.date, hide_terminating: bool = True, user_id: int = None):
-        """ Load the static StopSchedule """
-        base_schedule = StopSchedule(data, stop_id, hide_terminating=hide_terminating, route_filter_userid=user_id)
-        base_stop_times = base_schedule.relevant_stop_times(today)
-        return base_schedule, base_stop_times
-
-    @staticmethod
-    def load_real_schedule(base_schedule: StopSchedule, real_time_data: GTFSRData, vehicle_data: VehicleData, base_stop_times: list[SpecificStopTime]):
-        """ Load the RealTimeStopSchedule """
-        real_schedule = RealTimeStopSchedule.from_existing_schedule(base_schedule, real_time_data, vehicle_data, base_stop_times)
-        real_stop_times = real_schedule.real_stop_times()
-        return real_schedule, real_stop_times
-
-    async def refresh_real_schedule(self):
-        """ Refresh the RealTimeStopSchedule """
-        event_loop = asyncio.get_event_loop()
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=False, write=False)
-        self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
-        if not self.fixed:  # _time:
-            self.now = time.datetime.now(tz=TIMEZONE)
-            self.today = self.now.date()
-
-    def get_indexes(self, custom_lines: int = None) -> tuple[int, int]:
-        """ Get the value of start_idx and end_idx for the output """
-        start_idx = 0
-        lines = custom_lines or self.lines
-        # Set start_idx to the first departure after now
-        if self.real_time:
-            for idx, stop_time in enumerate(self.real_stop_times):
-                if stop_time.available_departure_time >= self.now:
-                    start_idx = idx
-                    break
-        else:
-            for idx, stop_time in enumerate(self.base_stop_times):
-                if stop_time.departure_time >= self.now:
-                    start_idx = idx
-                    break
-        max_idx = len(self.iterable_stop_times)
-        start_idx += self.index_offset
-        start_idx = max(0, min(start_idx, max_idx - lines))
-        end_idx = start_idx + lines  # We don't need the + 1 here
-        end_idx = min(end_idx, max_idx)
-        return start_idx, end_idx
-
-    @property
-    def iterable_stop_times(self) -> list[RealStopTime] | list[SpecificStopTime]:
-        """ Returns the stop times we can iterate over """
-        return self.real_stop_times if self.real_time else self.base_stop_times
-
-    def create_output(self):
-        """ Create the output from available information and send it to the user """
-        language = languages.Language("en")
-        output_data: list[list[str | None]] = [["Route", "Destination", "Schedule", "RealTime", "Distance", None, None]]
-        column_sizes = [5, 11, 8, 8, 8, 0, 0]  # Longest member of the column
-        extras = False
-        # I don't think this should be there - for fixed schedules, self.now should not change
-        # if not self.fixed:
-        self.start_idx, self.end_idx = self.get_indexes()
-        # iterable_stop_times = self.real_stop_times if self.real_time else self.base_stop_times
-        for stop_time in self.iterable_stop_times[self.start_idx:self.end_idx]:
-            if self.real_time:
-                if stop_time.scheduled_departure_time is not None:
-                    scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
-                    # scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
-                else:
-                    scheduled_departure_time = "--:--"  # "Unknown"
-
-                if stop_time.schedule_relationship == "CANCELED":
-                    real_departure_time = "CANCELLED"
-                elif stop_time.schedule_relationship == "SKIPPED":
-                    real_departure_time = "SKIPPED"
-                elif stop_time.departure_time is not None:
-                    real_departure_time = self.format_time(stop_time.departure_time)
-                    # real_departure_time = stop_time.departure_time.format("%H:%M")  # :%S
-                else:
-                    real_departure_time = "--:--"
-            else:
-                scheduled_departure_time = self.format_time(stop_time.departure_time)
-                # scheduled_departure_time = stop_time.departure_time.format("%H:%M")
-                real_departure_time = ""
-
-            if stop_time.pickup_type == 1:
-                scheduled_departure_time = "D " + scheduled_departure_time
-                extras = True
-            elif stop_time.drop_off_type == 1:
-                scheduled_departure_time = "P " + scheduled_departure_time
-                extras = True
-
-            _route = stop_time.route(self.data)
-            if _route is None:
-                route = "Unknown"
-            else:
-                route = _route.short_name
-
-            destination = stop_time.destination(self.data)
-            # If the bus terminates early or departs later than scheduled, show a warning sign at the destination field
-            if stop_time.actual_destination is not None or stop_time.actual_start is not None:
-                destination = "⚠️ " + destination
-
-            if self.real_time and stop_time.vehicle is not None:
-                distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
-                if distance_km >= 1:  # > 1 km
-                    distance = language.length(distance_km * 1000, precision=2).split(" | ")[0]  # Precision: 0.01km (=10m)
-                else:  # < 1 km
-                    distance = language.length(round(distance_km * 1000, -1), precision=0).split(" | ")[0]  # Round to nearest 10m
-                distance = distance.replace("\u200c", "")  # Remove ZWS
-            elif not self.real_time:
-                distance = ""
-            else:
-                distance = "-"
-
-            actual_destination_line = stop_time.actual_destination or ""
-            actual_start_line = stop_time.actual_start or ""
-
-            output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
-            for i, element in enumerate(output_line):
-                # noinspection PyUnresolvedReferences
-                column_sizes[i] = max(column_sizes[i], len(element))
-
-            output_data.append(output_line)
-
-        data_end = -2  # Last index with data to show
-        if not self.real_time:
-            data_end -= 2  # Hide real-time and distance data for non-real-time schedules
-
-        # Calculate the last line first, in case we need more characters for the destination field
-        line_length = sum(column_sizes[:data_end]) + len(column_sizes) - 1 + data_end
-        cutoff = 0
-        skip = column_sizes[0] + 1
-        if self.truncate_destination:
-            if line_length > 50:
-                cutoff = column_sizes[1] - (line_length - 50)  # Max length of the destination to fit the line
-                line_length = 50
-        else:
-            # If the extra lines are too long, expand the normal lines to fit
-            if any(column_sizes[-2:]):  # Only do this if the lines are actually there
-                max_length = max(column_sizes[-2:]) + skip
-                if max_length > line_length:
-                    new_line_length = min(100, max_length)
-                    column_sizes[1] += new_line_length - line_length
-                    line_length = new_line_length
-                    del new_line_length
-        extra_line_length = line_length - skip
-        spaces = line_length - len(self.stop.name) - 18
-        extra = 0
-        # Add more spaces to destination if there's too few between stop name and current time
-        if spaces < 8:
-            extra = 8 - spaces
-            spaces = 8
-        # Example:   "Ballinacurra Close       23 Oct 2023, 18:00"
-        last_line = f"{self.stop.name}{' ' * spaces}{self.now:%d %b %Y, %H:%M}```"
-        column_sizes[1] += extra  # [1] is destination
-        extra_line_length += extra
-
-        stop_code = f"Code `{self.stop.code}`, " if self.stop.code else ""
-        stop_id = f"ID `{self.stop.id}`"
-        additional_text = ""
-        if extras:
-            additional_text += "*D = Drop-off only; P = Pick-up only*\n"
-        output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
-                 "*Please note that the vehicle locations and distances may not be accurate*\n" \
-                 f"{additional_text}```fix\n"
-
-        for line in output_data:
-            assert len(column_sizes) == len(line)
-            line_data = []
-            for i in range(len(line) + data_end):  # Excluding the "actual_destination" and "actual_start"
-                size = column_sizes[i]
-                line_part = line[i]
-                if i == 1 and cutoff:
-                    size = cutoff
-                    if len(line_part) > cutoff:
-                        line_part = line_part[:cutoff - 1] + "…"  # Truncate destination field if necessary
-                # Left-align route and destination to fixed number of spaces
-                # Right-align the schedule, real-time info, and distance
-                alignment = "<" if i < 2 else ">"
-                line_data.append(f"{line_part:{alignment}{size}}")
-            output += f"{' '.join(line_data)}\n"
-            # If actual_destination and actual_start are not empty, insert them at the line below
-            # These lines will start at the Destination field, and can occupy space up to the end of the line
-            for i in (-2, -1):
-                if line[i]:
-                    length = len(line[i])
-                    if length > extra_line_length:
-                        output += f"{' ' * column_sizes[0]} {line[i][:extra_line_length - 1]}…\n"
-                    else:
-                        output += f"{' ' * column_sizes[0]} {line[i]}\n"
-        output += last_line
-        if len(output) > 2000:
-            output = output[:2000]
-        return output
-
-    def update_output(self):
-        self.output = self.create_output()
-
-    def format_time(self, provided_time: time.datetime):
-        """ Format the provided time, showing when a given trip happens outside the current day """
-        formatted = provided_time.format("%H:%M")
-        # If the date is not the date of the lookup, then append the weekday of the time
-        # If self.now is Tuesday 23:59, then trips at Wednesday 00:00 will be treated as "tomorrow"
-        # If self.now is Wednesday 00:00, then trips at Wednesday 00:00 will be treated as "today"
-        if provided_time.date() != self.today:
-            formatted = f"{WEEKDAYS[provided_time.weekday]} {formatted}"
-        return formatted
+__all__ = ["StopScheduleView", "TripDiagramView"]
 
 
 # noinspection PyUnresolvedReferences
@@ -303,7 +26,10 @@ class StopScheduleView(views.InteractiveView):
             self.remove_item(self.refresh_button)
             self.remove_item(self.freeze_unfreeze_schedule)
 
-        self.add_item(RouteFilterSelector(self))
+        self.route_filter_selector = RouteFilterSelector(self)
+        self.add_item(self.route_filter_selector)
+        self.route_line_selector = RouteLineSelector(self)
+        self.add_item(self.route_line_selector)
 
         self.reset_route_filter.disabled = not self.schedule.base_schedule.route_filter_exists  # Filter enabled -> button enabled
 
@@ -311,6 +37,7 @@ class StopScheduleView(views.InteractiveView):
         """ Refresh the real-time data """
         await self.schedule.refresh_real_schedule()
         self.schedule.update_output()
+        self.route_line_selector.update_options()
         return await self.message.edit(content=self.schedule.output)
 
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
@@ -386,6 +113,7 @@ class StopScheduleView(views.InteractiveView):
             limit_reached = True
         self.schedule.index_offset += indexes
         self.schedule.update_output()
+        self.route_line_selector.update_options()
         await self.message.edit(content=self.schedule.output, view=self)
         word = "down" if indexes > 0 else "up"
         offset = self.schedule.index_offset
@@ -407,6 +135,7 @@ class StopScheduleView(views.InteractiveView):
         # The limit behaviour should not be implemented here - otherwise, the "Reset offset" will break for schedules that are too small (Example: stop 835000014)
         self.schedule.index_offset = offset
         self.schedule.update_output()
+        self.route_line_selector.update_options()
         await self.message.edit(content=self.schedule.output, view=self)
         if offset == 0:
             content = "The offset has been reset to zero."
@@ -527,6 +256,8 @@ class StopScheduleView(views.InteractiveView):
             self.data_db.execute("DELETE FROM route_filters WHERE user_id=? AND stop_id=?", (user_id, stop_id))
             self.reset_route_filter.disabled = True
         self.schedule = await self.schedule.reload()
+        self.route_line_selector.schedule = self.schedule
+        self.route_line_selector.update_options()
         await self.message.edit(content=self.schedule.output, view=self)
         if values is not None:
             return await interaction.followup.send(f"From now on, this stop will only show departures for the following routes: {', '.join(values)}.\n"
@@ -539,6 +270,7 @@ class StopScheduleView(views.InteractiveView):
 
 
 class MoveOffsetModal(NumericInputModal):
+    """ Modal for moving the offset by a certain number """
     interface: StopScheduleView
 
     def __init__(self, interface: StopScheduleView):
@@ -558,6 +290,7 @@ class MoveOffsetModal(NumericInputModal):
 
 
 class SetOffsetModal(NumericInputModal):
+    """ Modal for setting the offset to a certain number """
     interface: StopScheduleView
 
     def __init__(self, interface: StopScheduleView):
@@ -577,6 +310,7 @@ class SetOffsetModal(NumericInputModal):
 
 
 class RouteFilterSelector(SelectMenu):
+    """ Select menu for routes to filter """
     interface: StopScheduleView
 
     def __init__(self, interface: StopScheduleView):
@@ -596,3 +330,181 @@ class RouteFilterSelector(SelectMenu):
 
     async def callback(self, interaction: discord.Interaction):
         return await self.interface.apply_route_filter(interaction, self.values)
+
+
+class RouteLineSelector(SelectMenu):
+    """ Select menu for a trip whose line diagram should be shown """
+    interface: StopScheduleView
+
+    def __init__(self, interface: StopScheduleView):
+        super().__init__(interface, placeholder="See details about trip", min_values=1, max_values=1, options=[], row=4)
+
+        self.schedule = self.interface.schedule
+        self.data = self.schedule.data
+        self.real_time = self.schedule.real_time
+        self.set_options()
+
+    def set_options(self):
+        """ Set options to the currently shown trips """
+        stop_times = self.schedule.iterable_stop_times[slice(*self.schedule.get_indexes(custom_lines=10))]
+        for i, stop_time in enumerate(stop_times, start=1):
+            destination = stop_time.actual_destination or stop_time.destination(self.data)
+            name = f"{self.schedule.format_time(stop_time.available_departure_time)} to {destination}"
+            if stop_time.is_added:
+                value = f"|{stop_time.trip_id}"
+            elif stop_time.real_time:
+                trip_id = stop_time.trip_id
+                real_trip_id = stop_time.real_trip.entity_id
+                value = f"{trip_id}|{real_trip_id}"
+            else:
+                value = f"{stop_time.trip_id}|"
+            value = f"{value}|{stop_time.day_modifier}"
+            self.add_option(value=value, label=name, description=None, emoji=NUMBERS[i])
+
+    def update_options(self):
+        """ Update the list of options """
+        self.reset_options()
+        self.set_options()
+
+    async def callback(self, interaction: discord.Interaction):
+        # noinspection PyUnresolvedReferences
+        await interaction.response.defer()
+        _message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading data about the trip...", wait=True)
+        message = await _message.fetch()
+        viewer = TripDiagramViewer(self.interface, self.values[0])
+        view = TripDiagramView(interaction.user, message, viewer)
+        return await view.update_message()
+
+
+# noinspection PyUnresolvedReferences
+class TripDiagramView(views.InteractiveView):
+    """ A view for displaying the list of all stops in a trip """
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer):
+        super().__init__(sender=sender, message=message, timeout=3600)
+        self.viewer = viewer
+        self._stop = self.viewer.stop
+        self.display_page = self.viewer.current_stop_page
+        self.update_page_labels()
+
+    @property
+    def pages(self) -> list[str]:
+        return self.viewer.output.pages
+
+    @property
+    def page_count(self):
+        return len(self.pages)
+
+    @property
+    def page_size(self) -> int:
+        return self.viewer.output.max_size
+
+    @property
+    def content(self) -> str:
+        if self.pages:
+            return self.pages[self.display_page]
+        return "No data available"
+
+    async def send_initial(self, destination: discord.abc.Messageable):
+        """ Send the initial message """
+        self.message = await destination.send(self.content, view=self)
+        return self.message
+
+    async def update_message(self):
+        """ Update the existing message """
+        self.update_page_labels()
+        self.message = await self.message.edit(content=self.content, view=self)
+        return self.message
+
+    def update_page_labels(self):
+        """ Update the paginator-related button labels to be accurate """
+        self.first_page.label = "1 ⏮️"
+        self.prev_page.label = "◀️"
+        self.curr_page.label = str(self.display_page + 1)
+        self.next_page.label = "▶️"
+        self.last_page.label = f"⏭️ {self.page_count}"
+
+    @discord.ui.button(label="1 ⏮️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    async def first_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to the first page """
+        await interaction.response.defer()
+        self.display_page = 0
+        return await self.update_message()
+
+    @discord.ui.button(label="◀️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def prev_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to the previous page """
+        await interaction.response.defer()
+        if self.display_page <= 0:
+            return await interaction.followup.send(f"{emotes.Deny} You are already on the first page.", ephemeral=True)
+        self.display_page -= 1
+        return await self.update_message()
+
+    @discord.ui.button(label="1", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def curr_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Indicates the current page number, does nothing """
+        await interaction.response.defer()
+        return await self.update_message()
+
+    @discord.ui.button(label="▶️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def next_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to the next page """
+        await interaction.response.defer()
+        if self.display_page >= self.page_count - 1:
+            return await interaction.followup.send(f"{emotes.Deny} You are already on the last page.", ephemeral=True)
+        self.display_page += 1
+        return await self.update_message()
+
+    @discord.ui.button(label="⏭️ 1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    async def last_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to the last page """
+        await interaction.response.defer()
+        self.display_page = self.page_count - 1
+        return await self.update_message()
+
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Refresh the real-time data """
+        await interaction.response.defer()
+        await self.viewer.refresh_real_time_data()
+        self.viewer.update_output()
+        await self.update_message()
+        await self.disable_button(self.message, button, cooldown=30)
+
+    @discord.ui.button(label="Go to page", emoji="➡️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to a user-specified page """
+        return await interaction.response.send_modal(GoToPageModal(self))
+
+    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Hide the view, instead of closing it altogether """
+        await interaction.response.defer()
+        await self.message.edit(view=views.HiddenView(self))
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=1)  # Red, second row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        await interaction.response.defer()
+        await self.message.edit(view=None)
+
+
+class GoToPageModal(NumericInputModal):
+    """ Modal for setting the offset to a certain number """
+    interface: TripDiagramView
+
+    def __init__(self, interface: TripDiagramView):
+        super().__init__(interface, "Go to page")
+        self.minimum = 1
+        self.maximum = self.interface.page_count
+        if self.maximum < self.minimum:
+            self.maximum = self.minimum
+        self.text_input.label = f"Enter page number to go to ({self.minimum} - {self.maximum}):"
+        self.text_input.min_length = 1
+        self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))
+
+    @override
+    async def submit_handler(self, interaction: discord.Interaction, value: int):
+        # noinspection PyUnresolvedReferences
+        await interaction.response.defer()
+        self.interface.display_page = value - 1
+        return await self.interface.update_message()

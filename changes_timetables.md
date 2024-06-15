@@ -281,3 +281,8 @@
 ## v0.9.0a3 - 14 June 2024
 - Made the list of routes in the route filter select menu sorted in a more human-friendly way
 - Separated the base class for the numeric input modal and select menu into the general views utility, so that they can be reused by other views if needed
+
+## v0.9.0 - 14-15 June 2024
+- Added ability to see all the stops for a given trip
+- Slightly changed the way real-time data is stored to be more efficient
+- Made the "shorten destinations" button work even when the name of the stop is extremely long

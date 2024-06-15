@@ -162,7 +162,7 @@ class InteractiveView(View):
     def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage, timeout: int = 300):
         super().__init__(timeout=timeout)
         self.sender = sender
-        if isinstance(message, discord.InteractionMessage):  # Fetch the full Message from the partial InteractionMessage
+        if isinstance(message, (discord.InteractionMessage, discord.WebhookMessage)):  # Fetch the full Message from the partial InteractionMessage
             nest_asyncio.apply()  # https://stackoverflow.com/a/56434301 - Patches asyncio to let the code below run properly
             self.message = asyncio.get_event_loop().run_until_complete(asyncio.create_task(message.fetch()))
         else:
@@ -236,6 +236,8 @@ class NumericInputModal(discord.ui.Modal):
 
 
 class SelectMenu(discord.ui.Select):
+    """ Subclass of Discord's default Select menu that incorporates an interface """
+
     def __init__(self, interface: InteractiveView, *, placeholder: str = None, min_values: int = 1, max_values: int = 1, options: list[discord.SelectOption] = None, row: int = None):
         if options is None:
             options = []

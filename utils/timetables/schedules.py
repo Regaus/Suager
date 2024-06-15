@@ -16,7 +16,7 @@ __all__ = [
 class SpecificStopTime:
     """ A StopTime initialised to a specific date """
 
-    def __init__(self, stop_time: StopTime, date: time.date):
+    def __init__(self, stop_time: StopTime, date: time.date, *, day_modifier: int = 0):
         self.raw_stop_time = stop_time
         self.trip_id = stop_time.trip_id
         # self.trip = stop_time.trip
@@ -31,9 +31,12 @@ class SpecificStopTime:
         self.raw_arrival_time = stop_time.arrival_time
         self.raw_departure_time = stop_time.departure_time
         self._destination: str | None = None
+        self.day_modifier = day_modifier  # To track trips starting on a different day
         # These will never be used here, but are there for parity with the RealStopTime
         self.actual_destination = None
         self.actual_start = None
+        self.is_added = False
+        self.real_time = False
 
         self.date = date
         _date = time.datetime.combine(date, time.time(tz=TIMEZONE))
@@ -56,6 +59,10 @@ class SpecificStopTime:
         destination = self.trip(data).headsign
         self._destination = destination
         return destination
+
+    @property
+    def available_departure_time(self):
+        return self.departure_time
 
     def __repr__(self):
         # "SpecificStopTime - 2023-10-14 02:00:00 - Stop #1 for trip 3626_214"
@@ -86,6 +93,7 @@ class AddedStopTime:
             self.vehicle_id = vehicle.vehicle_id
         else:
             self.vehicle = self.vehicle_id = None
+        self.day_modifier: int = 0
 
     def __repr__(self):
         # "AddedStopTime - 2023-10-14 02:00:00 (Stop D'Olier Street - #1, Trip ID T130)"
@@ -94,6 +102,7 @@ class AddedStopTime:
 
 class RealStopTime:
     """ A SpecificStopTime with real-time information applied """
+    is_added: bool
     stop_time: SpecificStopTime | AddedStopTime
     trip: Trip | None
     trip_id: str
@@ -114,11 +123,14 @@ class RealStopTime:
     _destination: str | None
     vehicle: Vehicle | None
     vehicle_id: str | None
+    day_modifier: int
 
     def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None, vehicles: VehicleData | None):
         self.actual_destination = None
         self.actual_start = None
+        self.day_modifier = stop_time.day_modifier
         if isinstance(stop_time, SpecificStopTime):
+            self.is_added = False
             self.stop_time = stop_time
             self._trip = None
             # self.trip = stop_time.trip
@@ -272,6 +284,7 @@ class RealStopTime:
             else:
                 self.vehicle = self.vehicle_id = None
         elif isinstance(stop_time, AddedStopTime):
+            self.is_added = True
             self.stop_time = stop_time
             self._trip = None
             # self.trip = None
@@ -457,7 +470,7 @@ class StopSchedule:
         self.all_routes = list(self._all_routes.values())
         del self._all_routes
 
-    def relevant_stop_times_one_day(self, date: time.date) -> list[SpecificStopTime]:
+    def relevant_stop_times_one_day(self, date: time.date, *, day_modifier: int = 0) -> list[SpecificStopTime]:
         """ Get the stop times for one day """
         db = get_database()  # This may get called in a separate thread than the one where the schedule was created
         output = []
@@ -505,7 +518,7 @@ class StopSchedule:
 
             # If the service is, indeed, valid today, then add it to the output
             if valid:
-                output.append(SpecificStopTime(self.stop_times[trip.trip_id], date))
+                output.append(SpecificStopTime(self.stop_times[trip.trip_id], date, day_modifier=day_modifier))
 
         # Sort the stop times by departure time and return
         output.sort(key=lambda st: st.departure_time)
@@ -513,9 +526,9 @@ class StopSchedule:
 
     def relevant_stop_times(self, date: time.date) -> list[SpecificStopTime]:
         """ Get the stop times for yesterday, today, and tomorrow """
-        yesterday = self.relevant_stop_times_one_day(date - time.timedelta(days=1))
-        today = self.relevant_stop_times_one_day(date)
-        tomorrow = self.relevant_stop_times_one_day(date + time.timedelta(days=1))
+        yesterday = self.relevant_stop_times_one_day(date - time.timedelta(days=1), day_modifier=-1)
+        today = self.relevant_stop_times_one_day(date, day_modifier=0)
+        tomorrow = self.relevant_stop_times_one_day(date + time.timedelta(days=1), day_modifier=1)
         return yesterday + today + tomorrow
 
     def __repr__(self):
@@ -527,8 +540,8 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
         return {}, {}
     output = {}
     added = {}
-    for entity in real_time_data.entities:
-        trip = entity.trip_update
+    for trip in real_time_data.entities.values():
+        # trip = entity.trip_update
         if trip.trip.trip_id in trip_ids:
             output[trip.trip.trip_id] = trip
 
@@ -536,7 +549,7 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
         if trip.trip.schedule_relationship == "ADDED" and trip.stop_times is not None:
             for stop_time_update in trip.stop_times:
                 if stop_time_update.stop_id == stop_id:
-                    added[entity.id] = trip
+                    added[trip.entity_id] = trip
     return output, added
 
 
