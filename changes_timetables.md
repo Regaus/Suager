@@ -292,3 +292,7 @@
 - The lines on the TripDiagramViewer are now stripped to remove extra spaces on the right side
 - Made the TripDiagramViewer more reliably find new real-time information about the trip
 - Removed the cooldown on offset-related buttons in the StopScheduleView
+
+## v0.9.2 - 16 June 2024
+- The RouteLineSelector will now include the route as the description
+- Fixed the RouteLineSelector options not updating when refreshing the view

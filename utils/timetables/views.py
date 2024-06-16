@@ -38,7 +38,7 @@ class StopScheduleView(views.InteractiveView):
         await self.schedule.refresh_real_schedule()
         self.schedule.update_output()
         self.route_line_selector.update_options()
-        return await self.message.edit(content=self.schedule.output)
+        return await self.message.edit(content=self.schedule.output, view=self)
 
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -359,7 +359,12 @@ class RouteLineSelector(SelectMenu):
             else:
                 value = f"{stop_time.trip_id}|"
             value = f"{value}|{stop_time.day_modifier}"
-            self.add_option(value=value, label=name, description=None, emoji=NUMBERS[i])
+            _route = stop_time.route(self.data)
+            if _route is None:
+                route = "Unknown route"
+            else:
+                route = f"Route {_route.short_name}"
+            self.add_option(value=value, label=name, description=route, emoji=NUMBERS[i])
 
     def update_options(self):
         """ Update the list of options """
