@@ -80,11 +80,15 @@ class View(discord.ui.View):
         """ Called when an error occurs during an interaction with an item """
         language = languages.Language.get(interaction, personal=True)
         component_type = language.data("generic_component_type")
-        if hasattr(item, "label"):
-            if hasattr(item.type, "name"):
-                origin = f"{component_type.get(item.type.name, item.type.name)}: {item.label!r}"  # e.g. Button: Move Offset
+        if hasattr(item, "label") or hasattr(item, "log_label"):
+            if hasattr(item, "log_label"):
+                label = item.log_label
             else:
-                origin = item.label  # I don't see how that would happen, but leave it just in case
+                label = item.label
+            if hasattr(item.type, "name"):
+                origin = f"{component_type.get(item.type.name, item.type.name)}: {label!r}"  # e.g. Button: Move Offset
+            else:
+                origin = label  # I don't see how that would happen, but leave it just in case
         elif getattr(item.type, "name", None) == "select":
             if hasattr(item, "placeholder"):
                 origin = f"{component_type.get('select', 'select')}: {item.placeholder}"  # e.g. Select: Route Filter

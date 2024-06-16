@@ -391,6 +391,13 @@ class TripDiagramView(views.InteractiveView):
         self.display_page = self.viewer.current_stop_page
         self.update_page_labels()
 
+        # Set special names for logging purposes
+        self.first_page.log_label = "First page"
+        self.prev_page.log_label = "Previous page"
+        self.curr_page.log_label = "Current page"
+        self.next_page.log_label = "Next page"
+        self.last_page.log_label = "Last page"
+
     @property
     def pages(self) -> list[str]:
         return self.viewer.output.pages
@@ -422,20 +429,21 @@ class TripDiagramView(views.InteractiveView):
 
     def update_page_labels(self):
         """ Update the paginator-related button labels to be accurate """
-        self.first_page.label = "1 ⏮️"
-        self.prev_page.label = "◀️"
+        # self.first_page.label = "1 ⏮️"
+        # self.prev_page.label = "◀️"
         self.curr_page.label = str(self.display_page + 1)
-        self.next_page.label = "▶️"
-        self.last_page.label = f"⏭️ {self.page_count}"
+        # self.next_page.label = "▶️"
+        # self.last_page.label = f"⏭️ {self.page_count}"
+        self.last_page.label = str(self.page_count)
 
-    @discord.ui.button(label="1 ⏮️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    @discord.ui.button(emoji="⏮️", label="1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def first_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the first page """
         await interaction.response.defer()
         self.display_page = 0
         return await self.update_message()
 
-    @discord.ui.button(label="◀️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def prev_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the previous page """
         await interaction.response.defer()
@@ -450,7 +458,7 @@ class TripDiagramView(views.InteractiveView):
         await interaction.response.defer()
         return await self.update_message()
 
-    @discord.ui.button(label="▶️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def next_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the next page """
         await interaction.response.defer()
@@ -459,7 +467,7 @@ class TripDiagramView(views.InteractiveView):
         self.display_page += 1
         return await self.update_message()
 
-    @discord.ui.button(label="⏭️ 1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    @discord.ui.button(emoji="⏭️", label="1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def last_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the last page """
         await interaction.response.defer()

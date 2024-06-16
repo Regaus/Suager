@@ -296,3 +296,7 @@
 ## v0.9.2 - 16 June 2024
 - The RouteLineSelector will now include the route as the description
 - Fixed the RouteLineSelector options not updating when refreshing the view
+
+## v0.9.3 - 16 June 2024
+- Changed the TripDiagramView paginator buttons to use the emoji fields
+- Added a "log_label" attribute to buttons whose labels are not identifiable (for interaction/error logs)
