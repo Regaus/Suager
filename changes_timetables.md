@@ -286,3 +286,9 @@
 - Added ability to see all the stops for a given trip
 - Slightly changed the way real-time data is stored to be more efficient
 - Made the "shorten destinations" button work even when the name of the stop is extremely long
+
+## v0.9.1 - 16 June 2024
+- The TripDiagramViewer now stores the trip identifier string so that it can be identified in the future
+- The lines on the TripDiagramViewer are now stripped to remove extra spaces on the right side
+- Made the TripDiagramViewer more reliably find new real-time information about the trip
+- Removed the cooldown on offset-related buttons in the StopScheduleView

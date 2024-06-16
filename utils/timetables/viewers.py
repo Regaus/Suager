@@ -25,6 +25,7 @@ def format_time(provided_time: time.datetime, today: time.date) -> str:
 # TODO: Link these to the real_time_data and vehicle_data of the Timetables cog, so that it can be updated properly
 class StopScheduleViewer:
     """ A loader for stop schedules"""
+
     def __init__(self, data: GTFSData, now: time.datetime, real_time: bool, fixed: bool, today: time.date,
                  stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, lines: int,
                  base_schedule: StopSchedule, base_stop_times: list[SpecificStopTime],
@@ -291,6 +292,7 @@ class StopScheduleViewer:
 
 class TripDiagramViewer:
     """ Viewer for a route diagram of an existing trip (called from a select menu in the StopScheduleView) """
+
     def __init__(self, original_view, trip_id: str):
         # I don't think the StopScheduleView and -Viewer should be stored as attrs
         # self.original_view = original_view  # views.StopScheduleView
@@ -306,6 +308,7 @@ class TripDiagramViewer:
 
         self.static_trip: Trip | None = None
         self.real_trip: TripUpdate | None = None
+        self.trip_identifier: str = trip_id
         self.cancelled: bool = False
         _type = 0
         static_trip_id, real_trip_id, _day_modifier = trip_id.split("|")
@@ -328,12 +331,27 @@ class TripDiagramViewer:
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data()  # type: GTFSRData, VehicleData
         if self.real_trip:
             # Find new real-time information about this trip
-            real_trip = self.real_time_data.entities.get(self.real_trip.entity_id, None)
-            if (not real_trip and self.static_trip) or (self.static_trip and real_trip.trip.trip_id != self.static_trip.trip_id):
+            real_trip = None
+            if self.type_name == "added":
+                for entity in self.real_time_data.entities.values():
+                    trip_update = entity.trip
+                    current_trip = self.real_trip.trip
+                    if trip_update.route_id == current_trip.route_id and \
+                            trip_update.start_time == current_trip.start_time and \
+                            trip_update.direction_id == current_trip.direction_id:
+                        real_trip = entity
+                        break
+            else:
                 for entity in self.real_time_data.entities.values():
                     if entity.trip.trip_id == self.static_trip.trip_id:
                         real_trip = entity
                         break
+            # real_trip = self.real_time_data.entities.get(self.real_trip.entity_id, None)
+            # if (not real_trip and self.static_trip) or (self.static_trip and real_trip.trip.trip_id != self.static_trip.trip_id):
+            #     for entity in self.real_time_data.entities.values():
+            #         if entity.trip.trip_id == self.static_trip.trip_id:
+            #             real_trip = entity
+            #             break
             if real_trip:
                 self.real_trip = real_trip
         # if not self.fixed:
@@ -537,7 +555,7 @@ class TripDiagramViewer:
                 line_part = _line[_i]
                 alignment = alignments[_i]
                 line_data.append(f"{line_part:{alignment}{size}}")
-            return " ".join(line_data)
+            return " ".join(line_data).rstrip()
 
         first_line = generate_line(output_data[0])
         output_start = f"All stops for Trip {trip_id} to {destination} ({route}){note}{extra_text}\n```fix\n{first_line}"

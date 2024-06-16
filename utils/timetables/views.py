@@ -92,9 +92,9 @@ class StopScheduleView(views.InteractiveView):
         await self.message.edit(view=None)
         # return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
 
-    async def disable_offset_buttons(self):
-        """ Put all the buttons on cooldown at the same time """
-        await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, self.set_offset_button, self.move_offset, self.reset_offset, cooldown=3)
+    # async def disable_offset_buttons(self):
+    #     """ Put all the buttons on cooldown at the same time """
+    #     await self.disable_buttons_light(self.message, self.move_up_1, self.move_up_6, self.move_down_1, self.move_down_6, self.set_offset_button, self.move_offset, self.reset_offset, cooldown=3)
 
     async def move_indexes(self, interaction: discord.Interaction, indexes: int):
         """ Move the departures by the provided amount of indexes (Wrapper function) """
@@ -127,7 +127,7 @@ class StopScheduleView(views.InteractiveView):
         if limit_reached:
             _limit = " Maximum offset reached."
         await interaction.followup.send(f"Moved the schedule {word} by {abs(indexes)} departure{_s}. Total offset: {offset_explanation}.{_limit}", ephemeral=True)
-        await self.disable_offset_buttons()
+        # await self.disable_offset_buttons()
 
     async def set_offset(self, interaction: discord.Interaction, offset: int):
         """ Set the index offset to a specific value (Wrapper function) """
@@ -144,7 +144,7 @@ class StopScheduleView(views.InteractiveView):
             _s = "s" if abs(offset) != 1 else ""
             content = f"Set the offset to {abs(offset)} departure{_s} {word}."
         await interaction.followup.send(content, ephemeral=True)
-        await self.disable_offset_buttons()
+        # await self.disable_offset_buttons()
 
     @staticmethod
     def change_departure_button_text(button: discord.ui.Button, next_lines: int):
