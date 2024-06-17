@@ -509,7 +509,7 @@ class Conworlds(commands.Cog):
     async def generate_name(self, ctx: commands.Context, language: str = "re_nu"):
         """ Generate a couple random Kargadian names """
         message = await ctx.send(conworlds2.generate_citizen_names(language))
-        view = views.GenerateNamesView(sender=ctx.author, message=message, language=language)
+        view = views.GenerateNamesView(sender=ctx.author, message=message, language=language, ctx=ctx)
         await message.edit(view=view)
         return message
 
@@ -520,7 +520,7 @@ class Conworlds(commands.Cog):
         embed = await conworlds2.generate_citizen_embed(ctx, citizen_language)
 
         message = await ctx.send(embed=embed)
-        view = views.GenerateCitizenView(sender=ctx.author, message=message, language=citizen_language)
+        view = views.GenerateCitizenView(sender=ctx.author, message=message, language=citizen_language, ctx=ctx)
         await message.edit(view=view)
         return message
 

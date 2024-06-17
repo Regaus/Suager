@@ -3,7 +3,7 @@ from typing import override
 
 import discord
 
-from utils import views, emotes
+from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.shared import get_data_database, NUMBERS
 from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer
@@ -15,10 +15,11 @@ __all__ = ["StopScheduleView", "TripDiagramView"]
 # noinspection PyUnresolvedReferences
 class StopScheduleView(views.InteractiveView):
     """ A view for displaying stop schedules for a given stop """
-    def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer):
-        super().__init__(sender=sender, message=message, timeout=3600)
+    def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer, ctx: commands.Context | discord.Interaction = None):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
         self.schedule = schedule
         self.data_db = get_data_database()
+        self.refreshing: bool = False
 
         self.update_freeze_button()
 
@@ -35,15 +36,21 @@ class StopScheduleView(views.InteractiveView):
 
     async def refresh(self):
         """ Refresh the real-time data """
-        await self.schedule.refresh_real_schedule()
-        self.schedule.update_output()
-        self.route_line_selector.update_options()
-        return await self.message.edit(content=self.schedule.output, view=self)
+        self.refreshing = True
+        try:
+            await self.schedule.refresh_real_schedule()
+            self.schedule.update_output()
+            self.route_line_selector.update_options()
+            await self.message.edit(content=self.schedule.output, view=self)
+        finally:
+            self.refreshing = False
 
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
         await interaction.response.defer()
+        if self.refreshing:
+            return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
         await self.disable_button(self.message, button, cooldown=30)
 
@@ -387,9 +394,11 @@ class TripDiagramView(views.InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer):
         super().__init__(sender=sender, message=message, timeout=3600)
         self.viewer = viewer
+        self.command = f"{self.__class__.__name__} {self.viewer.trip_identifier}"
         self._stop = self.viewer.stop
         self.display_page = self.viewer.current_stop_page
         self.update_page_labels()
+        self.refreshing: bool = False
 
         # Set special names for logging purposes
         self.first_page.log_label = "First page"
@@ -478,10 +487,16 @@ class TripDiagramView(views.InteractiveView):
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
         await interaction.response.defer()
-        await self.viewer.refresh_real_time_data()
-        self.viewer.update_output()
-        await self.update_message()
-        await self.disable_button(self.message, button, cooldown=30)
+        if self.refreshing:
+            return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
+        self.refreshing = True
+        try:
+            await self.viewer.refresh_real_time_data()
+            self.viewer.update_output()
+            await self.update_message()
+            await self.disable_button(self.message, button, cooldown=30)
+        finally:
+            self.refreshing = False
 
     @discord.ui.button(label="Go to page", emoji="➡️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
     async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):

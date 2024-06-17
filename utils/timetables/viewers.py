@@ -50,6 +50,7 @@ class StopScheduleViewer:
 
         self.truncate_destination = False  # Don't cut off destinations by default
         self.index_offset = 0
+        self.day_offset = 0  # Offset for date changes (prevents confusion when launching the TripDiagramViewer)
 
         self.start_idx, self.end_idx = self.get_indexes()
         self.output = self.create_output()
@@ -105,8 +106,11 @@ class StopScheduleViewer:
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=False, write=False)
         self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
         if not self.fixed:  # _time:
+            prev_today = self.today
             self.now = time.datetime.now(tz=TIMEZONE)
             self.today = self.now.date()
+            if prev_today != self.today:
+                self.day_offset = (prev_today - self.today).days
 
     def get_indexes(self, custom_lines: int = None) -> tuple[int, int]:
         """ Get the value of start_idx and end_idx for the output """
@@ -299,8 +303,6 @@ class TripDiagramViewer:
         stop_schedule: StopScheduleViewer = original_view.schedule
         self.static_data = stop_schedule.data
         self.stop = stop_schedule.stop
-        self.now = stop_schedule.now
-        self.today = stop_schedule.today
         # self.fixed = stop_schedule.fixed  # Do we even need this here?
         self.real_time_data = stop_schedule.real_time_data
         self.vehicle_data = stop_schedule.vehicle_data  # Not used here right now, but might be useful later.
@@ -322,8 +324,16 @@ class TripDiagramViewer:
             _type += 2
         self.type: int = _type
         self.type_name: str = ("static", "added", "real")[_type - 1]
-        self.timedelta = time.timedelta(days=int(_day_modifier))
-
+        self.timedelta = time.timedelta(days=int(_day_modifier) + stop_schedule.day_offset)
+        if stop_schedule.fixed:
+            self.now = stop_schedule.now
+            self.today = stop_schedule.today
+        else:
+            prev_today = stop_schedule.today
+            self.now = time.datetime.now(tz=TIMEZONE)
+            self.today = self.now.date()
+            if prev_today != self.today:
+                self.timedelta += prev_today - self.today
         self.current_stop_page: int | None = None
         self.output = self.create_output()
 
@@ -355,8 +365,11 @@ class TripDiagramViewer:
             if real_trip:
                 self.real_trip = real_trip
         # if not self.fixed:
+        prev_today = self.today
         self.now = time.datetime.now(tz=TIMEZONE)
         self.today = self.now.date()
+        if prev_today != self.today:
+            self.timedelta += prev_today - self.today
 
     def create_output(self) -> paginators.LinePaginator:
         output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure", "Status"]]
@@ -467,6 +480,14 @@ class TripDiagramViewer:
                     drop_off_only.add(stop_time.sequence - 1)
                 elif stop_time.drop_off_type == 1:
                     pickup_only.add(stop_time.sequence - 1)
+
+        # Fix arrival and departure times: if the next stop is left before the previous one, mark all previous stops as already departed from
+        for idx in range(total_stops - 1, 1, -1):
+            arr_time, dep_time = arrivals[idx], departures[idx]
+            if dep_time < arr_time:
+                arrivals[idx] = arr_time = dep_time
+            if departures[idx - 1] > arr_time or arrivals[idx - 1] > arr_time:
+                arrivals[idx - 1] = departures[idx - 1] = arr_time
 
         fill = len(str(total_stops))
         for idx in range(total_stops):

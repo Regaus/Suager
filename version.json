@@ -8,10 +8,10 @@
   },
   "cobble": {
     "short_version": "1.9",
-    "version": "1.9.5",
+    "version": "1.9.6",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1717607453
+    "last_update": 1718653432
   },
   "kyomi": {
     "short_version": "1.5",
@@ -43,10 +43,10 @@
   },
   "timetables": {
     "short_version": "0.9",
-    "version": "0.9.3",
+    "version": "0.9.4",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1718580832
+    "last_update": 1718653432
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

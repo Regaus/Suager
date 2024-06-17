@@ -680,7 +680,7 @@ class Timetables(University, Luas, name="Timetables"):
             # general.print_error(error_message)
             # logger.log(self.bot.name, "errors", error_message)
             # return
-        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
+        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
 

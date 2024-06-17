@@ -300,3 +300,11 @@
 ## v0.9.3 - 16 June 2024
 - Changed the TripDiagramView paginator buttons to use the emoji fields
 - Added a "log_label" attribute to buttons whose labels are not identifiable (for interaction/error logs)
+
+## v0.9.4 - 17 June 2024
+- Improved the times shown in the TripDiagramViewer: if the bus arrives to the next stop earlier than the previous one, then the previous stop is marked as already departed from
+- Made it possible to track which command spawned a view
+- Made it possible to log buttons and other interactions on views
+- The refresh buttons on StopScheduleView and TripDiagramView now tell the user to be patient if the view is already being refreshed
+- The TripDiagramViewer now updates the time to current time upon loading, unless the original view was fixed
+  - The viewer also handles the changes in the current date (e.g. when the time rolls over midnight)
