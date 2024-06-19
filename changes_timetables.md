@@ -313,3 +313,7 @@
 - Data about non-real-time trips can no longer be refreshed
 - The TripDiagramViewer now properly reflects changes if there is real-time information about a trip that was not available before
 - The `i.placeholder check` command now also shows the values of the debug and write flags
+
+## v0.9.6 - 19 June 2024
+- Replaced the Status field in the TripDiagramViewer with emojis to represent the stop where the vehicle currently is, skipped stops, and cancelled trips
+- Added an indicator to the currently selected stop

@@ -338,7 +338,16 @@ class TripDiagramViewer:
 
         self.shorter_stop_names: bool = False
         self.current_stop_page: int | None = None
+        self.route = self.get_route()
         self.output = self.create_output()
+
+    def get_route(self) -> Route | None:
+        try:
+            if self.static_trip:
+                return self.static_trip.route(self.static_data)
+            return load_value(self.static_data, Route, self.real_trip.trip.route_id)
+        except KeyError:
+            return None
 
     async def refresh_real_time_data(self):
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data()  # type: GTFSRData, VehicleData
@@ -359,12 +368,6 @@ class TripDiagramViewer:
                     if entity.trip.trip_id == self.static_trip.trip_id:
                         real_trip = entity
                         break
-            # real_trip = self.real_time_data.entities.get(self.real_trip.entity_id, None)
-            # if (not real_trip and self.static_trip) or (self.static_trip and real_trip.trip.trip_id != self.static_trip.trip_id):
-            #     for entity in self.real_time_data.entities.values():
-            #         if entity.trip.trip_id == self.static_trip.trip_id:
-            #             real_trip = entity
-            #             break
             if real_trip:
                 self.real_trip = real_trip
                 self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
@@ -376,9 +379,13 @@ class TripDiagramViewer:
             self.timedelta += prev_today - self.today
 
     def create_output(self) -> paginators.LinePaginator:
-        output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure", "Status"]]
-        column_sizes: list[int] = [3, 4, 9, 9, 9, 6]
-        alignments: tuple[str, ...] = ("<", ">", "<", ">", ">", "<")
+        output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure"]]
+        column_sizes: list[int] = [3, 4, 9, 9, 9]
+        alignments: tuple[str, ...] = ("<", ">", "<", ">", ">")
+        if self.shorter_stop_names:
+            output_data[0][3] = "Arr."
+            output_data[0][4] = "Dep."
+            column_sizes[3] = column_sizes[4] = 5
 
         skipped: set[int] = set()
         pickup_only: set[int] = set()
@@ -493,6 +500,7 @@ class TripDiagramViewer:
             if departures[idx - 1] > arr_time or arrivals[idx - 1] > arr_time:
                 arrivals[idx - 1] = departures[idx - 1] = arr_time
 
+        current_stop_marked: bool = False
         fill = len(str(total_stops))
         for idx in range(total_stops):
             seq = f"{idx + 1:0{fill}d})"
@@ -519,17 +527,19 @@ class TripDiagramViewer:
                 _departure = time.datetime().max
 
             if self.cancelled:
-                status = "Cancelled"
+                emoji = "⛔\u2060 "  # Insert a zero-width non-breaking space to even out the string length
             elif idx in skipped:
-                status = "Stop Skipped"
-            elif self.now < _arrival:
-                status = "Not yet arrived"
-            elif self.now < _departure:
-                status = "Arrived"
+                emoji = "⚠️ "
+            elif not current_stop_marked and (self.now < _arrival or self.now < _departure):
+                route_types = {0: "🚈", 1: "🚇", 2: "🚄", 3: "🚌", 4: "🚢", 5: "🚠", 6: "🚟", 7: "🚟", 11: "🚎", 12: "🚝"}
+                emoji = f"{route_types.get(self.route.route_type, '🚌')}\u2060 "
+                current_stop_marked = True
+            elif self.stop.id == stop.id:
+                emoji = "➡️ "
             else:
-                status = "Departed"
+                emoji = ""
 
-            output_line = [seq, code, name, arrival, departure, status]
+            output_line = [seq, code, emoji + name, arrival, departure]
             for i, element in enumerate(output_line):
                 column_sizes[i] = max(column_sizes[i], len(element))
 
@@ -552,15 +562,13 @@ class TripDiagramViewer:
         if self.static_trip:
             trip_id = self.static_trip.trip_id
             destination = self.static_trip.headsign
-            _route: Route = self.static_trip.route(self.static_data)
-            route = f"Route {_route.short_name}"
+            route = f"Route {self.route.short_name}"
         else:
             trip_id = self.real_trip.entity_id
             destination = stops[-1].name
-            try:
-                _route: Route = load_value(self.static_data, Route, self.real_trip.trip.route_id)
-                route = f"Route {_route.short_name}"
-            except KeyError:
+            if self.route:
+                route = f"Route {self.route.short_name}"
+            else:
                 route = "Unknown route"
 
         line_length = sum(column_sizes) + len(column_sizes) - 1
