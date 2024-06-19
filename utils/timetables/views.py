@@ -407,6 +407,9 @@ class TripDiagramView(views.InteractiveView):
         self.next_page.log_label = "Next page"
         self.last_page.log_label = "Last page"
 
+        if not self.viewer.is_real_time:
+            self.remove_item(self.refresh_button)
+
     @property
     def pages(self) -> list[str]:
         return self.viewer.output.pages

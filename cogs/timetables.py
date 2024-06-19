@@ -517,7 +517,7 @@ class Timetables(University, Luas, name="Timetables"):
     @placeholder.command(name="check")
     async def check_error(self, ctx: commands.Context):
         """ Check error status """
-        flags_status = f"{self.initialised=}\n{self.updating=}"
+        flags_status = f"{self._DEBUG=}\n{self._WRITE=}\n{self.initialised=}\n{self.updating=}"
         if self.loader_error is None:
             return await ctx.send(f"{flags_status}\n{self.loader_error=}")
         error = general.traceback_maker(self.loader_error)

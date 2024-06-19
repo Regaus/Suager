@@ -307,23 +307,24 @@ class TripDiagramViewer:
         self.real_time_data = stop_schedule.real_time_data
         self.vehicle_data = stop_schedule.vehicle_data  # Not used here right now, but might be useful later.
         self.cog = stop_schedule.cog
+        self.is_real_time = stop_schedule.real_time
 
         self.static_trip: Trip | None = None
         self.real_trip: TripUpdate | None = None
         self.trip_identifier: str = trip_id
         self.cancelled: bool = False
-        _type = 0
+        # _type = 0
         static_trip_id, real_trip_id, _day_modifier = trip_id.split("|")
         if static_trip_id:
             self.static_trip: Trip = load_value(self.static_data, Trip, static_trip_id)
-            _type += 1
+            # _type += 1
         if real_trip_id:
             self.real_trip: TripUpdate = self.real_time_data.entities[real_trip_id]
-            if self.real_trip.trip.schedule_relationship == "CANCELED":
-                self.cancelled = True
-            _type += 2
-        self.type: int = _type
-        self.type_name: str = ("static", "added", "real")[_type - 1]
+            self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
+            # _type += 2
+        # self.type: int = _type
+        # self.type_name: str = ("static", "added", "real")[_type - 1]
+
         self.timedelta = time.timedelta(days=int(_day_modifier) + stop_schedule.day_offset)
         if stop_schedule.fixed:
             self.now = stop_schedule.now
@@ -334,15 +335,17 @@ class TripDiagramViewer:
             self.today = self.now.date()
             if prev_today != self.today:
                 self.timedelta += prev_today - self.today
+
+        self.shorter_stop_names: bool = False
         self.current_stop_page: int | None = None
         self.output = self.create_output()
 
     async def refresh_real_time_data(self):
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data()  # type: GTFSRData, VehicleData
-        if self.real_trip:
+        if self.real_trip or self.is_real_time:
             # Find new real-time information about this trip
             real_trip = None
-            if self.type_name == "added":
+            if not self.static_trip:  # Added trip
                 for entity in self.real_time_data.entities.values():
                     trip_update = entity.trip
                     current_trip = self.real_trip.trip
@@ -364,6 +367,7 @@ class TripDiagramViewer:
             #             break
             if real_trip:
                 self.real_trip = real_trip
+                self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
         # if not self.fixed:
         prev_today = self.today
         self.now = time.datetime.now(tz=TIMEZONE)
@@ -533,9 +537,9 @@ class TripDiagramViewer:
 
         if self.cancelled:
             note = f"\n{WARNING}Note: This trip was cancelled."
-        elif self.type_name == "added":
+        elif self.real_trip and not self.static_trip:  # Added trip
             note = f"\n{WARNING}Note: This trip was not scheduled."
-        elif self.type_name == "static":
+        elif self.static_trip and not self.real_trip:  # Static trip
             note = "\nNote: This trip has no real-time information."
         else:
             note = ""

@@ -308,3 +308,8 @@
 - The refresh buttons on StopScheduleView and TripDiagramView now tell the user to be patient if the view is already being refreshed
 - The TripDiagramViewer now updates the time to current time upon loading, unless the original view was fixed
   - The viewer also handles the changes in the current date (e.g. when the time rolls over midnight)
+
+## v0.9.5 - 19 June 2024
+- Data about non-real-time trips can no longer be refreshed
+- The TripDiagramViewer now properly reflects changes if there is real-time information about a trip that was not available before
+- The `i.placeholder check` command now also shows the values of the debug and write flags
