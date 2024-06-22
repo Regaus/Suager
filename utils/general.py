@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import traceback
 from io import BytesIO
 from sys import stderr
+from typing import Iterable
 
 import discord
 
@@ -68,6 +70,20 @@ def reason(who, why=None) -> str:
     if why is None:
         return f"[{who}] No reason specified"
     return f"[{who}] {why}"
+
+
+def alphanumeric_sort(iterable: Iterable[str]) -> Iterable[str]:
+    """ Sort a list of alphanumeric strings in a human-friendly way """
+    return sorted(iterable, key=alphanumeric_sort_string)
+
+
+def alphanumeric_sort_string(entry: str) -> tuple[str | int, ...]:
+    """ Sort numbers and the rest of the text in a human-friendly way """
+    def convert(text: str) -> int | str:
+        return int(text) if text.isdigit() else text
+
+    # The output is surrounded by an empty string on both sides, but at least it works.
+    return tuple(convert(part) for part in re.split(r"([0-9]+)", entry))
 
 
 async def pretty_results(ctx, filename: str = "Results", result: str = "Here are the results:", loop=None):

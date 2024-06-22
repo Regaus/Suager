@@ -517,7 +517,7 @@ class Timetables(University, Luas, name="Timetables"):
     @placeholder.command(name="check")
     async def check_error(self, ctx: commands.Context):
         """ Check error status """
-        flags_status = f"{self.initialised=}\n{self.updating=}"
+        flags_status = f"{self._DEBUG=}\n{self._WRITE=}\n{self.initialised=}\n{self.updating=}"
         if self.loader_error is None:
             return await ctx.send(f"{flags_status}\n{self.loader_error=}")
         error = general.traceback_maker(self.loader_error)
@@ -680,7 +680,7 @@ class Timetables(University, Luas, name="Timetables"):
             # general.print_error(error_message)
             # logger.log(self.bot.name, "errors", error_message)
             # return
-        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule))
+        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
 

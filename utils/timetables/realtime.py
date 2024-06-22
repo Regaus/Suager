@@ -9,7 +9,7 @@ from utils.timetables.shared import GTFSAPIError, TIMEZONE
 
 __all__ = [
     "load_gtfs_r_data", "GTFSRData", "VehicleData",
-    "Header", "Entity", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle"
+    "Header", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle"
 ]
 
 
@@ -27,7 +27,7 @@ def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFS
 @dataclass()
 class GTFSRData:
     header: Header
-    entities: list[Entity]
+    entities: dict[str, TripUpdate]  # real_trip_id -> TripUpdate
 
     @classmethod
     def load(cls, data: dict | None):
@@ -39,7 +39,11 @@ class GTFSRData:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "real-time")
         if "entity" not in data:
             return None
-        return cls(Header.load(data["header"]), [Entity.load(e) for e in data["entity"]])
+        trip_updates: dict[str, TripUpdate] = {}
+        for entity in data["entity"]:
+            trip_update = TripUpdate.load(entity)
+            trip_updates[trip_update.entity_id] = trip_update
+        return cls(Header.load(data["header"]), trip_updates)
 
 
 @dataclass()
@@ -56,7 +60,7 @@ class VehicleData:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "vehicles")
         if "entity" not in data:
             return None
-        vehicles = {}
+        vehicles: dict[str, Vehicle] = {}
         for entity in data["entity"]:
             vehicle = Vehicle.load(entity)
             vehicles[vehicle.vehicle_id] = vehicle
@@ -75,34 +79,21 @@ class Header:
 
 
 @dataclass()
-class Entity:
-    id: str
-    # is_deleted: bool
-    trip_update: TripUpdate
-
-    # def __post_init__(self):
-    #     print(f"Entity {self.id} initialised")
-
-    @classmethod
-    def load(cls, data: dict):
-        # is_deleted was data["IsDeleted"]
-        return cls(data["id"], TripUpdate.load(data["trip_update"]))
-
-
-@dataclass()
 class TripUpdate:
+    entity_id: str
     trip: RealTimeTrip
     stop_times: list[StopTimeUpdate] | None
     vehicle_id: str | None
 
     @classmethod
     def load(cls, data: dict):
-        stop_times = [StopTimeUpdate.load(i) for i in data["stop_time_update"]] if "stop_time_update" in data else None
-        if "vehicle" in data:
-            vehicle_id = data["vehicle"]["id"]
+        trip_data = data["trip_update"]
+        stop_times = [StopTimeUpdate.load(i) for i in trip_data["stop_time_update"]] if "stop_time_update" in trip_data else None
+        if "vehicle" in trip_data:
+            vehicle_id = trip_data["vehicle"]["id"]
         else:
             vehicle_id = None
-        return cls(RealTimeTrip.load(data["trip"]), stop_times, vehicle_id)
+        return cls(data["id"], RealTimeTrip.load(trip_data["trip"]), stop_times, vehicle_id)
 
 
 @dataclass()
@@ -119,8 +110,6 @@ class RealTimeTrip:
         _date: str = data["start_date"]
         h, m, s = _time.split(":")
         y, mo, d = _date[0:4], _date[4:6], _date[6:8]
-        # This might have to be in Europe/Dublin timezone, but we'll ignore that for now
-        # TODO: See what happens in March when daylight savings kick back in
         start_time = time.datetime(int(y), int(mo), int(d), int(h) % 24, int(m), int(s), tz=TIMEZONE)
         if int(h) >= 24:
             start_time += time.timedelta(days=1)

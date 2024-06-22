@@ -270,3 +270,55 @@
 
 ## v0.8.0 - 12 June 2024
 - Added ability to filter the routes for which to show departures at a given stop
+
+## v0.9.0a1 - 13 June 2024
+- Rearranged the buttons in the schedule view to fit in just three rows (instead of four)
+
+## v0.9.0a2 - 13 June 2024
+- Improved the way the actual start/end of the trip is (for those that don't go the full way)
+- Improved handling of calendar exceptions
+
+## v0.9.0a3 - 14 June 2024
+- Made the list of routes in the route filter select menu sorted in a more human-friendly way
+- Separated the base class for the numeric input modal and select menu into the general views utility, so that they can be reused by other views if needed
+
+## v0.9.0 - 14-15 June 2024
+- Added ability to see all the stops for a given trip
+- Slightly changed the way real-time data is stored to be more efficient
+- Made the "shorten destinations" button work even when the name of the stop is extremely long
+
+## v0.9.1 - 16 June 2024
+- The TripDiagramViewer now stores the trip identifier string so that it can be identified in the future
+- The lines on the TripDiagramViewer are now stripped to remove extra spaces on the right side
+- Made the TripDiagramViewer more reliably find new real-time information about the trip
+- Removed the cooldown on offset-related buttons in the StopScheduleView
+
+## v0.9.2 - 16 June 2024
+- The RouteLineSelector will now include the route as the description
+- Fixed the RouteLineSelector options not updating when refreshing the view
+
+## v0.9.3 - 16 June 2024
+- Changed the TripDiagramView paginator buttons to use the emoji fields
+- Added a "log_label" attribute to buttons whose labels are not identifiable (for interaction/error logs)
+
+## v0.9.4 - 17 June 2024
+- Improved the times shown in the TripDiagramViewer: if the bus arrives to the next stop earlier than the previous one, then the previous stop is marked as already departed from
+- Made it possible to track which command spawned a view
+- Made it possible to log buttons and other interactions on views
+- The refresh buttons on StopScheduleView and TripDiagramView now tell the user to be patient if the view is already being refreshed
+- The TripDiagramViewer now updates the time to current time upon loading, unless the original view was fixed
+  - The viewer also handles the changes in the current date (e.g. when the time rolls over midnight)
+
+## v0.9.5 - 19 June 2024
+- Data about non-real-time trips can no longer be refreshed
+- The TripDiagramViewer now properly reflects changes if there is real-time information about a trip that was not available before
+- The `i.placeholder check` command now also shows the values of the debug and write flags
+
+## v0.9.6 - 19 June 2024
+- Replaced the Status field in the TripDiagramViewer with emojis to represent the stop where the vehicle currently is, skipped stops, and cancelled trips
+- Added an indicator to the currently selected stop
+
+## v0.9.7 - 20-22 June 2024
+- Added more compact view options for the TripDiagramViewer
+- Better handling of skipped stops and cancelled trips on the StopScheduleViewer
+- Added a compact view mode for the StopScheduleViewer
