@@ -71,18 +71,21 @@ class StopScheduleView(views.InteractiveView):
         self.update_freeze_button()
         return await self.message.edit(content=self.schedule.output, view=self)
 
+    def update_compact_mode_button(self):
+        labels = {  # Current state number -> next state
+            0: "Shorten destinations",
+            1: "Compact mode",
+            2: "Show full destinations"
+        }
+        self.mobile_desktop_view.label = labels[self.schedule.compact_mode]
+
     @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
-    async def mobile_desktop_view(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def mobile_desktop_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Toggle cutting off destination text to make sure that it fits on a mobile screen """
         await interaction.response.defer()
-        self.schedule.truncate_destination ^= True
+        self.schedule.compact_mode = (self.schedule.compact_mode + 1) % 3
         self.schedule.update_output()
-        if self.schedule.truncate_destination:
-            button.label = "Show full destinations"
-            # button.emoji = "➡️"  # If I ever decide to add an emoji to this button
-        else:
-            button.label = "Shorten destinations"
-            # button.emoji = "⬅️"
+        self.update_compact_mode_button()
         return await self.message.edit(content=self.schedule.output, view=self)
 
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
@@ -398,6 +401,7 @@ class TripDiagramView(views.InteractiveView):
         self._stop = self.viewer.stop
         self.display_page = self.viewer.current_stop_page
         self.update_page_labels()
+        self.update_compact_mode_button()
         self.refreshing: bool = False
 
         # Set special names for logging purposes
@@ -435,6 +439,8 @@ class TripDiagramView(views.InteractiveView):
 
     async def update_message(self):
         """ Update the existing message """
+        if self.display_page >= self.page_count:
+            self.display_page = self.page_count - 1
         self.update_page_labels()
         self.message = await self.message.edit(content=self.content, view=self)
         return self.message
@@ -505,6 +511,23 @@ class TripDiagramView(views.InteractiveView):
     async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to a user-specified page """
         return await interaction.response.send_modal(GoToPageModal(self))
+
+    def update_compact_mode_button(self):
+        labels = {  # Current state number -> next state
+            0: "Shorten stop names",
+            1: "Compact mode",
+            2: "Show full names"
+        }
+        self.shorten_stop_names.label = labels[self.viewer.compact_mode]
+
+    @discord.ui.button(label="Shorten stop names", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def shorten_stop_names(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Toggle showing shorter or full stop names """
+        await interaction.response.defer()
+        self.viewer.compact_mode = (self.viewer.compact_mode + 1) % 3  # rotate between 0, 1, 2
+        self.viewer.update_output()
+        self.update_compact_mode_button()
+        return await self.update_message()
 
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):

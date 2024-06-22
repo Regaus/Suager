@@ -5,7 +5,7 @@ from regaus import time
 from utils import conworlds, languages, paginators
 from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
 from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
-from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING
+from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
 
 __all__ = ["StopScheduleViewer", "TripDiagramViewer"]
@@ -48,7 +48,7 @@ class StopScheduleViewer:
         self.real_stop_times = real_stop_times
         self.cog = cog  # The Timetables cog
 
-        self.truncate_destination = False  # Don't cut off destinations by default
+        self.compact_mode: int = 0  # Don't cut off destinations by default
         self.index_offset = 0
         self.day_offset = 0  # Offset for date changes (prevents confusion when launching the TripDiagramViewer)
 
@@ -81,7 +81,7 @@ class StopScheduleViewer:
         # These will change in the new_schedule because the "now" parameter is set
         new_schedule.fixed = self.fixed
         new_schedule.real_time = self.real_time
-        new_schedule.truncate_destination = self.truncate_destination
+        new_schedule.compact_mode = self.compact_mode
         # new_schedule.index_offset = self.index_offset  # It's probably better to reset this to zero since we have changed the routes that appear here
         new_schedule.update_output()
         return new_schedule
@@ -144,39 +144,69 @@ class StopScheduleViewer:
         language = languages.Language("en")
         output_data: list[list[str | None]] = [["Route", "Destination", "Schedule", "RealTime", "Distance", None, None]]
         column_sizes = [5, 11, 8, 8, 8, 0, 0]  # Longest member of the column
+        if self.compact_mode == 2:
+            output_data[0][3] = "Departure"
+            column_sizes[3] = 9
+            for idx in (4, 2):
+                output_data[0].pop(idx)
+                column_sizes.pop(idx)
         extras = False
         # I don't think this should be there - for fixed schedules, self.now should not change
         # if not self.fixed:
         self.start_idx, self.end_idx = self.get_indexes()
         # iterable_stop_times = self.real_stop_times if self.real_time else self.base_stop_times
-        for stop_time in self.iterable_stop_times[self.start_idx:self.end_idx]:
-            if self.real_time:
-                if stop_time.scheduled_departure_time is not None:
-                    scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
-                    # scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
-                else:
-                    scheduled_departure_time = "--:--"  # "Unknown"
 
-                if stop_time.schedule_relationship == "CANCELED":
-                    real_departure_time = "CANCELLED"
-                elif stop_time.schedule_relationship == "SKIPPED":
-                    real_departure_time = "SKIPPED"
-                elif stop_time.departure_time is not None:
-                    real_departure_time = self.format_time(stop_time.departure_time)
-                    # real_departure_time = stop_time.departure_time.format("%H:%M")  # :%S
-                else:
-                    real_departure_time = "--:--"
+        # This is used in the for loop below
+        def add_letter(ltr: str):
+            if self.compact_mode == 2:
+                nonlocal departure_time
+                departure_time = ltr + departure_time
             else:
-                scheduled_departure_time = self.format_time(stop_time.departure_time)
-                # scheduled_departure_time = stop_time.departure_time.format("%H:%M")
-                real_departure_time = ""
+                nonlocal scheduled_departure_time
+                scheduled_departure_time = ltr + scheduled_departure_time
+            nonlocal extras
+            extras = True
+
+        for stop_time in self.iterable_stop_times[self.start_idx:self.end_idx]:
+            cancelled = skipped = False
+            departure_time = scheduled_departure_time = real_departure_time = ""
+            if self.compact_mode == 2:
+                if stop_time.schedule_relationship == "CANCELED":
+                    cancelled = True
+                    departure_time = "CANCELLED"
+                elif stop_time.schedule_relationship == "SKIPPED":
+                    skipped = True
+                    departure_time = "SKIPPED"
+                else:
+                    departure_time = self.format_time(stop_time.available_departure_time)
+            else:
+                if self.real_time:
+                    if stop_time.scheduled_departure_time is not None:
+                        scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
+                        # scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
+                    else:
+                        scheduled_departure_time = "--:--"  # "Unknown"
+
+                    if stop_time.schedule_relationship == "CANCELED":
+                        real_departure_time = "CANCELLED"
+                        cancelled = True
+                    elif stop_time.schedule_relationship == "SKIPPED":
+                        real_departure_time = "SKIPPED"
+                        skipped = True
+                    elif stop_time.departure_time is not None:
+                        real_departure_time = self.format_time(stop_time.departure_time)
+                        # real_departure_time = stop_time.departure_time.format("%H:%M")  # :%S
+                    else:
+                        real_departure_time = "--:--"
+                else:
+                    scheduled_departure_time = self.format_time(stop_time.departure_time)
+                    # scheduled_departure_time = stop_time.departure_time.format("%H:%M")
+                    real_departure_time = ""
 
             if stop_time.pickup_type == 1:
-                scheduled_departure_time = "D " + scheduled_departure_time
-                extras = True
+                add_letter("D ")
             elif stop_time.drop_off_type == 1:
-                scheduled_departure_time = "P " + scheduled_departure_time
-                extras = True
+                add_letter("P ")
 
             _route = stop_time.route(self.data)
             if _route is None:
@@ -186,10 +216,12 @@ class StopScheduleViewer:
 
             destination = stop_time.destination(self.data)
             # If the bus terminates early or departs later than scheduled, show a warning sign at the destination field
-            if stop_time.actual_destination is not None or stop_time.actual_start is not None:
+            if stop_time.actual_destination is not None or stop_time.actual_start is not None or skipped:
                 destination = WARNING + destination
+            if cancelled:
+                destination = CANCELLED + destination
 
-            if self.real_time and stop_time.vehicle is not None:
+            if self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:  # "Compact mode" does not show vehicle distance
                 distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
                 if distance_km >= 1:  # > 1 km
                     distance = language.length(distance_km * 1000, precision=2).split(" | ")[0]  # Precision: 0.01km (=10m)
@@ -204,7 +236,10 @@ class StopScheduleViewer:
             actual_destination_line = stop_time.actual_destination or ""
             actual_start_line = stop_time.actual_start or ""
 
-            output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
+            if self.compact_mode == 2:
+                output_line = [route, destination, departure_time, actual_destination_line, actual_start_line]
+            else:
+                output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
             for i, element in enumerate(output_line):
                 # noinspection PyUnresolvedReferences
                 column_sizes[i] = max(column_sizes[i], len(element))
@@ -219,10 +254,15 @@ class StopScheduleViewer:
         line_length = sum(column_sizes[:data_end]) + len(column_sizes) - 1 + data_end
         cutoff = 0
         skip = column_sizes[0] + 1
-        if self.truncate_destination:
-            if line_length > 50:
-                cutoff = column_sizes[1] - (line_length - 50)  # Max length of the destination to fit the line
-                line_length = 50
+        line_length_limit = None
+        if self.compact_mode:  # >= 1
+            if self.compact_mode == 1:
+                line_length_limit = 50
+            else:
+                line_length_limit = 36
+            if line_length > line_length_limit:
+                cutoff = column_sizes[1] - (line_length - line_length_limit)  # Max length of the destination to fit the line
+                line_length = line_length_limit
         else:
             # If the extra lines are too long, expand the normal lines to fit
             if any(column_sizes[-2:]):  # Only do this if the lines are actually there
@@ -236,12 +276,14 @@ class StopScheduleViewer:
         spaces = line_length - len(self.stop.name) - 18
         extra = 0
         # Add more spaces to destination if there's too few between stop name and current time
-        if spaces < 8:
-            extra = 8 - spaces
-            spaces = 8
-        if self.truncate_destination and (line_length + extra) > 50:
-            extra = 50 - line_length
-            last_line = f"{self.stop.name[:23]}…{' ' * spaces}{self.now:%d %b %Y, %H:%M}```"
+        spaces_requirement = 4 if self.compact_mode else 8
+        if spaces < spaces_requirement:
+            extra = spaces_requirement - spaces
+            spaces = spaces_requirement
+        if self.compact_mode and (line_length + extra) > line_length_limit:
+            extra = line_length_limit - line_length
+            # 23 chars: 18 for time + 4 spaces + 1 for ellipsis
+            last_line = f"{self.stop.name[:line_length_limit - 23]}…{' ' * spaces}{self.now:%d %b %Y, %H:%M}```"
         else:
             # Example:   "Ballinacurra Close       23 Oct 2023, 18:00"
             last_line = f"{self.stop.name}{' ' * spaces}{self.now:%d %b %Y, %H:%M}```"
@@ -336,7 +378,7 @@ class TripDiagramViewer:
             if prev_today != self.today:
                 self.timedelta += prev_today - self.today
 
-        self.shorter_stop_names: bool = False
+        self.compact_mode: int = stop_schedule.compact_mode  # 0 -> disabled | 1 -> shorter stop names | 2 -> mobile-friendly mode
         self.current_stop_page: int | None = None
         self.route = self.get_route()
         self.output = self.create_output()
@@ -381,11 +423,19 @@ class TripDiagramViewer:
     def create_output(self) -> paginators.LinePaginator:
         output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure"]]
         column_sizes: list[int] = [3, 4, 9, 9, 9]
-        alignments: tuple[str, ...] = ("<", ">", "<", ">", ">")
-        if self.shorter_stop_names:
-            output_data[0][3] = "Arr."
-            output_data[0][4] = "Dep."
+        alignments: list[str] = ["<", ">", "<", ">", ">"]
+        stop_name_idx = 2
+        if self.compact_mode:  # >= 1
+            output_data[0][3] = "Arr"
+            output_data[0][4] = "Dep"
             column_sizes[3] = column_sizes[4] = 5
+        if self.compact_mode == 2:
+            # Remove the arrival time (3) and the stop code (1)
+            for idx in (3, 1):
+                output_data[0].pop(idx)
+                column_sizes.pop(idx)
+                alignments.pop(idx)
+            stop_name_idx = 1
 
         skipped: set[int] = set()
         pickup_only: set[int] = set()
@@ -500,6 +550,15 @@ class TripDiagramViewer:
             if departures[idx - 1] > arr_time or arrivals[idx - 1] > arr_time:
                 arrivals[idx - 1] = departures[idx - 1] = arr_time
 
+        # This is used in the for loop below
+        def add_letter(ltr: str):
+            if self.compact_mode == 2:
+                nonlocal departure
+                departure = ltr + departure
+            else:
+                nonlocal arrival
+                arrival = ltr + arrival
+
         current_stop_marked: bool = False
         fill = len(str(total_stops))
         for idx in range(total_stops):
@@ -514,10 +573,6 @@ class TripDiagramViewer:
             else:
                 arrival = "  N/A"
                 _arrival = time.datetime().min
-            if idx in pickup_only:
-                arrival = "P " + arrival
-            elif idx in drop_off_only:
-                arrival = "D " + arrival
 
             _departure = departures[idx]
             if _departure is not None:
@@ -526,10 +581,16 @@ class TripDiagramViewer:
                 departure = "  N/A"
                 _departure = time.datetime().max
 
+            if idx in pickup_only:
+                add_letter("P ")
+            elif idx in drop_off_only:
+                add_letter("D ")
+
             if self.cancelled:
-                emoji = "⛔\u2060 "  # Insert a zero-width non-breaking space to even out the string length
+                emoji = CANCELLED
             elif idx in skipped:
-                emoji = "⚠️ "
+                emoji = WARNING
+                departure = "Skipped"
             elif not current_stop_marked and (self.now < _arrival or self.now < _departure):
                 route_types = {0: "🚈", 1: "🚇", 2: "🚄", 3: "🚌", 4: "🚢", 5: "🚠", 6: "🚟", 7: "🚟", 11: "🚎", 12: "🚝"}
                 emoji = f"{route_types.get(self.route.route_type, '🚌')}\u2060 "
@@ -539,7 +600,11 @@ class TripDiagramViewer:
             else:
                 emoji = ""
 
-            output_line = [seq, code, emoji + name, arrival, departure]
+            if self.compact_mode == 2:
+                output_line = [seq, emoji + name, departure]
+            else:
+                output_line = [seq, code, emoji + name, arrival, departure]
+
             for i, element in enumerate(output_line):
                 column_sizes[i] = max(column_sizes[i], len(element))
 
@@ -578,16 +643,36 @@ class TripDiagramViewer:
         if spaces < 8:
             extra = 8 - spaces
             spaces = 8
-        column_sizes[2] += extra  # [1] is destination
+        column_sizes[stop_name_idx] += extra
+        line_length += extra
+        # cutoff = column_sizes[2]
         output_end = f"{self.stop.name}{' ' * spaces}{self.now:%d %b %Y, %H:%M}```"
+
+        def update_output_end(stop_name_length: int):
+            nonlocal output_end
+            if len(self.stop.name) > stop_name_length:
+                output_end = f"{self.stop.name[:stop_name_length - 1]}…{' ' * 4}{self.now:%d %b %Y, %H:%M}```"
+            else:
+                _spaces = line_length_limit - len(self.stop.name) - 18
+                output_end = f"{self.stop.name}{' ' * _spaces}{self.now:%d %b %Y, %H:%M}```"
+
+        if self.compact_mode == 1 and line_length > (line_length_limit := 50):
+            column_sizes[2] = column_sizes[2] - (line_length - line_length_limit)
+            update_output_end(line_length_limit - 18 - 4)
+        elif self.compact_mode == 2 and line_length > (line_length_limit := 36):
+            column_sizes[1] = column_sizes[1] - (line_length - line_length_limit)  # Stop name is now [1] because the stop code is removed
+            update_output_end(line_length_limit - 18 - 4)
 
         def generate_line(_line: list[str]):
             line_data = []
             for _i in range(len(_line)):
                 size = column_sizes[_i]
                 line_part = _line[_i]
-                alignment = alignments[_i]
-                line_data.append(f"{line_part:{alignment}{size}}")
+                if len(line_part) > size:
+                    line_data.append(f"{line_part[:size - 1]}…")  # Text cut off
+                else:
+                    alignment = alignments[_i]
+                    line_data.append(f"{line_part:{alignment}{size}}")
             return " ".join(line_data).rstrip()
 
         first_line = generate_line(output_data[0])

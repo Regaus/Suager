@@ -317,3 +317,8 @@
 ## v0.9.6 - 19 June 2024
 - Replaced the Status field in the TripDiagramViewer with emojis to represent the stop where the vehicle currently is, skipped stops, and cancelled trips
 - Added an indicator to the currently selected stop
+
+## v0.9.7 - 20-22 June 2024
+- Added more compact view options for the TripDiagramViewer
+- Better handling of skipped stops and cancelled trips on the StopScheduleViewer
+- Added a compact view mode for the StopScheduleViewer

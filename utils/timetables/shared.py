@@ -4,7 +4,7 @@ from utils import database
 
 __all__ = [
     "real_time_filename", "vehicles_filename",
-    "TIMEZONE", "CHUNK_SIZE", "WEEKDAYS", "NUMBERS", "WARNING",
+    "TIMEZONE", "CHUNK_SIZE", "WEEKDAYS", "NUMBERS", "WARNING", "CANCELLED",
     "get_database", "get_data_database",
     "GTFSAPIError"
 ]
@@ -19,6 +19,7 @@ CHUNK_SIZE = 256
 WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 NUMBERS = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
 WARNING = "⚠️ "
+CANCELLED = "⛔\u2060 "  # Insert a zero-width non-breaking space to even out the string length
 
 
 def get_database() -> database.Database:
