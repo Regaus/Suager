@@ -322,3 +322,7 @@
 - Added more compact view options for the TripDiagramViewer
 - Better handling of skipped stops and cancelled trips on the StopScheduleViewer
 - Added a compact view mode for the StopScheduleViewer
+
+## v0.9.7.1 - 27 June 2024
+- Fixed the TripDiagramViewer breaking for added trips
+- Fixed the TripDiagramViewer and StopScheduleViewer incorrectly showing the times when departure delay is provided but arrival delay is not

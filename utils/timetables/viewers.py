@@ -481,11 +481,15 @@ class TripDiagramViewer:
                         real_time_statuses.extend([stop_time_update.schedule_relationship != "SKIPPED"] * repetitions)
                     repetitions = 0
                 extend_list(real_time_statuses, repetitions)
-                extend_list(arrival_delays, repetitions)
                 extend_list(departure_delays, repetitions)
                 real_time_statuses.append(stop_time_update.schedule_relationship != "SKIPPED")
-                arrival_delays.append(stop_time_update.arrival_delay)
                 departure_delays.append(stop_time_update.departure_delay)
+                if prev_sequence == 1 and stop_time_update.arrival_delay is None:
+                    arrival_delays.append(departure_delays[0])
+                    extend_list(arrival_delays, repetitions - 1)
+                else:
+                    extend_list(arrival_delays, repetitions)
+                    arrival_delays.append(stop_time_update.arrival_delay)
                 if stop_time_update.arrival_time is not None:
                     custom_arrival_times[sequence] = stop_time_update.arrival_time
                 if stop_time_update.departure_time is not None:
@@ -495,7 +499,11 @@ class TripDiagramViewer:
                 total_stops = self.static_trip.total_stops
                 remaining = total_stops - len(real_time_statuses)
                 extend_list(real_time_statuses, remaining)
-                extend_list(arrival_delays, remaining)
+                if arrival_delays[-1] is None:
+                    arrival_delays.append(departure_delays[-1])
+                    extend_list(arrival_delays, remaining - 1)
+                else:
+                    extend_list(arrival_delays, remaining)
                 extend_list(departure_delays, remaining)
                 stop_times = get_stop_times()
                 for stop_time in stop_times:
@@ -545,9 +553,20 @@ class TripDiagramViewer:
         # Fix arrival and departure times: if the next stop is left before the previous one, mark all previous stops as already departed from
         for idx in range(total_stops - 1, 1, -1):
             arr_time, dep_time = arrivals[idx], departures[idx]
+            if arr_time is None:
+                arr_time = time.datetime().min
+            if dep_time is None:
+                dep_time = time.datetime().max
             if dep_time < arr_time:
                 arrivals[idx] = arr_time = dep_time
-            if departures[idx - 1] > arr_time or arrivals[idx - 1] > arr_time:
+
+            prev_arr_time = arrivals[idx - 1]
+            if prev_arr_time is None:
+                prev_arr_time = time.datetime().min
+            prev_dep_time = departures[idx - 1]
+            if prev_dep_time is None:
+                prev_dep_time = time.datetime().min
+            if prev_dep_time > arr_time or prev_arr_time > arr_time:
                 arrivals[idx - 1] = departures[idx - 1] = arr_time
 
         # This is used in the for loop below

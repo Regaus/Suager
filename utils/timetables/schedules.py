@@ -176,6 +176,7 @@ class RealStopTime:
                             _departure_delay = stop_time_update.departure_delay
                             if _arrival_delay is not None:
                                 arrival_delay = _arrival_delay
+                            if _departure_delay is not None:
                                 departure_delay = _departure_delay
                             # The schedule relationship should only matter for this stop
                             if stop_time_update.stop_sequence == self.sequence:
