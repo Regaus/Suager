@@ -16,9 +16,9 @@ from utils import bot_data, commands, http, timetables, logger, emotes, dcu, pag
 from utils.time import time as print_current_time
 
 
-def dcu_data_access(ctx):
-    return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
-    # return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
+# def dcu_data_access(ctx):
+#     return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
+#     # return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
 
 
 class GTFSSearchFunction(Protocol):
@@ -37,8 +37,8 @@ class University(commands.Cog, name="Timetables"):
         }
 
     @commands.hybrid_group(name="dcu", case_insensitive=True)
-    @commands.check(dcu_data_access)
-    @app_commands.guilds(738425418637639775)
+    # @commands.check(dcu_data_access)
+    # @app_commands.guilds(738425418637639775)
     async def dcu_stuff(self, ctx: commands.Context):
         """ Access stuff related to DCU and its timetables """
         if ctx.invoked_subcommand is None:
@@ -82,9 +82,9 @@ class University(commands.Cog, name="Timetables"):
             await ctx.defer()
             if not course_code:
                 course_code = "COMSCI"
-                # Push September 2023 to be "January 2024", so that we can start defaulting to COMSCI 2 in Sep 2024
-                # Sep 2023 - Aug 2024 -> 1, Sep 2024 - Aug 2025 -> 2, etc.
-                year = (time.date.today() + time.relativedelta(months=4, time_class=time.Earth)).year - 2023
+                # Push August 2023 to be "January 2024", so that we can start defaulting to COMSCI 2 in Aug 2024
+                # Aug 2023 - Jul 2024 -> 1, Aug 2024 - Jul 2025 -> 2, etc.
+                year = (time.date.today() + time.relativedelta(months=5, time_class=time.Earth)).year - 2023
                 if year > 4:
                     # After I graduate, fall back to COMSCI1
                     year = 1
@@ -101,6 +101,35 @@ class University(commands.Cog, name="Timetables"):
             except Exception as e:
                 # await ctx.send(general.traceback_maker(e))
                 return await ctx.send(f"{emotes.Deny} An error occurred: {type(e).__name__}: {str(e)}")
+
+    @dcu_timetable.command(name="regaus", aliases=["my_timetable", "mine", "custom"])
+    @commands.is_owner()
+    @app_commands.describe(custom_week="The week for which you want to see the timetable. Defaults to current week.")
+    # @app_commands.guilds(738425418637639775)
+    async def dcu_timetable_regaus(self, ctx: commands.Context, custom_week: str = ""):
+        """ Fetch DCU timetables for my course but include the first year labs I'm involved in """
+        await ctx.defer()
+        date = time.datetime.now()
+        if custom_week:
+            date = time.date.from_iso(custom_week)
+            date = time.datetime.combine(date, time.time(), dcu.TZ)
+
+        if time.datetime(2024, 8) < date < time.datetime(2025, 7):
+            course_code = "COMSCI2"
+            extra_labs = ("CA116[1]", "CA117[2]")
+            description = "Regaus's Timetable: **COMSCI2** + Programming Labs"
+        else:
+            return await ctx.send("Error: The timetable for this academic year is not defined.")
+            # raise RuntimeError("The timetable for this academic year is not defined.")
+
+        course = (await dcu.get_course_identities())[course_code]
+        modules_all = await dcu.get_module_identities()
+        modules = []
+        for module in extra_labs:
+            modules.append(modules_all[module])
+        data = await dcu.get_timetable_data_regaus(course, modules, date)
+        start, end = dcu.get_times(date)
+        return await ctx.send(embed=dcu.get_timetable_regaus(data, modules, description, start, end))
 
     @dcu_timetable.command(name="modules", aliases=["module", "m"])
     # @app_commands.autocomplete(module_codes=dcu_autocomplete)
@@ -201,10 +230,11 @@ class Luas(commands.Cog, name="Timetables"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
 
-    @commands.command(name="luas")
+    @commands.hybrid_command(name="luas")
+    @app_commands.describe(place="The Luas stop whose data should be loaded")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
-        """ Data for Luas """
+        """ Fetch real-time data for a Luas stop """
         client = luas.api.LuasClient()
         _place = str(place).title() if len(str(place)) != 3 else str(place)
         data = client.stop_details(_place)
@@ -552,7 +582,7 @@ class Timetables(University, Luas, name="Timetables"):
     @commands.hybrid_group(name="tfi", case_insensitive=True)
     # @commands.is_owner()
     @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
-    @app_commands.guilds(738425418637639775)
+    # @app_commands.guilds(738425418637639775)
     async def tfi(self, ctx: commands.Context):
         """ Base command for TFI-related things """
         if ctx.invoked_subcommand is None:
@@ -685,9 +715,9 @@ class Timetables(University, Luas, name="Timetables"):
 
 
 async def setup(bot: bot_data.Bot):
-    if bot.name == "suager":
-        await bot.add_cog(University(bot))
-    elif bot.name == "cobble":
-        await bot.add_cog(Luas(bot))
-    else:
-        await bot.add_cog(Timetables(bot))
+    # if bot.name == "suager":
+    #     await bot.add_cog(University(bot))
+    # elif bot.name == "cobble":
+    #     await bot.add_cog(Luas(bot))
+    # else:
+    await bot.add_cog(Timetables(bot))

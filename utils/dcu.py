@@ -215,22 +215,33 @@ def get_times_course(course_code: str = "COMSCI1", custom_week: time.datetime = 
     """ Returns the start and end times for the current week in a given course """
     now = custom_week or time.datetime.now(tz=TZ)
     if course_code.endswith("1"):  # First-year courses start on 25 September
-        first_week = time.datetime(2023, 9, 25, tz=TZ)
+        first_weeks = {
+            2023: time.datetime(2023, 9, 25, tz=TZ),
+            2024: time.datetime(2024, 9, 16, tz=TZ),
+        }
+        year = (now + time.relativedelta(months=5, time_class=time.Earth)).year - 1  # Aug 2023 -> 2023, Aug 2024 -> 2024
+        first_week = first_weeks.get(year, time.datetime(year, 9, 1, tz=TZ))
         if now < first_week:
-            return get_times(time.datetime(2023, 9, 25, tz=TZ))
+            return get_times(first_week)
     return get_times(now)
 
 
 def get_times(custom_week: time.datetime = None) -> tuple[time.datetime, time.datetime]:
     """ Returns the start and end times for the current week """
     now = custom_week or time.datetime.now(tz=TZ)
-    first_week = time.datetime(2023, 9, 11, tz=TZ)
+    first_weeks = {
+        2023: time.datetime(2023, 9, 11, tz=TZ),
+        2024: time.datetime(2024, 9, 9, tz=TZ),
+        2025: time.datetime(2025, 9, 8, tz=TZ),
+        2026: time.datetime(2026, 9, 7, tz=TZ),
+    }
+    year = (now + time.relativedelta(months=5, time_class=time.Earth)).year - 1  # Aug 2023 -> 2023, Aug 2024 -> 2024
+    first_week = first_weeks.get(year, time.datetime(year, 9, 1, tz=TZ))
     if now < first_week:
-        start = first_week
-    else:
-        start: time.datetime = (now - time.timedelta(days=now.weekday)).replace(hour=0, minute=0, second=0, microsecond=0)
-        if now.weekday >= 5:  # Saturday or Sunday -> Show next week's timetables
-            start += time.timedelta(weeks=1)
+        now = first_week
+    start: time.datetime = (now - time.timedelta(days=now.weekday)).replace(hour=0, minute=0, second=0, microsecond=0)
+    if now.weekday >= 5:  # Saturday or Sunday -> Show next week's timetables
+        start += time.timedelta(weeks=1)
     end: time.datetime = start + time.timedelta(weeks=1) - time.timedelta(seconds=1)  # type: ignore
     return start, end
 
@@ -386,11 +397,7 @@ async def get_rooms(search: str = None) -> list[str]:
     return await get_list(get_room_identities, search)
 
 
-async def get_timetable_data(type_identity: str, category_identities: list[str], start: time.datetime, end: time.datetime):
-    """ Get the timetable for specified identities (a course, a room, or a list of modules) for a given week """
-    start = start.as_timezone(time.utc)
-    end = end.as_timezone(time.utc)
-
+async def get_timetable_data_generic(categories_data: list[dict], start: time.datetime, end: time.datetime):
     return await get_data(
         f"{BASE_URL}/CategoryTypes/Categories/Events/Filter/{INSTITUTION_IDENTITY}?startRange={start.iso()}.000Z&endRange={end.iso()}.999Z",
         headers={
@@ -407,15 +414,43 @@ async def get_timetable_data(type_identity: str, category_identities: list[str],
                     {"DayOfWeek": 5},
                 ],
             },
-            "CategoryTypesWithIdentities": [
-                {
-                    "CategoryTypeIdentity": type_identity,
-                    "CategoryIdentities": category_identities,
-                }
-            ],
+            "CategoryTypesWithIdentities": categories_data,
         },
         name="DCU Timetable Fetcher"
     )
+
+
+async def get_timetable_data(type_identity: str, category_identities: list[str], start: time.datetime, end: time.datetime):
+    """ Get the timetable for specified identities (a course, a room, or a list of modules) for a given week """
+    start = start.as_timezone(time.utc)
+    end = end.as_timezone(time.utc)
+    categories_data = [
+        {
+            "CategoryTypeIdentity": type_identity,
+            "CategoryIdentities": category_identities
+        }
+    ]
+
+    return await get_timetable_data_generic(categories_data, start, end)
+
+
+async def get_timetable_data_regaus(course: Course, modules: list[Module], custom_week: time.datetime):
+    """ Get the timetable for the specified course and extra modules """
+    start, end = get_times(custom_week)
+    start = start.as_timezone(time.utc)
+    end = end.as_timezone(time.utc)
+    categories_data = [
+        {
+            "CategoryTypeIdentity": PROGRAMMES_OF_STUDY,
+            "CategoryIdentities": [course.identity],
+        },
+        {
+            "CategoryTypeIdentity": MODULES_CATEGORY,
+            "CategoryIdentities": [module.identity for module in modules],
+        }
+    ]
+
+    return await get_timetable_data_generic(categories_data, start, end)
 
 
 async def get_timetable_data_course(course: Course, custom_week: time.datetime):
@@ -436,15 +471,20 @@ async def get_timetable_data_room(room: Room, custom_week: time.datetime):
     return await get_timetable_data(LOCATIONS_CATEGORY, [room.identity], start, end)
 
 
-def get_timetable(data: dict, description: str, start: time.datetime, end: time.datetime) -> discord.Embed:
-    """ Return a human-readable embed with the current week's timetable """
-    embed = discord.Embed(title="DCU Timetables", description=f"{description}\nTimetables for the week: **{start:%d %B} to {end:%d %B %Y}**", colour=general.random_colour())
-    # events_str = data["CategoryEvents"][0]["Results"]
+def get_events_data(data: dict) -> list[Event]:
+    """ Get the events """
     event_list = []
     for event_category in data["CategoryEvents"]:
         event_list += event_category["Results"]
     events = [Event(event) for event in event_list]
     events.sort(key=lambda x: x.start)  # Sort by starting time
+    return events
+
+
+def get_timetable(events: list[Event], description: str, start: time.datetime, end: time.datetime) -> discord.Embed:
+    """ Return a human-readable embed with the current week's timetable """
+    embed = discord.Embed(title="DCU Timetables", description=f"{description}\nTimetables for the week: **{start:%d %B} to {end:%d %B %Y}**", colour=general.random_colour())
+
     event_days: dict[int, list[str]] = {0: [], 1: [], 2: [], 3: [], 4: []}  # Mon - Fri
     for event in events:
         event_days[event.start.weekday].append(str(event))
@@ -458,6 +498,20 @@ def get_timetable(data: dict, description: str, start: time.datetime, end: time.
     return embed
 
 
+def get_timetable_regaus(data: dict, labs: list[Module], description: str, start: time.datetime, end: time.datetime) -> discord.Embed:
+    events_all = get_events_data(data)
+    events = []
+    module_names = [module.code[:-3] for module in labs]
+    for event in events_all:
+        if not any(module_name in event.module_name for module_name in module_names):
+            events.append(event)
+        # For the extra modules, only care about the labs
+        elif event.description.startswith("Practical"):
+            events.append(event)
+        # Otherwise, ignore this event
+    return get_timetable(events, description, start, end)
+
+
 async def get_timetable_course(course_code: str = "COMSCI1", custom_week: time.datetime = None) -> discord.Embed:
     """ Get the timetables data and return a human-readable embed with the current week's timetable """
     start, end = get_times_course(course_code, custom_week)
@@ -468,10 +522,11 @@ async def get_timetable_course(course_code: str = "COMSCI1", custom_week: time.d
     except KeyError:
         raise KeyError(f"Course not found: `{course_code}`")
     data = await get_timetable_data_course(course, custom_week)
+    events = get_events_data(data)
     course_name = course.name
     if course.code[-1].isdigit():
         course_name += f" - Year {course.code[-1]}"
-    return get_timetable(data, f"Timetable for course: **{course_name} ({course.code})**", start, end)
+    return get_timetable(events, f"Timetable for course: **{course_name} ({course.code})**", start, end)
 
 
 async def get_timetable_module(module_codes: list[str] | tuple[str, ...], custom_week: time.datetime = None) -> discord.Embed:
@@ -486,8 +541,9 @@ async def get_timetable_module(module_codes: list[str] | tuple[str, ...], custom
         except KeyError:
             raise KeyError(f"Module not found: `{module}`")
     data = await get_timetable_data_module(module_cls, custom_week)
+    events = get_events_data(data)
     module_names = [module.code for module in module_cls]
-    return get_timetable(data, f"Timetable for modules: **{', '.join(module_names)}** (Total: {len(module_names)})", start, end)
+    return get_timetable(events, f"Timetable for modules: **{', '.join(module_names)}** (Total: {len(module_names)})", start, end)
 
 
 async def get_timetable_room(room_code: str, custom_week: time.datetime = None) -> discord.Embed:
@@ -500,7 +556,8 @@ async def get_timetable_room(room_code: str, custom_week: time.datetime = None) 
     except KeyError:
         raise KeyError(f"Room not found: `{room_code}`")
     data = await get_timetable_data_room(room, custom_week)
-    return get_timetable(data, f"Timetable for room: **{room.code}** ({room.location})", start, end)
+    events = get_events_data(data)
+    return get_timetable(events, f"Timetable for room: **{room.code}** ({room.location})", start, end)
 
 
 class Event(object):

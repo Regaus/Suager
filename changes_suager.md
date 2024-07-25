@@ -1816,3 +1816,6 @@
 
 ## v7.7.17.1 - 11 June 2024
 - Fixed errors not being sent to the error logs channel when the traceback is very long
+
+## v7.7.17.2 - 25 July 2024
+- Removed access to `//dcu` (now only accessible on Timetables bot)

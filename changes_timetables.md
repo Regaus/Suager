@@ -326,3 +326,10 @@
 ## v0.9.7.1 - 27 June 2024
 - Fixed the TripDiagramViewer breaking for added trips
 - Fixed the TripDiagramViewer and StopScheduleViewer incorrectly showing the times when departure delay is provided but arrival delay is not
+
+## v0.10.0 - 25 July 2024
+- Added a way to see my DCU timetable that combines a course and extra modules
+- Made the DCU timetable commands be able to adjust the dates in August and early September to the start of the next academic year (dates are currently known for 2023-2026)
+- Made `i.dcu` no longer accessible on Suager
+- Made `i.luas` no longer accessible on CobbleBot
+- Made `i.dcu`, `i.luas`, and `i.tfi` global slash commands

@@ -15,7 +15,6 @@ load = {
         "placeholder",
         "settings",
         "util",
-        "timetables"
     ],
     "kyomi": [
         "admin",
@@ -64,7 +63,6 @@ load = {
         "starboard",
         "tags",
         "util",
-        "timetables"
     ]
 }
 

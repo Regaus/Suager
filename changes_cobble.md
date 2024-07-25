@@ -806,3 +806,6 @@
 ## v1.9.6 - 17 June 2024
 - Made it possible to log buttons on views
 - Made it possible to track which command spawned a view
+
+## v1.9.6.1 - 25 July 2024
+- Removed access to `..luas` (now only accessible on Timetables bot)
