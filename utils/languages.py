@@ -55,10 +55,17 @@ class Language(languages.Language):
         else:
             raise AttributeError(f"{type(ctx).__name__!r} object has no attributes 'bot' nor 'client'")
         is_guild = hasattr(ctx, "guild") and ctx.guild is not None  # Whether we are in a guild or not
-        if (personal and hasattr(ctx, "author")) or not is_guild:
+        if (personal and (hasattr(ctx, "author") or hasattr(ctx, "user"))) or not is_guild:  # ctx.author or interaction.user
             # Let users set their personal language (this behaviour is disabled by default, the command has to explicitly enable the personal languages)
             # The personal language is, however, always used in the DMs.
-            data = bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (ctx.author.id, bot.name))
+            if hasattr(ctx, "author"):
+                author_id = ctx.author.id
+            elif hasattr(ctx, "user"):
+                author_id = ctx.user.id
+            else:
+                # I don't think this should ever happen, but fall back to the default language if somehow neither the author nor user attribute is filled
+                return cls(bot.local_config["default_locale"])
+            data = bot.db.fetchrow("SELECT * FROM locales WHERE id=? AND bot=? AND type='user'", (author_id, bot.name))
             if data:
                 return cls(data["locale"])
         if hasattr(ctx, "channel"):

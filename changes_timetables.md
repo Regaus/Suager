@@ -333,3 +333,10 @@
 - Made `i.dcu` no longer accessible on Suager
 - Made `i.luas` no longer accessible on CobbleBot
 - Made `i.dcu`, `i.luas`, and `i.tfi` global slash commands
+
+## v0.10.1 - 30 July 2024
+- Made `i.dcu`, `i.luas`, and `i.tfi` user-installable, usable in all contexts
+- Made InteractiveViews be able to handle cases when the original message cannot be fetched (the timeout is set to 15 minutes and the view closes upon receiving an "invalid webhook token" error)
+- Changed the date limits for `i.dcu timetable regaus`: the specified/current time is assumed to belong to the 2024/25 academic year if it's between 2024-08-01 and 2025-08-01 (exclusive)
+- Fixed `Language.get()` to load the user from an interaction for personal responses
+- Made Views not raise errors if it fails to edit the message when disabling the view

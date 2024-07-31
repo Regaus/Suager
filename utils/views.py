@@ -140,15 +140,19 @@ class View(discord.ui.View):
 
     async def on_timeout(self):
         """ Called when the view times out """
-        # Disable the View after it has timed out
+        # Disable the View after it has timed out, if possible
         if hasattr(self, "message"):
-            await self.message.edit(view=None)
+            try:
+                await self.message.edit(view=None)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                pass
         self.stop()
 
     async def on_error(self, interaction: discord.Interaction, error: Exception, item: discord.ui.Item):
         """ Called when an error occurs during an interaction with an item """
         language = languages.Language.get(interaction, personal=True)
         component_type = language.data("generic_component_type")
+        temporary_view = getattr(self, "temporary", False) and "Invalid Webhook Token" in str(error)  # Our temporary view has expired
         if hasattr(item, "label") or hasattr(item, "log_label"):
             if hasattr(item, "log_label"):
                 label = item.log_label
@@ -168,6 +172,7 @@ class View(discord.ui.View):
                 origin = component_type.get(item.type.name, item.type.name)
             else:
                 origin = language.string("generic_component_unknown")
+
         error_msg = f"{type(error).__name__}: {str(error)}"
         ephemeral = False
         ignore = False
@@ -177,7 +182,10 @@ class View(discord.ui.View):
                 message = f"{str(error)}"
                 ephemeral = True
             else:
-                message = f"{language.string("events_error_check2")}"
+                message = language.string("events_error_check2")
+        elif temporary_view:
+            message = language.string("events_error_temporary_view")
+            ephemeral = True
         else:
             message = f"{origin} > {language.string("events_error_error", err=error_msg)}"
         # noinspection PyUnresolvedReferences
@@ -188,10 +196,18 @@ class View(discord.ui.View):
         else:
             # noinspection PyUnresolvedReferences
             await interaction.response.send_message(message, ephemeral=ephemeral)
+
         # content = f"{general.build_interaction_content(interaction)} > {origin}"
         content = f"{self.command[:750]} > {origin}"
         bot = interaction.client  # bot_data.Bot
         error_message = f"{time.time()} > {bot.full_name} > {interaction.guild or "Private Message"} > {interaction.user} ({interaction.user.id}) > {content} > {error_msg}"
+
+        if temporary_view:
+            logger.log(bot.name, "commands", error_message)
+            general.print_error(error_message)
+            self.stop()
+            return
+
         if not ignore:
             logger.log(bot.name, "errors", error_message)
             general.print_error(error_message)
@@ -235,14 +251,29 @@ class HiddenView(View):
 
 
 class InteractiveView(View):
+    message: discord.Message | discord.InteractionMessage
+
     def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage, timeout: int = 300, ctx: commands.Context | discord.Interaction = None):
         super().__init__(timeout=timeout, ctx=ctx)
         self.sender = sender
+        self.temporary = False
+
         if isinstance(message, (discord.InteractionMessage, discord.WebhookMessage)):  # Fetch the full Message from the partial InteractionMessage
-            nest_asyncio.apply()  # https://stackoverflow.com/a/56434301 - Patches asyncio to let the code below run properly
-            self.message = asyncio.get_event_loop().run_until_complete(asyncio.create_task(message.fetch()))
+            if message.interaction_metadata.is_guild_integration():  # This should be fine. I don't think we'll ever need to load partial messages from a non-interaction webhook?
+                try:
+                    nest_asyncio.apply()  # https://stackoverflow.com/a/56434301 - Patches asyncio to let the code below run properly
+                    self.message = asyncio.get_event_loop().run_until_complete(asyncio.create_task(message.fetch()))
+                except (discord.NotFound, discord.Forbidden):
+                    self.message = message
+                    self.temporary = True
+            else:
+                self.message = message
+                self.temporary = True
         else:
             self.message: discord.Message = message
+
+        if self.temporary:
+            self.timeout = min(self.timeout, 900)
 
     # async def validate_sender(self, interaction: discord.Interaction):
     #     """ Make sure that the person clicking on the button is also the author of the message """

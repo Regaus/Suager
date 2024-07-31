@@ -37,6 +37,8 @@ class University(commands.Cog, name="Timetables"):
         }
 
     @commands.hybrid_group(name="dcu", case_insensitive=True)
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     # @commands.check(dcu_data_access)
     # @app_commands.guilds(738425418637639775)
     async def dcu_stuff(self, ctx: commands.Context):
@@ -114,7 +116,7 @@ class University(commands.Cog, name="Timetables"):
             date = time.date.from_iso(custom_week)
             date = time.datetime.combine(date, time.time(), dcu.TZ)
 
-        if time.datetime(2024, 8) < date < time.datetime(2025, 7):
+        if time.datetime(2024, 8) <= date < time.datetime(2025, 8):
             course_code = "COMSCI2"
             extra_labs = ("CA116[1]", "CA117[2]")
             description = "Regaus's Timetable: **COMSCI2** + Programming Labs"
@@ -231,6 +233,8 @@ class Luas(commands.Cog, name="Timetables"):
         self.bot = bot
 
     @commands.hybrid_command(name="luas")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.describe(place="The Luas stop whose data should be loaded")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
@@ -580,6 +584,8 @@ class Timetables(University, Luas, name="Timetables"):
         return output
 
     @commands.hybrid_group(name="tfi", case_insensitive=True)
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     # @commands.is_owner()
     @commands.cooldown(rate=1, per=4, type=commands.BucketType.user)
     # @app_commands.guilds(738425418637639775)

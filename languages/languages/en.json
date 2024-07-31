@@ -109,6 +109,7 @@
   "events_error_permissions": "{emotes.Deny} You are missing these required permissions: {perms}.",
   "events_error_permissions_bot": "{emotes.Deny} I am missing these required permissions: {perms}.",
   "events_error_owner": "{emotes.Deny} Only the bot owner can execute this command.",
+  "events_error_temporary_view": "{emotes.Deny} Due to Discord's limitations, the message can no longer be edited. Please run the command again.",
   "events_user_joined": "User joined the server",
   "events_user_left": "User left the server",
 
