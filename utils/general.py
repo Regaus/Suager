@@ -29,6 +29,7 @@ def create_dirs():
         make_dir(f"data/logs/{bot['internal_name']}")
     make_dir("data/gtfs")
     make_dir("data/dcu")
+    make_dir("data/maps")
 
 
 def make_dir(dir_name):

@@ -340,3 +340,7 @@
 - Changed the date limits for `i.dcu timetable regaus`: the specified/current time is assumed to belong to the 2024/25 academic year if it's between 2024-08-01 and 2025-08-01 (exclusive)
 - Fixed `Language.get()` to load the user from an interaction for personal responses
 - Made Views not raise errors if it fails to edit the message when disabling the view
+
+## v0.11.0 - 3 August 2024
+- Added ability to see buses currently near a bus stop on a map image
+- Made static GTFS dataclasses raise a KeyError instead of a TypeError when the value passed is invalid or None

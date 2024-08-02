@@ -259,7 +259,7 @@ class Timetables(University, Luas, name="Timetables"):
         super().__init__(bot)
         # self.db = timetables.db
         self.db = timetables.get_database()
-        self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
+        self._DEBUG = True  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
         self._WRITE = True   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
@@ -718,6 +718,40 @@ class Timetables(University, Luas, name="Timetables"):
             # return
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
+
+    @tfi.command("map")
+    @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
+    @app_commands.describe(
+        stop_query="The ID, code, or name of the stop for which you want to see the schedule",
+    )
+    async def tfi_stop_map(self, ctx: commands.Context, *, stop_query: str):
+        """ Show a map of the area around a stop, including any buses nearby. """
+        message = await self.wait_for_initialisation(ctx)
+        stops = self.find_stop(stop_query)
+        if len(stops) != 1:
+            start = "No stops were found" if len(stops) < 1 else "More than one stop was found"
+            return await message.edit(content=f"{start} for your search query ({stop_query}).\n"
+                                              f"Use `{ctx.prefix}tfi search stop` to find the specific stop code or provide a more specific query.\n"
+                                              "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
+        stop = stops[0]
+
+        if not self.soft_limit_warning:
+            try:
+                data_valid = timetables.check_gtfs_data_expiry(self.db)
+                if not data_valid:
+                    await ctx.send("Warning: The GTFS data currently stored here has become more than a month old. It should be updated soon to prevent it from going out of date.")
+                self.soft_limit_warning = True  # The warning is shown only once per bot restart.
+            except RuntimeError:  # This should never happen by this stage, but better safe than sorry
+                return await ctx.send("The GTFS data available has expired.")
+
+        await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
+        map_image = await timetables.get_map_with_buses(stop.latitude, stop.longitude, zoom=timetables.DEFAULT_ZOOM, vehicle_data=self.vehicle_data)
+        stop_code = f"Code `{stop.code}`, " if stop.code else ""
+        stop_id = f"ID `{stop.id}`"
+        output = (f"Buses currently near the stop {stop.name} ({stop_code}{stop_id})\n"
+                  "Note: This only shows vehicles whose location is tracked by TFI's real-time data. A vehicle may not show up on this map despite being there in reality.\n\n"
+                  "The blue circle represents your stop's location, while the green rectangles represent the buses.")
+        return await message.edit(content=output, attachments=[discord.File(map_image, f"{stop.id}.png")])
 
 
 async def setup(bot: bot_data.Bot):

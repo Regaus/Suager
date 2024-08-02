@@ -82,7 +82,10 @@ class Agency:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Agency:
         """ Construct a new Agency object from a dictionary """
-        return cls(data["id"], data["name"], data["url"], data["timezone"])
+        try:
+            return cls(data["id"], data["name"], data["url"], data["timezone"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
     @classmethod
     def from_sql(cls, agency_id: str, db: database.Database = None) -> Agency:
@@ -112,8 +115,11 @@ class Calendar:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Calendar:
         """ Construct a new Calendar object from a dictionary """
-        return cls(data["service_id"], _int_to_weekdays(data["data"]),
-                   time.date.from_datetime(data["start_date"]), time.date.from_datetime(data["end_date"]))
+        try:
+            return cls(data["service_id"], _int_to_weekdays(data["data"]),
+                       time.date.from_datetime(data["start_date"]), time.date.from_datetime(data["end_date"]))
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
     @classmethod
     def from_sql(cls, service_id: str, db: database.Database = None) -> Calendar:
@@ -146,7 +152,10 @@ class CalendarException:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CalendarException:
         """ Construct a new CalendarException object from a dictionary """
-        return cls(data["service_id"], time.date.from_datetime(data["date"]), data["exception"])
+        try:
+            return cls(data["service_id"], time.date.from_datetime(data["date"]), data["exception"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
     @classmethod
     def from_sql(cls, service_id: str, db: database.Database = None) -> dict[time.date, CalendarException]:
@@ -196,8 +205,11 @@ class Route:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Route:
         """ Construct a new Route object from a dictionary """
-        return cls(data["id"], data["agency_id"], data["short_name"], data["long_name"], data["route_desc"],
-                   data["route_type"], data["route_url"], data["route_colour"], data["route_text_colour"])
+        try:
+            return cls(data["id"], data["agency_id"], data["short_name"], data["long_name"], data["route_desc"],
+                       data["route_type"], data["route_url"], data["route_colour"], data["route_text_colour"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
     @classmethod
     def from_sql(cls, route_id: str, db: database.Database = None) -> Route:
@@ -238,8 +250,11 @@ class Stop:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Stop:
         """ Construct a new Stop object from a dictionary """
-        return cls(data["id"], data["code"], data["name"], data["description"], data["latitude"], data["longitude"],
-                   data["zone_id"], data["stop_url"], data["location_type"], data["parent_station"])
+        try:
+            return cls(data["id"], data["code"], data["name"], data["description"], data["latitude"], data["longitude"],
+                       data["zone_id"], data["stop_url"], data["location_type"], data["parent_station"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
     @classmethod
     def from_sql(cls, stop_id: str, db: database.Database = None) -> Stop:
@@ -288,8 +303,11 @@ class Trip:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Trip:
         """ Construct a new Trip object from a dictionary """
-        return cls(data["route_id"], data["calendar_id"], data["trip_id"], data["headsign"],
-                   data["short_name"], data["direction_id"], data["block_id"], data["shape_id"], data["total_stops"])
+        try:
+            return cls(data["route_id"], data["calendar_id"], data["trip_id"], data["headsign"],
+                       data["short_name"], data["direction_id"], data["block_id"], data["shape_id"], data["total_stops"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
     @classmethod
     def from_sql(cls, trip_id: str, db: database.Database = None) -> Trip:
@@ -346,8 +364,11 @@ class StopTime:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> StopTime:
         """ Construct a new StopTime object from a dictionary """
-        return cls(data["trip_id"], data["arrival_time"], data["departure_time"], data["stop_id"],
-                   data["sequence"], data["stop_headsign"], data["pickup_type"], data["drop_off_type"], data["timepoint"])
+        try:
+            return cls(data["trip_id"], data["arrival_time"], data["departure_time"], data["stop_id"],
+                       data["sequence"], data["stop_headsign"], data["pickup_type"], data["drop_off_type"], data["timepoint"])
+        except TypeError as e:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance: {str(e)}") from None
 
     @classmethod
     def from_sql(cls, trip_id: str, db: database.Database = None) -> list[StopTime]:
