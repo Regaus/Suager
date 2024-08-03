@@ -10,7 +10,9 @@ from regaus import time
 
 from utils import http, logger, conworlds
 from utils.general import print_error, make_dir
-from utils.timetables import VehicleData, Route, get_database, Trip, Shape, GTFSData, load_value
+from utils.timetables.shared import get_database
+from utils.timetables.realtime import VehicleData
+from utils.timetables.static import GTFSData, Route, Trip, Shape, load_value
 
 
 __all__ = (

@@ -1,5 +1,7 @@
 import asyncio
+import io
 
+import discord
 from regaus import time
 
 from utils import conworlds, languages, paginators
@@ -7,8 +9,9 @@ from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
 from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
+from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses
 
-__all__ = ["StopScheduleViewer", "TripDiagramViewer"]
+__all__ = ["StopScheduleViewer", "TripDiagramViewer", "MapViewer"]
 
 
 def format_time(provided_time: time.datetime, today: time.date) -> str:
@@ -103,7 +106,7 @@ class StopScheduleViewer:
     async def refresh_real_schedule(self):
         """ Refresh the RealTimeStopSchedule """
         event_loop = asyncio.get_event_loop()
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=False, write=False)
+        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
         self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
         if not self.fixed:  # _time:
             prev_today = self.today
@@ -392,7 +395,7 @@ class TripDiagramViewer:
             return None
 
     async def refresh_real_time_data(self):
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data()  # type: GTFSRData, VehicleData
+        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)  # type: GTFSRData, VehicleData
         if self.real_trip or self.is_real_time:
             # Find new real-time information about this trip
             real_trip = None
@@ -733,3 +736,55 @@ class TripDiagramViewer:
     def format_time(self, provided_time: time.datetime) -> str:
         """ Format the provided time, showing when a given trip happens outside the current day """
         return format_time(provided_time, self.today)
+
+
+class MapViewer:
+    """ Viewer for the map around a bus stop """
+    def __init__(self, cog, image: io.BytesIO, stop: Stop, zoom: int = DEFAULT_ZOOM):
+        self.cog = cog
+        self.static_data: GTFSData = cog.static_data
+        self.vehicle_data: VehicleData = cog.vehicle_data
+        self.stop: Stop = stop
+        self.lat: float = stop.latitude
+        self.lon: float = stop.longitude
+        self.zoom: int = zoom
+
+        self.image: io.BytesIO = image
+        self.attachment = self.get_attachment()
+        self.output: str = self.create_output()
+
+    @classmethod
+    async def load(cls, cog, stop: Stop, zoom: int = DEFAULT_ZOOM):
+        image_bio = await get_map_with_buses(stop.latitude, stop.longitude, zoom, cog.vehicle_data, cog.static_data)
+        return cls(cog, image_bio, stop, zoom)
+
+    def get_attachment(self):
+        """ Generate the Discord attachment from the map image """
+        attachment: tuple[discord.File] = (discord.File(self.image, f"{self.stop.id}.png"),)
+        return attachment
+
+    async def refresh(self):
+        """ Refresh the map with new data """
+        _, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        await self.update_map()
+        self.update_output()
+
+    async def update_map(self):
+        """ Update the map output without refreshing the vehicle data """
+        self.image = await get_map_with_buses(self.stop.latitude, self.stop.longitude, self.zoom, self.cog.vehicle_data, self.cog.static_data)
+        self.attachment = self.get_attachment()
+
+    def create_output(self) -> str:
+        """ Create the text part of the output """
+        stop_code = f"Code `{self.stop.code}`, " if self.stop.code else ""
+        stop_id = f"ID `{self.stop.id}`"
+        data_timestamp = self.vehicle_data.header.timestamp
+        output = (f"Buses currently near the stop {self.stop.name} ({stop_code}{stop_id})\n"
+                  "The blue circle represents your stop's location, while the green rectangles represent the buses.\n"
+                  f"-# Vehicle data timestamp: {data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)\n"
+                  "-# Note: This only shows vehicles whose location is tracked by TFI's real-time data. A vehicle may not show up on this map despite being there in reality.\n"
+                  "-# Note: The direction displayed on the map may sometimes be inaccurate.")
+        return output
+
+    def update_output(self):
+        self.output = self.create_output()

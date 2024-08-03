@@ -259,8 +259,8 @@ class Timetables(University, Luas, name="Timetables"):
         super().__init__(bot)
         # self.db = timetables.db
         self.db = timetables.get_database()
-        self._DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
-        self._WRITE = True   # Write real-time data to disk
+        self.DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
+        self.WRITE = True   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
@@ -388,7 +388,7 @@ class Timetables(University, Luas, name="Timetables"):
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
             if self.real_time_data is None:
-                await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
+                await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:
                     if force_redownload:
@@ -506,20 +506,20 @@ class Timetables(University, Luas, name="Timetables"):
     @placeholder.command(name="debug", aliases=["toggledebug"])
     async def toggle_debug_mode(self, ctx: commands.Context):
         """ Toggle Debug Mode """
-        self._DEBUG ^= True
-        return await ctx.send(f"{self._DEBUG=}")
+        self.DEBUG ^= True
+        return await ctx.send(f"{self.DEBUG=}")
 
     @placeholder.command(name="write", aliases=["togglewrite"])
     async def toggle_write_mode(self, ctx: commands.Context):
         """ Toggle Write Mode """
-        self._WRITE ^= True
-        return await ctx.send(f"{self._WRITE=}")
+        self.WRITE ^= True
+        return await ctx.send(f"{self.WRITE=}")
 
     @placeholder.command(name="refresh")
     async def refresh_real_time_data(self, ctx: commands.Context, force_redownload: bool = False):
         """ Refresh real-time GTFS data """
-        debug = False if force_redownload else self._DEBUG
-        await self.get_real_time_data(debug=debug, write=self._WRITE)
+        debug = False if force_redownload else self.DEBUG
+        await self.get_real_time_data(debug=debug, write=self.WRITE)
         return await ctx.send(f"Refreshed real-time data. {debug=}")
 
     @placeholder.command(name="load")
@@ -551,7 +551,7 @@ class Timetables(University, Luas, name="Timetables"):
     @placeholder.command(name="check")
     async def check_error(self, ctx: commands.Context):
         """ Check error status """
-        flags_status = f"{self._DEBUG=}\n{self._WRITE=}\n{self.initialised=}\n{self.updating=}"
+        flags_status = f"{self.DEBUG=}\n{self.WRITE=}\n{self.initialised=}\n{self.updating=}"
         if self.loader_error is None:
             return await ctx.send(f"{flags_status}\n{self.loader_error=}")
         error = general.traceback_maker(self.loader_error)
@@ -703,7 +703,7 @@ class Timetables(University, Luas, name="Timetables"):
             except RuntimeError:  # This should never happen by this stage, but better safe than sorry
                 return await ctx.send("The GTFS data available has expired.")
 
-        await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
         try:
             schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now,
                                                                 hide_terminating=not show_terminating, user_id=ctx.author.id)
@@ -744,15 +744,12 @@ class Timetables(University, Luas, name="Timetables"):
             except RuntimeError:  # This should never happen by this stage, but better safe than sorry
                 return await ctx.send("The GTFS data available has expired.")
 
-        await self.load_real_time_data(debug=self._DEBUG, write=self._WRITE)
-        map_image = await timetables.get_map_with_buses(stop.latitude, stop.longitude, zoom=timetables.DEFAULT_ZOOM, vehicle_data=self.vehicle_data, static_data=self.static_data)
-        stop_code = f"Code `{stop.code}`, " if stop.code else ""
-        stop_id = f"ID `{stop.id}`"
-        output = (f"Buses currently near the stop {stop.name} ({stop_code}{stop_id})\n"
-                  "The blue circle represents your stop's location, while the green rectangles represent the buses.\n"
-                  "-# Note: This only shows vehicles whose location is tracked by TFI's real-time data. A vehicle may not show up on this map despite being there in reality.\n"
-                  "-# Note: The direction displayed on the map may sometimes be inaccurate.")
-        return await message.edit(content=output, attachments=[discord.File(map_image, f"{stop.id}.png")])
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        try:
+            map_viewer = await timetables.MapViewer.load(self, stop, zoom=timetables.DEFAULT_ZOOM)
+        except Exception:
+            raise
+        return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.MapView(ctx.author, message, map_viewer, ctx))
 
 
 async def setup(bot: bot_data.Bot):

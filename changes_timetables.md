@@ -351,3 +351,9 @@
 ## v0.11.2 - 3 August 2024
 - The map can now estimate the direction in which the bus is moving
 - The database now stores Shapes (sets of lat/long coordinates for displaying the route of the bus on a map)
+
+## v0.11.3 - 3 August 2024
+- Created a Viewer and View for the map command
+- Added ability to zoom out to level 16 (and back in to level 17) on the map view
+- Added ability to refresh the map view
+- Changed the cog's debug and write values to be public, and made the real-time data refreshing commands use those values
