@@ -13,7 +13,7 @@ from utils.timetables.shared import CHUNK_SIZE, get_database
 
 __all__ = [
     "str_to_date", "time_to_int",
-    "GTFSData", "Agency", "Calendar", "CalendarException", "Route", "Stop", "Trip", "StopTime",
+    "GTFSData", "Agency", "Calendar", "CalendarException", "Route", "Stop", "Trip", "StopTime", "Shape", "ShapePoint",
     "load_csv_lines", "check_gtfs_data_expiry", "iterate_over_csv_full",
     "read_and_store_gtfs_data", "init_gtfs_data",
     "load_calendars", "load_value"
@@ -63,6 +63,8 @@ class GTFSData:
     stop_times: dict[str, dict[str, StopTime]]
     # trips[trip_id] = Trip
     trips: dict[str, Trip]
+    # shapes[shape_id] = Shape | shapes[shape_id][sequence] = ShapePoint
+    shapes: dict[str, Shape]
 
     def __repr__(self):
         return "This string is too large to be feasible to render."
@@ -95,7 +97,7 @@ class Agency:
         return cls.from_dict(db.fetchrow("SELECT * FROM agencies WHERE id=?", (agency_id,)))
 
     def save_to_sql(self) -> str:
-        """ Save the Agency to the SQL database"""
+        """ Return the SQL command to save this data into the database """
         return f"INSERT INTO agencies(id, name, url, timezone) VALUES ({self.id!r}, {self.name!r}, {self.url!r}, {self.timezone!r})"
 
 
@@ -129,7 +131,7 @@ class Calendar:
         return cls.from_dict(db.fetchrow("SELECT * FROM calendars WHERE service_id=?", (service_id,)))
 
     def save_to_sql(self) -> str:
-        """ Save the Calendar to the SQL database """
+        """ Return the SQL command to save this data into the database """
         return ("INSERT INTO calendars(service_id, data, start_date, end_date) VALUES "
                 f"({self.service_id!r}, {_weekdays_to_int(self.data)!r}, {database.adapt_date_iso(self.start_date.to_datetime())!r}, {database.adapt_date_iso(self.end_date.to_datetime())!r})")
 
@@ -166,7 +168,7 @@ class CalendarException:
         return {exc.date: exc for exc in exceptions}
 
     def save_to_sql(self) -> str:
-        """ Save the CalendarException to the SQL database """
+        """ Return the SQL command to save this data into the database """
         return ("INSERT INTO calendar_exceptions(service_id, date, exception) VALUES "
                 f"({self.service_id!r}, {database.adapt_date_iso(self.date.to_datetime())!r}, {self.exception!r})")
 
@@ -219,7 +221,7 @@ class Route:
         return cls.from_dict(db.fetchrow("SELECT * FROM routes WHERE id=?", (route_id,)))
 
     def save_to_sql(self) -> str:
-        """ Save the Route to the SQL database """
+        """ Return the SQL command to save this data into the database """
         return ("INSERT INTO routes(id, agency_id, short_name, long_name, route_desc, route_type, route_url, route_colour, route_text_colour) VALUES "
                 f"({self.id!r}, {self.agency_id!r}, {self.short_name!r}, {self.long_name!r}, {self.route_desc!r}, "
                 f"{self.route_type!r}, {self.route_url!r}, {self.route_colour!r}, {self.route_text_colour!r})")
@@ -264,7 +266,7 @@ class Stop:
         return cls.from_dict(db.fetchrow("SELECT * FROM stops WHERE id=?", (stop_id,)))
 
     def save_to_sql(self) -> str:
-        """ Save the Stop to the SQL database """
+        """ Return the SQL command to save this data into the database """
         return ("INSERT INTO stops(id, code, name, description, latitude, longitude, zone_id, stop_url, location_type, parent_station) VALUES "
                 f"({self.id!r}, {self.code!r}, {self.name!r}, {self.description!r}, {self.latitude!r}, {self.longitude!r}, "
                 f"{self.zone_id!r}, {self.stop_url!r}, {self.location_type!r}, {self.parent_station!r})")
@@ -292,6 +294,9 @@ class Trip:
         return load_value(data, Calendar, self.calendar_id, db)
         # return Calendar.from_sql(self.calendar_id)
 
+    def shape(self, data: GTFSData = None, db: database.Database = None) -> Shape:
+        return load_value(data, Shape, self.shape_id, db)
+
     def __repr__(self):
         # "Trip 3626_209 to Charlesland, stop 7462 (93 stops) - Route 3626_39040
         return f"Trip {self.trip_id} to {self.headsign} ({self.total_stops} stops) - Route {self.route_id}"
@@ -317,7 +322,7 @@ class Trip:
         return cls.from_dict(db.fetchrow("SELECT * FROM trips WHERE trip_id=?", (trip_id,)))
 
     def save_to_sql(self) -> str:
-        """ Save the Trip to the SQL database """
+        """ Return the SQL command to save this data into the database """
         return ("INSERT INTO trips(route_id, calendar_id, trip_id, headsign, short_name, direction_id, block_id, shape_id, total_stops) VALUES "
                 f"({self.route_id!r}, {self.calendar_id!r}, {self.trip_id!r}, {self.headsign!r}, {self.short_name!r}, "
                 f"{self.direction_id!r}, {self.block_id!r}, {self.shape_id!r}, {self.total_stops!r})")
@@ -392,10 +397,83 @@ class StopTime:
         return cls.from_dict(db.fetchrow("SELECT * FROM stop_times WHERE trip_id=? AND sequence=?", (trip_id, sequence)))
 
     def save_to_sql(self) -> str:
-        """ Save the StopTime into the SQL database """
+        """ Return the SQL command to save this data into the database """
         return ("INSERT INTO stop_times(trip_id, arrival_time, departure_time, stop_id, sequence, stop_headsign, pickup_type, drop_off_type, timepoint) VALUES "
                 f"({self.trip_id!r}, {self.arrival_time!r}, {self.departure_time!r}, {self.stop_id!r}, {self.sequence!r}, "
                 f"{self.stop_headsign!r}, {self.pickup_type!r}, {self.drop_off_type!r}, {self.timepoint!r})")
+
+
+@dataclass()
+class Shape:
+    shape_id: str
+    shape_points: dict[int, ShapePoint]
+
+    def __len__(self) -> int:
+        return len(self.shape_points)
+
+    def __repr__(self):
+        return f"Shape {self.shape_id} ({len(self.shape_points)} points)"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, str | dict[int, ShapePoint]]) -> Shape:
+        """ Construct a new Shape object from a dictionary containing a shape ID and all the shape points """
+        try:
+            return cls(data["shape_id"], data["shape_points"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
+
+    @classmethod
+    def from_sql(cls, shape_id: str, db: database.Database = None) -> Shape:
+        """ Load a Shape from the SQL database """
+        if not db:
+            db = get_database()
+        data = db.fetch("SELECT * FROM shapes WHERE shape_id=?", (shape_id,))
+        if data:
+            points: dict[int, ShapePoint] = {p.sequence: p for p in map(ShapePoint.from_dict, data)}
+            # points: list[ShapePoint] = sorted(list(map(ShapePoint.from_dict, data)), key=lambda p: p.sequence)
+            return cls(points[1].shape_id, points)
+        else:
+            raise KeyError(f"No data found for Shape ID {shape_id}")
+
+    def save_to_sql(self) -> str:
+        """ Return the SQL command to save this data into the database """
+        return "; ".join(point.save_to_sql() for point in self.shape_points.values())
+
+
+@dataclass()
+class ShapePoint:
+    shape_id: str
+    sequence: int
+    latitude: float
+    longitude: float
+    distance_travelled: float
+
+    def shape(self, data: GTFSData = None, db: database.Database = None) -> Shape:
+        """ Get the full shape to which this point belongs """
+        return load_value(data, Shape, self.shape_id, db)
+
+    def __repr__(self):
+        return f"ShapePoint - {self.latitude:.4f}, {self.longitude:.4f} - #{self.sequence} for Shape {self.shape_id} - {self.distance_travelled:.2f}m travelled"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ShapePoint:
+        """ Construct a new ShapePoint from a dictionary """
+        try:
+            return cls(data["shape_id"], data["sequence"], data["latitude"], data["longitude"], data["distance_travelled"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
+
+    @classmethod
+    def from_sql(cls, shape_id: str, sequence: int, db: database.Database = None) -> ShapePoint:
+        """ Get the specific ShapePoint from the SQL database """
+        if not db:
+            db = get_database()
+        return cls.from_dict(db.fetchrow("SELECT * FROM shapes WHERE shape_id=? AND sequence=?", (shape_id, sequence)))
+
+    def save_to_sql(self) -> str:
+        """ Return the SQL command to save this data into the database """
+        return ("INSERT INTO shapes(shape_id, sequence, latitude, longitude, distance_travelled) VALUES "
+                f"({self.shape_id!r}, {self.sequence!r}, {self.latitude!r}, {self.longitude!r}, {self.distance_travelled!r})")
 
 
 # # Mapping of files to corresponding dataclasses
@@ -564,6 +642,13 @@ def read_and_store_gtfs_data():  # self=None
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved trips")
 
+    for row in iterate_over_csv_full("shapes.txt"):
+        statements.append(ShapePoint(row.shape_id, row.shape_pt_sequence, row.shape_pt_lat, row.shape_pt_lon, row.shape_dist_traveled).save_to_sql())
+        if len(statements) >= 100000:
+            save_to_sql()
+    save_to_sql()
+    print(f"{now()} > Static GTFS Loader > Saved shapes")
+
     # Delete old expiry and set the new one
     # noinspection SqlWithoutWhere
     db.execute("DELETE FROM expiry")
@@ -583,7 +668,7 @@ def init_gtfs_data(*, ignore_expiry: bool = False, db: database.Database = None)
         if db is None:
             db = get_database()
         check_gtfs_data_expiry(db)
-    return GTFSData({}, {}, {}, {}, {}, {}, {})
+    return GTFSData({}, {}, {}, {}, {}, {}, {}, {})
 
 
 def load_calendars(data: GTFSData):
@@ -607,7 +692,8 @@ key_mapping = {
     Route:             "routes",
     Stop:              "stops",
     StopTime:          "stop_times",
-    Trip:              "trips"
+    Trip:              "trips",
+    Shape:             "shapes"
 }
 
 

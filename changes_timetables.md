@@ -347,3 +347,7 @@
 
 ## v0.11.1 - 3 August 2024
 - Improved the algorithm for getting the arrival and departure delays for the TripDiagramViewer, the results should now be more accurate
+
+## v0.11.2 - 3 August 2024
+- The map can now estimate the direction in which the bus is moving
+- The database now stores Shapes (sets of lat/long coordinates for displaying the route of the bus on a map)

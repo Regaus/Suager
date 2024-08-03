@@ -409,6 +409,13 @@ tables = [
         Column("drop_off_type", "INTEGER", True),   # 0 or empty -> Drop off, 1 -> No drop off
         Column("timepoint", "INTEGER", True),       # 0 -> Times are approximate, 1 -> Times are exact
     ], "UNIQUE(trip_id, sequence)"),                 # Constraint: Trip ID + Sequence
+    Table("shapes", "gtfs/static.db", [
+        Column("shape_id", "TEXT", True),            # ID of the shape
+        Column("sequence", "INTEGER", True),         # Order of the shape point
+        Column("latitude", "REAL", True),            # Coordinates of the shape point
+        Column("longitude", "REAL", True),
+        Column("distance_travelled", "REAL", True),  # Total distance travelled along the line up until this point
+    ], "UNIQUE(shape_id, sequence)"),                # Constraint: Shape ID + Sequence
     Table("expiry", "gtfs/static.db", [
         Column("type", "INTEGER", True, True),  # 0 -> soft limit, 1 -> hard limit
         Column("date", "DATE", True)            # Date when expiry limit is reached
