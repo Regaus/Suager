@@ -75,7 +75,7 @@ class Header:
 
     @classmethod
     def load(cls, data: dict):
-        return cls(data["gtfs_realtime_version"], data["incrementality"], time.datetime.from_timestamp(int(data["timestamp"])))
+        return cls(data["gtfs_realtime_version"], data["incrementality"], time.datetime.from_timestamp(int(data["timestamp"]), tz=TIMEZONE))
 
 
 @dataclass()

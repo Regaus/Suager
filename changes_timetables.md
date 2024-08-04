@@ -357,3 +357,6 @@
 - Added ability to zoom out to level 16 (and back in to level 17) on the map view
 - Added ability to refresh the map view
 - Changed the cog's debug and write values to be public, and made the real-time data refreshing commands use those values
+
+## v0.11.3.1 - 4 August 2024
+- Changed the real-time GTFS data header's timestamp to show up in Irish time rather than UTC
