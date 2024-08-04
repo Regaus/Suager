@@ -360,3 +360,6 @@
 
 ## v0.11.3.1 - 4 August 2024
 - Changed the real-time GTFS data header's timestamp to show up in Irish time rather than UTC
+
+## v0.11.3.2 - 4 August 2024
+- Made the notes on the StopScheduleViewer and TripDiagramViewer to show up in small text (`-#`)

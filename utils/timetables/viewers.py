@@ -297,9 +297,9 @@ class StopScheduleViewer:
         stop_id = f"ID `{self.stop.id}`"
         additional_text = ""
         if extras:
-            additional_text += "*D = Drop-off/Alighting only; P = Pick-up/Boarding only*\n"
+            additional_text += "-# D = Drop-off/Alighting only; P = Pick-up/Boarding only\n"
         output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
-                 "*Please note that the vehicle locations and distances may not be accurate*\n" \
+                 "-# Please note that the vehicle locations and distances may not be accurate\n" \
                  f"{additional_text}```fix\n"
 
         for line in output_data:
@@ -664,7 +664,7 @@ class TripDiagramViewer:
             note = ""
 
         if pickup_only or drop_off_only:
-            extra_text = "\n*D = Drop-off/Alighting only; P = Pick-up/Boarding only*"
+            extra_text = "\n-# D = Drop-off/Alighting only; P = Pick-up/Boarding only"
         else:
             extra_text = ""
 
