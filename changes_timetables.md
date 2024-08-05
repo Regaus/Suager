@@ -363,3 +363,11 @@
 
 ## v0.11.3.2 - 4 August 2024
 - Made the notes on the StopScheduleViewer and TripDiagramViewer to show up in small text (`-#`)
+
+## v0.11.3.3 - 5 August 2024
+- Refactored the timetables maps submodule to have more consistent variable names and make it easier to customise the map generation afterwards
+- Changed the `__all__` declarations to use tuples instead of lists
+
+## v0.12.0 - 5 August 2024
+- Made it possible to look up a diagram of a trip on the map
+- Added a failsafe to prevent the map command from loading if the vehicle data is unavailable

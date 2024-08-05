@@ -7,10 +7,10 @@ from regaus import time
 from utils.timetables.shared import GTFSAPIError, TIMEZONE
 
 
-__all__ = [
+__all__ = (
     "load_gtfs_r_data", "GTFSRData", "VehicleData",
     "Header", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle"
-]
+)
 
 
 # These classes handle the GTFS-R Real time information

@@ -7,10 +7,10 @@ from utils.timetables.shared import TIMEZONE, get_database, get_data_database
 from utils.timetables.static import *
 from utils.timetables.realtime import *
 
-__all__ = [
+__all__ = (
     "SpecificStopTime", "AddedStopTime", "RealStopTime",
     "StopSchedule", "RealTimeStopSchedule", "real_trip_updates"
-]
+)
 
 
 class SpecificStopTime:

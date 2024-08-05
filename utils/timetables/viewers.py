@@ -9,9 +9,9 @@ from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
 from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
-from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses
+from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram
 
-__all__ = ["StopScheduleViewer", "TripDiagramViewer", "MapViewer"]
+__all__ = ("StopScheduleViewer", "TripDiagramViewer", "TripDiagramMapViewer", "MapViewer")
 
 
 def format_time(provided_time: time.datetime, today: time.date) -> str:
@@ -299,7 +299,7 @@ class StopScheduleViewer:
         if extras:
             additional_text += "-# D = Drop-off/Alighting only; P = Pick-up/Boarding only\n"
         output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
-                 "-# Please note that the vehicle locations and distances may not be accurate\n" \
+                 "-# Note: Vehicle locations and distances may not be accurate\n" \
                  f"{additional_text}```fix\n"
 
         for line in output_data:
@@ -738,6 +738,54 @@ class TripDiagramViewer:
         return format_time(provided_time, self.today)
 
 
+class TripDiagramMapViewer:
+    """ Map viewer for the trip diagram """
+    def __init__(self, cog, image: io.BytesIO, trip: Trip, stop: Stop):
+        self.cog = cog
+        self.static_data: GTFSData = cog.static_data
+        self.vehicle_data: VehicleData = cog.vehicle_data
+        self.trip: Trip = trip
+        self.stop: Stop = stop
+        self.image: io.BytesIO = image
+        self.output: str = self.create_output()
+
+    @classmethod
+    async def load(cls, cog, trip: Trip, stop: Stop):
+        image_bio = await get_trip_diagram(trip, stop, cog.static_data, cog.vehicle_data)
+        return cls(cog, image_bio, trip, stop)
+
+    @property
+    def attachment(self) -> tuple[discord.File]:
+        """ The Discord attachment with the map image """
+        return (discord.File(self.image, f"{self.trip.trip_id}.png"),)
+
+    async def refresh(self):
+        """ Refresh the map with new data """
+        _, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        await self.update_map()
+        self.update_output()
+
+    async def update_map(self):
+        """ Update the map output without refreshing the vehicle data """
+        self.image = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data)
+
+    @property
+    def data_timestamp(self) -> str:
+        """ Returns the timestamp of the vehicle data """
+        data_timestamp = self.vehicle_data.header.timestamp
+        return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+
+    def create_output(self) -> str:
+        """ Create the text part of the output """
+        output = (f"Map overview of Trip {self.trip.trip_id}.\n"
+                  "-# Stop colours: Blue = current stop | Yellow = drop off only | Orange = pick up only | Green = regular stop\n"
+                  f"-# Vehicle data timestamp: {self.data_timestamp}")
+        return output
+
+    def update_output(self):
+        self.output = self.create_output()
+
+
 class MapViewer:
     """ Viewer for the map around a bus stop """
     def __init__(self, cog, image: io.BytesIO, stop: Stop, zoom: int = DEFAULT_ZOOM):
@@ -748,9 +796,7 @@ class MapViewer:
         self.lat: float = stop.latitude
         self.lon: float = stop.longitude
         self.zoom: int = zoom
-
         self.image: io.BytesIO = image
-        self.attachment = self.get_attachment()
         self.output: str = self.create_output()
 
     @classmethod
@@ -758,10 +804,10 @@ class MapViewer:
         image_bio = await get_map_with_buses(stop.latitude, stop.longitude, zoom, cog.vehicle_data, cog.static_data)
         return cls(cog, image_bio, stop, zoom)
 
-    def get_attachment(self):
-        """ Generate the Discord attachment from the map image """
-        attachment: tuple[discord.File] = (discord.File(self.image, f"{self.stop.id}.png"),)
-        return attachment
+    @property
+    def attachment(self) -> tuple[discord.File]:
+        """ The Discord attachment with the map image """
+        return (discord.File(self.image, f"{self.stop.id}.png"),)
 
     async def refresh(self):
         """ Refresh the map with new data """
@@ -772,16 +818,20 @@ class MapViewer:
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
         self.image = await get_map_with_buses(self.stop.latitude, self.stop.longitude, self.zoom, self.cog.vehicle_data, self.cog.static_data)
-        self.attachment = self.get_attachment()
+
+    @property
+    def data_timestamp(self) -> str:
+        """ Returns the timestamp of the vehicle data """
+        data_timestamp = self.vehicle_data.header.timestamp
+        return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
 
     def create_output(self) -> str:
         """ Create the text part of the output """
         stop_code = f"Code `{self.stop.code}`, " if self.stop.code else ""
         stop_id = f"ID `{self.stop.id}`"
-        data_timestamp = self.vehicle_data.header.timestamp
         output = (f"Buses currently near the stop {self.stop.name} ({stop_code}{stop_id})\n"
                   "The blue circle represents your stop's location, while the green rectangles represent the buses.\n"
-                  f"-# Vehicle data timestamp: {data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)\n"
+                  f"-# Vehicle data timestamp: {self.data_timestamp}\n"
                   "-# Note: This only shows vehicles whose location is tracked by TFI's real-time data. A vehicle may not show up on this map despite being there in reality.\n"
                   "-# Note: The direction displayed on the map may sometimes be inaccurate.")
         return output

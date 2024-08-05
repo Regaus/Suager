@@ -1,16 +1,21 @@
+import json
+
 import pytz
 
 from utils import database
 
-__all__ = [
+__all__ = (
+    "__version__",
     "real_time_filename", "vehicles_filename",
     "TIMEZONE", "CHUNK_SIZE", "WEEKDAYS", "NUMBERS", "WARNING", "CANCELLED",
     "get_database", "get_data_database",
     "GTFSAPIError"
-]
+)
 
 
 # Constants
+__version__ = json.load(open("version.json", "r"))["timetables"]["version"]
+
 real_time_filename = "data/gtfs/real_time.json"
 vehicles_filename = "data/gtfs/vehicles.json"
 TIMEZONE = pytz.timezone("Europe/Dublin")

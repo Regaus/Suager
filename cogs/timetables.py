@@ -745,8 +745,10 @@ class Timetables(University, Luas, name="Timetables"):
                 return await ctx.send("The GTFS data available has expired.")
 
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        if self.vehicle_data is None:
+            return await ctx.send("Vehicle data seems to be unavailable at the moment. Try again in a minute.")
         try:
-            map_viewer = await timetables.MapViewer.load(self, stop, zoom=timetables.DEFAULT_ZOOM)
+            map_viewer: timetables.MapViewer = await timetables.MapViewer.load(self, stop, zoom=timetables.DEFAULT_ZOOM)
         except Exception:
             raise
         return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.MapView(ctx.author, message, map_viewer, ctx))
