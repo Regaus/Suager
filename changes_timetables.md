@@ -371,3 +371,7 @@
 ## v0.12.0 - 5 August 2024
 - Made it possible to look up a diagram of a trip on the map
 - Added a failsafe to prevent the map command from loading if the vehicle data is unavailable
+- Changed the font on the maps to Univers
+
+## v0.12.0.1 - 5 August 2024
+- Added a real-time data timestamp for StopScheduleViewer and TripDiagramViewer

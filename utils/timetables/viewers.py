@@ -142,6 +142,14 @@ class StopScheduleViewer:
         """ Returns the stop times we can iterate over """
         return self.real_stop_times if self.real_time else self.base_stop_times
 
+    @property
+    def data_timestamp(self) -> str:
+        """ Returns the timestamp of the real-time data """
+        if self.real_time_data:
+            data_timestamp = self.real_time_data.header.timestamp
+            return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+        return "Real-time data unavailable"
+
     def create_output(self):
         """ Create the output from available information and send it to the user """
         language = languages.Language("en")
@@ -297,10 +305,12 @@ class StopScheduleViewer:
         stop_id = f"ID `{self.stop.id}`"
         additional_text = ""
         if extras:
-            additional_text += "-# D = Drop-off/Alighting only; P = Pick-up/Boarding only\n"
+            additional_text += "\n-# D = Drop-off/Alighting only; P = Pick-up/Boarding only"
+        if self.real_time:
+            additional_text += f"\n-# Real-time data timestamp: {self.data_timestamp}"
         output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
-                 "-# Note: Vehicle locations and distances may not be accurate\n" \
-                 f"{additional_text}```fix\n"
+                 "-# Note: Vehicle locations and distances may not be accurate" \
+                 f"{additional_text}\n```fix\n"
 
         for line in output_data:
             assert len(column_sizes) == len(line)
@@ -422,6 +432,14 @@ class TripDiagramViewer:
         self.today = self.now.date()
         if prev_today != self.today:
             self.timedelta += prev_today - self.today
+
+    @property
+    def data_timestamp(self) -> str:
+        """ Returns the timestamp of the real-time data """
+        if self.real_time_data:
+            data_timestamp = self.real_time_data.header.timestamp
+            return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+        return "Real-time data unavailable"
 
     def create_output(self) -> paginators.LinePaginator:
         output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure"]]
@@ -667,6 +685,9 @@ class TripDiagramViewer:
             extra_text = "\n-# D = Drop-off/Alighting only; P = Pick-up/Boarding only"
         else:
             extra_text = ""
+
+        if self.is_real_time:
+            extra_text += f"\n-# Real-time data timestamp: {self.data_timestamp}"
 
         if self.static_trip:
             trip_id = self.static_trip.trip_id
