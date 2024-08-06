@@ -484,12 +484,19 @@ class TripDiagramViewer:
                 extend_list(departure_delays, repetitions)
                 real_time_statuses.append(stop_time_update.schedule_relationship != "SKIPPED")
                 departure_delays.append(stop_time_update.departure_delay)
-                if prev_sequence == 1 and stop_time_update.arrival_delay is None:
-                    arrival_delays.append(departure_delays[0])
+                # if prev_sequence == 1 and arrival_delays[0] is None:
+                #     if repetitions > 0:
+                #         arrival_delays.append(departure_delays[0])
+                #         extend_list(arrival_delays, repetitions - 1)
+                #     else:
+                #         arrival_delays.append(stop_time_update.arrival_delay)
+                # else:
+                #     extend_list(arrival_delays, repetitions)
+                #     arrival_delays.append(stop_time_update.arrival_delay)
+                if repetitions > 0:
+                    arrival_delays.append(departure_delays[prev_sequence - 1])
                     extend_list(arrival_delays, repetitions - 1)
-                else:
-                    extend_list(arrival_delays, repetitions)
-                    arrival_delays.append(stop_time_update.arrival_delay)
+                arrival_delays.append(stop_time_update.arrival_delay)
                 if stop_time_update.arrival_time is not None:
                     custom_arrival_times[sequence] = stop_time_update.arrival_time
                 if stop_time_update.departure_time is not None:
@@ -499,12 +506,27 @@ class TripDiagramViewer:
                 total_stops = self.static_trip.total_stops
                 remaining = total_stops - len(real_time_statuses)
                 extend_list(real_time_statuses, remaining)
-                if arrival_delays[-1] is None:
+                # if arrival_delays[-1] is None:
+                #     if remaining > 0:
+                #         arrival_delays.append(departure_delays[-1])
+                #         extend_list(arrival_delays, remaining - 1)
+                #     else:
+                #         arrival_delays[-1] = departure_delays[-1]
+                # else:
+                #     extend_list(arrival_delays, remaining)
+                if remaining > 0:
                     arrival_delays.append(departure_delays[-1])
                     extend_list(arrival_delays, remaining - 1)
+                elif arrival_delays[-1] is None:
+                    arrival_delays[-1] = departure_delays[-1]
+                if departure_delays[-1] is None:
+                    if remaining > 0:
+                        departure_delays.append(arrival_delays[-1])
+                        extend_list(departure_delays, remaining - 1)
+                    else:
+                        departure_delays[-1] = arrival_delays[-1]
                 else:
-                    extend_list(arrival_delays, remaining)
-                extend_list(departure_delays, remaining)
+                    extend_list(departure_delays, remaining)
                 stop_times = get_stop_times()
                 for stop_time in stop_times:
                     sequence = stop_time.sequence

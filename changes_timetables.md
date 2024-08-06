@@ -344,3 +344,6 @@
 ## v0.11.0 - 3 August 2024
 - Added ability to see buses currently near a bus stop on a map image
 - Made static GTFS dataclasses raise a KeyError instead of a TypeError when the value passed is invalid or None
+
+## v0.11.1 - 3 August 2024
+- Improved the algorithm for getting the arrival and departure delays for the TripDiagramViewer, the results should now be more accurate
