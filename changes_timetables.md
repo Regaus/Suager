@@ -375,3 +375,6 @@
 
 ## v0.12.0.1 - 5 August 2024
 - Added a real-time data timestamp for StopScheduleViewer and TripDiagramViewer
+
+## v0.12.0.2 - 6 August 2024
+- Changed the "find fitting coordinates and zoom" algorithm to be more likely to produce a map where all the points fit

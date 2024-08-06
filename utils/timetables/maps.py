@@ -1,6 +1,7 @@
 import io
 import os.path
 from contextlib import suppress
+from itertools import islice
 from math import radians as rad, degrees as deg, cos, sinh, tan, atan, pi, log, asin
 
 import numpy
@@ -56,18 +57,34 @@ def xy_to_deg(x: float, y: float, zoom: int) -> tuple[float, float]:
 
 def find_fitting_coords_and_zoom(shape: Shape) -> tuple[int, int, int]:
     """ Find the best-fitting (x, y) coordinates and zoom level for a shape """
-    points = len(shape.shape_points)
-    start_point = shape.shape_points[1]
-    start_x, start_y = deg_to_xy(start_point.latitude, start_point.longitude, DEFAULT_ZOOM)
-    mid_point = shape.shape_points[points // 2]
-    mid_x, mid_y = deg_to_xy(mid_point.latitude, mid_point.longitude, DEFAULT_ZOOM)
-    end_point = shape.shape_points[points]
-    end_x, end_y = deg_to_xy(end_point.latitude, end_point.longitude, DEFAULT_ZOOM)
+    # points = len(shape.shape_points)
+    # start_point = shape.shape_points[1]
+    # start_x, start_y = deg_to_xy(start_point.latitude, start_point.longitude, DEFAULT_ZOOM)
+    # mid_point = shape.shape_points[points // 2]
+    # mid_x, mid_y = deg_to_xy(mid_point.latitude, mid_point.longitude, DEFAULT_ZOOM)
+    # end_point = shape.shape_points[points]
+    # end_x, end_y = deg_to_xy(end_point.latitude, end_point.longitude, DEFAULT_ZOOM)
+    #
+    # min_x = min(start_x, mid_x, end_x)
+    # min_y = min(start_y, mid_y, end_y)
+    # max_x = max(start_x, mid_x, end_x)
+    # max_y = max(start_y, mid_y, end_y)
 
-    min_x = min(start_x, mid_x, end_x)
-    min_y = min(start_y, mid_y, end_y)
-    max_x = max(start_x, mid_x, end_x)
-    max_y = max(start_y, mid_y, end_y)
+    min_x, min_y = float("inf"), float("inf")
+    max_x, max_y = float("-inf"), float("-inf")
+
+    # Get coordinates for every 20th point to be more likely to make them fit
+    # for point in list(shape.shape_points.values())[::20]:  # TypeError: 'dict_values' object is not subscriptable - Python devs in their infinite wisdom
+    for point in islice(shape.shape_points.values(), 0, None, 20):
+        x, y = deg_to_xy(point.latitude, point.longitude, DEFAULT_ZOOM)
+        if x < min_x:
+            min_x = x
+        if x > max_x:
+            max_x = x
+        if y < min_y:
+            min_y = y
+        if y > max_y:
+            max_y = y
 
     dist_x = max_x - min_x
     dist_y = max_y - min_y
