@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import override
 
@@ -6,6 +7,7 @@ import discord
 from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.shared import get_data_database, NUMBERS
+from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
 from utils.views import NumericInputModal, SelectMenu
 
@@ -639,6 +641,9 @@ class MapView(views.InteractiveView):
         self.viewer = map_viewer
         self.data_db = get_data_database()
         self.refreshing: bool = False
+        self.zoom_updating: bool = False
+        self.min_zoom = DEFAULT_ZOOM - 1  # Minimum allowed zoom: 16
+        self.max_zoom = DEFAULT_ZOOM + 1  # Maximum allowed zoom: 18
 
     async def refresh(self):
         """ Refresh the real-time data """
@@ -658,25 +663,40 @@ class MapView(views.InteractiveView):
         await self.refresh()
         await self.disable_button(self.message, button, cooldown=60)
 
-    def update_zoom_button(self):
-        if self.viewer.zoom == 16:
-            self.change_zoom.label = "Zoom in"
-        else:  # zoom = 17
-            self.change_zoom.label = "Zoom out"
+    async def update_zoom_buttons(self):
+        """ Change the two buttons to be in an appropriate state after a 5s cooldown """
+        await asyncio.sleep(5)
+        self.zoom_out.disabled = self.viewer.zoom <= self.min_zoom
+        self.zoom_in.disabled = self.viewer.zoom >= self.max_zoom
+        await self.message.edit(view=self)
 
-    @discord.ui.button(label="Zoom out", emoji="🔎", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
-    async def change_zoom(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Zoom in or out on the map """
+    async def zoom_button_response(self, interaction: discord.Interaction, movement: int):
+        """ Zoom in or out - common function for the two buttons """
         await interaction.response.defer()
-        if self.viewer.zoom == 16:
-            self.viewer.zoom = 17
-        else:
-            self.viewer.zoom = 16
-        await self.viewer.update_map()
-        self.viewer.update_output()
-        self.update_zoom_button()
-        await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
-        await self.disable_button(self.message, button, cooldown=5)
+        if self.zoom_updating:
+            return await interaction.followup.send("The map's zoom is already being updated, please wait.", ephemeral=True)
+        self.zoom_updating = True
+        try:
+            self.viewer.zoom += movement
+            await self.viewer.update_map()
+            self.viewer.update_output()
+            # Disable the zoom buttons for 5 seconds
+            self.zoom_out.disabled = True
+            self.zoom_in.disabled = True
+            await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
+            await self.update_zoom_buttons()
+        finally:
+            self.zoom_updating = False
+
+    @discord.ui.button(label="Zoom out", emoji="🗺️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_out(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom out on the map """
+        return await self.zoom_button_response(interaction, -1)
+
+    @discord.ui.button(label="Zoom in", emoji="🔎", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_in(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom in on the map """
+        return await self.zoom_button_response(interaction, 1)
 
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):

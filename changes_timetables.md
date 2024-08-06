@@ -378,3 +378,6 @@
 
 ## v0.12.0.2 - 6 August 2024
 - Changed the "find fitting coordinates and zoom" algorithm to be more likely to produce a map where all the points fit
+
+## v0.12.1 - 6 August 2024
+- Changed the highest available zoom to be 18 (making the limit 16-18 rather than 16-17)
