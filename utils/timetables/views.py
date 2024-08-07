@@ -328,6 +328,8 @@ class RouteFilterSelector(SelectMenu):
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=25, options=[], row=3)
 
+        values = set()
+
         for route in self.interface.schedule.base_schedule.all_routes:
             name = f"Route {route.short_name}"
             description = route.long_name
@@ -335,7 +337,10 @@ class RouteFilterSelector(SelectMenu):
                 value = f"{route.short_name} {route.long_name}"
             else:
                 value = route.short_name
-            self.add_option(value=value, label=name, description=description)
+            # Prevent crashing from duplicate bus route numbers
+            if value not in values:
+                self.add_option(value=value, label=name, description=description)
+                values.add(value)
 
         self.options.sort(key=lambda x: alphanumeric_sort_string(x.value))
         self.max_values = len(self.options)

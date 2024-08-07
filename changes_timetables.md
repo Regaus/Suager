@@ -395,3 +395,6 @@
 - Stopped TripDiagramViewer from breaking if no stop time was ever loaded for the trip before
 - Added a special debug command for testing the TripDiagramMapViewer
 - Added special debug functions to generate fake real-time and added trips and create fake vehicles
+
+## v0.12.3.1 - 8 August 2024
+- Fixed the RouteFilterSelector crashing when two bus routes running through a bus stop happened to have the same number
