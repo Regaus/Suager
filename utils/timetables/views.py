@@ -11,7 +11,7 @@ from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
 from utils.views import NumericInputModal, SelectMenu
 
-__all__ = ("StopScheduleView", "TripDiagramView", "MapView")
+__all__ = ("StopScheduleView", "TripDiagramView", "TripDiagramMapView", "MapView")
 
 
 # noinspection PyUnresolvedReferences
@@ -387,20 +387,21 @@ class RouteLineSelector(SelectMenu):
         # noinspection PyUnresolvedReferences
         await interaction.response.defer()
         message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading data about the trip...", wait=True)
-        # try:
-        #     message = await _message.fetch()
-        # except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
-        #     message = _message
+        if not self.interface.temporary:
+            try:
+                message: discord.Message = await message.fetch()
+            except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
+                pass
         viewer = TripDiagramViewer(self.interface, self.values[0])
-        view = TripDiagramView(interaction.user, message, viewer)
+        view = TripDiagramView(interaction.user, message, viewer, try_full_fetch=False)
         return await view.update_message()
 
 
 # noinspection PyUnresolvedReferences
 class TripDiagramView(views.InteractiveView):
     """ A view for displaying the list of all stops in a trip """
-    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer):
-        super().__init__(sender=sender, message=message, timeout=3600)
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer, *, try_full_fetch: bool = True):
+        super().__init__(sender=sender, message=message, timeout=3600, try_full_fetch=try_full_fetch)
         self.viewer = viewer
         self.command = f"{self.__class__.__name__} {self.viewer.trip_identifier}"
         self._stop = self.viewer.stop
@@ -554,15 +555,17 @@ class TripDiagramView(views.InteractiveView):
         button.disabled = True
         await self.message.edit(view=self)
         message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading the map...")
-        # try:
-        #     message: discord.Message = await message.fetch()
-        # except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
-        #     pass
+        if not self.temporary:
+            try:
+                message: discord.Message = await message.fetch()
+            except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
+                pass
         try:
-            map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer.cog, self.viewer.static_trip, self.viewer.stop)
+            map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer)
+            # map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer.cog, self.viewer.static_trip, self.viewer.stop, self.viewer)
         except Exception:
             raise
-        view = TripDiagramMapView(interaction.user, message, map_viewer)
+        view = TripDiagramMapView(interaction.user, message, map_viewer, try_full_fetch=False)
         return await view.update_message()
 
 
@@ -591,9 +594,11 @@ class GoToPageModal(NumericInputModal):
 # noinspection PyUnresolvedReferences
 class TripDiagramMapView(views.InteractiveView):
     """ A view for displaying a trip diagram on a map """
-    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: TripDiagramMapViewer, ctx: commands.Context | discord.Interaction = None):
-        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
+    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: TripDiagramMapViewer, ctx: commands.Context | discord.Interaction = None,
+                 *, try_full_fetch: bool = True):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx, try_full_fetch=try_full_fetch)
         self.viewer = map_viewer
+        self.command = f"{self.__class__.__name__} {self.viewer.trip_id}"
         self.data_db = get_data_database()
         self.refreshing: bool = False
 

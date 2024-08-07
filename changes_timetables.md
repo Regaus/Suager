@@ -381,3 +381,17 @@
 
 ## v0.12.1 - 6 August 2024
 - Changed the highest available zoom to be 18 (making the limit 16-18 rather than 16-17)
+
+## v0.12.2 - 6 August 2024
+- Fixed the TripDiagramView and TripDiagramMapView breaking after 15 minutes
+- The TripDiagramMapViewer now gets its data from the TripDiagramViewer, including information about arrival and departure times
+- The departure times for stops are now rendered on the TripDiagramViewer
+- Made the TripDiagramMapViewer be able to handle added trips
+- Fixed the TripDiagramMapViewer breaking if the trip had no vehicle tracked
+
+## v0.12.3 - 6-7 August 2024
+- The TripDiagramMapViewer map should no longer be able to go out of bounds
+- The times shown on the TripDiagramMapViewer will now try to not overlap with each other (not perfect, but decent enough to leave for now)
+- Stopped TripDiagramViewer from breaking if no stop time was ever loaded for the trip before
+- Added a special debug command for testing the TripDiagramMapViewer
+- Added special debug functions to generate fake real-time and added trips and create fake vehicles

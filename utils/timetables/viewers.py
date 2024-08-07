@@ -394,6 +394,16 @@ class TripDiagramViewer:
         self.compact_mode: int = stop_schedule.compact_mode  # 0 -> disabled | 1 -> shorter stop names | 2 -> mobile-friendly mode
         self.current_stop_page: int | None = None
         self.route = self.get_route()
+
+        # Attributes for the output generator
+        self.skipped: set[int] = set()
+        self.pickup_only: set[int] = set()
+        self.drop_off_only: set[int] = set()
+        self.stops: list[Stop] = []
+        self.arrivals: list[time.datetime] = []
+        self.departures: list[time.datetime] = []
+        self.total_stops: int = -1
+        self.get_output_values()
         self.output = self.create_output()
 
     def get_route(self) -> Route | None:
@@ -432,6 +442,7 @@ class TripDiagramViewer:
         self.today = self.now.date()
         if prev_today != self.today:
             self.timedelta += prev_today - self.today
+        self.get_output_values()  # Update the values with the new real-time data
 
     @property
     def data_timestamp(self) -> str:
@@ -441,29 +452,23 @@ class TripDiagramViewer:
             return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
         return "Real-time data unavailable"
 
-    def create_output(self) -> paginators.LinePaginator:
-        output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure"]]
-        column_sizes: list[int] = [3, 4, 9, 9, 9]
-        alignments: list[str] = ["<", ">", "<", ">", ">"]
-        stop_name_idx = 2
-        if self.compact_mode:  # >= 1
-            output_data[0][3] = "Arr"
-            output_data[0][4] = "Dep"
-            column_sizes[3] = column_sizes[4] = 5
-        if self.compact_mode == 2:
-            # Remove the arrival time (3) and the stop code (1)
-            for idx in (3, 1):
-                output_data[0].pop(idx)
-                column_sizes.pop(idx)
-                alignments.pop(idx)
-            stop_name_idx = 1
+    def get_output_values(self):
+        """ Sets the values for stop time-related values used in the output generator
 
-        skipped: set[int] = set()
-        pickup_only: set[int] = set()
-        drop_off_only: set[int] = set()
-        stops: list[Stop] = []
-        arrivals: list[time.datetime] = []
-        departures: list[time.datetime] = []
+        Values set:
+         - Set of skipped stops
+         - Set of pick up-only stops
+         - Set of drop off-only stops
+         - List of all stops for the trip
+         - List of arrival times at each stop
+         - List of departure times at each stop
+        """
+        self.skipped: set[int] = set()
+        self.pickup_only: set[int] = set()
+        self.drop_off_only: set[int] = set()
+        self.stops: list[Stop] = []
+        self.arrivals: list[time.datetime] = []
+        self.departures: list[time.datetime] = []
 
         def get_stop_times():
             _total_stops = self.static_trip.total_stops
@@ -477,6 +482,8 @@ class TripDiagramViewer:
             if not base_stop_times:
                 base_stop_times = StopTime.from_sql(_trip_id)
                 for _stop_time in base_stop_times:
+                    if _trip_id not in self.static_data.stop_times:
+                        self.static_data.stop_times[_trip_id] = {}
                     self.static_data.stop_times[_trip_id][_stop_time.stop_id] = _stop_time
             # Apparently they need to be sorted because they may somehow come out in the wrong order
             return sorted([SpecificStopTime(_stop_time, self.today + self.timedelta) for _stop_time in base_stop_times], key=lambda st: st.sequence)
@@ -505,15 +512,6 @@ class TripDiagramViewer:
                 extend_list(departure_delays, repetitions)
                 real_time_statuses.append(stop_time_update.schedule_relationship != "SKIPPED")
                 departure_delays.append(stop_time_update.departure_delay)
-                # if prev_sequence == 1 and arrival_delays[0] is None:
-                #     if repetitions > 0:
-                #         arrival_delays.append(departure_delays[0])
-                #         extend_list(arrival_delays, repetitions - 1)
-                #     else:
-                #         arrival_delays.append(stop_time_update.arrival_delay)
-                # else:
-                #     extend_list(arrival_delays, repetitions)
-                #     arrival_delays.append(stop_time_update.arrival_delay)
                 if repetitions > 0:
                     arrival_delays.append(departure_delays[prev_sequence - 1])
                     extend_list(arrival_delays, repetitions - 1)
@@ -524,17 +522,9 @@ class TripDiagramViewer:
                     custom_departure_times[sequence] = stop_time_update.departure_time
                 prev_sequence = sequence
             if self.static_trip:
-                total_stops = self.static_trip.total_stops
-                remaining = total_stops - len(real_time_statuses)
+                self.total_stops = self.static_trip.total_stops
+                remaining = self.total_stops - len(real_time_statuses)
                 extend_list(real_time_statuses, remaining)
-                # if arrival_delays[-1] is None:
-                #     if remaining > 0:
-                #         arrival_delays.append(departure_delays[-1])
-                #         extend_list(arrival_delays, remaining - 1)
-                #     else:
-                #         arrival_delays[-1] = departure_delays[-1]
-                # else:
-                #     extend_list(arrival_delays, remaining)
                 if remaining > 0:
                     arrival_delays.append(departure_delays[-1])
                     extend_list(arrival_delays, remaining - 1)
@@ -553,64 +543,81 @@ class TripDiagramViewer:
                     sequence = stop_time.sequence
                     index = sequence - 1
                     if sequence in custom_arrival_times:
-                        arrivals.append(custom_arrival_times[sequence])
+                        self.arrivals.append(custom_arrival_times[sequence])
                     else:
                         arrival_delay = arrival_delays[index]
                         if arrival_delay is None:
                             arrival_delay = time.timedelta()
-                        arrivals.append(stop_time.arrival_time + arrival_delay)
+                        self.arrivals.append(stop_time.arrival_time + arrival_delay)
                     if sequence in custom_departure_times:
-                        departures.append(custom_departure_times[sequence])
+                        self.departures.append(custom_departure_times[sequence])
                     else:
                         departure_delay = departure_delays[index]
                         if departure_delay is None:
                             departure_delay = time.timedelta()
-                        departures.append(stop_time.departure_time + departure_delay)
-                    stops.append(stop_time.stop(self.static_data))
+                        self.departures.append(stop_time.departure_time + departure_delay)
+                    self.stops.append(stop_time.stop(self.static_data))
                     if stop_time.pickup_type == 1:
-                        drop_off_only.add(sequence - 1)
+                        self.drop_off_only.add(sequence - 1)
                     elif stop_time.drop_off_type == 1:
-                        pickup_only.add(sequence - 1)
+                        self.pickup_only.add(sequence - 1)
                 for idx in range(len(real_time_statuses)):
                     if not real_time_statuses[idx]:
-                        skipped.add(idx)
+                        self.skipped.add(idx)
             else:
-                total_stops = len(real_time_statuses)
-                for sequence in range(1, total_stops + 1):
-                    arrivals.append(custom_arrival_times.get(sequence, None))
-                    departures.append(custom_departure_times.get(sequence, None))
+                self.total_stops = len(real_time_statuses)
+                for sequence in range(1, self.total_stops + 1):
+                    self.arrivals.append(custom_arrival_times.get(sequence, None))
+                    self.departures.append(custom_departure_times.get(sequence, None))
                 for stop_time in self.real_trip.stop_times:
-                    stops.append(load_value(self.static_data, Stop, stop_time.stop_id))
+                    self.stops.append(load_value(self.static_data, Stop, stop_time.stop_id))
         else:
-            total_stops = self.static_trip.total_stops
+            self.total_stops = self.static_trip.total_stops
             stop_times = get_stop_times()
             for stop_time in stop_times:
-                arrivals.append(stop_time.arrival_time)
-                departures.append(stop_time.departure_time)
-                stops.append(stop_time.stop(self.static_data))
+                self.arrivals.append(stop_time.arrival_time)
+                self.departures.append(stop_time.departure_time)
+                self.stops.append(stop_time.stop(self.static_data))
                 if stop_time.pickup_type == 1:
-                    drop_off_only.add(stop_time.sequence - 1)
+                    self.drop_off_only.add(stop_time.sequence - 1)
                 elif stop_time.drop_off_type == 1:
-                    pickup_only.add(stop_time.sequence - 1)
+                    self.pickup_only.add(stop_time.sequence - 1)
 
         # Fix arrival and departure times: if the next stop is left before the previous one, mark all previous stops as already departed from
-        for idx in range(total_stops - 1, 1, -1):
-            arr_time, dep_time = arrivals[idx], departures[idx]
+        for idx in range(self.total_stops - 1, 1, -1):
+            arr_time, dep_time = self.arrivals[idx], self.departures[idx]
             if arr_time is None:
                 arr_time = time.datetime().min
             if dep_time is None:
                 dep_time = time.datetime().max
             if dep_time < arr_time:
-                arrivals[idx] = arr_time = dep_time
+                self.arrivals[idx] = arr_time = dep_time
 
-            prev_arr_time = arrivals[idx - 1]
+            prev_arr_time = self.arrivals[idx - 1]
             if prev_arr_time is None:
                 prev_arr_time = time.datetime().min
-            prev_dep_time = departures[idx - 1]
+            prev_dep_time = self.departures[idx - 1]
             if prev_dep_time is None:
                 prev_dep_time = time.datetime().min
             if prev_dep_time > arr_time or prev_arr_time > arr_time:
-                arrivals[idx - 1] = departures[idx - 1] = arr_time
+                self.arrivals[idx - 1] = self.departures[idx - 1] = arr_time
+
+    def create_output(self) -> paginators.LinePaginator:
+        output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure"]]
+        column_sizes: list[int] = [3, 4, 9, 9, 9]
+        alignments: list[str] = ["<", ">", "<", ">", ">"]
+        stop_name_idx = 2
+        if self.compact_mode:  # >= 1
+            output_data[0][3] = "Arr"
+            output_data[0][4] = "Dep"
+            column_sizes[3] = column_sizes[4] = 5
+        if self.compact_mode == 2:
+            # Remove the arrival time (3) and the stop code (1)
+            for idx in (3, 1):
+                output_data[0].pop(idx)
+                column_sizes.pop(idx)
+                alignments.pop(idx)
+            stop_name_idx = 1
 
         # This is used in the for loop below
         def add_letter(ltr: str):
@@ -622,35 +629,35 @@ class TripDiagramViewer:
                 arrival = ltr + arrival
 
         current_stop_marked: bool = False
-        fill = len(str(total_stops))
-        for idx in range(total_stops):
+        fill = len(str(self.total_stops))
+        for idx in range(self.total_stops):
             seq = f"{idx + 1:0{fill}d})"
-            stop = stops[idx]
+            stop = self.stops[idx]
             code = stop.code_or_id
             name = stop.name
 
-            _arrival = arrivals[idx]
+            _arrival = self.arrivals[idx]
             if _arrival is not None:
                 arrival = self.format_time(_arrival)
             else:
                 arrival = "  N/A"
                 _arrival = time.datetime().min
 
-            _departure = departures[idx]
+            _departure = self.departures[idx]
             if _departure is not None:
                 departure = self.format_time(_departure)
             else:
                 departure = "  N/A"
                 _departure = time.datetime().max
 
-            if idx in pickup_only:
+            if idx in self.pickup_only:
                 add_letter("P ")
-            elif idx in drop_off_only:
+            elif idx in self.drop_off_only:
                 add_letter("D ")
 
             if self.cancelled:
                 emoji = CANCELLED
-            elif idx in skipped:
+            elif idx in self.skipped:
                 emoji = WARNING
                 departure = "Skipped"
             elif not current_stop_marked and (self.now < _arrival or self.now < _departure):
@@ -681,7 +688,7 @@ class TripDiagramViewer:
         else:
             note = ""
 
-        if pickup_only or drop_off_only:
+        if self.pickup_only or self.drop_off_only:
             extra_text = "\n-# D = Drop-off/Alighting only; P = Pick-up/Boarding only"
         else:
             extra_text = ""
@@ -695,7 +702,7 @@ class TripDiagramViewer:
             route = f"Route {self.route.short_name}"
         else:
             trip_id = self.real_trip.entity_id
-            destination = stops[-1].name
+            destination = self.stops[-1].name
             if self.route:
                 route = f"Route {self.route.short_name}"
             else:
@@ -747,7 +754,7 @@ class TripDiagramViewer:
         for idx, line in enumerate(output_data[1:], start=0):
             assert len(column_sizes) == len(line)
             paginator.add_line(generate_line(line))
-            if stops[idx].id == self.stop.id:
+            if self.stops[idx].id == self.stop.id:
                 self.current_stop_page = len(paginator.pages) - 1
         return paginator
 
@@ -761,34 +768,63 @@ class TripDiagramViewer:
 
 class TripDiagramMapViewer:
     """ Map viewer for the trip diagram """
-    def __init__(self, cog, image: io.BytesIO, trip: Trip, stop: Stop):
-        self.cog = cog
-        self.static_data: GTFSData = cog.static_data
-        self.vehicle_data: VehicleData = cog.vehicle_data
-        self.trip: Trip = trip
-        self.stop: Stop = stop
+    def __init__(self, image: io.BytesIO, viewer: TripDiagramViewer):
         self.image: io.BytesIO = image
+        self.original_viewer: TripDiagramViewer = viewer
+        self.trip: Trip | TripUpdate = viewer.static_trip or viewer.real_trip
+        self.trip_id: str = viewer.trip_identifier
+        self.stop: Stop = viewer.stop
+        self.cog = viewer.cog
+        self.static_data: GTFSData = viewer.cog.static_data
+        self.vehicle_data: VehicleData = viewer.cog.vehicle_data
+        self.skipped: set[int] = viewer.skipped
+        self.pickup_only: set[int] = viewer.pickup_only
+        self.drop_off_only: set[int] = viewer.drop_off_only
+        self.stops: list[Stop] = viewer.stops
+        self.arrivals: list[time.datetime] = viewer.arrivals
+        self.departures: list[time.datetime] = viewer.departures
+        self.total_stops: int = viewer.total_stops
         self.output: str = self.create_output()
 
     @classmethod
-    async def load(cls, cog, trip: Trip, stop: Stop):
-        image_bio = await get_trip_diagram(trip, stop, cog.static_data, cog.vehicle_data)
-        return cls(cog, image_bio, trip, stop)
+    async def load(cls, viewer: TripDiagramViewer):
+        departures = viewer.departures.copy()
+        if departures[-1] is None:
+            departures[-1] = viewer.arrivals[-1]
+        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped)
+        if viewer.static_trip:
+            image_bio = await get_trip_diagram(viewer.static_trip, *args)
+        else:
+            image_bio = await get_trip_diagram(viewer.real_trip, *args)
+        return cls(image_bio, viewer)
+        # image_bio = await get_trip_diagram(trip, stop, cog.static_data, cog.vehicle_data)
+        # return cls(cog, image_bio, trip, stop, trip_diagram_viewer)
 
     @property
     def attachment(self) -> tuple[discord.File]:
         """ The Discord attachment with the map image """
-        return (discord.File(self.image, f"{self.trip.trip_id}.png"),)
+        return (discord.File(self.image, f"{self.trip_id.replace("|", "_")}.png"),)
 
     async def refresh(self):
         """ Refresh the map with new data """
-        _, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        # _, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        await self.original_viewer.refresh_real_time_data()
+        self.vehicle_data = self.original_viewer.vehicle_data
+        if isinstance(self.trip, TripUpdate):
+            self.trip = self.original_viewer.real_trip
+        self.skipped: set[int] = self.original_viewer.skipped
+        self.pickup_only: set[int] = self.original_viewer.pickup_only
+        self.drop_off_only: set[int] = self.original_viewer.drop_off_only
+        self.arrivals: list[time.datetime] = self.original_viewer.arrivals
+        self.departures: list[time.datetime] = self.original_viewer.departures.copy()
+        if self.departures[-1] is None:
+            self.departures[-1] = self.arrivals[-1]
         await self.update_map()
         self.update_output()
 
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
-        self.image = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data)
+        self.image = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.departures, self.drop_off_only, self.pickup_only, self.skipped)
 
     @property
     def data_timestamp(self) -> str:
@@ -798,8 +834,12 @@ class TripDiagramMapViewer:
 
     def create_output(self) -> str:
         """ Create the text part of the output """
-        output = (f"Map overview of Trip {self.trip.trip_id}.\n"
-                  "-# Stop colours: Blue = current stop | Yellow = drop off only | Orange = pick up only | Green = regular stop\n"
+        if isinstance(self.trip, Trip):
+            trip_id = self.trip.trip_id
+        else:
+            trip_id = self.trip.entity_id
+        output = (f"Map overview of Trip {trip_id}\n"
+                  "-# Stop colours: Blue = current stop | Yellow = pick up only | Orange = drop off only | Green = regular stop | Red = skipped stop\n"
                   f"-# Vehicle data timestamp: {self.data_timestamp}")
         return output
 

@@ -2,7 +2,7 @@ import io
 import os.path
 from contextlib import suppress
 from itertools import islice
-from math import radians as rad, degrees as deg, cos, sinh, tan, atan, pi, log, asin
+from math import radians as rad, degrees as deg, cos, sinh, tan, atan, pi, log, asin, ceil
 
 import numpy
 from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
@@ -10,7 +10,7 @@ from regaus import time
 
 from utils import http, logger, conworlds
 from utils.general import print_error, make_dir
-from utils.timetables.realtime import VehicleData, Vehicle
+from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate
 from utils.timetables.shared import get_database, __version__
 from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, load_value
 
@@ -19,7 +19,8 @@ __all__ = (
     "deg_to_xy_float", "deg_to_xy", "xy_to_deg", "find_fitting_coords_and_zoom",
     "download_tile", "download_map", "download_map_lat_lon",
     "draw_vehicle", "paste_vehicle_on_map", "add_map_attribution", "draw_shape", "draw_stop", "draw_all_stops",
-    "get_map_with_buses", "get_trip_diagram"
+    "get_map_with_buses", "get_trip_diagram",
+    "debug_generate_real_time_trip", "debug_generate_added_trip", "debug_generate_fake_vehicle"
 )
 
 
@@ -30,6 +31,9 @@ MAP_SIZE = len(DELTA)
 TILE_SIZE = 256
 DEFAULT_ZOOM = 17
 BASE_MAP_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+MAP_ATTR_FONT = ImageFont.truetype("assets/fonts/univers.ttf", 24)
+VEHICLE_FONT = ImageFont.truetype("assets/fonts/univers.ttf", 24)
+DEPARTURE_TIME_FONT = ImageFont.truetype("assets/fonts/univers.ttf", 16)
 
 
 def deg_to_xy_float(lat: float, lon: float, zoom: int) -> tuple[float, float]:
@@ -55,28 +59,20 @@ def xy_to_deg(x: float, y: float, zoom: int) -> tuple[float, float]:
     return lat, lon
 
 
-def find_fitting_coords_and_zoom(shape: Shape) -> tuple[int, int, int]:
+def find_fitting_coords_and_zoom(shape: Shape | list[Stop]) -> tuple[int, int, int]:
     """ Find the best-fitting (x, y) coordinates and zoom level for a shape """
-    # points = len(shape.shape_points)
-    # start_point = shape.shape_points[1]
-    # start_x, start_y = deg_to_xy(start_point.latitude, start_point.longitude, DEFAULT_ZOOM)
-    # mid_point = shape.shape_points[points // 2]
-    # mid_x, mid_y = deg_to_xy(mid_point.latitude, mid_point.longitude, DEFAULT_ZOOM)
-    # end_point = shape.shape_points[points]
-    # end_x, end_y = deg_to_xy(end_point.latitude, end_point.longitude, DEFAULT_ZOOM)
-    #
-    # min_x = min(start_x, mid_x, end_x)
-    # min_y = min(start_y, mid_y, end_y)
-    # max_x = max(start_x, mid_x, end_x)
-    # max_y = max(start_y, mid_y, end_y)
-
+    # TODO: Try to find a solution for maps that just barely don't fit into 5 tiles so they don't look stupid with a lot of empty space
     min_x, min_y = float("inf"), float("inf")
     max_x, max_y = float("-inf"), float("-inf")
 
     # Get coordinates for every 20th point to be more likely to make them fit
     # for point in list(shape.shape_points.values())[::20]:  # TypeError: 'dict_values' object is not subscriptable - Python devs in their infinite wisdom
-    for point in islice(shape.shape_points.values(), 0, None, 20):
-        x, y = deg_to_xy(point.latitude, point.longitude, DEFAULT_ZOOM)
+    if isinstance(shape, Shape):
+        points = islice(shape.shape_points.values(), 0, None, 20)
+    else:
+        points = shape
+    for point in points:
+        x, y = deg_to_xy_float(point.latitude, point.longitude, DEFAULT_ZOOM)
         if x < min_x:
             min_x = x
         if x > max_x:
@@ -86,19 +82,28 @@ def find_fitting_coords_and_zoom(shape: Shape) -> tuple[int, int, int]:
         if y > max_y:
             max_y = y
 
+    # Ensure the points stay reasonably far away from the edges
+    min_x, min_y = int(min_x - 0.25), int(min_y - 0.25)
+    max_x, max_y = ceil(max_x + 0.25), ceil(max_y + 0.25)
     dist_x = max_x - min_x
     dist_y = max_y - min_y
     # print(f"{dist_x=} {dist_y=}", end=" ")
     zoom = DEFAULT_ZOOM
-    centre_x = (max_x + min_x) // 2
-    centre_y = (max_y + min_y) // 2
+    # print(f"{dist_x=} {dist_y=} {min_x=} {min_y=} {max_x=} {max_y=} {zoom=}")
     while dist_x > MAP_SIZE or dist_y > MAP_SIZE:
         zoom -= 1
-        dist_x /= 2
-        dist_y /= 2
-        centre_x //= 2
-        centre_y //= 2
+        min_x, min_y = int(min_x / 2), int(min_y / 2)
+        max_x, max_y = ceil(max_x / 2), ceil(max_y / 2)
+        dist_x = max_x - min_x
+        dist_y = max_y - min_y
+        # print(f"{dist_x=} {dist_y=} {min_x=} {min_y=} {max_x=} {max_y=} {zoom=}")
+        # dist_x /= 2
+        # dist_y /= 2
+        # centre_x //= 2
+        # centre_y //= 2
     # print(f"{zoom=}")
+    centre_x = (max_x + min_x) // 2
+    centre_y = (max_y + min_y) // 2
     return centre_x, centre_y, zoom
 
 
@@ -172,7 +177,6 @@ async def download_map_lat_lon(lat: float, lon: float, zoom: int = DEFAULT_ZOOM)
 def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_data: GTFSData) -> tuple[Image.Image, int, int]:
     """ Return an image of a vehicle and its coordinates on the map image (in pixels) """
     # Get route data and draw the bus on a temporary image
-    font = ImageFont.truetype("assets/fonts/univers.ttf", 24)
     db = get_database()
     try:
         # route = Route.from_sql(vehicle.trip.route_id, db).short_name
@@ -185,7 +189,7 @@ def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_d
     image = Image.new("RGBA", (100, 30), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     draw.rectangle((20, 0, 80, 30), fill=(1, 133, 64), outline=(0, 0, 0), width=2)
-    draw.text((50, 15), text=route, fill=(255, 255, 255), font=font, anchor="mm", stroke_width=1, stroke_fill=(0, 255, 114))
+    draw.text((50, 15), text=route, fill=(255, 255, 255), font=VEHICLE_FONT, anchor="mm", stroke_width=1, stroke_fill=(0, 255, 114))
     # Calculate the direction the bus is moving in
     try:
         # trip = Trip.from_sql(vehicle.trip.trip_id, db)
@@ -265,18 +269,20 @@ def paste_vehicle_on_map(map_image: Image.Image, vehicle_image: Image.Image, map
 def add_map_attribution(image: Image.Image) -> Image.Image:
     """ Add the map attribution to the map image """
     width, height = image.size
-    font = ImageFont.truetype("assets/fonts/univers.ttf", 24)
     draw = ImageDraw.Draw(image)
-    draw.text((width - 4, height), "Map data from OpenStreetMap", fill=(48, 48, 48), font=font, anchor="rd")  # Draw on bottom right
+    draw.text((width - 4, height), "Map data from OpenStreetMap", fill=(48, 48, 48), font=MAP_ATTR_FONT, anchor="rd")  # Draw on bottom right
     return image
 
 
-def draw_shape(draw: ImageDraw.ImageDraw, shape: Shape, map_x1: int, map_y1: int, zoom: int, colour: tuple[int, int, int] = (128, 128, 128)) -> None:
+def draw_shape(draw: ImageDraw.ImageDraw, shape: Shape | list[Stop], map_x1: int, map_y1: int, zoom: int, colour: tuple[int, int, int] = (128, 128, 128)) -> None:
     """ Draw the shape of the trip onto the map. Takes in an existing Draw instance and returns nothing. """
     # img_size = TILE_SIZE * MAP_SIZE
     # image = Image.new("RGBA", (img_size, img_size))
     # draw = ImageDraw.Draw(image)
-    points = list(shape.shape_points.values())
+    if isinstance(shape, Shape):
+        points = list(shape.shape_points.values())
+    else:
+        points = shape
     image_points: list[tuple[float, float]] = []
     for point in points:
         tile_x, tile_y = deg_to_xy_float(point.latitude, point.longitude, zoom)
@@ -290,29 +296,104 @@ def draw_stop(draw: ImageDraw.ImageDraw, image_x: int | float, image_y: int | fl
     draw.circle((image_x, image_y), radius=12, fill=colour, outline=(0, 0, 0), width=2)
 
 
-def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str, map_x1: int, map_y1: int, zoom: int, current_stop_id: str, static_data: GTFSData) -> None:
+def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1: int, map_y1: int, zoom: int, current_stop_id: str,
+                   static_data: GTFSData, departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int]) -> None:
     """ Draw all stops along a route. Takes in an existing Draw instance and returns nothing. """
-    db = get_database()
-    if trip_id not in static_data.stop_times:
-        static_data.stop_times[trip_id] = {}
-    trip_data = static_data.stop_times[trip_id]
-    stop_times = StopTime.from_sql(trip_id, db)
-    for stop_time in stop_times:
-        if stop_time.stop_id not in trip_data:
-            trip_data[stop_time.stop_id] = stop_time
-        stop = stop_time.stop(static_data, db)
-        stop_x, stop_y = deg_to_xy_float(stop.latitude, stop.longitude, zoom)
+    text_coordinates: list[tuple[float, float, str]] = []
+
+    def handle_stop(idx, _stop: Stop):
+        stop_x, stop_y = deg_to_xy_float(_stop.latitude, _stop.longitude, zoom)
         stop_img_x = (stop_x - map_x1) * TILE_SIZE
         stop_img_y = (stop_y - map_y1) * TILE_SIZE
         if stop.id == current_stop_id:
             colour = (1, 64, 132)   # Dark blue
-        elif stop_time.drop_off_type == 1:  # Pickup only
-            colour = (178, 178, 0)  # Yellow
-        elif stop_time.pickup_type == 1:    # Drop off only
+        elif idx in drop_off_only:  # Pickup only
             colour = (204, 102, 0)  # Orange
-        else:                               # Regular stop
+        elif idx in pickup_only:    # Drop off only
+            colour = (178, 178, 0)  # Yellow
+        elif idx in skipped:        # Skipped stop
+            colour = (255, 0, 0)    # Red
+        else:                       # Regular stop
             colour = (153, 204, 0)  # Lime-green
         draw_stop(draw, stop_img_x, stop_img_y, colour)
+        nonlocal text_coordinates
+        text_coordinates.append((stop_img_x, stop_img_y, departure_times[idx].format("%H:%M", "en")))
+        # draw.text((stop_img_x, stop_img_y + 20), departure_times[idx].format("%H:%M", "en"), fill=(64, 64, 64), font=DEPARTURE_TIME_FONT, anchor="mm")
+
+    db = get_database()
+    if isinstance(trip_id, str):
+        if trip_id not in static_data.stop_times:
+            static_data.stop_times[trip_id] = {}
+        trip_data = static_data.stop_times[trip_id]
+        stop_times = StopTime.from_sql(trip_id, db)
+        for i, stop_time in enumerate(stop_times):
+            if stop_time.stop_id not in trip_data:
+                trip_data[stop_time.stop_id] = stop_time
+            stop = stop_time.stop(static_data, db)
+            handle_stop(i, stop)
+    else:
+        for i, stop in enumerate(trip_id):  # trip_id = list[Stop]
+            handle_stop(i, stop)
+
+    total_stops: int = len(text_coordinates)
+    modifiers_x: dict[str, int] = {"c": 0, "l": -15, "r": 15}
+    modifiers_y: dict[str, int] = {"c": 0, "u": -15, "d": 15}
+    prev_anchor: str = "mtcd"
+    for i in range(total_stops):
+        # anchor: horizontal, vertical, x coordinate modifier, y coordinate modifier
+        # x modifiers: c - centre, l - left, r - right
+        # y modifiers: c - centre, u - up/above, d - down/below
+        anchor: str = "mtcd"
+        curr_x, curr_y, text = text_coordinates[i]       # type: float, float, str
+        if i > 0:
+            prev_x, prev_y, _ = text_coordinates[i - 1]  # type: float | None, float | None, str
+            # prev_x += modifiers_x.get(prev_anchor[2], 0)
+            # prev_y += modifiers_y.get(prev_anchor[3], 0)
+        else:
+            prev_x, prev_y = (None, None)                  # type: float | None, float | None
+        if i < total_stops - 1:
+            next_x, next_y, _ = text_coordinates[i + 1]  # type: float | None, float | None, str
+        else:
+            next_x, next_y = (None, None)                  # type: float | None, float | None
+        if prev_x is None or prev_y is None:
+            dx, dy = next_x - curr_x, next_y - curr_y
+            if 0 < dx < 40:  # next stop on the right -> draw time on centre left
+                anchor = "rmlc"
+            elif 0 > dx > -40:  # next stop on the left -> draw time on centre right
+                anchor = "lmrc"
+        elif next_x is None or next_y is None:
+            dx, dy = prev_x - curr_x, prev_y - curr_y
+            if 0 < dx < 40:  # prev stop on the right -> draw time on centre left
+                anchor = "rmlc"
+            elif 0 > dx > -40:  # prev stop on the left -> draw time on centre right
+                anchor = "lmrc"
+        else:
+            dx1, dy1 = next_x - curr_x, next_y - curr_y
+            dx2, dy2 = prev_x - curr_x, prev_y - curr_y
+            if -40 < dx1 < 40 and -40 < dx2 < 40 and 5 > dy1 > -10 and 5 > dy2 > -10 and prev_anchor[3] == "c":
+                anchor = "mtcd"
+            elif -40 < dx1 < 40 and -40 < dx2 < 40 and -5 < dy1 < 10 and -5 < dy2 < 10 and prev_anchor[3] == "c":
+                anchor = "mscu"
+            elif 0 < dx1 < 40 and abs(dy1) + abs(dy2) < 40:
+                anchor = "rmlc"
+            elif 0 > dx1 > -40 and abs(dy1) + abs(dy2) < 40:
+                anchor = "lmrc"
+        # # Prevents formatting errors for the print statement below
+        # prev_x, prev_y, next_x, next_y = prev_x or -1, prev_y or -1, next_x or -1, next_y or -1
+        # try:
+        #     # noinspection PyUnboundLocalVariable
+        #     deltas = f"{dx=:4.0f} {dy=:4.0f}"
+        #     del dx, dy
+        # except UnboundLocalError:
+        #     # noinspection PyUnboundLocalVariable
+        #     deltas = f"{dx1=:3.0f} {dy1=:3.0f} {dx2=:3.0f} {dy2=:3.0f}"
+        #     del dx1, dy1, dx2, dy2
+        # print(f"{i=:02d} {curr_x=:4.0f} {curr_y=:4.0f} {prev_x=:4.0f} {prev_y=:4.0f} {next_x=:4.0f} {next_y=:4.0f} {deltas} {anchor=}")
+        mod_x = modifiers_x.get(anchor[2], 0)
+        mod_y = modifiers_y.get(anchor[3], 0)
+        draw.text((curr_x + mod_x, curr_y + mod_y), text, fill=(64, 64, 64), font=DEPARTURE_TIME_FONT, anchor=anchor[:2])
+        prev_anchor = anchor
+    # draw.text((0, 0), "Debug: This is a Test", fill=(255, 0, 0), font=DEPARTURE_TIME_FONT, anchor="la")
 
 
 async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: VehicleData, static_data: GTFSData) -> io.BytesIO:
@@ -347,13 +428,19 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
     return bio
 
 
-async def get_trip_diagram(trip: Trip, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData) -> io.BytesIO:
+async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData,
+                           departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int]) -> io.BytesIO:
     """ Show the diagram of a trip, including stops along the trip and the vehicle's current location (if available).
 
     Returns a BytesIO instance with the image inside."""
     db = get_database()
-    trip_id = trip.trip_id
-    shape = trip.shape(static_data, db)
+    trip_id: str | list[Stop]
+    shape: Shape | list[Stop]
+    if isinstance(trip, Trip):
+        trip_id = trip.trip_id
+        shape = trip.shape(static_data, db)
+    else:
+        trip_id = shape = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
     x, y, zoom = find_fitting_coords_and_zoom(shape)
     x1, y1 = x + START, y + START
     image = await download_map(x, y, zoom)
@@ -366,15 +453,169 @@ async def get_trip_diagram(trip: Trip, current_stop: Stop, static_data: GTFSData
     # image.paste(shape_image, (0, 0), mask=shape_image)
 
     # Draw all the stops along the route
-    draw_all_stops(draw, trip_id, x1, y1, zoom, current_stop.id, static_data)
+    draw_all_stops(draw, trip_id, x1, y1, zoom, current_stop.id, static_data, departure_times, drop_off_only, pickup_only, skipped)
 
     # Draw the bus along the route
-    for vehicle in vehicle_data.entities.values():
-        if vehicle.trip.trip_id == trip_id:
-            bus_image, bus_x, bus_y = draw_vehicle(vehicle, x1, y1, zoom, static_data)
-            image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)
+    bus: Vehicle | None = None
+    if isinstance(trip, Trip):
+        for vehicle in vehicle_data.entities.values():
+            if vehicle.trip.trip_id == trip_id:
+                bus = vehicle
+                break
+    else:
+        vehicle_id = trip.vehicle_id
+        for vehicle in vehicle_data.entities.values():
+            if vehicle.vehicle_id == vehicle_id:
+                bus = vehicle
+                break
+    if bus is not None:
+        bus_image, bus_x, bus_y = draw_vehicle(bus, x1, y1, zoom, static_data)
+        image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)
 
     bio = io.BytesIO()
     image.save(bio, "PNG")
     bio.seek(0)
     return bio
+
+
+def debug_generate_real_time_trip(real_trip_id: str, fake_entity_id: str = "T2002", vehicle_id: str = "10001") -> str:
+    """ Generate a fake real-time trip that can be added to real_time.json """
+    import json
+    import random
+    from utils.timetables.shared import TIMEZONE
+    today = time.datetime.combine(time.date.today(), time.time(), TIMEZONE)
+    today_ts = int(today.timestamp)
+    stop_time_updates = []
+    stop_times = StopTime.from_sql(real_trip_id)
+    skip_a_segment: bool = random.random() < 0.75
+    skipped_segment_start = random.randint(1, len(stop_times) - 5)
+    skipped_segment_end = skipped_segment_start + random.randint(0, 11)
+    prev_delay = 0
+    for stop_time in stop_times:
+        delay = prev_delay + random.randint(-120, 120)
+        if skip_a_segment and skipped_segment_start <= stop_time.sequence <= skipped_segment_end:
+            stop_time_updates.append({
+                "stop_sequence": stop_time.sequence,
+                "stop_id": stop_time.stop_id,
+                "schedule_relationship": "SKIPPED"
+            })
+        else:
+            stop_time_updates.append({
+                "stop_sequence": stop_time.sequence,
+                "arrival": {"delay": prev_delay},
+                "departure": {"delay": delay},
+                "stop_id": stop_time.stop_id,
+                "schedule_relationship": "SCHEDULED"
+            })
+        prev_delay = delay
+    trip = Trip.from_sql(real_trip_id)
+    output = {
+        "id": fake_entity_id,
+        "trip_update": {
+            "trip": {
+                "trip_id": real_trip_id,
+                "start_time": time.timedelta(seconds=stop_times[0].arrival_time).format("%H:%M:%S"),
+                "start_date": today.format("%Y%m%d"),
+                "schedule_relationship": "SCHEDULED",
+                "route_id": trip.route_id,
+                "direction_id": trip.direction_id
+            },
+            "stop_time_update": stop_time_updates,
+            "vehicle": {
+                "id": vehicle_id
+            },
+            "timestamp": str(today_ts)
+        }
+    }
+    # return json.dumps(output, indent=1)
+    # Add extra spaces before each line to make it fit in with the other data
+    json_output = json.dumps(output, indent=1)
+    indentation = []
+    for line in json_output.splitlines():
+        indentation.append("  " + line)
+    return "\n".join(indentation)
+
+
+def debug_generate_added_trip(real_trip_id: str, fake_entity_id: str = "T2001", vehicle_id: str = "10001") -> str:
+    """ Generate a fake added trip that can be added to real_time.json """
+    import json
+    from utils.timetables.shared import TIMEZONE
+    today = time.datetime.combine(time.date.today(), time.time(), TIMEZONE)
+    today_ts = int(today.timestamp)
+    stop_time_updates = []
+    stop_times = StopTime.from_sql(real_trip_id)
+    for stop_time in stop_times:
+        stop_time_updates.append({
+            "stop_sequence": stop_time.sequence,
+            "arrival": {"time": str(today_ts + stop_time.arrival_time)},
+            "departure": {"time": str(today_ts + stop_time.departure_time)},
+            "stop_id": stop_time.stop_id
+        })
+    trip = Trip.from_sql(real_trip_id)
+    output = {
+        "id": fake_entity_id,
+        "trip_update": {
+            "trip": {
+                "start_time": time.timedelta(seconds=stop_times[0].arrival_time).format("%H:%M:%S"),
+                "start_date": today.format("%Y%m%d"),
+                "schedule_relationship": "ADDED",
+                "route_id": trip.route_id,
+                "direction_id": trip.direction_id
+            },
+            "stop_time_update": stop_time_updates,
+            "vehicle": {
+                "id": vehicle_id
+            },
+            "timestamp": str(today_ts)
+        }
+    }
+    # return json.dumps(output, indent=1)
+    # Add extra spaces before each line to make it fit in with the other data
+    json_output = json.dumps(output, indent=1)
+    indentation = []
+    for line in json_output.splitlines():
+        indentation.append("  " + line)
+    return "\n".join(indentation)
+
+
+def debug_generate_fake_vehicle(real_trip_id: str, current_stop: str | int, fake_entity_id: str = "V2001", vehicle_id: str = "10001") -> str:
+    """ Generate fake vehicle location data that can be added to vehicles.json """
+    import json
+    from utils.timetables.shared import TIMEZONE
+    today = time.datetime.combine(time.date.today(), time.time(), TIMEZONE)
+    today_ts = int(today.timestamp)
+    trip = Trip.from_sql(real_trip_id)
+    if isinstance(current_stop, str):
+        stop = Stop.from_sql(current_stop)
+    else:
+        stop_time = StopTime.from_sql_sequence(real_trip_id, current_stop)
+        stop = stop_time.stop()
+    departure_time = time.timedelta(seconds=StopTime.from_sql_sequence(real_trip_id, 1).arrival_time).format("%H:%M:%S")
+    output = {
+        "id": fake_entity_id,
+        "vehicle": {
+            "trip": {
+                "trip_id": real_trip_id,
+                "start_time": departure_time,
+                "start_date": today.format("%Y%m%d"),
+                "schedule_relationship": "SCHEDULED",
+                "route_id": trip.route_id,
+                "direction_id": trip.direction_id
+            },
+            "position": {
+                "latitude": round(stop.latitude, 5),
+                "longitude": round(stop.longitude, 5)
+            },
+            "timestamp": today_ts,
+            "vehicle": {
+                "id": vehicle_id
+            }
+        }
+    }
+    # return json.dumps(output, indent=1)
+    # Add extra spaces before each line to make it fit in with the other data
+    json_output = json.dumps(output, indent=1)
+    indentation = []
+    for line in json_output.splitlines():
+        indentation.append("  " + line)
+    return "\n".join(indentation)
