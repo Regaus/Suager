@@ -416,3 +416,9 @@
 ## v0.12.5 - 8 August 2024
 - Removed the "Hide view" button from TripDiagramMapView and MapView, since they have few buttons to begin with
 - Added a "Reset zoom" button to MapView, which resets the zoom level back to default
+
+## v0.12.5.1 - 8 August 2024
+- Skipped stops no longer set the arrival/departure delay to zero
+- Skipped stops will no longer have their departure times rendered
+- Skipped stops will always be rendered red, even if they are pickup-only or drop off-only
+- Vehicles whose coordinates are 0, 0 will no longer show their distance

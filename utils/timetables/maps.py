@@ -377,12 +377,12 @@ def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1:
         stop_img_y = (stop_y - map_y1) * TILE_SIZE
         if stop.id == current_stop_id:
             colour = (1, 64, 132)   # Dark blue
+        elif idx in skipped:        # Skipped stop
+            colour = (255, 0, 0)    # Red
         elif idx in drop_off_only:  # Pickup only
             colour = (204, 102, 0)  # Orange
         elif idx in pickup_only:    # Drop off only
             colour = (178, 178, 0)  # Yellow
-        elif idx in skipped:        # Skipped stop
-            colour = (255, 0, 0)    # Red
         else:                       # Regular stop
             colour = (153, 204, 0)  # Lime-green
         draw_stop(draw, stop_img_x, stop_img_y, colour)
@@ -459,9 +459,10 @@ def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1:
         #     deltas = f"{dx1=:3.0f} {dy1=:3.0f} {dx2=:3.0f} {dy2=:3.0f}"
         #     del dx1, dy1, dx2, dy2
         # print(f"{i=:02d} {curr_x=:4.0f} {curr_y=:4.0f} {prev_x=:4.0f} {prev_y=:4.0f} {next_x=:4.0f} {next_y=:4.0f} {deltas} {anchor=}")
-        mod_x = modifiers_x.get(anchor[2], 0)
-        mod_y = modifiers_y.get(anchor[3], 0)
-        draw.text((curr_x + mod_x, curr_y + mod_y), text, fill=(64, 64, 64), font=DEPARTURE_TIME_FONT, anchor=anchor[:2])
+        if i not in skipped:  # Don't draw the departure time for skipped stops, but still do the rest of the calculations
+            mod_x = modifiers_x.get(anchor[2], 0)
+            mod_y = modifiers_y.get(anchor[3], 0)
+            draw.text((curr_x + mod_x, curr_y + mod_y), text, fill=(64, 64, 64), font=DEPARTURE_TIME_FONT, anchor=anchor[:2])
         prev_anchor = anchor
     # draw.text((0, 0), "Debug: This is a Test", fill=(255, 0, 0), font=DEPARTURE_TIME_FONT, anchor="la")
 

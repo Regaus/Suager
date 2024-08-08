@@ -234,21 +234,24 @@ class StopScheduleViewer:
                 destination = CANCELLED + destination
 
             if self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:  # "Compact mode" does not show vehicle distance
-                has_distances = True
-                # distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
-                if stop_time.is_added:
-                    trip = stop_time.real_trip
+                if stop_time.vehicle.latitude == 0 and stop_time.vehicle.longitude == 0:
+                    distance = "-"
                 else:
-                    trip = stop_time.trip(self.data)
-                distance_m, colour = distance_between_bus_and_stop(trip, self.stop, stop_time.vehicle, self.data)
-                if distance_m >= 1000:  # > 1 km
-                    distance = f"{distance_m / 1000:.2f}km"  # Precision: 0.01km (=10m)
-                    # distance = language.length(distance_m, precision=2).split(" | ")[0]
-                else:  # < 1 km
-                    distance = f"{round(distance_m, -1):.0f}m"  # Round to nearest 10m
-                    # distance = language.length(round(distance_m, -1), precision=0).split(" | ")[0]
-                # distance = distance.replace("\u200c", "")  # Remove ZWS
-                distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"  # Circle takes up 2 symbol widths
+                    has_distances = True
+                    # distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
+                    if stop_time.is_added:
+                        trip = stop_time.real_trip
+                    else:
+                        trip = stop_time.trip(self.data)
+                    distance_m, colour = distance_between_bus_and_stop(trip, self.stop, stop_time.vehicle, self.data)
+                    if distance_m >= 1000:  # > 1 km
+                        distance = f"{distance_m / 1000:.2f}km"  # Precision: 0.01km (=10m)
+                        # distance = language.length(distance_m, precision=2).split(" | ")[0]
+                    else:  # < 1 km
+                        distance = f"{round(distance_m, -1):.0f}m"  # Round to nearest 10m
+                        # distance = language.length(round(distance_m, -1), precision=0).split(" | ")[0]
+                    # distance = distance.replace("\u200c", "")  # Remove ZWS
+                    distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"  # Circle takes up 2 symbol widths
             elif not self.real_time:
                 distance = ""
             else:
@@ -514,20 +517,28 @@ class TripDiagramViewer:
             for stop_time_update in self.real_trip.stop_times:
                 sequence: int = stop_time_update.stop_sequence
                 repetitions: int = sequence - prev_sequence - 1
+                is_skipped = stop_time_update.schedule_relationship == "SKIPPED"
                 if prev_sequence == 0:
                     if sequence > 1:
                         arrival_delays.extend([time.timedelta()] * repetitions)
                         departure_delays.extend([time.timedelta()] * repetitions)
-                        real_time_statuses.extend([stop_time_update.schedule_relationship != "SKIPPED"] * repetitions)
+                        real_time_statuses.extend([not is_skipped] * repetitions)
                     repetitions = 0
                 extend_list(real_time_statuses, repetitions)
                 extend_list(departure_delays, repetitions)
-                real_time_statuses.append(stop_time_update.schedule_relationship != "SKIPPED")
-                departure_delays.append(stop_time_update.departure_delay)
-                if repetitions > 0:
-                    arrival_delays.append(departure_delays[prev_sequence - 1])
-                    extend_list(arrival_delays, repetitions - 1)
-                arrival_delays.append(stop_time_update.arrival_delay)
+                real_time_statuses.append(not is_skipped)
+                if is_skipped:
+                    departure_delays.append(departure_delays[-1])
+                    if repetitions > 0:
+                        arrival_delays.append(departure_delays[prev_sequence - 1])
+                        extend_list(arrival_delays, repetitions - 1)
+                    arrival_delays.append(arrival_delays[-1])
+                else:
+                    departure_delays.append(stop_time_update.departure_delay)
+                    if repetitions > 0:
+                        arrival_delays.append(departure_delays[prev_sequence - 1])
+                        extend_list(arrival_delays, repetitions - 1)
+                    arrival_delays.append(stop_time_update.arrival_delay)
                 if stop_time_update.arrival_time is not None:
                     custom_arrival_times[sequence] = stop_time_update.arrival_time
                 if stop_time_update.departure_time is not None:
