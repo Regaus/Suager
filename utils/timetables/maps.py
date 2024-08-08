@@ -367,7 +367,7 @@ def draw_stop(draw: ImageDraw.ImageDraw, image_x: int | float, image_y: int | fl
 
 
 def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1: int, map_y1: int, zoom: int, current_stop_id: str,
-                   static_data: GTFSData, departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int]) -> None:
+                   static_data: GTFSData, departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int], is_cancelled: bool) -> None:
     """ Draw all stops along a route. Takes in an existing Draw instance and returns nothing. """
     text_coordinates: list[tuple[float, float, str]] = []
 
@@ -375,16 +375,16 @@ def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1:
         stop_x, stop_y = deg_to_xy_float(_stop.latitude, _stop.longitude, zoom)
         stop_img_x = (stop_x - map_x1) * TILE_SIZE
         stop_img_y = (stop_y - map_y1) * TILE_SIZE
-        if stop.id == current_stop_id:
-            colour = (1, 64, 132)   # Dark blue
-        elif idx in skipped:        # Skipped stop
-            colour = (255, 0, 0)    # Red
-        elif idx in drop_off_only:  # Pickup only
-            colour = (204, 102, 0)  # Orange
-        elif idx in pickup_only:    # Drop off only
-            colour = (178, 178, 0)  # Yellow
-        else:                       # Regular stop
-            colour = (153, 204, 0)  # Lime-green
+        if stop.id == current_stop_id:        # Current stop  = dark blue
+            colour = (1, 64, 132)
+        elif idx in skipped or is_cancelled:  # Skipped stop  = red
+            colour = (255, 0, 0)
+        elif idx in drop_off_only:            # Pickup only   = orange
+            colour = (204, 102, 0)
+        elif idx in pickup_only:              # Drop off only = yellow
+            colour = (178, 178, 0)
+        else:                                 # Regular stop  = lime-green
+            colour = (153, 204, 0)
         draw_stop(draw, stop_img_x, stop_img_y, colour)
         nonlocal text_coordinates
         text_coordinates.append((stop_img_x, stop_img_y, departure_times[idx].format("%H:%M", "en")))
@@ -500,7 +500,8 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
 
 
 async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData,
-                           departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int], custom_zoom: int = None) -> tuple[io.BytesIO, int]:
+                           departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int],
+                           is_cancelled: bool = False, custom_zoom: int = None) -> tuple[io.BytesIO, int]:
     """ Show the diagram of a trip, including stops along the trip and the vehicle's current location (if available).
 
     Returns a BytesIO instance with the image inside and the map's zoom level."""
@@ -528,7 +529,7 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
     # image.paste(shape_image, (0, 0), mask=shape_image)
 
     # Draw all the stops along the route
-    draw_all_stops(draw, trip_id, x1, y1, zoom, current_stop.id, static_data, departure_times, drop_off_only, pickup_only, skipped)
+    draw_all_stops(draw, trip_id, x1, y1, zoom, current_stop.id, static_data, departure_times, drop_off_only, pickup_only, skipped, is_cancelled)
 
     # Draw the bus along the route
     bus: Vehicle | None = None

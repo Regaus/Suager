@@ -801,6 +801,7 @@ class TripDiagramMapViewer:
         self.cog = viewer.cog
         self.static_data: GTFSData = viewer.cog.static_data
         self.vehicle_data: VehicleData = viewer.cog.vehicle_data
+        self.cancelled: bool = viewer.cancelled
         self.skipped: set[int] = viewer.skipped
         self.pickup_only: set[int] = viewer.pickup_only
         self.drop_off_only: set[int] = viewer.drop_off_only
@@ -815,7 +816,7 @@ class TripDiagramMapViewer:
         departures = viewer.departures.copy()
         if departures[-1] is None:
             departures[-1] = viewer.arrivals[-1]
-        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped)
+        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled)
         if viewer.static_trip:
             image_bio, zoom = await get_trip_diagram(viewer.static_trip, *args)
         else:
@@ -859,7 +860,7 @@ class TripDiagramMapViewer:
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
         self.image, _ = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.departures,
-                                               self.drop_off_only, self.pickup_only, self.skipped, self.custom_zoom)
+                                               self.drop_off_only, self.pickup_only, self.skipped, self.cancelled, self.custom_zoom)
 
     @property
     def data_timestamp(self) -> str:

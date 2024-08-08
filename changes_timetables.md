@@ -428,3 +428,6 @@
 
 ## v0.12.6.1 - 8 August 2024
 - Trips that terminate early no longer show the "Terminates at" part on the RouteLineSelector (only the destination)
+
+## v0.12.6.2 - 8 August 2024
+- Cancelled trips will now have all stops (except the current stop) rendered in red on the map, but still show the departure times
