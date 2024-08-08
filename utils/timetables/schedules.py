@@ -538,7 +538,7 @@ class StopSchedule:
 
 
 def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: str) -> tuple[dict[str, TripUpdate], dict[str, TripUpdate]]:
-    if real_time_data is None:
+    if not real_time_data:
         return {}, {}
     output = {}
     added = {}

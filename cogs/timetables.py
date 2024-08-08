@@ -339,6 +339,17 @@ class Timetables(University, Luas, name="Timetables"):
         # Only refresh the data once in 60 seconds
         if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
             return self.real_time_data, self.vehicle_data
+        if self.last_updated is None:
+            prev_real_time_data_d, prev_vehicle_data_d = await self.get_real_time_data(debug=True, write=False)
+            prev_real_time_data, prev_vehicle_data = timetables.load_gtfs_r_data(prev_real_time_data_d, prev_vehicle_data_d)
+            ts1, ts2 = prev_real_time_data.header.timestamp.timestamp, prev_vehicle_data.header.timestamp.timestamp
+            now = time.datetime.now().timestamp
+            if (now - max(ts1, ts2)) < 75:  # Less than 75s passed since the data header's timestamp (vehicle data has a 60s cooldown, add 15s to be sure to not hit it)
+                self.real_time_data = prev_real_time_data
+                self.vehicle_data = prev_vehicle_data
+                self.last_updated = time.datetime.from_timestamp(max(ts1, ts2))
+                logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded GTFS-R data stored on disk (too recent to update)")
+                return self.real_time_data, self.vehicle_data
         data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
         try:
             new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
@@ -358,7 +369,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.last_updated = time.datetime.now()
         return self.real_time_data, self.vehicle_data  # just in case
 
-    async def get_real_time_data(self, debug: bool = False, *, write: bool = True):
+    async def get_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[dict, dict]:
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
         if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):
             try:
@@ -387,7 +398,7 @@ class Timetables(University, Luas, name="Timetables"):
             cpu_burner.arr[2] = False  # Disable the CPU burner function while loading the GTFS data
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
-            if self.real_time_data is None:
+            if not self.real_time_data:
                 await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:

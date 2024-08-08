@@ -33,17 +33,28 @@ class GTFSRData:
     def load(cls, data: dict | None):
         # If no data is available, keep self.data null until we do get some data
         if data is None:
-            return None
+            return cls.empty()
         # See if the API returned any errors
         if "status_code" in data and "message" in data:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "real-time")
         if "entity" not in data:
-            return None
+            return cls.empty()
         trip_updates: dict[str, TripUpdate] = {}
         for entity in data["entity"]:
             trip_update = TripUpdate.load(entity)
             trip_updates[trip_update.entity_id] = trip_update
         return cls(Header.load(data["header"]), trip_updates)
+
+    @classmethod
+    def empty(cls):
+        """ Return an empty GTFSRData object """
+        return cls(Header("2.0", "EMPTY", time.datetime.zero), {})
+
+    def is_empty(self) -> bool:
+        return self.header.incrementality == "EMPTY"
+
+    def __bool__(self) -> bool:
+        return not self.is_empty()
 
 
 @dataclass()
@@ -54,17 +65,28 @@ class VehicleData:
     @classmethod
     def load(cls, data: dict | None):
         if data is None:
-            return None
+            return cls.empty()
         # See if the API returned any errors
         if "status_code" in data and "message" in data:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "vehicles")
         if "entity" not in data:
-            return None
+            return cls.empty()
         vehicles: dict[str, Vehicle] = {}
         for entity in data["entity"]:
             vehicle = Vehicle.load(entity)
             vehicles[vehicle.vehicle_id] = vehicle
         return cls(Header.load(data["header"]), vehicles)
+
+    @classmethod
+    def empty(cls):
+        """ Return an empty GTFSRData object """
+        return cls(Header("2.0", "EMPTY", time.datetime.zero), {})
+
+    def is_empty(self) -> bool:
+        return self.header.incrementality == "EMPTY"
+
+    def __bool__(self) -> bool:
+        return not self.is_empty()
 
 
 @dataclass()
