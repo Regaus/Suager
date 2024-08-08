@@ -422,3 +422,6 @@
 - Skipped stops will no longer have their departure times rendered
 - Skipped stops will always be rendered red, even if they are pickup-only or drop off-only
 - Vehicles whose coordinates are 0, 0 will no longer show their distance
+
+## v0.12.6 - 8 August 2024
+- The TripDiagramMapViewer now supports zooming in (centres around the current stop)

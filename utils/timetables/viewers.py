@@ -790,8 +790,10 @@ class TripDiagramViewer:
 
 class TripDiagramMapViewer:
     """ Map viewer for the trip diagram """
-    def __init__(self, image: io.BytesIO, viewer: TripDiagramViewer):
+    def __init__(self, image: io.BytesIO, viewer: TripDiagramViewer, zoom: int):
         self.image: io.BytesIO = image
+        self.zoom: int = zoom
+        self.custom_zoom: int | None = None
         self.original_viewer: TripDiagramViewer = viewer
         self.trip: Trip | TripUpdate = viewer.static_trip or viewer.real_trip
         self.trip_id: str = viewer.trip_identifier
@@ -815,12 +817,22 @@ class TripDiagramMapViewer:
             departures[-1] = viewer.arrivals[-1]
         args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped)
         if viewer.static_trip:
-            image_bio = await get_trip_diagram(viewer.static_trip, *args)
+            image_bio, zoom = await get_trip_diagram(viewer.static_trip, *args)
         else:
-            image_bio = await get_trip_diagram(viewer.real_trip, *args)
-        return cls(image_bio, viewer)
+            image_bio, zoom = await get_trip_diagram(viewer.real_trip, *args)
+        return cls(image_bio, viewer, zoom)
         # image_bio = await get_trip_diagram(trip, stop, cog.static_data, cog.vehicle_data)
         # return cls(cog, image_bio, trip, stop, trip_diagram_viewer)
+
+    @property
+    def zoom_level(self) -> int:
+        return self.custom_zoom or self.zoom
+
+    @zoom_level.setter
+    def zoom_level(self, zoom_level: int):
+        self.custom_zoom = zoom_level
+        if self.custom_zoom == self.zoom:
+            self.custom_zoom = None
 
     @property
     def attachment(self) -> tuple[discord.File]:
@@ -846,7 +858,8 @@ class TripDiagramMapViewer:
 
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
-        self.image = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.departures, self.drop_off_only, self.pickup_only, self.skipped)
+        self.image, _ = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.departures,
+                                               self.drop_off_only, self.pickup_only, self.skipped, self.custom_zoom)
 
     @property
     def data_timestamp(self) -> str:

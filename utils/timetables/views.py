@@ -606,6 +606,11 @@ class TripDiagramMapView(views.InteractiveView):
         self.command = f"{self.__class__.__name__} {self.viewer.trip_id}"
         self.data_db = get_data_database()
         self.refreshing: bool = False
+        self.zoom_updating: bool = False
+        self.reset_zoom.disabled = True
+        self.zoom_out.disabled = True
+        self.min_zoom = self.viewer.zoom  # Minimum allowed zoom = default zoom
+        self.max_zoom = DEFAULT_ZOOM      # Maximum allowed zoom: 17
 
     async def update_message(self):
         """ Update the existing message """
@@ -629,6 +634,51 @@ class TripDiagramMapView(views.InteractiveView):
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
         await self.disable_button(self.message, button, cooldown=60)
+
+    async def update_zoom_buttons(self):
+        """ Change the two buttons to be in an appropriate state after a 5s cooldown """
+        await asyncio.sleep(5)
+        self.reset_zoom.disabled = self.viewer.custom_zoom is None
+        self.zoom_out.disabled = self.viewer.zoom_level <= self.min_zoom
+        self.zoom_in.disabled = self.viewer.zoom_level >= self.max_zoom
+        await self.message.edit(view=self)
+
+    async def zoom_button_response(self, interaction: discord.Interaction, movement: int):
+        """ Zoom in or out - common function for the two buttons """
+        await interaction.response.defer()
+        if self.zoom_updating:
+            return await interaction.followup.send("The map's zoom is already being updated, please wait.", ephemeral=True)
+        self.zoom_updating = True
+        try:
+            if movement:
+                self.viewer.zoom_level += movement
+            else:
+                self.viewer.custom_zoom = None
+            await self.viewer.update_map()
+            self.viewer.update_output()
+            # Disable the zoom buttons for 5 seconds
+            self.reset_zoom.disabled = True
+            self.zoom_out.disabled = True
+            self.zoom_in.disabled = True
+            await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
+            await self.update_zoom_buttons()
+        finally:
+            self.zoom_updating = False
+
+    @discord.ui.button(label="Reset zoom", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def reset_zoom(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the zoom back to normal """
+        return await self.zoom_button_response(interaction, 0)
+
+    @discord.ui.button(label="Zoom out", emoji="🗺️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_out(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom out on the map """
+        return await self.zoom_button_response(interaction, -1)
+
+    @discord.ui.button(label="Zoom in", emoji="🔎", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_in(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom in on the map - centred around the current stop """
+        return await self.zoom_button_response(interaction, 1)
 
     # @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     # async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):

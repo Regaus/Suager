@@ -500,10 +500,10 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
 
 
 async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData,
-                           departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int]) -> io.BytesIO:
+                           departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int], custom_zoom: int = None) -> tuple[io.BytesIO, int]:
     """ Show the diagram of a trip, including stops along the trip and the vehicle's current location (if available).
 
-    Returns a BytesIO instance with the image inside."""
+    Returns a BytesIO instance with the image inside and the map's zoom level."""
     db = get_database()
     trip_id: str | list[Stop]
     shape: Shape | list[Stop]
@@ -512,7 +512,11 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
         shape = trip.shape(static_data, db)
     else:
         trip_id = shape = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
-    x, y, zoom = find_fitting_coords_and_zoom(shape)
+    if custom_zoom:
+        x, y = deg_to_xy(current_stop.latitude, current_stop.longitude, custom_zoom)
+        zoom = custom_zoom
+    else:
+        x, y, zoom = find_fitting_coords_and_zoom(shape)
     x1, y1 = x + START, y + START
     image = await download_map(x, y, zoom)
     image = add_map_attribution(image)
@@ -546,7 +550,7 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
     bio = io.BytesIO()
     image.save(bio, "PNG")
     bio.seek(0)
-    return bio
+    return bio, zoom
 
 
 def debug_generate_real_time_trip(real_trip_id: str, fake_entity_id: str = "T2002", vehicle_id: str = "10001") -> str:
