@@ -431,3 +431,6 @@
 
 ## v0.12.6.2 - 8 August 2024
 - Cancelled trips will now have all stops (except the current stop) rendered in red on the map, but still show the departure times
+
+## v0.12.6.3 - 8 August 2024
+- Improved the TripDiagramMapViewer coordinates algorithm to fit more stops when zooming in, instead of blindly centering at the current stop even if it's near the end of the route

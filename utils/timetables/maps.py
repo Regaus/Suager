@@ -59,7 +59,7 @@ def xy_to_deg(x: float, y: float, zoom: int) -> tuple[float, float]:
     return lat, lon
 
 
-def find_fitting_coords_and_zoom(shape: Shape | list[Stop]) -> tuple[int, int, int]:
+def find_fitting_coords_and_zoom(shape: Shape | list[Stop], custom_centre: tuple[int, int] = None, custom_zoom: int = -1) -> tuple[int, int, int]:
     """ Find the best-fitting (x, y) coordinates and zoom level for a shape """
     # TODO: Try to find a solution for maps that just barely don't fit into 5 tiles so they don't look stupid with a lot of empty space
     min_x, min_y = float("inf"), float("inf")
@@ -90,7 +90,7 @@ def find_fitting_coords_and_zoom(shape: Shape | list[Stop]) -> tuple[int, int, i
     # print(f"{dist_x=} {dist_y=}", end=" ")
     zoom = DEFAULT_ZOOM
     # print(f"{dist_x=} {dist_y=} {min_x=} {min_y=} {max_x=} {max_y=} {zoom=}")
-    while dist_x > MAP_SIZE or dist_y > MAP_SIZE:
+    while (dist_x > MAP_SIZE or dist_y > MAP_SIZE) and zoom > custom_zoom:
         zoom -= 1
         min_x, min_y = int(min_x / 2), int(min_y / 2)
         max_x, max_y = ceil(max_x / 2), ceil(max_y / 2)
@@ -102,8 +102,20 @@ def find_fitting_coords_and_zoom(shape: Shape | list[Stop]) -> tuple[int, int, i
         # centre_x //= 2
         # centre_y //= 2
     # print(f"{zoom=}")
-    centre_x = (max_x + min_x) // 2
-    centre_y = (max_y + min_y) // 2
+    if custom_centre:
+        # Adjust the given coordinates to fit as many points as possible
+        centre_x, centre_y = custom_centre
+        if centre_x + START < min_x:
+            centre_x = min_x - START
+        if centre_x + END > max_x:
+            centre_x = max_x - END
+        if centre_y + START < min_y:
+            centre_y = min_y - START
+        if centre_y + END > max_y:
+            centre_y = max_y - END
+    else:
+        centre_x = (max_x + min_x) // 2
+        centre_y = (max_y + min_y) // 2
     return centre_x, centre_y, zoom
 
 
@@ -515,7 +527,7 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
         trip_id = shape = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
     if custom_zoom:
         x, y = deg_to_xy(current_stop.latitude, current_stop.longitude, custom_zoom)
-        zoom = custom_zoom
+        x, y, zoom = find_fitting_coords_and_zoom(shape, (x, y), custom_zoom)
     else:
         x, y, zoom = find_fitting_coords_and_zoom(shape)
     x1, y1 = x + START, y + START
