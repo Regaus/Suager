@@ -753,50 +753,54 @@ class Timetables(University, Luas, name="Timetables"):
             raise
         return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.MapView(ctx.author, message, map_viewer, ctx))
 
-    @tfi.command(name="debug")
-    @commands.is_owner()
-    async def tfi_debug_trip_diagram_map(self, ctx: commands.Context, trip: str = "155"):
-        """ Debug the TripDiagramMapViewer """
-        import importlib
-        modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.static", "utils.timetables.schedules", "utils.timetables.maps",
-                   "utils.timetables.viewers", "utils.timetables.views", "utils.timetables")
-        for module_name in modules:
-            module = importlib.import_module(module_name)
-            importlib.reload(module)
-        self.initialised = True
-        self.updating = False
-        self.DEBUG = True
-        self.WRITE = False
-        self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
-        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
-        message = await ctx.send(f"{emotes.Loading} Debug: Initialisation bypassed and modules reloaded")
-        trip_id = {
-            "16": "4159_5535||0",
-            "16B": "4159_70418||0",
-            "16D": "4159_5774||0",
-            "33N": "4175_21||0",
-            "46A": "4159_11162||0",
-            "46B": "4159_10876||0",
-            "46U": "4159_10875||0",
-            "99": "4159_14592|T185|0",
-            "155": "4159_4567|T184|0",
-            "155B": "4159_4414||0",
-            "225": "4174_101560||0",
-            "225B": "4174_71091||0",
-            "N4": "4159_18342|T187|0",
-            "N4B": "4159_18609|T186|0",
-            "DARTM": "4176_2046||0",
-            "DARTH": "4176_2047||0",
-            "CORK": "4176_5358||0",
-            "ADDED": "|T183|0"
-        }.get(trip.upper(), "4159_4567||0")
-        stop = timetables.load_value(self.static_data, timetables.Stop, "8350DB004153", self.db)
-        schedule_viewer = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, self, None, user_id=ctx.author.id)
-        schedule_view = timetables.StopScheduleView(ctx.author, message, schedule_viewer, ctx)
-        diagram_viewer = timetables.TripDiagramViewer(schedule_view, trip_id)
-        # diagram_view = timetables.TripDiagramView(ctx.author, message, diagram_viewer, try_full_fetch=False)
-        map_viewer = await timetables.TripDiagramMapViewer.load(diagram_viewer)
-        return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.TripDiagramMapView(ctx.author, message, map_viewer, ctx))
+    # If this command is uncommented, it will still get synced to a slash command for whatever reason
+    # @tfi.command(name="debug", enabled=False)
+    # @commands.is_owner()
+    # async def tfi_debug_command(self, ctx: commands.Context):  # , trip: str = "155"
+    #     """ Debug certain commands """
+    #     import importlib
+    #     modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.static", "utils.timetables.schedules", "utils.timetables.maps",
+    #                "utils.timetables.viewers", "utils.timetables.views", "utils.timetables")
+    #     for module_name in modules:
+    #         module = importlib.import_module(module_name)
+    #         importlib.reload(module)
+    #     self.initialised = True
+    #     self.updating = False
+    #     self.DEBUG = True
+    #     self.WRITE = False
+    #     self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
+    #     await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+    #     message = await ctx.send(f"{emotes.Loading} Debug: Initialisation bypassed and modules reloaded")
+    #     # trip_id = {
+    #     #     "16": "4159_5535||0",
+    #     #     "16B": "4159_70418||0",
+    #     #     "16D": "4159_5774||0",
+    #     #     "33N": "4175_21||0",
+    #     #     "44": "4159_10812|T1001|0",
+    #     #     "46A": "4159_11162||0",
+    #     #     "46B": "4159_10876||0",
+    #     #     "46U": "4159_10875||0",
+    #     #     "99": "4159_14592|T185|0",
+    #     #     "155": "4159_4567|T184|0",
+    #     #     "155B": "4159_4414||0",
+    #     #     "225": "4174_101560||0",
+    #     #     "225B": "4174_71091||0",
+    #     #     "N4": "4159_18353|T1002|0",
+    #     #     "N4B": "4159_18609|T186|0",
+    #     #     "DARTM": "4176_2046||0",
+    #     #     "DARTH": "4176_2047||0",
+    #     #     "CORK": "4176_5358||0",
+    #     #     "ADDED": "|T183|0"
+    #     # }.get(trip.upper(), "4159_4567||0")
+    #     stop = timetables.load_value(self.static_data, timetables.Stop, "8220DB001738", self.db)  # 8350DB004153
+    #     schedule_viewer = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, self,
+    #                                                                time.datetime(2024, 8, 8, 7, 17, tz=timetables.TIMEZONE), user_id=ctx.author.id)
+    #     schedule_view = timetables.StopScheduleView(ctx.author, message, schedule_viewer, ctx)
+    #     return await message.edit(content=schedule_viewer.output, view=schedule_view)
+    #     # diagram_viewer = timetables.TripDiagramViewer(schedule_view, trip_id)
+    #     # # diagram_view = timetables.TripDiagramView(ctx.author, message, diagram_viewer, try_full_fetch=False)
+    #     # map_viewer = await timetables.TripDiagramMapViewer.load(diagram_viewer)
+    #     # return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.TripDiagramMapView(ctx.author, message, map_viewer, ctx))
 
 
 async def setup(bot: bot_data.Bot):

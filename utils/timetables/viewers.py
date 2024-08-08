@@ -4,12 +4,12 @@ import io
 import discord
 from regaus import time
 
-from utils import conworlds, languages, paginators
-from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
-from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
+from utils import paginators
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
+from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
-from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram
+from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
+from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop
 
 __all__ = ("StopScheduleViewer", "TripDiagramViewer", "TripDiagramMapViewer", "MapViewer")
 
@@ -152,7 +152,7 @@ class StopScheduleViewer:
 
     def create_output(self):
         """ Create the output from available information and send it to the user """
-        language = languages.Language("en")
+        # language = languages.Language("en")
         output_data: list[list[str | None]] = [["Route", "Destination", "Schedule", "RealTime", "Distance", None, None]]
         column_sizes = [5, 11, 8, 8, 8, 0, 0]  # Longest member of the column
         if self.compact_mode == 2:
@@ -162,6 +162,7 @@ class StopScheduleViewer:
                 output_data[0].pop(idx)
                 column_sizes.pop(idx)
         extras = False
+        has_distances = False
         # I don't think this should be there - for fixed schedules, self.now should not change
         # if not self.fixed:
         self.start_idx, self.end_idx = self.get_indexes()
@@ -233,12 +234,21 @@ class StopScheduleViewer:
                 destination = CANCELLED + destination
 
             if self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:  # "Compact mode" does not show vehicle distance
-                distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
-                if distance_km >= 1:  # > 1 km
-                    distance = language.length(distance_km * 1000, precision=2).split(" | ")[0]  # Precision: 0.01km (=10m)
+                has_distances = True
+                # distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
+                if stop_time.is_added:
+                    trip = stop_time.real_trip
+                else:
+                    trip = stop_time.trip(self.data)
+                distance_m, colour = distance_between_bus_and_stop(trip, self.stop, stop_time.vehicle, self.data)
+                if distance_m >= 1000:  # > 1 km
+                    distance = f"{distance_m / 1000:.2f}km"  # Precision: 0.01km (=10m)
+                    # distance = language.length(distance_m, precision=2).split(" | ")[0]
                 else:  # < 1 km
-                    distance = language.length(round(distance_km * 1000, -1), precision=0).split(" | ")[0]  # Round to nearest 10m
-                distance = distance.replace("\u200c", "")  # Remove ZWS
+                    distance = f"{round(distance_m, -1):.0f}m"  # Round to nearest 10m
+                    # distance = language.length(round(distance_m, -1), precision=0).split(" | ")[0]
+                # distance = distance.replace("\u200c", "")  # Remove ZWS
+                distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"  # Circle takes up 2 symbol widths
             elif not self.real_time:
                 distance = ""
             else:
@@ -305,7 +315,9 @@ class StopScheduleViewer:
         stop_id = f"ID `{self.stop.id}`"
         additional_text = ""
         if extras:
-            additional_text += "\n-# D = Drop-off/Alighting only; P = Pick-up/Boarding only"
+            additional_text += "\n-# D = Drop-off/Alighting only | P = Pick-up/Boarding only"
+        if has_distances:
+            additional_text += "\n-# Distance indicators: Red = Bus already passed stop | Yellow = Bus approaching | Green = Bus not nearby yet"
         if self.real_time:
             additional_text += f"\n-# Real-time data timestamp: {self.data_timestamp}"
         output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
@@ -688,10 +700,9 @@ class TripDiagramViewer:
         else:
             note = ""
 
+        extra_text = ""
         if self.pickup_only or self.drop_off_only:
-            extra_text = "\n-# D = Drop-off/Alighting only; P = Pick-up/Boarding only"
-        else:
-            extra_text = ""
+            extra_text = "\n-# D = Drop-off/Alighting only | P = Pick-up/Boarding only"
 
         if self.is_real_time:
             extra_text += f"\n-# Real-time data timestamp: {self.data_timestamp}"

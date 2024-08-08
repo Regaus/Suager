@@ -27,7 +27,7 @@ def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFS
 @dataclass()
 class GTFSRData:
     header: Header
-    entities: dict[str, TripUpdate]  # real_trip_id -> TripUpdate
+    entities: dict[str, TripUpdate]  # entity_id -> TripUpdate
 
     @classmethod
     def load(cls, data: dict | None):
@@ -49,7 +49,7 @@ class GTFSRData:
 @dataclass()
 class VehicleData:
     header: Header
-    entities: dict[str, Vehicle]
+    entities: dict[str, Vehicle]  # vehicle_id -> Vehicle (not entity_id!)
 
     @classmethod
     def load(cls, data: dict | None):

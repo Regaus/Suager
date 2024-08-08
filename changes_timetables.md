@@ -398,3 +398,8 @@
 
 ## v0.12.3.1 - 8 August 2024
 - Fixed the RouteFilterSelector crashing when two bus routes running through a bus stop happened to have the same number
+
+## v0.12.4 - 8 August 2024
+- The StopScheduleViewer now shows a more accurate distance between the bus and the stop using the map shape
+- Stop times for added trips now hold their relevant trip update with them
+- Disabled the debug command

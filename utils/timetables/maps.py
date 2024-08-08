@@ -16,7 +16,7 @@ from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape
 
 __all__ = (
     "MAP_SIZE", "TILE_SIZE", "DEFAULT_ZOOM", "BASE_MAP_URL",
-    "deg_to_xy_float", "deg_to_xy", "xy_to_deg", "find_fitting_coords_and_zoom",
+    "deg_to_xy_float", "deg_to_xy", "xy_to_deg", "find_fitting_coords_and_zoom", "distance_between_bus_and_stop",
     "download_tile", "download_map", "download_map_lat_lon",
     "draw_vehicle", "paste_vehicle_on_map", "add_map_attribution", "draw_shape", "draw_stop", "draw_all_stops",
     "get_map_with_buses", "get_trip_diagram",
@@ -107,6 +107,76 @@ def find_fitting_coords_and_zoom(shape: Shape | list[Stop]) -> tuple[int, int, i
     return centre_x, centre_y, zoom
 
 
+def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: Vehicle, static_data: GTFSData) -> tuple[float, int]:
+    """ Return the distance between the bus and the current bus stop in metres and an indication of whether the bus has passed the stop.
+
+    Second return value denotes the colour of the circle that denotes whether the bus has passed or not.
+     -1 = Orange = Unknown / can't tell (this should never be returned)
+     0 = Green = Bus hasn't passed the stop yet
+     1 = Yellow = Bus near stop
+     2 = Red = Bus passed the stop
+    """
+    # if not isinstance(trip, Trip):  # Added trip or otherwise invalid data
+    #     return conworlds.distance_between_places(stop.latitude, stop.longitude, vehicle.latitude, vehicle.longitude, "Earth") * 1000, -1
+    db = get_database()
+    if isinstance(trip, Trip):
+        shape = trip.shape(static_data, db)
+        points = shape.shape_points
+        added = False
+    else:
+        points = {stop_time_update.stop_sequence: load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times}
+        added = True
+    lat1, lon1 = vehicle.latitude, vehicle.longitude
+    distances1: dict[int, float] = {}
+    min_distance1 = float("inf")
+    sequence1 = 0
+    lat2, lon2 = stop.latitude, stop.longitude
+    distances2: dict[int, float] = {}
+    min_distance2 = float("inf")
+    sequence2 = 0
+    for seq, point in points.items():
+        lat3, lon3 = point.latitude, point.longitude
+        distance1 = conworlds.distance_between_places(lat1, lon1, lat3, lon3, "Earth") * 1000
+        distance2 = conworlds.distance_between_places(lat2, lon2, lat3, lon3, "Earth") * 1000
+        distances1[seq] = distance1
+        distances2[seq] = distance2
+        if distance1 < min_distance1:
+            min_distance1 = distance1
+            sequence1 = seq
+        if distance2 < min_distance2:
+            min_distance2 = distance2
+            sequence2 = seq
+    if sequence1 == sequence2:
+        return min_distance1 + min_distance2, 1
+
+    if added:
+        distance = min_distance1 + min_distance2
+        colour = 0
+        if sequence1 > sequence2:
+            _range = range(sequence2, sequence1)
+            colour = 2
+        else:
+            _range = range(sequence1, sequence2)
+        for i in _range:
+            stop = points[i]
+            next_stop = points[i + _range.step]
+            distance += conworlds.distance_between_places(stop.latitude, stop.longitude, next_stop.latitude, next_stop.longitude, "Earth") * 1000
+        if distance < 150 and colour != 2:
+            return distance, 1
+        return distance, colour
+    else:
+        point1 = points[sequence1]
+        point2 = points[sequence2]
+        if sequence1 > sequence2:  # Bus already passed stop
+            distance = point1.distance_travelled - point2.distance_travelled + min_distance1 + min_distance2
+            return distance, 2
+        else:
+            distance = point2.distance_travelled - point1.distance_travelled + min_distance1 + min_distance2
+            if distance < 150:
+                return distance, 1
+            return distance, 0
+
+
 async def download_tile(x: int, y: int, zoom: int) -> Image.Image:
     """ Download a specific tile at the given (x, y) coordinates. Returns an Image instance of it """
     req_download = True
@@ -195,7 +265,7 @@ def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_d
         # trip = Trip.from_sql(vehicle.trip.trip_id, db)
         # shape = Shape.from_sql(trip.shape_id, db)
         trip: Trip = load_value(static_data, Trip, vehicle.trip.trip_id, db)
-        shape: Shape = trip.shape()
+        shape: Shape = trip.shape(static_data, db)
         lat1, lon1 = vehicle.latitude, vehicle.longitude
         distances: dict[int, float] = {}
         min_distance = float("inf")
