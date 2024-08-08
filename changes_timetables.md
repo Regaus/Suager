@@ -412,3 +412,7 @@
 ## v0.12.4.2 - 8 August 2024
 - Prevented from real-time data from being loaded twice at the same time, causing rate limit errors on the API
 - Changed refresh button cooldowns to 60 seconds (the underlying code only calls the API once a minute anyways)
+
+## v0.12.5 - 8 August 2024
+- Removed the "Hide view" button from TripDiagramMapView and MapView, since they have few buttons to begin with
+- Added a "Reset zoom" button to MapView, which resets the zoom level back to default
