@@ -434,3 +434,6 @@
 
 ## v0.12.6.3 - 8 August 2024
 - Improved the TripDiagramMapViewer coordinates algorithm to fit more stops when zooming in, instead of blindly centering at the current stop even if it's near the end of the route
+
+## v0.12.6.4 - 8 August 2024
+- Fixed StopScheduleView crashing when there's no departures available from a stop (because RouteLineSelector was empty)

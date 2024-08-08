@@ -30,9 +30,11 @@ class StopScheduleView(views.InteractiveView):
             self.remove_item(self.freeze_unfreeze_schedule)
 
         self.route_filter_selector = RouteFilterSelector(self)
-        self.add_item(self.route_filter_selector)
+        if self.route_filter_selector.options:  # Don't add the selector if it's empty
+            self.add_item(self.route_filter_selector)
         self.route_line_selector = RouteLineSelector(self)
-        self.add_item(self.route_line_selector)
+        if self.route_line_selector.options:  # Don't add the selector if it's empty
+            self.add_item(self.route_line_selector)
 
         self.reset_route_filter.disabled = not self.schedule.base_schedule.route_filter_exists  # Filter enabled -> button enabled
 
