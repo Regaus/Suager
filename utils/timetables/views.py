@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import override
 
@@ -6,10 +7,11 @@ import discord
 from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.shared import get_data_database, NUMBERS
-from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer, MapViewer
+from utils.timetables.maps import DEFAULT_ZOOM
+from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
 from utils.views import NumericInputModal, SelectMenu
 
-__all__ = ["StopScheduleView", "TripDiagramView", "MapView"]
+__all__ = ("StopScheduleView", "TripDiagramView", "TripDiagramMapView", "MapView")
 
 
 # noinspection PyUnresolvedReferences
@@ -28,9 +30,11 @@ class StopScheduleView(views.InteractiveView):
             self.remove_item(self.freeze_unfreeze_schedule)
 
         self.route_filter_selector = RouteFilterSelector(self)
-        self.add_item(self.route_filter_selector)
+        if self.route_filter_selector.options:  # Don't add the selector if it's empty
+            self.add_item(self.route_filter_selector)
         self.route_line_selector = RouteLineSelector(self)
-        self.add_item(self.route_line_selector)
+        if self.route_line_selector.options:  # Don't add the selector if it's empty
+            self.add_item(self.route_line_selector)
 
         self.reset_route_filter.disabled = not self.schedule.base_schedule.route_filter_exists  # Filter enabled -> button enabled
 
@@ -52,7 +56,7 @@ class StopScheduleView(views.InteractiveView):
         if self.refreshing:
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
-        await self.disable_button(self.message, button, cooldown=30)
+        await self.disable_button(self.message, button, cooldown=60)
 
     def update_freeze_button(self):
         if self.schedule.fixed:
@@ -326,6 +330,8 @@ class RouteFilterSelector(SelectMenu):
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=25, options=[], row=3)
 
+        values = set()
+
         for route in self.interface.schedule.base_schedule.all_routes:
             name = f"Route {route.short_name}"
             description = route.long_name
@@ -333,7 +339,10 @@ class RouteFilterSelector(SelectMenu):
                 value = f"{route.short_name} {route.long_name}"
             else:
                 value = route.short_name
-            self.add_option(value=value, label=name, description=description)
+            # Prevent crashing from duplicate bus route numbers
+            if value not in values:
+                self.add_option(value=value, label=name, description=description)
+                values.add(value)
 
         self.options.sort(key=lambda x: alphanumeric_sort_string(x.value))
         self.max_values = len(self.options)
@@ -358,7 +367,10 @@ class RouteLineSelector(SelectMenu):
         """ Set options to the currently shown trips """
         stop_times = self.schedule.iterable_stop_times[slice(*self.schedule.get_indexes(custom_lines=10))]
         for i, stop_time in enumerate(stop_times, start=1):
-            destination = stop_time.actual_destination or stop_time.destination(self.data)
+            if stop_time.actual_destination:
+                destination = stop_time.actual_destination.replace("Terminates at ", "")
+            else:
+                destination = stop_time.destination(self.data)
             name = f"{self.schedule.format_time(stop_time.available_departure_time)} to {destination}"
             if stop_time.is_added:
                 value = f"|{stop_time.trip_id}"
@@ -384,18 +396,22 @@ class RouteLineSelector(SelectMenu):
     async def callback(self, interaction: discord.Interaction):
         # noinspection PyUnresolvedReferences
         await interaction.response.defer()
-        _message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading data about the trip...", wait=True)
-        message = await _message.fetch()
+        message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading data about the trip...", wait=True)
+        if not self.interface.temporary:
+            try:
+                message: discord.Message = await message.fetch()
+            except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
+                pass
         viewer = TripDiagramViewer(self.interface, self.values[0])
-        view = TripDiagramView(interaction.user, message, viewer)
+        view = TripDiagramView(interaction.user, message, viewer, try_full_fetch=False)
         return await view.update_message()
 
 
 # noinspection PyUnresolvedReferences
 class TripDiagramView(views.InteractiveView):
     """ A view for displaying the list of all stops in a trip """
-    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer):
-        super().__init__(sender=sender, message=message, timeout=3600)
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer, *, try_full_fetch: bool = True):
+        super().__init__(sender=sender, message=message, timeout=3600, try_full_fetch=try_full_fetch)
         self.viewer = viewer
         self.command = f"{self.__class__.__name__} {self.viewer.trip_identifier}"
         self._stop = self.viewer.stop
@@ -503,7 +519,7 @@ class TripDiagramView(views.InteractiveView):
             await self.viewer.refresh_real_time_data()
             self.viewer.update_output()
             await self.update_message()
-            await self.disable_button(self.message, button, cooldown=30)
+            await self.disable_button(self.message, button, cooldown=60)
         finally:
             self.refreshing = False
 
@@ -541,6 +557,27 @@ class TripDiagramView(views.InteractiveView):
         await interaction.response.defer()
         await self.message.edit(view=None)
 
+    @discord.ui.button(label="Show on a map", emoji="🗺️", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
+    async def show_on_map(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Show the trip diagram on a map """
+        await interaction.response.defer()
+        # Can't be pressed again
+        button.disabled = True
+        await self.message.edit(view=self)
+        message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading the map...")
+        if not self.temporary:
+            try:
+                message: discord.Message = await message.fetch()
+            except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
+                pass
+        try:
+            map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer)
+            # map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer.cog, self.viewer.static_trip, self.viewer.stop, self.viewer)
+        except Exception:
+            raise
+        view = TripDiagramMapView(interaction.user, message, map_viewer, try_full_fetch=False)
+        return await view.update_message()
+
 
 class GoToPageModal(NumericInputModal):
     """ Modal for setting the offset to a certain number """
@@ -565,13 +602,25 @@ class GoToPageModal(NumericInputModal):
 
 
 # noinspection PyUnresolvedReferences
-class MapView(views.InteractiveView):
-    """ A view for displaying buses near a given stop """
-    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: MapViewer, ctx: commands.Context | discord.Interaction = None):
-        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
+class TripDiagramMapView(views.InteractiveView):
+    """ A view for displaying a trip diagram on a map """
+    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: TripDiagramMapViewer, ctx: commands.Context | discord.Interaction = None,
+                 *, try_full_fetch: bool = True):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx, try_full_fetch=try_full_fetch)
         self.viewer = map_viewer
+        self.command = f"{self.__class__.__name__} {self.viewer.trip_id}"
         self.data_db = get_data_database()
         self.refreshing: bool = False
+        self.zoom_updating: bool = False
+        self.reset_zoom.disabled = True
+        self.zoom_out.disabled = True
+        self.min_zoom = self.viewer.zoom  # Minimum allowed zoom = default zoom
+        self.max_zoom = DEFAULT_ZOOM      # Maximum allowed zoom: 17
+
+    async def update_message(self):
+        """ Update the existing message """
+        self.message = await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
+        return self.message
 
     async def refresh(self):
         """ Refresh the real-time data """
@@ -591,31 +640,145 @@ class MapView(views.InteractiveView):
         await self.refresh()
         await self.disable_button(self.message, button, cooldown=60)
 
-    def update_zoom_button(self):
-        if self.viewer.zoom == 16:
-            self.change_zoom.label = "Zoom in"
-        else:  # zoom = 17
-            self.change_zoom.label = "Zoom out"
+    async def update_zoom_buttons(self):
+        """ Change the two buttons to be in an appropriate state after a 5s cooldown """
+        await asyncio.sleep(5)
+        self.reset_zoom.disabled = self.viewer.custom_zoom is None
+        self.zoom_out.disabled = self.viewer.zoom_level <= self.min_zoom
+        self.zoom_in.disabled = self.viewer.zoom_level >= self.max_zoom
+        await self.message.edit(view=self)
 
-    @discord.ui.button(label="Zoom out", emoji="🔎", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
-    async def change_zoom(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """ Zoom in or out on the map """
+    async def zoom_button_response(self, interaction: discord.Interaction, movement: int):
+        """ Zoom in or out - common function for the two buttons """
         await interaction.response.defer()
-        if self.viewer.zoom == 16:
-            self.viewer.zoom = 17
-        else:
-            self.viewer.zoom = 16
-        await self.viewer.update_map()
-        self.viewer.update_output()
-        self.update_zoom_button()
-        await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
-        await self.disable_button(self.message, button, cooldown=5)
+        if self.zoom_updating:
+            return await interaction.followup.send("The map's zoom is already being updated, please wait.", ephemeral=True)
+        self.zoom_updating = True
+        try:
+            if movement:
+                self.viewer.zoom_level += movement
+            else:
+                self.viewer.custom_zoom = None
+            await self.viewer.update_map()
+            self.viewer.update_output()
+            # Disable the zoom buttons for 5 seconds
+            self.reset_zoom.disabled = True
+            self.zoom_out.disabled = True
+            self.zoom_in.disabled = True
+            await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
+            await self.update_zoom_buttons()
+        finally:
+            self.zoom_updating = False
 
-    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
-    async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
-        """ Hide the view, instead of closing it altogether. """
+    @discord.ui.button(label="Reset zoom", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def reset_zoom(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the zoom back to normal """
+        return await self.zoom_button_response(interaction, 0)
+
+    @discord.ui.button(label="Zoom out", emoji="🗺️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_out(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom out on the map """
+        return await self.zoom_button_response(interaction, -1)
+
+    @discord.ui.button(label="Zoom in", emoji="🔎", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_in(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom in on the map - centred around the current stop """
+        return await self.zoom_button_response(interaction, 1)
+
+    # @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    # async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+    #     """ Hide the view, instead of closing it altogether. """
+    #     await interaction.response.defer()
+    #     await self.message.edit(view=views.HiddenView(self))
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
         await interaction.response.defer()
-        await self.message.edit(view=views.HiddenView(self))
+        await self.message.edit(view=None)
+
+
+# noinspection PyUnresolvedReferences
+class MapView(views.InteractiveView):
+    """ A view for displaying buses near a given stop """
+    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: MapViewer, ctx: commands.Context | discord.Interaction = None):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
+        self.viewer = map_viewer
+        self.data_db = get_data_database()
+        self.refreshing: bool = False
+        self.zoom_updating: bool = False
+        self.reset_zoom.disabled = True
+        self.min_zoom = DEFAULT_ZOOM - 1  # Minimum allowed zoom: 16
+        self.max_zoom = DEFAULT_ZOOM + 1  # Maximum allowed zoom: 18
+
+    async def refresh(self):
+        """ Refresh the real-time data """
+        self.refreshing = True
+        try:
+            await self.viewer.refresh()
+            await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
+        finally:
+            self.refreshing = False
+
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Refresh the real-time data """
+        await interaction.response.defer()
+        if self.refreshing:
+            return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
+        await self.refresh()
+        await self.disable_button(self.message, button, cooldown=60)
+
+    async def update_zoom_buttons(self):
+        """ Change the two buttons to be in an appropriate state after a 5s cooldown """
+        await asyncio.sleep(5)
+        self.reset_zoom.disabled = self.viewer.zoom == DEFAULT_ZOOM
+        self.zoom_out.disabled = self.viewer.zoom <= self.min_zoom
+        self.zoom_in.disabled = self.viewer.zoom >= self.max_zoom
+        await self.message.edit(view=self)
+
+    async def zoom_button_response(self, interaction: discord.Interaction, movement: int):
+        """ Zoom in or out - common function for the two buttons """
+        await interaction.response.defer()
+        if self.zoom_updating:
+            return await interaction.followup.send("The map's zoom is already being updated, please wait.", ephemeral=True)
+        self.zoom_updating = True
+        try:
+            if movement:
+                self.viewer.zoom += movement
+            else:
+                self.viewer.zoom = DEFAULT_ZOOM
+            await self.viewer.update_map()
+            self.viewer.update_output()
+            # Disable the zoom buttons for 5 seconds
+            self.reset_zoom.disabled = True
+            self.zoom_out.disabled = True
+            self.zoom_in.disabled = True
+            await self.message.edit(content=self.viewer.output, attachments=self.viewer.attachment, view=self)
+            await self.update_zoom_buttons()
+        finally:
+            self.zoom_updating = False
+
+    @discord.ui.button(label="Reset zoom", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def reset_zoom(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the zoom back to normal """
+        return await self.zoom_button_response(interaction, 0)
+
+    @discord.ui.button(label="Zoom out", emoji="🗺️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_out(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom out on the map """
+        return await self.zoom_button_response(interaction, -1)
+
+    @discord.ui.button(label="Zoom in", emoji="🔎", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def zoom_in(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Zoom in on the map """
+        return await self.zoom_button_response(interaction, 1)
+
+    # @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    # async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+    #     """ Hide the view, instead of closing it altogether. """
+    #     await interaction.response.defer()
+    #     await self.message.edit(view=views.HiddenView(self))
 
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):

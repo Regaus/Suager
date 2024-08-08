@@ -253,13 +253,18 @@ class HiddenView(View):
 class InteractiveView(View):
     message: discord.Message | discord.InteractionMessage
 
-    def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage, timeout: int = 300, ctx: commands.Context | discord.Interaction = None):
+    def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage | discord.WebhookMessage,
+                 timeout: int = 300, ctx: commands.Context | discord.Interaction = None, *, try_full_fetch: bool = True):
         super().__init__(timeout=timeout, ctx=ctx)
         self.sender = sender
         self.temporary = False
 
         if isinstance(message, (discord.InteractionMessage, discord.WebhookMessage)):  # Fetch the full Message from the partial InteractionMessage
-            if message.interaction_metadata.is_guild_integration():  # This should be fine. I don't think we'll ever need to load partial messages from a non-interaction webhook?
+            # Unless explicitly told not to try to fetch the full message, try to load it if:
+            # it's an InteractionMessage and it's marked as being called from a guild integration
+            # it's a WebhookMessage (no other conditions required in this case)
+            if try_full_fetch and ((isinstance(message, discord.InteractionMessage) and message.interaction_metadata is not None and message.interaction_metadata.is_guild_integration())
+                                   or isinstance(message, discord.WebhookMessage)):
                 try:
                     nest_asyncio.apply()  # https://stackoverflow.com/a/56434301 - Patches asyncio to let the code below run properly
                     self.message = asyncio.get_event_loop().run_until_complete(asyncio.create_task(message.fetch()))
@@ -274,6 +279,7 @@ class InteractiveView(View):
 
         if self.temporary:
             self.timeout = min(self.timeout, 900)
+        # print(self.__class__.__name__, type(self.message).__name__, self.temporary)
 
     # async def validate_sender(self, interaction: discord.Interaction):
     #     """ Make sure that the person clicking on the button is also the author of the message """

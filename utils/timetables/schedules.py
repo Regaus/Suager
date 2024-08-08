@@ -7,10 +7,10 @@ from utils.timetables.shared import TIMEZONE, get_database, get_data_database
 from utils.timetables.static import *
 from utils.timetables.realtime import *
 
-__all__ = [
+__all__ = (
     "SpecificStopTime", "AddedStopTime", "RealStopTime",
     "StopSchedule", "RealTimeStopSchedule", "real_trip_updates"
-]
+)
 
 
 class SpecificStopTime:
@@ -77,9 +77,10 @@ class SpecificStopTime:
 class AddedStopTime:
     """ A stop from an ADDED trip """
 
-    def __init__(self, stop_time_update: StopTimeUpdate, trip_id: str | None, route: Route | None, stop: Stop, destination: str = None, vehicle: Vehicle = None):  # stops: dict[str, Stop]
+    def __init__(self, stop_time_update: StopTimeUpdate, trip_update: TripUpdate, route: Route | None, stop: Stop, destination: str = None, vehicle: Vehicle = None):  # stops: dict[str, Stop]
         self.stop_time = stop_time_update
-        self.trip_id = trip_id
+        self.trip_update = trip_update
+        self.trip_id = trip_update.entity_id
         self.route = route
         self.stop_id = stop.id
         self.stop = stop  # Has to be provided manually
@@ -303,7 +304,7 @@ class RealStopTime:
             self.arrival_time = stop_time.arrival_time
             self.departure_time = stop_time.departure_time
             self.real_time = True
-            self.real_trip = None
+            self.real_trip = stop_time.trip_update
             self.schedule_relationship = "ADDED"
             self._destination = stop_time.destination
             self.vehicle = stop_time.vehicle
@@ -537,7 +538,7 @@ class StopSchedule:
 
 
 def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: str) -> tuple[dict[str, TripUpdate], dict[str, TripUpdate]]:
-    if real_time_data is None:
+    if not real_time_data:
         return {}, {}
     output = {}
     added = {}
@@ -580,6 +581,7 @@ class RealTimeStopSchedule:
 
         self.real_trips, self.added_trips = real_trip_updates(real_time_data, self.trip_ids, self.stop_id)
 
+        self.real_time_data = real_time_data
         self.vehicle_data = vehicle_data
 
     @classmethod
@@ -619,7 +621,8 @@ class RealTimeStopSchedule:
                         vehicle = self.vehicle_data.entities[vehicle_id]
                     else:
                         vehicle = None
-                    added_stop_time = AddedStopTime(stop_time, trip_id, route, self.stop_schedule.stop, destination, vehicle)
+                    trip_update = self.real_time_data.entities[trip_id]
+                    added_stop_time = AddedStopTime(stop_time, trip_update, route, self.stop_schedule.stop, destination, vehicle)
                     output.append(RealStopTime(added_stop_time, None, None))
 
         output.sort(key=lambda st: st.available_departure_time)

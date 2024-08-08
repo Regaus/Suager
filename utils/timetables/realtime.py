@@ -7,10 +7,10 @@ from regaus import time
 from utils.timetables.shared import GTFSAPIError, TIMEZONE
 
 
-__all__ = [
+__all__ = (
     "load_gtfs_r_data", "GTFSRData", "VehicleData",
     "Header", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle"
-]
+)
 
 
 # These classes handle the GTFS-R Real time information
@@ -27,44 +27,66 @@ def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFS
 @dataclass()
 class GTFSRData:
     header: Header
-    entities: dict[str, TripUpdate]  # real_trip_id -> TripUpdate
+    entities: dict[str, TripUpdate]  # entity_id -> TripUpdate
 
     @classmethod
     def load(cls, data: dict | None):
         # If no data is available, keep self.data null until we do get some data
         if data is None:
-            return None
+            return cls.empty()
         # See if the API returned any errors
         if "status_code" in data and "message" in data:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "real-time")
         if "entity" not in data:
-            return None
+            return cls.empty()
         trip_updates: dict[str, TripUpdate] = {}
         for entity in data["entity"]:
             trip_update = TripUpdate.load(entity)
             trip_updates[trip_update.entity_id] = trip_update
         return cls(Header.load(data["header"]), trip_updates)
 
+    @classmethod
+    def empty(cls):
+        """ Return an empty GTFSRData object """
+        return cls(Header("2.0", "EMPTY", time.datetime.zero), {})
+
+    def is_empty(self) -> bool:
+        return self.header.incrementality == "EMPTY"
+
+    def __bool__(self) -> bool:
+        return not self.is_empty()
+
 
 @dataclass()
 class VehicleData:
     header: Header
-    entities: dict[str, Vehicle]
+    entities: dict[str, Vehicle]  # vehicle_id -> Vehicle (not entity_id!)
 
     @classmethod
     def load(cls, data: dict | None):
         if data is None:
-            return None
+            return cls.empty()
         # See if the API returned any errors
         if "status_code" in data and "message" in data:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "vehicles")
         if "entity" not in data:
-            return None
+            return cls.empty()
         vehicles: dict[str, Vehicle] = {}
         for entity in data["entity"]:
             vehicle = Vehicle.load(entity)
             vehicles[vehicle.vehicle_id] = vehicle
         return cls(Header.load(data["header"]), vehicles)
+
+    @classmethod
+    def empty(cls):
+        """ Return an empty GTFSRData object """
+        return cls(Header("2.0", "EMPTY", time.datetime.zero), {})
+
+    def is_empty(self) -> bool:
+        return self.header.incrementality == "EMPTY"
+
+    def __bool__(self) -> bool:
+        return not self.is_empty()
 
 
 @dataclass()

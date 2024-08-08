@@ -273,6 +273,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.static_data: timetables.GTFSData | None = None
         self.initialised = False
         self.updating = False
+        self.updating_real_time = False
         self.loader_error: Exception | None = None
         self.soft_loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
@@ -336,29 +337,46 @@ class Timetables(University, Luas, name="Timetables"):
         return data
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
-        # Only refresh the data once in 60 seconds
-        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
-            return self.real_time_data, self.vehicle_data
-        data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
+        while self.updating_real_time:
+            await asyncio.sleep(1)
         try:
-            new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
-            if new_real_time_data:
-                self.real_time_data = new_real_time_data
-            if new_vehicle_data:
-                self.vehicle_data = new_vehicle_data
-        except timetables.GTFSAPIError as e:
-            error_place = e.error_place
-            # Load new data for the valid part, and leave the other one as-is
-            if error_place == "real-time":
-                self.vehicle_data = timetables.load_gtfs_r_data(None, vehicle_data)[1]
-            elif error_place == "vehicles":
-                self.real_time_data = timetables.load_gtfs_r_data(data, None)[0]
-            logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Real-Time API Error for {error_place}: {type(e).__name__}: {str(e)}")
-        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
-        self.last_updated = time.datetime.now()
-        return self.real_time_data, self.vehicle_data  # just in case
+            self.updating_real_time = True
+            # Only refresh the data once in 60 seconds
+            if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
+                return self.real_time_data, self.vehicle_data
+            if self.last_updated is None:
+                prev_real_time_data_d, prev_vehicle_data_d = await self.get_real_time_data(debug=True, write=False)
+                prev_real_time_data, prev_vehicle_data = timetables.load_gtfs_r_data(prev_real_time_data_d, prev_vehicle_data_d)
+                ts1, ts2 = prev_real_time_data.header.timestamp.timestamp, prev_vehicle_data.header.timestamp.timestamp
+                now = time.datetime.now().timestamp
+                if (now - max(ts1, ts2)) < 75:  # Less than 75s passed since the data header's timestamp (vehicle data has a 60s cooldown, add 15s to be sure to not hit it)
+                    self.real_time_data = prev_real_time_data
+                    self.vehicle_data = prev_vehicle_data
+                    self.last_updated = time.datetime.from_timestamp(max(ts1, ts2))
+                    logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded GTFS-R data stored on disk (too recent to update)")
+                    return self.real_time_data, self.vehicle_data
+            data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
+            try:
+                new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
+                if new_real_time_data:
+                    self.real_time_data = new_real_time_data
+                if new_vehicle_data:
+                    self.vehicle_data = new_vehicle_data
+            except timetables.GTFSAPIError as e:
+                error_place = e.error_place
+                # Load new data for the valid part, and leave the other one as-is
+                if error_place == "real-time":
+                    self.vehicle_data = timetables.load_gtfs_r_data(None, vehicle_data)[1]
+                elif error_place == "vehicles":
+                    self.real_time_data = timetables.load_gtfs_r_data(data, None)[0]
+                logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Real-Time API Error for {error_place}: {type(e).__name__}: {str(e)}")
+            logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
+            self.last_updated = time.datetime.now()
+            return self.real_time_data, self.vehicle_data  # just in case
+        finally:
+            self.updating_real_time = False
 
-    async def get_real_time_data(self, debug: bool = False, *, write: bool = True):
+    async def get_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[dict, dict]:
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
         if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):
             try:
@@ -387,7 +405,7 @@ class Timetables(University, Luas, name="Timetables"):
             cpu_burner.arr[2] = False  # Disable the CPU burner function while loading the GTFS data
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
-            if self.real_time_data is None:
+            if not self.real_time_data:
                 await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:
@@ -719,7 +737,7 @@ class Timetables(University, Luas, name="Timetables"):
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
-    @tfi.command("map")
+    @tfi.command(name="map")
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
     @app_commands.describe(
         stop_query="The ID, code, or name of the stop for which you want to see the schedule",
@@ -745,11 +763,62 @@ class Timetables(University, Luas, name="Timetables"):
                 return await ctx.send("The GTFS data available has expired.")
 
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        if self.vehicle_data is None:
+            return await ctx.send("Vehicle data seems to be unavailable at the moment. Try again in a minute.")
         try:
-            map_viewer = await timetables.MapViewer.load(self, stop, zoom=timetables.DEFAULT_ZOOM)
+            map_viewer: timetables.MapViewer = await timetables.MapViewer.load(self, stop, zoom=timetables.DEFAULT_ZOOM)
         except Exception:
             raise
         return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.MapView(ctx.author, message, map_viewer, ctx))
+
+    # If this command is uncommented, it will still get synced to a slash command for whatever reason
+    # @tfi.command(name="debug", enabled=False)
+    # @commands.is_owner()
+    # async def tfi_debug_command(self, ctx: commands.Context):  # , trip: str = "155"
+    #     """ Debug certain commands """
+    #     import importlib
+    #     modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.static", "utils.timetables.schedules", "utils.timetables.maps",
+    #                "utils.timetables.viewers", "utils.timetables.views", "utils.timetables")
+    #     for module_name in modules:
+    #         module = importlib.import_module(module_name)
+    #         importlib.reload(module)
+    #     self.initialised = True
+    #     self.updating = False
+    #     self.DEBUG = True
+    #     self.WRITE = False
+    #     self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
+    #     await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+    #     message = await ctx.send(f"{emotes.Loading} Debug: Initialisation bypassed and modules reloaded")
+    #     # trip_id = {
+    #     #     "16": "4159_5535||0",
+    #     #     "16B": "4159_70418||0",
+    #     #     "16D": "4159_5774||0",
+    #     #     "33N": "4175_21||0",
+    #     #     "44": "4159_10812|T1001|0",
+    #     #     "46A": "4159_11162||0",
+    #     #     "46B": "4159_10876||0",
+    #     #     "46U": "4159_10875||0",
+    #     #     "99": "4159_14592|T185|0",
+    #     #     "155": "4159_4567|T184|0",
+    #     #     "155B": "4159_4414||0",
+    #     #     "225": "4174_101560||0",
+    #     #     "225B": "4174_71091||0",
+    #     #     "N4": "4159_18353|T1002|0",
+    #     #     "N4B": "4159_18609|T186|0",
+    #     #     "DARTM": "4176_2046||0",
+    #     #     "DARTH": "4176_2047||0",
+    #     #     "CORK": "4176_5358||0",
+    #     #     "ADDED": "|T183|0"
+    #     # }.get(trip.upper(), "4159_4567||0")
+    #     stop = timetables.load_value(self.static_data, timetables.Stop, "8220DB001738", self.db)  # 8350DB004153
+    #     schedule_viewer = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, self,
+    #                                                                time.datetime(2024, 8, 8, 7, 17, tz=timetables.TIMEZONE), user_id=ctx.author.id)
+    #     schedule_view = timetables.StopScheduleView(ctx.author, message, schedule_viewer, ctx)
+    #     return await message.edit(content=schedule_viewer.output, view=schedule_view)
+    #     # diagram_viewer = timetables.TripDiagramViewer(schedule_view, trip_id)
+    #     # # diagram_view = timetables.TripDiagramView(ctx.author, message, diagram_viewer, try_full_fetch=False)
+    #     # map_viewer = await timetables.TripDiagramMapViewer.load(diagram_viewer)
+    #     # return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.TripDiagramMapView(ctx.author, message, map_viewer, ctx))
 
 
 async def setup(bot: bot_data.Bot):

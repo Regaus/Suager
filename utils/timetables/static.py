@@ -11,13 +11,13 @@ from regaus import time
 from utils import database
 from utils.timetables.shared import CHUNK_SIZE, get_database
 
-__all__ = [
+__all__ = (
     "str_to_date", "time_to_int",
     "GTFSData", "Agency", "Calendar", "CalendarException", "Route", "Stop", "Trip", "StopTime", "Shape", "ShapePoint",
     "load_csv_lines", "check_gtfs_data_expiry", "iterate_over_csv_full",
     "read_and_store_gtfs_data", "init_gtfs_data",
     "load_calendars", "load_value"
-]
+)
 
 
 def _weekdays_to_int(weekdays: tuple[bool, bool, bool, bool, bool, bool, bool]) -> int:

@@ -363,3 +363,77 @@
 
 ## v0.11.3.2 - 4 August 2024
 - Made the notes on the StopScheduleViewer and TripDiagramViewer to show up in small text (`-#`)
+
+## v0.11.3.3 - 5 August 2024
+- Refactored the timetables maps submodule to have more consistent variable names and make it easier to customise the map generation afterwards
+- Changed the `__all__` declarations to use tuples instead of lists
+
+## v0.12.0 - 5 August 2024
+- Made it possible to look up a diagram of a trip on the map
+- Added a failsafe to prevent the map command from loading if the vehicle data is unavailable
+- Changed the font on the maps to Univers
+
+## v0.12.0.1 - 5 August 2024
+- Added a real-time data timestamp for StopScheduleViewer and TripDiagramViewer
+
+## v0.12.0.2 - 6 August 2024
+- Changed the "find fitting coordinates and zoom" algorithm to be more likely to produce a map where all the points fit
+
+## v0.12.1 - 6 August 2024
+- Changed the highest available zoom to be 18 (making the limit 16-18 rather than 16-17)
+
+## v0.12.2 - 6 August 2024
+- Fixed the TripDiagramView and TripDiagramMapView breaking after 15 minutes
+- The TripDiagramMapViewer now gets its data from the TripDiagramViewer, including information about arrival and departure times
+- The departure times for stops are now rendered on the TripDiagramViewer
+- Made the TripDiagramMapViewer be able to handle added trips
+- Fixed the TripDiagramMapViewer breaking if the trip had no vehicle tracked
+
+## v0.12.3 - 6-7 August 2024
+- The TripDiagramMapViewer map should no longer be able to go out of bounds
+- The times shown on the TripDiagramMapViewer will now try to not overlap with each other (not perfect, but decent enough to leave for now)
+- Stopped TripDiagramViewer from breaking if no stop time was ever loaded for the trip before
+- Added a special debug command for testing the TripDiagramMapViewer
+- Added special debug functions to generate fake real-time and added trips and create fake vehicles
+
+## v0.12.3.1 - 8 August 2024
+- Fixed the RouteFilterSelector crashing when two bus routes running through a bus stop happened to have the same number
+
+## v0.12.4 - 8 August 2024
+- The StopScheduleViewer now shows a more accurate distance between the bus and the stop using the map shape
+- Stop times for added trips now hold their relevant trip update with them
+- Disabled the debug command
+
+## v0.12.4.1 - 8 August 2024
+- GTFSRData and VehicleData classes now return an empty instance instead of None if the data is not available
+- When first loading data, the bot will now check the timestamp of the data stored on disk, only loading from API if more than 75s passed since last update
+  - This will prevent the vehicle API from complaining when I reload the bot a lot during debugging
+
+## v0.12.4.2 - 8 August 2024
+- Prevented from real-time data from being loaded twice at the same time, causing rate limit errors on the API
+- Changed refresh button cooldowns to 60 seconds (the underlying code only calls the API once a minute anyways)
+
+## v0.12.5 - 8 August 2024
+- Removed the "Hide view" button from TripDiagramMapView and MapView, since they have few buttons to begin with
+- Added a "Reset zoom" button to MapView, which resets the zoom level back to default
+
+## v0.12.5.1 - 8 August 2024
+- Skipped stops no longer set the arrival/departure delay to zero
+- Skipped stops will no longer have their departure times rendered
+- Skipped stops will always be rendered red, even if they are pickup-only or drop off-only
+- Vehicles whose coordinates are 0, 0 will no longer show their distance
+
+## v0.12.6 - 8 August 2024
+- The TripDiagramMapViewer now supports zooming in (centres around the current stop)
+
+## v0.12.6.1 - 8 August 2024
+- Trips that terminate early no longer show the "Terminates at" part on the RouteLineSelector (only the destination)
+
+## v0.12.6.2 - 8 August 2024
+- Cancelled trips will now have all stops (except the current stop) rendered in red on the map, but still show the departure times
+
+## v0.12.6.3 - 8 August 2024
+- Improved the TripDiagramMapViewer coordinates algorithm to fit more stops when zooming in, instead of blindly centering at the current stop even if it's near the end of the route
+
+## v0.12.6.4 - 8 August 2024
+- Fixed StopScheduleView crashing when there's no departures available from a stop (because RouteLineSelector was empty)
