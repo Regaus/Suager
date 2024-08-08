@@ -54,7 +54,7 @@ class StopScheduleView(views.InteractiveView):
         if self.refreshing:
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
-        await self.disable_button(self.message, button, cooldown=30)
+        await self.disable_button(self.message, button, cooldown=60)
 
     def update_freeze_button(self):
         if self.schedule.fixed:
@@ -514,7 +514,7 @@ class TripDiagramView(views.InteractiveView):
             await self.viewer.refresh_real_time_data()
             self.viewer.update_output()
             await self.update_message()
-            await self.disable_button(self.message, button, cooldown=30)
+            await self.disable_button(self.message, button, cooldown=60)
         finally:
             self.refreshing = False
 

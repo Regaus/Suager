@@ -273,6 +273,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.static_data: timetables.GTFSData | None = None
         self.initialised = False
         self.updating = False
+        self.updating_real_time = False
         self.loader_error: Exception | None = None
         self.soft_loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
@@ -336,38 +337,44 @@ class Timetables(University, Luas, name="Timetables"):
         return data
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
-        # Only refresh the data once in 60 seconds
-        if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
-            return self.real_time_data, self.vehicle_data
-        if self.last_updated is None:
-            prev_real_time_data_d, prev_vehicle_data_d = await self.get_real_time_data(debug=True, write=False)
-            prev_real_time_data, prev_vehicle_data = timetables.load_gtfs_r_data(prev_real_time_data_d, prev_vehicle_data_d)
-            ts1, ts2 = prev_real_time_data.header.timestamp.timestamp, prev_vehicle_data.header.timestamp.timestamp
-            now = time.datetime.now().timestamp
-            if (now - max(ts1, ts2)) < 75:  # Less than 75s passed since the data header's timestamp (vehicle data has a 60s cooldown, add 15s to be sure to not hit it)
-                self.real_time_data = prev_real_time_data
-                self.vehicle_data = prev_vehicle_data
-                self.last_updated = time.datetime.from_timestamp(max(ts1, ts2))
-                logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded GTFS-R data stored on disk (too recent to update)")
-                return self.real_time_data, self.vehicle_data
-        data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
+        while self.updating_real_time:
+            await asyncio.sleep(1)
         try:
-            new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
-            if new_real_time_data:
-                self.real_time_data = new_real_time_data
-            if new_vehicle_data:
-                self.vehicle_data = new_vehicle_data
-        except timetables.GTFSAPIError as e:
-            error_place = e.error_place
-            # Load new data for the valid part, and leave the other one as-is
-            if error_place == "real-time":
-                self.vehicle_data = timetables.load_gtfs_r_data(None, vehicle_data)[1]
-            elif error_place == "vehicles":
-                self.real_time_data = timetables.load_gtfs_r_data(data, None)[0]
-            logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Real-Time API Error for {error_place}: {type(e).__name__}: {str(e)}")
-        logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
-        self.last_updated = time.datetime.now()
-        return self.real_time_data, self.vehicle_data  # just in case
+            self.updating_real_time = True
+            # Only refresh the data once in 60 seconds
+            if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
+                return self.real_time_data, self.vehicle_data
+            if self.last_updated is None:
+                prev_real_time_data_d, prev_vehicle_data_d = await self.get_real_time_data(debug=True, write=False)
+                prev_real_time_data, prev_vehicle_data = timetables.load_gtfs_r_data(prev_real_time_data_d, prev_vehicle_data_d)
+                ts1, ts2 = prev_real_time_data.header.timestamp.timestamp, prev_vehicle_data.header.timestamp.timestamp
+                now = time.datetime.now().timestamp
+                if (now - max(ts1, ts2)) < 75:  # Less than 75s passed since the data header's timestamp (vehicle data has a 60s cooldown, add 15s to be sure to not hit it)
+                    self.real_time_data = prev_real_time_data
+                    self.vehicle_data = prev_vehicle_data
+                    self.last_updated = time.datetime.from_timestamp(max(ts1, ts2))
+                    logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded GTFS-R data stored on disk (too recent to update)")
+                    return self.real_time_data, self.vehicle_data
+            data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
+            try:
+                new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
+                if new_real_time_data:
+                    self.real_time_data = new_real_time_data
+                if new_vehicle_data:
+                    self.vehicle_data = new_vehicle_data
+            except timetables.GTFSAPIError as e:
+                error_place = e.error_place
+                # Load new data for the valid part, and leave the other one as-is
+                if error_place == "real-time":
+                    self.vehicle_data = timetables.load_gtfs_r_data(None, vehicle_data)[1]
+                elif error_place == "vehicles":
+                    self.real_time_data = timetables.load_gtfs_r_data(data, None)[0]
+                logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Real-Time API Error for {error_place}: {type(e).__name__}: {str(e)}")
+            logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
+            self.last_updated = time.datetime.now()
+            return self.real_time_data, self.vehicle_data  # just in case
+        finally:
+            self.updating_real_time = False
 
     async def get_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[dict, dict]:
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """

@@ -408,3 +408,7 @@
 - GTFSRData and VehicleData classes now return an empty instance instead of None if the data is not available
 - When first loading data, the bot will now check the timestamp of the data stored on disk, only loading from API if more than 75s passed since last update
   - This will prevent the vehicle API from complaining when I reload the bot a lot during debugging
+
+## v0.12.4.2 - 8 August 2024
+- Prevented from real-time data from being loaded twice at the same time, causing rate limit errors on the API
+- Changed refresh button cooldowns to 60 seconds (the underlying code only calls the API once a minute anyways)
