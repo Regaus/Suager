@@ -365,7 +365,10 @@ class RouteLineSelector(SelectMenu):
         """ Set options to the currently shown trips """
         stop_times = self.schedule.iterable_stop_times[slice(*self.schedule.get_indexes(custom_lines=10))]
         for i, stop_time in enumerate(stop_times, start=1):
-            destination = stop_time.actual_destination or stop_time.destination(self.data)
+            if stop_time.actual_destination:
+                destination = stop_time.actual_destination.replace("Terminates at ", "")
+            else:
+                destination = stop_time.destination(self.data)
             name = f"{self.schedule.format_time(stop_time.available_departure_time)} to {destination}"
             if stop_time.is_added:
                 value = f"|{stop_time.trip_id}"

@@ -425,3 +425,6 @@
 
 ## v0.12.6 - 8 August 2024
 - The TripDiagramMapViewer now supports zooming in (centres around the current stop)
+
+## v0.12.6.1 - 8 August 2024
+- Trips that terminate early no longer show the "Terminates at" part on the RouteLineSelector (only the destination)
