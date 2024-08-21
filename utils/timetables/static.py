@@ -406,7 +406,7 @@ class StopTime:
 @dataclass()
 class Shape:
     shape_id: str
-    shape_points: dict[int, ShapePoint]
+    shape_points: list[ShapePoint]  # dict[int, ShapePoint]
 
     def __len__(self) -> int:
         return len(self.shape_points)
@@ -415,7 +415,7 @@ class Shape:
         return f"Shape {self.shape_id} ({len(self.shape_points)} points)"
 
     @classmethod
-    def from_dict(cls, data: dict[str, str | dict[int, ShapePoint]]) -> Shape:
+    def from_dict(cls, data: dict[str, str | list[ShapePoint]]) -> Shape:  # dict[int, ShapePoint]
         """ Construct a new Shape object from a dictionary containing a shape ID and all the shape points """
         try:
             return cls(data["shape_id"], data["shape_points"])
@@ -429,15 +429,15 @@ class Shape:
             db = get_database()
         data = db.fetch("SELECT * FROM shapes WHERE shape_id=?", (shape_id,))
         if data:
-            points: dict[int, ShapePoint] = {p.sequence: p for p in map(ShapePoint.from_dict, data)}
-            # points: list[ShapePoint] = sorted(list(map(ShapePoint.from_dict, data)), key=lambda p: p.sequence)
-            return cls(points[1].shape_id, points)
+            # points: dict[int, ShapePoint] = {p.sequence: p for p in map(ShapePoint.from_dict, data)}
+            points: list[ShapePoint] = sorted(list(map(ShapePoint.from_dict, data)), key=lambda p: p.sequence)
+            return cls(points[0].shape_id, points)
         else:
             raise KeyError(f"No data found for Shape ID {shape_id}")
 
     def save_to_sql(self) -> str:
         """ Return the SQL command to save this data into the database """
-        return "; ".join(point.save_to_sql() for point in self.shape_points.values())
+        return "; ".join(point.save_to_sql() for point in self.shape_points)
 
 
 @dataclass()
@@ -579,6 +579,7 @@ def read_and_store_gtfs_data():  # self=None
                      "DELETE FROM stops;"
                      "DELETE FROM trips;"
                      "DELETE FROM stop_times;"
+                     "DELETE FROM shapes;"
                      "COMMIT;")
 
     def save_to_sql():
@@ -642,8 +643,15 @@ def read_and_store_gtfs_data():  # self=None
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved trips")
 
+    # indexes: dict[str, int] = {}
     for row in iterate_over_csv_full("shapes.txt"):
-        statements.append(ShapePoint(row.shape_id, row.shape_pt_sequence, row.shape_pt_lat, row.shape_pt_lon, row.shape_dist_traveled).save_to_sql())
+        # I don't think custom indexes are necessary, but I'll leave this in case they turn out to be
+        # if row.shape_id not in indexes:
+        #     idx = indexes[row.shape_id] = 0
+        # else:
+        #     idx = indexes[row.shape_id]
+        # indexes[row.shape_id] += 1
+        statements.append(ShapePoint(row.shape_id, row.shape_pt_sequence - 1, row.shape_pt_lat, row.shape_pt_lon, row.shape_dist_traveled).save_to_sql())
         if len(statements) >= 100000:
             save_to_sql()
     save_to_sql()
@@ -716,4 +724,4 @@ def load_value(data: GTFSData | None, cls: Type[Any], _id: str, db: database.Dat
         else:
             raise ValueError
     except (KeyError, ValueError):
-        raise KeyError(f"Could not find a {cls.__name__} instance for key {key_mapping[cls]} and ID {_id}") from None  # type: ignore
+        raise KeyError(f"Could not find a {cls.__name__} instance for key {key_mapping[cls]!r} and ID {_id!r}") from None  # type: ignore

@@ -437,3 +437,10 @@
 
 ## v0.12.6.4 - 8 August 2024
 - Fixed StopScheduleView crashing when there's no departures available from a stop (because RouteLineSelector was empty)
+
+## v0.12.6.5 - 21 August 2024
+- Added quotes around the key and ID in the KeyError raised by `load_value()`
+- Fixed `timetables.maps` throwing an error when a trip somehow doesn't have the shape data associated with a trip
+- Fixed shapes breaking the uniqueness constraint (shape ID + sequence)
+  - The shapes will now use zero-based indexes so that they can be converted to a list
+- Changed shapes to use a list of shape points rather than a dictionary

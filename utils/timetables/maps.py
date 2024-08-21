@@ -1,7 +1,6 @@
 import io
 import os.path
 from contextlib import suppress
-from itertools import islice
 from math import radians as rad, degrees as deg, cos, sinh, tan, atan, pi, log, asin, ceil
 
 import numpy
@@ -10,6 +9,7 @@ from regaus import time
 
 from utils import http, logger, conworlds
 from utils.general import print_error, make_dir
+from utils.timetables import ShapePoint
 from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate
 from utils.timetables.shared import get_database, __version__
 from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, load_value
@@ -68,7 +68,8 @@ def find_fitting_coords_and_zoom(shape: Shape | list[Stop], custom_centre: tuple
     # Get coordinates for every 20th point to be more likely to make them fit
     # for point in list(shape.shape_points.values())[::20]:  # TypeError: 'dict_values' object is not subscriptable - Python devs in their infinite wisdom
     if isinstance(shape, Shape):
-        points = islice(shape.shape_points.values(), 0, None, 20)
+        # points = islice(shape.shape_points, 0, None, 20)
+        points = shape.shape_points[::20]
     else:
         points = shape
     for point in points:
@@ -131,12 +132,19 @@ def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: 
     # if not isinstance(trip, Trip):  # Added trip or otherwise invalid data
     #     return conworlds.distance_between_places(stop.latitude, stop.longitude, vehicle.latitude, vehicle.longitude, "Earth") * 1000, -1
     db = get_database()
+    points: list[ShapePoint] | list[Stop]
     if isinstance(trip, Trip):
-        shape = trip.shape(static_data, db)
-        points = shape.shape_points
-        added = False
+        try:
+            shape = trip.shape(static_data, db)
+            points = shape.shape_points
+            added = False
+        except KeyError:
+            stop_times = StopTime.from_sql(trip.trip_id, db)
+            points = [stop_time.stop(static_data, db) for stop_time in stop_times]
+            added = True
     else:
-        points = {stop_time_update.stop_sequence: load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times}
+        # points = {stop_time_update.stop_sequence: load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times}
+        points = [load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times]
         added = True
     lat1, lon1 = vehicle.latitude, vehicle.longitude
     distances1: dict[int, float] = {}
@@ -146,7 +154,7 @@ def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: 
     distances2: dict[int, float] = {}
     min_distance2 = float("inf")
     sequence2 = 0
-    for seq, point in points.items():
+    for seq, point in enumerate(points):
         lat3, lon3 = point.latitude, point.longitude
         distance1 = conworlds.distance_between_places(lat1, lon1, lat3, lon3, "Earth") * 1000
         distance2 = conworlds.distance_between_places(lat2, lon2, lat3, lon3, "Earth") * 1000
@@ -177,8 +185,8 @@ def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: 
             return distance, 1
         return distance, colour
     else:
-        point1 = points[sequence1]
-        point2 = points[sequence2]
+        point1: ShapePoint = points[sequence1]
+        point2: ShapePoint = points[sequence2]
         if sequence1 > sequence2:  # Bus already passed stop
             distance = point1.distance_travelled - point2.distance_travelled + min_distance1 + min_distance2
             return distance, 2
@@ -282,7 +290,7 @@ def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_d
         distances: dict[int, float] = {}
         min_distance = float("inf")
         sequence1 = 0
-        for point in shape.shape_points.values():
+        for point in shape.shape_points:
             distance = conworlds.distance_between_places(lat1, lon1, point.latitude, point.longitude, "Earth")
             distances[point.sequence] = distance
             if distance < min_distance:
@@ -362,7 +370,7 @@ def draw_shape(draw: ImageDraw.ImageDraw, shape: Shape | list[Stop], map_x1: int
     # image = Image.new("RGBA", (img_size, img_size))
     # draw = ImageDraw.Draw(image)
     if isinstance(shape, Shape):
-        points = list(shape.shape_points.values())
+        points = shape.shape_points
     else:
         points = shape
     image_points: list[tuple[float, float]] = []
@@ -522,7 +530,10 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
     shape: Shape | list[Stop]
     if isinstance(trip, Trip):
         trip_id = trip.trip_id
-        shape = trip.shape(static_data, db)
+        try:
+            shape = trip.shape(static_data, db)
+        except KeyError:
+            shape = list(stop_time.stop(static_data, db) for stop_time in StopTime.from_sql(trip_id, db))
     else:
         trip_id = shape = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
     if custom_zoom:
