@@ -191,14 +191,12 @@ class View(discord.ui.View):
             ephemeral = True
         else:
             message = f"{origin} > {language.string("events_error_error", err=error_msg)}"
-        # noinspection PyUnresolvedReferences
         if interaction.is_expired():
             await interaction.channel.send(message)
-        elif interaction.response.is_done():
+        elif interaction.response.is_done():  # type: ignore
             await interaction.followup.send(message, ephemeral=ephemeral)
         else:
-            # noinspection PyUnresolvedReferences
-            await interaction.response.send_message(message, ephemeral=ephemeral)
+            await interaction.response.send_message(message, ephemeral=ephemeral)  # type: ignore
 
         # content = f"{general.build_interaction_content(interaction)} > {origin}"
         content = f"{self.command[:750]} > {origin}"
@@ -240,16 +238,14 @@ class HiddenView(View):
 
     @discord.ui.button(label="Restore view", emoji="🔄", style=discord.ButtonStyle.primary)
     async def restore_view(self, interaction: discord.Interaction, _: discord.ui.Button):
-        # noinspection PyUnresolvedReferences
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=self.original_view)
         # return await interaction.followup.send("The original view has now been restored.", ephemeral=True)
 
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger)
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
-        # noinspection PyUnresolvedReferences
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
 
 
@@ -311,8 +307,7 @@ class GenerateNamesView(InteractiveView):
 
     @discord.ui.button(label='Generate more names', style=discord.ButtonStyle.primary)
     async def generate(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # noinspection PyUnresolvedReferences
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(content=conworlds.generate_citizen_names(self.language))
         await self.disable_button(self.message, button, cooldown=6)
 
@@ -324,8 +319,7 @@ class GenerateCitizenView(InteractiveView):
 
     @discord.ui.button(label='Generate another citizen', style=discord.ButtonStyle.primary)
     async def generate(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # noinspection PyUnresolvedReferences
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         new_embed = await conworlds.generate_citizen_embed(interaction.response, self.language)
         await self.message.edit(embed=new_embed)
         await self.disable_button(self.message, button, cooldown=3)
@@ -366,14 +360,12 @@ class Modal(discord.ui.Modal):
                 message = f"{language.string("events_error_check2")}"
         else:
             message = f"{origin} > {language.string("events_error_error", err=error_msg)}"
-        # noinspection PyUnresolvedReferences
         if interaction.is_expired():
             await interaction.channel.send(message)
-        elif interaction.response.is_done():
+        elif interaction.response.is_done():  # type: ignore
             await interaction.followup.send(message, ephemeral=ephemeral)
         else:
-            # noinspection PyUnresolvedReferences
-            await interaction.response.send_message(message, ephemeral=ephemeral)
+            await interaction.response.send_message(message, ephemeral=ephemeral)  # type: ignore
         # content = f"{general.build_interaction_content(interaction)} > {origin}"
         content = f"{self.interface.command[:750]} > {origin}"
         bot = interaction.client  # bot_data.Bot
@@ -409,7 +401,6 @@ class NumericInputModal(Modal):
         """ Handle the user input """
         raise NotImplementedError("This method must be implemented by subclasses")
 
-    # noinspection PyUnresolvedReferences
     @override
     async def on_submit(self, interaction: discord.Interaction):
         """ This is called when a value is submitted to this modal """
@@ -418,9 +409,9 @@ class NumericInputModal(Modal):
                 raise ValueError("Value was not filled")
             value = int(self.text_input.value)
             if value < self.minimum:
-                return await interaction.response.send_message(f"Value must be greater than {self.minimum}.", ephemeral=True)
+                return await interaction.response.send_message(f"Value must be greater than {self.minimum}.", ephemeral=True)  # type: ignore
             if value > self.maximum:
-                return await interaction.response.send_message(f"Value must be less than {self.maximum}.", ephemeral=True)
+                return await interaction.response.send_message(f"Value must be less than {self.maximum}.", ephemeral=True)  # type: ignore
             self._log_interaction(interaction)  # Only log the interaction if it is valid
             return await self.submit_handler(interaction, value)
         except ValueError:
@@ -428,7 +419,7 @@ class NumericInputModal(Modal):
                 content = f"`{self.text_input.value}` could not be converted to a valid number."
             else:
                 content = f"You need to enter a value."
-            await interaction.response.send_message(content=content, ephemeral=True)
+            await interaction.response.send_message(content=content, ephemeral=True)  # type: ignore
 
 
 class SelectMenu(discord.ui.Select):

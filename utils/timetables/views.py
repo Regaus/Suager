@@ -14,7 +14,6 @@ from utils.views import NumericInputModal, SelectMenu
 __all__ = ("StopScheduleView", "TripDiagramView", "TripDiagramMapView", "MapView")
 
 
-# noinspection PyUnresolvedReferences
 class StopScheduleView(views.InteractiveView):
     """ A view for displaying stop schedules for a given stop """
     def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer, ctx: commands.Context | discord.Interaction = None):
@@ -52,7 +51,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.refreshing:
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
@@ -69,7 +68,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Freeze schedule", emoji="🕒", style=discord.ButtonStyle.danger, row=0)  # Red/Blue, first row
     async def freeze_unfreeze_schedule(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Freeze the schedule at the current time and index - or let it move again """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         self.schedule.fixed ^= True
         self.schedule.update_output()
         self.update_freeze_button()
@@ -86,7 +85,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def mobile_desktop_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Toggle cutting off destination text to make sure that it fits on a mobile screen """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         self.schedule.compact_mode = (self.schedule.compact_mode + 1) % 3
         self.schedule.update_output()
         self.update_compact_mode_button()
@@ -95,14 +94,14 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Hide the view, instead of closing it altogether. """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=views.HiddenView(self))
         # return await interaction.followup.send("The view has been hidden. Use the Restore button to restore this view.", ephemeral=True)
 
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
         # return await interaction.followup.send("The view has been closed. You may still see the schedule, unless you delete this message.", ephemeral=True)
 
@@ -112,7 +111,7 @@ class StopScheduleView(views.InteractiveView):
 
     async def move_indexes(self, interaction: discord.Interaction, indexes: int):
         """ Move the departures by the provided amount of indexes (Wrapper function) """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         limit_reached = False
         _minimum = -self.schedule.start_idx
         # When the start index moves into the future, the "maximum" value may become out of bounds... Is it worth investigating and fixing though?
@@ -145,7 +144,7 @@ class StopScheduleView(views.InteractiveView):
 
     async def set_offset(self, interaction: discord.Interaction, offset: int):
         """ Set the index offset to a specific value (Wrapper function) """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         # The limit behaviour should not be implemented here - otherwise, the "Reset offset" will break for schedules that are too small (Example: stop 835000014)
         self.schedule.index_offset = offset
         self.schedule.update_output()
@@ -190,7 +189,7 @@ class StopScheduleView(views.InteractiveView):
          4 departures -> Expand to 7
          7 departures -> Shrink to 4
          10 departures -> Shrink to 4 """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.schedule.lines == 4:
             self.schedule.lines = 7
             self.change_departure_button_text(button, 4)
@@ -205,13 +204,13 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Move offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Move offset by a custom amount provided by the user """
-        return await interaction.response.send_modal(MoveOffsetModal(self))
+        return await interaction.response.send_modal(MoveOffsetModal(self))  # type: ignore
 
     @discord.ui.button(label="Reset route filter", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
     async def reset_route_filter(self, interaction: discord.Interaction, _: discord.Button):
         """ Reset the route filter - Show all departures regardless of route """
         if not self.schedule.base_schedule.route_filter_exists:
-            return await interaction.response.send_message("There is already no route filter applied to this stop!", ephemeral=True)
+            return await interaction.response.send_message("There is already no route filter applied to this stop!", ephemeral=True)  # type: ignore
         return await self.apply_route_filter(interaction, values=None)
 
     @discord.ui.button(label="Move down 1", emoji="🔽", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
@@ -232,7 +231,7 @@ class StopScheduleView(views.InteractiveView):
          4 departures -> Expand to 10
          7 departures -> Expand to 10
          10 departures -> Shrink to 7 """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.schedule.lines == 10:
             self.schedule.lines = 7
             self.change_departure_button_text(button, 10)
@@ -247,7 +246,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def set_offset_button(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Set offset to a custom amount provided by the user """
-        return await interaction.response.send_modal(SetOffsetModal(self))
+        return await interaction.response.send_modal(SetOffsetModal(self))  # type: ignore
 
     @discord.ui.button(label="Reset offset", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
     async def reset_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -255,7 +254,7 @@ class StopScheduleView(views.InteractiveView):
         return await self.set_offset(interaction, 0)
 
     async def apply_route_filter(self, interaction: discord.Interaction, values: list[str] | None):
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(content=f"{emotes.Loading} Updating the route filter for this stop... This may take up to a minute.", view=None)
         user_id = self.sender.id
         stop_id = self.schedule.stop.id
@@ -394,8 +393,7 @@ class RouteLineSelector(SelectMenu):
         self.set_options()
 
     async def callback(self, interaction: discord.Interaction):
-        # noinspection PyUnresolvedReferences
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         message: discord.WebhookMessage = await interaction.followup.send(f"{emotes.Loading} Loading data about the trip...", wait=True)
         if not self.interface.temporary:
             try:
@@ -407,7 +405,6 @@ class RouteLineSelector(SelectMenu):
         return await view.update_message()
 
 
-# noinspection PyUnresolvedReferences
 class TripDiagramView(views.InteractiveView):
     """ A view for displaying the list of all stops in a trip """
     def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer, *, try_full_fetch: bool = True):
@@ -473,14 +470,14 @@ class TripDiagramView(views.InteractiveView):
     @discord.ui.button(emoji="⏮️", label="1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def first_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the first page """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         self.display_page = 0
         return await self.update_message()
 
     @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def prev_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the previous page """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.display_page <= 0:
             return await interaction.followup.send(f"{emotes.Deny} You are already on the first page.", ephemeral=True)
         self.display_page -= 1
@@ -489,13 +486,13 @@ class TripDiagramView(views.InteractiveView):
     @discord.ui.button(label="1", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def curr_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Indicates the current page number, does nothing """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         return await self.update_message()
 
     @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def next_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the next page """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.display_page >= self.page_count - 1:
             return await interaction.followup.send(f"{emotes.Deny} You are already on the last page.", ephemeral=True)
         self.display_page += 1
@@ -504,14 +501,14 @@ class TripDiagramView(views.InteractiveView):
     @discord.ui.button(emoji="⏭️", label="1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def last_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to the last page """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         self.display_page = self.page_count - 1
         return await self.update_message()
 
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.refreshing:
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         self.refreshing = True
@@ -526,7 +523,7 @@ class TripDiagramView(views.InteractiveView):
     @discord.ui.button(label="Go to page", emoji="➡️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
     async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Go to a user-specified page """
-        return await interaction.response.send_modal(GoToPageModal(self))
+        return await interaction.response.send_modal(GoToPageModal(self))  # type: ignore
 
     def update_compact_mode_button(self):
         labels = {  # Current state number -> next state
@@ -539,7 +536,7 @@ class TripDiagramView(views.InteractiveView):
     @discord.ui.button(label="Shorten stop names", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def shorten_stop_names(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Toggle showing shorter or full stop names """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         self.viewer.compact_mode = (self.viewer.compact_mode + 1) % 3  # rotate between 0, 1, 2
         self.viewer.update_output()
         self.update_compact_mode_button()
@@ -548,19 +545,19 @@ class TripDiagramView(views.InteractiveView):
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Hide the view, instead of closing it altogether """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=views.HiddenView(self))
 
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=1)  # Red, second row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
 
     @discord.ui.button(label="Show on a map", emoji="🗺️", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
     async def show_on_map(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Show the trip diagram on a map """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         # Can't be pressed again
         button.disabled = True
         await self.message.edit(view=self)
@@ -595,13 +592,11 @@ class GoToPageModal(NumericInputModal):
 
     @override
     async def submit_handler(self, interaction: discord.Interaction, value: int):
-        # noinspection PyUnresolvedReferences
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         self.interface.display_page = value - 1
         return await self.interface.update_message()
 
 
-# noinspection PyUnresolvedReferences
 class TripDiagramMapView(views.InteractiveView):
     """ A view for displaying a trip diagram on a map """
     def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: TripDiagramMapViewer, ctx: commands.Context | discord.Interaction = None,
@@ -634,7 +629,7 @@ class TripDiagramMapView(views.InteractiveView):
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.refreshing:
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
@@ -650,7 +645,7 @@ class TripDiagramMapView(views.InteractiveView):
 
     async def zoom_button_response(self, interaction: discord.Interaction, movement: int):
         """ Zoom in or out - common function for the two buttons """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.zoom_updating:
             return await interaction.followup.send("The map's zoom is already being updated, please wait.", ephemeral=True)
         self.zoom_updating = True
@@ -694,11 +689,10 @@ class TripDiagramMapView(views.InteractiveView):
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
 
 
-# noinspection PyUnresolvedReferences
 class MapView(views.InteractiveView):
     """ A view for displaying buses near a given stop """
     def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: MapViewer, ctx: commands.Context | discord.Interaction = None):
@@ -723,7 +717,7 @@ class MapView(views.InteractiveView):
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.refreshing:
             return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
         await self.refresh()
@@ -739,7 +733,7 @@ class MapView(views.InteractiveView):
 
     async def zoom_button_response(self, interaction: discord.Interaction, movement: int):
         """ Zoom in or out - common function for the two buttons """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         if self.zoom_updating:
             return await interaction.followup.send("The map's zoom is already being updated, please wait.", ephemeral=True)
         self.zoom_updating = True
@@ -783,5 +777,5 @@ class MapView(views.InteractiveView):
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
-        await interaction.response.defer()
+        await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)

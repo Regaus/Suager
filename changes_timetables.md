@@ -444,3 +444,6 @@
 - Fixed shapes breaking the uniqueness constraint (shape ID + sequence)
   - The shapes will now use zero-based indexes so that they can be converted to a list
 - Changed shapes to use a list of shape points rather than a dictionary
+
+## v0.12.6.6 - 25 August 2024
+- Replaced the "unresolved references" noinspection comment with `type: ignore`

@@ -1,10 +1,10 @@
 {
   "suager": {
     "short_version": "7.8",
-    "version": "7.8.0.2",
+    "version": "7.8.0.3",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1724626401
+    "last_update": 1724626908
   },
   "cobble": {
     "short_version": "1.9",
@@ -43,10 +43,10 @@
   },
   "timetables": {
     "short_version": "0.12",
-    "version": "0.12.6.5",
+    "version": "0.12.6.6",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1724284690
+    "last_update": 1724626908
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

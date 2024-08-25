@@ -34,8 +34,7 @@ async def eval_fn(ctx: commands.Context, cmd):
         cmd = "\n".join(f"    {i}" for i in cmd.splitlines())
         body = f"async def {fn_name}():\n{cmd}"
         parsed = ast.parse(body)
-        # noinspection PyUnresolvedReferences
-        body = parsed.body[0].body
+        body = parsed.body[0].body  # type: ignore
         insert_returns(body)
         env = {'bot': ctx.bot, 'discord': discord, 'commands': commands, 'ctx': ctx, 'db': ctx.bot.db, 'time': time, '__import__': __import__}
         exec(compile(parsed, filename="<ast>", mode="exec"), env)

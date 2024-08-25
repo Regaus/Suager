@@ -1834,3 +1834,6 @@
 ## v7.8.0.2 - 25 August 2024
 - Temporaries: put the `asyncio.sleep()` calls into `finally:` blocks to make the functions sleep even if an error is raised
 - Removed the old code that is no longer used (avatar changer and calendar updater)
+
+## v7.8.0.3 - 25 August 2024
+- Replaced the "unresolved references" noinspection comment with `type: ignore`

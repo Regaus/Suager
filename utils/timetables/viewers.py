@@ -265,7 +265,6 @@ class StopScheduleViewer:
             else:
                 output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
             for i, element in enumerate(output_line):
-                # noinspection PyUnresolvedReferences
                 column_sizes[i] = max(column_sizes[i], len(element))
 
             output_data.append(output_line)
