@@ -809,3 +809,6 @@
 
 ## v1.9.6.1 - 25 July 2024
 - Removed access to `..luas` (now only accessible on Timetables bot)
+
+## v1.9.6.2 - 25 August 2024
+- Removed the cases folder from languages (the Regaus.py version of declension patterns will always be used instead)

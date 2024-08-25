@@ -1827,3 +1827,6 @@
 - The bot can no longer give itself reaction roles while adding reactions to the message
 - Unlocked reaction roles for all servers
 - Views now have their context as `message.clean_content` rather than `message.content` for text commands (for consistency with command logs)
+
+## v7.8.0.1 - 25 August 2024
+- Removed the cases folder from languages (the Regaus.py version of declension patterns will always be used instead)

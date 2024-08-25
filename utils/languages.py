@@ -33,12 +33,7 @@ _countries = _read_dir("languages/countries")
 for _name, _data in _countries.items():
     languages.languages[_name] |= _data  # We will assume that if country names are defined, then the language itself is defined already too...
 
-# Update our case list from Regaus.py, just in case there's something here before the proper Regaus.py update...
-# We will assume that the overwritten cases are the correct ones, so we can safely ignore the ones stored in the library.
-_cases = _read_dir("languages/cases")
-for _name, _data in _cases.items():
-    languages.cases[_name] = _data
-del _languages, _countries, _cases, _name, _data, _read_dir
+del _languages, _countries, _name, _data, _read_dir
 
 
 db = database.Database("database.db")
