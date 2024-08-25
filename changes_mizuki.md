@@ -434,3 +434,6 @@
 - The bot can no longer give itself reaction roles while adding reactions to the message
 - Unlocked reaction roles for all servers
 - Views now have their context as `message.clean_content` rather than `message.content` for text commands (for consistency with command logs)
+
+## v1.6.0.1 - 25 August 2024
+- Temporaries: put the `asyncio.sleep()` calls into `finally:` blocks to make the functions sleep even if an error is raised

@@ -12,7 +12,7 @@ import pytz
 from regaus import conworlds, RegausError, time as time2
 
 from cogs.mod import send_mod_dm, send_mod_log
-from utils import birthday, bot_data, commands, dcu, general, logger, time
+from utils import birthday, bot_data, commands, general, logger, time
 
 
 async def wait_until_next_iter(update_speed: int = 120, adjustment: int = 0, time_class: Type[time2.Earth] = time2.Earth):
@@ -66,12 +66,13 @@ async def reminders(bot: bot_data.Bot):
             if expired:
                 for entry in expired:
                     await handle_reminder(bot, entry, False)
-            await asyncio.sleep(1)
         except (aiohttp.ClientConnectorError, ConnectionError):
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders > Error with connection.")
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        finally:
+            await asyncio.sleep(1)
 
 
 async def reminders_errors(bot: bot_data.Bot):
@@ -88,13 +89,14 @@ async def reminders_errors(bot: bot_data.Bot):
             if expired:
                 for entry in expired:
                     await handle_reminder(bot, entry, True)
-            await asyncio.sleep(1)
-            await wait_until_next_iter(update_speed, 0)
         except (aiohttp.ClientConnectorError, ConnectionError):
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > Error with connection.")
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Reminders Errors > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 0)
 
 
 async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False):
@@ -175,12 +177,13 @@ async def punishments(bot: bot_data.Bot):
             if expired:
                 for entry in expired:
                     await handle_punishment(bot, entry, False)
-            await asyncio.sleep(1)
         except (aiohttp.ClientConnectorError, ConnectionError):
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments > Error with connection.")
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        finally:
+            await asyncio.sleep(1)
 
 
 async def punishments_errors(bot: bot_data.Bot):
@@ -196,13 +199,14 @@ async def punishments_errors(bot: bot_data.Bot):
             if expired:
                 for entry in expired:
                     await handle_punishment(bot, entry, True)
-            await asyncio.sleep(1)
-            await wait_until_next_iter(update_speed, 0)
         except (aiohttp.ClientConnectorError, ConnectionError):
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > Error with connection.")
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Punishments Errors > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 0)
 
 
 def process_birthday(bot: bot_data.Bot, entry: dict) -> birthday.Birthday:
@@ -368,10 +372,10 @@ async def birthdays(bot: bot_data.Bot):
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Birthdays Handler > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
-
-        # birthday.save()
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 1, time_class)
+        finally:
+            # birthday.save()
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 1, time_class)
 
 
 ka_places = {
@@ -681,16 +685,15 @@ async def ka_time_updater(bot: bot_data.Bot):
                     data.append(f"`{_data['data']}`")
                 await update_message(area_name, "\n".join(data))
             logger.log(bot.name, "kargadia", f"{time.time()} > {bot.full_name} > City Time Updater > Updated Kargadian cities times messages")
-
-            # This should make it adjust itself for lag caused
-            await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-            await wait_until_next_iter(update_speed, 1, time2.Kargadia)
-            # await asyncio.sleep(update_speed)
         except (aiohttp.ClientConnectorError, ConnectionError):
             general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > Error with connection.")
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > City Time Updater > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
+        finally:
+            # This should make it adjust itself for lag caused
+            await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
+            await wait_until_next_iter(update_speed, 1, time2.Kargadia)
 
 
 async def playing(bot: bot_data.Bot):
@@ -1003,43 +1006,10 @@ async def playing(bot: bot_data.Bot):
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > Playing Changer > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e, code_block=False))  # Remove the codeblock markdown and extra newlines
-
-        # This should make it adjust itself for lag caused
-        await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
-        await wait_until_next_iter(update_speed, 0)
-
-
-# No longer needed: Suager now has an animated avatar
-# async def avatars(bot: bot_data.Bot):
-#     await wait_until_next_iter(3600, 1)
-#     await bot.wait_until_ready()
-#     logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Avatar updater")
-#
-#     while True:
-#         try:
-#             avatar = random.choice(lists.avatars)
-#             e = False
-#             s1, s2 = [f"{time.time()} > {bot.full_name} > Avatar updated", f"{time.time()} > {bot.name} > Failed to change avatar due to an error"]
-#             try:
-#                 bio: bytes = await http.get(avatar, res_method="read")
-#                 # Flip the avatar during 1st April
-#                 if time.april_fools():
-#                     bio = images.april_fools_avatar(bio)
-#                 await bot.user.edit(avatar=bio)
-#             except discord.errors.HTTPException:
-#                 e = True
-#             send = s2 if e else s1
-#             logger.log(bot.name, "avatar", send)
-#         except PermissionError:
-#             general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Failed to save changes.")
-#         except (aiohttp.ClientConnectorError, ConnectionError):
-#             general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > Error with connection.")
-#         except Exception as e:
-#             general.log_error(bot, f"{time.time()} > {bot.full_name} > Avatar Changer > {type(e).__name__}: {e}")
-#             general.log_error(bot, general.traceback_maker(e).strip("```")[3:-1])  # Remove the codeblock markdown and extra newlines
-#
-#         await asyncio.sleep(1)
-#         await wait_until_next_iter(3600, 1)
+        finally:
+            # This should make it adjust itself for lag caused
+            await asyncio.sleep(1)  # Hopefully prevents it from lagging ahead of itself
+            await wait_until_next_iter(update_speed, 0)
 
 
 async def polls(bot: bot_data.Bot):
@@ -1184,9 +1154,9 @@ async def voice_channel_server_stats(bot: bot_data.Bot):
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e, code_block=False))
-
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 1)
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 1)
 
 
 async def new_year(bot: bot_data.Bot):
@@ -1248,9 +1218,9 @@ async def sl_holidays_updater(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
             logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > SL Holidays > {type(e).__name__}: {e}")
-
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 1)
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 1)
 
 
 async def ka_holidays_updater(bot: bot_data.Bot):
@@ -1287,9 +1257,9 @@ async def ka_holidays_updater(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
             logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Kargadia Holidays > {type(e).__name__}: {e}")
-
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, update_delay, time2.Kargadia)
 
 
 async def data_remover(bot: bot_data.Bot):
@@ -1310,24 +1280,6 @@ async def data_remover(bot: bot_data.Bot):
         except Exception as e:
             general.print_error(f"{time.time()} > {bot.full_name} > Data Remover > {type(e).__name__}: {e}")
             logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Data Remover > {type(e).__name__}: {e}")
-
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, 1)
-
-
-async def dcu_calendar_updater(bot: bot_data.Bot):
-    update_speed = 604800  # 7 days / 1 week
-    update_delay = 345600  # 4 days -> Restart every Monday
-    await wait_until_next_iter(update_speed, update_delay)  # Wait until the start of next week
-    await bot.wait_until_ready()
-    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised DCU Calendar Updater")
-    while True:
-        try:
-            await dcu.generate_ical()
-            logger.log(bot.name, "dcu", f"{time.time()} > {bot.full_name} > DCU Calendar > Fetched new timetable information and generated new .ics file")
-        except Exception as e:
-            general.print_error(f"{time.time()} > {bot.full_name} > DCU Calendar > {type(e).__name__}: {e}")
-            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > DCU Calendar > {type(e).__name__}: {e}")
-
-        await asyncio.sleep(1)
-        await wait_until_next_iter(update_speed, update_delay)
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 1)

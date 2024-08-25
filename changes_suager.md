@@ -1830,3 +1830,7 @@
 
 ## v7.8.0.1 - 25 August 2024
 - Removed the cases folder from languages (the Regaus.py version of declension patterns will always be used instead)
+
+## v7.8.0.2 - 25 August 2024
+- Temporaries: put the `asyncio.sleep()` calls into `finally:` blocks to make the functions sleep even if an error is raised
+- Removed the old code that is no longer used (avatar changer and calendar updater)

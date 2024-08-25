@@ -812,3 +812,6 @@
 
 ## v1.9.6.2 - 25 August 2024
 - Removed the cases folder from languages (the Regaus.py version of declension patterns will always be used instead)
+
+## v1.9.6.3 - 25 August 2024
+- Temporaries: put the `asyncio.sleep()` calls into `finally:` blocks to make the functions sleep even if an error is raised
