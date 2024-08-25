@@ -5,6 +5,7 @@ import asyncio
 import discord
 import nest_asyncio
 from discord import app_commands
+from typing_extensions import override
 
 from utils import conworlds, emotes, languages, general, time, logger, commands
 
@@ -30,7 +31,7 @@ class View(discord.ui.View):
         elif ctx.interaction is not None:
             self.command: str = general.build_interaction_content(ctx.interaction)
         else:
-            self.command: str = ctx.message.content
+            self.command: str = ctx.message.clean_content  # type: ignore
         # self.bot = bot
 
     async def disable_button(self, message: discord.Message, button: discord.Button, cooldown: int = 2):
@@ -124,6 +125,8 @@ class View(discord.ui.View):
             case _:
                 do_print = True
                 item_name = f"Unknown item {item}"
+        if (print_override := getattr(item, "print_override", None)) is not None:
+            do_print = print_override
         bot = interaction.client  # bot_data.Bot
         message = f"{time.time()} > {bot.full_name} > {interaction.guild or "Private Message"} > {interaction.user} ({interaction.user.id}) > {self.command} > {item_name}"
         logger.log(bot.name, "commands", message)
@@ -251,7 +254,7 @@ class HiddenView(View):
 
 
 class InteractiveView(View):
-    message: discord.Message | discord.InteractionMessage
+    message: discord.Message | discord.InteractionMessage | discord.WebhookMessage
 
     def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage | discord.WebhookMessage,
                  timeout: int = 300, ctx: commands.Context | discord.Interaction = None, *, try_full_fetch: bool = True):
@@ -263,8 +266,7 @@ class InteractiveView(View):
             # Unless explicitly told not to try to fetch the full message, try to load it if:
             # it's an InteractionMessage and it's marked as being called from a guild integration
             # it's a WebhookMessage (no other conditions required in this case)
-            if try_full_fetch and ((isinstance(message, discord.InteractionMessage) and message.interaction_metadata is not None and message.interaction_metadata.is_guild_integration())
-                                   or isinstance(message, discord.WebhookMessage)):
+            if try_full_fetch and (message.interaction_metadata is not None and message.interaction_metadata.is_guild_integration()):
                 try:
                     nest_asyncio.apply()  # https://stackoverflow.com/a/56434301 - Patches asyncio to let the code below run properly
                     self.message = asyncio.get_event_loop().run_until_complete(asyncio.create_task(message.fetch()))
@@ -285,6 +287,21 @@ class InteractiveView(View):
     #     """ Make sure that the person clicking on the button is also the author of the message """
     #     if interaction.user.id != self.sender.id:
     #         return await interaction.response.send(f"{emotes.Deny} This interaction is not from you.", ephemeral=True)
+
+
+class TranslatedView(InteractiveView):
+    """ An InteractiveView that includes a Language instance for translations """
+
+    def __init__(self, sender: discord.Member, message: discord.Message, ctx: commands.Context | discord.Interaction | None,
+                 language: languages.Language, timeout: int = 900):
+        super().__init__(sender=sender, message=message, timeout=timeout, ctx=ctx)
+        self.language = language
+
+        # Translate all button labels
+        for item in self.children:
+            if item.type == discord.ComponentType.button:
+                item: discord.ui.Button[TranslatedView]
+                item.label = self.language.string(item.label)
 
 
 class GenerateNamesView(InteractiveView):
@@ -314,23 +331,22 @@ class GenerateCitizenView(InteractiveView):
         await self.disable_button(self.message, button, cooldown=3)
 
 
-class NumericInputModal(discord.ui.Modal):
-    """ A modal that asks the user to enter a number (e.g. for changing pages) """
-    text_input: discord.ui.TextInput[NumericInputModal] = discord.ui.TextInput(label="Enter value", style=discord.TextStyle.short, placeholder="0")
-
+class Modal(discord.ui.Modal):
     def __init__(self, interface: InteractiveView, title: str = "Modal"):
         super().__init__(title=title, timeout=interface.timeout)
         self.interface = interface
-        self.minimum = 0  # Override this in subclasses
-        self.maximum = 0  # Override this in subclasses
+
+    def _interaction_description(self) -> str:
+        """ Describes the input received (used for the interaction logging) """
+        raise NotImplementedError("This method must be implemented by subclasses")
 
     def _log_interaction(self, interaction: discord.Interaction):
-        """ Log the interaction - e.g. button presses """
+        """ Log the submission of the modal """
         bot = interaction.client  # bot_data.Bot
         item_name = self.__class__.__name__
         # item_name = f"{self.__class__.__name__}: {self.text_input.label}"
         message = (f"{time.time()} > {bot.full_name} > {interaction.guild or "Private Message"} > {interaction.user} ({interaction.user.id}) > "
-                   f"{self.interface.command} > {item_name} > {self.text_input.value}")
+                   f"{self.interface.command} > {item_name} > {self._interaction_description()}")
         logger.log(bot.name, "commands", message)
         # print(message)
 
@@ -371,11 +387,30 @@ class NumericInputModal(discord.ui.Modal):
                 await ec.send(error)
         logger.log(bot.name, "commands", error_message)
 
+    async def on_submit(self, interaction: discord.Interaction):
+        """ This is called when a value is submitted to the modal """
+        raise NotImplementedError("This method must be implemented by subclasses")
+
+
+class NumericInputModal(Modal):
+    """ A modal that asks the user to enter a number (e.g. for changing pages) """
+    text_input: discord.ui.TextInput[NumericInputModal] = discord.ui.TextInput(label="Enter value", style=discord.TextStyle.short, placeholder="0")
+
+    def __init__(self, interface: InteractiveView, title: str = "Modal"):
+        super().__init__(interface=interface, title=title)
+        self.minimum = 0  # Override this in subclasses
+        self.maximum = 0  # Override this in subclasses
+
+    @override
+    def _interaction_description(self) -> str:
+        return self.text_input.value
+
     async def submit_handler(self, interaction: discord.Interaction, value: int):
         """ Handle the user input """
         raise NotImplementedError("This method must be implemented by subclasses")
 
     # noinspection PyUnresolvedReferences
+    @override
     async def on_submit(self, interaction: discord.Interaction):
         """ This is called when a value is submitted to this modal """
         try:
@@ -408,3 +443,7 @@ class SelectMenu(discord.ui.Select):
     def reset_options(self):
         """ Reset the list of options to nothing """
         self.options = []
+
+    async def callback(self, interaction: discord.Interaction):
+        """ This function is called when something is submitted to this select menu """
+        raise NotImplementedError("This method must be implemented by subclasses")

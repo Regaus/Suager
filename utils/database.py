@@ -267,18 +267,24 @@ tables = [
     ]),
     Table("reaction_groups", "database.db", [
         Column("gid", "INTEGER", True),      # Guild ID
-        Column("message", "INTEGER", True),  # Message ID
-        Column("type", "INTEGER", True)      # Reaction Type (1-4)
-    ]),
+        Column("channel", "INTEGER", True),  # Channel ID
+        Column("message", "INTEGER", True),  # Message ID - Must be unique
+        Column("type", "INTEGER", True),     # Reaction Type (1-4)
+        Column("start", "TEXT", False),      # Reaction message start (Optional)
+        Column("end", "TEXT", False),        # Reaction message end (Optional)
+        Column("style", "TEXT", True),       # Reaction list style (Required)
+        Column("bot", "TEXT", True),         # The bot responsible for interactions with this group
+    ], "UNIQUE(message)"),
     Table("reaction_roles", "database.db", [
         Column("message", "INTEGER", True),   # Message ID (Group)
+        Column("ord", "INTEGER", True),       # Order of the reaction within the group
         Column("reaction", "TEXT", True),     # Reaction Emoji
         Column("role", "INTEGER", True)       # Role ID
-    ]),
+    ], "UNIQUE(message, ord)"),
     Table("reaction_tracking", "database.db", [  # Track if someone already has a role (Type 2 and 4 reaction groups)
         Column("message", "INTEGER", True),   # Message ID (Group)
         Column("uid", "INTEGER", True),       # User ID
-    ]),
+    ], "UNIQUE(message, uid)"),
     Table("reminders", "database.db", [
         Column("id", "INTEGER", True, True),  # Reminder ID
         Column("uid", "INTEGER", True),       # User ID

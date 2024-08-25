@@ -426,3 +426,11 @@
 
 ## v1.5.1 - 5 June 2024
 - Turned `m!time` into an embed
+
+## v1.6.0 - 15-25 August 2024
+- Rewrote reaction roles to have a more intuitive UI/UX
+  - Old groups should (hopefully) keep working as before, but might not necessarily work well if you try to edit them
+  - The bot is now required to have access to the emotes when creating or editing the reaction roles, which was not the case before
+- The bot can no longer give itself reaction roles while adding reactions to the message
+- Unlocked reaction roles for all servers
+- Views now have their context as `message.clean_content` rather than `message.content` for text commands (for consistency with command logs)
