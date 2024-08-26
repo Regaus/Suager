@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 import json
+from contextlib import suppress
 from typing import override
 
 import discord
@@ -8,10 +11,10 @@ from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.shared import get_data_database, NUMBERS
 from utils.timetables.maps import DEFAULT_ZOOM
-from utils.timetables.viewers import StopScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
+from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
 from utils.views import NumericInputModal, SelectMenu
 
-__all__ = ("StopScheduleView", "TripDiagramView", "TripDiagramMapView", "MapView")
+__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripDiagramMapView", "MapView")
 
 
 class StopScheduleView(views.InteractiveView):
@@ -326,12 +329,19 @@ class RouteFilterSelector(SelectMenu):
     """ Select menu for routes to filter """
     interface: StopScheduleView
 
-    def __init__(self, interface: StopScheduleView):
+    def __init__(self, interface: StopScheduleView | HubRouteFilterView):
         super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=25, options=[], row=3)
 
         values = set()
 
-        for route in self.interface.schedule.base_schedule.all_routes:
+        if isinstance(self.interface, StopScheduleView):
+            iterable = self.interface.schedule.base_schedule.all_routes
+        elif isinstance(self.interface, HubRouteFilterView):
+            iterable = self.interface.original_view.viewer.base_schedules[self.interface.stop_idx].all_routes
+        else:
+            raise TypeError(f"{self.__class__.__name__} received unexpected interface class {self.interface.__class__.__name__}")
+
+        for route in iterable[:25]:  # If there are more than 25 routes passing through the stop, tough luck.
             name = f"Route {route.short_name}"
             description = route.long_name
             if route.short_name == "rail":
@@ -347,7 +357,10 @@ class RouteFilterSelector(SelectMenu):
         self.max_values = len(self.options)
 
     async def callback(self, interaction: discord.Interaction):
-        return await self.interface.apply_route_filter(interaction, self.values)
+        if isinstance(self.interface, StopScheduleView):
+            return await self.interface.apply_route_filter(interaction, self.values)
+        elif isinstance(self.interface, HubRouteFilterView):
+            return await self.interface.original_view.apply_route_filter(interaction, self.interface.stop_idx, self.values, self.interface.message)
 
 
 class RouteLineSelector(SelectMenu):
@@ -403,6 +416,148 @@ class RouteLineSelector(SelectMenu):
         viewer = TripDiagramViewer(self.interface, self.values[0])
         view = TripDiagramView(interaction.user, message, viewer, try_full_fetch=False)
         return await view.update_message()
+
+
+class HubScheduleView(views.InteractiveView):
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: HubScheduleViewer, ctx: commands.Context | discord.Interaction = None):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
+        self.viewer = viewer
+        self.db = get_data_database()
+        self.refreshing: bool = False
+
+        self.update_freeze_button()
+        if not self.viewer.real_time:
+            self.refresh_button.disabled = True
+            self.freeze_button.disabled = True
+            # self.remove_item(self.refresh_button)
+            # self.remove_item(self.freeze_button)
+        if len(self.viewer.stops) >= 7:
+            self.compact_mode_button.disabled = True
+            # self.remove_item(self.compact_mode_button)
+
+        self.stop_selector = HubStopSelector(self)
+        self.add_item(self.stop_selector)
+
+    async def refresh(self):
+        self.refreshing = True
+        try:
+            await self.viewer.refresh()
+            self.viewer.update_output()
+            await self.message.edit(content=self.viewer.output, view=self)
+        finally:
+            self.refreshing = False
+
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Refresh the real-time data """
+        await interaction.response.defer()  # type: ignore
+        if self.refreshing:
+            return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
+        await self.refresh()
+        await self.disable_button(self.message, button, cooldown=60)
+
+    def update_freeze_button(self):
+        if self.viewer.fixed:
+            self.freeze_button.label = "Unfreeze schedule"
+            self.freeze_button.style = discord.ButtonStyle.primary
+        else:
+            self.freeze_button.label = "Freeze schedule"
+            self.freeze_button.style = discord.ButtonStyle.danger
+
+    @discord.ui.button(label="Freeze schedule", emoji="🕒", style=discord.ButtonStyle.danger, row=0)  # Red/Blue, first row
+    async def freeze_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Freeze the schedule at the current time and index - or let it move again """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.fixed ^= True
+        self.viewer.update_output()
+        self.update_freeze_button()
+        return await self.message.edit(content=self.viewer.output, view=self)
+
+    def update_compact_mode_button(self):
+        self.compact_mode_button.label = "Show full destinations" if self.viewer.compact_mode else "Shorten destinations"
+
+    @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    async def compact_mode_button(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Toggle cutting off destination text to make sure that it fits on a mobile screen """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.compact_mode ^= True
+        self.viewer.update_output()
+        self.update_compact_mode_button()
+        return await self.message.edit(content=self.viewer.output, view=self)
+
+    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Hide the view, instead of closing it altogether. """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=views.HiddenView(self))
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=None)
+
+    async def apply_route_filter(self, interaction: discord.Interaction, stop_idx: int, values: list[str] | None, message: discord.Message):
+        await interaction.response.defer()  # type: ignore
+        user_id = self.sender.id
+        stop = self.viewer.stops[stop_idx]
+        stop_id = stop.id
+        await self.message.edit(content=f"{emotes.Loading} Updating the route filter for the stop {stop.name}... This may take up to a minute.", view=None)
+        with suppress(discord.NotFound, discord.Forbidden):
+            await message.edit(content="The route filter is now being updated.", view=None)
+        if values is not None:
+            db_values = json.dumps(values)
+            if self.viewer.base_schedules[stop_idx].route_filter_exists:
+                self.db.execute("UPDATE route_filters SET routes=? WHERE user_id=? AND stop_id=?", (db_values, user_id, stop_id))
+            else:
+                self.db.execute("INSERT INTO route_filters(user_id, stop_id, routes) VALUES (?, ?, ?)", (user_id, stop_id, db_values))
+        else:
+            self.db.execute("DELETE FROM route_filters WHERE user_id=? AND stop_id=?", (user_id, stop_id))
+        self.viewer = await self.viewer.reload()
+        await self.message.edit(content=self.viewer.output, view=self)
+        with suppress(discord.NotFound, discord.Forbidden):
+            await message.delete()
+        if values is not None:
+            return await interaction.followup.send(f"From now on, the stop {stop.name} will only show departures for the following routes: {', '.join(values)}.")
+        else:
+            return await interaction.followup.send(f"The route filter for the stop {stop.name} has been disabled, and all departures will be shown regardless of route.")
+
+
+class HubStopSelector(SelectMenu):
+    """ Select menu for routes to filter """
+    interface: HubScheduleView
+
+    def __init__(self, interface: HubScheduleView):
+        super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=1, options=[], row=1)
+
+        for i, stop in enumerate(self.interface.viewer.stops):
+            self.add_option(value=str(i), label=stop.name, description=f"Stop {stop.code_or_id}", emoji=NUMBERS[i])
+
+        # self.options.sort(key=lambda x: alphanumeric_sort_string(x.label))
+        self.max_values = len(self.options)
+
+    async def callback(self, interaction: discord.Interaction):
+        new_view = HubRouteFilterView(self.interface, self.interface.message, int(self.values[0]))
+        new_view.message = await interaction.response.send_message(view=new_view, ephemeral=True)  # type: ignore
+        return new_view
+
+
+class HubRouteFilterView(views.InteractiveView):
+    def __init__(self, original_view: HubScheduleView, message: discord.Message, stop_idx: int):
+        super().__init__(original_view.sender, message, try_full_fetch=False)
+        self.original_view = original_view
+        self.command = f"{self.original_view.command} > {self.__class__.__name__}"
+        self.stop_idx = stop_idx
+        self.route_filter_selector = RouteFilterSelector(self)
+        self.route_filter_selector.row = 0
+        self.add_item(self.route_filter_selector)
+
+    @discord.ui.button(label="Reset route filter", style=discord.ButtonStyle.primary, row=1)
+    async def reset_route_filter(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the route filter - Show all departures regardless of route """
+        if not self.original_view.viewer.base_schedules[self.stop_idx].route_filter_exists:
+            return await interaction.response.send_message("There is already no route filter applied to this stop!", ephemeral=True)  # type: ignore
+        return await self.original_view.apply_route_filter(interaction, self.stop_idx, None, self.message)
 
 
 class TripDiagramView(views.InteractiveView):

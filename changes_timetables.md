@@ -447,3 +447,7 @@
 
 ## v0.12.6.6 - 25 August 2024
 - Replaced the "unresolved references" noinspection comment with `type: ignore`
+
+## v0.13.0 - 26 August 2024
+- Added "stop hubs" (shows schedules for multiple stops nearby at the same time)
+  - Currently only has stop hubs for locations around Dublin

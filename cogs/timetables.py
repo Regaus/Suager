@@ -21,6 +21,40 @@ from utils.time import time as print_current_time
 #     # return ctx.bot.name == "timetables" or ctx.author.id in [302851022790066185]
 
 
+STOP_HUBS: dict[str, list[str]] = {
+    "Abbey St Lower":     ["8220DB007591", "8220DB000289", "8220DB000288", "8220DB000292"],
+    "Abbey St Luas":      ["8220GA00409",  "8220GA00408",  "8220GA00444",  "8220GA00034",  "8220000150",   "8220DB000271"],
+    "Aston Quay":         ["8220DB000325", "8220DB004720", "8220DB007392", "8220DB000328", "8220DB000329"],
+    "Bachelors Walk":     ["8220B1021101", "8220DB000316", "8220DB000315", "8220DB007622"],
+    "Bray Station":       ["8350IR0123",   "8350DB004167", "8350DB004168", "8350DB004169"],
+    "Broombridge":        ["8220IR0026",   "8220GA00459",  "8220DB007672"],
+    "Busaras":            ["8220B135001",  "8220DB000496", "8220B134961",  "8220GA00421",  "8220GA00420"],
+    "Clontarf":           ["8220IR0032",   "8220DB004794", "8220DB001738", "8220DB001740"],
+    "College Green East": ["8220DB001358", "8220DB007582", "8220DB001359"],
+    "College Green West": ["8220DB004521", "8220DB004522", "8220DB001278", "8220DB001279", "8220DB007581"],
+    "Connolly":           ["8220IR0007",   "8220GA00423",  "8220DB001500", "8220B1351201", "8220DB000497"],
+    "D'Olier":            ["8220DB000273", "8220DB000333", "8220DB000334", "8220DB000335", "8220DB000336", "8220GA00035"],
+    "Dawson":             ["8220DB000791", "8220DB000790", "8220DB000792", "8220DB000793", "8220GA00031",  "8220GA00441"],
+    "DCU":                ["8220DB007571", "8220DB004680", "8220DB000037", "8220DB001644", "8220DB001646", "8220DB000205", "8220DB000213"],
+    "Dundrum":            ["8250GA00286",  "8250GA00287",  "8250DB002825", "8250DB006041", "8250DB002866", "8250DB007981", "8250GD10160",  "8250DB007719"],
+    "Eden Quay East":     ["8220B1353501", "8220DB007359", "8220DB000297", "8220DB000298", "8220DB000299", "8220DB000300"],
+    "Eden Quay West":     ["8220DB000303", "8220DB000302", "8220DB000301"],
+    "Heuston":            ["8220IR0132",   "8220GA00387",  "8220GA00386",  "8220DB004320", "8220DB004425"],
+    "Heuston North":      ["8220DB007078", "8220DB001474", "8220CO10996"],
+    "Heuston South":      ["8220DB004413", "8220DB002637", "8220B10995",   "8220B1354001"],
+    "Killester":          ["8220IR3881",   "8220DB004390", "8220DB004791", "8220DB000530", "8220DB000608"],
+    "Nassau":             ["8220DB000403", "8220DB000404", "8220DB000406", "8220DB000405", "8220DB007585", "8220DB007586"],
+    "Red Cow":            ["8230GA00354",  "8230GA00353",  "8230DB007791", "8230DB007887", "8230DB007886", "8230DB004379"],
+    "Red Cow Coaches":    ["8230CO11059",  "8230CO11058",  "8230CO11056",  "8230CO11057"],
+    "Pearse Station":     ["8220IR0134",   "8220DB000399", "8220DB000495", "8220B100111",  "8220DB002809", "8220B111761"],
+    "Pearse Street":      ["8220DB000342", "8220DB000346", "8220DB000345", "8220DB007588", "8220DB000400", "8220DB007859", "8220DB007587"],
+    "Tara":               ["8220IR0025",   "8220DB001502", "8220DB007732", "8220DB007564"],
+    "Townsend":           ["8220DB000340", "8220DB000341", "8220DB005192", "8220DB004495"],
+    "UCD":                ["8250DB000768", "8250DB002007", "8250B1350601", "8250DB000767", "8250DB000765", "8250DB004953", "8250DB004952"],
+    "Westmoreland":       ["8220GA00443",  "8220DB000319", "8220DB000320"],
+}
+
+
 class GTFSSearchFunction(Protocol):
     def __call__(self, query: str) -> list:
         ...
@@ -601,6 +635,17 @@ class Timetables(University, Luas, name="Timetables"):
                 self.static_data.routes[route.id] = route
         return output
 
+    async def _soft_limit_warning(self, ctx: commands.Context):
+        """ Show the warning about the soft expiry of static data """
+        if not self.soft_limit_warning:
+            try:
+                data_valid = timetables.check_gtfs_data_expiry(self.db)
+                if not data_valid:
+                    await ctx.send("Warning: The GTFS data currently stored here has become more than a month old. It should be updated soon to prevent it from going out of date.")
+                self.soft_limit_warning = True  # The warning is shown only once per bot restart.
+            except RuntimeError:  # This should never happen by this stage, but better safe than sorry
+                return await ctx.send("The GTFS data available has expired.")
+
     @commands.hybrid_group(name="tfi", case_insensitive=True)
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -682,7 +727,21 @@ class Timetables(University, Luas, name="Timetables"):
                 stop_name = f"{entry['name']} (stop ID {entry['id']})"
             results.append((entry["id"], stop_name, max(ratios)))
         results.sort(key=lambda x: x[2], reverse=True)
-        return [app_commands.Choice(name=result[1], value=result[0]) for result in results[:25]]
+        return [app_commands.Choice(name=stop_name, value=stop_id) for stop_id, stop_name, _ in results[:25]]
+
+    @staticmethod
+    def get_hub_suggestions(current: str) -> list[tuple[str, int]]:
+        current = current.replace("á", "a")  # Busáras key
+        results: list[tuple[str, int]] = []
+        for key in STOP_HUBS.keys():
+            results.append((key, process.default_scorer(current, key)))
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results
+
+    async def tfi_hub_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the stop hub search """
+        results = self.get_hub_suggestions(current)
+        return [app_commands.Choice(name=result, value=result) for result, _ in results[:25]]
 
     @tfi_schedules.command(name="stop")
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
@@ -698,12 +757,12 @@ class Timetables(University, Luas, name="Timetables"):
         if ctx.interaction is None:
             stop_query, timestamp, show_terminating, valid_check = self.get_query_and_timestamp(stop_query)
             if not valid_check:
-                return await ctx.send(stop_query)
+                return await message.edit(content=stop_query)
         else:
             show_terminating = bool(show_terminating)
         now, valid_check = self.parse_timestamp(timestamp)
         if not valid_check:
-            return await ctx.send("Invalid timestamp. Make sure it is in the following format: `YYYY-MM-DD HH:MM:SS`.")
+            return await message.edit(content="Invalid timestamp. Make sure it is in the following format: `YYYY-MM-DD HH:MM:SS`.")
         stops = self.find_stop(stop_query)
         if len(stops) != 1:
             start = "No stops were found" if len(stops) < 1 else "More than one stop was found"
@@ -712,14 +771,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
 
-        if not self.soft_limit_warning:
-            try:
-                data_valid = timetables.check_gtfs_data_expiry(self.db)
-                if not data_valid:
-                    await ctx.send("Warning: The GTFS data currently stored here has become more than a month old. It should be updated soon to prevent it from going out of date.")
-                self.soft_limit_warning = True  # The warning is shown only once per bot restart.
-            except RuntimeError:  # This should never happen by this stage, but better safe than sorry
-                return await ctx.send("The GTFS data available has expired.")
+        await self._soft_limit_warning(ctx)
 
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
         try:
@@ -737,6 +789,49 @@ class Timetables(University, Luas, name="Timetables"):
         return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx))
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
+    @tfi_schedules.command(name="hub", aliases=["collection"])
+    @app_commands.autocomplete(hub_id=tfi_hub_autocomplete)
+    @app_commands.describe(
+        hub_id="The stop hub for which schedules should be fetched",
+        timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)",
+        show_terminating="Leave empty to hide arrivals that terminate at this stop. Add any text here to show them."
+    )
+    @app_commands.rename(hub_id="hub")
+    async def tfi_schedules_hub(self, ctx: commands.Context, *, hub_id: str, timestamp: str = None, show_terminating: str = None):  # timestamp arg will be used by the slash command
+        """ Show the next departures for a specific stop """
+        message = await self.wait_for_initialisation(ctx)
+        # language = ctx.language2("en")
+        if ctx.interaction is None:
+            hub_id, timestamp, show_terminating, valid_check = self.get_query_and_timestamp(hub_id)
+            if not valid_check:
+                return await message.edit(content=hub_id)
+        else:
+            show_terminating = bool(show_terminating)
+        now, valid_check = self.parse_timestamp(timestamp)
+        if not valid_check:
+            return await message.edit(content="Invalid timestamp. Make sure it is in the following format: `YYYY-MM-DD HH:MM:SS`.")
+
+        hub_id = hub_id.replace("á", "a")  # Busáras key
+        try:
+            hub = STOP_HUBS[hub_id]
+        except KeyError:
+            suggestions = [suggestion for suggestion, ratio in self.get_hub_suggestions(hub_id) if ratio > 70][:3]
+            if suggestions:
+                return await message.edit(content=f"The specified hub does not exist. Did you mean: `{'`, `'.join(suggestions)}`?")
+            return await message.edit(content="The specified hub does not exist. Make sure the spelling and capitalisation are correct.")
+
+        await self._soft_limit_warning(ctx)
+
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        try:
+            stops: list[timetables.Stop] = []
+            for stop_id in hub:
+                stops.append(timetables.load_value(self.static_data, timetables.Stop, stop_id, self.db))
+            schedule = await timetables.HubScheduleViewer.load(hub_id, stops, now, not show_terminating, ctx.author.id, self.static_data, self)
+        except Exception:
+            raise
+        return await message.edit(content=schedule.output, view=timetables.HubScheduleView(ctx.author, message, schedule, ctx=ctx))
+
     @tfi.command(name="map")
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
     @app_commands.describe(
@@ -753,14 +848,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "*Hint: You can use both the stop code and the stop name in your query, e.g. `17 Drumcondra`.*")
         stop = stops[0]
 
-        if not self.soft_limit_warning:
-            try:
-                data_valid = timetables.check_gtfs_data_expiry(self.db)
-                if not data_valid:
-                    await ctx.send("Warning: The GTFS data currently stored here has become more than a month old. It should be updated soon to prevent it from going out of date.")
-                self.soft_limit_warning = True  # The warning is shown only once per bot restart.
-            except RuntimeError:  # This should never happen by this stage, but better safe than sorry
-                return await ctx.send("The GTFS data available has expired.")
+        await self._soft_limit_warning(ctx)
 
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
         if self.vehicle_data is None:

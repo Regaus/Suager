@@ -11,7 +11,7 @@ from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, 
 from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop
 
-__all__ = ("StopScheduleViewer", "TripDiagramViewer", "TripDiagramMapViewer", "MapViewer")
+__all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripDiagramMapViewer", "MapViewer")
 
 
 def format_time(provided_time: time.datetime, today: time.date) -> str:
@@ -360,6 +360,234 @@ class StopScheduleViewer:
 
     def format_time(self, provided_time: time.datetime) -> str:
         """ Format the provided time, showing when a given trip happens outside the current day """
+        return format_time(provided_time, self.today)
+
+
+class HubScheduleViewer:
+    """ Shows multiple schedules at once """
+    def __init__(self, hub_id: str, stops: list[Stop], now: time.datetime, real_time: bool, fixed: bool, static_data: GTFSData, cog,
+                 hide_terminating: bool, user_id: int | None,
+                 base_schedules: list[StopSchedule], base_stop_times: list[list[SpecificStopTime]],
+                 real_schedules: list[RealTimeStopSchedule] | None, real_stop_times: list[list[RealStopTime]] | None):
+        self.static_data: GTFSData = static_data
+        self.cog = cog
+        self.hub_id: str = hub_id  # Only used for output here
+        self.stops: list[Stop] = stops
+        self.base_schedules: list[StopSchedule] = base_schedules
+        self.base_stop_times: list[list[SpecificStopTime]] = base_stop_times
+        self.real_schedules: list[RealTimeStopSchedule] = real_schedules
+        self.real_stop_times: list[list[RealStopTime]] = real_stop_times
+
+        self.now: time.datetime = now
+        self.today: time.date = now.date()
+        self.real_time: bool = real_time
+        self.fixed: bool = fixed
+        self.hide_terminating: bool = hide_terminating
+        self.user_id: int | None = user_id
+
+        self.compact_mode: bool = False
+        self.index_offset: int = 0  # Not currently used, but left just in case.
+        self.day_offset: int = 0    # Not currently used, but left just in case.
+        self.lines: int = 4 if len(stops) < 8 else 3
+
+        self.indexes = self.get_indexes()
+        self.output = self.create_output()
+
+    @classmethod
+    async def load(cls, hub_id: str, stops: list[Stop], now: time.datetime | None, hide_terminating: bool, user_id: int | None, static_data: GTFSData, cog):
+        """ Load the data and return a working instance """
+        if now is not None:
+            real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
+            fixed = True
+        else:
+            now = time.datetime.now(tz=TIMEZONE)
+            real_time = True
+            fixed = False
+        today = now.date()
+        event_loop = asyncio.get_event_loop()
+        base_schedules, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedules, static_data, stops, today, hide_terminating, user_id)
+        if real_time:
+            real_schedules, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedules, cog, base_schedules, base_stop_times)
+        else:
+            real_schedules = real_stop_times = None
+        return cls(hub_id, stops, now, real_time, fixed, static_data, cog, hide_terminating, user_id, base_schedules, base_stop_times, real_schedules, real_stop_times)
+
+    @staticmethod
+    def load_base_schedules(data: GTFSData, stops: list[Stop], today: time.date, hide_terminating: bool, user_id: int | None):
+        base_schedules: list[StopSchedule] = []
+        base_stop_times: list[list[SpecificStopTime]] = []
+        for stop in stops:
+            schedule = StopSchedule(data, stop.id, hide_terminating, user_id)
+            base_schedules.append(schedule)
+            base_stop_times.append(schedule.relevant_stop_times(today))
+        return base_schedules, base_stop_times
+
+    @staticmethod
+    def load_real_schedules(cog, base_schedules: list[StopSchedule], base_stop_times: list[list[RealStopTime]]):
+        real_schedules: list[RealTimeStopSchedule] = []
+        real_stop_times: list[list[RealStopTime]] = []
+        for schedule, stop_times in zip(base_schedules, base_stop_times):
+            real_schedule = RealTimeStopSchedule.from_existing_schedule(schedule, cog.real_time_data, cog.vehicle_data, stop_times)
+            real_schedules.append(real_schedule)
+            real_stop_times.append(real_schedule.real_stop_times())
+        return real_schedules, real_stop_times
+
+    async def reload(self):
+        new_schedule = await self.load(self.hub_id, self.stops, self.now, self.hide_terminating, self.user_id, self.static_data, self.cog)
+        new_schedule.fixed = self.fixed
+        new_schedule.real_time = self.real_time
+        new_schedule.compact_mode = self.compact_mode
+        new_schedule.update_output()
+        return new_schedule
+
+    async def refresh(self):
+        event_loop = asyncio.get_event_loop()
+        await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        self.real_schedules, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedules, self.cog, self.base_schedules, self.base_stop_times)
+        if not self.fixed:
+            prev_today = self.today
+            self.now = time.datetime.now(tz=TIMEZONE)
+            self.today = self.now.date()
+            if prev_today != self.today:
+                self.day_offset += (prev_today - self.today).days
+
+    def get_indexes(self) -> list[tuple[int, int]]:
+        """ Get start_idx and end_idx for each schedule """
+        outputs = []
+        if self.real_time:
+            departure_time_attr = "available_departure_time"
+        else:
+            departure_time_attr = "departure_time"
+        for stop_times in self.iterable_stop_times:
+            start_idx = 0
+            for idx, stop_time in enumerate(stop_times):
+                if getattr(stop_time, departure_time_attr) >= self.now:
+                    start_idx = idx
+                    break
+            start_idx += self.index_offset
+            max_idx = len(stop_times)
+            start_idx = max(0, min(start_idx, max_idx - self.lines))
+            end_idx = min(start_idx + self.lines, max_idx)
+            outputs.append((start_idx, end_idx))
+        return outputs
+
+    @property
+    def iterable_stop_times(self) -> list[list[RealStopTime]] | list[list[SpecificStopTime]]:
+        return self.real_stop_times if self.real_time else self.base_stop_times
+
+    @property
+    def data_timestamp(self) -> str:
+        """ Returns the timestamp of the real-time data """
+        if self.cog.real_time_data:
+            data_timestamp = self.cog.real_time_data.header.timestamp
+            return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+        return "Real-time data unavailable"
+
+    def create_output(self):
+        if self.real_time:
+            header = f"Real-time data for stop hub {self.hub_id}\n-# Real-time data timestamp: {self.data_timestamp}"
+        else:
+            header = f"Schedule for stop hub {self.hub_id}"
+        output: list[str] = [header + f"\n-# Lookup time: {self.now:%d %b %Y, %H:%M}"]
+        output_data_header: list[str | None] = ["Rt", "Destination", "Sched", "Real"]
+        output_data: list[list[list[str | None]]] = []  # output_data[stop][line][column]
+        column_sizes: list[int] = [2, 11, 5, 5]
+        assert len(output_data_header) == len(column_sizes)
+        if self.compact_mode or len(self.stops) >= 7:
+            line_length_limit = 36
+        elif len(self.stops) >= 5:
+            line_length_limit = 40
+        else:
+            line_length_limit = 45
+
+        self.indexes = self.get_indexes()
+
+        for i, stop_times in enumerate(self.iterable_stop_times):
+            start_idx, end_idx = self.indexes[i]
+            output_stop: list[list[str | None]] = [output_data_header]
+            for stop_time in stop_times[start_idx:end_idx]:
+                destination = stop_time.destination(self.static_data)
+
+                if self.real_time:
+                    if stop_time.scheduled_departure_time is not None:
+                        scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
+                    else:
+                        scheduled_departure_time = "--:--"  # "Unknown"
+
+                    if stop_time.schedule_relationship == "CANCELED":
+                        real_departure_time = "CANCELD"
+                        destination = CANCELLED + destination
+                    elif stop_time.schedule_relationship == "SKIPPED":
+                        real_departure_time = "SKIPPED"
+                        destination = WARNING + destination
+                    elif stop_time.departure_time is not None:
+                        real_departure_time = self.format_time(stop_time.departure_time)
+                    else:
+                        real_departure_time = "--:--"
+                else:
+                    scheduled_departure_time = self.format_time(stop_time.departure_time)
+                    real_departure_time = ""
+
+                _route = stop_time.route(self.static_data)
+                if _route is None:
+                    route = "Unknown"
+                else:
+                    route = _route.short_name
+
+                if stop_time.actual_destination:
+                    destination = WARNING + stop_time.actual_destination.lstrip("Terminates at ")
+
+                output_line = [route, destination, scheduled_departure_time, real_departure_time]
+                for j, element in enumerate(output_line):
+                    column_sizes[j] = max(column_sizes[j], len(element))
+
+                output_stop.append(output_line)
+            output_data.append(output_stop)
+
+        data_end = 0
+        if not self.real_time:
+            data_end = -1
+            output_data_header[2] = "Depart"
+            column_sizes[2] = max(column_sizes[2], 6)
+            column_sizes[3] = 0
+        if 3 <= column_sizes[0] < 5:
+            output_data_header[0] = "Rte"
+        elif column_sizes[0] >= 5:
+            output_data_header[0] = "Route"
+
+        line_length = sum(column_sizes) + len(column_sizes) - 1 + data_end
+        if line_length > line_length_limit:
+            column_sizes[1] = column_sizes[1] - (line_length - line_length_limit)
+            # line_length = line_length_limit
+        # print(line_length, line_length_limit, *column_sizes)
+
+        for stop, stop_data in zip(self.stops, output_data):  # type: Stop, list[list[str | None]]
+            stop_code = f"Code `{stop.code}`, " if stop.code else ""
+            stop_id = f"ID `{stop.id}`"
+            stop_output = [f"Data for stop {stop.name} ({stop_code}{stop_id})", "```fix"]
+            for line in stop_data:
+                line_data = []
+                for i in range(len(line) + data_end):
+                    size = column_sizes[i]
+                    line_part = line[i]
+                    # print(i, size, len(line_part))
+                    if i == 1 and len(line_part) > size:
+                        line_part = line_part[:size - 1] + "…"
+                    alignment = "<" if i < 2 else ">"
+                    line_data.append(f"{line_part:{alignment}{size}}")
+                stop_output.append(" ".join(line_data))
+            stop_output.append("```")
+            output.append("\n".join(stop_output))
+
+        output_str = "\n".join(output)
+        if len(output_str) > 2000:
+            output_str = output_str[:2000]
+        return output_str
+
+    def update_output(self):
+        self.output = self.create_output()
+
+    def format_time(self, provided_time: time.datetime) -> str:
         return format_time(provided_time, self.today)
 
 
