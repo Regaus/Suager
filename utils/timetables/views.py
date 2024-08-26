@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-from contextlib import suppress
 from typing import override
 
 import discord
 
 from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
-from utils.timetables.shared import get_data_database, NUMBERS
 from utils.timetables.maps import DEFAULT_ZOOM
+from utils.timetables.shared import get_data_database, NUMBERS
 from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
 from utils.views import NumericInputModal, SelectMenu
 
@@ -37,8 +36,10 @@ class StopScheduleView(views.InteractiveView):
         self.route_line_selector = RouteLineSelector(self)
         if self.route_line_selector.options:  # Don't add the selector if it's empty
             self.add_item(self.route_line_selector)
+        self._route_line_selector_shown = bool(self.route_line_selector.options)
 
         self.reset_route_filter.disabled = not self.schedule.base_schedule.route_filter_exists  # Filter enabled -> button enabled
+        self.reset_route_filter.print_override = True
 
     async def refresh(self):
         """ Refresh the real-time data """
@@ -274,6 +275,12 @@ class StopScheduleView(views.InteractiveView):
         self.schedule = await self.schedule.reload()
         self.route_line_selector.schedule = self.schedule
         self.route_line_selector.update_options()
+        if self.route_line_selector.options and not self._route_line_selector_shown:
+            self.add_item(self.route_line_selector)
+            self._route_line_selector_shown = True
+        elif not self.route_line_selector.options and self._route_line_selector_shown:
+            self.remove_item(self.route_line_selector)
+            self._route_line_selector_shown = False
         await self.message.edit(content=self.schedule.output, view=self)
         if values is not None:
             return await interaction.followup.send(f"From now on, this stop will only show departures for the following routes: {', '.join(values)}.\n"
@@ -503,8 +510,7 @@ class HubScheduleView(views.InteractiveView):
         stop = self.viewer.stops[stop_idx]
         stop_id = stop.id
         await self.message.edit(content=f"{emotes.Loading} Updating the route filter for the stop {stop.name}... This may take up to a minute.", view=None)
-        with suppress(discord.NotFound, discord.Forbidden):
-            await message.edit(content="The route filter is now being updated.", view=None)
+        await message.edit(content="The route filter is now being updated.", view=None)
         if values is not None:
             db_values = json.dumps(values)
             if self.viewer.base_schedules[stop_idx].route_filter_exists:
@@ -515,12 +521,10 @@ class HubScheduleView(views.InteractiveView):
             self.db.execute("DELETE FROM route_filters WHERE user_id=? AND stop_id=?", (user_id, stop_id))
         self.viewer = await self.viewer.reload()
         await self.message.edit(content=self.viewer.output, view=self)
-        with suppress(discord.NotFound, discord.Forbidden):
-            await message.delete()
         if values is not None:
-            return await interaction.followup.send(f"From now on, the stop {stop.name} will only show departures for the following routes: {', '.join(values)}.")
+            return await message.edit(content=f"From now on, the stop {stop.name} will only show departures for the following routes: {', '.join(values)}.")
         else:
-            return await interaction.followup.send(f"The route filter for the stop {stop.name} has been disabled, and all departures will be shown regardless of route.")
+            return await message.edit(content=f"The route filter for the stop {stop.name} has been disabled, and all departures will be shown regardless of route.")
 
 
 class HubStopSelector(SelectMenu):
@@ -529,16 +533,14 @@ class HubStopSelector(SelectMenu):
 
     def __init__(self, interface: HubScheduleView):
         super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=1, options=[], row=1)
-
         for i, stop in enumerate(self.interface.viewer.stops):
-            self.add_option(value=str(i), label=stop.name, description=f"Stop {stop.code_or_id}", emoji=NUMBERS[i])
-
-        # self.options.sort(key=lambda x: alphanumeric_sort_string(x.label))
-        self.max_values = len(self.options)
+            self.add_option(value=str(i), label=stop.name, description=f"Stop {stop.code_or_id}", emoji=NUMBERS[i + 1])
+        self.print_override = False
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()  # type: ignore
         new_view = HubRouteFilterView(self.interface, self.interface.message, int(self.values[0]))
-        new_view.message = await interaction.response.send_message(view=new_view, ephemeral=True)  # type: ignore
+        new_view.message = await interaction.followup.send(view=new_view, ephemeral=False)
         return new_view
 
 
@@ -546,11 +548,13 @@ class HubRouteFilterView(views.InteractiveView):
     def __init__(self, original_view: HubScheduleView, message: discord.Message, stop_idx: int):
         super().__init__(original_view.sender, message, try_full_fetch=False)
         self.original_view = original_view
-        self.command = f"{self.original_view.command} > {self.__class__.__name__}"
+        self.command = f"{self.original_view.command} > {self.__class__.__name__}: {self.original_view.viewer.stops[stop_idx].name}"
         self.stop_idx = stop_idx
         self.route_filter_selector = RouteFilterSelector(self)
         self.route_filter_selector.row = 0
         self.add_item(self.route_filter_selector)
+        self.reset_route_filter.disabled = not self.original_view.viewer.base_schedules[self.stop_idx].route_filter_exists
+        self.reset_route_filter.print_override = True
 
     @discord.ui.button(label="Reset route filter", style=discord.ButtonStyle.primary, row=1)
     async def reset_route_filter(self, interaction: discord.Interaction, _: discord.ui.Button):

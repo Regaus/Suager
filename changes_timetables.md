@@ -451,3 +451,8 @@
 ## v0.13.0 - 26 August 2024
 - Added "stop hubs" (shows schedules for multiple stops nearby at the same time)
   - Currently only has stop hubs for locations around Dublin
+
+## v0.13.1 - 26 August 2024
+- The stop hub route filter view will now edit its own message instead of sending a new one once the filter is set
+- The "reset route filter" button will now be disabled if there is no route filter currently active
+- The "reset route filter" button presses will now print to stdout, while the HubStopSelector won't
