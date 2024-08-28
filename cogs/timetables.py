@@ -152,7 +152,7 @@ class University(commands.Cog, name="Timetables"):
 
         if time.datetime(2024, 8) <= date < time.datetime(2025, 8):
             course_code = "COMSCI2"
-            extra_labs = ("CA116[1]", "CA117[2]")
+            extra_labs = ("CSC1003[1]", "CSC1004[2]")
             description = "Regaus's Timetable: **COMSCI2** + Programming Labs"
         else:
             return await ctx.send("Error: The timetable for this academic year is not defined.")

@@ -6,6 +6,7 @@ import re
 from collections.abc import Callable, Awaitable
 from typing import Type, TypeVar
 
+import aiohttp
 import discord
 import pytz
 from icalendar import Calendar, Event as CalendarEvent
@@ -104,66 +105,71 @@ BUILDINGS = {
 MODULES = {
     # Year 1
     # Semester 1
-    "CA103": "Computer Systems",
-    "CA106": "Web Design",
-    "CA116": "Computer Programming 1",
-    "CA172": "Problem-Solving",
-    "MS134": "IT Mathematics 1",
+    "CSC1060": "Computer Systems",
+    "CSC1061": "Web Design",
+    "CSC1003": "Computer Programming 1",
+    "CSC1012": "Problem-Solving",
+    "MTH1025": "IT Mathematics 1",
 
     # Semester 2
-    "CA115": "Digital Innovation",
-    "CA117": "Computer Programming 2",
-    "CA169": "Networks & Internet",
-    "CA170": "Intro to Operating Systems",
-    "MS135": "IT Mathematics 2",
+    "CSC1002": "Digital Innovation",
+    "CSC1004": "Computer Programming 2",
+    "CSC1010": "Networks & Internet",
+    "CSC1011": "Intro to Operating Systems",
+    "MTH1026": "IT Mathematics 2",
 
     # Year 2
     # Semester 1
-    "CA214": "Systems Analysis",
-    "CA266": "Probability & Statistics",
-    "CA268": "Computer Programming 3",
-    "CA282": "Intro to DevOps",
-    "CA284": "Systems Programming",
-    "MS200": "Linear Algebra",
+    "CSC1020": "Systems Analysis",
+    "CSC1028": "Probability & Statistics",
+    "CSC1030": "Computer Programming 3",
+    "CSC1037": "Intro to DevOps",
+    "CSC1038": "Systems Programming",
+    "MTH1034": "Linear Algebra",
 
     # Semester 2
-    "CA208": "Logic",
-    "CA216": "Operating Systems",
-    "CA218": "Intro to Databases",
-    "CA267": "Software Testing",
-    "CA269": "Computer Programming 4",
-    "CA298": "Full Stack Development",
+    "CSC1018": "Logic",
+    "CSC1021": "Operating Systems",
+    "CSC1022": "Intro to Databases",
+    "CSC1029": "Software Testing",
+    "CSC1031": "Computer Programming 4",
+    "CSC1040": "Full Stack Development",
 
     # Year 3
     # Semester 1
-    "CA304": "Computer Networks 2",
-    "CA314": "OO Analysis and Design",
-    "CA318": "Advanced Algorithms & AI",
-    "CA320": "Computability and Complexity",
-    "CA341": "Comparative Programming Langs",
-    "CA357": "UI Design & Implementation",
-    "CA369": "Semester 1 Abroad",
+    "CSC1042": "Computer Networks 2",
+    "CSC1046": "OO Analysis and Design",
+    "CSC1047": "Advanced Algorithms & AI",
+    "CSC1048": "Computability and Complexity",
+    "CSC1055": "Comparative Programming Langs",
+    "CSC1058": "UI Design & Implementation",
+    "CSC1094": "Semester 1 Abroad",
 
     # Semester 2
-    "CA326": "Year 3 Project",
-    "CA366": "INTRA",
-    "CA360": "Communication Skills",
-    "CA361": "IT Architecture",
-    "CA3109": "Machine Learning",
+    "CSC1049": "Year 3 Project",
+    "CSC1050": "INTRA",
+    "CSC1053": "INTRA",
+    "CSC1093": "INTRA",
+    "CSC1091": "Communication Skills",
+    "CSC1057": "IT Architecture",
+    "CSC1092": "IT Architecture",
+    "CSC1044": "Machine Learning",
+    "CSC1045": "Machine Learning in Context",
 
     # Year 4
     # Semester 1
-    "CA400": "Year 4 Project",
-    "CA4003": "Compiler Construction",
-    "CA4009": "Search Technologies",
-    "CA4010": "Data Warehousing & Data Mining",
-    "CA4005": "Cryptography & Security Protocols",
+    "CSC1108": "Year 4 Project",
+    "CSC1098": "Compiler Construction",
+    "CSC1103": "Search Technologies",
+    "CSC1104": "Data Warehousing & Data Mining",
+    "CSC1059": "Cryptography",
+    "CSC1100": "Cryptography & Security Protocols",
 
     # Semester 2
-    "CA4004": "Software Engineering",
-    "CA4006": "Concurrent & Distributed Programming",
-    "CA4007": "Computer Graphics & Image Processing",
-    "CA4012": "Machine Translation"
+    "CSC1099": "Software Engineering",
+    "CSC1101": "Concurrent & Distributed Programming",
+    "CSC1102": "Computer Graphics & Image Processing",
+    "CSC1105": "Machine Translation"
 }
 # Campus Codes
 CAMPUSES = {
@@ -172,7 +178,7 @@ CAMPUSES = {
     "SPC": "St Patrick's"
 }
 # noinspection RegExpRedundantEscape
-MODULE_REGEX = re.compile(r"^(?:[A-Z]{2}\d+[A-Za-z]{0,2}(?:[\[\(]\d[\]\)])?/?){1,2}")
+MODULE_REGEX = re.compile(r"^(?:[A-Z]{2,3}\d+[A-Za-z]{0,2}(?:[\[\(]\d[\]\)])?/?){1,2}")  # Module names can now contain 3 letters
 
 
 cache = {
@@ -180,6 +186,7 @@ cache = {
     "modules": {},
     "rooms": {}
 }
+_timeout_error = False
 
 
 def get_module_name(name: str) -> tuple[str, str, int | None]:
@@ -252,8 +259,10 @@ async def get_data(url: str, headers: dict, json_data: dict = None, name: str = 
         if not res.ok:
             if res.content_type == "application/json":
                 data = await res.json()
-                ts = f"{now_time()} > Suager > {name} > Encountered an error:\n"
-                logger.log("Suager", "dcu", ts + data)
+                logger.log("timetables", "dcu", f"{now_time()} > Timetables > {name} > Encountered an error ({res.status}):\nURL: {url}\nData: {data}")
+                if "Timeout performing" in data:
+                    global _timeout_error
+                    _timeout_error = True
             res.raise_for_status()
 
         data = await res.json()
@@ -281,12 +290,26 @@ async def get_list_from_api(identity: str, name: str) -> dict:
         # print(f"{_i=}, time={time.datetime.now().iso(ms=True)}")
         return _data["TotalPages"]
 
+    global _timeout_error
     total_pages = await make_request(1)
-    tasks = []
-    for i in range(2, total_pages + 1):
-        tasks.append(make_request(i))
-    await asyncio.gather(*tasks)
-    logger.log("Suager", "dcu", f"{now_time()} > Suager > {name} > Downloaded new data from API")
+    try:
+        tasks = []
+        for i in range(2, total_pages + 1):
+            tasks.append(make_request(i))
+        await asyncio.gather(*tasks)
+    except aiohttp.ClientResponseError:
+        if _timeout_error:
+            message = f"{now_time()} > Timetables > {name} > Got error loading all data at once. Trying to load one by one"
+            general.print_error(message)
+            logger.log("timetables", "dcu", message)
+            for i in range(1, total_pages + 1):
+                await make_request(i)
+                # print(f"Loaded page {i:03d}/{total_pages:03d}")
+        else:
+            raise
+    finally:
+        _timeout_error = False
+    logger.log("timetables", "dcu", f"{now_time()} > Timetables > {name} > Downloaded new data from API")
     return output
 
 
@@ -301,10 +324,10 @@ async def get_list_from_cache(filename: str, renew_function: Callable[[], Awaita
             # If the data is more than a month old - The list of courses, modules, and rooms should not change often
             if timestamp - data["timestamp"] > 86400 * 30:
                 must_renew = True
-                logger.log("Suager", "dcu", f"{now_time()} > Suager > DCU Cache Fetcher > Data from {filename} has expired")
+                logger.log("timetables", "dcu", f"{now_time()} > Timetables > DCU Cache Fetcher > Data from {filename} has expired")
     except FileNotFoundError:
         must_renew = True
-        logger.log("Suager", "dcu", f"{now_time()} > Suager > DCU Cache Fetcher > File {filename} does not exist")
+        logger.log("timetables", "dcu", f"{now_time()} > Timetables > DCU Cache Fetcher > File {filename} does not exist")
     if must_renew:
         data = await renew_function()
         data["timestamp"] = timestamp

@@ -457,3 +457,8 @@
 - The stop hub route filter view will now edit its own message instead of sending a new one once the filter is set
 - The "reset route filter" button will now be disabled if there is no route filter currently active
 - The "reset route filter" button presses will now print to stdout, while the HubStopSelector won't
+
+## v0.13.2 - 28 August 2024
+- Changed the DCU module to log to Timetables instead of Suager
+- Tried to prevent errors caused by the API timing out
+- Updated the bot to handle the new module codes
