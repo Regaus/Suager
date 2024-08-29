@@ -1,6 +1,8 @@
 import asyncio
 import json
+import os
 from collections.abc import Callable, Awaitable
+from contextlib import suppress
 from io import BytesIO
 from typing import Any, Protocol
 from zipfile import ZipFile, BadZipFile
@@ -259,6 +261,36 @@ class University(commands.Cog, name="Timetables"):
         """ Fetch DCU room list or look for a specific room """
         async with ctx.typing():
             return await self.dcu_list(ctx, dcu.get_rooms, "DCU Room Codes", search)
+
+    @dcu_stuff.command(name="invalidatecache", with_app_command=False)
+    @commands.is_owner()
+    async def dcu_invalidate_cache(self, ctx: commands.Context, cache: str = "all"):
+        """ Invalidate the cache for courses, modules, and rooms """
+        courses = modules = rooms = False
+        cache = cache.lower()
+        if cache == "all":
+            courses = modules = rooms = True
+        elif cache == "courses":
+            courses = True
+        elif cache == "modules":
+            modules = True
+        elif cache == "rooms":
+            rooms = True
+        else:
+            return await ctx.send(f"Invalid cache value {cache!r} received.")
+        if courses:
+            with suppress(FileNotFoundError):
+                os.remove("data/dcu/courses.json")
+            dcu.cache["courses"] = {}
+        if modules:
+            with suppress(FileNotFoundError):
+                os.remove("data/dcu/modules.json")
+            dcu.cache["modules"] = {}
+        if rooms:
+            with suppress(FileNotFoundError):
+                os.remove("data/dcu/rooms.json")
+            dcu.cache["rooms"] = {}
+        return await ctx.send(f"Successfully removed {cache} cache.")
 
 
 # Cog for Luas timetables - loaded by Cobble

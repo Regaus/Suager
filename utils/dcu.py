@@ -179,6 +179,7 @@ CAMPUSES = {
 }
 # noinspection RegExpRedundantEscape
 MODULE_REGEX = re.compile(r"^(?:[A-Z]{2,3}\d+[A-Za-z]{0,2}(?:[\[\(]\d[\]\)])?/?){1,2}")  # Module names can now contain 3 letters
+COURSE_REGEX = re.compile(r"^([A-Za-z-]+\d*)(\s\([\w\s-]+\))?")  # Group 1 = Course code, Group 2 = Course name
 
 
 cache = {
@@ -216,6 +217,16 @@ def get_module_name(name: str) -> tuple[str, str, int | None]:
     except (ValueError, IndexError):
         semester = None
     return code, module, semester
+
+
+def get_course_name(full_name: str) -> tuple[str, str | None]:
+    """ Return the course code and name from the new course codes """
+    match = re.match(COURSE_REGEX, full_name)
+    if match:
+        code = match.group(1)
+        name = match.group(2)
+        return code, name
+    return full_name, None
 
 
 def get_times_course(course_code: str = "COMSCI1", custom_week: time.datetime = None) -> tuple[time.datetime, time.datetime]:
@@ -345,8 +356,8 @@ async def get_list_identities(cache_function: Callable[[], Awaitable[dict]], cls
         result = cls(entry)
         # TODO: Fix this creating repeated room names (e.g. GLA.LG25 - GLA.LG25)
         cache[cache_name][result.code] = f"{result.code} - {result.name}"
-        # Don't overwrite the data if there is a duplicate
-        if result.code not in output:
+        # Don't overwrite the data if there is a duplicate, unless it's a course that has a descriptor while the previous one doesn't
+        if result.code not in output or (result.code in output and getattr(output[result.code], "code_desc", None) is None and getattr(result, "code_desc", None) is not None):
             output[result.code] = result
     return output
 
@@ -709,9 +720,14 @@ class BaseIdentity(object):
 
 
 class Course(BaseIdentity):
+    def __init__(self, data: dict):
+        super().__init__(data)
+        full_name: str = data["Name"]
+        self.code, self.code_desc = get_course_name(full_name)
+
     def __str__(self) -> str:
-        # "COMSCI1 - BSc in Computer Science"
-        return f"**{self.code}** - {self.name}"
+        # "COMSCI1 (Computer-Science-1) - BSc in Computer Science"
+        return f"**{self.code}**{self.code_desc} - {self.name}"
 
 
 class Module(BaseIdentity):

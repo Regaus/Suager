@@ -462,3 +462,7 @@
 - Changed the DCU module to log to Timetables instead of Suager
 - Tried to prevent errors caused by the API timing out
 - Updated the bot to handle the new module codes
+
+## v0.13.3 - 29 August 2024
+- The bot now handles new course codes that contain the course name in them
+- Added a command to delete existing cache and fetch new data from server (`i.dcu invalidatecache`)
