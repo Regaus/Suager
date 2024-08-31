@@ -383,17 +383,17 @@
 - Changed the highest available zoom to be 18 (making the limit 16-18 rather than 16-17)
 
 ## v0.12.2 - 6 August 2024
-- Fixed the TripDiagramView and TripDiagramMapView breaking after 15 minutes
-- The TripDiagramMapViewer now gets its data from the TripDiagramViewer, including information about arrival and departure times
+- Fixed the TripDiagramView and TripMapView breaking after 15 minutes
+- The TripMapViewer now gets its data from the TripDiagramViewer, including information about arrival and departure times
 - The departure times for stops are now rendered on the TripDiagramViewer
-- Made the TripDiagramMapViewer be able to handle added trips
-- Fixed the TripDiagramMapViewer breaking if the trip had no vehicle tracked
+- Made the TripMapViewer be able to handle added trips
+- Fixed the TripMapViewer breaking if the trip had no vehicle tracked
 
 ## v0.12.3 - 6-7 August 2024
-- The TripDiagramMapViewer map should no longer be able to go out of bounds
-- The times shown on the TripDiagramMapViewer will now try to not overlap with each other (not perfect, but decent enough to leave for now)
+- The TripMapViewer map should no longer be able to go out of bounds
+- The times shown on the TripMapViewer will now try to not overlap with each other (not perfect, but decent enough to leave for now)
 - Stopped TripDiagramViewer from breaking if no stop time was ever loaded for the trip before
-- Added a special debug command for testing the TripDiagramMapViewer
+- Added a special debug command for testing the TripMapViewer
 - Added special debug functions to generate fake real-time and added trips and create fake vehicles
 
 ## v0.12.3.1 - 8 August 2024
@@ -414,7 +414,7 @@
 - Changed refresh button cooldowns to 60 seconds (the underlying code only calls the API once a minute anyways)
 
 ## v0.12.5 - 8 August 2024
-- Removed the "Hide view" button from TripDiagramMapView and MapView, since they have few buttons to begin with
+- Removed the "Hide view" button from TripMapView and MapView, since they have few buttons to begin with
 - Added a "Reset zoom" button to MapView, which resets the zoom level back to default
 
 ## v0.12.5.1 - 8 August 2024
@@ -424,7 +424,7 @@
 - Vehicles whose coordinates are 0, 0 will no longer show their distance
 
 ## v0.12.6 - 8 August 2024
-- The TripDiagramMapViewer now supports zooming in (centres around the current stop)
+- The TripMapViewer now supports zooming in (centres around the current stop)
 
 ## v0.12.6.1 - 8 August 2024
 - Trips that terminate early no longer show the "Terminates at" part on the RouteLineSelector (only the destination)
@@ -433,7 +433,7 @@
 - Cancelled trips will now have all stops (except the current stop) rendered in red on the map, but still show the departure times
 
 ## v0.12.6.3 - 8 August 2024
-- Improved the TripDiagramMapViewer coordinates algorithm to fit more stops when zooming in, instead of blindly centering at the current stop even if it's near the end of the route
+- Improved the TripMapViewer coordinates algorithm to fit more stops when zooming in, instead of blindly centering at the current stop even if it's near the end of the route
 
 ## v0.12.6.4 - 8 August 2024
 - Fixed StopScheduleView crashing when there's no departures available from a stop (because RouteLineSelector was empty)
@@ -466,3 +466,10 @@
 ## v0.13.3 - 29 August 2024
 - The bot now handles new course codes that contain the course name in them
 - Added a command to delete existing cache and fetch new data from server (`i.dcu invalidatecache`)
+
+## v0.13.4 - 31 August 2024
+- Renamed TripDiagramMapViewer and TripDiagramMapView to TripMapViewer and TripMapView respectively
+- StopScheduleViewer will now show data about the vehicle (if available)
+- The code for generating departure data for StopScheduleViewer and HubScheduleViewer is now combined into a common function, since they mostly do the same thing
+- Renamed the `schedule` attribute of StopScheduleView to `viewer` for consistency
+- Data about vehicle distances is no longer shown if no such data is available for any shown trip

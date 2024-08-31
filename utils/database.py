@@ -423,7 +423,14 @@ tables = [
         Column("distance_travelled", "REAL", True),  # Total distance travelled along the line up until this point
     ], "UNIQUE(shape_id, sequence)"),                # Constraint: Shape ID + Sequence
     Table("expiry", "gtfs/static.db", [
-        Column("type", "INTEGER", True, True),  # 0 -> soft limit, 1 -> hard limit
+        Column("type", "INTEGER", True, True),  # 0 -> soft limit, 1 -> hard limit | 2 -> vehicle data
         Column("date", "DATE", True)            # Date when expiry limit is reached
+    ]),
+    Table("vehicles", "gtfs/static.db", [
+        Column("vehicle_id", "TEXT", True, True),     # Vehicle ID used by the GTFS-R API
+        Column("fleet_number", "TEXT", True),         # Fleet number (e.g. "AH1")
+        Column("reg_plates", "TEXT", True),           # Reg plates (e.g. "191-D-44403")
+        Column("model", "TEXT", True),                # Model name (e.g. "ADL Enviro400H MMC")
+        Column("trivia", "TEXT", False),              # Trivia (e.g. presence of USB sockets)
     ])
 ]

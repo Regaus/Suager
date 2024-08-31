@@ -43,10 +43,10 @@
   },
   "timetables": {
     "short_version": "0.13",
-    "version": "0.13.3",
+    "version": "0.13.4",
     "first_version": 1668995199,
     "major_release": 1668995199,
-    "last_update": 1724942950
+    "last_update": 1725143202
   },
   "version": "v7.0.0-fuck-off-pycharm"
 }

@@ -13,7 +13,7 @@ from utils.timetables.shared import CHUNK_SIZE, get_database
 
 __all__ = (
     "str_to_date", "time_to_int",
-    "GTFSData", "Agency", "Calendar", "CalendarException", "Route", "Stop", "Trip", "StopTime", "Shape", "ShapePoint",
+    "GTFSData", "Agency", "Calendar", "CalendarException", "Route", "Stop", "Trip", "StopTime", "Shape", "ShapePoint", "FleetVehicle",
     "load_csv_lines", "check_gtfs_data_expiry", "iterate_over_csv_full",
     "read_and_store_gtfs_data", "init_gtfs_data",
     "load_calendars", "load_value"
@@ -476,6 +476,43 @@ class ShapePoint:
                 f"({self.shape_id!r}, {self.sequence!r}, {self.latitude!r}, {self.longitude!r}, {self.distance_travelled!r})")
 
 
+@dataclass()
+class FleetVehicle:
+    vehicle_id: str
+    fleet_number: str
+    reg_plates: str
+    model: str
+    trivia: str | None
+
+    def __repr__(self):
+        return f"FleetVehicle - {self.fleet_number} (ID {self.vehicle_id}, Reg {self.reg_plates})"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, str]) -> FleetVehicle:
+        try:
+            return cls(data["vehicle_id"], data["fleet_number"], data["reg_plates"], data["model"], data["trivia"])
+        except TypeError:
+            raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
+
+    @classmethod
+    def from_sql(cls, vehicle_id: str, db: database.Database = None) -> FleetVehicle:
+        if not db:
+            db = get_database()
+        return cls.from_dict(db.fetchrow("SELECT * FROM vehicles WHERE vehicle_id=?", (vehicle_id,)))
+
+    @classmethod
+    def fetch_all(cls, db: database.Database = None) -> dict[str, FleetVehicle]:
+        if not db:
+            db = get_database()
+        vehicles = map(cls.from_dict, db.fetch("SELECT * FROM vehicles", ()))
+        return {vehicle.vehicle_id: vehicle for vehicle in vehicles}
+
+    def save_to_sql(self) -> str:
+        trivia = "NULL" if self.trivia is None else repr(self.trivia)
+        return (f"INSERT INTO vehicles(vehicle_id, fleet_number, reg_plates, model, trivia) VALUES "
+                f"({self.vehicle_id!r}, {self.fleet_number!r}, {self.reg_plates!r}, {self.model!r}, {trivia})")
+
+
 # # Mapping of files to corresponding dataclasses
 # class_mapping = {
 #     "agency.txt": Agency,
@@ -658,8 +695,7 @@ def read_and_store_gtfs_data():  # self=None
     print(f"{now()} > Static GTFS Loader > Saved shapes")
 
     # Delete old expiry and set the new one
-    # noinspection SqlWithoutWhere
-    db.execute("DELETE FROM expiry")
+    db.execute("DELETE FROM expiry WHERE type=0 OR type=1")
     # Soft limit: 30 days (1 month) from today
     db.execute("INSERT INTO expiry(type, date) VALUES (?, ?)", (0, (time.date.today() + time.timedelta(days=30)).to_datetime(),))
     # Hard limit: 90 days (3 months) from today

@@ -10,23 +10,23 @@ from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.shared import get_data_database, NUMBERS
-from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripDiagramMapViewer, MapViewer
+from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer
 from utils.views import NumericInputModal, SelectMenu
 
-__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripDiagramMapView", "MapView")
+__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView")
 
 
 class StopScheduleView(views.InteractiveView):
     """ A view for displaying stop schedules for a given stop """
-    def __init__(self, sender: discord.Member, message: discord.Message, schedule: StopScheduleViewer, ctx: commands.Context | discord.Interaction = None):
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: StopScheduleViewer, ctx: commands.Context | discord.Interaction = None):
         super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
-        self.schedule = schedule
+        self.viewer = viewer
         self.data_db = get_data_database()
         self.refreshing: bool = False
 
         self.update_freeze_button()
 
-        if not self.schedule.real_time:
+        if not self.viewer.real_time:
             self.remove_item(self.refresh_button)
             self.remove_item(self.freeze_unfreeze_schedule)
 
@@ -38,17 +38,17 @@ class StopScheduleView(views.InteractiveView):
             self.add_item(self.route_line_selector)
         self._route_line_selector_shown = bool(self.route_line_selector.options)
 
-        self.reset_route_filter.disabled = not self.schedule.base_schedule.route_filter_exists  # Filter enabled -> button enabled
+        self.reset_route_filter.disabled = not self.viewer.base_schedule.route_filter_exists  # Filter enabled -> button enabled
         self.reset_route_filter.print_override = True
 
     async def refresh(self):
         """ Refresh the real-time data """
         self.refreshing = True
         try:
-            await self.schedule.refresh_real_schedule()
-            self.schedule.update_output()
+            await self.viewer.refresh_real_schedule()
+            self.viewer.update_output()
             self.route_line_selector.update_options()
-            await self.message.edit(content=self.schedule.output, view=self)
+            await self.message.edit(content=self.viewer.output, view=self)
         finally:
             self.refreshing = False
 
@@ -62,7 +62,7 @@ class StopScheduleView(views.InteractiveView):
         await self.disable_button(self.message, button, cooldown=60)
 
     def update_freeze_button(self):
-        if self.schedule.fixed:
+        if self.viewer.fixed:
             self.freeze_unfreeze_schedule.label = "Unfreeze schedule"
             self.freeze_unfreeze_schedule.style = discord.ButtonStyle.primary
         else:
@@ -73,10 +73,10 @@ class StopScheduleView(views.InteractiveView):
     async def freeze_unfreeze_schedule(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Freeze the schedule at the current time and index - or let it move again """
         await interaction.response.defer()  # type: ignore
-        self.schedule.fixed ^= True
-        self.schedule.update_output()
+        self.viewer.fixed ^= True
+        self.viewer.update_output()
         self.update_freeze_button()
-        return await self.message.edit(content=self.schedule.output, view=self)
+        return await self.message.edit(content=self.viewer.output, view=self)
 
     def update_compact_mode_button(self):
         labels = {  # Current state number -> next state
@@ -84,16 +84,16 @@ class StopScheduleView(views.InteractiveView):
             1: "Compact mode",
             2: "Show full destinations"
         }
-        self.mobile_desktop_view.label = labels[self.schedule.compact_mode]
+        self.mobile_desktop_view.label = labels[self.viewer.compact_mode]
 
     @discord.ui.button(label="Shorten destinations", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def mobile_desktop_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Toggle cutting off destination text to make sure that it fits on a mobile screen """
         await interaction.response.defer()  # type: ignore
-        self.schedule.compact_mode = (self.schedule.compact_mode + 1) % 3
-        self.schedule.update_output()
+        self.viewer.compact_mode = (self.viewer.compact_mode + 1) % 3
+        self.viewer.update_output()
         self.update_compact_mode_button()
-        return await self.message.edit(content=self.schedule.output, view=self)
+        return await self.message.edit(content=self.viewer.output, view=self)
 
     @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -117,9 +117,9 @@ class StopScheduleView(views.InteractiveView):
         """ Move the departures by the provided amount of indexes (Wrapper function) """
         await interaction.response.defer()  # type: ignore
         limit_reached = False
-        _minimum = -self.schedule.start_idx
+        _minimum = -self.viewer.start_idx
         # When the start index moves into the future, the "maximum" value may become out of bounds... Is it worth investigating and fixing though?
-        _maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines
+        _maximum = len(self.viewer.iterable_stop_times) - self.viewer.start_idx - self.viewer.lines
         if _maximum < _minimum:
             _maximum = _minimum
         if indexes < _minimum:
@@ -128,12 +128,12 @@ class StopScheduleView(views.InteractiveView):
         elif indexes > _maximum:
             indexes = _maximum
             limit_reached = True
-        self.schedule.index_offset += indexes
-        self.schedule.update_output()
+        self.viewer.index_offset += indexes
+        self.viewer.update_output()
         self.route_line_selector.update_options()
-        await self.message.edit(content=self.schedule.output, view=self)
+        await self.message.edit(content=self.viewer.output, view=self)
         word = "down" if indexes > 0 else "up"
-        offset = self.schedule.index_offset
+        offset = self.viewer.index_offset
         if offset == 0:
             offset_explanation = "zero"
         else:
@@ -150,10 +150,10 @@ class StopScheduleView(views.InteractiveView):
         """ Set the index offset to a specific value (Wrapper function) """
         await interaction.response.defer()  # type: ignore
         # The limit behaviour should not be implemented here - otherwise, the "Reset offset" will break for schedules that are too small (Example: stop 835000014)
-        self.schedule.index_offset = offset
-        self.schedule.update_output()
+        self.viewer.index_offset = offset
+        self.viewer.update_output()
         self.route_line_selector.update_options()
-        await self.message.edit(content=self.schedule.output, view=self)
+        await self.message.edit(content=self.viewer.output, view=self)
         if offset == 0:
             content = "The offset has been reset to zero."
         else:
@@ -171,7 +171,7 @@ class StopScheduleView(views.InteractiveView):
         button.emoji = emoji[next_lines]
 
     def change_move_button_text(self):
-        lines = self.schedule.lines - 1
+        lines = self.viewer.lines - 1
         self.move_up_6.label = f"Move up {lines}"
         self.move_down_6.label = f"Move up {lines}"
 
@@ -183,7 +183,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Move up 6", emoji="⏫", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_up_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
-        return await self.move_indexes(interaction, -(self.schedule.lines - 1))
+        return await self.move_indexes(interaction, -(self.viewer.lines - 1))
 
     @discord.ui.button(label="Show 4 departures", emoji="4️⃣", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def shrink_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -194,16 +194,16 @@ class StopScheduleView(views.InteractiveView):
          7 departures -> Shrink to 4
          10 departures -> Shrink to 4 """
         await interaction.response.defer()  # type: ignore
-        if self.schedule.lines == 4:
-            self.schedule.lines = 7
+        if self.viewer.lines == 4:
+            self.viewer.lines = 7
             self.change_departure_button_text(button, 4)
         else:
-            self.schedule.lines = 4
+            self.viewer.lines = 4
             self.change_departure_button_text(button, 7)
         self.change_departure_button_text(self.expand_departures, 10)
         self.change_move_button_text()
-        self.schedule.update_output()
-        await self.message.edit(content=self.schedule.output, view=self)
+        self.viewer.update_output()
+        await self.message.edit(content=self.viewer.output, view=self)
 
     @discord.ui.button(label="Move offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
     async def move_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -213,7 +213,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Reset route filter", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
     async def reset_route_filter(self, interaction: discord.Interaction, _: discord.Button):
         """ Reset the route filter - Show all departures regardless of route """
-        if not self.schedule.base_schedule.route_filter_exists:
+        if not self.viewer.base_schedule.route_filter_exists:
             return await interaction.response.send_message("There is already no route filter applied to this stop!", ephemeral=True)  # type: ignore
         return await self.apply_route_filter(interaction, values=None)
 
@@ -225,7 +225,7 @@ class StopScheduleView(views.InteractiveView):
     @discord.ui.button(label="Move down 6", emoji="⏬", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def move_down_6(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Show 1 departure above the current """
-        return await self.move_indexes(interaction, self.schedule.lines - 1)
+        return await self.move_indexes(interaction, self.viewer.lines - 1)
 
     @discord.ui.button(label="Show 10 departures", emoji="🔟", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def expand_departures(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -236,16 +236,16 @@ class StopScheduleView(views.InteractiveView):
          7 departures -> Expand to 10
          10 departures -> Shrink to 7 """
         await interaction.response.defer()  # type: ignore
-        if self.schedule.lines == 10:
-            self.schedule.lines = 7
+        if self.viewer.lines == 10:
+            self.viewer.lines = 7
             self.change_departure_button_text(button, 10)
         else:
-            self.schedule.lines = 10
+            self.viewer.lines = 10
             self.change_departure_button_text(button, 7)
         self.change_departure_button_text(self.shrink_departures, 4)
         self.change_move_button_text()
-        self.schedule.update_output()
-        await self.message.edit(content=self.schedule.output, view=self)
+        self.viewer.update_output()
+        await self.message.edit(content=self.viewer.output, view=self)
 
     @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def set_offset_button(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -261,10 +261,10 @@ class StopScheduleView(views.InteractiveView):
         await interaction.response.defer()  # type: ignore
         await self.message.edit(content=f"{emotes.Loading} Updating the route filter for this stop... This may take up to a minute.", view=None)
         user_id = self.sender.id
-        stop_id = self.schedule.stop.id
+        stop_id = self.viewer.stop.id
         if values is not None:
             db_values = json.dumps(values)
-            if self.schedule.base_schedule.route_filter_exists:
+            if self.viewer.base_schedule.route_filter_exists:
                 self.data_db.execute("UPDATE route_filters SET routes=? WHERE user_id=? AND stop_id=?", (db_values, user_id, stop_id))
             else:
                 self.data_db.execute("INSERT INTO route_filters(user_id, stop_id, routes) VALUES (?, ?, ?)", (user_id, stop_id, db_values))
@@ -272,8 +272,8 @@ class StopScheduleView(views.InteractiveView):
         else:
             self.data_db.execute("DELETE FROM route_filters WHERE user_id=? AND stop_id=?", (user_id, stop_id))
             self.reset_route_filter.disabled = True
-        self.schedule = await self.schedule.reload()
-        self.route_line_selector.schedule = self.schedule
+        self.viewer = await self.viewer.reload()
+        self.route_line_selector.viewer = self.viewer
         self.route_line_selector.update_options()
         if self.route_line_selector.options and not self._route_line_selector_shown:
             self.add_item(self.route_line_selector)
@@ -281,7 +281,7 @@ class StopScheduleView(views.InteractiveView):
         elif not self.route_line_selector.options and self._route_line_selector_shown:
             self.remove_item(self.route_line_selector)
             self._route_line_selector_shown = False
-        await self.message.edit(content=self.schedule.output, view=self)
+        await self.message.edit(content=self.viewer.output, view=self)
         if values is not None:
             return await interaction.followup.send(f"From now on, this stop will only show departures for the following routes: {', '.join(values)}.\n"
                                                    f"Note: This setting will persist the next time you look up the schedule for this same stop.\n"
@@ -298,9 +298,9 @@ class MoveOffsetModal(NumericInputModal):
 
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, "Move Offset")
-        self.schedule = self.interface.schedule
-        self.minimum = -self.schedule.start_idx  # + self.schedule.index_offset
-        self.maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines
+        self.viewer = self.interface.viewer
+        self.minimum = -self.viewer.start_idx  # + self.viewer.index_offset
+        self.maximum = len(self.viewer.iterable_stop_times) - self.viewer.start_idx - self.viewer.lines
         if self.maximum < self.minimum:
             self.maximum = self.minimum
         self.text_input.label = f"Amount to move offset by ({self.minimum} - {self.maximum}):"
@@ -318,9 +318,9 @@ class SetOffsetModal(NumericInputModal):
 
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, "Set Offset")
-        self.schedule = self.interface.schedule
-        self.minimum = -self.schedule.start_idx + self.schedule.index_offset
-        self.maximum = len(self.schedule.iterable_stop_times) - self.schedule.start_idx - self.schedule.lines + self.schedule.index_offset
+        self.viewer = self.interface.viewer
+        self.minimum = -self.viewer.start_idx + self.viewer.index_offset
+        self.maximum = len(self.viewer.iterable_stop_times) - self.viewer.start_idx - self.viewer.lines + self.viewer.index_offset
         if self.maximum < self.minimum:
             self.maximum = self.minimum
         self.text_input.label = f"Set new offset to ({self.minimum} - {self.maximum}):"
@@ -342,7 +342,7 @@ class RouteFilterSelector(SelectMenu):
         values = set()
 
         if isinstance(self.interface, StopScheduleView):
-            iterable = self.interface.schedule.base_schedule.all_routes
+            iterable = self.interface.viewer.base_schedule.all_routes
         elif isinstance(self.interface, HubRouteFilterView):
             iterable = self.interface.original_view.viewer.base_schedules[self.interface.stop_idx].all_routes
         else:
@@ -377,20 +377,20 @@ class RouteLineSelector(SelectMenu):
     def __init__(self, interface: StopScheduleView):
         super().__init__(interface, placeholder="See details about trip", min_values=1, max_values=1, options=[], row=4)
 
-        self.schedule = self.interface.schedule
-        self.data = self.schedule.data
-        self.real_time = self.schedule.real_time
+        self.viewer = self.interface.viewer
+        self.data = self.viewer.static_data
+        self.real_time = self.viewer.real_time
         self.set_options()
 
     def set_options(self):
         """ Set options to the currently shown trips """
-        stop_times = self.schedule.iterable_stop_times[slice(*self.schedule.get_indexes(custom_lines=10))]
+        stop_times = self.viewer.iterable_stop_times[slice(*self.viewer.get_indexes(custom_lines=10))]
         for i, stop_time in enumerate(stop_times, start=1):
             if stop_time.actual_destination:
                 destination = stop_time.actual_destination.replace("Terminates at ", "")
             else:
                 destination = stop_time.destination(self.data)
-            name = f"{self.schedule.format_time(stop_time.available_departure_time)} to {destination}"
+            name = f"{self.viewer.format_time(stop_time.available_departure_time)} to {destination}"
             if stop_time.is_added:
                 value = f"|{stop_time.trip_id}"
             elif stop_time.real_time:
@@ -727,11 +727,11 @@ class TripDiagramView(views.InteractiveView):
             except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
                 pass
         try:
-            map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer)
-            # map_viewer: TripDiagramMapViewer = await TripDiagramMapViewer.load(self.viewer.cog, self.viewer.static_trip, self.viewer.stop, self.viewer)
+            map_viewer: TripMapViewer = await TripMapViewer.load(self.viewer)
+            # map_viewer: TripMapViewer = await TripMapViewer.load(self.viewer.cog, self.viewer.static_trip, self.viewer.stop, self.viewer)
         except Exception:
             raise
-        view = TripDiagramMapView(interaction.user, message, map_viewer, try_full_fetch=False)
+        view = TripMapView(interaction.user, message, map_viewer, try_full_fetch=False)
         return await view.update_message()
 
 
@@ -756,9 +756,9 @@ class GoToPageModal(NumericInputModal):
         return await self.interface.update_message()
 
 
-class TripDiagramMapView(views.InteractiveView):
+class TripMapView(views.InteractiveView):
     """ A view for displaying a trip diagram on a map """
-    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: TripDiagramMapViewer, ctx: commands.Context | discord.Interaction = None,
+    def __init__(self, sender: discord.Member, message: discord.Message, map_viewer: TripMapViewer, ctx: commands.Context | discord.Interaction = None,
                  *, try_full_fetch: bool = True):
         super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx, try_full_fetch=try_full_fetch)
         self.viewer = map_viewer

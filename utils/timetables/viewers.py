@@ -1,17 +1,24 @@
+from __future__ import annotations
+
 import asyncio
 import io
+import re
 
 import discord
 from regaus import time
 
 from utils import paginators
+from utils.timetables import FleetVehicle
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
 from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
 from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop
 
-__all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripDiagramMapViewer", "MapViewer")
+__all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripMapViewer", "MapViewer")
+
+
+FLEET_REGEX = re.compile(r"^([A-Z]{2,3})([0-9]{1,3})$")
 
 
 def format_time(provided_time: time.datetime, today: time.date) -> str:
@@ -25,31 +32,107 @@ def format_time(provided_time: time.datetime, today: time.date) -> str:
     return formatted
 
 
-# TODO: Link these to the real_time_data and vehicle_data of the Timetables cog, so that it can be updated properly
+def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: RealStopTime | SpecificStopTime):
+    hub = isinstance(self, HubScheduleViewer)
+    destination = stop_time.destination(self.static_data)
+
+    if self.real_time:
+        if stop_time.scheduled_departure_time is not None:
+            scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
+        else:
+            scheduled_departure_time = "--:--"  # "Unknown"
+
+        if stop_time.schedule_relationship == "CANCELED":
+            real_departure_time = "CANCELD" if hub else "CANCELLED"
+            destination = CANCELLED + destination
+        elif stop_time.schedule_relationship == "SKIPPED":
+            real_departure_time = "SKIPPED"
+            destination = WARNING + destination
+        elif stop_time.departure_time is not None:
+            real_departure_time = self.format_time(stop_time.departure_time)
+        else:
+            real_departure_time = "--:--"
+    else:
+        scheduled_departure_time = self.format_time(stop_time.departure_time)
+        real_departure_time = ""
+
+    if not hub and stop_time.pickup_type == 1:
+        scheduled_departure_time = "D " + scheduled_departure_time
+    elif not hub and stop_time.drop_off_type == 1:
+        scheduled_departure_time = "P " + scheduled_departure_time
+
+    _route = stop_time.route(self.static_data)
+    if _route is None:
+        route = "Unknown"
+    else:
+        route = _route.short_name
+
+    if hub and stop_time.actual_destination:
+        destination = WARNING + stop_time.actual_destination.lstrip("Terminates at ")
+    elif not hub and (stop_time.actual_destination or stop_time.actual_start) and not destination.startswith(WARNING):
+        destination = WARNING + destination
+
+    if hub or not self.real_time:
+        distance = vehicle = ""
+    elif self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:
+        vehicle_data: FleetVehicle | None = self.cog.fleet_data.get(stop_time.vehicle_id)
+        if vehicle_data:
+            fleet = vehicle_data.fleet_number
+            match = re.match(FLEET_REGEX, fleet)
+            vehicle = f"{match.group(1)}{match.group(2):>3}" if match else fleet
+        else:
+            vehicle = "-"
+        if stop_time.vehicle.latitude == 0 and stop_time.vehicle.longitude == 0:
+            distance = "-"
+        else:
+            trip = stop_time.real_trip if stop_time.is_added else stop_time.trip(self.static_data)
+            distance_m, colour = distance_between_bus_and_stop(trip, self.stop, stop_time.vehicle, self.static_data)
+            if self.compact_mode == 1:
+                distance = f"{distance_m / 1000:.1f}k"
+            else:
+                if distance_m >= 1000:
+                    distance = f"{distance_m / 1000:.2f}km"
+                else:
+                    distance = f"{round(distance_m, -1):.0f}m"
+            distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"
+    else:
+        distance = vehicle = "-"
+
+    if hub:
+        output_line = [route, destination, scheduled_departure_time, real_departure_time]
+    else:
+        actual_destination = stop_time.actual_destination or ""
+        actual_start = stop_time.actual_start or ""
+        output_line = [route, destination, scheduled_departure_time, real_departure_time, vehicle, distance, actual_destination, actual_start]
+
+    return output_line
+
+
 class StopScheduleViewer:
     """ A loader for stop schedules"""
 
-    def __init__(self, data: GTFSData, now: time.datetime, real_time: bool, fixed: bool, today: time.date,
-                 stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, lines: int,
+    def __init__(self, static_data: GTFSData, now: time.datetime, real_time: bool, fixed: bool, today: time.date, stop: Stop, lines: int,
                  base_schedule: StopSchedule, base_stop_times: list[SpecificStopTime],
                  real_schedule: RealTimeStopSchedule | None, real_stop_times: list[RealStopTime] | None, cog):
-        self.data = data
+        self.static_data = static_data
+        self.cog = cog  # The Timetables cog
+        self.real_time_data = cog.real_time_data
+        self.vehicle_data = cog.vehicle_data
+        self.fleet_data = cog.fleet_data
+        self.stop = stop
+        self.latitude = stop.latitude
+        self.longitude = stop.longitude
+        self.base_schedule = base_schedule
+        self.base_stop_times = base_stop_times
+        self.real_schedule = real_schedule
+        self.real_stop_times = real_stop_times
+
         self.now = now
         self.today = today
         self.real_time = real_time
         self.fixed = fixed
         # self.fixed_time = fixed
-        self.stop = stop
-        self.latitude = stop.latitude
-        self.longitude = stop.longitude
-        self.real_time_data = real_time_data
-        self.vehicle_data = vehicle_data
         self.lines = lines
-        self.base_schedule = base_schedule
-        self.base_stop_times = base_stop_times
-        self.real_schedule = real_schedule
-        self.real_stop_times = real_stop_times
-        self.cog = cog  # The Timetables cog
 
         self.compact_mode: int = 0  # Don't cut off destinations by default
         self.index_offset = 0
@@ -59,8 +142,7 @@ class StopScheduleViewer:
         self.output = self.create_output()
 
     @classmethod
-    async def load(cls, data: GTFSData, stop: Stop, real_time_data: GTFSRData, vehicle_data: VehicleData, cog,
-                   now: time.datetime | None = None, lines: int = 7, hide_terminating: bool = True, user_id: int = None):
+    async def load(cls, data: GTFSData, stop: Stop, cog, now: time.datetime | None = None, lines: int = 7, hide_terminating: bool = True, user_id: int = None):
         """ Load the data and return a working instance """
         if now is not None:
             real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
@@ -73,14 +155,13 @@ class StopScheduleViewer:
         event_loop = asyncio.get_event_loop()
         base_schedule, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedule, data, stop.id, today, hide_terminating, user_id)
         if real_time:
-            real_schedule, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedule, base_schedule, real_time_data, vehicle_data, base_stop_times)
+            real_schedule, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedule, cog, base_schedule, base_stop_times)
         else:
             real_schedule = real_stop_times = None
-        return cls(data, now, real_time, fixed, today, stop, real_time_data, vehicle_data, lines, base_schedule, base_stop_times, real_schedule, real_stop_times, cog)
+        return cls(data, now, real_time, fixed, today, stop, lines, base_schedule, base_stop_times, real_schedule, real_stop_times, cog)
 
     async def reload(self):
-        new_schedule = await self.load(self.data, self.stop, self.real_time_data, self.vehicle_data, self.cog, self.now, self.lines,
-                                       self.base_schedule.hide_terminating, self.base_schedule.route_filter_userid)
+        new_schedule = await self.load(self.static_data, self.stop, self.cog, self.now, self.lines, self.base_schedule.hide_terminating, self.base_schedule.route_filter_userid)
         # These will change in the new_schedule because the "now" parameter is set
         new_schedule.fixed = self.fixed
         new_schedule.real_time = self.real_time
@@ -97,9 +178,9 @@ class StopScheduleViewer:
         return base_schedule, base_stop_times
 
     @staticmethod
-    def load_real_schedule(base_schedule: StopSchedule, real_time_data: GTFSRData, vehicle_data: VehicleData, base_stop_times: list[SpecificStopTime]):
+    def load_real_schedule(cog, base_schedule: StopSchedule, base_stop_times: list[SpecificStopTime]):
         """ Load the RealTimeStopSchedule """
-        real_schedule = RealTimeStopSchedule.from_existing_schedule(base_schedule, real_time_data, vehicle_data, base_stop_times)
+        real_schedule = RealTimeStopSchedule.from_existing_schedule(base_schedule, cog.real_time_data, cog.vehicle_data, base_stop_times)
         real_stop_times = real_schedule.real_stop_times()
         return real_schedule, real_stop_times
 
@@ -107,7 +188,7 @@ class StopScheduleViewer:
         """ Refresh the RealTimeStopSchedule """
         event_loop = asyncio.get_event_loop()
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
-        self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.base_schedule, self.real_time_data, self.vehicle_data, self.base_stop_times)
+        self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.cog, self.base_schedule, self.base_stop_times)
         if not self.fixed:  # _time:
             prev_today = self.today
             self.now = time.datetime.now(tz=TIMEZONE)
@@ -120,27 +201,25 @@ class StopScheduleViewer:
         start_idx = 0
         lines = custom_lines or self.lines
         # Set start_idx to the first departure after now
-        if self.real_time:
-            for idx, stop_time in enumerate(self.real_stop_times):
-                if stop_time.available_departure_time >= self.now:
-                    start_idx = idx
-                    break
-        else:
-            for idx, stop_time in enumerate(self.base_stop_times):
-                if stop_time.departure_time >= self.now:
-                    start_idx = idx
-                    break
+        departure_time_attr = self.departure_time_attr
+        for idx, stop_time in enumerate(self.iterable_stop_times):
+            if getattr(stop_time, departure_time_attr) >= self.now:
+                start_idx = idx
+                break
         max_idx = len(self.iterable_stop_times)
         start_idx += self.index_offset
         start_idx = max(0, min(start_idx, max_idx - lines))
-        end_idx = start_idx + lines  # We don't need the + 1 here
-        end_idx = min(end_idx, max_idx)
+        end_idx = min(start_idx + lines, max_idx)
         return start_idx, end_idx
 
     @property
     def iterable_stop_times(self) -> list[RealStopTime] | list[SpecificStopTime]:
         """ Returns the stop times we can iterate over """
         return self.real_stop_times if self.real_time else self.base_stop_times
+
+    @property
+    def departure_time_attr(self) -> str:
+        return "available_departure_time" if self.real_time else "departure_time"
 
     @property
     def data_timestamp(self) -> str:
@@ -153,125 +232,42 @@ class StopScheduleViewer:
     def create_output(self):
         """ Create the output from available information and send it to the user """
         # language = languages.Language("en")
-        output_data: list[list[str | None]] = [["Route", "Destination", "Schedule", "RealTime", "Distance", None, None]]
-        column_sizes = [5, 11, 8, 8, 8, 0, 0]  # Longest member of the column
-        if self.compact_mode == 2:
-            output_data[0][3] = "Departure"
-            column_sizes[3] = 9
-            for idx in (4, 2):
-                output_data[0].pop(idx)
-                column_sizes.pop(idx)
-        extras = False
-        has_distances = False
-        # I don't think this should be there - for fixed schedules, self.now should not change
-        # if not self.fixed:
+        output_data: list[list[str | None]] = [["Route", "Destination", "Sched", "Real", "Bus", "Dist", None, None]]
+        column_sizes = [5, 11, 5, 5, 3, 4, 0, 0]  # Longest member of the column
+        # if self.compact_mode == 2:
+        #     output_data[0][3] = "Departure"
+        #     column_sizes[3] = 9
+        #     for idx in (4, 2):
+        #         output_data[0].pop(idx)
+        #         column_sizes.pop(idx)
+        has_vehicle_info = False
         self.start_idx, self.end_idx = self.get_indexes()
         # iterable_stop_times = self.real_stop_times if self.real_time else self.base_stop_times
 
-        # This is used in the for loop below
-        def add_letter(ltr: str):
-            if self.compact_mode == 2:
-                nonlocal departure_time
-                departure_time = ltr + departure_time
-            else:
-                nonlocal scheduled_departure_time
-                scheduled_departure_time = ltr + scheduled_departure_time
-            nonlocal extras
-            extras = True
-
         for stop_time in self.iterable_stop_times[self.start_idx:self.end_idx]:
-            cancelled = skipped = False
-            departure_time = scheduled_departure_time = real_departure_time = ""
-            if self.compact_mode == 2:
-                if stop_time.schedule_relationship == "CANCELED":
-                    cancelled = True
-                    departure_time = "CANCELLED"
-                elif stop_time.schedule_relationship == "SKIPPED":
-                    skipped = True
-                    departure_time = "SKIPPED"
-                else:
-                    departure_time = self.format_time(stop_time.available_departure_time)
-            else:
-                if self.real_time:
-                    if stop_time.scheduled_departure_time is not None:
-                        scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
-                        # scheduled_departure_time = stop_time.scheduled_departure_time.format("%H:%M")  # :%S
-                    else:
-                        scheduled_departure_time = "--:--"  # "Unknown"
-
-                    if stop_time.schedule_relationship == "CANCELED":
-                        real_departure_time = "CANCELLED"
-                        cancelled = True
-                    elif stop_time.schedule_relationship == "SKIPPED":
-                        real_departure_time = "SKIPPED"
-                        skipped = True
-                    elif stop_time.departure_time is not None:
-                        real_departure_time = self.format_time(stop_time.departure_time)
-                        # real_departure_time = stop_time.departure_time.format("%H:%M")  # :%S
-                    else:
-                        real_departure_time = "--:--"
-                else:
-                    scheduled_departure_time = self.format_time(stop_time.departure_time)
-                    # scheduled_departure_time = stop_time.departure_time.format("%H:%M")
-                    real_departure_time = ""
-
-            if stop_time.pickup_type == 1:
-                add_letter("D ")
-            elif stop_time.drop_off_type == 1:
-                add_letter("P ")
-
-            _route = stop_time.route(self.data)
-            if _route is None:
-                route = "Unknown"
-            else:
-                route = _route.short_name
-
-            destination = stop_time.destination(self.data)
-            # If the bus terminates early or departs later than scheduled, show a warning sign at the destination field
-            if stop_time.actual_destination is not None or stop_time.actual_start is not None or skipped:
-                destination = WARNING + destination
-            if cancelled:
-                destination = CANCELLED + destination
-
-            if self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:  # "Compact mode" does not show vehicle distance
-                if stop_time.vehicle.latitude == 0 and stop_time.vehicle.longitude == 0:
-                    distance = "-"
-                else:
-                    has_distances = True
-                    # distance_km = conworlds.distance_between_places(self.latitude, self.longitude, stop_time.vehicle.latitude, stop_time.vehicle.longitude, "Earth")
-                    if stop_time.is_added:
-                        trip = stop_time.real_trip
-                    else:
-                        trip = stop_time.trip(self.data)
-                    distance_m, colour = distance_between_bus_and_stop(trip, self.stop, stop_time.vehicle, self.data)
-                    if distance_m >= 1000:  # > 1 km
-                        distance = f"{distance_m / 1000:.2f}km"  # Precision: 0.01km (=10m)
-                        # distance = language.length(distance_m, precision=2).split(" | ")[0]
-                    else:  # < 1 km
-                        distance = f"{round(distance_m, -1):.0f}m"  # Round to nearest 10m
-                        # distance = language.length(round(distance_m, -1), precision=0).split(" | ")[0]
-                    # distance = distance.replace("\u200c", "")  # Remove ZWS
-                    distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"  # Circle takes up 2 symbol widths
-            elif not self.real_time:
-                distance = ""
-            else:
-                distance = "-"
-
-            actual_destination_line = stop_time.actual_destination or ""
-            actual_start_line = stop_time.actual_start or ""
-
-            if self.compact_mode == 2:
-                output_line = [route, destination, departure_time, actual_destination_line, actual_start_line]
-            else:
-                output_line = [route, destination, scheduled_departure_time, real_departure_time, distance, actual_destination_line, actual_start_line]
+            output_line = format_departure(self, stop_time)
+            if output_line[4] not in ("", "-") or output_line[5] not in ("", "-"):
+                has_vehicle_info = True
             for i, element in enumerate(output_line):
                 column_sizes[i] = max(column_sizes[i], len(element))
 
             output_data.append(output_line)
 
-        data_end = -2  # Last index with data to show
+        if column_sizes[2] >= 8:
+            output_data[0][2] = "Schedule"
+        if column_sizes[3] >= 8:
+            output_data[0][3] = "RealTime"
+        if column_sizes[5] >= 8:
+            output_data[0][5] = "Distance"
+
+        data_end = _end = -2  # Last index with data to show
+        skip_idx = []
+        # if self.compact_mode == 1:
+        #     skip_idx = [_end - 2]  # Hide fleet data
+        if self.compact_mode == 2 or not has_vehicle_info:
+            data_end = _end - 2  # Hide vehicle and distance data
         if not self.real_time:
-            data_end -= 2  # Hide real-time and distance data for non-real-time schedules
+            data_end = _end - 3  # Hide real-time, vehicle, distance
 
         # Calculate the last line first, in case we need more characters for the destination field
         line_length = sum(column_sizes[:data_end]) + len(column_sizes) - 1 + data_end
@@ -315,10 +311,8 @@ class StopScheduleViewer:
 
         stop_code = f"Code `{self.stop.code}`, " if self.stop.code else ""
         stop_id = f"ID `{self.stop.id}`"
-        additional_text = ""
-        if extras:
-            additional_text += "\n-# D = Drop-off/Alighting only | P = Pick-up/Boarding only"
-        if has_distances:
+        additional_text = "\n-# D = Drop-off/Alighting only | P = Pick-up/Boarding only"
+        if has_vehicle_info:
             additional_text += "\n-# Distance indicators: Red = Bus already passed stop | Yellow = Bus approaching | Green = Bus not nearby yet"
         if self.real_time:
             additional_text += f"\n-# Real-time data timestamp: {self.data_timestamp}"
@@ -330,16 +324,17 @@ class StopScheduleViewer:
             assert len(column_sizes) == len(line)
             line_data = []
             for i in range(len(line) + data_end):  # Excluding the "actual_destination" and "actual_start"
-                size = column_sizes[i]
-                line_part = line[i]
-                if i == 1 and cutoff:
-                    size = cutoff
-                    if len(line_part) > cutoff:
-                        line_part = line_part[:cutoff - 1] + "…"  # Truncate destination field if necessary
-                # Left-align route and destination to fixed number of spaces
-                # Right-align the schedule, real-time info, and distance
-                alignment = "<" if i < 2 else ">"
-                line_data.append(f"{line_part:{alignment}{size}}")
+                if i not in skip_idx:
+                    size = column_sizes[i]
+                    line_part = line[i]
+                    if i == 1 and cutoff:
+                        size = cutoff
+                        if len(line_part) > cutoff:
+                            line_part = line_part[:cutoff - 1] + "…"  # Truncate destination field if necessary
+                    # Left-align route and destination to fixed number of spaces
+                    # Right-align the schedule, real-time info, and distance
+                    alignment = "<" if i < 2 else ">"
+                    line_data.append(f"{line_part:{alignment}{size}}")
             output += f"{' '.join(line_data)}\n"
             # If actual_destination and actual_start are not empty, insert them at the line below
             # These lines will start at the Destination field, and can occupy space up to the end of the line
@@ -423,7 +418,7 @@ class HubScheduleViewer:
         return base_schedules, base_stop_times
 
     @staticmethod
-    def load_real_schedules(cog, base_schedules: list[StopSchedule], base_stop_times: list[list[RealStopTime]]):
+    def load_real_schedules(cog, base_schedules: list[StopSchedule], base_stop_times: list[list[SpecificStopTime]]):
         real_schedules: list[RealTimeStopSchedule] = []
         real_stop_times: list[list[RealStopTime]] = []
         for schedule, stop_times in zip(base_schedules, base_stop_times):
@@ -454,10 +449,7 @@ class HubScheduleViewer:
     def get_indexes(self) -> list[tuple[int, int]]:
         """ Get start_idx and end_idx for each schedule """
         outputs = []
-        if self.real_time:
-            departure_time_attr = "available_departure_time"
-        else:
-            departure_time_attr = "departure_time"
+        departure_time_attr = self.departure_time_attr
         for stop_times in self.iterable_stop_times:
             start_idx = 0
             for idx, stop_time in enumerate(stop_times):
@@ -474,6 +466,10 @@ class HubScheduleViewer:
     @property
     def iterable_stop_times(self) -> list[list[RealStopTime]] | list[list[SpecificStopTime]]:
         return self.real_stop_times if self.real_time else self.base_stop_times
+
+    @property
+    def departure_time_attr(self) -> str:
+        return "available_departure_time" if self.real_time else "departure_time"
 
     @property
     def data_timestamp(self) -> str:
@@ -506,38 +502,7 @@ class HubScheduleViewer:
             start_idx, end_idx = self.indexes[i]
             output_stop: list[list[str | None]] = [output_data_header]
             for stop_time in stop_times[start_idx:end_idx]:
-                destination = stop_time.destination(self.static_data)
-
-                if self.real_time:
-                    if stop_time.scheduled_departure_time is not None:
-                        scheduled_departure_time = self.format_time(stop_time.scheduled_departure_time)
-                    else:
-                        scheduled_departure_time = "--:--"  # "Unknown"
-
-                    if stop_time.schedule_relationship == "CANCELED":
-                        real_departure_time = "CANCELD"
-                        destination = CANCELLED + destination
-                    elif stop_time.schedule_relationship == "SKIPPED":
-                        real_departure_time = "SKIPPED"
-                        destination = WARNING + destination
-                    elif stop_time.departure_time is not None:
-                        real_departure_time = self.format_time(stop_time.departure_time)
-                    else:
-                        real_departure_time = "--:--"
-                else:
-                    scheduled_departure_time = self.format_time(stop_time.departure_time)
-                    real_departure_time = ""
-
-                _route = stop_time.route(self.static_data)
-                if _route is None:
-                    route = "Unknown"
-                else:
-                    route = _route.short_name
-
-                if stop_time.actual_destination:
-                    destination = WARNING + stop_time.actual_destination.lstrip("Terminates at ")
-
-                output_line = [route, destination, scheduled_departure_time, real_departure_time]
+                output_line = format_departure(self, stop_time)
                 for j, element in enumerate(output_line):
                     column_sizes[j] = max(column_sizes[j], len(element))
 
@@ -597,8 +562,8 @@ class TripDiagramViewer:
     def __init__(self, original_view, trip_id: str):
         # I don't think the StopScheduleView and -Viewer should be stored as attrs
         # self.original_view = original_view  # views.StopScheduleView
-        stop_schedule: StopScheduleViewer = original_view.schedule
-        self.static_data = stop_schedule.data
+        stop_schedule: StopScheduleViewer = original_view.viewer
+        self.static_data = stop_schedule.static_data
         self.stop = stop_schedule.stop
         # self.fixed = stop_schedule.fixed  # Do we even need this here?
         self.real_time_data = stop_schedule.real_time_data
@@ -1015,7 +980,7 @@ class TripDiagramViewer:
         return format_time(provided_time, self.today)
 
 
-class TripDiagramMapViewer:
+class TripMapViewer:
     """ Map viewer for the trip diagram """
     def __init__(self, image: io.BytesIO, viewer: TripDiagramViewer, zoom: int):
         self.image: io.BytesIO = image

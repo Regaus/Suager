@@ -10,13 +10,13 @@ from zipfile import ZipFile, BadZipFile
 import discord
 import luas.api
 from aiohttp import ClientError
+from bs4 import BeautifulSoup
 from discord import app_commands
 from regaus import time
 from thefuzz import process
 
 from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser, cpu_burner
 from utils.time import time as print_current_time
-
 
 # def dcu_data_access(ctx):
 #     return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
@@ -330,6 +330,11 @@ class Timetables(University, Luas, name="Timetables"):
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
+        self.vehicle_list_urls = (
+            "https://bustimes.org/operators/dublin-bus/vehicles",
+            "https://bustimes.org/operators/bus-eireann/vehicles",
+            "https://bustimes.org/operators/go-ahead-ireland/vehicles"
+        )
         self.headers = {
             "Cache-Control": "no-cache",
             "x-api-key": self.bot.config["gtfsr_api_token"]
@@ -337,6 +342,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.real_time_data: timetables.GTFSRData | None = None
         self.vehicle_data: timetables.VehicleData | None = None
         self.static_data: timetables.GTFSData | None = None
+        self.fleet_data: dict[str, timetables.FleetVehicle] = {}
         self.initialised = False
         self.updating = False
         self.updating_real_time = False
@@ -344,6 +350,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.soft_loader_error: Exception | None = None
         self.last_updated: time.datetime | None = None
         self.soft_limit_warning: bool = False
+        self.updating_vehicles: bool = False
 
     @staticmethod
     def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool, bool]:
@@ -547,6 +554,8 @@ class Timetables(University, Luas, name="Timetables"):
         else:
             message = await ctx.send(f"{emotes.Loading} Loading the response...")
 
+        await self.update_vehicles(force_update=False)
+
         # Keep the function alive until the bot is initialised and the data has been updated
         while not self.initialised or self.updating:
             if self.loader_error is not None:
@@ -571,6 +580,73 @@ class Timetables(University, Luas, name="Timetables"):
             raise self.loader_error from None
 
         return message
+
+    async def get_vehicle_names_web(self) -> list[timetables.FleetVehicle]:
+        """ Get vehicle data from bustimes """
+        def strip(string: str | None):
+            if string:
+                return string.strip()
+            return string
+
+        all_vehicles: list[timetables.FleetVehicle] = []
+        for i, url in enumerate(self.vehicle_list_urls):
+            # This depends on the layout of the website not changing. Oh well.
+            data = await http.get(url, res_method="text")
+            soup = BeautifulSoup(data, "html.parser")
+            vehicles = soup.body.main.find(name="div", id="content").find(name="div", class_="table-wrapper").table.tbody.find_all(name="tr")
+            trivia_idx = 7 if i == 0 else 6
+            for vehicle in vehicles:
+                vehicle_id = vehicle["id"][3:]
+                columns = vehicle.find_all(name="td")
+                fleet_number = strip(columns[0].a.string)
+                reg_plates = strip(columns[1].a.string)
+                model = strip(columns[4].string)
+                trivia = strip(columns[trivia_idx].string)
+                all_vehicles.append(timetables.FleetVehicle(vehicle_id, fleet_number, reg_plates, model, trivia))
+                # all_vehicles.append({"vehicle_id": vehicle_id, "fleet_number": fleet_number, "reg_plates": reg_plates, "model": model, "trivia": trivia})
+        return all_vehicles
+
+    async def update_vehicles(self, force_update: bool = False):
+        """ Save or update vehicle data from bustimes """
+        # This function shouldn't really have to run more than once per uptime, but let's keep this here in case the bot stays up for more than two weeks
+        if self.updating_vehicles:
+            return
+        try:
+            self.updating_vehicles = True
+            # Check if the existing data has expired
+            expiry = self.db.fetchrow("SELECT * FROM expiry WHERE type=2")
+            if not expiry:
+                force_update = True
+            elif time.date.today() > time.date.from_datetime(expiry["date"]):
+                force_update = True
+            # Download the new data, if necessary
+            if force_update:
+                all_vehicles: list[timetables.FleetVehicle] = await self.get_vehicle_names_web()
+                # noinspection SqlWithoutWhere
+                statements = ["BEGIN", "DELETE FROM vehicles"]
+                for vehicle in all_vehicles:
+                    statements.append(vehicle.save_to_sql())
+                    self.fleet_data[vehicle.vehicle_id] = vehicle
+                    # vehicle_id = vehicle["vehicle_id"]
+                    # fleet_number = vehicle["fleet_number"]
+                    # reg_plates = vehicle["reg_plates"]
+                    # model = vehicle["model"]
+                    # trivia = vehicle["trivia"]
+                    # statements.append(f"INSERT INTO vehicles(vehicle_id, fleet_number, reg_plates, model, trivia) VALUES ({vehicle_id!r}, {fleet_number!r}, {reg_plates!r}, {model!r}, {trivia!r})")
+                new_expiry = (time.date.today() + time.timedelta(days=14)).iso()
+                if expiry:
+                    statements.append(f"UPDATE expiry SET date={new_expiry!r} WHERE type=2")
+                else:
+                    statements.append(f"INSERT INTO expiry(type, date) VALUES (2, {new_expiry!r})")
+                statements.append("COMMIT;")
+                self.db.executescript("; ".join(statements))
+                logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded new fleet data from bustimes")
+            else:
+                if not self.fleet_data:  # Only reload the data if it does not yet exist
+                    self.fleet_data = timetables.FleetVehicle.fetch_all(self.db)
+                    logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded existing fleet data from storage")
+        finally:
+            self.updating_vehicles = False
 
     @commands.group(name="placeholder", case_insensitive=True)  # , invoke_without_command=True
     # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
@@ -640,6 +716,12 @@ class Timetables(University, Luas, name="Timetables"):
             return await ctx.send(f"{flags_status}\n{self.loader_error=}")
         error = general.traceback_maker(self.loader_error)
         return await ctx.send(f"{flags_status}\nself.loader_error has an error stored:\n{error[-1900:]}")
+
+    @placeholder.command(name="vehicles")
+    async def update_vehicle_data(self, ctx: commands.Context):
+        """ Update the vehicle data from bustimes """
+        await self.update_vehicles(force_update=True)
+        return await ctx.send(f"{print_current_time()} > Fleet data has been successfully updated.")
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
@@ -807,8 +889,7 @@ class Timetables(University, Luas, name="Timetables"):
 
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
         try:
-            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, cog=self, now=now,
-                                                                hide_terminating=not show_terminating, user_id=ctx.author.id)
+            schedule = await timetables.StopScheduleViewer.load(self.static_data, stop, self, now, hide_terminating=not show_terminating, user_id=ctx.author.id)
         except Exception:
             # For some reason, without this block, exceptions raised are simply silently ignored, this will forward them to the on_command_error listener.
             raise
@@ -937,8 +1018,8 @@ class Timetables(University, Luas, name="Timetables"):
     #     return await message.edit(content=schedule_viewer.output, view=schedule_view)
     #     # diagram_viewer = timetables.TripDiagramViewer(schedule_view, trip_id)
     #     # # diagram_view = timetables.TripDiagramView(ctx.author, message, diagram_viewer, try_full_fetch=False)
-    #     # map_viewer = await timetables.TripDiagramMapViewer.load(diagram_viewer)
-    #     # return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.TripDiagramMapView(ctx.author, message, map_viewer, ctx))
+    #     # map_viewer = await timetables.TripMapViewer.load(diagram_viewer)
+    #     # return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.TripMapView(ctx.author, message, map_viewer, ctx))
 
 
 async def setup(bot: bot_data.Bot):
