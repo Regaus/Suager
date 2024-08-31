@@ -473,3 +473,7 @@
 - The code for generating departure data for StopScheduleViewer and HubScheduleViewer is now combined into a common function, since they mostly do the same thing
 - Renamed the `schedule` attribute of StopScheduleView to `viewer` for consistency
 - Data about vehicle distances is no longer shown if no such data is available for any shown trip
+
+## v0.13.5 - 31 August 2024
+- TripDiagramViewer and TripMapViewer can now show information about the bus serving the trip
+  - It states the current nearest stop as well as the fleet number, reg plates, model, and any features of the bus

@@ -16,7 +16,7 @@ from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape
 
 __all__ = (
     "MAP_SIZE", "TILE_SIZE", "DEFAULT_ZOOM", "BASE_MAP_URL",
-    "deg_to_xy_float", "deg_to_xy", "xy_to_deg", "find_fitting_coords_and_zoom", "distance_between_bus_and_stop",
+    "deg_to_xy_float", "deg_to_xy", "xy_to_deg", "find_fitting_coords_and_zoom", "distance_between_bus_and_stop", "get_nearest_stop",
     "download_tile", "download_map", "download_map_lat_lon",
     "draw_vehicle", "paste_vehicle_on_map", "add_map_attribution", "draw_shape", "draw_stop", "draw_all_stops",
     "get_map_with_buses", "get_trip_diagram",
@@ -195,6 +195,26 @@ def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: 
             if distance < 150:
                 return distance, 1
             return distance, 0
+
+
+def get_nearest_stop(trip: Trip | TripUpdate, vehicle: Vehicle, static_data: GTFSData) -> Stop:
+    """ Returns the stop nearest to the vehicle's current position """
+    db = get_database()
+    if isinstance(trip, Trip):
+        stops = list(stop_time.stop(static_data, db) for stop_time in StopTime.from_sql(trip.trip_id, db))
+    else:
+        stops = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
+    lat1, lon1 = vehicle.latitude, vehicle.longitude
+    distances: dict[int, float] = {}
+    min_distance = float("inf")
+    sequence = 0
+    for seq, stop in enumerate(stops):
+        distance = conworlds.distance_between_places(lat1, lon1, stop.latitude, stop.longitude, "Earth")
+        distances[seq] = distance
+        if distance < min_distance:
+            min_distance = distance
+            sequence = seq
+    return stops[sequence]
 
 
 async def download_tile(x: int, y: int, zoom: int) -> Image.Image:

@@ -8,7 +8,7 @@ import discord
 from regaus import time
 
 from utils import paginators
-from utils.timetables import FleetVehicle
+from utils.timetables import FleetVehicle, get_nearest_stop
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
 from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
@@ -106,6 +106,20 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         output_line = [route, destination, scheduled_departure_time, real_departure_time, vehicle, distance, actual_destination, actual_start]
 
     return output_line
+
+
+def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
+    """ Get data about the bus that is serving this trip """
+    bus_data = []
+    vehicle = self.vehicle_data.entities.get(self.vehicle_id)
+    if vehicle is not None and vehicle.latitude != 0 and vehicle.longitude != 0:
+        nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
+        bus_data.append(f"The bus is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
+    fleet_vehicle: FleetVehicle | None = self.cog.fleet_data.get(self.vehicle_id)
+    if fleet_vehicle is not None:
+        bus_data.append(f"This trip is served by the bus {fleet_vehicle.fleet_number} ({fleet_vehicle.reg_plates}).")
+        bus_data.append(f"-# Model: {fleet_vehicle.model} | Notable features: {fleet_vehicle.trivia}")
+    return "\n".join(bus_data)
 
 
 class StopScheduleViewer:
@@ -567,7 +581,7 @@ class TripDiagramViewer:
         self.stop = stop_schedule.stop
         # self.fixed = stop_schedule.fixed  # Do we even need this here?
         self.real_time_data = stop_schedule.real_time_data
-        self.vehicle_data = stop_schedule.vehicle_data  # Not used here right now, but might be useful later.
+        self.vehicle_data = stop_schedule.vehicle_data
         self.cog = stop_schedule.cog
         self.is_real_time = stop_schedule.real_time
 
@@ -575,6 +589,7 @@ class TripDiagramViewer:
         self.real_trip: TripUpdate | None = None
         self.trip_identifier: str = trip_id
         self.cancelled: bool = False
+        self.vehicle_id: str | None = None
         # _type = 0
         static_trip_id, real_trip_id, _day_modifier = trip_id.split("|")
         if static_trip_id:
@@ -583,6 +598,7 @@ class TripDiagramViewer:
         if real_trip_id:
             self.real_trip: TripUpdate = self.real_time_data.entities[real_trip_id]
             self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
+            self.vehicle_id = self.real_trip.vehicle_id
             # _type += 2
         # self.type: int = _type
         # self.type_name: str = ("static", "added", "real")[_type - 1]
@@ -612,6 +628,11 @@ class TripDiagramViewer:
         self.total_stops: int = -1
         self.get_output_values()
         self.output = self.create_output()
+
+    @property
+    def trip(self) -> Trip | TripUpdate:
+        """ Returns the available trip data (used for the vehicle data part of the output) """
+        return self.static_trip or self.real_trip
 
     def get_route(self) -> Route | None:
         try:
@@ -922,6 +943,11 @@ class TripDiagramViewer:
             else:
                 route = "Unknown route"
 
+        if self.real_trip:
+            bus_data = get_vehicle_data(self)
+            if bus_data:
+                extra_text += "\n\n" + bus_data
+
         line_length = sum(column_sizes) + len(column_sizes) - 1
         spaces = line_length - len(self.stop.name) - 18
         extra = 0
@@ -993,6 +1019,7 @@ class TripMapViewer:
         self.cog = viewer.cog
         self.static_data: GTFSData = viewer.cog.static_data
         self.vehicle_data: VehicleData = viewer.cog.vehicle_data
+        self.vehicle_id: str | None = viewer.vehicle_id
         self.cancelled: bool = viewer.cancelled
         self.skipped: set[int] = viewer.skipped
         self.pickup_only: set[int] = viewer.pickup_only
@@ -1069,6 +1096,10 @@ class TripMapViewer:
         output = (f"Map overview of Trip {trip_id}\n"
                   "-# Stop colours: Blue = current stop | Yellow = pick up only | Orange = drop off only | Green = regular stop | Red = skipped stop\n"
                   f"-# Vehicle data timestamp: {self.data_timestamp}")
+        if self.vehicle_id:
+            bus_data = get_vehicle_data(self)
+            if bus_data:
+                output += "\n\n" + bus_data
         return output
 
     def update_output(self):
