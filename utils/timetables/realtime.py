@@ -48,13 +48,14 @@ class GTFSRData:
     @classmethod
     def empty(cls):
         """ Return an empty GTFSRData object """
-        return cls(Header("2.0", "EMPTY", time.datetime.zero), {})
+        return cls(Header.empty(), {})
 
+    @property
     def is_empty(self) -> bool:
-        return self.header.incrementality == "EMPTY"
+        return self.header.is_empty
 
     def __bool__(self) -> bool:
-        return not self.is_empty()
+        return not self.is_empty
 
 
 @dataclass()
@@ -79,14 +80,15 @@ class VehicleData:
 
     @classmethod
     def empty(cls):
-        """ Return an empty GTFSRData object """
-        return cls(Header("2.0", "EMPTY", time.datetime.zero), {})
+        """ Return an empty VehicleData object """
+        return cls(Header.empty(), {})
 
+    @property
     def is_empty(self) -> bool:
-        return self.header.incrementality == "EMPTY"
+        return self.header.is_empty
 
     def __bool__(self) -> bool:
-        return not self.is_empty()
+        return not self.is_empty
 
 
 @dataclass()
@@ -98,6 +100,17 @@ class Header:
     @classmethod
     def load(cls, data: dict):
         return cls(data["gtfs_realtime_version"], data["incrementality"], time.datetime.from_timestamp(int(data["timestamp"]), tz=TIMEZONE))
+
+    @classmethod
+    def empty(cls):
+        return cls("2.0", "EMPTY", time.datetime.zero)
+
+    @property
+    def is_empty(self) -> bool:
+        return self.incrementality == "EMPTY"
+
+    def __bool__(self) -> bool:
+        return not self.is_empty
 
 
 @dataclass()

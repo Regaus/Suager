@@ -477,3 +477,7 @@
 ## v0.13.5 - 31 August 2024
 - TripDiagramViewer and TripMapViewer can now show information about the bus serving the trip
   - It states the current nearest stop as well as the fleet number, reg plates, model, and any features of the bus
+
+## v0.13.5.1 - 1 September 2024
+- Turned the `is_empty` function into a property for GTFSRData and VehicleData
+- Added an `.empty()` classmethod to the Header class
