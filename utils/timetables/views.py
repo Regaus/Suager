@@ -10,10 +10,10 @@ from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.shared import get_data_database, NUMBERS
-from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer
+from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer, VehicleDataViewer
 from utils.views import NumericInputModal, SelectMenu
 
-__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView")
+__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView", "VehicleDataView")
 
 
 class StopScheduleView(views.InteractiveView):
@@ -931,6 +931,44 @@ class MapView(views.InteractiveView):
     # async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
     #     """ Hide the view, instead of closing it altogether. """
     #     await interaction.response.defer()
+    #     await self.message.edit(view=views.HiddenView(self))
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=None)
+
+
+class VehicleDataView(views.InteractiveView):
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: VehicleDataViewer, ctx: commands.Context | discord.Interaction = None):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
+        self.viewer = viewer
+        self.db = get_data_database()
+        self.refreshing: bool = False
+
+    async def refresh(self):
+        """ Refresh the real-time data """
+        self.refreshing = True
+        try:
+            await self.viewer.refresh()
+            await self.message.edit(content=self.viewer.output, view=self)
+        finally:
+            self.refreshing = False
+
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Refresh the real-time data """
+        await interaction.response.defer()  # type: ignore
+        if self.refreshing:
+            return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
+        await self.refresh()
+        await self.disable_button(self.message, button, cooldown=60)
+
+    # @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    # async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+    #     """ Hide the view, instead of closing it altogether """
+    #     await interaction.response.defer()  # type: ignore
     #     await self.message.edit(view=views.HiddenView(self))
 
     @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row

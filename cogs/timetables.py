@@ -749,6 +749,12 @@ class Timetables(University, Luas, name="Timetables"):
                 self.static_data.routes[route.id] = route
         return output
 
+    def find_specific_vehicle(self, query: str) -> timetables.FleetVehicle | None:
+        vehicle = self.db.fetchrow("SELECT * FROM vehicles WHERE vehicle_id=?1 OR fleet_number=?1", (query,))
+        if not vehicle:
+            return None
+        return timetables.FleetVehicle.from_dict(vehicle)
+
     async def _soft_limit_warning(self, ctx: commands.Context):
         """ Show the warning about the soft expiry of static data """
         if not self.soft_limit_warning:
@@ -856,6 +862,17 @@ class Timetables(University, Luas, name="Timetables"):
         """ Autocomplete for the stop hub search """
         results = self.get_hub_suggestions(current)
         return [app_commands.Choice(name=result, value=result) for result, _ in results[:25]]
+
+    async def tfi_vehicle_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the specific vehicle search """
+        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
+        data = self.db.fetch("SELECT vehicle_id, fleet_number FROM vehicles WHERE vehicle_id LIKE ?1 ESCAPE '!' OR fleet_number LIKE ?1 ESCAPE '!'", (search,))
+        results: list[tuple[str, str, int]] = []
+        for entry in data:
+            ratios = (process.default_scorer(current, entry["vehicle_id"]), process.default_scorer(current, entry["fleet_number"]))
+            results.append((entry["vehicle_id"], f"{entry['fleet_number']} ({entry['reg_plates']})", max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=fleet_and_reg, value=vehicle_id) for vehicle_id, fleet_and_reg, _ in results[:25]]
 
     @tfi_schedules.command(name="stop")
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
@@ -971,6 +988,29 @@ class Timetables(University, Luas, name="Timetables"):
         except Exception:
             raise
         return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.MapView(ctx.author, message, map_viewer, ctx))
+
+    @tfi.group(name="vehicle", aliases=["vehicles", "bus", "buses"], case_insensitive=True)
+    async def tfi_vehicles(self, ctx: commands.Context):
+        """ Commands related to information about vehicles """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @tfi_vehicles.command(name="specific")
+    @app_commands.autocomplete(vehicle_id=tfi_vehicle_autocomplete)
+    @app_commands.describe(vehicle_id="The fleet number of the vehicle or its API vehicle ID")
+    async def tfi_vehicles_specific(self, ctx: commands.Context, *, vehicle_id: str):
+        """ Show information about a specific vehicle """
+        message = await self.wait_for_initialisation(ctx)
+        vehicle = self.find_specific_vehicle(vehicle_id)
+        if not vehicle:
+            return await message.edit(content=f"The specified vehicle {vehicle_id} was not found.")
+        await self._soft_limit_warning(ctx)
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        try:
+            viewer: timetables.VehicleDataViewer = timetables.VehicleDataViewer(self, vehicle)
+        except Exception:
+            raise
+        return await message.edit(content=viewer.output, view=timetables.VehicleDataView(ctx.author, message, viewer, ctx))
 
     # If this command is uncommented, it will still get synced to a slash command for whatever reason
     # @tfi.command(name="debug", enabled=False)

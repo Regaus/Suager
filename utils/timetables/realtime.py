@@ -119,6 +119,7 @@ class TripUpdate:
     trip: RealTimeTrip
     stop_times: list[StopTimeUpdate] | None
     vehicle_id: str | None
+    timestamp: time.datetime  # The timestamp for data about this specific entity
 
     @classmethod
     def load(cls, data: dict):
@@ -128,7 +129,8 @@ class TripUpdate:
             vehicle_id = trip_data["vehicle"]["id"]
         else:
             vehicle_id = None
-        return cls(data["id"], RealTimeTrip.load(trip_data["trip"]), stop_times, vehicle_id)
+        timestamp = trip_data["timestamp"]
+        return cls(data["id"], RealTimeTrip.load(trip_data["trip"]), stop_times, vehicle_id, time.datetime.from_timestamp(int(timestamp), tz=TIMEZONE))
 
 
 @dataclass()
@@ -188,6 +190,7 @@ class Vehicle:
     latitude: float
     longitude: float
     vehicle_id: str
+    timestamp: time.datetime  # The timestamp for data about this specific vehicle
 
     @classmethod
     def load(cls, data: dict):
@@ -196,4 +199,5 @@ class Vehicle:
         trip = RealTimeTrip.load(vehicle_data["trip"])
         position = vehicle_data["position"]
         vehicle_id = vehicle_data["vehicle"]["id"]
-        return cls(entity_id, trip, position["latitude"], position["longitude"], vehicle_id)
+        timestamp = vehicle_data["timestamp"]
+        return cls(entity_id, trip, position["latitude"], position["longitude"], vehicle_id, time.datetime.from_timestamp(int(timestamp), tz=TIMEZONE))

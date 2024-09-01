@@ -481,3 +481,7 @@
 ## v0.13.5.1 - 1 September 2024
 - Turned the `is_empty` function into a property for GTFSRData and VehicleData
 - Added an `.empty()` classmethod to the Header class
+
+## v0.14.0a1 - 1 September 2024
+- Added command to show data about specific buses
+- Added ability to see timestamp for specific TripUpdates and Vehicles

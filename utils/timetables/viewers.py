@@ -8,14 +8,13 @@ import discord
 from regaus import time
 
 from utils import paginators
-from utils.timetables import FleetVehicle, get_nearest_stop
-from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED
-from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate
-from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route
-from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule
-from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop
+from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database
+from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle
+from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route, FleetVehicle
+from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule, trip_validity
+from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop, get_nearest_stop
 
-__all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripMapViewer", "MapViewer")
+__all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripMapViewer", "MapViewer", "VehicleDataViewer")
 
 
 FLEET_REGEX = re.compile(r"^([A-Z]{2,3})([0-9]{1,3})$")
@@ -30,6 +29,10 @@ def format_time(provided_time: time.datetime, today: time.date) -> str:
     if provided_time.date() != today:
         formatted = f"{WEEKDAYS[provided_time.weekday]} {formatted}"
     return formatted
+
+
+def format_timestamp(data_timestamp: time.datetime) -> str:
+    return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
 
 
 def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: RealStopTime | SpecificStopTime):
@@ -239,8 +242,7 @@ class StopScheduleViewer:
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the real-time data """
         if self.real_time_data:
-            data_timestamp = self.real_time_data.header.timestamp
-            return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+            return format_timestamp(self.real_time_data.header.timestamp)
         return "Real-time data unavailable"
 
     def create_output(self):
@@ -489,8 +491,7 @@ class HubScheduleViewer:
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the real-time data """
         if self.cog.real_time_data:
-            data_timestamp = self.cog.real_time_data.header.timestamp
-            return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+            return format_timestamp(self.cog.real_time_data.header.timestamp)
         return "Real-time data unavailable"
 
     def create_output(self):
@@ -675,9 +676,10 @@ class TripDiagramViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the real-time data """
+        if self.real_trip:
+            return format_timestamp(self.real_trip.timestamp)
         if self.real_time_data:
-            data_timestamp = self.real_time_data.header.timestamp
-            return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+            return format_timestamp(self.real_time_data.header.timestamp)
         return "Real-time data unavailable"
 
     def get_output_values(self):
@@ -1014,10 +1016,12 @@ class TripMapViewer:
         self.custom_zoom: int | None = None
         self.original_viewer: TripDiagramViewer = viewer
         self.trip: Trip | TripUpdate = viewer.static_trip or viewer.real_trip
+        self.real_trip: TripUpdate | None = viewer.real_trip
         self.trip_id: str = viewer.trip_identifier
         self.stop: Stop = viewer.stop
         self.cog = viewer.cog
         self.static_data: GTFSData = viewer.cog.static_data
+        self.real_time_data: GTFSRData = viewer.cog.real_time_data
         self.vehicle_data: VehicleData = viewer.cog.vehicle_data
         self.vehicle_id: str | None = viewer.vehicle_id
         self.cancelled: bool = viewer.cancelled
@@ -1063,6 +1067,7 @@ class TripMapViewer:
         """ Refresh the map with new data """
         # _, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
         await self.original_viewer.refresh_real_time_data()
+        self.real_time_data = self.original_viewer.real_time_data
         self.vehicle_data = self.original_viewer.vehicle_data
         if isinstance(self.trip, TripUpdate):
             self.trip = self.original_viewer.real_trip
@@ -1084,8 +1089,11 @@ class TripMapViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the vehicle data """
-        data_timestamp = self.vehicle_data.header.timestamp
-        return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+        if self.real_trip:
+            return format_timestamp(self.real_trip.timestamp)
+        if self.real_time_data:
+            return format_timestamp(self.real_time_data.header.timestamp)
+        return "Real-time data unavailable"
 
     def create_output(self) -> str:
         """ Create the text part of the output """
@@ -1095,7 +1103,7 @@ class TripMapViewer:
             trip_id = self.trip.entity_id
         output = (f"Map overview of Trip {trip_id}\n"
                   "-# Stop colours: Blue = current stop | Yellow = pick up only | Orange = drop off only | Green = regular stop | Red = skipped stop\n"
-                  f"-# Vehicle data timestamp: {self.data_timestamp}")
+                  f"-# Real-time data timestamp: {self.data_timestamp}")
         if self.vehicle_id:
             bus_data = get_vehicle_data(self)
             if bus_data:
@@ -1142,8 +1150,7 @@ class MapViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the vehicle data """
-        data_timestamp = self.vehicle_data.header.timestamp
-        return f"{data_timestamp:%Y-%m-%d %H:%M:%S} (<t:{int(data_timestamp.timestamp)}:R>)"
+        return format_timestamp(self.vehicle_data.header.timestamp)
 
     def create_output(self) -> str:
         """ Create the text part of the output """
@@ -1154,6 +1161,151 @@ class MapViewer:
                   f"-# Vehicle data timestamp: {self.data_timestamp}\n"
                   "-# Note: This only shows vehicles whose location is tracked by TFI's real-time data. A vehicle may not show up on this map despite being there in reality.\n"
                   "-# Note: The direction displayed on the map may sometimes be inaccurate.")
+        return output
+
+    def update_output(self):
+        self.output = self.create_output()
+
+
+class VehicleDataViewer:
+    """ Shows data about a specific vehicle """
+    # This view doesn't require any hard calculations to initialise, so we don't need a load method
+    def __init__(self, cog, vehicle: FleetVehicle):
+        self.cog = cog
+        self.static_data: GTFSData = cog.static_data
+        self.real_time_data: GTFSRData = cog.real_time_data
+        self.vehicle_data: VehicleData = cog.vehicle_data
+        self.fleet_vehicle: FleetVehicle = vehicle
+        self.real_time_vehicle: Vehicle | None = self.vehicle_data.entities.get(vehicle.vehicle_id)
+        self.db = get_database()
+        self.output: str = self.create_output()
+
+    async def refresh(self):
+        """ Refresh the map with new data """
+        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        self.update_output()
+
+    @property
+    def data_timestamp(self) -> str:
+        """ Returns the timestamp of the vehicle data """
+        if self.real_time_vehicle:
+            return format_timestamp(self.real_time_vehicle.timestamp)
+        if self.vehicle_data:
+            return format_timestamp(self.vehicle_data.header.timestamp)
+        return "Vehicle data unavailable"
+
+    def create_output(self) -> str:
+        header = (f"Data about vehicle {self.fleet_vehicle.fleet_number}\n\n"
+                  f"API ID: {self.fleet_vehicle.vehicle_id}\n"
+                  f"Fleet Number: {self.fleet_vehicle.fleet_number}\n"
+                  f"Reg plates: {self.fleet_vehicle.reg_plates}\n"
+                  f"Model: {self.fleet_vehicle.model}\n"
+                  f"Notable features: {self.fleet_vehicle.trivia}")
+        if not self.real_time_vehicle:
+            vehicle_data = "Real-time data about this vehicle is currently unavailable."
+        else:
+            real_trip = self.real_time_vehicle.trip
+            unknown_trip = False
+            try:
+                static_trip: Trip | None = load_value(self.static_data, Trip, real_trip.trip_id, self.db)
+                _route = static_trip.route(self.static_data, self.db)
+                if _route:
+                    route = f"Route {_route.short_name}"
+                else:
+                    route = f"Unknown route {static_trip.route_id}"
+                trip_info = f"Current trip: {real_trip.start_time:%H:%M} to {static_trip.headsign} on {route}"
+            except KeyError:  # Added trip or other trip
+                static_trip = None
+                try:
+                    _route = load_value(self.static_data, Route, real_trip.route_id, self.db)
+                    route = f"Route {_route.short_name}"
+                except KeyError:
+                    route = f"Unknown route {real_trip.route_id}"
+                stop_times = None
+                for real_time_trip in self.real_time_data.entities.values():
+                    trip_update = real_time_trip.trip
+                    if trip_update.start_time == real_trip.start_time and \
+                            trip_update.route_id == real_trip.route_id and \
+                            trip_update.direction_id == real_trip.direction_id:
+                        stop_times = real_time_trip.stop_times
+                        break
+                if stop_times:
+                    try:
+                        last_stop: Stop = load_value(self.static_data, Stop, stop_times[-1].stop_id, self.db)
+                        destination = f"{last_stop.name} (stop {last_stop.code_or_id})"
+                    except KeyError:
+                        destination = f"Unknown stop {stop_times[-1].stop_id}"
+                    trip_info = f"Currently trip: Unscheduled {real_trip.start_time:%H:%M} to {destination} on {route}"
+                else:
+                    unknown_trip = True
+                    trip_info = f"Currently trip: Unknown trip {real_trip.trip_id}, departed terminus at {real_trip.start_time:%H:%M} on {route}"
+            if self.real_time_vehicle.latitude == 0 or self.real_time_vehicle.longitude == 0:
+                location = "The bus's current location is unavailable."
+            elif unknown_trip:
+                def deg_m_s(deg: float):
+                    m, s = divmod(abs(deg)*3600, 60)
+                    d, m = divmod(m, 60)
+                    return f"{int(d)}° {int(m):02d}' {int(s):02d}\""
+
+                latitude = deg_m_s(self.real_time_vehicle.latitude)
+                longitude = deg_m_s(self.real_time_vehicle.longitude)
+                location = f"The bus is currently at the coordinates {latitude} N, {longitude} W."  # Assume this is always the case, since we are in Ireland
+            else:
+                nearest_stop = get_nearest_stop(static_trip or real_trip, self.real_time_vehicle, self.static_data)
+                location = f"The bus is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id})."
+            current_trip = f"{trip_info}\n{location}"
+            vehicle_data = current_trip  # Fallback for unavailable static Trip data or block data
+            if static_trip:
+                block_id = static_trip.block_id
+                if block_id:
+                    block = Trip.from_block(block_id)
+                    # tuple(trip_id, start_time, destination)
+                    prev_trips: list[tuple[str, time.datetime, str, str]] = []
+                    next_trips: list[tuple[str, time.datetime, str, str]] = []
+                    today_date = time.date.today()
+                    today = time.datetime.combine(today_date, time.time(), tz=TIMEZONE)
+                    now = time.datetime.now(tz=TIMEZONE)
+                    for trip in block:
+                        if trip.trip_id == static_trip.trip_id:  # Ignore current trip
+                            continue
+                        valid = trip_validity(self.static_data, trip, today_date, self.db)
+                        if not valid:  # Only include the trip if it actually runs today
+                            continue
+                        stop_time = StopTime.from_sql_sequence(trip.trip_id, 1, self.db)
+                        departure = today + time.timedelta(seconds=stop_time.departure_time)
+                        _route = trip.route(self.static_data, self.db)
+                        if _route:
+                            route = f"Route {_route.short_name}"
+                        else:
+                            route = f"Unknown route {trip.route_id}"  # Should never happen, but just in case.
+                        trip_data = (trip.trip_id, departure, route, trip.headsign)
+                        if departure > now:
+                            next_trips.append(trip_data)
+                        else:
+                            prev_trips.append(trip_data)
+                    output_data = [current_trip]
+
+                    def format_trip(_departure: time.datetime, _route: str, _destination: str):
+                        return f"- {_departure:%H:%M} to {_destination} ({_route})"
+                    # Show up to 10 previous trips and up to 10 future trips
+                    if prev_trips:
+                        prev_trips.sort(key=lambda t: t[1])  # sort by departure time
+                        _s = "s" if len(prev_trips) > 1 else ""
+                        prev_trips_str = f"Previous trip{_s}:\n" + "\n".join(format_trip(departure, route, destination) for _, departure, route, destination in prev_trips[-10:])
+                        output_data.append(prev_trips_str)
+                    if next_trips:
+                        next_trips.sort(key=lambda t: t[1])
+                        _s = "s" if len(next_trips) > 1 else ""
+                        next_trips_str = f"Upcoming trip{_s}:\n" + "\n".join(format_trip(departure, route, destination) for _, departure, route, destination in next_trips[:10])
+                        output_data.append(next_trips_str)
+                    vehicle_data = "\n\n".join(output_data)
+        timestamp = f"\n-# Vehicle data timestamp: {self.data_timestamp}" if self.vehicle_data else ""
+        link = f"https://bustimes.org/vehicles/ie-{self.fleet_vehicle.vehicle_id}"
+        notice = ("-# Note: This data is based on the bus's current real-time data. The list of past and future journeys is based on the current trip (if that data is available at all).\n"
+                  f"-# For more accurate information about past trips, or if the bus has no real-time information at the moment, try using [bustimes.org]({link}).{timestamp}")
+        output = "\n\n".join([header, vehicle_data, notice])
+        if len(output) > 2000:
+            output = output[:2000]
         return output
 
     def update_output(self):

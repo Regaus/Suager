@@ -9,8 +9,49 @@ from utils.timetables.realtime import *
 
 __all__ = (
     "SpecificStopTime", "AddedStopTime", "RealStopTime",
-    "StopSchedule", "RealTimeStopSchedule", "real_trip_updates"
+    "StopSchedule", "RealTimeStopSchedule", "real_trip_updates", "trip_validity"
 )
+
+
+def trip_validity(static_data: GTFSData, trip: Trip, date: time.date, db):
+    """ Returns whether a trip is valid on a given date """
+    weekday = date.weekday
+    calendars = static_data.calendars
+    calendar_exceptions = static_data.calendar_exceptions
+    if not calendars:  # calendars empty = no calendars have been loaded yet
+        load_calendars(static_data)
+
+    if trip.calendar_id in calendars:
+        calendar = calendars[trip.calendar_id]
+    else:  # Weird but just in case
+        calendar = trip.calendar(static_data)
+    # calendar = stop_time.trip(self.data).calendar(self.data)
+    valid = None  # Whether the trip is valid for the given day
+
+    # Check if the calendar has exceptions for today
+    if trip.calendar_id in calendar_exceptions:
+        exception = calendar_exceptions[trip.calendar_id].get(date)
+        if exception:
+            valid = exception.exception
+    else:  # Weird but just in case
+        try:
+            exceptions: dict[time.date, CalendarException] = load_value(static_data, CalendarException, calendar.service_id, db)
+            exception = exceptions.get(date)
+            if exception is not None:
+                valid = exception.exception
+        except KeyError:
+            static_data.calendar_exceptions[calendar.service_id] = {}
+
+    # Check that the current date is within the dates range
+    if valid is None:
+        if date > calendar.end_date or date < calendar.start_date:
+            valid = False
+
+    # If there is no exceptional value today, load the default validity from calendar
+    if valid is None:
+        valid = calendar.data[weekday]
+
+    return valid
 
 
 class SpecificStopTime:
@@ -476,48 +517,8 @@ class StopSchedule:
         """ Get the stop times for one day """
         db = get_database()  # This may get called in a separate thread than the one where the schedule was created
         output = []
-        weekday = date.weekday
-        calendars = self.data.calendars
-        calendar_exceptions = self.data.calendar_exceptions
-        if not calendars:  # calendars empty = no calendars have been loaded yet
-            load_calendars(self.data)
         for trip in self.all_trips.values():
-            if trip.calendar_id in calendars:
-                calendar = calendars[trip.calendar_id]
-            else:  # Weird but just in case
-                calendar = trip.calendar(self.data)
-            # calendar = stop_time.trip(self.data).calendar(self.data)
-            valid = None  # Whether the trip is valid for the given day
-
-            # Check if the calendar has exceptions for today
-            if trip.calendar_id in calendar_exceptions:
-                exception = calendar_exceptions[trip.calendar_id].get(date)
-                if exception:
-                    valid = exception.exception
-            else:  # Weird but just in case
-                try:
-                    exceptions: dict[time.date, CalendarException] = load_value(self.data, CalendarException, calendar.service_id, db)
-                    # calendar_exceptions = load_value_from_id(self.data, "calendar_dates.txt", calendar.service_id, db)
-                    exception = exceptions.get(date)
-                    if exception is not None:
-                        valid = exception.exception
-                except KeyError:
-                    self.data.calendar_exceptions[calendar.service_id] = {}
-
-            # Check that the current date is within the dates range
-            if valid is None:
-                if date > calendar.end_date or date < calendar.start_date:
-                    valid = False
-
-            # if service_id in self.data.calendar_exceptions:
-            #     calendar_exception = self.data.calendar_exceptions[service_id].get(date)
-            #     if calendar_exception is not None:
-            #         valid = calendar_exception.exception
-
-            # If there is no exceptional values today, load the default validity from calendar
-            if valid is None:
-                valid = calendar.data[weekday]
-
+            valid = trip_validity(self.data, trip, date, db)
             # If the service is, indeed, valid today, then add it to the output
             if valid:
                 output.append(SpecificStopTime(self.stop_times[trip.trip_id], date, day_modifier=day_modifier))
