@@ -651,6 +651,66 @@ class Admin(commands.Cog):
             return await ctx.send("Server not found...")
         await ctx.send(f"Starting backup for {server.name} ({server.id})")
         statements = ["BEGIN"]
+        server_exists = db.fetchrow("SELECT * FROM servers WHERE id=?", (guild_id,))
+        server_name = make_valid_sql(server.name)
+        server_locale = server.preferred_locale.value  # type: ignore
+        if server_exists:
+            statements.append(f"UPDATE servers SET name={server_name}, owner_id={server.owner_id}, preferred_locale={server_locale!r} WHERE id={server.id}")
+        else:
+            statements.append(f"INSERT INTO servers(id, name, owner_id, preferred_locale) VALUES ({server.id!r}, {server_name}, {server.owner_id}, {server_locale!r})")
+
+        # Emojis and stickers: emojis[id] = (name, filename)
+        existing_emojis: dict[int, tuple[str, str]] = {e["id"]: (e["name"], e["filename"]) for e in db.fetch("SELECT id, name, filename FROM emojis WHERE guild_id=?", (guild_id,))}
+        for emoji in server.emojis:
+            emoji_name = make_valid_sql(emoji.name)
+            emoji_roles = make_valid_sql(json.dumps([r.id for r in emoji.roles]))
+            emoji_filename = emoji.url.split("/")[-1]
+            physical_path = os.path.join(attachments_dir, emoji_filename)
+            if not os.path.isfile(physical_path):
+                try:
+                    await emoji.save(physical_path)  # type: ignore
+                except (discord.HTTPException, discord.NotFound):
+                    await ctx.send(f"Emoji {emoji.id} ({emoji.name}) failed to download.")
+            check: tuple[str, str] = existing_emojis.get(emoji.id)
+            if check is not None:
+                statements.append(f"UPDATE emojis SET name={emoji_name}, roles={emoji_roles}, filename={emoji_filename!r} WHERE id={emoji.id} AND guild_id={emoji.guild_id}")
+                existing_emojis.pop(emoji.id)
+            else:
+                statements.append(f"INSERT INTO emojis(id, guild_id, name, roles, filename) VALUES ({emoji.id}, {emoji.guild_id}, {emoji_name}, {emoji_roles}, {emoji_filename!r})")
+        for deleted_emoji, (deleted_name, deleted_filename) in existing_emojis.items():
+            statements.append(f"DELETE FROM emojis WHERE id={deleted_emoji}")
+            with suppress(FileNotFoundError):
+                os.remove(os.path.join(attachments_dir, deleted_filename))
+            # print(f"Debug: Emoji {deleted_emoji} - {deleted_name} no longer exists")
+        await ctx.send("Backed up emojis")
+
+        existing_stickers: dict[int, tuple[str, str]] = {s["id"]: (s["name"], s["filename"]) for s in db.fetch("SELECT id, name, filename FROM stickers WHERE guild_id=?", (guild_id,))}
+        for sticker in server.stickers:
+            sticker_name = make_valid_sql(sticker.name)
+            sticker_description = make_valid_sql(sticker.description)
+            sticker_emoji = make_valid_sql(sticker.emoji)  # Name of the Unicode emoji
+            sticker_filename = sticker.url.split("/")[-1]
+            physical_path = os.path.join(attachments_dir, sticker_filename)
+            if not os.path.isfile(physical_path):
+                try:
+                    await sticker.save(physical_path)  # type: ignore
+                except (discord.HTTPException, discord.NotFound):
+                    await ctx.send(f"Sticker {sticker.id} ({sticker.name}) failed to download.")
+            check: tuple[str, str] = existing_stickers.get(sticker.id)
+            if check is not None:
+                statements.append(f"UPDATE stickers SET name={sticker_name}, description={sticker_description}, unicode_emoji={sticker_emoji}, filename={sticker_filename!r} "
+                                  f"WHERE id={sticker.id} AND guild_id={sticker.guild_id}")
+                existing_stickers.pop(sticker.id)
+            else:
+                statements.append(f"INSERT INTO stickers(id, guild_id, name, description, unicode_emoji, filename) VALUES "
+                                  f"({sticker.id}, {sticker.guild_id}, {sticker_name}, {sticker_description}, {sticker_emoji}, {sticker_filename!r})")
+        for deleted_sticker, (deleted_name, deleted_filename) in existing_stickers.items():
+            statements.append(f"DELETE FROM stickers WHERE id={deleted_sticker}")
+            with suppress(FileNotFoundError):
+                os.remove(os.path.join(attachments_dir, deleted_filename))
+            # print(f"Debug: Sticker {deleted_sticker} - {deleted_name} no longer exists")
+        await ctx.send("Backed up stickers")
+
         existing_roles: dict[int, str] = {r["id"]: r["name"] for r in db.fetch("SELECT id, name FROM roles WHERE guild_id=?", (guild_id,))}
         for role in server.roles:
             # We don't need to save information about the default role or bot roles.
@@ -667,18 +727,19 @@ class Admin(commands.Cog):
                     statements.append(f"UPDATE roles SET name={role_name}, hoist={role.hoist!r}, permissions={role.permissions.value!r}, "
                                       f"colour={role.colour.value!r}, members={role_members!r} WHERE id={role.id!r} AND guild_id={role.guild.id!r}")
                     existing_roles.pop(role.id)  # Remove from list so that we can delete roles we didn't find
-                    print(f"Debug: Updated role {role.id} - {role.name}")
+                    # print(f"Debug: Updated role {role.id} - {role.name}")
                 else:
                     # db.execute("INSERT INTO roles(id, guild_id, name, hoist, permissions, colour, members) VALUES (?, ?, ?, ?, ?, ?, ?)", payload)
                     statements.append(f"INSERT INTO roles(id, guild_id, name, hoist, permissions, colour, members) VALUES "
                                       f"({role.id!r}, {role.guild.id!r}, {role_name}, {role.hoist!r}, {role.permissions.value!r}, {role.colour.value!r}, {role_members!r})")
-                    print(f"Debug: Found new role {role.id} - {role.name}")
+                    # print(f"Debug: Found new role {role.id} - {role.name}")
         for deleted_role, deleted_name in existing_roles.items():
             statements.append(f"DELETE FROM roles WHERE id={deleted_role!r}")
-            print(f"Debug: Role {deleted_role} - {deleted_name} no longer exists")
+            # print(f"Debug: Role {deleted_role} - {deleted_name} no longer exists")
         statements.append("COMMIT")
         db.executescript("; ".join(statements))
-        await ctx.send("Backed up roles.")
+        await ctx.send("Backed up roles")
+
         existing_channels: dict[int, str] = {c["id"]: c["name"] for c in db.fetch("SELECT id, name FROM channels WHERE guild_id=?", (guild_id,))}
         for channel in server.channels:
             statements = ["BEGIN"]
@@ -697,12 +758,12 @@ class Admin(commands.Cog):
                 statements.append(f"UPDATE channels SET name={channel.name!r}, type={channel.type.value!r}, category_id={category_id}, category_name={category_name}, "  # cat name is repr'd
                                   f"nsfw={channel.nsfw!r}, position={channel.position!r} WHERE id={channel.id!r} AND guild_id={channel.guild.id!r}")
                 existing_channels.pop(channel.id)
-                print(f"Debug: Updated channel {channel.id} - #{channel.name}")
+                # print(f"Debug: Updated channel {channel.id} - #{channel.name}")
             else:
                 # db.execute("INSERT INTO channels(id, guild_id, name, type, category_id, category_name, nsfw, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", payload)
                 statements.append(f"INSERT INTO channels(id, guild_id, name, type, category_id, category_name, nsfw, position) VALUES "
                                   f"({channel.id!r}, {channel.guild.id!r}, {channel.name!r}, {channel.type.value!r}, {category_id}, {category_name}, {channel.nsfw!r}, {channel.position!r})")
-                print(f"Debug: Found new channel {channel.id} - #{channel.name}")
+                # print(f"Debug: Found new channel {channel.id} - #{channel.name}")
 
             if channel.type == discord.ChannelType.text:
                 # existing_messages[message_id] = [attachment_filename, attachment_filename, ...]
@@ -743,7 +804,7 @@ class Admin(commands.Cog):
                             if filename not in attachments_physical:  # File no longer exists
                                 with suppress(FileNotFoundError):
                                     os.remove(os.path.join(attachments_dir, filename))
-                                    print(f"Debug: Deleted attachment {filename} for existing message {message.id} in #{channel.name}")
+                                    # print(f"Debug: Deleted attachment {filename} for existing message {message.id} in #{channel.name}")
                         # db.execute("UPDATE messages SET author_id=?, author_name=?, author_avatar_url=?, channel_id=?, channel_name=?, contents=?,"
                         #            "type=?, pinned=?, attachments_physical=?, attachments_filenames=?, embeds=? WHERE message_id=?", payload[2:] + payload[:1])
                         statements.append(f"UPDATE messages SET author_id={message.author.id!r}, author_name={author_name}, author_avatar_url={author_avatar_url!r}, "
@@ -762,28 +823,28 @@ class Admin(commands.Cog):
                         # print(f"Debug: Found new message {message.id} in #{channel.name}")
                 for deleted_message, deleted_attachments in existing_messages.items():
                     statements.append(f"DELETE FROM messages WHERE message_id={deleted_message!r}")
-                    print(f"Debug: Message {deleted_message} no longer exists in #{channel.name}")
+                    # print(f"Debug: Message {deleted_message} no longer exists in #{channel.name}")
                     for filename in deleted_attachments:
                         with suppress(FileNotFoundError):
                             os.remove(os.path.join(attachments_dir, filename))
-                            print(f"Debug: Deleted attachment {filename} for deleted message {deleted_message}")
+                            # print(f"Debug: Deleted attachment {filename} for deleted message {deleted_message}")
             statements.append("COMMIT")
             db.executescript("; ".join(statements))
-            await ctx.send(f"Backed up channel {channel.mention}.")
+            await ctx.send(f"Backed up channel {channel.mention}")
         statements = ["BEGIN"]
         for deleted_channel, deleted_name in existing_channels.items():
             statements.append(f"DELETE FROM channels WHERE id={deleted_channel!r}")
-            print(f"Debug: Channel {deleted_channel} - {deleted_name} no longer exists")
+            # print(f"Debug: Channel {deleted_channel} - {deleted_name} no longer exists")
             deleted_messages = db.fetch("SELECT * FROM messages WHERE channel_id=?", (deleted_channel,))
             for message in deleted_messages:
                 deleted_attachments = json.loads(message["attachments_physical"])
                 for filename in deleted_attachments:
                     os.remove(os.path.join(attachments_dir, filename))
-                    print(f"Debug: Deleted attachment {filename} for message {message['message_id']} in deleted channel #{deleted_name}")
+                    # print(f"Debug: Deleted attachment {filename} for message {message['message_id']} in deleted channel #{deleted_name}")
             statements.append(f"DELETE FROM messages WHERE channel_id={deleted_channel!r}")
         statements.append("COMMIT")
         db.executescript("; ".join(statements))
-        return await ctx.send("Backup successful.")
+        return await ctx.send("Backup successful")
 
 
 async def setup(bot: bot_data.Bot):

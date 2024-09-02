@@ -1842,3 +1842,6 @@
 - Updated the script that backs up server messages
   - Now uses `executescript()` to speed up the database interactions
   - Now handles roles, channels, and messages getting deleted
+
+## v7.8.1.1 - 2 September 2024
+- The backup script now also saves the server's name, emojis, and stickers
