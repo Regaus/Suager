@@ -126,8 +126,8 @@ async def reload_extension(bot: bot_data.Bot, name: str):
 
 
 def make_valid_sql(data: str) -> str:
-    # Replace ' with '' to make valid SQL
-    return "'" + data.replace("'", "''") + "'"
+    # Replace ' with '' to make valid SQL and replace NUL with "\x00"
+    return "'" + data.replace("'", "''").replace("\0", "\\x00") + "'"
 
 
 class Admin(commands.Cog):
@@ -736,7 +736,7 @@ class Admin(commands.Cog):
         for deleted_role, deleted_name in existing_roles.items():
             statements.append(f"DELETE FROM roles WHERE id={deleted_role!r}")
             # print(f"Debug: Role {deleted_role} - {deleted_name} no longer exists")
-        statements.append("COMMIT")
+        statements.append("COMMIT;")
         db.executescript("; ".join(statements))
         await ctx.send("Backed up roles")
 
@@ -785,8 +785,10 @@ class Admin(commands.Cog):
                         if not os.path.isfile(physical_path):  # Only bother saving the attachment again if it does not already exist
                             try:
                                 await attachment.save(physical_path)  # type: ignore
-                            except (discord.HTTPException, discord.NotFound):
-                                await ctx.send(f"{channel.name} -> Message {message.id} -> Attachment {attachment.filename} failed to download.")
+                            except (discord.HTTPException, discord.NotFound, aiohttp.ClientError) as e:
+                                await ctx.send(f"#{channel.name} -> Message {message.id} -> Attachment [{attachment.filename}]({attachment.url}) failed to download.")
+                                general.print_error(f"{time.time()} > #{channel.name} -> Message {message.id} -> Attachment {attachment.filename} (ID {attachment.id}) "
+                                                    f"failed to download: {type(e).__name__}: {str(e)}")
                     # payload = (message.id, message.guild.id, message.author.id, general.username(message.author), str(message.author.display_avatar),
                     #            message.channel.id, message.channel.name, message.system_content, message.type.value, message.pinned,  # type: ignore
                     #            json.dumps(attachments_physical), json.dumps(attachments_filenames), json.dumps([e.to_dict() for e in message.embeds]))
@@ -817,8 +819,8 @@ class Admin(commands.Cog):
                         # db.execute("INSERT INTO messages(message_id, guild_id, author_id, author_name, author_avatar_url, channel_id, channel_name, contents, "
                         #            "type, pinned, attachments_physical, attachments_filenames, embeds) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", payload)
                         statements.append(f"INSERT INTO messages(message_id, guild_id, author_id, author_name, author_avatar_url, channel_id, channel_name, contents, "
-                                          f"type, pinned, attachments_physical, attachments_filenames, embeds) VALUES ({message.id!r}, {message.guild.id!r}, {message.author.id!r}, {author_name},"
-                                          f"{author_avatar_url!r}, {message.channel.id!r}, {message.channel.name!r}, {message_content}, {message.type.value!r},"  # type: ignore
+                                          f"type, pinned, attachments_physical, attachments_filenames, embeds) VALUES ({message.id!r}, {message.guild.id!r}, {message.author.id!r}, {author_name}, "
+                                          f"{author_avatar_url!r}, {message.channel.id!r}, {message.channel.name!r}, {message_content}, {message.type.value!r}, "  # type: ignore
                                           f"{message.pinned!r}, {attachments_physical_str!r}, {attachments_filenames_str!r}, {embeds_str})")
                         # print(f"Debug: Found new message {message.id} in #{channel.name}")
                 for deleted_message, deleted_attachments in existing_messages.items():
@@ -828,7 +830,7 @@ class Admin(commands.Cog):
                         with suppress(FileNotFoundError):
                             os.remove(os.path.join(attachments_dir, filename))
                             # print(f"Debug: Deleted attachment {filename} for deleted message {deleted_message}")
-            statements.append("COMMIT")
+            statements.append("COMMIT;")
             db.executescript("; ".join(statements))
             await ctx.send(f"Backed up channel {channel.mention}")
         statements = ["BEGIN"]
@@ -842,7 +844,7 @@ class Admin(commands.Cog):
                     os.remove(os.path.join(attachments_dir, filename))
                     # print(f"Debug: Deleted attachment {filename} for message {message['message_id']} in deleted channel #{deleted_name}")
             statements.append(f"DELETE FROM messages WHERE channel_id={deleted_channel!r}")
-        statements.append("COMMIT")
+        statements.append("COMMIT;")
         db.executescript("; ".join(statements))
         return await ctx.send("Backup successful")
 

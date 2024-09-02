@@ -1845,3 +1845,7 @@
 
 ## v7.8.1.1 - 2 September 2024
 - The backup script now also saves the server's name, emojis, and stickers
+
+## v7.8.1.2 - 2 September 2024
+- Fixed errors when message contents contained a null (`\x00`) character
+- ClientPayloadErrors will now be logged instead of crashing the entire command
