@@ -1837,3 +1837,8 @@
 
 ## v7.8.0.3 - 25 August 2024
 - Replaced the "unresolved references" noinspection comment with `type: ignore`
+
+## v7.8.1 - 2 September 2024
+- Updated the script that backs up server messages
+  - Now uses `executescript()` to speed up the database interactions
+  - Now handles roles, channels, and messages getting deleted
