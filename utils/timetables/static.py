@@ -328,6 +328,13 @@ class Trip:
             db = get_database()
         return list(map(cls.from_dict, db.fetch("SELECT * FROM trips WHERE block_id=?", (block_id,))))
 
+    @classmethod
+    def from_route(cls, route_id: str, db: database.Database = None) -> list[Trip]:
+        """ Load a list of Trips given a route ID """
+        if not db:
+            db = get_database()
+        return list(map(cls.from_dict, db.fetch("SELECT * FROM trips WHERE route_id=?", (route_id,))))
+
     def save_to_sql(self) -> str:
         """ Return the SQL command to save this data into the database """
         return ("INSERT INTO trips(route_id, calendar_id, trip_id, headsign, short_name, direction_id, block_id, shape_id, total_stops) VALUES "

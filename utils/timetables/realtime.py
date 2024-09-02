@@ -137,6 +137,7 @@ class TripUpdate:
 class RealTimeTrip:
     trip_id: str
     route_id: str
+    start_date: time.date
     start_time: time.datetime
     schedule_relationship: str  # SCHEDULED, ADDED, UNSCHEDULED, CANCELED, DUPLICATED, DELETED
     direction_id: int
@@ -147,10 +148,11 @@ class RealTimeTrip:
         _date: str = data["start_date"]
         h, m, s = _time.split(":")
         y, mo, d = _date[0:4], _date[4:6], _date[6:8]
+        start_date = time.date(int(y), int(mo), int(d))
         start_time = time.datetime(int(y), int(mo), int(d), int(h) % 24, int(m), int(s), tz=TIMEZONE)
         if int(h) >= 24:
             start_time += time.timedelta(days=1)
-        return cls(data.get("trip_id", "Unknown"), data["route_id"], start_time, data.get("schedule_relationship", "Unknown"), data["direction_id"])
+        return cls(data.get("trip_id", "Unknown"), data["route_id"], start_date, start_time, data.get("schedule_relationship", "Unknown"), data["direction_id"])
 
 
 @dataclass()

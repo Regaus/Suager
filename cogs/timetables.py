@@ -742,7 +742,8 @@ class Timetables(University, Luas, name="Timetables"):
         all_routes = self.db.fetch("SELECT id, short_name, long_name FROM routes")
         output = []
         for route_dict in all_routes:
-            if query in route_dict["id"].lower() or query in f"{route_dict['short_name']} {route_dict['long_name']}".lower():
+            # Require exact match to ID, but allow partial matches for the route number + destinations
+            if query == route_dict["id"].lower() or query in f"{route_dict['short_name']} {route_dict['long_name']}".lower():
                 route = timetables.Route.from_sql(route_dict["id"], self.db)
                 # route = timetables.Route.from_dict(route_dict)
                 output.append(route)
@@ -865,14 +866,27 @@ class Timetables(University, Luas, name="Timetables"):
 
     async def tfi_vehicle_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         """ Autocomplete for the specific vehicle search """
-        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
-        data = self.db.fetch("SELECT vehicle_id, fleet_number FROM vehicles WHERE vehicle_id LIKE ?1 ESCAPE '!' OR fleet_number LIKE ?1 ESCAPE '!'", (search,))
+        if not self.fleet_data:
+            await self.update_vehicles(force_update=False)
         results: list[tuple[str, str, int]] = []
-        for entry in data:
-            ratios = (process.default_scorer(current, entry["vehicle_id"]), process.default_scorer(current, entry["fleet_number"]))
-            results.append((entry["vehicle_id"], f"{entry['fleet_number']} ({entry['reg_plates']})", max(ratios)))
+        for vehicle in self.fleet_data.values():
+            ratios = (process.default_scorer(current, vehicle.vehicle_id), process.default_scorer(current, vehicle.fleet_number))
+            results.append((vehicle.vehicle_id, f"{vehicle.fleet_number} (API ID {vehicle.vehicle_id})", max(ratios)))  # f"{vehicle.fleet_number} ({vehicle.reg_plates})"
         results.sort(key=lambda x: x[2], reverse=True)
         return [app_commands.Choice(name=fleet_and_reg, value=vehicle_id) for vehicle_id, fleet_and_reg, _ in results[:25]]
+
+    async def tfi_route_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for route search """
+        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
+        data = self.db.fetch("SELECT id, short_name, long_name FROM routes WHERE id LIKE ?1 ESCAPE '!' OR (short_name || ' ' || long_name) LIKE ?1 ESCAPE '!'", (search,))
+        # results: [(code, name, similarity), ...]
+        results: list[tuple[str, str, int]] = []
+        for entry in data:
+            ratios = (process.default_scorer(current, entry["id"]), process.default_scorer(current, f"{entry['short_name']} {entry['long_name']}"))
+            route_name = f"Route {entry['short_name']} ({entry['long_name']})"
+            results.append((entry["id"], route_name, max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=route_name, value=route_id) for route_id, route_name, _ in results[:25]]
 
     @tfi_schedules.command(name="stop")
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
@@ -989,7 +1003,7 @@ class Timetables(University, Luas, name="Timetables"):
             raise
         return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.MapView(ctx.author, message, map_viewer, ctx))
 
-    @tfi.group(name="vehicle", aliases=["vehicles", "bus", "buses"], case_insensitive=True)
+    @tfi.group(name="vehicles", aliases=["vehicle", "buses", "bus"], case_insensitive=True)
     async def tfi_vehicles(self, ctx: commands.Context):
         """ Commands related to information about vehicles """
         if ctx.invoked_subcommand is None:
@@ -1007,10 +1021,31 @@ class Timetables(University, Luas, name="Timetables"):
         await self._soft_limit_warning(ctx)
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
         try:
-            viewer: timetables.VehicleDataViewer = timetables.VehicleDataViewer(self, vehicle)
+            viewer = timetables.VehicleDataViewer(self, vehicle)
         except Exception:
             raise
         return await message.edit(content=viewer.output, view=timetables.VehicleDataView(ctx.author, message, viewer, ctx))
+
+    @tfi_vehicles.command(name="route")
+    @app_commands.rename(route_query="route")
+    @app_commands.autocomplete(route_query=tfi_route_autocomplete)
+    @app_commands.describe(route_query="The number (and optionally destinations) of the route or its ID")
+    async def tfi_vehicles_route(self, ctx: commands.Context, *, route_query: str):
+        """ List of vehicles currently serving a specific route """
+        """ Show information about a specific vehicle """
+        message = await self.wait_for_initialisation(ctx)
+        routes = self.find_route(route_query)
+        if len(routes) != 1:
+            start = "No routes were found" if len(routes) < 1 else "More than one route was found"
+            return await message.edit(content=f"{start} for your search query ({route_query}).\nUse `{ctx.prefix}tfi search route` to find your specific route's ID, or provide a more specific query.")
+        route = routes[0]
+        await self._soft_limit_warning(ctx)
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        try:
+            viewer = timetables.RouteVehiclesViewer(self, route)
+        except Exception:
+            raise
+        return await message.edit(content=viewer.output, view=timetables.RouteVehiclesView(ctx.author, message, viewer, ctx))
 
     # If this command is uncommented, it will still get synced to a slash command for whatever reason
     # @tfi.command(name="debug", enabled=False)

@@ -485,3 +485,11 @@
 ## v0.14.0a1 - 1 September 2024
 - Added command to show data about specific buses
 - Added ability to see timestamp for specific TripUpdates and Vehicles
+
+## v0.14.0 - 1 September 2024
+- Added ability to see the list of vehicles currently operating on a route
+  - The view can also list the buses by model
+- Fixed fleet vehicle autocomplete not working
+  - Replaced the reg plates with the API vehicle ID
+- Added `start_date` field to RealTimeTrips (so that you can tell if the trip belongs to a different day)
+- When specifying a route, IDs now require a full match (but only a partial match for route number + destinations)

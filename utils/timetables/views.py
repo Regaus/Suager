@@ -10,10 +10,11 @@ from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.shared import get_data_database, NUMBERS
-from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer, VehicleDataViewer
+from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer, VehicleDataViewer, RouteVehiclesViewer
 from utils.views import NumericInputModal, SelectMenu
 
-__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView", "VehicleDataView")
+__all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView",
+           "VehicleDataView", "RouteVehiclesView")
 
 
 class StopScheduleView(views.InteractiveView):
@@ -976,3 +977,89 @@ class VehicleDataView(views.InteractiveView):
         """ Close the view """
         await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
+
+
+class RouteVehiclesView(views.InteractiveView):
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: RouteVehiclesViewer, ctx: commands.Context | discord.Interaction = None):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx)
+        self.viewer = viewer
+        self.db = get_data_database()
+        self.refreshing: bool = False
+        self.model_list: RouteVehiclesModelListView | None = None
+
+    async def refresh(self):
+        """ Refresh the real-time data """
+        self.refreshing = True
+        try:
+            await self.viewer.refresh()
+            await self.message.edit(content=self.viewer.output, view=self)
+            if self.model_list:
+                await self.model_list.refresh()
+        finally:
+            self.refreshing = False
+
+    @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=0)  # Blue, first row
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Refresh the real-time data """
+        await interaction.response.defer()  # type: ignore
+        if self.refreshing:
+            return await interaction.followup.send("The data is already being refreshed, please wait.", ephemeral=True)
+        await self.refresh()
+        await self.disable_button(self.message, button, cooldown=60)
+
+    @discord.ui.button(label="List models", style=discord.ButtonStyle.grey, row=0)  # Grey, first row
+    async def list_bus_models(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ List the models of buses currently operating on the route """
+        if self.model_list:  # This shouldn't happen, but just in case.
+            return await interaction.response.send_message("The model list is already open.", ephemeral=True)  # type: ignore
+        self.model_list = await RouteVehiclesModelListView.send(interaction, self)
+        button.disabled = True  # If the user deletes the message, too bad. It will raise an error, but don't send a new message.
+        await self.message.edit(view=self)
+
+    async def enable_bus_models_button(self):
+        self.model_list = None
+        self.list_bus_models.disabled = False
+        if not self.is_finished():
+            await self.message.edit(view=self)
+
+    # @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
+    # async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+    #     """ Hide the view, instead of closing it altogether """
+    #     await interaction.response.defer()  # type: ignore
+    #     await self.message.edit(view=views.HiddenView(self))
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=None)
+        self.stop()
+
+
+class RouteVehiclesModelListView(views.InteractiveView):
+    def __init__(self, sender: discord.Member, message: discord.Message, original_view: RouteVehiclesView):
+        super().__init__(sender=sender, message=message, try_full_fetch=False)
+        self.original_view = original_view
+        self.viewer = original_view.viewer
+
+    async def refresh(self):
+        await self.message.edit(content=self.viewer.vehicle_list_by_model(), view=self)
+
+    @classmethod
+    async def send(cls, interaction: discord.Interaction, original_view: RouteVehiclesView):
+        await interaction.response.defer()  # type: ignore
+        view = cls(original_view.sender, original_view.message, original_view)
+        message: discord.WebhookMessage = await interaction.followup.send(view.viewer.vehicle_list_by_model(), view=view)
+        if original_view.temporary:
+            view.message = message
+        else:
+            view.message = await message.fetch()
+        return view
+
+    @discord.ui.button(label="Close", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)  # Red, first row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view and delete the message """
+        await interaction.response.defer()  # type: ignore
+        await self.message.delete()
+        await self.original_view.enable_bus_models_button()
+        self.stop()
