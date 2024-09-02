@@ -498,3 +498,6 @@
 - Added a command to hot-reload the timetables module and set the debug value without restarting the bot
 - Changed the static data expiry to be 14 days for a soft warning and 45 days as hard limit
 - The RouteVehiclesViewer can now show buses that are associated with the route even if it is outside the scheduled departure and arrival times
+
+## v0.14.1.1 - 3 September 2024
+- Fixed trips not showing up on the RouteVehiclesViewer where they are valid for yesterday but not today

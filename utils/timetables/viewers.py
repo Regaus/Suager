@@ -1430,13 +1430,13 @@ class RouteVehiclesViewer:
         inbound: list[tuple[time.datetime, str, str, str]] = []
         outbound: list[tuple[time.datetime, str, str, str]] = []
         vehicle_ids: dict[str, str] = {}  # vehicle_ids[trip_id] = vehicle_id
-        visited_trips: set[str] = set()  # Ignore static trips for which we already gathered real-time data
+        visited_trips: set[tuple[str, time.date]] = set()  # Ignore static trips for which we already gathered real-time data
 
         def handle_trip(_trip: Trip | TripUpdate, day: time.datetime | time.date, is_static: bool):
             if isinstance(_trip, Trip):
-                if _trip.trip_id in visited_trips:
+                if (_trip.trip_id, day) in visited_trips:
                     return
-                visited_trips.add(_trip.trip_id)
+                visited_trips.add((_trip.trip_id, day))
                 first_stop = StopTime.from_sql_sequence(_trip.trip_id, 1, self.db)
                 last_stop: StopTime = StopTime.from_sql_sequence(_trip.trip_id, _trip.total_stops, self.db)
                 _departure = day + time.timedelta(seconds=first_stop.departure_time)
