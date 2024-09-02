@@ -69,6 +69,10 @@ class GTFSData:
     def __repr__(self):
         return "This string is too large to be feasible to render."
 
+    @classmethod
+    def empty(cls):
+        return cls({}, {}, {}, {}, {}, {}, {}, {})
+
 
 @dataclass()
 class Agency:
@@ -708,12 +712,12 @@ def read_and_store_gtfs_data():  # self=None
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved shapes")
 
-    # Delete old expiry and set the new one
+    # Delete old expiry data and set the new one
     db.execute("DELETE FROM expiry WHERE type=0 OR type=1")
-    # Soft limit: 30 days (1 month) from today
-    db.execute("INSERT INTO expiry(type, date) VALUES (?, ?)", (0, (time.date.today() + time.timedelta(days=30)).to_datetime(),))
-    # Hard limit: 90 days (3 months) from today
-    db.execute("INSERT INTO expiry(type, date) VALUES (?, ?)", (1, (time.date.today() + time.timedelta(days=90)).to_datetime(),))
+    # Soft limit: 14 days from today
+    db.execute("INSERT INTO expiry(type, date) VALUES (?, ?)", (0, (time.date.today() + time.timedelta(days=14)).to_datetime(),))
+    # Hard limit: 45 days from today
+    db.execute("INSERT INTO expiry(type, date) VALUES (?, ?)", (1, (time.date.today() + time.timedelta(days=45)).to_datetime(),))
     print(f"{now()} > Static GTFS Loader > Saved expiry data")
 
     # if hasattr(self, "updating"):
@@ -726,7 +730,7 @@ def init_gtfs_data(*, ignore_expiry: bool = False, db: database.Database = None)
         if db is None:
             db = get_database()
         check_gtfs_data_expiry(db)
-    return GTFSData({}, {}, {}, {}, {}, {}, {}, {})
+    return GTFSData.empty()
 
 
 def load_calendars(data: GTFSData):

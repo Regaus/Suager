@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import json
 import os
 from collections.abc import Callable, Awaitable
@@ -707,6 +708,21 @@ class Timetables(University, Luas, name="Timetables"):
         self.initialised = False
         self.updating = False
         return await ctx.send(f"{print_current_time()} > Reset the loader error status and reset the initialised and updating values to False.")
+
+    @placeholder.command(name="reloadmodule", aliases=["rm"])
+    async def reload_modules(self, ctx: commands.Context, debug: bool = True, write: bool = False):
+        modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.static", "utils.timetables.schedules",
+                   "utils.timetables.maps", "utils.timetables.viewers", "utils.timetables.views", "utils.timetables", "cogs.timetables")
+        for module_name in modules:
+            module = importlib.import_module(module_name)
+            importlib.reload(module)
+        self.initialised = True
+        self.updating = False
+        self.DEBUG = debug
+        self.WRITE = write
+        self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        return await ctx.send(f"Reloaded modules and data. {self.DEBUG=}, {self.WRITE=}")
 
     @placeholder.command(name="check")
     async def check_error(self, ctx: commands.Context):

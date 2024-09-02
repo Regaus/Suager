@@ -493,3 +493,8 @@
   - Replaced the reg plates with the API vehicle ID
 - Added `start_date` field to RealTimeTrips (so that you can tell if the trip belongs to a different day)
 - When specifying a route, IDs now require a full match (but only a partial match for route number + destinations)
+
+## v0.14.1 - 2 September 2024
+- Added a command to hot-reload the timetables module and set the debug value without restarting the bot
+- Changed the static data expiry to be 14 days for a soft warning and 45 days as hard limit
+- The RouteVehiclesViewer can now show buses that are associated with the route even if it is outside the scheduled departure and arrival times

@@ -1010,11 +1010,16 @@ class RouteVehiclesView(views.InteractiveView):
     @discord.ui.button(label="List models", style=discord.ButtonStyle.grey, row=0)  # Grey, first row
     async def list_bus_models(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ List the models of buses currently operating on the route """
+        await interaction.response.defer()  # type: ignore
         if self.model_list:  # This shouldn't happen, but just in case.
-            return await interaction.response.send_message("The model list is already open.", ephemeral=True)  # type: ignore
-        self.model_list = await RouteVehiclesModelListView.send(interaction, self)
-        button.disabled = True  # If the user deletes the message, too bad. It will raise an error, but don't send a new message.
-        await self.message.edit(view=self)
+            return await interaction.followup.send("The model list is already open.", ephemeral=True)
+        try:
+            self.model_list = await RouteVehiclesModelListView.send(interaction, self)
+        except RuntimeError:
+            return await interaction.followup.send("There are no real-time vehicles operating on this route at the moment.", ephemeral=True)
+        else:
+            button.disabled = True  # If the user deletes the message, too bad. It will raise an error, but don't send a new message.
+            await self.message.edit(view=self)
 
     async def enable_bus_models_button(self):
         self.model_list = None
@@ -1047,7 +1052,6 @@ class RouteVehiclesModelListView(views.InteractiveView):
 
     @classmethod
     async def send(cls, interaction: discord.Interaction, original_view: RouteVehiclesView):
-        await interaction.response.defer()  # type: ignore
         view = cls(original_view.sender, original_view.message, original_view)
         message: discord.WebhookMessage = await interaction.followup.send(view.viewer.vehicle_list_by_model(), view=view)
         if original_view.temporary:

@@ -150,7 +150,8 @@ def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
     return "\n".join(bus_data)
 
 
-def get_block_trips(current_trip: Trip, today_date: time.date, static_data: GTFSData, db) -> tuple[list[tuple[str, time.datetime, str, str]], list[tuple[str, time.datetime, str, str]]]:
+def get_block_trips(current_trip: Trip, today_date: time.date, now: time.datetime, static_data: GTFSData, db) \
+        -> tuple[list[tuple[str, time.datetime, str, str]], list[tuple[str, time.datetime, str, str]]]:
     """ Returns the previous and upcoming trips along the given route
 
     Inner tuple format: (trip_id, start_time, route, destination) """
@@ -160,7 +161,7 @@ def get_block_trips(current_trip: Trip, today_date: time.date, static_data: GTFS
         prev_trips: list[tuple[str, time.datetime, str, str]] = []
         next_trips: list[tuple[str, time.datetime, str, str]] = []
         today = time.datetime.combine(today_date, time.time(), tz=TIMEZONE)
-        now = time.datetime.now(tz=TIMEZONE)
+        # now = time.datetime.now(tz=TIMEZONE)  # Use the "now" provided by the functions to avoid skipping trips that should've already departed
         for trip in block:
             if trip.trip_id == current_trip.trip_id:  # Ignore current trip
                 continue
@@ -1319,7 +1320,7 @@ class VehicleDataViewer:
             vehicle_data = current_trip  # Fallback for unavailable static Trip data or block data
             if static_trip:
                 # This uses the vehicle's trip's start_date to account for trips that started yesterday (or belong to yesterday)
-                prev_trips, next_trips = get_block_trips(static_trip, self.real_time_vehicle.trip.start_date, self.static_data, self.db)
+                prev_trips, next_trips = get_block_trips(static_trip, self.real_time_vehicle.trip.start_date, self.real_time_vehicle.trip.start_time, self.static_data, self.db)
                 output_data = [current_trip]
 
                 def format_trip(_departure: time.datetime, _route: str, _destination: str):
@@ -1380,6 +1381,8 @@ class RouteVehiclesViewer:
     def vehicle_list_by_model(self) -> str:
         """ List the buses currently operating on a route by their model """
         all_vehicles = self.get_all_vehicles()
+        if not all_vehicles:
+            raise RuntimeError("No vehicles operating on the route")
         models: dict[str, list[str]] = {}
 
         def add_to_dict(key: str, value: str):
@@ -1399,6 +1402,7 @@ class RouteVehiclesViewer:
 
         output = []
         for model, vehicles in models.items():
+            vehicles.sort()  # Sort the list of vehicles alphabetically
             amount = len(vehicles)
             _s = "s" if amount > 1 else ""
             output.append(f"- {model}: {amount} vehicle{_s} ({', '.join(vehicles)})")
@@ -1426,18 +1430,22 @@ class RouteVehiclesViewer:
         inbound: list[tuple[time.datetime, str, str, str]] = []
         outbound: list[tuple[time.datetime, str, str, str]] = []
         vehicle_ids: dict[str, str] = {}  # vehicle_ids[trip_id] = vehicle_id
+        visited_trips: set[str] = set()  # Ignore static trips for which we already gathered real-time data
 
-        def handle_trip(_trip: Trip | TripUpdate, day: time.datetime | time.date):
+        def handle_trip(_trip: Trip | TripUpdate, day: time.datetime | time.date, is_static: bool):
             if isinstance(_trip, Trip):
+                if _trip.trip_id in visited_trips:
+                    return
+                visited_trips.add(_trip.trip_id)
                 first_stop = StopTime.from_sql_sequence(_trip.trip_id, 1, self.db)
                 last_stop: StopTime = StopTime.from_sql_sequence(_trip.trip_id, _trip.total_stops, self.db)
                 _departure = day + time.timedelta(seconds=first_stop.departure_time)
-                arrival = day + time.timedelta(seconds=last_stop.arrival_time)
+                _arrival = day + time.timedelta(seconds=last_stop.arrival_time)
                 direction = _trip.direction_id
                 _destination = _trip.headsign
             else:
                 _departure = _trip.stop_times[0].departure_time
-                arrival = _trip.stop_times[-1].arrival_time
+                _arrival = _trip.stop_times[-1].arrival_time
                 direction = _trip.trip.direction_id
                 try:
                     last_stop: Stop = load_value(self.static_data, Stop, _trip.stop_times[-1].stop_id, self.db)
@@ -1448,8 +1456,14 @@ class RouteVehiclesViewer:
                 date = day.date()
             else:
                 date = day
-            # Note: This will exclude trips where a vehicle is assigned before scheduled departure or after scheduled arrival.
-            if _departure < now < arrival:  # The trip is currently running
+            if not is_static:  # Only check time bounds for non-real-time trips, but don't overwrite actual departure time
+                _check_departure = time.datetime.min
+                _check_arrival = time.datetime.max
+            else:
+                _check_departure = _departure
+                _check_arrival = _arrival
+            # This might show buses that have already arrived at the terminus or have not yet departed, but it should be fine.
+            if _check_departure < now < _check_arrival:  # The trip is currently running
                 relevant_list = inbound if direction == 0 else outbound
                 if isinstance(_trip, Trip):
                     vehicle_id = vehicle_ids.get(_trip.trip_id)
@@ -1468,7 +1482,7 @@ class RouteVehiclesViewer:
                     _vehicle_data = f"{fleet_number} - Currently near {nearest_stop.name}"
                 _next_departure = ""
                 if isinstance(_trip, Trip):
-                    _, next_trips = get_block_trips(_trip, date, self.static_data, self.db)
+                    _, next_trips = get_block_trips(_trip, date, _departure, self.static_data, self.db)
                     if next_trips:
                         _, _next_departure, _, next_destination = next_trips[0]
                         _next_departure = f"\n  -# Next departure: {_next_departure:%H:%M} to {next_destination}"
@@ -1479,12 +1493,20 @@ class RouteVehiclesViewer:
             if trip_update.trip.route_id == self.route.id:
                 if trip_update.trip.trip_id:
                     vehicle_ids[trip_update.trip.trip_id] = trip_update.vehicle_id
+                # This ignores added trips that show up in vehicle data but not real-time data, but I'm not really bothered to fix that
                 if trip_update.trip.schedule_relationship == "ADDED":
-                    handle_trip(trip_update, trip_update.trip.start_date)  # The day variable doesn't matter for added trips
+                    handle_trip(trip_update, trip_update.trip.start_date, False)  # The day variable doesn't matter for added trips
+                elif trip_update.vehicle_id:  # If there is a vehicle on this trip, try to show the trip if it exists in static data
+                    try:
+                        trip: Trip = load_value(self.static_data, Trip, trip_update.trip.trip_id)
+                        start_date = time.datetime.combine(trip_update.trip.start_date, time.time(), tz=TIMEZONE)
+                        handle_trip(trip, start_date, False)
+                    except KeyError:
+                        continue
         for trip in today_trips:
-            handle_trip(trip, today)
+            handle_trip(trip, today, True)
         for trip in yesterday_trips:
-            handle_trip(trip, yesterday)
+            handle_trip(trip, yesterday, True)
 
         if not inbound and not outbound:
             return f"There are currently no vehicles operating on {route_full}."
