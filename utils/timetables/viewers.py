@@ -11,14 +11,17 @@ from utils import paginators
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database
 from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route, FleetVehicle
-from utils.timetables.schedules import SpecificStopTime, RealStopTime, StopSchedule, RealTimeStopSchedule, trip_validity
+from utils.timetables.schedules import trip_validity, SpecificStopTime, RealStopTime, ScheduledTrip, StopSchedule, RealTimeStopSchedule, RouteSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop, get_nearest_stop
 
 __all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripMapViewer", "MapViewer",
-           "VehicleDataViewer", "RouteVehiclesViewer")
+           "VehicleDataViewer", "RouteVehiclesViewer", "RouteScheduleViewer")
 
 
 FLEET_REGEX = re.compile(r"^([A-Z]{2,3})([0-9]{1,3})$")
+INBOUND_DIRECTION_ID = 1
+PAGINATOR_MAX_LINES = 20
+PAGINATOR_MAX_LENGTH = 1500
 
 
 def get_model_code(fleet_number: str) -> str:
@@ -1054,7 +1057,7 @@ class TripDiagramViewer:
         first_line = generate_line(output_data[0])
         output_start = f"All stops for Trip {trip_id} to {destination} ({route}){note}{extra_text}\n```fix\n{first_line}"
 
-        paginator = paginators.LinePaginator(prefix=output_start, suffix=output_end, max_lines=20, max_size=1500)
+        paginator = paginators.LinePaginator(prefix=output_start, suffix=output_end, max_lines=PAGINATOR_MAX_LINES, max_size=PAGINATOR_MAX_LENGTH)
         for idx, line in enumerate(output_data[1:], start=0):
             assert len(column_sizes) == len(line)
             paginator.add_line(generate_line(line))
@@ -1464,7 +1467,7 @@ class RouteVehiclesViewer:
                 _check_arrival = _arrival
             # This might show buses that have already arrived at the terminus or have not yet departed, but it should be fine.
             if _check_departure < now < _check_arrival:  # The trip is currently running
-                relevant_list = inbound if direction == 0 else outbound
+                relevant_list = inbound if direction == INBOUND_DIRECTION_ID else outbound
                 if isinstance(_trip, Trip):
                     vehicle_id = vehicle_ids.get(_trip.trip_id)
                 else:
@@ -1534,3 +1537,210 @@ class RouteVehiclesViewer:
 
     def update_output(self):
         self.output = self.create_output()
+
+
+class RouteScheduleViewer:
+    # This does not interact with real-time data, so we don't need to import it here
+    def __init__(self, static_data: GTFSData, route_schedule: RouteSchedule, trips: list[ScheduledTrip], now: time.datetime, direction: int = 0):
+        self.static_data: GTFSData = static_data
+        self.route_schedule: RouteSchedule = route_schedule
+        self.route: Route = self.route_schedule.route
+        self.route_id: str = self.route_schedule.route_id
+        self.direction: int = direction  # Show trips with direction 0 by default, unless otherwise specified
+        self.all_trips: list[ScheduledTrip] = trips
+        self.now = now
+        self.today = self.now.date()
+        self.db = get_database()
+        self.compact_mode: int = 0
+        self.index_offset: int = 0
+        self.inbound_stop_order, self.outbound_stop_order = self.get_stop_order()  # stop_id -> sequence
+        self.relevant_trips: list[ScheduledTrip] = self.get_relevant_trips()
+        self.start_idx, self.end_idx = self.get_indexes()
+        self.output: paginators.LinePaginator = self.create_output()
+
+    @classmethod
+    async def load(cls, static_data: GTFSData, route: Route, now: time.datetime = None, direction: int = 0):
+        if now is None:
+            now = time.datetime.now(tz=TIMEZONE)
+        today = now.date()
+        event_loop = asyncio.get_event_loop()
+        route_schedule: RouteSchedule = await event_loop.run_in_executor(None, RouteSchedule, static_data, route)
+        trips: list[ScheduledTrip] = await event_loop.run_in_executor(None, route_schedule.relevant_trips, today)
+        return cls(static_data, route_schedule, trips, now, direction)
+
+    @property
+    def departures(self) -> int:
+        """ Returns the amount of departures being shown at once """
+        # Normal -> 6 departures, compact mode 1 -> 3 departures, compact mode 2 -> 1 departure
+        return {0: 6, 1: 3, 2: 1}[self.compact_mode]
+
+    def get_indexes(self):
+        start_idx = 0
+        for i, trip in enumerate(self.relevant_trips):
+            if trip.departure_time <= self.now:
+                start_idx += 1
+            else:
+                break
+        max_idx = len(self.relevant_trips)
+        start_idx = max(0, min(start_idx + self.index_offset, max_idx - self.departures))
+        end_idx = min(start_idx + self.departures, max_idx)
+        return start_idx, end_idx
+
+    def get_stop_order(self) -> tuple[dict[str, int], dict[str, int]]:
+        """ Arrange the stops throughout the trip """
+        inbound_stops = []
+        outbound_stops = []
+        for trip in self.all_trips:
+            relevant_list = inbound_stops if trip.direction_id == INBOUND_DIRECTION_ID else outbound_stops
+            stop_ids = [stop_time.stop_id for stop_time in trip.stop_times]
+            for stop_time in trip.stop_times:
+                stop_id = stop_time.stop_id
+                if stop_id in relevant_list:
+                    continue
+                else:
+                    # First stop or middle of journey -> insert at appropriate index
+                    # Last stop -> append to end of list
+                    # Quite simple, but should work unless a route is extremely silly
+                    if stop_time.sequence >= len(relevant_list):
+                        relevant_list.append(stop_id)
+                    elif stop_time.sequence == trip.total_stops:
+                        relevant_list.append(stop_id)
+                    elif relevant_list[0] in stop_ids:  # This stop is before the existing first stop
+                        relevant_list.insert(stop_time.sequence - 1, stop_id)
+                    else:
+                        relevant_list.insert(stop_time.sequence, stop_id)
+
+        inbound_output: dict[str, int] = {}
+        outbound_output: dict[str, int] = {}
+        for i, stop in enumerate(inbound_stops):
+            inbound_output[stop] = i
+        for i, stop in enumerate(outbound_stops):
+            outbound_output[stop] = i
+        return inbound_output, outbound_output
+
+    def get_relevant_trips(self) -> list[ScheduledTrip]:
+        """ List of trips that are going in the specified direction """
+        # output[idx] = trip | times[idx][seq] = departure_time
+        output: list[ScheduledTrip] = []
+        times: list[dict[int, time.datetime]] = []
+        stop_order = self.relevant_stop_order
+        prev_stops: set = set()
+        for trip in filter(lambda t: t.direction_id == self.direction, self.all_trips):  # type: ScheduledTrip
+            stop_times: list[SpecificStopTime] = trip.stop_times
+            trip_times: dict[int, time.datetime] = {stop_order[stop_time.stop_id]: stop_time.departure_time for stop_time in stop_times}
+            trip_stops: set[int] = set(trip_times)   # set of stop sequences at which this trip calls
+            # trip_stops: set = {stop_order[stop_time.stop_id] for stop_time in stop_times}
+            if not output:  # If no trips exist yet, just add it
+                output.append(trip)
+                times.append(trip_times)
+            else:
+                shared = prev_stops.intersection(trip_stops)
+                idx = len(output)
+                if shared:
+                    seq = min(shared)
+                    for other_times in times[::-1]:
+                        if other_times[seq] > trip_times[seq]:
+                            idx -= 1
+                        else:
+                            break
+                else:  # I don't know how this would happen, but if it does, try to guess based on the trip departure times
+                    for other_trip in output[::-1]:
+                        if other_trip.departure_time > trip.departure_time:
+                            idx -= 1
+                        else:
+                            break
+                output.insert(idx, trip)
+                times.insert(idx, trip_times)
+            prev_stops = trip_stops
+        return output
+
+    @property
+    def relevant_stop_order(self) -> dict[str, int]:
+        """ Dictionary with orders and stop IDs of all stops made in the specified direction """
+        return self.inbound_stop_order if self.direction == INBOUND_DIRECTION_ID else self.outbound_stop_order
+
+    def create_output(self) -> paginators.LinePaginator:
+        # Seq - Stop - Code - Dep 1 - Dep 2 - Dep 3 - Dep 4
+        header_line = ["Seq", "Stop", "Code"]
+        output_data: list[list[str]] = []
+        column_sizes = [2, 0, 0]
+        self.start_idx, self.end_idx = self.get_indexes()
+        # Create initial list of all stops along the route
+        stop_order = self.relevant_stop_order
+        stop_idx_len = len(str(len(stop_order)))
+        for stop_id, idx in stop_order.items():
+            stop: Stop = load_value(self.static_data, Stop, stop_id, self.db)
+            index = f"{idx + 1:0{stop_idx_len}d})"
+            output_line = [index, stop.name, stop.code_or_id]
+            output_data.append(output_line)
+            for i, element in enumerate(output_line):
+                column_sizes[i] = max(column_sizes[i], len(element))
+        output_data.sort(key=lambda _line: _line[0])  # Sort by stop order
+
+        for trip in self.relevant_trips[self.start_idx:self.end_idx]:
+            longest = 0
+            for stop_time in trip.stop_times:
+                seq = stop_order[stop_time.stop_id]
+                departure_time = self.format_time(stop_time.departure_time)
+                if stop_time.pickup_type == 1:
+                    departure_time = "D " + departure_time
+                elif stop_time.drop_off_type == 1:
+                    departure_time = "P " + departure_time
+                output_data[seq].append(departure_time)
+                longest = max(longest, len(departure_time))
+            column_sizes.append(longest)
+            header_line.append("Dep.")
+            # Add "-" to any stops not served by this trip
+            columns = len(column_sizes)
+            for line in output_data:
+                if len(line) < columns:
+                    line.append("-")
+
+        # skipped = ()  # Indexes of columns not shown
+        # line_length = sum(column_sizes) + len(column_sizes) - 1
+        # cutoff = 0
+        if self.compact_mode:
+            skipped = (2,)  # Skip the stop code
+            if self.compact_mode == 1:
+                line_length_limit = 50
+            else:
+                # Extra departure columns will remove themselves as they're empty
+                line_length_limit = 36
+            for idx in skipped:
+                column_sizes.pop(idx)
+                header_line.pop(idx)
+                for line in output_data:
+                    line.pop(idx)
+            line_length = sum(column_sizes) + len(column_sizes) - 1
+            if line_length > line_length_limit:
+                column_sizes[1] -= (line_length - line_length_limit)
+                # cutoff = column_sizes[1] - (line_length - line_length_limit)
+                # line_length = line_length_limit
+
+        def generate_line(_line: list[str]):
+            line_data = []
+            for j, (size, column) in enumerate(zip(column_sizes, _line)):
+                if size == 0:  # Skip empty columns (e.g. routes that have less than 4 daily departures)
+                    continue
+                elif len(column) > size:
+                    line_data.append(f"{column[:size - 1]}…")
+                else:
+                    alignment = "<" if j < 2 else ">"
+                    line_data.append(f"{column:{alignment}{size}}")
+            return " ".join(line_data).rstrip()
+
+        direction = "inbound" if self.direction == INBOUND_DIRECTION_ID else "outbound"
+        operator = self.route.agency(self.static_data, self.db).name
+        output = (f"Route schedule for the route {self.route.short_name} ({self.route.long_name}).\nShowing {direction} trips\n"
+                  f"-# Route operated by {operator}\n```fix\n{generate_line(header_line)}")
+        suffix = "```\n-# Note: This schedule is static and does not take real-time data into account."
+        paginator = paginators.LinePaginator(prefix=output, suffix=suffix, max_lines=PAGINATOR_MAX_LINES, max_size=PAGINATOR_MAX_LENGTH)
+        for line in output_data:
+            paginator.add_line(generate_line(line))
+        return paginator
+
+    def update_output(self):
+        self.output = self.create_output()
+
+    def format_time(self, provided_time: time.datetime) -> str:
+        return format_time(provided_time, self.today)

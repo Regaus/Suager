@@ -354,8 +354,8 @@ class Timetables(University, Luas, name="Timetables"):
         self.updating_vehicles: bool = False
 
     @staticmethod
-    def get_query_and_timestamp(query: str) -> tuple[str, str | None, bool, bool]:
-        """ Split the query and timestamp using argparse """
+    def get_stop_query_and_timestamp(query: str) -> tuple[str, str | None, bool, bool]:
+        """ Split the stop query and timestamp using argparse """
         parser = arg_parser.Arguments()
         parser.add_argument("--time", nargs="+")
         parser.add_argument("--show-terminating", default=False, action="store_true")
@@ -370,6 +370,25 @@ class Timetables(University, Luas, name="Timetables"):
         else:
             timestamp = None
         return query, timestamp, args.show_terminating, True
+
+    @staticmethod
+    def get_route_query_and_timestamp(query: str) -> tuple[str, str | None, int, bool]:
+        """ Split the route query and timestamp using argparse """
+        parser = arg_parser.Arguments()
+        parser.add_argument("--time", nargs="+")
+        parser.add_argument("query", nargs="+")
+        parser.add_argument("--outbound", "-o", default=True, action="store_true")
+        parser.add_argument("--inbound", "-i", dest="outbound", action="store_false")
+        args, valid_check = parser.parse_args(query)
+        if not valid_check:
+            return args, None, -1, False
+        query = " ".join(args.query)
+        if args.time is not None:
+            timestamp = " ".join(args.time)
+        else:
+            timestamp = None
+        # direction 0 = outbound, direction 1 = inbound
+        return query, timestamp, int(not args.outbound), True
 
     @staticmethod
     def parse_timestamp(timestamp: str | None) -> tuple[time.datetime | None, bool]:
@@ -452,7 +471,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     async def get_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[dict, dict]:
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
-        if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):
+        if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):  # type: ignore
             try:
                 with open(timetables.real_time_filename, "rb") as file:
                     data: bytes = file.read()
@@ -905,6 +924,7 @@ class Timetables(University, Luas, name="Timetables"):
         return [app_commands.Choice(name=route_name, value=route_id) for route_id, route_name, _ in results[:25]]
 
     @tfi_schedules.command(name="stop")
+    @app_commands.rename(stop_query="stop")
     @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
     @app_commands.describe(
         stop_query="The ID, code, or name of the stop for which you want to see the schedule",
@@ -916,7 +936,7 @@ class Timetables(University, Luas, name="Timetables"):
         message = await self.wait_for_initialisation(ctx)
         # language = ctx.language2("en")
         if ctx.interaction is None:
-            stop_query, timestamp, show_terminating, valid_check = self.get_query_and_timestamp(stop_query)
+            stop_query, timestamp, show_terminating, valid_check = self.get_stop_query_and_timestamp(stop_query)
             if not valid_check:
                 return await message.edit(content=stop_query)
         else:
@@ -950,19 +970,19 @@ class Timetables(University, Luas, name="Timetables"):
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
     @tfi_schedules.command(name="hub", aliases=["collection"])
+    @app_commands.rename(hub_id="hub")
     @app_commands.autocomplete(hub_id=tfi_hub_autocomplete)
     @app_commands.describe(
         hub_id="The stop hub for which schedules should be fetched",
         timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)",
         show_terminating="Leave empty to hide arrivals that terminate at this stop. Add any text here to show them."
     )
-    @app_commands.rename(hub_id="hub")
     async def tfi_schedules_hub(self, ctx: commands.Context, *, hub_id: str, timestamp: str = None, show_terminating: str = None):  # timestamp arg will be used by the slash command
         """ Show the next departures for a specific stop """
         message = await self.wait_for_initialisation(ctx)
         # language = ctx.language2("en")
         if ctx.interaction is None:
-            hub_id, timestamp, show_terminating, valid_check = self.get_query_and_timestamp(hub_id)
+            hub_id, timestamp, show_terminating, valid_check = self.get_stop_query_and_timestamp(hub_id)
             if not valid_check:
                 return await message.edit(content=hub_id)
         else:
@@ -992,11 +1012,50 @@ class Timetables(University, Luas, name="Timetables"):
             raise
         return await message.edit(content=schedule.output, view=timetables.HubScheduleView(ctx.author, message, schedule, ctx=ctx))
 
-    @tfi.command(name="map")
-    @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
+    @tfi_schedules.command(name="route")
+    @app_commands.rename(route_query="route")
+    @app_commands.autocomplete(route_query=tfi_route_autocomplete)
     @app_commands.describe(
-        stop_query="The ID, code, or name of the stop for which you want to see the schedule",
+        route_query="The number (and optionally destinations) of the route or its ID",
+        timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)",
+        direction="The direction for which to look up the timetable (inbound or outbound)"
     )
+    async def tfi_schedules_route(self, ctx: commands.Context, *, route_query: str, timestamp: str = None, direction: str = None):
+        """ Show the timetable for a route """
+        message = await self.wait_for_initialisation(ctx)
+        if ctx.interaction is None:
+            route_query, timestamp, direction_id, valid_check = self.get_route_query_and_timestamp(route_query)
+            if not valid_check:
+                return await message.edit(content=route_query)
+        else:
+            direction = direction.lower()
+            if direction in ("0", "in", "inbound"):
+                direction_id = 0
+            elif direction in ("1", "out", "outbound"):
+                direction_id = 1
+            else:
+                return await message.edit(content=f"Unknown direction {direction} - Must be either \"inbound\" or \"outbound\"")
+        now, valid_check = self.parse_timestamp(timestamp)
+        if not valid_check:
+            return await message.edit(content="Invalid timestamp. Make sure it is in the following format: `YYYY-MM-DD HH:MM:SS`.")
+        routes = self.find_route(route_query)
+        if len(routes) != 1:
+            start = "No routes were found" if len(routes) < 1 else "More than one route was found"
+            return await message.edit(content=f"{start} for your search query ({route_query}).\nUse `{ctx.prefix}tfi search route` to find your specific route's ID, or provide a more specific query.")
+        route = routes[0]
+        await self._soft_limit_warning(ctx)
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        try:
+            schedule = await timetables.RouteScheduleViewer.load(self.static_data, route, now, direction_id)
+        except Exception:
+            raise
+        view = timetables.RouteScheduleView(ctx.author, message, schedule, ctx=ctx)
+        return await message.edit(content=view.content, view=view)
+
+    @tfi.command(name="map")
+    @app_commands.rename(stop_query="stop")
+    @app_commands.autocomplete(stop_query=tfi_stop_autocomplete)
+    @app_commands.describe(stop_query="The ID, code, or name of the stop for which you want to see the schedule")
     async def tfi_stop_map(self, ctx: commands.Context, *, stop_query: str):
         """ Show a map of the area around a stop, including any buses nearby. """
         message = await self.wait_for_initialisation(ctx)

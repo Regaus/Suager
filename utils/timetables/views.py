@@ -10,11 +10,11 @@ from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.shared import get_data_database, NUMBERS
-from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer, VehicleDataViewer, RouteVehiclesViewer
+from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer, VehicleDataViewer, RouteVehiclesViewer, RouteScheduleViewer
 from utils.views import NumericInputModal, SelectMenu
 
 __all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView",
-           "VehicleDataView", "RouteVehiclesView")
+           "VehicleDataView", "RouteVehiclesView", "RouteScheduleView")
 
 
 class StopScheduleView(views.InteractiveView):
@@ -565,27 +565,19 @@ class HubRouteFilterView(views.InteractiveView):
         return await self.original_view.apply_route_filter(interaction, self.stop_idx, None, self.message)
 
 
-class TripDiagramView(views.InteractiveView):
-    """ A view for displaying the list of all stops in a trip """
-    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer, *, try_full_fetch: bool = True):
-        super().__init__(sender=sender, message=message, timeout=3600, try_full_fetch=try_full_fetch)
+class PaginatorView(views.InteractiveView):
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer | RouteScheduleViewer, *,
+                 ctx: commands.Context | discord.Interaction = None, try_full_fetch: bool = True):
+        super().__init__(sender=sender, message=message, timeout=3600, ctx=ctx, try_full_fetch=try_full_fetch)
         self.viewer = viewer
-        self.command = f"{self.__class__.__name__} {self.viewer.trip_identifier}"
-        self._stop = self.viewer.stop
-        self.display_page = self.viewer.current_stop_page
+        self.display_page = 0
         self.update_page_labels()
-        self.update_compact_mode_button()
-        self.refreshing: bool = False
-
         # Set special names for logging purposes
         self.first_page.log_label = "First page"
         self.prev_page.log_label = "Previous page"
         self.curr_page.log_label = "Current page"
         self.next_page.log_label = "Next page"
         self.last_page.log_label = "Last page"
-
-        if not self.viewer.is_real_time:
-            self.remove_item(self.refresh_button)
 
     @property
     def pages(self) -> list[str]:
@@ -665,6 +657,48 @@ class TripDiagramView(views.InteractiveView):
         self.display_page = self.page_count - 1
         return await self.update_message()
 
+    @discord.ui.button(label="Go to page", emoji="➡️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to a user-specified page """
+        return await interaction.response.send_modal(GoToPageModal(self))  # type: ignore
+
+
+class GoToPageModal(NumericInputModal):
+    """ Modal for setting the offset to a certain number """
+    interface: PaginatorView
+
+    def __init__(self, interface: PaginatorView):
+        super().__init__(interface, "Go to page")
+        self.minimum = 1
+        self.maximum = self.interface.page_count
+        if self.maximum < self.minimum:
+            self.maximum = self.minimum
+        self.text_input.label = f"Enter page number to go to ({self.minimum} - {self.maximum}):"
+        self.text_input.min_length = 1
+        self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))
+
+    @override
+    async def submit_handler(self, interaction: discord.Interaction, value: int):
+        await interaction.response.defer()  # type: ignore
+        self.interface.display_page = value - 1
+        return await self.interface.update_message()
+
+
+class TripDiagramView(PaginatorView):
+    """ A view for displaying the list of all stops in a trip """
+    viewer: TripDiagramViewer
+
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: TripDiagramViewer, *, try_full_fetch: bool = True):
+        super().__init__(sender=sender, message=message, viewer=viewer, try_full_fetch=try_full_fetch)
+        self.display_page = self.viewer.current_stop_page
+        self.command = f"{self.__class__.__name__} {self.viewer.trip_identifier}"
+        self._stop = self.viewer.stop
+        # self.update_compact_mode_button()
+        self.refreshing: bool = False
+
+        if not self.viewer.is_real_time:
+            self.remove_item(self.refresh_button)
+
     @discord.ui.button(label="Refresh", emoji="🔄", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         """ Refresh the real-time data """
@@ -679,11 +713,6 @@ class TripDiagramView(views.InteractiveView):
             await self.disable_button(self.message, button, cooldown=60)
         finally:
             self.refreshing = False
-
-    @discord.ui.button(label="Go to page", emoji="➡️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
-    async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):
-        """ Go to a user-specified page """
-        return await interaction.response.send_modal(GoToPageModal(self))  # type: ignore
 
     def update_compact_mode_button(self):
         labels = {  # Current state number -> next state
@@ -734,27 +763,6 @@ class TripDiagramView(views.InteractiveView):
             raise
         view = TripMapView(interaction.user, message, map_viewer, try_full_fetch=False)
         return await view.update_message()
-
-
-class GoToPageModal(NumericInputModal):
-    """ Modal for setting the offset to a certain number """
-    interface: TripDiagramView
-
-    def __init__(self, interface: TripDiagramView):
-        super().__init__(interface, "Go to page")
-        self.minimum = 1
-        self.maximum = self.interface.page_count
-        if self.maximum < self.minimum:
-            self.maximum = self.minimum
-        self.text_input.label = f"Enter page number to go to ({self.minimum} - {self.maximum}):"
-        self.text_input.min_length = 1
-        self.text_input.max_length = max(len(str(self.minimum)), len(str(self.maximum)))
-
-    @override
-    async def submit_handler(self, interaction: discord.Interaction, value: int):
-        await interaction.response.defer()  # type: ignore
-        self.interface.display_page = value - 1
-        return await self.interface.update_message()
 
 
 class TripMapView(views.InteractiveView):
@@ -1067,3 +1075,39 @@ class RouteVehiclesModelListView(views.InteractiveView):
         await self.message.delete()
         await self.original_view.enable_bus_models_button()
         self.stop()
+
+
+class RouteScheduleView(PaginatorView):
+    viewer: RouteScheduleViewer
+
+    def __init__(self, sender: discord.Member, message: discord.Message, viewer: RouteScheduleViewer, ctx: commands.Context | discord.Interaction = None):
+        super().__init__(sender=sender, message=message, viewer=viewer, ctx=ctx)
+
+    def update_compact_mode_button(self):
+        labels = {  # Current state number -> next state
+            0: "Shorten stop names",
+            1: "Compact mode",
+            2: "Show full names"
+        }
+        self.shorten_stop_names.label = labels[self.viewer.compact_mode]
+
+    @discord.ui.button(label="Shorten stop names", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def shorten_stop_names(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Toggle showing shorter or full stop names """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.compact_mode = (self.viewer.compact_mode + 1) % 3  # rotate between 0, 1, 2
+        self.viewer.update_output()
+        self.update_compact_mode_button()
+        return await self.update_message()
+
+    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Hide the view, instead of closing it altogether """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=views.HiddenView(self))
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=1)  # Red, second row
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=None)

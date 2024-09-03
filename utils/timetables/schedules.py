@@ -3,13 +3,14 @@ from typing import Optional
 
 from regaus import time
 
+from utils import database
 from utils.timetables.shared import TIMEZONE, get_database, get_data_database
 from utils.timetables.static import *
 from utils.timetables.realtime import *
 
 __all__ = (
-    "SpecificStopTime", "AddedStopTime", "RealStopTime",
-    "StopSchedule", "RealTimeStopSchedule", "real_trip_updates", "trip_validity"
+    "trip_validity", "SpecificStopTime", "AddedStopTime", "RealStopTime", "ScheduledTrip",
+    "StopSchedule", "RealTimeStopSchedule", "real_trip_updates", "RouteSchedule"
 )
 
 
@@ -407,6 +408,41 @@ class RealStopTime:
         # return f"RealStopTime - [{self.schedule_relationship}] {self.available_departure_time} to <Unknown> (Stop {stop.name} - #{self.sequence}, Trip {self.trip_id})"
 
 
+class ScheduledTrip:
+    """ A Trip that carries information about its scheduling """
+    def __init__(self, trip: Trip, stop_times: list[StopTime], date: time.date, *, day_modifier: int = 0):
+        self.raw_trip: Trip = trip
+        self.raw_stop_times: list[StopTime] = stop_times
+        self.trip_id: str = self.raw_trip.trip_id
+        self.route_id: str = self.raw_trip.route_id
+        self.calendar_id: str = self.raw_trip.calendar_id
+        self.headsign: str = self.raw_trip.headsign
+        self.short_name: str = self.raw_trip.short_name
+        self.direction_id: int = self.raw_trip.direction_id
+        self.block_id: str = self.raw_trip.block_id
+        self.shape_id: str = self.raw_trip.shape_id
+        self.total_stops: int = self.raw_trip.total_stops
+        self.start_date: time.date = date
+        self.day_modifier: int = day_modifier
+        self.trip_identifier: str = f"{self.trip_id}||{self.day_modifier}"
+        self.stop_times: list[SpecificStopTime] = []
+        for stop_time in self.raw_stop_times:
+            self.stop_times.append(SpecificStopTime(stop_time, self.start_date, day_modifier=self.day_modifier))
+        self.departure_time = self.stop_times[0].departure_time
+
+    def route(self, data: GTFSData = None, db: database.Database = None) -> Route:
+        return self.raw_trip.route(data, db)
+
+    def calendar(self, data: GTFSData = None, db: database.Database = None) -> Calendar:
+        return self.raw_trip.calendar(data, db)
+
+    def shape(self, data: GTFSData = None, db: database.Database = None) -> Shape:
+        return self.raw_trip.shape(data, db)
+
+    def __repr__(self):
+        # ScheduledTrip 3626_209 - 2023-10-14 02:00:00 to Charlesland, stop 7462 (93 stops) - Route 3626_39040
+        return f"{self.__class__.__name__} {self.trip_id} - {self.departure_time} to {self.headsign} ({self.total_stops} stops) - Route {self.route_id}"
+
 # @dataclass()
 # class TripSchedule:
 #     trip: Trip
@@ -631,3 +667,52 @@ class RealTimeStopSchedule:
 
     def __repr__(self):
         return f"Real-Time Stop Schedule for {self.stop}"
+
+
+class RouteSchedule:
+    def __init__(self, data: GTFSData, route: Route):  # route_id: str
+        self.data = data
+        self.db = get_database()
+        self.route: Route = route
+        self.route_id: str = self.route.id
+        # self.route: Route = load_value(self.data, Route, route_id, self.db)
+        # self.route_id = self.route.id
+
+        self.all_trips: dict[str, Trip] = {}
+        self.stop_times: dict[str, list[StopTime]] = {}
+
+        # The data is loaded into GTFSData so that it can be fetched by the StopSchedule or similar
+        trips = Trip.from_route(self.route.id, self.db)
+        for trip in trips:
+            self.all_trips[trip.trip_id] = trip
+            self.data.trips[trip.trip_id] = trip
+            self.stop_times[trip.trip_id] = StopTime.from_sql(trip.trip_id, self.db)
+            for stop_time in self.stop_times[trip.trip_id]:
+                if trip.trip_id not in self.data.stop_times:
+                    self.data.stop_times[trip.trip_id] = {}
+                self.data.stop_times[trip.trip_id][stop_time.stop_id] = stop_time
+
+    def relevant_trips_one_day(self, date: time.date, *, day_modifier: int = 0) -> list[ScheduledTrip]:
+        """ Get relevant trips and stop times for one day (all trips valid for date on GTFS data) """
+        db = get_database()
+        valid_trips: list[ScheduledTrip] = []
+        for trip_id, trip in self.all_trips.items():
+            if trip_validity(self.data, trip, date, db):
+                valid_trips.append(ScheduledTrip(trip, self.stop_times[trip_id], date, day_modifier=day_modifier))
+
+        valid_trips.sort(key=lambda t: t.departure_time)
+        return valid_trips
+
+    def relevant_trips(self, date: time.date) -> list[ScheduledTrip]:
+        """ Get relevant trips and stop times from 00:00 until end of the day """
+        yesterday = self.relevant_trips_one_day(date - time.timedelta(days=1), day_modifier=-1)
+        today = self.relevant_trips_one_day(date, day_modifier=0)
+        valid_trips: list[ScheduledTrip] = []
+        today_datetime = time.datetime.combine(date, time.time(), tz=TIMEZONE)
+        for trip in yesterday:  # Only add trips from yesterday that start at/after midnight today
+            if trip.departure_time >= today_datetime:
+                valid_trips.append(trip)
+        return valid_trips + today
+
+    def __repr__(self):
+        return f"Route Schedule for {self.route}"

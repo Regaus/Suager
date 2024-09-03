@@ -501,3 +501,7 @@
 
 ## v0.14.1.1 - 3 September 2024
 - Fixed trips not showing up on the RouteVehiclesViewer where they are valid for yesterday but not today
+
+## v1.0.0a1 - 3 September 2024
+- Added a command to view the schedule of a route
+  - Only uses static data
