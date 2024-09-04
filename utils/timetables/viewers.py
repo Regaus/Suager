@@ -14,7 +14,7 @@ from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, 
 from utils.timetables.schedules import trip_validity, SpecificStopTime, RealStopTime, ScheduledTrip, StopSchedule, RealTimeStopSchedule, RouteSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop, get_nearest_stop
 
-__all__ = ("StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripMapViewer", "MapViewer",
+__all__ = ("INBOUND_DIRECTION_ID", "StopScheduleViewer", "HubScheduleViewer", "TripDiagramViewer", "TripMapViewer", "MapViewer",
            "VehicleDataViewer", "RouteVehiclesViewer", "RouteScheduleViewer")
 
 
@@ -1575,9 +1575,10 @@ class RouteScheduleViewer:
         return {0: 6, 1: 3, 2: 1}[self.compact_mode]
 
     def get_indexes(self):
+        # TODO: Try to find a more accurate way to do this (accounting for trips that don't originate at the first stop)
         start_idx = 0
         for i, trip in enumerate(self.relevant_trips):
-            if trip.departure_time <= self.now:
+            if trip.departure_time < self.now:  # Do show trips that depart exactly now
                 start_idx += 1
             else:
                 break
@@ -1624,7 +1625,7 @@ class RouteScheduleViewer:
         output: list[ScheduledTrip] = []
         times: list[dict[int, time.datetime]] = []
         stop_order = self.relevant_stop_order
-        prev_stops: set = set()
+        # prev_stops: set = set()
         for trip in filter(lambda t: t.direction_id == self.direction, self.all_trips):  # type: ScheduledTrip
             stop_times: list[SpecificStopTime] = trip.stop_times
             trip_times: dict[int, time.datetime] = {stop_order[stop_time.stop_id]: stop_time.departure_time for stop_time in stop_times}
@@ -1634,25 +1635,29 @@ class RouteScheduleViewer:
                 output.append(trip)
                 times.append(trip_times)
             else:
-                shared = prev_stops.intersection(trip_stops)
                 idx = len(output)
-                if shared:
-                    seq = min(shared)
-                    for other_times in times[::-1]:
+                for other_times in times[::-1]:
+                    shared = trip_stops.intersection(other_times)
+                    if shared:
+                        seq = min(shared)
                         if other_times[seq] > trip_times[seq]:
                             idx -= 1
                         else:
                             break
-                else:  # I don't know how this would happen, but if it does, try to guess based on the trip departure times
-                    for other_trip in output[::-1]:
-                        if other_trip.departure_time > trip.departure_time:
-                            idx -= 1
-                        else:
-                            break
+                    else:  # This shouldn't happen on a normal route, but if it does, try to find a trip that does share at least some of the stops...
+                        continue
+                        # other_trip = output[idx - 1]
+                        # if other_trip.departure_time > trip.departure_time:
+                        #     idx -= 1
+                        # else:
+                        #     break
                 output.insert(idx, trip)
                 times.insert(idx, trip_times)
-            prev_stops = trip_stops
+            # prev_stops = trip_stops
         return output
+
+    def update_relevant_trips(self):
+        self.relevant_trips = self.get_relevant_trips()
 
     @property
     def relevant_stop_order(self) -> dict[str, int]:
@@ -1733,7 +1738,9 @@ class RouteScheduleViewer:
         operator = self.route.agency(self.static_data, self.db).name
         output = (f"Route schedule for the route {self.route.short_name} ({self.route.long_name}).\nShowing {direction} trips\n"
                   f"-# Route operated by {operator}\n```fix\n{generate_line(header_line)}")
-        suffix = "```\n-# Note: This schedule is static and does not take real-time data into account."
+        suffix = ("```\n-# Note: This schedule is static and does not take real-time data into account.\n"
+                  "-# Use the first row of buttons to scroll through the list of stops.\n"
+                  "-# Use the second row of buttons to see earlier or later departures.")
         paginator = paginators.LinePaginator(prefix=output, suffix=suffix, max_lines=PAGINATOR_MAX_LINES, max_size=PAGINATOR_MAX_LENGTH)
         for line in output_data:
             paginator.add_line(generate_line(line))

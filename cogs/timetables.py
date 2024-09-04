@@ -491,14 +491,14 @@ class Timetables(University, Luas, name="Timetables"):
     # async def on_ready(self):
     #     await asyncio.sleep(60)  # To let the other bots load before we freeze the machine for half a minute
 
-    async def load_data(self, *, force_redownload: bool = False, force_reload: bool = False):
+    async def load_data(self, *, force_redownload: bool = False, force_reload: bool = False, ignore_real_time: bool = False):
         """ Load the GTFS-R and static GTFS data only when needed """
         static_reload = False
         try:
             cpu_burner.arr[2] = False  # Disable the CPU burner function while loading the GTFS data
             self.loader_error = None  # Reset any previous error encountered
             self.updating = True
-            if not self.real_time_data:
+            if not ignore_real_time and not self.real_time_data:
                 await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
             if force_redownload or force_reload or self.static_data is None:
                 try:
@@ -562,13 +562,13 @@ class Timetables(University, Luas, name="Timetables"):
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > {message}")
         self.updating = False
 
-    async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False, force_reload: bool = False) -> discord.Message:
+    async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False, force_reload: bool = False, ignore_real_time: bool = False) -> discord.Message:
         """ Initialise the data before letting the actual command execute """
         # If self.updating is True, then the data is already being loaded
         # If force_redownload is True, then we need to reload regardless of the status
         if force_redownload or force_reload or (not self.initialised and not self.updating):
             message = await ctx.send(f"{emotes.Loading} The GTFS data has not been initialised yet. This may take a few minutes...")
-            await self.load_data(force_redownload=force_redownload, force_reload=force_reload)
+            await self.load_data(force_redownload=force_redownload, force_reload=force_reload, ignore_real_time=ignore_real_time)
         elif self.updating:
             message = await ctx.send(f"{emotes.Loading} The GTFS data used by this bot is currently being updated and is therefore unavailable. This may take a few minutes...")
         else:
@@ -1020,9 +1020,9 @@ class Timetables(University, Luas, name="Timetables"):
         timestamp="The time for which to load the schedule (format: `YYYY-MM-DD HH:MM:SS`)",
         direction="The direction for which to look up the timetable (inbound or outbound)"
     )
-    async def tfi_schedules_route(self, ctx: commands.Context, *, route_query: str, timestamp: str = None, direction: str = None):
+    async def tfi_schedules_route(self, ctx: commands.Context, *, route_query: str, timestamp: str = None, direction: str = "outbound"):
         """ Show the timetable for a route """
-        message = await self.wait_for_initialisation(ctx)
+        message = await self.wait_for_initialisation(ctx, ignore_real_time=True)
         if ctx.interaction is None:
             route_query, timestamp, direction_id, valid_check = self.get_route_query_and_timestamp(route_query)
             if not valid_check:
@@ -1030,9 +1030,9 @@ class Timetables(University, Luas, name="Timetables"):
         else:
             direction = direction.lower()
             if direction in ("0", "in", "inbound"):
-                direction_id = 0
+                direction_id = timetables.INBOUND_DIRECTION_ID
             elif direction in ("1", "out", "outbound"):
-                direction_id = 1
+                direction_id = timetables.INBOUND_DIRECTION_ID ^ 1  # Opposite of that value
             else:
                 return await message.edit(content=f"Unknown direction {direction} - Must be either \"inbound\" or \"outbound\"")
         now, valid_check = self.parse_timestamp(timestamp)
@@ -1044,7 +1044,6 @@ class Timetables(University, Luas, name="Timetables"):
             return await message.edit(content=f"{start} for your search query ({route_query}).\nUse `{ctx.prefix}tfi search route` to find your specific route's ID, or provide a more specific query.")
         route = routes[0]
         await self._soft_limit_warning(ctx)
-        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
         try:
             schedule = await timetables.RouteScheduleViewer.load(self.static_data, route, now, direction_id)
         except Exception:

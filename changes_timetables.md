@@ -505,3 +505,10 @@
 ## v1.0.0a1 - 3 September 2024
 - Added a command to view the schedule of a route
   - Only uses static data
+
+## v1.0.0 - 3 September 2024
+- The RouteScheduleViewer no longer loads real-time data (since it is not used)
+- Added buttons to show earlier and later departures
+  - Also added a button to jump to a specific time
+- Added buttons to flip the direction without having to call the command again
+- Fixed the route schedule completely breaking on routes that do weird stuff

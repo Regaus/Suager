@@ -5,12 +5,14 @@ import json
 from typing import override
 
 import discord
+from regaus import time
 
 from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.maps import DEFAULT_ZOOM
-from utils.timetables.shared import get_data_database, NUMBERS
-from utils.timetables.viewers import StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer, VehicleDataViewer, RouteVehiclesViewer, RouteScheduleViewer
+from utils.timetables.shared import get_data_database, NUMBERS, TIMEZONE
+from utils.timetables.viewers import (INBOUND_DIRECTION_ID, StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer,
+                                      VehicleDataViewer, RouteVehiclesViewer, RouteScheduleViewer)
 from utils.views import NumericInputModal, SelectMenu
 
 __all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView",
@@ -1082,6 +1084,112 @@ class RouteScheduleView(PaginatorView):
 
     def __init__(self, sender: discord.Member, message: discord.Message, viewer: RouteScheduleViewer, ctx: commands.Context | discord.Interaction = None):
         super().__init__(sender=sender, message=message, viewer=viewer, ctx=ctx)
+        self.bot = ctx.bot
+        self.first_page.emoji = "<:23ee_up:1280620615702675588>"
+        self.prev_page.emoji = "🔼"
+        self.next_page.emoji = "🔽"
+        self.last_page.emoji = "<:23ee_down:1280620613752590387>"
+
+        self.update_departure_buttons()
+        self.update_direction_button()
+
+    async def update_message(self):
+        self.update_departure_buttons()
+        return await super().update_message()
+
+    # def page_from_index(self, index: int):
+    #     # This may not always be accurate, but oh well
+    #     return (index // self.viewer.departures) + 1
+
+    def update_departure_buttons(self):
+        if self.viewer.departures > 1:
+            self.curr_departures.label = f"{self.viewer.start_idx + 1} - {self.viewer.end_idx}"
+        else:
+            self.curr_departures.label = str(self.viewer.start_idx + 1)
+        self.last_departure.label = str(len(self.viewer.relevant_trips))
+        self.next_departures.disabled = self.last_departure.disabled = self.viewer.index_offset >= self.max_offset
+        self.prev_departures.disabled = self.first_departure.disabled = self.viewer.index_offset <= self.min_offset
+        # self.curr_departures.label = str(self.page_from_index(self.viewer.start_idx))
+        # self.last_departure.label = str(self.page_from_index(len(self.viewer.relevant_trips) - self.viewer.departures))
+
+    @property
+    def min_offset(self):
+        return -self.viewer.start_idx + self.viewer.index_offset
+
+    @property
+    def max_offset(self):
+        return len(self.viewer.relevant_trips) - self.viewer.start_idx - self.viewer.departures + self.viewer.index_offset
+
+    @discord.ui.button(emoji="⏮️", label="1", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def first_departure(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to the first departure for today """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.index_offset = self.min_offset
+        self.viewer.update_output()
+        return await self.update_message()
+
+    @discord.ui.button(emoji="◀️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def prev_departures(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Show the previous departures """
+        await interaction.response.defer()  # type: ignore
+        if self.viewer.start_idx <= 0:  # Maybe replace with index calculations?
+            return await interaction.followup.send(f"{emotes.Deny} There are no earlier departures on this day.", ephemeral=True)
+        if self.viewer.index_offset - self.viewer.departures < self.min_offset:
+            self.viewer.index_offset = self.min_offset
+        else:
+            self.viewer.index_offset -= self.viewer.departures
+        self.viewer.update_output()
+        return await self.update_message()
+
+    @discord.ui.button(label="1", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def curr_departures(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Indicates the current page number (in terms of departures), does nothing """
+        await interaction.response.defer()  # type: ignore
+        return await self.update_message()
+
+    @discord.ui.button(emoji="▶️", style=discord.ButtonStyle.primary, row=1)  # Blue, second row
+    async def next_departures(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Show the next departures """
+        await interaction.response.defer()  # type: ignore
+        if self.viewer.end_idx >= len(self.viewer.relevant_trips):  # Maybe replace with index calculations?
+            return await interaction.followup.send(f"{emotes.Deny} There are no later departures on this day.", ephemeral=True)
+        if self.viewer.index_offset + self.viewer.departures > self.max_offset:
+            self.viewer.index_offset = self.max_offset
+        else:
+            self.viewer.index_offset += self.viewer.departures
+        self.viewer.update_output()
+        return await self.update_message()
+
+    @discord.ui.button(emoji="⏭️", label="1", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def last_departure(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to the last departure for today """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.index_offset = self.max_offset
+        self.viewer.update_output()
+        return await self.update_message()
+
+    @discord.ui.button(label="Go to page", emoji="➡️", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
+    async def go_to_page(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Go to a user-specified page """
+        return await interaction.response.send_modal(GoToPageModal(self))  # type: ignore
+
+    @discord.ui.button(label="Jump to time", emoji="🕒", style=discord.ButtonStyle.primary, row=2)  # Blue, third row
+    async def jump_to_time(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Jump to a given time """
+        return await interaction.response.send_modal(JumpToTimeModal(self))  # type: ignore
+
+    async def jump_to_time_response(self, interaction: discord.Interaction, delta: time.timedelta):
+        await interaction.response.defer()  # type: ignore
+        self.viewer.now = time.datetime.combine(self.viewer.today, time.time(), tz=TIMEZONE) + delta
+        self.viewer.index_offset = 0
+        self.viewer.update_output()
+        await self.update_message()
+        new_time = delta.format("%H:%M:%S")
+        if delta.days:
+            h = int(delta.total_seconds()) // 3600
+            ms = delta.format("%M:%S")
+            new_time = f"{h}:{ms}"
+        return await interaction.followup.send(f"Now showing departures after {new_time}.", ephemeral=True)
 
     def update_compact_mode_button(self):
         labels = {  # Current state number -> next state
@@ -1091,7 +1199,7 @@ class RouteScheduleView(PaginatorView):
         }
         self.shorten_stop_names.label = labels[self.viewer.compact_mode]
 
-    @discord.ui.button(label="Shorten stop names", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    @discord.ui.button(label="Shorten stop names", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def shorten_stop_names(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Toggle showing shorter or full stop names """
         await interaction.response.defer()  # type: ignore
@@ -1100,14 +1208,74 @@ class RouteScheduleView(PaginatorView):
         self.update_compact_mode_button()
         return await self.update_message()
 
-    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    @discord.ui.button(label="Hide view", emoji="⏸️", style=discord.ButtonStyle.secondary, row=2)  # Grey, third row
     async def hide_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Hide the view, instead of closing it altogether """
         await interaction.response.defer()  # type: ignore
         await self.message.edit(view=views.HiddenView(self))
 
-    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=1)  # Red, second row
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=2)  # Red, third row
     async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
         """ Close the view """
         await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
+
+    def update_direction_button(self):
+        if self.viewer.direction == INBOUND_DIRECTION_ID:
+            self.flip_direction.label = "Show outbound trips"
+        else:
+            self.flip_direction.label = "Show inbound trips"
+
+    @discord.ui.button(label="Flip direction", emoji="🔀", style=discord.ButtonStyle.secondary, row=3)  # Grey, fourth row
+    async def flip_direction(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Flip the direction of trips being shown """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.direction ^= 1
+        self.viewer.update_relevant_trips()
+        self.viewer.update_output()
+        self.update_direction_button()
+        await self.update_message()
+
+
+class JumpToTimeModal(views.Modal):
+    interface: RouteScheduleView
+    text_input: discord.ui.TextInput[JumpToTimeModal] = discord.ui.TextInput(label="Time to go to", placeholder="HH:MM or HH:MM:SS", style=discord.TextStyle.short)
+
+    def __init__(self, interface: RouteScheduleView):
+        super().__init__(interface, "Jump to Time")
+
+    @override
+    def _interaction_description(self) -> str:
+        return self.text_input.value
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            if not self.text_input.value:
+                raise ValueError("Value was not filled")
+            value = self.text_input.value
+            count = value.count(":")
+            if count == 1:  # 1 colon = 2 parts
+                h, m = value.split(":")
+                s = "0"
+            elif count == 2:
+                h, m, s = value.split(":")
+            else:
+                return await interaction.response.send_message(f"Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+            if not all((h.isdigit(), m.isdigit(), s.isdigit())):
+                return await interaction.response.send_message(f"Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+            h, m, s = int(h), int(m), int(s)
+            if h < 0 or h > 31:  # For whatever reason, departures from the first stop can go up to 31:20:00
+                return await interaction.response.send_message(f"Hour must be between 0 and 31.", ephemeral=True)  # type: ignore
+            if m < 0 or m > 59:
+                return await interaction.response.send_message(f"Minute must be between 0 and 59.", ephemeral=True),  # type: ignore
+            if s < 0 or s > 59:
+                return await interaction.response.send_message(f"Second must be between 0 and 59.", ephemeral=True),  # type: ignore
+            self._log_interaction(interaction)  # Only log the interaction if it is valid
+            delta = time.timedelta(hours=h, minutes=m, seconds=s)
+            return await self.interface.jump_to_time_response(interaction, delta)
+        except ValueError:
+            if self.text_input.value:
+                content = f"`{self.text_input.value}` could not be converted to a valid time."
+            else:
+                content = f"You need to enter a value."
+            await interaction.response.send_message(content=content, ephemeral=True)  # type: ignore
