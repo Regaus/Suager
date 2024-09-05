@@ -512,3 +512,6 @@
   - Also added a button to jump to a specific time
 - Added buttons to flip the direction without having to call the command again
 - Fixed the route schedule completely breaking on routes that do weird stuff
+
+## v1.0.1 - 5 September 2024
+- The RouteVehiclesViewer now shows cancelled trips

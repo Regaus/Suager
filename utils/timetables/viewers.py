@@ -1435,7 +1435,7 @@ class RouteVehiclesViewer:
         vehicle_ids: dict[str, str] = {}  # vehicle_ids[trip_id] = vehicle_id
         visited_trips: set[tuple[str, time.date]] = set()  # Ignore static trips for which we already gathered real-time data
 
-        def handle_trip(_trip: Trip | TripUpdate, day: time.datetime | time.date, is_static: bool):
+        def handle_trip(_trip: Trip | TripUpdate, day: time.datetime | time.date, is_static: bool, cancelled: bool = False):
             if isinstance(_trip, Trip):
                 if (_trip.trip_id, day) in visited_trips:
                     return
@@ -1468,42 +1468,48 @@ class RouteVehiclesViewer:
             # This might show buses that have already arrived at the terminus or have not yet departed, but it should be fine.
             if _check_departure < now < _check_arrival:  # The trip is currently running
                 relevant_list = inbound if direction == INBOUND_DIRECTION_ID else outbound
-                if isinstance(_trip, Trip):
-                    vehicle_id = vehicle_ids.get(_trip.trip_id)
+                if cancelled:
+                    _vehicle_data = "Cancelled"
+                    _next_departure = ""
                 else:
-                    vehicle_id = _trip.vehicle_id
-                vehicle = self.vehicle_data.entities.get(vehicle_id)
-                if not vehicle:
-                    _vehicle_data = "No bus tracked"
-                else:
-                    fleet_vehicle = self.fleet_data.get(vehicle_id)
-                    if fleet_vehicle:
-                        fleet_number = fleet_vehicle.fleet_number
+                    if isinstance(_trip, Trip):
+                        vehicle_id = vehicle_ids.get(_trip.trip_id)
                     else:
-                        fleet_number = f"Unknown vehicle {vehicle_id}"
-                    nearest_stop = get_nearest_stop(_trip, vehicle, self.static_data)
-                    _vehicle_data = f"{fleet_number} - Currently near {nearest_stop.name}"
-                _next_departure = ""
-                if isinstance(_trip, Trip):
-                    _, next_trips = get_block_trips(_trip, date, _departure, self.static_data, self.db)
-                    if next_trips:
-                        _, _next_departure, _, next_destination = next_trips[0]
-                        _next_departure = f"\n  -# Next departure: {_next_departure:%H:%M} to {next_destination}"
+                        vehicle_id = _trip.vehicle_id
+                    vehicle = self.vehicle_data.entities.get(vehicle_id)
+                    if not vehicle:
+                        _vehicle_data = "No bus tracked"
+                    else:
+                        fleet_vehicle = self.fleet_data.get(vehicle_id)
+                        if fleet_vehicle:
+                            fleet_number = fleet_vehicle.fleet_number
+                        else:
+                            fleet_number = f"Unknown vehicle {vehicle_id}"
+                        nearest_stop = get_nearest_stop(_trip, vehicle, self.static_data)
+                        _vehicle_data = f"{fleet_number} - Currently near {nearest_stop.name}"
+                    _next_departure = ""
+                    if isinstance(_trip, Trip):
+                        _, next_trips = get_block_trips(_trip, date, _departure, self.static_data, self.db)
+                        if next_trips:
+                            _, _next_departure, _, next_destination = next_trips[0]
+                            _next_departure = f"\n  -# Next departure: {_next_departure:%H:%M} to {next_destination}"
                 trip_output = (_departure, _destination, _vehicle_data, _next_departure)
                 relevant_list.append(trip_output)
 
         for trip_update in self.real_time_data.entities.values():
             if trip_update.trip.route_id == self.route.id:
+                is_cancelled = trip_update.trip.schedule_relationship == "CANCELED"
                 if trip_update.trip.trip_id:
                     vehicle_ids[trip_update.trip.trip_id] = trip_update.vehicle_id
                 # This ignores added trips that show up in vehicle data but not real-time data, but I'm not really bothered to fix that
                 if trip_update.trip.schedule_relationship == "ADDED":
                     handle_trip(trip_update, trip_update.trip.start_date, False)  # The day variable doesn't matter for added trips
-                elif trip_update.vehicle_id:  # If there is a vehicle on this trip, try to show the trip if it exists in static data
+                # If there is a vehicle on this trip or the trip is cancelled, try to show the trip if it exists in static data or it is cancelled
+                elif trip_update.vehicle_id or is_cancelled:
                     try:
                         trip: Trip = load_value(self.static_data, Trip, trip_update.trip.trip_id)
                         start_date = time.datetime.combine(trip_update.trip.start_date, time.time(), tz=TIMEZONE)
-                        handle_trip(trip, start_date, False)
+                        handle_trip(trip, start_date, False, is_cancelled)
                     except KeyError:
                         continue
         for trip in today_trips:
