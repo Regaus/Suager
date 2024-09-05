@@ -187,11 +187,11 @@
   "info_stats_dates": "Dates",
   "info_stats_dates_data": "First version: **{first}**\nRelease {mjr}: **{major}**\nLast Update: **{last}**",
   "info_stats_developer": "Developer",
-  "info_stats_servers": "Server counters",
+  "info_stats_servers": "Server counts",
   "info_stats_servers_data": "Total servers: **{servers}**\nText channels: **{text}**\nCategories: **{cats}**\nVoice channels: **{voice}**",
   "info_stats_uptime": "Uptime",
   "info_stats_used": "What I use",
-  "info_stats_users": "User counters",
+  "info_stats_users": "User counts",
   "info_stats_users_data": "Total members: **{members}**\nUnique users: **{users}**\nAvg. members: **{avg}**",
   "info_stats_users_data2": "Total members: **{members}**\nUnique users: **{users}**",
 

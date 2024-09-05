@@ -1849,3 +1849,6 @@
 ## v7.8.1.2 - 2 September 2024
 - Fixed errors when message contents contained a null (`\x00`) character
 - ClientPayloadErrors will now be logged instead of crashing the entire command
+
+## v7.8.1.3 - 5 September 2024
+- Changed "counters" to "counts" in the `//info` command
