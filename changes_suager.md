@@ -1852,3 +1852,6 @@
 
 ## v7.8.1.3 - 5 September 2024
 - Changed "counters" to "counts" in the `//info` command
+
+## v7.8.1.4 - 6 September 2024
+- Fixed starboard statistics command breaking when the specified user does not have any starred messages

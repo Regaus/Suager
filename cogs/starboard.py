@@ -370,7 +370,7 @@ class Starboard(commands.Cog):
             embed = discord.Embed(colour=general.random_colour())
             data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, user.id, self.bot.name))
             if not data:
-                return await ctx.send(language.number("starboard_stats_none2", user=general.username(user)))
+                return await ctx.send(language.string("starboard_stats_none2", user=general.username(user)))
             stars = 0
             top = []
             for i, message in enumerate(data):
