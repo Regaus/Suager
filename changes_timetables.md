@@ -515,3 +515,7 @@
 
 ## v1.0.1 - 5 September 2024
 - The RouteVehiclesViewer now shows cancelled trips
+
+## v1.0.2 - 10 September 2024
+- Added a new stop hub: "Regaus Northbound"
+  - Includes the stops I usually transfer at when getting to university
