@@ -525,3 +525,6 @@
 
 ## v1.0.3.1 - 15 September 2024
 - Added Drumcondra stop hub
+
+## v1.0.3.2 - 15 September 2024
+- Added "timetables" as an alias to `i.tfi schedule` command group

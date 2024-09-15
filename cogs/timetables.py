@@ -865,7 +865,7 @@ class Timetables(University, Luas, name="Timetables"):
         #                   "*You can use both the route number and route destinations in your query, e.g. `155 Bray` or `4 Monkstown`. "
         #                   "However, the words have to match the beginning of the route's description (i.e. if it says \"Bray - IKEA Ballymun\", you cannot use `155 IKEA`).*")
 
-    @tfi.group(name="schedule", aliases=["schedules", "data", "info", "rtpi"], case_insensitive=True)
+    @tfi.group(name="schedule", aliases=["schedules", "timetable", "timetables", "data", "info", "rtpi", "tt"], case_insensitive=True)
     async def tfi_schedules(self, ctx: commands.Context):
         """ Commands that deal with schedules and real-time information """
         if ctx.invoked_subcommand is None:
