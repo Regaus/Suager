@@ -445,6 +445,8 @@ class HubScheduleView(views.InteractiveView):
             self.compact_mode_button.disabled = True
             # self.remove_item(self.compact_mode_button)
 
+        self.button_delta = time.timedelta(minutes=5)  # The delta to jump by on button presses
+
         self.stop_selector = HubStopSelector(self)
         self.add_item(self.stop_selector)
 
@@ -507,6 +509,100 @@ class HubScheduleView(views.InteractiveView):
         await interaction.response.defer()  # type: ignore
         await self.message.edit(view=None)
 
+    @staticmethod
+    def _format_delta(delta: time.timedelta, is_offset: bool) -> tuple[str, str]:
+        """ Return a string version of the delta """
+        def _s(number: int) -> str:
+            return "s" if number != 1 else ""
+
+        seconds = int(delta.total_seconds())
+        if seconds < 0:
+            seconds *= -1
+            word = " behind" if is_offset else "back"
+        elif seconds > 0:
+            word = " ahead" if is_offset else "forwards"
+        else:
+            return "zero", ""
+        hours, ms = divmod(seconds, 3600)
+        minutes, seconds = divmod(ms, 60)
+        output = []
+        if hours:
+            output.append(f"{hours} hour{_s(hours)}")
+        if minutes:
+            output.append(f"{minutes} minute{_s(minutes)}")
+        if seconds:
+            output.append(f"{seconds} second{_s(seconds)}")
+        return ", ".join(output), word
+
+    async def move_time_offset(self, interaction: discord.Interaction, delta: time.timedelta):
+        """ Jump back or forwards by a specified time """
+        await interaction.response.defer()  # type: ignore
+        self.viewer.now += delta
+        self.viewer.timedelta += delta
+        self.viewer.update_output()
+        await self.message.edit(content=self.viewer.output, view=self)
+        delta_str, word1 = self._format_delta(delta, False)
+        offset_str, word2 = self._format_delta(self.viewer.timedelta, True)
+        return await interaction.followup.send(f"Moved the schedule {word1} by {delta_str}. Total offset: {offset_str}{word2}.", ephemeral=True)
+
+    async def set_time_offset(self, interaction: discord.Interaction, offset: time.timedelta):
+        """ Set the time offset to the specified delta """
+        await interaction.response.defer()  # type: ignore
+        if self.viewer.fixed:
+            self.viewer.now = self.viewer.base_now + offset
+        else:
+            self.viewer.now = time.datetime.now(tz=TIMEZONE) + offset
+        self.viewer.timedelta = offset
+        self.viewer.update_output()
+        await self.message.edit(content=self.viewer.output, view=self)
+        if not offset:
+            return await interaction.followup.send("The offset has been reset to zero.", ephemeral=True)
+        offset_str, word = self._format_delta(self.viewer.timedelta, True)
+        return await interaction.followup.send(f"Set the time offset to {offset_str}{word}.", ephemeral=True)
+
+    @discord.ui.button(label="Jump 5 minutes back", emoji="◀️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def jump_back(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Jump 5 minutes back """
+        return await self.move_time_offset(interaction, -self.button_delta)
+
+    @discord.ui.button(label="Jump 5 minutes ahead", emoji="▶️", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def jump_ahead(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Jump 5 minutes forwards """
+        return await self.move_time_offset(interaction, self.button_delta)
+
+    @discord.ui.button(label="Set offset", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def set_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Set the offset to a specified delta """
+        return await interaction.response.send_modal(SetTimeOffsetModal(self))  # type: ignore
+
+    @discord.ui.button(label="Jump to time", style=discord.ButtonStyle.secondary, row=1)  # Grey, second row
+    async def jump_to_time(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Jump to a user-specified time """
+        return await interaction.response.send_modal(JumpToTimeModal(self))  # type: ignore
+
+    async def jump_to_time_response(self, interaction: discord.Interaction, new_time: time.datetime):
+        await interaction.response.defer()  # type: ignore
+        self.viewer.now = new_time
+        self.viewer.base_now = new_time
+        self.viewer.fixed = True  # Make the timetable fixed to the new time
+        self.update_freeze_button()
+        if self.viewer.today == new_time.date():
+            self.viewer.timedelta = time.timedelta()
+            self.viewer.update_output()
+        else:
+            await self.message.edit(content=f"{emotes.Loading} Updating the schedule for the specified time...", view=None)
+            self.viewer = await self.viewer.reload()
+        # If we go to a time far in the future, disable the real-time and freeze buttons
+        self.refresh_button.disabled = not self.viewer.real_time
+        self.freeze_button.disabled = not self.viewer.real_time
+        await self.message.edit(content=self.viewer.output, view=self)
+        return await interaction.followup.send(f"Now showing departures for {self.viewer.now:%d %b %Y, %H:%M:%S}.", ephemeral=True)
+
+    @discord.ui.button(label="Reset offset", style=discord.ButtonStyle.primary, row=1)  # Blurple, second row
+    async def reset_offset(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Reset the time back to right now """
+        return await self.set_time_offset(interaction, time.timedelta())
+
     async def apply_route_filter(self, interaction: discord.Interaction, stop_idx: int, values: list[str] | None, message: discord.Message):
         await interaction.response.defer()  # type: ignore
         user_id = self.sender.id
@@ -535,7 +631,7 @@ class HubStopSelector(SelectMenu):
     interface: HubScheduleView
 
     def __init__(self, interface: HubScheduleView):
-        super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=1, options=[], row=1)
+        super().__init__(interface, placeholder="Filter Routes", min_values=1, max_values=1, options=[], row=2)
         for i, stop in enumerate(self.interface.viewer.stops):
             self.add_option(value=str(i), label=stop.name, description=f"Stop {stop.code_or_id}", emoji=NUMBERS[i + 1])
         self.print_override = False
@@ -1237,45 +1333,148 @@ class RouteScheduleView(PaginatorView):
         await self.update_message()
 
 
-class JumpToTimeModal(views.Modal):
-    interface: RouteScheduleView
-    text_input: discord.ui.TextInput[JumpToTimeModal] = discord.ui.TextInput(label="Time to go to", placeholder="HH:MM or HH:MM:SS", style=discord.TextStyle.short)
-
-    def __init__(self, interface: RouteScheduleView):
-        super().__init__(interface, "Jump to Time")
+class TimeModal(views.Modal):
+    text_input: discord.ui.TextInput
 
     @override
     def _interaction_description(self) -> str:
         return self.text_input.value
+
+    @staticmethod
+    async def parse_time(interaction: discord.Interaction, time_str: str, return_time: bool, max_h: int = 23) -> time.timedelta | time.time | discord.InteractionMessage:
+        """ Parse the given timestamp """
+        count = time_str.count(":")
+        if count == 1:  # 1 colon = 2 parts
+            h, m = time_str.split(":")
+            s = "0"
+        elif count == 2:
+            h, m, s = time_str.split(":")
+        else:
+            return await interaction.response.send_message("Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+        if not all((h.isdigit(), m.isdigit(), s.isdigit())):
+            return await interaction.response.send_message("Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+        h, m, s = int(h), int(m), int(s)
+        if h < 0 or h > max_h:  # For whatever reason, departures from the first stop can go up to 31:20:00
+            return await interaction.response.send_message(f"Hour must be between 0 and {max_h}.", ephemeral=True)  # type: ignore
+        if m < 0 or m > 59:
+            return await interaction.response.send_message("Minute must be between 0 and 59.", ephemeral=True),  # type: ignore
+        if s < 0 or s > 59:
+            return await interaction.response.send_message(f"Second must be between 0 and 59.", ephemeral=True),  # type: ignore
+        if return_time:
+            return time.time(h, m, s, tz=TIMEZONE)
+        return time.timedelta(hours=h, minutes=m, seconds=s)
+
+
+class SetTimeOffsetModal(TimeModal):
+    interface: HubScheduleView
+    # TODO: Allow entering a timedelta with text ("2h15m" or "2:15:00")
+    text_input: discord.ui.TextInput[SetTimeOffsetModal] = discord.ui.TextInput(label="New offset", placeholder="E.g. \"2h45m\" or \"2:45:00\" or \"45:00\"", style=discord.TextStyle.short)
+
+    def __init__(self, interface: HubScheduleView):
+        super().__init__(interface, "Set offset")
+
+    @staticmethod
+    async def parse_delta(interaction: discord.Interaction, delta_str: str) -> time.timedelta | discord.InteractionMessage:
+        """ Parse the given timedelta """
+        if delta_str.startswith("-"):
+            delta_str = delta_str[1:]
+            mult = -1
+        else:
+            mult = 1
+        count = delta_str.count(":")
+        if count == 1:
+            m, s = delta_str.split(":")
+            h = "0"
+        elif count == 2:
+            h, m, s = delta_str.split(":")
+        else:
+            return await interaction.response.send_message("Value must be of format `MM:SS` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+        if not all((h.isdigit(), m.isdigit(), s.isdigit())):
+            return await interaction.response.send_message("Value must be of format `MM:SS` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+        h, m, s = int(h), int(m), int(s)
+        # Skip validation checks here, the timedelta will normalise the value
+        return time.timedelta(hours=h, minutes=m, seconds=s) * mult
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
             if not self.text_input.value:
                 raise ValueError("Value was not filled")
             value = self.text_input.value
-            count = value.count(":")
-            if count == 1:  # 1 colon = 2 parts
-                h, m = value.split(":")
-                s = "0"
-            elif count == 2:
-                h, m, s = value.split(":")
-            else:
-                return await interaction.response.send_message(f"Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
-            if not all((h.isdigit(), m.isdigit(), s.isdigit())):
-                return await interaction.response.send_message(f"Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
-            h, m, s = int(h), int(m), int(s)
-            if h < 0 or h > 31:  # For whatever reason, departures from the first stop can go up to 31:20:00
-                return await interaction.response.send_message(f"Hour must be between 0 and 31.", ephemeral=True)  # type: ignore
-            if m < 0 or m > 59:
-                return await interaction.response.send_message(f"Minute must be between 0 and 59.", ephemeral=True),  # type: ignore
-            if s < 0 or s > 59:
-                return await interaction.response.send_message(f"Second must be between 0 and 59.", ephemeral=True),  # type: ignore
-            self._log_interaction(interaction)  # Only log the interaction if it is valid
-            delta = time.timedelta(hours=h, minutes=m, seconds=s)
-            return await self.interface.jump_to_time_response(interaction, delta)
+            offset = await self.parse_delta(interaction, value)
+            if isinstance(offset, time.timedelta):
+                if offset.total_seconds() > 86400:
+                    return await interaction.response.send_message("Offset cannot be more than 24 hours.", ephemeral=True)  # type: ignore
+                self._log_interaction(interaction)
+                return await self.interface.set_time_offset(interaction, offset)
         except ValueError:
             if self.text_input.value:
                 content = f"`{self.text_input.value}` could not be converted to a valid time."
             else:
                 content = f"You need to enter a value."
-            await interaction.response.send_message(content=content, ephemeral=True)  # type: ignore
+            return await interaction.response.send_message(content=content, ephemeral=True)  # type: ignore
+
+
+class JumpToTimeModal(TimeModal):
+    interface: RouteScheduleView | HubScheduleView
+    text_input: discord.ui.TextInput[JumpToTimeModal] = discord.ui.TextInput(label="Time to jump to", placeholder="HH:MM or HH:MM:SS", style=discord.TextStyle.short)
+
+    def __init__(self, interface: RouteScheduleView | HubScheduleView):
+        super().__init__(interface, "Jump to Time")
+
+    @staticmethod
+    async def parse_date(interaction: discord.Interaction, date_str: str) -> time.date | discord.InteractionMessage:
+        """ Parse the given date """
+        try:
+            y, m, d = date_str.split("-")
+        except ValueError:
+            return await interaction.response.send_message("Date must be of format `YYYY-MM-DD`.", ephemeral=True)  # type: ignore
+        if not all((y.isdigit(), m.isdigit(), d.isdigit())):
+            return await interaction.response.send_message("Date must be of format `YYYY-MM-DD`.", ephemeral=True)  # type: ignore
+        y, m, d = int(y), int(m), int(d)
+        if y < 2020 or y > 2100:
+            return await interaction.response.send_message("Invalid year specified.", ephemeral=True)  # type: ignore
+        if m < 1 or m > 12:
+            return await interaction.response.send_message("Month must be between 1 and 12.", ephemeral=True)  # type: ignore
+        if d < 1 or d > 31:
+            return await interaction.response.send_message("Day must be between 1 and 31.", ephemeral=True)  # type: ignore
+        try:
+            return time.date(y, m, d)
+        except ValueError:
+            return await interaction.response.send_message("Invalid date specified.", ephemeral=True)  # type: ignore
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            if not self.text_input.value:
+                raise ValueError("Value was not filled")
+            value = self.text_input.value
+            is_hub = isinstance(self.interface, HubScheduleView)
+            spaces = value.count(" ")
+            if spaces == 1 and is_hub:
+                _date, _time = value.split(" ")
+                new_date = await self.parse_date(interaction, _date)
+                if not isinstance(new_date, time.date):
+                    return new_date
+                new_time = await self.parse_time(interaction, _time, True, 23)
+                if not isinstance(new_time, time.time):
+                    return new_time
+                new_datetime = time.datetime.combine(new_date, new_time)
+                return await self.interface.jump_to_time_response(interaction, new_datetime)
+            elif spaces == 0:
+                max_h = 23 if is_hub else 31
+                delta = await self.parse_time(interaction, value, is_hub, max_h)
+                if isinstance(delta, (time.timedelta, time.time)):
+                    self._log_interaction(interaction)  # Only log the interaction if it is valid
+                    if is_hub:
+                        new_time = time.datetime.combine(self.interface.viewer.today, delta)
+                        return await self.interface.jump_to_time_response(interaction, new_time)
+                    return await self.interface.jump_to_time_response(interaction, delta)
+            else:
+                if is_hub:
+                    return await interaction.response.send_message(f"You must either specify a valid time or a date and time as `YYYY-MM-DD HH:MM:SS`.", ephemeral=True)  # type: ignore
+                return await interaction.response.send_message(f"Value must be of format `HH:MM` or `HH:MM:SS`.", ephemeral=True)  # type: ignore
+        except ValueError:
+            if self.text_input.value:
+                content = f"`{self.text_input.value}` could not be converted to a valid time."
+            else:
+                content = f"You need to enter a value."
+            return await interaction.response.send_message(content=content, ephemeral=True)  # type: ignore

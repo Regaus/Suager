@@ -519,3 +519,6 @@
 ## v1.0.2 - 10 September 2024
 - Added a new stop hub: "Regaus Northbound"
   - Includes the stops I usually transfer at when getting to university
+
+## v1.0.3 - 10, 15 September 2024
+- Added ability to move the HubScheduleView by 5 minutes or to jump to a given time

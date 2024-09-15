@@ -455,6 +455,7 @@ class HubScheduleViewer:
         self.real_stop_times: list[list[RealStopTime]] = real_stop_times
 
         self.now: time.datetime = now
+        self.base_now: time.datetime = now
         self.today: time.date = now.date()
         self.real_time: bool = real_time
         self.fixed: bool = fixed
@@ -462,7 +463,7 @@ class HubScheduleViewer:
         self.user_id: int | None = user_id
 
         self.compact_mode: bool = False
-        self.index_offset: int = 0  # Not currently used, but left just in case.
+        self.timedelta: time.timedelta = time.timedelta()  # Time-based equivalent to index offsets - only applied automatically for refreshing
         self.day_offset: int = 0    # Not currently used, but left just in case.
         self.lines: int = 4 if len(stops) < 8 else 3
 
@@ -511,7 +512,8 @@ class HubScheduleViewer:
     async def reload(self):
         new_schedule = await self.load(self.hub_id, self.stops, self.now, self.hide_terminating, self.user_id, self.static_data, self.cog)
         new_schedule.fixed = self.fixed
-        new_schedule.real_time = self.real_time
+        # new_schedule.real_time = self.real_time
+        new_schedule.base_now = self.base_now
         new_schedule.compact_mode = self.compact_mode
         new_schedule.update_output()
         return new_schedule
@@ -522,7 +524,7 @@ class HubScheduleViewer:
         self.real_schedules, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedules, self.cog, self.base_schedules, self.base_stop_times)
         if not self.fixed:
             prev_today = self.today
-            self.now = time.datetime.now(tz=TIMEZONE)
+            self.now = time.datetime.now(tz=TIMEZONE) + self.timedelta
             self.today = self.now.date()
             if prev_today != self.today:
                 self.day_offset += (prev_today - self.today).days
@@ -537,7 +539,6 @@ class HubScheduleViewer:
                 if getattr(stop_time, departure_time_attr) >= self.now:
                     start_idx = idx
                     break
-            start_idx += self.index_offset
             max_idx = len(stop_times)
             start_idx = max(0, min(start_idx, max_idx - self.lines))
             end_idx = min(start_idx + self.lines, max_idx)
