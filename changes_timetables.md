@@ -522,3 +522,6 @@
 
 ## v1.0.3 - 10, 15 September 2024
 - Added ability to move the HubScheduleView by 5 minutes or to jump to a given time
+
+## v1.0.3.1 - 15 September 2024
+- Added Drumcondra stop hub
