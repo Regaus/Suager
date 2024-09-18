@@ -38,7 +38,7 @@ STOP_HUBS: dict[str, list[str]] = {
     "Connolly":           ["8220IR0007",   "8220GA00423",  "8220DB001500", "8220B1351201", "8220DB000497"],
     "D'Olier":            ["8220DB000273", "8220DB000333", "8220DB000334", "8220DB000335", "8220DB000336", "8220GA00035"],
     "Dawson":             ["8220DB000791", "8220DB000790", "8220DB000792", "8220DB000793", "8220GA00031",  "8220GA00441"],
-    "DCU":                ["8220DB007571", "8220DB004680", "8220DB000037", "8220DB001644", "8220DB001646", "8220DB000205", "8220DB000213"],
+    "DCU":                ["8220DB007571", "8220DB004680", "8220DB000037", "8220DB001644", "8220DB001646", "8220DB000205", "8220DB000213", "8220DB008307", "8220DB008246"],
     "Drumcondra":         ["8220IR0027",   "8220DB000017", "8220B1001201", "8220DB000047"],
     "Dundrum":            ["8250GA00286",  "8250GA00287",  "8250DB002825", "8250DB006041", "8250DB002866", "8250DB007981", "8250GD10160",  "8250DB007719"],
     "Eden Quay East":     ["8220B1353501", "8220DB007359", "8220DB000297", "8220DB000298", "8220DB000299", "8220DB000300"],
@@ -968,7 +968,7 @@ class Timetables(University, Luas, name="Timetables"):
             # general.print_error(error_message)
             # logger.log(self.bot.name, "errors", error_message)
             # return
-        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx))
+        return await message.edit(content=schedule.output, view=timetables.StopScheduleView(ctx.author, message, schedule, ctx=ctx) if not schedule.empty else None)
         # return await message.edit(view=await timetables.StopScheduleView(ctx.author, message, self.static_data, stop, self.real_time_data, self.vehicle_data))
 
     @tfi_schedules.command(name="hub", aliases=["collection"])

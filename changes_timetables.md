@@ -528,3 +528,10 @@
 
 ## v1.0.3.2 - 15 September 2024
 - Added "timetables" as an alias to `i.tfi schedule` command group
+
+## v1.0.4 - 18 September 2024
+- Added new stops for route N2 to the DCU stop hub
+- The StopScheduleViewer and HubScheduleViewer now show an error message if there are no departures from the stop on a given day
+- The RouteScheduleViewer now also shows a better output when the data is empty
+- The HubScheduleViewer no longer shows the header for every stop (it is now only shown once)
+  - As such, the view can now display 4 departures even for hubs with a lot of stops

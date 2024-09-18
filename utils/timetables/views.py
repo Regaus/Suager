@@ -710,12 +710,15 @@ class PaginatorView(views.InteractiveView):
 
     def update_page_labels(self):
         """ Update the paginator-related button labels to be accurate """
-        # self.first_page.label = "1 ⏮️"
-        # self.prev_page.label = "◀️"
-        self.curr_page.label = str(self.display_page + 1)
-        # self.next_page.label = "▶️"
-        # self.last_page.label = f"⏭️ {self.page_count}"
+        self.go_to_page.disabled = not self.pages
+        if not self.pages:
+            self.first_page.label = "0"
+            self.curr_page.label = "N/A"
+        else:
+            self.curr_page.label = str(self.display_page + 1)
         self.last_page.label = str(self.page_count)
+        self.first_page.disabled = self.prev_page.disabled = self.display_page <= 0
+        self.last_page.disabled = self.next_page.disabled = self.display_page >= self.page_count - 1
 
     @discord.ui.button(emoji="⏮️", label="1", style=discord.ButtonStyle.secondary, row=0)  # Grey, first row
     async def first_page(self, interaction: discord.Interaction, _: discord.ui.Button):
@@ -1189,6 +1192,15 @@ class RouteScheduleView(PaginatorView):
         self.update_departure_buttons()
         self.update_direction_button()
 
+    @override
+    @property
+    def content(self) -> str:
+        if not self.pages:
+            direction = "inbound" if self.viewer.direction == INBOUND_DIRECTION_ID else "outbound"
+            return f"There are no {direction} departures on route {self.viewer.route.short_name} on {self.viewer.today:%d %B %Y}."
+        return super().content
+
+    @override
     async def update_message(self):
         self.update_departure_buttons()
         return await super().update_message()
@@ -1198,7 +1210,11 @@ class RouteScheduleView(PaginatorView):
     #     return (index // self.viewer.departures) + 1
 
     def update_departure_buttons(self):
-        if self.viewer.departures > 1:
+        self.jump_to_time.disabled = not self.pages  # "Jump to Time" cannot jump to a different date, unlike the HubScheduleView
+        if not self.pages:
+            self.first_departure.label = "0"
+            self.curr_departures.label = "N/A"
+        elif self.viewer.departures > 1:
             self.curr_departures.label = f"{self.viewer.start_idx + 1} - {self.viewer.end_idx}"
         else:
             self.curr_departures.label = str(self.viewer.start_idx + 1)

@@ -219,6 +219,7 @@ class StopScheduleViewer:
         self.compact_mode: int = 0  # Don't cut off destinations by default
         self.index_offset = 0
         self.day_offset = 0  # Offset for date changes (prevents confusion when launching the TripDiagramViewer)
+        self.empty: bool = False  # Whether there are any departures or arrivals shown by the viewer
 
         self.start_idx, self.end_idx = self.get_indexes()
         self.output = self.create_output()
@@ -333,6 +334,12 @@ class StopScheduleViewer:
                 column_sizes[i] = max(column_sizes[i], len(element))
 
             output_data.append(output_line)
+
+        self.empty = len(output_data) == 1
+        if self.empty:
+            if self.base_schedule.hide_terminating:
+                return f"There are no departures from the stop {self.stop.name} on {self.today:%d %B %Y}."
+            return f"There are no departures or arrivals at the stop {self.stop.name} on {self.today:%d %B %Y}."
 
         if column_sizes[2] >= 8:
             output_data[0][2] = "Schedule"
@@ -465,7 +472,7 @@ class HubScheduleViewer:
         self.compact_mode: bool = False
         self.timedelta: time.timedelta = time.timedelta()  # Time-based equivalent to index offsets - only applied automatically for refreshing
         self.day_offset: int = 0    # Not currently used, but left just in case.
-        self.lines: int = 4 if len(stops) < 8 else 3
+        self.lines: int = 4  # if len(stops) < 8 else 3
 
         self.indexes = self.get_indexes()
         self.output = self.create_output()
@@ -562,10 +569,9 @@ class HubScheduleViewer:
 
     def create_output(self):
         if self.real_time:
-            header = f"Real-time data for stop hub {self.hub_id}\n-# Real-time data timestamp: {self.data_timestamp}"
+            output: list[str] = [f"Real-time data for stop hub {self.hub_id}"]
         else:
-            header = f"Schedule for stop hub {self.hub_id}"
-        output: list[str] = [header + f"\n-# Lookup time: {self.now:%d %b %Y, %H:%M}"]
+            output: list[str] = [f"Schedule for stop hub {self.hub_id}"]
         output_data_header: list[str | None] = ["Rt", "Destination", "Sched", "Real"]
         output_data: list[list[list[str | None]]] = []  # output_data[stop][line][column]
         column_sizes: list[int] = [2, 11, 5, 5]
@@ -578,17 +584,23 @@ class HubScheduleViewer:
             line_length_limit = 45
 
         self.indexes = self.get_indexes()
+        empty_stops = set()  # Stops that do not have any departures on the day
+        header_set = False   # In case the first stop has no departures
 
         for i, stop_times in enumerate(self.iterable_stop_times):
-            start_idx, end_idx = self.indexes[i]
-            output_stop: list[list[str | None]] = [output_data_header]
-            for stop_time in stop_times[start_idx:end_idx]:
-                output_line = format_departure(self, stop_time)
-                for j, element in enumerate(output_line):
-                    column_sizes[j] = max(column_sizes[j], len(element))
-
-                output_stop.append(output_line)
-            output_data.append(output_stop)
+            if not stop_times:
+                empty_stops.add(i)
+                output_data.append([])
+            else:
+                start_idx, end_idx = self.indexes[i]
+                output_stop: list[list[str | None]] = [output_data_header] if not header_set else []
+                header_set = True
+                for stop_time in stop_times[start_idx:end_idx]:
+                    output_line = format_departure(self, stop_time)
+                    for j, element in enumerate(output_line):
+                        column_sizes[j] = max(column_sizes[j], len(element))
+                    output_stop.append(output_line)
+                output_data.append(output_stop)
 
         data_end = 0
         if not self.real_time:
@@ -622,9 +634,15 @@ class HubScheduleViewer:
                     alignment = "<" if i < 2 else ">"
                     line_data.append(f"{line_part:{alignment}{size}}")
                 stop_output.append(" ".join(line_data))
-            stop_output.append("```")
-            output.append("\n".join(stop_output))
+            if len(stop_output) == 2:
+                output.append(f"There are no departures from stop {stop.name} ({stop_code}{stop_id}) on {self.today:%d %B %Y}.\n")
+            else:
+                stop_output.append("```")
+                output.append("\n".join(stop_output))
 
+        output.append(f"-# Lookup time: {self.now:%d %b %Y, %H:%M}")
+        if self.real_time:
+            output.append(f"-# Real-time data timestamp: {self.data_timestamp}")
         output_str = "\n".join(output)
         if len(output_str) > 2000:
             output_str = output_str[:2000]
