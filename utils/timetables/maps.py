@@ -12,7 +12,7 @@ from utils.general import print_error, make_dir
 from utils.timetables import ShapePoint
 from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate
 from utils.timetables.shared import get_database, __version__
-from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, load_value
+from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, FleetVehicle, load_value
 
 __all__ = (
     "MAP_SIZE", "TILE_SIZE", "DEFAULT_ZOOM", "BASE_MAP_URL",
@@ -284,7 +284,7 @@ async def download_map_lat_lon(lat: float, lon: float, zoom: int = DEFAULT_ZOOM)
     return output, x + START, y + START
 
 
-def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_data: GTFSData) -> tuple[Image.Image, int, int]:
+def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_data: GTFSData, fleet_data: dict[str, FleetVehicle]) -> tuple[Image.Image, int, int]:
     """ Return an image of a vehicle and its coordinates on the map image (in pixels) """
     # Get route data and draw the bus on a temporary image
     db = get_database()
@@ -293,13 +293,36 @@ def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_d
         route = load_value(static_data, Route, vehicle.trip.route_id, db).short_name
     except KeyError:
         route = vehicle.trip.route_id
+    fleet_vehicle: FleetVehicle | None = fleet_data.get(vehicle.vehicle_id, None)
+    if not fleet_vehicle:
+        # Unknown vehicles - Green with green-ish highlight
+        bus_colour = (1, 133, 64)
+        text_colour = (255, 255, 255)
+        stroke_colour = (0, 255, 114)
+    elif fleet_vehicle.agency == "Dublin Bus":
+        # Dublin Bus - Yellow
+        bus_colour = (253, 221, 1)
+        text_colour = (0, 0, 0)
+        stroke_colour = (153, 132, 1)
+    elif fleet_vehicle.agency == "Bus Éireann":
+        # Bus Éireann - Red
+        bus_colour = (234, 29, 26)
+        text_colour = (255, 255, 255)
+        stroke_colour = (229, 58, 52)
+    elif fleet_vehicle.agency == "Go-Ahead Ireland":
+        # Go-Ahead Ireland - Cyan-ish
+        bus_colour = (79, 199, 204)
+        text_colour = (0, 0, 0)
+        stroke_colour = (58, 149, 153)
+    else:
+        raise RuntimeError(f"Unknown fleet vehicle agency {fleet_vehicle.agency!r}")
     map_x, map_y = deg_to_xy_float(vehicle.latitude, vehicle.longitude, zoom)
     img_x = int((map_x - tile_x) * TILE_SIZE)
     img_y = int((map_y - tile_y) * TILE_SIZE)
     image = Image.new("RGBA", (100, 30), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
-    draw.rectangle((20, 0, 80, 30), fill=(1, 133, 64), outline=(0, 0, 0), width=2)
-    draw.text((50, 15), text=route, fill=(255, 255, 255), font=VEHICLE_FONT, anchor="mm", stroke_width=1, stroke_fill=(0, 255, 114))
+    draw.rectangle((20, 0, 80, 30), fill=bus_colour, outline=(0, 0, 0), width=2)
+    draw.text((50, 15), text=route, fill=text_colour, font=VEHICLE_FONT, anchor="mm", stroke_width=1, stroke_fill=stroke_colour)
     # Calculate the direction the bus is moving in
     try:
         # trip = Trip.from_sql(vehicle.trip.trip_id, db)
@@ -507,7 +530,7 @@ def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1:
     # draw.text((0, 0), "Debug: This is a Test", fill=(255, 0, 0), font=DEPARTURE_TIME_FONT, anchor="la")
 
 
-async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: VehicleData, static_data: GTFSData) -> io.BytesIO:
+async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: VehicleData, static_data: GTFSData, fleet_data: dict[str, FleetVehicle]) -> io.BytesIO:
     """ Show the map of the area around a bus stop, including all buses nearby.
 
     Returns a BytesIO instance with the image inside """
@@ -531,7 +554,7 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
     del lat1, lon1, lat2, lon2
     for vehicle in vehicle_data.entities.values():
         if lat_min <= vehicle.latitude <= lat_max and lon_min <= vehicle.longitude <= lon_max:
-            bus_image, bus_x, bus_y = draw_vehicle(vehicle, tile_x1, tile_y1, zoom, static_data)
+            bus_image, bus_x, bus_y = draw_vehicle(vehicle, tile_x1, tile_y1, zoom, static_data, fleet_data)
             image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)
     bio = io.BytesIO()
     image.save(bio, "PNG")
@@ -539,7 +562,7 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
     return bio
 
 
-async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData,
+async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData, fleet_data: dict[str, FleetVehicle],
                            departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int],
                            is_cancelled: bool = False, custom_zoom: int = None) -> tuple[io.BytesIO, int]:
     """ Show the diagram of a trip, including stops along the trip and the vehicle's current location (if available).
@@ -588,7 +611,7 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
                 bus = vehicle
                 break
     if bus is not None:
-        bus_image, bus_x, bus_y = draw_vehicle(bus, x1, y1, zoom, static_data)
+        bus_image, bus_x, bus_y = draw_vehicle(bus, x1, y1, zoom, static_data, fleet_data)
         image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)
 
     bio = io.BytesIO()

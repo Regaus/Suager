@@ -432,5 +432,6 @@ tables = [
         Column("reg_plates", "TEXT", True),           # Reg plates (e.g. "191-D-44403")
         Column("model", "TEXT", True),                # Model name (e.g. "ADL Enviro400H MMC")
         Column("trivia", "TEXT", False),              # Trivia (e.g. presence of USB sockets)
+        Column("agency", "TEXT", True),               # Agency/Operator's name (Dublin Bus, Go-Ahead, Bus Éireann)
     ])
 ]

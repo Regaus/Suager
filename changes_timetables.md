@@ -535,3 +535,8 @@
 - The RouteScheduleViewer now also shows a better output when the data is empty
 - The HubScheduleViewer no longer shows the header for every stop (it is now only shown once)
   - As such, the view can now display 4 departures even for hubs with a lot of stops
+
+## v1.0.5 - 21 September 2024
+- Improved the table parsing to correctly get the "trivia" section of vehicle data
+- FleetVehicles now store which operator they're associated with
+- The colours of the bus on the map will be changed depending on the operator

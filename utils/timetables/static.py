@@ -501,14 +501,15 @@ class FleetVehicle:
     reg_plates: str
     model: str
     trivia: str | None
+    agency: str
 
     def __repr__(self):
-        return f"FleetVehicle - {self.fleet_number} (ID {self.vehicle_id}, Reg {self.reg_plates})"
+        return f"FleetVehicle - {self.fleet_number} (ID {self.vehicle_id}, Reg {self.reg_plates}, Operated by {self.agency})"
 
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> FleetVehicle:
         try:
-            return cls(data["vehicle_id"], data["fleet_number"], data["reg_plates"], data["model"], data["trivia"])
+            return cls(data["vehicle_id"], data["fleet_number"], data["reg_plates"], data["model"], data["trivia"], data["agency"])
         except TypeError:
             raise KeyError(f"Cannot convert the provided data (type {type(data).__name__}) to a {cls.__name__} instance") from None
 
@@ -527,8 +528,8 @@ class FleetVehicle:
 
     def save_to_sql(self) -> str:
         trivia = "NULL" if self.trivia is None else repr(self.trivia)
-        return (f"INSERT INTO vehicles(vehicle_id, fleet_number, reg_plates, model, trivia) VALUES "
-                f"({self.vehicle_id!r}, {self.fleet_number!r}, {self.reg_plates!r}, {self.model!r}, {trivia})")
+        return (f"INSERT INTO vehicles(vehicle_id, fleet_number, reg_plates, model, trivia, agency) VALUES "
+                f"({self.vehicle_id!r}, {self.fleet_number!r}, {self.reg_plates!r}, {self.model!r}, {trivia}, {self.agency!r})")
 
 
 # # Mapping of files to corresponding dataclasses

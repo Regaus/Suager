@@ -333,10 +333,10 @@ class Timetables(University, Luas, name="Timetables"):
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
-        self.vehicle_list_urls = (
-            "https://bustimes.org/operators/dublin-bus/vehicles",
-            "https://bustimes.org/operators/bus-eireann/vehicles",
-            "https://bustimes.org/operators/go-ahead-ireland/vehicles"
+        self.vehicle_list_urls: tuple[tuple[str, str], ...] = (  # (agency, link)
+            ("Dublin Bus",       "https://bustimes.org/operators/dublin-bus/vehicles"),
+            ("Bus Éireann",      "https://bustimes.org/operators/bus-eireann/vehicles"),
+            ("Go-Ahead Ireland", "https://bustimes.org/operators/go-ahead-ireland/vehicles")
         )
         self.headers = {
             "Cache-Control": "no-cache",
@@ -345,7 +345,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.real_time_data: timetables.GTFSRData | None = None
         self.vehicle_data: timetables.VehicleData | None = None
         self.static_data: timetables.GTFSData | None = None
-        self.fleet_data: dict[str, timetables.FleetVehicle] = {}
+        self.fleet_data: dict[str, timetables.FleetVehicle] = {}  # fleet_data[vehicle_id] = FleetVehicle
         self.initialised = False
         self.updating = False
         self.updating_real_time = False
@@ -611,20 +611,20 @@ class Timetables(University, Luas, name="Timetables"):
             return string
 
         all_vehicles: list[timetables.FleetVehicle] = []
-        for i, url in enumerate(self.vehicle_list_urls):
+        for agency, url in self.vehicle_list_urls:
             # This depends on the layout of the website not changing. Oh well.
             data = await http.get(url, res_method="text")
             soup = BeautifulSoup(data, "html.parser")
             vehicles = soup.body.main.find(name="div", id="content").find(name="div", class_="table-wrapper").table.tbody.find_all(name="tr")
-            trivia_idx = 7 if i == 0 else 6
+            # trivia_idx = 7 if i == 0 else 6
             for vehicle in vehicles:
                 vehicle_id = vehicle["id"][3:]
                 columns = vehicle.find_all(name="td")
                 fleet_number = strip(columns[0].a.string)
                 reg_plates = strip(columns[1].a.string)
                 model = strip(columns[4].string)
-                trivia = strip(columns[trivia_idx].string)
-                all_vehicles.append(timetables.FleetVehicle(vehicle_id, fleet_number, reg_plates, model, trivia))
+                trivia = strip(columns[-3].string)  # Always third last column
+                all_vehicles.append(timetables.FleetVehicle(vehicle_id, fleet_number, reg_plates, model, trivia, agency))
                 # all_vehicles.append({"vehicle_id": vehicle_id, "fleet_number": fleet_number, "reg_plates": reg_plates, "model": model, "trivia": trivia})
         return all_vehicles
 
@@ -908,7 +908,7 @@ class Timetables(University, Luas, name="Timetables"):
         results: list[tuple[str, str, int]] = []
         for vehicle in self.fleet_data.values():
             ratios = (process.default_scorer(current, vehicle.vehicle_id), process.default_scorer(current, vehicle.fleet_number))
-            results.append((vehicle.vehicle_id, f"{vehicle.fleet_number} (API ID {vehicle.vehicle_id})", max(ratios)))  # f"{vehicle.fleet_number} ({vehicle.reg_plates})"
+            results.append((vehicle.vehicle_id, f"{vehicle.fleet_number} ({vehicle.agency}, API ID {vehicle.vehicle_id})", max(ratios)))  # f"{vehicle.fleet_number} ({vehicle.reg_plates})"
         results.sort(key=lambda x: x[2], reverse=True)
         return [app_commands.Choice(name=fleet_and_reg, value=vehicle_id) for vehicle_id, fleet_and_reg, _ in results[:25]]
 
