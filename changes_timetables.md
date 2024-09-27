@@ -540,3 +540,11 @@
 - Improved the table parsing to correctly get the "trivia" section of vehicle data
 - FleetVehicles now store which operator they're associated with
 - The colours of the bus on the map will be changed depending on the operator
+
+## v1.0.6 - 27 September 2024
+- The StopScheduleViewer and HubScheduleViewer can now guess the next departure time if it is not available from the API, based on the data for the previous trip
+  - These times are shown with an asterisk, as they are guesses rather than actual real-time data
+  - If the previous journey is expected to reach the terminus later than the current trip is scheduled to depart, that will be shown as the delay
+  - The current implementation does not sort these guessed times together with the rest of the data, but realistically that shouldn't be a big problem
+- Fixed the Bus Éireann stop at Drumcondra station no longer existing
+- HubScheduleViewer: Changed "Lookup time" to "Showing departures after" in the output text

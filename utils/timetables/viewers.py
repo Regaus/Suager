@@ -81,6 +81,49 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
             destination = WARNING + destination
         elif stop_time.departure_time is not None:
             real_departure_time = self.format_time(stop_time.departure_time)
+        elif stop_time.trip().block_id:  # Try to get real-time data from the previous trip to be able to tell what will happen with this one
+            real_departure_time = "--:--"  # Default if no value is found
+            prev_trips, _ = get_prev_next_trips(stop_time.trip(), self.today, self.static_data, self.cog.db)
+            if prev_trips:
+                prev_trip_id, _, _, _ = prev_trips[-1]  # Load last trip
+                prev_trip: Trip = load_value(self.static_data, Trip, prev_trip_id, self.cog.db)
+                prev_real_time: TripUpdate | None = None
+                for entity in self.cog.real_time_data.entities.values():  # type: TripUpdate
+                    if entity.trip.trip_id == prev_trip_id:
+                        prev_real_time = entity
+                        break
+                if prev_real_time:
+                    prev_arrival_time: time.datetime = time.datetime.zero
+
+                    def _handle_trip(_delay: time.timedelta) -> time.datetime:
+                        _stop_time = StopTime.from_sql_sequence(prev_trip_id, prev_trip.total_stops, self.cog.db)
+                        departure_time = time.datetime.combine(self.today, time.time(), TIMEZONE) + time.timedelta(seconds=_stop_time.departure_time)
+                        return departure_time + _delay
+
+                    for stop_time_update in prev_real_time.stop_times[::-1]:
+                        # Find the last stop that has an arrival or departure time available
+                        # Departure times take priority since they are later
+                        if stop_time_update.departure_time is not None:
+                            prev_arrival_time = stop_time_update.departure_time
+                            break
+                        if stop_time_update.arrival_time is not None:
+                            prev_arrival_time = stop_time_update.arrival_time
+                            break
+                        if stop_time_update.departure_delay is not None:
+                            prev_arrival_time = _handle_trip(stop_time_update.departure_delay)
+                            break
+                        if stop_time_update.arrival_delay is not None:
+                            prev_arrival_time = _handle_trip(stop_time_update.arrival_delay)
+                            break
+
+                    first_stop = StopTime.from_sql_sequence(stop_time.trip_id, 1, self.cog.db)
+                    this_departure_time = time.datetime.combine(self.today, time.time(), TIMEZONE) + time.timedelta(seconds=first_stop.departure_time)
+                    # If the last trip is expected to arrive later than this one is scheduled to depart
+                    if prev_arrival_time > this_departure_time:
+                        delay = prev_arrival_time - this_departure_time
+                        real_departure_time = self.format_time(stop_time.scheduled_departure_time + delay) + "*"
+                    else:
+                        real_departure_time = self.format_time(stop_time.scheduled_departure_time) + "*"
         else:
             real_departure_time = "--:--"
     else:
@@ -103,14 +146,17 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
     elif not hub and (stop_time.actual_destination or stop_time.actual_start) and not destination.startswith(WARNING):
         destination = WARNING + destination
 
+    def _handle_fleet_vehicle(_vehicle: FleetVehicle) -> str:
+        fleet = _vehicle.fleet_number
+        match = re.match(FLEET_REGEX, fleet)
+        return f"{match.group(1)}{match.group(2):>3}" if match else fleet
+
     if hub or not self.real_time:
         distance = vehicle = ""
     elif self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:
         vehicle_data: FleetVehicle | None = self.cog.fleet_data.get(stop_time.vehicle_id)
         if vehicle_data:
-            fleet = vehicle_data.fleet_number
-            match = re.match(FLEET_REGEX, fleet)
-            vehicle = f"{match.group(1)}{match.group(2):>3}" if match else fleet
+            vehicle = _handle_fleet_vehicle(vehicle_data)
         else:
             vehicle = "-"
         if stop_time.vehicle.latitude == 0 and stop_time.vehicle.longitude == 0:
@@ -126,6 +172,22 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
                 else:
                     distance = f"{round(distance_m, -1):.0f}m"
             distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"
+    elif stop_time.trip().block_id:  # Similarly to the real-time departure time, try to guess the vehicle that will depart on this trip
+        vehicle = "-"  # Default if no value is found
+        prev_trips, _ = get_prev_next_trips(stop_time.trip(), self.today, self.static_data, self.cog.db)
+        if prev_trips:
+            prev_trip_id, _, _, _ = prev_trips[-1]  # Load last trip
+            prev_trip: Trip = load_value(self.static_data, Trip, prev_trip_id, self.cog.db)
+            prev_real_time: TripUpdate | None = None
+            for entity in self.cog.real_time_data.entities.values():  # type: TripUpdate
+                if entity.trip.trip_id == prev_trip_id:
+                    prev_real_time = entity
+                    break
+            if prev_real_time and prev_real_time.vehicle_id:
+                vehicle_data: FleetVehicle | None = self.cog.fleet_data.get(prev_real_time.vehicle_id)
+                if vehicle_data:
+                    vehicle = _handle_fleet_vehicle(vehicle_data) + "*"
+        distance = "-"  # Don't bother trying to guess the distance
     else:
         distance = vehicle = "-"
 
@@ -153,24 +215,43 @@ def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
     return "\n".join(bus_data)
 
 
-def get_block_trips(current_trip: Trip, today_date: time.date, now: time.datetime, static_data: GTFSData, db) \
+# Cache for the next/previous trips: prev_next_trips[trip_id] = ([prev_trips], [next_trips])
+prev_next_trips_cache: dict[str, tuple[list[tuple[str, time.datetime, str, str]], list[tuple[str, time.datetime, str, str]]]] = {}
+
+
+def get_prev_next_trips(current_trip: Trip, today_date: time.date, static_data: GTFSData, db) \
         -> tuple[list[tuple[str, time.datetime, str, str]], list[tuple[str, time.datetime, str, str]]]:
     """ Returns the previous and upcoming trips along the given route
 
     Inner tuple format: (trip_id, start_time, route, destination) """
+    # If we have already calculated this for this block before, don't bother doing it again
+    if current_trip.trip_id in prev_next_trips_cache:
+        return prev_next_trips_cache[current_trip.trip_id]
     block_id = current_trip.block_id
     if block_id:
-        block = Trip.from_block(block_id)
+        # Fetch all relevant trips
+        calendar_id = current_trip.calendar_id
+        block = None
+        if block_id in static_data.trip_blocks:
+            block = static_data.trip_blocks[block_id].get(calendar_id)
+        else:
+            static_data.trip_blocks[block_id] = {}  # Make sure an empty dictionary is initialised
+        if not block:
+            block = Trip.from_block(block_id, calendar_id)
+            static_data.trip_blocks[block_id][calendar_id] = block
+
         prev_trips: list[tuple[str, time.datetime, str, str]] = []
         next_trips: list[tuple[str, time.datetime, str, str]] = []
         today = time.datetime.combine(today_date, time.time(), tz=TIMEZONE)
-        # now = time.datetime.now(tz=TIMEZONE)  # Use the "now" provided by the functions to avoid skipping trips that should've already departed
+        stop_time = StopTime.from_sql_sequence(current_trip.trip_id, 1, db)
+        now = today + time.timedelta(seconds=stop_time.departure_time)
         for trip in block:
             if trip.trip_id == current_trip.trip_id:  # Ignore current trip
                 continue
-            valid = trip_validity(static_data, trip, today_date, db)
-            if not valid:  # Only include the trip if it actually runs today
-                continue
+            # This shouldn't be necessary anymore, since the calendar ID is already filtered
+            # valid = trip_validity(static_data, trip, today_date, db)
+            # if not valid:  # Only include the trip if it actually runs today
+            #     continue
             stop_time = StopTime.from_sql_sequence(trip.trip_id, 1, db)
             departure = today + time.timedelta(seconds=stop_time.departure_time)
             # print(trip.trip_id, today_date, today, departure, now, departure > now)
@@ -186,7 +267,9 @@ def get_block_trips(current_trip: Trip, today_date: time.date, now: time.datetim
                 prev_trips.append(trip_data)
         prev_trips.sort(key=lambda t: t[1])
         next_trips.sort(key=lambda t: t[1])
+        prev_next_trips_cache[current_trip.trip_id] = (prev_trips, next_trips)
         return prev_trips, next_trips
+    prev_next_trips_cache[current_trip.trip_id] = ([], [])
     return [], []
 
 
@@ -399,13 +482,13 @@ class StopScheduleViewer:
 
         stop_code = f"Code `{self.stop.code}`, " if self.stop.code else ""
         stop_id = f"ID `{self.stop.id}`"
-        additional_text = "\n-# D = Drop-off/Alighting only | P = Pick-up/Boarding only"
+        additional_text = "\n-# D = Drop-off/Alighting only | P = Pick-up/Boarding only\n-# Departure times marked by an asterisk are guesses made by this bot"
         if has_vehicle_info:
             additional_text += "\n-# Distance indicators: Red = Bus already passed stop | Yellow = Bus approaching | Green = Bus not nearby yet"
         if self.real_time:
             additional_text += f"\n-# Real-time data timestamp: {self.data_timestamp}"
         output = f"Real-Time data for the stop {self.stop.name} ({stop_code}{stop_id})\n" \
-                 "-# Note: Vehicle locations and distances may not be accurate" \
+                 "-# Note: Vehicle locations and distances may not always be accurate" \
                  f"{additional_text}\n```fix\n"
 
         for line in output_data:
@@ -640,7 +723,7 @@ class HubScheduleViewer:
                 stop_output.append("```")
                 output.append("\n".join(stop_output))
 
-        output.append(f"-# Lookup time: {self.now:%d %b %Y, %H:%M}")
+        output.append(f"-# Showing departures after {self.now:%d %b %Y, %H:%M}")
         if self.real_time:
             output.append(f"-# Real-time data timestamp: {self.data_timestamp}")
         output_str = "\n".join(output)
@@ -1342,7 +1425,7 @@ class VehicleDataViewer:
             vehicle_data = current_trip  # Fallback for unavailable static Trip data or block data
             if static_trip:
                 # This uses the vehicle's trip's start_date to account for trips that started yesterday (or belong to yesterday)
-                prev_trips, next_trips = get_block_trips(static_trip, self.real_time_vehicle.trip.start_date, self.real_time_vehicle.trip.start_time, self.static_data, self.db)
+                prev_trips, next_trips = get_prev_next_trips(static_trip, self.real_time_vehicle.trip.start_date, self.static_data, self.db)
                 output_data = [current_trip]
 
                 def format_trip(_departure: time.datetime, _route: str, _destination: str):
@@ -1508,7 +1591,7 @@ class RouteVehiclesViewer:
                         _vehicle_data = f"{fleet_number} - Currently near {nearest_stop.name}"
                     _next_departure = ""
                     if isinstance(_trip, Trip):
-                        _, next_trips = get_block_trips(_trip, date, _departure, self.static_data, self.db)
+                        _, next_trips = get_prev_next_trips(_trip, date, self.static_data, self.db)
                         if next_trips:
                             _, _next_departure, _, next_destination = next_trips[0]
                             _next_departure = f"\n  -# Next departure: {_next_departure:%H:%M} to {next_destination}"

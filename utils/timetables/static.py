@@ -65,13 +65,15 @@ class GTFSData:
     trips: dict[str, Trip]
     # shapes[shape_id] = Shape | shapes[shape_id][sequence] = ShapePoint
     shapes: dict[str, Shape]
+    # trip_blocks[block_id][calendar_id] = [Trip, ...]
+    trip_blocks: dict[str, dict[str, list[Trip]]]
 
     def __repr__(self):
         return "This string is too large to be feasible to render."
 
     @classmethod
     def empty(cls):
-        return cls({}, {}, {}, {}, {}, {}, {}, {})
+        return cls({}, {}, {}, {}, {}, {}, {}, {}, {})
 
 
 @dataclass()
@@ -326,11 +328,11 @@ class Trip:
         return cls.from_dict(db.fetchrow("SELECT * FROM trips WHERE trip_id=?", (trip_id,)))
 
     @classmethod
-    def from_block(cls, block_id: str, db: database.Database = None) -> list[Trip]:
-        """ Load a list of Trips given a block ID """
+    def from_block(cls, block_id: str, calendar_id: str, db: database.Database = None) -> list[Trip]:
+        """ Load a list of Trips given a block ID and calendar ID """
         if not db:
             db = get_database()
-        return list(map(cls.from_dict, db.fetch("SELECT * FROM trips WHERE block_id=?", (block_id,))))
+        return list(map(cls.from_dict, db.fetch("SELECT * FROM trips WHERE block_id=? AND calendar_id=?", (block_id, calendar_id))))
 
     @classmethod
     def from_route(cls, route_id: str, db: database.Database = None) -> list[Trip]:
