@@ -548,3 +548,7 @@
   - The current implementation does not sort these guessed times together with the rest of the data, but realistically that shouldn't be a big problem
 - Fixed the Bus Éireann stop at Drumcondra station no longer existing
 - HubScheduleViewer: Changed "Lookup time" to "Showing departures after" in the output text
+
+## v1.0.6.1 - 1 October 2024
+- Added the eastbound N4 stop at Clontarf station to the stop hub
+- Slightly reduced the line length limit for hubs with 9 stops, so that they wouldn't overflow over 2000 characters

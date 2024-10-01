@@ -555,7 +555,7 @@ class HubScheduleViewer:
         self.compact_mode: bool = False
         self.timedelta: time.timedelta = time.timedelta()  # Time-based equivalent to index offsets - only applied automatically for refreshing
         self.day_offset: int = 0    # Not currently used, but left just in case.
-        self.lines: int = 4  # if len(stops) < 8 else 3
+        self.lines: int = 4 if len(stops) < 10 else 3  # I don't think I'll ever have 10 or more stops for one hub, but just in case.
 
         self.indexes = self.get_indexes()
         self.output = self.create_output()
@@ -647,7 +647,9 @@ class HubScheduleViewer:
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the real-time data """
         if self.cog.real_time_data:
-            return format_timestamp(self.cog.real_time_data.header.timestamp)
+            if len(self.stops) < 9:
+                return format_timestamp(self.cog.real_time_data.header.timestamp)
+            return f"{self.cog.real_time_data.header.timestamp:%Y-%m-%d %H:%M:%S}"  # The timestamp doesn't fit for 9 stops
         return "Real-time data unavailable"
 
     def create_output(self):
@@ -659,7 +661,9 @@ class HubScheduleViewer:
         output_data: list[list[list[str | None]]] = []  # output_data[stop][line][column]
         column_sizes: list[int] = [2, 11, 5, 5]
         assert len(output_data_header) == len(column_sizes)
-        if self.compact_mode or len(self.stops) >= 7:
+        if len(self.stops) >= 9:  # The text just barely doesn't fit for 9 stops
+            line_length_limit = 32
+        elif self.compact_mode or len(self.stops) >= 7:
             line_length_limit = 36
         elif len(self.stops) >= 5:
             line_length_limit = 40
