@@ -8,6 +8,7 @@ from io import BytesIO
 from typing import Any, Protocol
 from zipfile import ZipFile, BadZipFile
 
+import aiohttp
 import discord
 import luas.api
 from aiohttp import ClientError
@@ -18,6 +19,7 @@ from thefuzz import process
 
 from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser, cpu_burner
 from utils.time import time as print_current_time
+from utils.timetables import GTFSRData, VehicleData
 
 # def dcu_data_access(ctx):
 #     return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
@@ -43,7 +45,7 @@ STOP_HUBS: dict[str, list[str]] = {
     "Dundrum":            ["8250GA00286",  "8250GA00287",  "8250DB002825", "8250DB006041", "8250DB002866", "8250DB007981", "8250GD10160",  "8250DB007719"],
     "Eden Quay East":     ["8220B1353501", "8220DB007359", "8220DB000297", "8220DB000298", "8220DB000299", "8220DB000300"],
     "Eden Quay West":     ["8220DB000303", "8220DB000302", "8220DB000301"],
-    "Heuston":            ["8220IR0132",   "8220GA00387",  "8220GA00386",  "8220DB004320", "8220DB004425"],
+    "Heuston Station":    ["8220IR0132",   "8220GA00387",  "8220GA00386",  "8220DB004319",  "8220DB004320", "8220DB004425"],
     "Heuston North":      ["8220DB007078", "8220DB001474", "8220CO10996"],
     "Heuston South":      ["8220DB004413", "8220DB002637", "8220B10995",   "8220B1354001"],
     "Killester":          ["8220IR3881",   "8220DB004390", "8220DB004791", "8220DB000530", "8220DB000608"],
@@ -342,8 +344,8 @@ class Timetables(University, Luas, name="Timetables"):
             "Cache-Control": "no-cache",
             "x-api-key": self.bot.config["gtfsr_api_token"]
         }
-        self.real_time_data: timetables.GTFSRData | None = None
-        self.vehicle_data: timetables.VehicleData | None = None
+        self.real_time_data: timetables.GTFSRData = GTFSRData.empty()
+        self.vehicle_data: timetables.VehicleData = VehicleData.empty()
         self.static_data: timetables.GTFSData | None = None
         self.fleet_data: dict[str, timetables.FleetVehicle] = {}  # fleet_data[vehicle_id] = FleetVehicle
         self.initialised = False
@@ -416,20 +418,22 @@ class Timetables(University, Luas, name="Timetables"):
             return time.datetime.combine(date_part, time_part, timetables.TIMEZONE), True
         return None, True
 
-    async def get_data_from_api(self, *, write: bool = True):
-        data: bytes = await http.get(self.url, headers=self.headers, res_method="read")
-        if write:
-            with open(timetables.real_time_filename, "wb+") as file:
-                file.write(data)
-            # json.dump(data, open(timetables.real_time_filename, "w+"), indent=2)
-        return data
+    async def get_from_api(self, url: str, filename: str, *, write: bool = True) -> bytes:
+        """ Generic function to get data from the real-time API - for the real-time and vehicles """
+        try:
+            data: bytes = await http.get(url, headers=self.headers, res_method="read")
+            if write:
+                with open(filename, "wb+") as file:
+                    file.write(data)
+            return data
+        except (aiohttp.ClientError, TimeoutError):
+            return timetables.empty_real_time_str.encode("utf-8")
 
-    async def get_vehicles_from_api(self, *, write: bool = True):
-        data: bytes = await http.get(self.vehicle_url, headers=self.headers, res_method="read")
-        if write:
-            with open(timetables.vehicles_filename, "wb+") as file:
-                file.write(data)
-        return data
+    async def get_data_from_api(self, *, write: bool = True) -> bytes:
+        return await self.get_from_api(self.url, timetables.real_time_filename, write=write)
+
+    async def get_vehicles_from_api(self, *, write: bool = True) -> bytes:
+        return await self.get_from_api(self.vehicle_url, timetables.vehicles_filename, write=write)
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
         while self.updating_real_time:
@@ -1071,8 +1075,8 @@ class Timetables(University, Luas, name="Timetables"):
         await self._soft_limit_warning(ctx)
 
         await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
-        if self.vehicle_data is None:
-            return await ctx.send("Vehicle data seems to be unavailable at the moment. Try again in a minute.")
+        if not self.vehicle_data:
+            return await message.edit(content="Vehicle data seems to be unavailable at the moment. Try again in a minute.")
         try:
             map_viewer: timetables.MapViewer = await timetables.MapViewer.load(self, stop, zoom=timetables.DEFAULT_ZOOM)
         except Exception:

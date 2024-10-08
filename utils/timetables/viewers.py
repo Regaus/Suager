@@ -1401,7 +1401,8 @@ class VehicleDataViewer:
                             trip_update.direction_id == real_trip.direction_id:
                         stop_times = real_time_trip.stop_times
                         break
-                if stop_times:
+                # Only do this for added trips - scheduled trips that have an invalid ID should get marked as unknown
+                if real_trip.schedule_relationship == "ADDED" and stop_times:
                     try:
                         last_stop: Stop = load_value(self.static_data, Stop, stop_times[-1].stop_id, self.db)
                         destination = f"{last_stop.name} (stop {last_stop.code_or_id})"
@@ -1423,7 +1424,8 @@ class VehicleDataViewer:
                 longitude = deg_m_s(self.real_time_vehicle.longitude)
                 location = f"The bus is currently at the coordinates {latitude} N, {longitude} W."  # Assume this is always the case, since we are in Ireland
             else:
-                nearest_stop = get_nearest_stop(static_trip or real_trip, self.real_time_vehicle, self.static_data)
+                # I don't think it's possible to guess the stop here, since we have a RealTimeTrip rather than a TripUpdate
+                nearest_stop = get_nearest_stop(static_trip, self.real_time_vehicle, self.static_data)
                 location = f"The bus is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id})."
             current_trip = f"{trip_info}\n{location}"
             vehicle_data = current_trip  # Fallback for unavailable static Trip data or block data

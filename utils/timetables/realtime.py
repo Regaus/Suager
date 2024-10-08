@@ -8,9 +8,12 @@ from utils.timetables.shared import GTFSAPIError, TIMEZONE
 
 
 __all__ = (
-    "load_gtfs_r_data", "GTFSRData", "VehicleData",
+    "empty_real_time_str", "load_gtfs_r_data", "GTFSRData", "VehicleData",
     "Header", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle"
 )
+
+
+empty_real_time_str = '{"header": {"gtfs_realtime_version": "2.0", "incrementality": "EMPTY", "timestamp": "0"}, "entity": {}}'
 
 
 # These classes handle the GTFS-R Real time information

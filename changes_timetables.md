@@ -552,3 +552,9 @@
 ## v1.0.6.1 - 1 October 2024
 - Added the eastbound N4 stop at Clontarf station to the stop hub
 - Slightly reduced the line length limit for hubs with 9 stops, so that they wouldn't overflow over 2000 characters
+
+## v1.0.6.2 - 8 October 2024
+- Real-time commands should no longer crash when the real-time API is not accessible
+- Scheduled trips that are on real-time but are not in the database (old static data) will no longer cause `i.tfi vehicles specific` to crash
+- Added the N2 stop to the Heuston station hub
+- Renamed the hub from "Heuston" to "Heuston Station"
