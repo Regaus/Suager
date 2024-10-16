@@ -579,16 +579,15 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
         return {}, {}
     output = {}
     added = {}
-    for trip in real_time_data.entities.values():
-        # trip = entity.trip_update
-        if trip.trip.trip_id in trip_ids:
-            output[trip.trip.trip_id] = trip
-
-        # Check ADDED trips, as they may include our stop
-        if trip.trip.schedule_relationship == "ADDED" and trip.stop_times is not None:
-            for stop_time_update in trip.stop_times:
+    for trip_id in trip_ids:
+        if trip_id in real_time_data.scheduled:
+            output[trip_id] = real_time_data.scheduled[trip_id]
+    for trip_update in real_time_data.added.values():
+        if trip_update.stop_times is not None:
+            for stop_time_update in trip_update.stop_times:
                 if stop_time_update.stop_id == stop_id:
-                    added[trip.entity_id] = trip
+                    added[trip_update.entity_id] = trip_update
+                    break
     return output, added
 
 
@@ -655,10 +654,10 @@ class RealTimeStopSchedule:
                     # route = self.stop_schedule.data.routes.get(added_trip.trip.route_id)
                     if added_trip.vehicle_id:
                         vehicle_id = added_trip.vehicle_id
-                        vehicle = self.vehicle_data.entities[vehicle_id]
+                        vehicle = self.vehicle_data.vehicles[vehicle_id]
                     else:
                         vehicle = None
-                    trip_update = self.real_time_data.entities[trip_id]
+                    trip_update = self.real_time_data.added[trip_id]
                     added_stop_time = AddedStopTime(stop_time, trip_update, route, self.stop_schedule.stop, destination, vehicle)
                     output.append(RealStopTime(added_stop_time, None, None))
 

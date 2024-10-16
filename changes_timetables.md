@@ -561,3 +561,7 @@
 
 ## v1.0.6.3 - 16 October 2024
 - Fixed the real-time data crashing when a vehicle's trip descriptor lacks a route ID
+
+## v1.0.7 - 16 October 2024
+- Added more mappings for GTFSRData and VehicleData, to allow for more optimised lookups of real-time data
+  - Hopefully this will make it quicker to load the real-time data, especially for hubs

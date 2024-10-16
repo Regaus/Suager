@@ -87,11 +87,12 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
             if prev_trips:
                 prev_trip_id, _, _, _ = prev_trips[-1]  # Load last trip
                 prev_trip: Trip = load_value(self.static_data, Trip, prev_trip_id, self.cog.db)
-                prev_real_time: TripUpdate | None = None
-                for entity in self.cog.real_time_data.entities.values():  # type: TripUpdate
-                    if entity.trip.trip_id == prev_trip_id:
-                        prev_real_time = entity
-                        break
+                prev_real_time: TripUpdate | None = self.cog.real_time_data.scheduled.get(prev_trip_id)
+                # prev_real_time: TripUpdate | None = None
+                # for entity in self.cog.real_time_data.entities.values():  # type: TripUpdate
+                #     if entity.trip.trip_id == prev_trip_id:
+                #         prev_real_time = entity
+                #         break
                 if prev_real_time:
                     prev_arrival_time: time.datetime = time.datetime.zero
 
@@ -178,11 +179,12 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         if prev_trips:
             prev_trip_id, _, _, _ = prev_trips[-1]  # Load last trip
             prev_trip: Trip = load_value(self.static_data, Trip, prev_trip_id, self.cog.db)
-            prev_real_time: TripUpdate | None = None
-            for entity in self.cog.real_time_data.entities.values():  # type: TripUpdate
-                if entity.trip.trip_id == prev_trip_id:
-                    prev_real_time = entity
-                    break
+            prev_real_time: TripUpdate | None = self.cog.real_time_data.scheduled.get(prev_trip_id)
+            # prev_real_time: TripUpdate | None = None
+            # for entity in self.cog.real_time_data.entities.values():  # type: TripUpdate
+            #     if entity.trip.trip_id == prev_trip_id:
+            #         prev_real_time = entity
+            #         break
             if prev_real_time and prev_real_time.vehicle_id:
                 vehicle_data: FleetVehicle | None = self.cog.fleet_data.get(prev_real_time.vehicle_id)
                 if vehicle_data:
@@ -204,7 +206,7 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
 def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
     """ Get data about the bus that is serving this trip """
     bus_data = []
-    vehicle = self.vehicle_data.entities.get(self.vehicle_id)
+    vehicle = self.vehicle_data.vehicles.get(self.vehicle_id)
     if vehicle is not None and vehicle.latitude != 0 and vehicle.longitude != 0:
         nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
         bus_data.append(f"The bus is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
@@ -563,6 +565,7 @@ class HubScheduleViewer:
     @classmethod
     async def load(cls, hub_id: str, stops: list[Stop], now: time.datetime | None, hide_terminating: bool, user_id: int | None, static_data: GTFSData, cog):
         """ Load the data and return a working instance """
+        # print(f"{time.datetime.now():%d %b %Y, %H:%M:%S} > Started loading hub {hub_id}")
         if now is not None:
             real_time: bool = abs((now - time.datetime.now()).total_microseconds()) < 28_800_000_000
             fixed = True
@@ -573,10 +576,12 @@ class HubScheduleViewer:
         today = now.date()
         event_loop = asyncio.get_event_loop()
         base_schedules, base_stop_times = await event_loop.run_in_executor(None, cls.load_base_schedules, static_data, stops, today, hide_terminating, user_id)
+        # print(f"{time.datetime.now():%d %b %Y, %H:%M:%S} > Loaded base schedules")
         if real_time:
             real_schedules, real_stop_times = await event_loop.run_in_executor(None, cls.load_real_schedules, cog, base_schedules, base_stop_times)
         else:
             real_schedules = real_stop_times = None
+        # print(f"{time.datetime.now():%d %b %Y, %H:%M:%S} > Loaded real-time schedules")
         return cls(hub_id, stops, now, real_time, fixed, static_data, cog, hide_terminating, user_id, base_schedules, base_stop_times, real_schedules, real_stop_times)
 
     @staticmethod
@@ -587,6 +592,7 @@ class HubScheduleViewer:
             schedule = StopSchedule(data, stop.id, hide_terminating, user_id)
             base_schedules.append(schedule)
             base_stop_times.append(schedule.relevant_stop_times(today))
+            # print(f"{time.datetime.now():%d %b %Y, %H:%M:%S} > Loaded base schedule for stop {stop.name} ({stop.code_or_id})")
         return base_schedules, base_stop_times
 
     @staticmethod
@@ -597,6 +603,7 @@ class HubScheduleViewer:
             real_schedule = RealTimeStopSchedule.from_existing_schedule(schedule, cog.real_time_data, cog.vehicle_data, stop_times)
             real_schedules.append(real_schedule)
             real_stop_times.append(real_schedule.real_stop_times())
+            # print(f"{time.datetime.now():%d %b %Y, %H:%M:%S} > Loaded real-time schedule for stop {schedule.stop.name} ({schedule.stop.code_or_id})")
         return real_schedules, real_stop_times
 
     async def reload(self):
@@ -820,7 +827,7 @@ class TripDiagramViewer:
             # Find new real-time information about this trip
             real_trip = None
             if not self.static_trip:  # Added trip
-                for entity in self.real_time_data.entities.values():
+                for entity in self.real_time_data.added.values():
                     trip_update = entity.trip
                     current_trip = self.real_trip.trip
                     if trip_update.route_id == current_trip.route_id and \
@@ -829,10 +836,11 @@ class TripDiagramViewer:
                         real_trip = entity
                         break
             else:
-                for entity in self.real_time_data.entities.values():
-                    if entity.trip.trip_id == self.static_trip.trip_id:
-                        real_trip = entity
-                        break
+                real_trip = self.real_time_data.scheduled.get(self.static_trip.trip_id)
+                # for entity in self.real_time_data.entities.values():
+                #     if entity.trip.trip_id == self.static_trip.trip_id:
+                #         real_trip = entity
+                #         break
             if real_trip:
                 self.real_trip = real_trip
                 self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
@@ -1347,14 +1355,14 @@ class VehicleDataViewer:
         self.real_time_data: GTFSRData = cog.real_time_data
         self.vehicle_data: VehicleData = cog.vehicle_data
         self.fleet_vehicle: FleetVehicle = vehicle
-        self.real_time_vehicle: Vehicle | None = self.vehicle_data.entities.get(vehicle.vehicle_id)
+        self.real_time_vehicle: Vehicle | None = self.vehicle_data.vehicles.get(vehicle.vehicle_id)
         self.db = get_database()
         self.output: str = self.create_output()
 
     async def refresh(self):
         """ Refresh the map with new data """
         self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
-        self.real_time_vehicle = self.vehicle_data.entities.get(self.fleet_vehicle.vehicle_id, self.real_time_vehicle)
+        self.real_time_vehicle = self.vehicle_data.vehicles.get(self.fleet_vehicle.vehicle_id, self.real_time_vehicle)
         self.update_output()
 
     @property
@@ -1584,7 +1592,7 @@ class RouteVehiclesViewer:
                         vehicle_id = vehicle_ids.get(_trip.trip_id)
                     else:
                         vehicle_id = _trip.vehicle_id
-                    vehicle = self.vehicle_data.entities.get(vehicle_id)
+                    vehicle = self.vehicle_data.vehicles.get(vehicle_id)
                     if not vehicle:
                         _vehicle_data = "No bus tracked"
                     else:

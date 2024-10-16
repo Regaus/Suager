@@ -598,18 +598,20 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
     draw_all_stops(draw, trip_id, x1, y1, zoom, current_stop.id, static_data, departure_times, drop_off_only, pickup_only, skipped, is_cancelled)
 
     # Draw the bus along the route
-    bus: Vehicle | None = None
+    # bus: Vehicle | None = None
     if isinstance(trip, Trip):
-        for vehicle in vehicle_data.entities.values():
-            if vehicle.trip.trip_id == trip_id:
-                bus = vehicle
-                break
+        bus = vehicle_data.scheduled.get(trip.trip_id)
+        # for vehicle in vehicle_data.entities.values():
+        #     if vehicle.trip.trip_id == trip_id:
+        #         bus = vehicle
+        #         break
     else:
-        vehicle_id = trip.vehicle_id
-        for vehicle in vehicle_data.entities.values():
-            if vehicle.vehicle_id == vehicle_id:
-                bus = vehicle
-                break
+        bus = vehicle_data.entities.get(trip.vehicle_id)
+        # vehicle_id = trip.vehicle_id
+        # for vehicle in vehicle_data.entities.values():
+        #     if vehicle.vehicle_id == vehicle_id:
+        #         bus = vehicle
+        #         break
     if bus is not None:
         bus_image, bus_x, bus_y = draw_vehicle(bus, x1, y1, zoom, static_data, fleet_data)
         image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)

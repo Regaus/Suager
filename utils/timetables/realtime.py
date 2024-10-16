@@ -30,7 +30,16 @@ def load_gtfs_r_data(data: dict | None, vehicle_data: dict | None) -> tuple[GTFS
 @dataclass()
 class GTFSRData:
     header: Header
-    entities: dict[str, TripUpdate]  # entity_id -> TripUpdate
+    entities:  dict[str, TripUpdate]
+    """ All entities: entity_id -> TripUpdate """
+    all_trips: dict[str, TripUpdate]
+    """ All trips: trip_id or entity_id -> TripUpdate
+     
+     Uses trip_id for scheduled trips and entity_id for added trips """
+    scheduled: dict[str, TripUpdate]
+    """ Scheduled trips: trip_id -> TripUpdate """
+    added:     dict[str, TripUpdate]
+    """ Added trips: entity_id -> TripUpdate """
 
     @classmethod
     def load(cls, data: dict | None):
@@ -43,15 +52,23 @@ class GTFSRData:
         if "entity" not in data:
             return cls.empty()
         trip_updates: dict[str, TripUpdate] = {}
+        all_trips: dict[str, TripUpdate] = {}
+        scheduled: dict[str, TripUpdate] = {}
+        added: dict[str, TripUpdate] = {}
         for entity in data["entity"]:
             trip_update = TripUpdate.load(entity)
             trip_updates[trip_update.entity_id] = trip_update
-        return cls(Header.load(data["header"]), trip_updates)
+            all_trips[trip_update.trip.trip_id or trip_update.entity_id] = trip_update
+            if trip_update.trip.schedule_relationship == "ADDED":
+                added[trip_update.entity_id] = trip_update
+            else:
+                scheduled[trip_update.trip.trip_id] = trip_update
+        return cls(Header.load(data["header"]), trip_updates, all_trips, scheduled, added)
 
     @classmethod
     def empty(cls):
         """ Return an empty GTFSRData object """
-        return cls(Header.empty(), {})
+        return cls(Header.empty(), {}, {}, {}, {})
 
     @property
     def is_empty(self) -> bool:
@@ -64,7 +81,15 @@ class GTFSRData:
 @dataclass()
 class VehicleData:
     header: Header
-    entities: dict[str, Vehicle]  # vehicle_id -> Vehicle (not entity_id!)
+    # entities: dict[str, Vehicle]  # vehicle_id -> Vehicle (not entity_id!)
+    entities:  dict[str, Vehicle]
+    """ All entities: entity_id -> Vehicle """
+    vehicles:  dict[str, Vehicle]
+    """ All vehicles: vehicle_id -> Vehicle """
+    scheduled: dict[str, Vehicle]
+    """ Scheduled trips: trip_id -> Vehicle """
+    added:     dict[str, Vehicle]
+    """ Added trips: vehicle_id -> Vehicle"""
 
     @classmethod
     def load(cls, data: dict | None):
@@ -75,16 +100,24 @@ class VehicleData:
             raise GTFSAPIError(f"{data['status_code']}: {data['message']}", "vehicles")
         if "entity" not in data:
             return cls.empty()
+        entities: dict[str, Vehicle] = {}
         vehicles: dict[str, Vehicle] = {}
+        scheduled: dict[str, Vehicle] = {}
+        added: dict[str, Vehicle] = {}
         for entity in data["entity"]:
             vehicle = Vehicle.load(entity)
+            entities[vehicle.entity_id] = vehicle
             vehicles[vehicle.vehicle_id] = vehicle
-        return cls(Header.load(data["header"]), vehicles)
+            if vehicle.trip.schedule_relationship == "ADDED":
+                added[vehicle.vehicle_id] = vehicle
+            else:
+                scheduled[vehicle.trip.trip_id] = vehicle
+        return cls(Header.load(data["header"]), entities, vehicles, scheduled, added)
 
     @classmethod
     def empty(cls):
         """ Return an empty VehicleData object """
-        return cls(Header.empty(), {})
+        return cls(Header.empty(), {}, {}, {}, {})
 
     @property
     def is_empty(self) -> bool:
