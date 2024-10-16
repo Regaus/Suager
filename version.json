@@ -43,9 +43,9 @@
   },
   "timetables": {
     "short_version": "1.0",
-    "version": "1.0.6.2",
+    "version": "1.0.6.3",
     "first_version": 1668995199,
     "major_release": 1725408000,
-    "last_update": 1728383601
+    "last_update": 1729097700
   }
 }

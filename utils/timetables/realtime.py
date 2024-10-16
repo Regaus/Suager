@@ -155,7 +155,7 @@ class RealTimeTrip:
         start_time = time.datetime(int(y), int(mo), int(d), int(h) % 24, int(m), int(s), tz=TIMEZONE)
         if int(h) >= 24:
             start_time += time.timedelta(days=1)
-        return cls(data.get("trip_id", "Unknown"), data["route_id"], start_date, start_time, data.get("schedule_relationship", "Unknown"), data["direction_id"])
+        return cls(data.get("trip_id", "Unknown"), data.get("route_id", "Unknown"), start_date, start_time, data.get("schedule_relationship", "Unknown"), data["direction_id"])
 
 
 @dataclass()

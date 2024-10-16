@@ -558,3 +558,6 @@
 - Scheduled trips that are on real-time but are not in the database (old static data) will no longer cause `i.tfi vehicles specific` to crash
 - Added the N2 stop to the Heuston station hub
 - Renamed the hub from "Heuston" to "Heuston Station"
+
+## v1.0.6.3 - 16 October 2024
+- Fixed the real-time data crashing when a vehicle's trip descriptor lacks a route ID
