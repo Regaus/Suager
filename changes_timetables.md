@@ -570,3 +570,6 @@
 - Fixed the code to update fleet information breaking when a vehicle lacks reg plates information
 - Fixed vehicles not being found properly for real-time trips
 - If a vehicle ID is not found in the fleet list, it will now show that ID instead of nothing
+
+## v1.0.7.2 - 20 October 2024
+- Fixed static data breaking when a trip doesn't have a single stop time associated with it

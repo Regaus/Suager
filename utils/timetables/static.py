@@ -697,7 +697,7 @@ def read_and_store_gtfs_data():  # self=None
 
     for row in iterate_over_csv_full("trips.txt"):
         statements.append(Trip(row.route_id, row.service_id, row.trip_id, row.trip_headsign, row.trip_short_name,
-                               row.direction_id, row.block_id, row.shape_id, stops_per_trip[row.trip_id]).save_to_sql())
+                               row.direction_id, row.block_id, row.shape_id, stops_per_trip.get(row.trip_id, 0)).save_to_sql())
     save_to_sql()
     print(f"{now()} > Static GTFS Loader > Saved trips")
 
