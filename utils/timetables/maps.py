@@ -606,7 +606,7 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
         #         bus = vehicle
         #         break
     else:
-        bus = vehicle_data.entities.get(trip.vehicle_id)
+        bus = vehicle_data.vehicles.get(trip.vehicle_id)
         # vehicle_id = trip.vehicle_id
         # for vehicle in vehicle_data.entities.values():
         #     if vehicle.vehicle_id == vehicle_id:
