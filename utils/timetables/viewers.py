@@ -159,7 +159,7 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         if vehicle_data:
             vehicle = _handle_fleet_vehicle(vehicle_data)
         else:
-            vehicle = "-"
+            vehicle = str(stop_time.vehicle_id)
         if stop_time.vehicle.latitude == 0 and stop_time.vehicle.longitude == 0:
             distance = "-"
         else:
@@ -189,6 +189,8 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
                 vehicle_data: FleetVehicle | None = self.cog.fleet_data.get(prev_real_time.vehicle_id)
                 if vehicle_data:
                     vehicle = _handle_fleet_vehicle(vehicle_data) + "*"
+                else:
+                    vehicle = str(prev_real_time.vehicle_id) + "*"
         distance = "-"  # Don't bother trying to guess the distance
     else:
         distance = vehicle = "-"

@@ -565,3 +565,8 @@
 ## v1.0.7 - 16 October 2024
 - Added more mappings for GTFSRData and VehicleData, to allow for more optimised lookups of real-time data
   - Hopefully this will make it quicker to load the real-time data, especially for hubs
+
+## v1.0.7.1 - 20 October 2024
+- Fixed the code to update fleet information breaking when a vehicle lacks reg plates information
+- Fixed vehicles not being found properly for real-time trips
+- If a vehicle ID is not found in the fleet list, it will now show that ID instead of nothing

@@ -322,7 +322,7 @@ class RealStopTime:
                 vehicle_id = self.real_trip.vehicle_id
                 if vehicle_id is not None and vehicles is not None:
                     self.vehicle_id = vehicle_id
-                    self.vehicle = vehicles.entities.get(vehicle_id)  # In case there somehow doesn't exist a value
+                    self.vehicle = vehicles.vehicles.get(vehicle_id)  # In case there somehow doesn't exist a value
                 else:
                     self.vehicle = self.vehicle_id = None
             else:

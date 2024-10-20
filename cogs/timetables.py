@@ -625,7 +625,10 @@ class Timetables(University, Luas, name="Timetables"):
                 vehicle_id = vehicle["id"][3:]
                 columns = vehicle.find_all(name="td")
                 fleet_number = strip(columns[0].a.string)
-                reg_plates = strip(columns[1].a.string)
+                try:
+                    reg_plates = strip(columns[1].a.string)
+                except AttributeError:
+                    reg_plates = "Unknown"
                 model = strip(columns[4].string)
                 trivia = strip(columns[-3].string)  # Always third last column
                 all_vehicles.append(timetables.FleetVehicle(vehicle_id, fleet_number, reg_plates, model, trivia, agency))
