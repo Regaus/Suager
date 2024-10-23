@@ -221,14 +221,21 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
 def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
     """ Get data about the bus that is serving this trip """
     bus_data = []
-    vehicle = self.vehicle_data.vehicles.get(self.vehicle_id)
-    if vehicle is not None and vehicle.latitude != 0 and vehicle.longitude != 0:
-        nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
-        bus_data.append(f"The bus is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
-    fleet_vehicle: FleetVehicle | None = self.cog.fleet_data.get(self.vehicle_id)
-    if fleet_vehicle is not None:
-        bus_data.append(f"This trip is served by the bus {fleet_vehicle.fleet_number} ({fleet_vehicle.reg_plates}).")
-        bus_data.append(f"-# Model: {fleet_vehicle.model} | Notable features: {fleet_vehicle.trivia}")
+    if getattr(self.trip, "short_name", None) in self.train_data:  # A real-time trip wouldn't have a "short_name", so this is fine
+        vehicle = self.train_data.get(self.trip.short_name)
+        if vehicle is not None and vehicle.latitude != 0 and vehicle.latitude != 0:
+            nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
+            bus_data.append(f"The train is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
+            bus_data.append(f"Information provided by Irish Rail: {vehicle.public_message}")
+    else:
+        vehicle = self.vehicle_data.vehicles.get(self.vehicle_id)
+        if vehicle is not None and vehicle.latitude != 0 and vehicle.longitude != 0:
+            nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
+            bus_data.append(f"The bus is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
+        fleet_vehicle: FleetVehicle | None = self.cog.fleet_data.get(self.vehicle_id)
+        if fleet_vehicle is not None:
+            bus_data.append(f"This trip is served by the bus {fleet_vehicle.fleet_number} ({fleet_vehicle.reg_plates}).")
+            bus_data.append(f"-# Model: {fleet_vehicle.model} | Notable features: {fleet_vehicle.trivia}")
     return "\n".join(bus_data)
 
 
@@ -298,9 +305,10 @@ class StopScheduleViewer:
                  real_schedule: RealTimeStopSchedule | None, real_stop_times: list[RealStopTime] | None, cog):
         self.static_data = static_data
         self.cog = cog  # The Timetables cog
-        self.real_time_data = cog.real_time_data
-        self.vehicle_data = cog.vehicle_data
-        self.fleet_data = cog.fleet_data
+        self.real_time_data: GTFSRData = cog.real_time_data
+        self.vehicle_data: VehicleData = cog.vehicle_data
+        self.fleet_data: dict[str, FleetVehicle] = cog.fleet_data
+        self.train_data: dict[str, Train] = cog.train_data
         self.stop = stop
         self.latitude = stop.latitude
         self.longitude = stop.longitude
@@ -777,13 +785,15 @@ class TripDiagramViewer:
         self.static_data = stop_schedule.static_data
         self.stop = stop_schedule.stop
         # self.fixed = stop_schedule.fixed  # Do we even need this here?
-        self.real_time_data = stop_schedule.real_time_data
-        self.vehicle_data = stop_schedule.vehicle_data
         self.cog = stop_schedule.cog
+        self.real_time_data: GTFSRData = self.cog.real_time_data
+        self.vehicle_data: VehicleData = self.cog.vehicle_data
+        self.train_data: dict[str, Train] = self.cog.train_data
         self.is_real_time = stop_schedule.real_time
 
         self.static_trip: Trip | None = None
         self.real_trip: TripUpdate | None = None
+        self.is_real_time_train: bool = False  # Whether the train has real-time info (in case it is available here but not on GTFS)
         self.trip_identifier: str = trip_id
         self.cancelled: bool = False
         self.vehicle_id: str | None = None
@@ -791,6 +801,7 @@ class TripDiagramViewer:
         static_trip_id, real_trip_id, _day_modifier = trip_id.split("|")
         if static_trip_id:
             self.static_trip: Trip = load_value(self.static_data, Trip, static_trip_id)
+            self.is_real_time_train = self.static_trip.short_name in self.train_data
             # _type += 1
         if real_trip_id:
             self.real_trip: TripUpdate = self.real_time_data.entities[real_trip_id]
@@ -1118,7 +1129,7 @@ class TripDiagramViewer:
             note = f"\n{WARNING}Note: This trip was cancelled."
         elif self.real_trip and not self.static_trip:  # Added trip
             note = f"\n{WARNING}Note: This trip was not scheduled."
-        elif self.static_trip and not self.real_trip:  # Static trip
+        elif self.static_trip and not (self.real_trip or self.is_real_time_train):  # Static trip
             note = "\nNote: This trip has no real-time information."
         else:
             note = ""
@@ -1142,7 +1153,7 @@ class TripDiagramViewer:
             else:
                 route = "Unknown route"
 
-        if self.real_trip:
+        if self.real_trip or self.is_real_time_train:
             bus_data = get_vehicle_data(self)
             if bus_data:
                 extra_text += "\n\n" + bus_data
@@ -1214,12 +1225,14 @@ class TripMapViewer:
         self.original_viewer: TripDiagramViewer = viewer
         self.trip: Trip | TripUpdate = viewer.static_trip or viewer.real_trip
         self.real_trip: TripUpdate | None = viewer.real_trip
+        self.is_real_time_train: bool = viewer.is_real_time_train
         self.trip_id: str = viewer.trip_identifier
         self.stop: Stop = viewer.stop
         self.cog = viewer.cog
         self.static_data: GTFSData = viewer.cog.static_data
         self.real_time_data: GTFSRData = viewer.cog.real_time_data
         self.vehicle_data: VehicleData = viewer.cog.vehicle_data
+        self.train_data: dict[str, Train] = viewer.cog.train_data
         self.vehicle_id: str | None = viewer.vehicle_id
         self.cancelled: bool = viewer.cancelled
         self.skipped: set[int] = viewer.skipped
@@ -1236,7 +1249,8 @@ class TripMapViewer:
         departures = viewer.departures.copy()
         if departures[-1] is None:
             departures[-1] = viewer.arrivals[-1]
-        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, viewer.cog.fleet_data, viewer.cog.train_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled)
+        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, viewer.cog.fleet_data, viewer.cog.train_data,
+                departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled)
         if viewer.static_trip:
             image_bio, zoom = await get_trip_diagram(viewer.static_trip, *args)
         else:
@@ -1301,7 +1315,7 @@ class TripMapViewer:
         output = (f"Map overview of Trip {trip_id}\n"
                   "-# Stop colours: Blue = current stop | Yellow = pick up only | Orange = drop off only | Green = regular stop | Red = skipped stop\n"
                   f"-# Real-time data timestamp: {self.data_timestamp}")
-        if self.vehicle_id:
+        if self.vehicle_id or self.is_real_time_train:
             bus_data = get_vehicle_data(self)
             if bus_data:
                 output += "\n\n" + bus_data
@@ -1317,6 +1331,7 @@ class MapViewer:
         self.cog = cog
         self.static_data: GTFSData = cog.static_data
         self.vehicle_data: VehicleData = cog.vehicle_data
+        self.train_data: dict[str, Train] = cog.train_data
         self.stop: Stop = stop
         self.lat: float = stop.latitude
         self.lon: float = stop.longitude

@@ -585,3 +585,6 @@
 ## v1.1.0a1 - 23 October 2024
 - Added ability to show trains on the map
 - Train distance is no longer shown if the location is (0, 0).
+
+## v1.1.0a2 - 23 October 2024
+- The TripDiagramViewer and TripMapViewer can now tell real-time information about a train journey if it is available on the Irish Rail API
