@@ -414,6 +414,9 @@ class StopScheduleViewer:
         # language = languages.Language("en")
         output_data: list[list[str | None]] = [["Route", "Destination", "Sched", "Real", "Bus", "Dist", None, None]]
         column_sizes = [5, 11, 5, 5, 3, 4, 0, 0]  # Longest member of the column
+        if self.base_schedule.has_trains:  # Replace "Bus" with "Train" if we are on a train schedule
+            output_data[0][4] = "Train"
+            column_sizes[4] = 5
         # if self.compact_mode == 2:
         #     output_data[0][3] = "Departure"
         #     column_sizes[3] = 9
