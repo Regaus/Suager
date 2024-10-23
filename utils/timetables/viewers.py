@@ -172,6 +172,8 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         train: Train | None = self.cog.train_data.get(trip_code)
         if train is None:
             distance = "-"
+        elif train.latitude == 0 and train.longitude == 0:
+            distance = "-"
         else:
             distance = _format_distance(train)
     elif stop_time.vehicle is not None:
@@ -1234,7 +1236,7 @@ class TripMapViewer:
         departures = viewer.departures.copy()
         if departures[-1] is None:
             departures[-1] = viewer.arrivals[-1]
-        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, viewer.cog.fleet_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled)
+        args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, viewer.cog.fleet_data, viewer.cog.train_data, departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled)
         if viewer.static_trip:
             image_bio, zoom = await get_trip_diagram(viewer.static_trip, *args)
         else:
@@ -1278,8 +1280,8 @@ class TripMapViewer:
 
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
-        self.image, _ = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.cog.fleet_data, self.departures,
-                                               self.drop_off_only, self.pickup_only, self.skipped, self.cancelled, self.custom_zoom)
+        self.image, _ = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.cog.fleet_data, self.cog.train_data,
+                                               self.departures, self.drop_off_only, self.pickup_only, self.skipped, self.cancelled, self.custom_zoom)
 
     @property
     def data_timestamp(self) -> str:
@@ -1324,7 +1326,7 @@ class MapViewer:
 
     @classmethod
     async def load(cls, cog, stop: Stop, zoom: int = DEFAULT_ZOOM):
-        image_bio = await get_map_with_buses(stop.latitude, stop.longitude, zoom, cog.vehicle_data, cog.static_data, cog.fleet_data)
+        image_bio = await get_map_with_buses(stop.latitude, stop.longitude, zoom, cog.vehicle_data, cog.static_data, cog.fleet_data, cog.train_data)
         return cls(cog, image_bio, stop, zoom)
 
     @property
@@ -1340,7 +1342,7 @@ class MapViewer:
 
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
-        self.image = await get_map_with_buses(self.stop.latitude, self.stop.longitude, self.zoom, self.cog.vehicle_data, self.cog.static_data, self.cog.fleet_data)
+        self.image = await get_map_with_buses(self.stop.latitude, self.stop.longitude, self.zoom, self.cog.vehicle_data, self.cog.static_data, self.cog.fleet_data, self.cog.train_data)
 
     @property
     def data_timestamp(self) -> str:

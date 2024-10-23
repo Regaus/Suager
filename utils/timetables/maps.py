@@ -197,7 +197,7 @@ def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: 
             return distance, 0
 
 
-def get_nearest_stop(trip: Trip | TripUpdate, vehicle: Vehicle, static_data: GTFSData) -> Stop:
+def get_nearest_stop(trip: Trip | TripUpdate, vehicle: Vehicle | Train, static_data: GTFSData) -> Stop:
     """ Returns the stop nearest to the vehicle's current position """
     db = get_database()
     if isinstance(trip, Trip):
@@ -284,38 +284,44 @@ async def download_map_lat_lon(lat: float, lon: float, zoom: int = DEFAULT_ZOOM)
     return output, x + START, y + START
 
 
-def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_data: GTFSData, fleet_data: dict[str, FleetVehicle]) -> tuple[Image.Image, int, int]:
+def draw_vehicle(vehicle: Vehicle | Train, tile_x: int, tile_y: int, zoom: int, static_data: GTFSData, fleet_data: dict[str, FleetVehicle]) -> tuple[Image.Image, int, int]:
     """ Return an image of a vehicle and its coordinates on the map image (in pixels) """
-    # Get route data and draw the bus on a temporary image
+    # Get route data, then draw the vehicle on a temporary image before pasting it on the map itself
     db = get_database()
-    try:
-        # route = Route.from_sql(vehicle.trip.route_id, db).short_name
-        route = load_value(static_data, Route, vehicle.trip.route_id, db).short_name
-    except KeyError:
-        route = vehicle.trip.route_id
-    fleet_vehicle: FleetVehicle | None = fleet_data.get(vehicle.vehicle_id, None)
-    if not fleet_vehicle:
-        # Unknown vehicles - Green with green-ish highlight
-        bus_colour = (1, 133, 64)
+    if isinstance(vehicle, Vehicle):  # Bus
+        try:
+            # route = Route.from_sql(vehicle.trip.route_id, db).short_name
+            route = load_value(static_data, Route, vehicle.trip.route_id, db).short_name
+        except KeyError:
+            route = vehicle.trip.route_id
+        fleet_vehicle: FleetVehicle | None = fleet_data.get(vehicle.vehicle_id, None)
+        if not fleet_vehicle:
+            # Unknown vehicles - Green with green-ish highlight
+            bus_colour = (1, 133, 64)
+            text_colour = (255, 255, 255)
+            stroke_colour = (0, 255, 114)
+        elif fleet_vehicle.agency == "Dublin Bus":
+            # Dublin Bus - Yellow
+            bus_colour = (253, 221, 1)
+            text_colour = (0, 0, 0)
+            stroke_colour = (153, 132, 1)
+        elif fleet_vehicle.agency == "Bus Éireann":
+            # Bus Éireann - Red
+            bus_colour = (234, 29, 26)
+            text_colour = (255, 255, 255)
+            stroke_colour = (229, 58, 52)
+        elif fleet_vehicle.agency == "Go-Ahead Ireland":
+            # Go-Ahead Ireland - Cyan-ish
+            bus_colour = (79, 199, 204)
+            text_colour = (0, 0, 0)
+            stroke_colour = (58, 149, 153)
+        else:
+            raise RuntimeError(f"Unknown fleet vehicle agency {fleet_vehicle.agency!r}")
+    else:  # Train
+        route = vehicle.trip_code
+        bus_colour = (44, 154, 66)
         text_colour = (255, 255, 255)
-        stroke_colour = (0, 255, 114)
-    elif fleet_vehicle.agency == "Dublin Bus":
-        # Dublin Bus - Yellow
-        bus_colour = (253, 221, 1)
-        text_colour = (0, 0, 0)
-        stroke_colour = (153, 132, 1)
-    elif fleet_vehicle.agency == "Bus Éireann":
-        # Bus Éireann - Red
-        bus_colour = (234, 29, 26)
-        text_colour = (255, 255, 255)
-        stroke_colour = (229, 58, 52)
-    elif fleet_vehicle.agency == "Go-Ahead Ireland":
-        # Go-Ahead Ireland - Cyan-ish
-        bus_colour = (79, 199, 204)
-        text_colour = (0, 0, 0)
-        stroke_colour = (58, 149, 153)
-    else:
-        raise RuntimeError(f"Unknown fleet vehicle agency {fleet_vehicle.agency!r}")
+        stroke_colour = (73, 255, 110)
     map_x, map_y = deg_to_xy_float(vehicle.latitude, vehicle.longitude, zoom)
     img_x = int((map_x - tile_x) * TILE_SIZE)
     img_y = int((map_y - tile_y) * TILE_SIZE)
@@ -327,7 +333,10 @@ def draw_vehicle(vehicle: Vehicle, tile_x: int, tile_y: int, zoom: int, static_d
     try:
         # trip = Trip.from_sql(vehicle.trip.trip_id, db)
         # shape = Shape.from_sql(trip.shape_id, db)
-        trip: Trip = load_value(static_data, Trip, vehicle.trip.trip_id, db)
+        if isinstance(vehicle, Vehicle):
+            trip: Trip = load_value(static_data, Trip, vehicle.trip.trip_id, db)
+        else:
+            trip: Trip = Trip.from_short_name(vehicle.trip_code, db)
         shape: Shape = trip.shape(static_data, db)
         lat1, lon1 = vehicle.latitude, vehicle.longitude
         distances: dict[int, float] = {}
@@ -530,7 +539,7 @@ def draw_all_stops(draw: ImageDraw.ImageDraw, trip_id: str | list[Stop], map_x1:
     # draw.text((0, 0), "Debug: This is a Test", fill=(255, 0, 0), font=DEPARTURE_TIME_FONT, anchor="la")
 
 
-async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: VehicleData, static_data: GTFSData, fleet_data: dict[str, FleetVehicle]) -> io.BytesIO:
+async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: VehicleData, static_data: GTFSData, fleet_data: dict[str, FleetVehicle], train_data: dict[str, Train]) -> io.BytesIO:
     """ Show the map of the area around a bus stop, including all buses nearby.
 
     Returns a BytesIO instance with the image inside """
@@ -552,17 +561,24 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
     lat_min, lat_max = min((lat1, lat2)), max((lat1, lat2))
     lon_min, lon_max = min((lon1, lon2)), max((lon1, lon2))
     del lat1, lon1, lat2, lon2
-    for vehicle in vehicle_data.entities.values():
-        if lat_min <= vehicle.latitude <= lat_max and lon_min <= vehicle.longitude <= lon_max:
-            bus_image, bus_x, bus_y = draw_vehicle(vehicle, tile_x1, tile_y1, zoom, static_data, fleet_data)
+
+    def _handle_vehicle(_vehicle: Vehicle | Train):
+        if lat_min <= _vehicle.latitude <= lat_max and lon_min <= _vehicle.longitude <= lon_max:
+            bus_image, bus_x, bus_y = draw_vehicle(_vehicle, tile_x1, tile_y1, zoom, static_data, fleet_data)
+            nonlocal image
             image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)
+
+    for vehicle in vehicle_data.entities.values():
+        _handle_vehicle(vehicle)
+    for vehicle in train_data.values():
+        _handle_vehicle(vehicle)
     bio = io.BytesIO()
     image.save(bio, "PNG")
     bio.seek(0)
     return bio
 
 
-async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData, fleet_data: dict[str, FleetVehicle],
+async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData, fleet_data: dict[str, FleetVehicle], train_data: dict[str, Train],
                            departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int],
                            is_cancelled: bool = False, custom_zoom: int = None) -> tuple[io.BytesIO, int]:
     """ Show the diagram of a trip, including stops along the trip and the vehicle's current location (if available).
@@ -600,20 +616,23 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
     # Draw the bus along the route
     # bus: Vehicle | None = None
     if isinstance(trip, Trip):
-        bus = vehicle_data.scheduled.get(trip.trip_id)
+        if trip.short_name in train_data:
+            vehicle = train_data.get(trip.short_name)
+        else:
+            vehicle = vehicle_data.scheduled.get(trip.trip_id)
         # for vehicle in vehicle_data.entities.values():
         #     if vehicle.trip.trip_id == trip_id:
         #         bus = vehicle
         #         break
     else:
-        bus = vehicle_data.vehicles.get(trip.vehicle_id)
+        vehicle = vehicle_data.vehicles.get(trip.vehicle_id)
         # vehicle_id = trip.vehicle_id
         # for vehicle in vehicle_data.entities.values():
         #     if vehicle.vehicle_id == vehicle_id:
         #         bus = vehicle
         #         break
-    if bus is not None:
-        bus_image, bus_x, bus_y = draw_vehicle(bus, x1, y1, zoom, static_data, fleet_data)
+    if vehicle is not None:
+        bus_image, bus_x, bus_y = draw_vehicle(vehicle, x1, y1, zoom, static_data, fleet_data)
         image = paste_vehicle_on_map(image, bus_image, bus_x, bus_y)
 
     bio = io.BytesIO()

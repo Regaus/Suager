@@ -581,3 +581,7 @@
 
 ## v1.0.8.1 - 23 October 2024
 - Replaced "Bus" with "Train" on schedules for train stations
+
+## v1.1.0a1 - 23 October 2024
+- Added ability to show trains on the map
+- Train distance is no longer shown if the location is (0, 0).

@@ -328,6 +328,13 @@ class Trip:
         return cls.from_dict(db.fetchrow("SELECT * FROM trips WHERE trip_id=?", (trip_id,)))
 
     @classmethod
+    def from_short_name(cls, trip_code: str, db: database.Database = None) -> Trip:
+        """ Load a Trip based on its "short name"/code """
+        if not db:
+            db = get_database()
+        return cls.from_dict(db.fetchrow("SELECT * FROM trips WHERE short_name=?", (trip_code,)))
+
+    @classmethod
     def from_block(cls, block_id: str, calendar_id: str, db: database.Database = None) -> list[Trip]:
         """ Load a list of Trips given a block ID and calendar ID """
         if not db:
