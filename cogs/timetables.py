@@ -334,6 +334,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.WRITE = True   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
+        self.train_data_url = "https://api.irishrail.ie/realtime/realtime.asmx/getCurrentTrainsXML"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
         self.vehicle_list_urls: tuple[tuple[str, str], ...] = (  # (agency, link)
             ("Dublin Bus",       "https://bustimes.org/operators/dublin-bus/vehicles"),
@@ -348,6 +349,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.vehicle_data: timetables.VehicleData = VehicleData.empty()
         self.static_data: timetables.GTFSData | None = None
         self.fleet_data: dict[str, timetables.FleetVehicle] = {}  # fleet_data[vehicle_id] = FleetVehicle
+        self.train_data: dict[str, timetables.Train] = {}         # train_data[trip_code] = Train
         self.initialised = False
         self.updating = False
         self.updating_real_time = False
@@ -418,7 +420,7 @@ class Timetables(University, Luas, name="Timetables"):
             return time.datetime.combine(date_part, time_part, timetables.TIMEZONE), True
         return None, True
 
-    async def get_from_api(self, url: str, filename: str, *, write: bool = True) -> bytes:
+    async def get_from_api(self, url: str, filename: str, *, write: bool = True, is_json: bool = True) -> bytes:
         """ Generic function to get data from the real-time API - for the real-time and vehicles """
         try:
             data: bytes = await http.get(url, headers=self.headers, res_method="read")
@@ -427,13 +429,18 @@ class Timetables(University, Luas, name="Timetables"):
                     file.write(data)
             return data
         except (aiohttp.ClientError, TimeoutError):
-            return timetables.empty_real_time_str.encode("utf-8")
+            if is_json:
+                return timetables.empty_real_time_str
+            return timetables.empty_train_data_str
 
     async def get_data_from_api(self, *, write: bool = True) -> bytes:
-        return await self.get_from_api(self.url, timetables.real_time_filename, write=write)
+        return await self.get_from_api(self.url, timetables.real_time_filename, write=write, is_json=True)
 
     async def get_vehicles_from_api(self, *, write: bool = True) -> bytes:
-        return await self.get_from_api(self.vehicle_url, timetables.vehicles_filename, write=write)
+        return await self.get_from_api(self.vehicle_url, timetables.vehicles_filename, write=write, is_json=True)
+
+    async def get_trains_from_api(self, *, write: bool = True) -> bytes:
+        return await self.get_from_api(self.train_data_url, timetables.trains_filename, write=write, is_json=False)
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
         while self.updating_real_time:
@@ -444,17 +451,18 @@ class Timetables(University, Luas, name="Timetables"):
             if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
                 return self.real_time_data, self.vehicle_data
             if self.last_updated is None:
-                prev_real_time_data_d, prev_vehicle_data_d = await self.get_real_time_data(debug=True, write=False)
+                prev_real_time_data_d, prev_vehicle_data_d, prev_train_data_d = await self.get_real_time_data(debug=True, write=False)
                 prev_real_time_data, prev_vehicle_data = timetables.load_gtfs_r_data(prev_real_time_data_d, prev_vehicle_data_d)
                 ts1, ts2 = prev_real_time_data.header.timestamp.timestamp, prev_vehicle_data.header.timestamp.timestamp
                 now = time.datetime.now().timestamp
                 if (now - max(ts1, ts2)) < 75:  # Less than 75s passed since the data header's timestamp (vehicle data has a 60s cooldown, add 15s to be sure to not hit it)
                     self.real_time_data = prev_real_time_data
                     self.vehicle_data = prev_vehicle_data
+                    self.train_data = prev_train_data_d
                     self.last_updated = time.datetime.from_timestamp(max(ts1, ts2))
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded GTFS-R data stored on disk (too recent to update)")
                     return self.real_time_data, self.vehicle_data
-            data, vehicle_data = await self.get_real_time_data(debug=debug, write=write)
+            data, vehicle_data, train_data = await self.get_real_time_data(debug=debug, write=write)
             try:
                 new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
                 if new_real_time_data:
@@ -469,29 +477,40 @@ class Timetables(University, Luas, name="Timetables"):
                 elif error_place == "vehicles":
                     self.real_time_data = timetables.load_gtfs_r_data(data, None)[0]
                 logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Real-Time API Error for {error_place}: {type(e).__name__}: {str(e)}")
+            self.train_data = train_data
             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
             self.last_updated = time.datetime.now()
             return self.real_time_data, self.vehicle_data  # just in case
         finally:
             self.updating_real_time = False
 
-    async def get_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[dict, dict]:
+    async def get_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[dict, dict, dict[str, timetables.Train]]:
         """ Gets real-time data from the NTA's API or load from cache if in debug mode """
         if debug or (self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60):  # type: ignore
+            updated = False
             try:
                 with open(timetables.real_time_filename, "rb") as file:
                     data: bytes = file.read()
+            except FileNotFoundError:
+                data: bytes = await self.get_data_from_api(write=write)
+            try:
                 with open(timetables.vehicles_filename, "rb") as file:
                     vehicles: bytes = file.read()
             except FileNotFoundError:
-                data: bytes = await self.get_data_from_api(write=write)
                 vehicles: bytes = await self.get_vehicles_from_api(write=write)
+            try:
+                with open(timetables.trains_filename, "rb") as file:
+                    trains: bytes = file.read()
+            except FileNotFoundError:
+                trains: bytes = await self.get_trains_from_api(write=write)
+            if updated:
                 self.last_updated = time.datetime.now()
         else:
             data: bytes = await self.get_data_from_api(write=write)
             vehicles: bytes = await self.get_vehicles_from_api(write=write)
+            trains: bytes = await self.get_trains_from_api(write=write)
             self.last_updated = time.datetime.now()
-        return json.loads(data), json.loads(vehicles)
+        return json.loads(data), json.loads(vehicles), timetables.parse_train_data(trains)
 
     # @commands.Cog.listener()
     # async def on_ready(self):

@@ -9,7 +9,7 @@ from regaus import time
 
 from utils import paginators
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database
-from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle
+from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle, Train
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route, FleetVehicle
 from utils.timetables.schedules import trip_validity, SpecificStopTime, RealStopTime, ScheduledTrip, StopSchedule, RealTimeStopSchedule, RouteSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop, get_nearest_stop
@@ -152,9 +152,29 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         match = re.match(FLEET_REGEX, fleet)
         return f"{match.group(1)}{match.group(2):>3}" if match else fleet
 
-    if hub or not self.real_time:
+    def _format_distance(_vehicle: Vehicle | Train) -> str:
+        trip = stop_time.real_trip if stop_time.is_added else stop_time.trip(self.static_data)
+        _distance_m, colour = distance_between_bus_and_stop(trip, self.stop, _vehicle, self.static_data)
+        if _distance_m >= 1000:
+            if self.compact_mode == 1:
+                _distance = f"{_distance_m / 1000:.1f}k"
+            else:
+                _distance = f"{_distance_m / 1000:.2f}km"
+        else:
+            _distance = f"{round(_distance_m, -1):.0f}m"
+        _distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"
+        return _distance
+
+    if hub or not self.real_time or self.compact_mode >= 2:
         distance = vehicle = ""
-    elif self.compact_mode < 2 and self.real_time and stop_time.vehicle is not None:
+    elif getattr(stop_time, "is_train_departure", False):
+        vehicle = trip_code = stop_time.trip().short_name  # The "Bus" column is used to show the trip code
+        train: Train | None = self.cog.train_data.get(trip_code)
+        if train is None:
+            distance = "-"
+        else:
+            distance = _format_distance(train)
+    elif stop_time.vehicle is not None:
         vehicle_data: FleetVehicle | None = self.cog.fleet_data.get(stop_time.vehicle_id)
         if vehicle_data:
             vehicle = _handle_fleet_vehicle(vehicle_data)
@@ -163,17 +183,8 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         if stop_time.vehicle.latitude == 0 and stop_time.vehicle.longitude == 0:
             distance = "-"
         else:
-            trip = stop_time.real_trip if stop_time.is_added else stop_time.trip(self.static_data)
-            distance_m, colour = distance_between_bus_and_stop(trip, self.stop, stop_time.vehicle, self.static_data)
-            if self.compact_mode == 1:
-                distance = f"{distance_m / 1000:.1f}k"
-            else:
-                if distance_m >= 1000:
-                    distance = f"{distance_m / 1000:.2f}km"
-                else:
-                    distance = f"{round(distance_m, -1):.0f}m"
-            distance += {-1: "🟠", 0: "🟢", 1: "🟡", 2: "🔴"}.get(colour, "🟠") + "\u2060"
-    elif stop_time.trip().block_id:  # Similarly to the real-time departure time, try to guess the vehicle that will depart on this trip
+            distance = _format_distance(stop_time.vehicle)
+    elif getattr(stop_time.trip(), "block_id", None):  # Similarly to the real-time departure time, try to guess the vehicle that will depart on this trip
         vehicle = "-"  # Default if no value is found
         prev_trips, _ = get_prev_next_trips(stop_time.trip(), self.today, self.static_data, self.cog.db)
         if prev_trips:

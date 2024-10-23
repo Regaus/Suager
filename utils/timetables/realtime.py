@@ -2,18 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import xmltodict
 from regaus import time
 
 from utils.timetables.shared import GTFSAPIError, TIMEZONE
 
 
 __all__ = (
-    "empty_real_time_str", "load_gtfs_r_data", "GTFSRData", "VehicleData",
-    "Header", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle"
+    "empty_real_time_str", "empty_train_data_str",
+    "load_gtfs_r_data", "GTFSRData", "VehicleData",
+    "Header", "TripUpdate", "RealTimeTrip", "StopTimeUpdate", "Vehicle",
+    "Train", "parse_train_data"
 )
 
 
-empty_real_time_str = '{"header": {"gtfs_realtime_version": "2.0", "incrementality": "EMPTY", "timestamp": "0"}, "entity": {}}'
+empty_real_time_str: bytes = b'{"header": {"gtfs_realtime_version": "2.0", "incrementality": "EMPTY", "timestamp": "0"}, "entity": {}}'
+empty_train_data_str: bytes = b"<ArrayOfObjTrainPositions><NoData/></ArrayOfObjTrainPositions>"
 
 
 # These classes handle the GTFS-R Real time information
@@ -239,3 +243,33 @@ class Vehicle:
         vehicle_id = vehicle_data["vehicle"]["id"]
         timestamp = vehicle_data["timestamp"]
         return cls(entity_id, trip, position["latitude"], position["longitude"], vehicle_id, time.datetime.from_timestamp(int(timestamp), tz=TIMEZONE))
+
+
+def parse_train_data(xml: str | bytes) -> dict[str, Train]:
+    train_data: list[dict[str, str]] = xmltodict.parse(xml)["ArrayOfObjTrainPositions"].get("objTrainPositions", [])
+    trains: dict[str, Train] = {}
+    for entry in train_data:
+        trip_code: str = entry["TrainCode"]
+        latitude: float = float(entry["TrainLatitude"])
+        longitude: float = float(entry["TrainLongitude"])
+        date: str = entry["TrainDate"]
+        public_message: str = entry["PublicMessage"].replace("\\n", "\n")
+        direction: str = entry["Direction"]
+        status: str = entry["TrainStatus"]
+        trains[trip_code] = Train(trip_code, latitude, longitude, date, public_message, direction, status)
+    return trains
+
+
+@dataclass()
+class Train:
+    trip_code: str
+    """ Irish Rail's 4-letter trip code """
+    latitude: float
+    longitude: float
+    date: str
+    """ The date on which the trip started, as a string """
+    public_message: str
+    """ Irish Rail's "public message", which contains information about the current state of the trip """
+    direction: str
+    train_status: str
+    """ N = not yet running | R = running | T = terminated """

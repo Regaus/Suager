@@ -10,7 +10,7 @@ from regaus import time
 from utils import http, logger, conworlds
 from utils.general import print_error, make_dir
 from utils.timetables import ShapePoint
-from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate
+from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate, Train
 from utils.timetables.shared import get_database, __version__
 from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, FleetVehicle, load_value
 
@@ -120,7 +120,7 @@ def find_fitting_coords_and_zoom(shape: Shape | list[Stop], custom_centre: tuple
     return centre_x, centre_y, zoom
 
 
-def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: Vehicle, static_data: GTFSData) -> tuple[float, int]:
+def distance_between_bus_and_stop(trip: Trip | TripUpdate, stop: Stop, vehicle: Vehicle | Train, static_data: GTFSData) -> tuple[float, int]:
     """ Return the distance between the bus and the current bus stop in metres and an indication of whether the bus has passed the stop.
 
     Second return value denotes the colour of the circle that denotes whether the bus has passed or not.

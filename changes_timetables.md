@@ -573,3 +573,8 @@
 
 ## v1.0.7.2 - 20 October 2024
 - Fixed static data breaking when a trip doesn't have a single stop time associated with it
+
+## v1.0.8 - 23 October 2024
+- StopScheduleViewer: Added ability to see trains' locations, using data provided by Irish Rail's API
+- If real-time information is missing while in debug mode, only the missing part will be downloaded
+- Fixed some errors where the code was trying to look for route or trip attributes when they were None

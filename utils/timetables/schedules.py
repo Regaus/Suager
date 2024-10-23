@@ -353,6 +353,7 @@ class RealStopTime:
             self.vehicle_id = stop_time.vehicle_id
         else:
             raise TypeError(f"Unexpected StopTime type {type(stop_time).__name__} received")
+        self.is_train_departure: bool = getattr(self.route(), "route_type", None) == 2  # Trains use a different API for vehicle locations
 
     def trip(self, data: GTFSData = None) -> Optional[Trip]:
         if self._trip:
@@ -476,6 +477,7 @@ class StopSchedule:
         self._all_routes: dict[str, Route] = {}  # All routes passing through the stop (Does not account for routes that only terminate at this stop)
         self.all_trips: dict[str, Trip] = {}
         self.hide_terminating = hide_terminating
+        self.has_trains: bool = False  # Whether this schedule contains train routes
 
         # self.total_stops[trip_id] = Trip.total_stops
         self.total_stops: dict[str, int] = {}
@@ -490,6 +492,8 @@ class StopSchedule:
                 route = _trip.route(self.data, self.db)
                 self._all_routes[_trip.route_id] = route
                 self._route_id_cache[_trip.route_id] = route.filter_name()
+                if route.route_type == 2:
+                    self.has_trains |= True
 
             route_name = self._route_id_cache.get(_trip.route_id, None)
             if route_name is None:
@@ -619,6 +623,7 @@ class RealTimeStopSchedule:
 
         self.real_time_data = real_time_data
         self.vehicle_data = vehicle_data
+        self.has_trains = self.stop_schedule.has_trains
 
     @classmethod
     def from_existing_schedule(cls, existing_schedule: StopSchedule, real_time_data: GTFSRData, vehicle_data: VehicleData, stop_times: list[SpecificStopTime] | None = None):

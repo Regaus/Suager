@@ -20,3 +20,4 @@ icalendar
 pandas
 thefuzz
 beautifulsoup4
+xmltodict
