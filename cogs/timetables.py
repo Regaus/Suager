@@ -334,9 +334,9 @@ class Timetables(University, Luas, name="Timetables"):
         self.WRITE = True   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
-        self.train_data_url = "https://api.irishrail.ie/realtime/realtime.asmx/getCurrentTrainsXML"
+        self.train_locations_url = "https://api.irishrail.ie/realtime/realtime.asmx/getCurrentTrainsXML"
         self.gtfs_data_url = "https://www.transportforireland.ie/transitData/Data/GTFS_All.zip"
-        self.vehicle_list_urls: tuple[tuple[str, str], ...] = (  # (agency, link)
+        self.fleet_list_urls: tuple[tuple[str, str], ...] = (  # (agency, link)
             ("Dublin Bus",       "https://bustimes.org/operators/dublin-bus/vehicles"),
             ("Bus Éireann",      "https://bustimes.org/operators/bus-eireann/vehicles"),
             ("Go-Ahead Ireland", "https://bustimes.org/operators/go-ahead-ireland/vehicles")
@@ -420,10 +420,11 @@ class Timetables(University, Luas, name="Timetables"):
             return time.datetime.combine(date_part, time_part, timetables.TIMEZONE), True
         return None, True
 
-    async def get_from_api(self, url: str, filename: str, *, write: bool = True, is_json: bool = True) -> bytes:
+    @staticmethod
+    async def get_from_api(url: str, filename: str, headers: dict | None, *, write: bool = True, is_json: bool = True) -> bytes | None:
         """ Generic function to get data from the real-time API - for the real-time and vehicles """
         try:
-            data: bytes = await http.get(url, headers=self.headers, res_method="read")
+            data: bytes = await http.get(url, headers=headers, res_method="read")
             if write:
                 with open(filename, "wb+") as file:
                     file.write(data)
@@ -431,16 +432,16 @@ class Timetables(University, Luas, name="Timetables"):
         except (aiohttp.ClientError, TimeoutError):
             if is_json:
                 return timetables.empty_real_time_str
-            return timetables.empty_train_data_str
+            return None
 
     async def get_data_from_api(self, *, write: bool = True) -> bytes:
-        return await self.get_from_api(self.url, timetables.real_time_filename, write=write, is_json=True)
+        return await self.get_from_api(self.url, timetables.real_time_filename, self.headers, write=write, is_json=True)
 
     async def get_vehicles_from_api(self, *, write: bool = True) -> bytes:
-        return await self.get_from_api(self.vehicle_url, timetables.vehicles_filename, write=write, is_json=True)
+        return await self.get_from_api(self.vehicle_url, timetables.vehicles_filename, self.headers, write=write, is_json=True)
 
-    async def get_trains_from_api(self, *, write: bool = True) -> bytes:
-        return await self.get_from_api(self.train_data_url, timetables.trains_filename, write=write, is_json=False)
+    async def get_train_locations_from_api(self, *, write: bool = True) -> bytes:
+        return await self.get_from_api(self.train_locations_url, timetables.trains_filename, None, write=write, is_json=False)
 
     async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
         while self.updating_real_time:
@@ -502,13 +503,13 @@ class Timetables(University, Luas, name="Timetables"):
                 with open(timetables.trains_filename, "rb") as file:
                     trains: bytes = file.read()
             except FileNotFoundError:
-                trains: bytes = await self.get_trains_from_api(write=write)
+                trains: bytes = await self.get_train_locations_from_api(write=write)
             if updated:
                 self.last_updated = time.datetime.now()
         else:
             data: bytes = await self.get_data_from_api(write=write)
             vehicles: bytes = await self.get_vehicles_from_api(write=write)
-            trains: bytes = await self.get_trains_from_api(write=write)
+            trains: bytes = await self.get_train_locations_from_api(write=write)
             self.last_updated = time.datetime.now()
         return json.loads(data), json.loads(vehicles), timetables.parse_train_data(trains)
 
@@ -582,7 +583,7 @@ class Timetables(University, Luas, name="Timetables"):
         self.updating = True
         # await asyncio.get_event_loop().run_in_executor(None, functools.partial(timetables.read_and_store_gtfs_data, self))
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, timetables.read_and_store_gtfs_data)
+        await loop.run_in_executor(None, timetables.read_and_store_gtfs_data)  # type: ignore
         self.static_data = timetables.init_gtfs_data()
         logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > {message}")
         self.updating = False
@@ -599,7 +600,7 @@ class Timetables(University, Luas, name="Timetables"):
         else:
             message = await ctx.send(f"{emotes.Loading} Loading the response...")
 
-        await self.update_vehicles(force_update=False)
+        await self.update_fleet(force_update=False)
 
         # Keep the function alive until the bot is initialised and the data has been updated
         while not self.initialised or self.updating:
@@ -626,7 +627,7 @@ class Timetables(University, Luas, name="Timetables"):
 
         return message
 
-    async def get_vehicle_names_web(self) -> list[timetables.FleetVehicle]:
+    async def get_fleet_list_web(self) -> list[timetables.FleetVehicle]:
         """ Get vehicle data from bustimes """
         def strip(string: str | None):
             if string:
@@ -634,7 +635,7 @@ class Timetables(University, Luas, name="Timetables"):
             return string
 
         all_vehicles: list[timetables.FleetVehicle] = []
-        for agency, url in self.vehicle_list_urls:
+        for agency, url in self.fleet_list_urls:
             # This depends on the layout of the website not changing. Oh well.
             data = await http.get(url, res_method="text")
             soup = BeautifulSoup(data, "html.parser")
@@ -654,7 +655,7 @@ class Timetables(University, Luas, name="Timetables"):
                 # all_vehicles.append({"vehicle_id": vehicle_id, "fleet_number": fleet_number, "reg_plates": reg_plates, "model": model, "trivia": trivia})
         return all_vehicles
 
-    async def update_vehicles(self, force_update: bool = False):
+    async def update_fleet(self, force_update: bool = False):
         """ Save or update vehicle data from bustimes """
         # This function shouldn't really have to run more than once per uptime, but let's keep this here in case the bot stays up for more than two weeks
         if self.updating_vehicles:
@@ -669,7 +670,7 @@ class Timetables(University, Luas, name="Timetables"):
                 force_update = True
             # Download the new data, if necessary
             if force_update:
-                all_vehicles: list[timetables.FleetVehicle] = await self.get_vehicle_names_web()
+                all_vehicles: list[timetables.FleetVehicle] = await self.get_fleet_list_web()
                 # noinspection SqlWithoutWhere
                 statements = ["BEGIN", "DELETE FROM vehicles"]
                 for vehicle in all_vehicles:
@@ -783,7 +784,7 @@ class Timetables(University, Luas, name="Timetables"):
     @placeholder.command(name="vehicles")
     async def update_vehicle_data(self, ctx: commands.Context):
         """ Update the vehicle data from bustimes """
-        await self.update_vehicles(force_update=True)
+        await self.update_fleet(force_update=True)
         return await ctx.send(f"{print_current_time()} > Fleet data has been successfully updated.")
 
     def find_stop(self, query: str) -> list[timetables.Stop]:
@@ -930,7 +931,7 @@ class Timetables(University, Luas, name="Timetables"):
     async def tfi_vehicle_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
         """ Autocomplete for the specific vehicle search """
         if not self.fleet_data:
-            await self.update_vehicles(force_update=False)
+            await self.update_fleet(force_update=False)
         results: list[tuple[str, str, int]] = []
         for vehicle in self.fleet_data.values():
             ratios = (process.default_scorer(current, vehicle.vehicle_id), process.default_scorer(current, vehicle.fleet_number))

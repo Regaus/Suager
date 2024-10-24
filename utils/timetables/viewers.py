@@ -5,11 +5,12 @@ import io
 import re
 
 import discord
+import nest_asyncio
 from regaus import time
 
 from utils import paginators
-from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database
-from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle, Train
+from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database, TRAIN_STATION_CODE_TO_ID
+from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle, Train, TrainMovement, fetch_train_movements
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route, FleetVehicle
 from utils.timetables.schedules import trip_validity, SpecificStopTime, RealStopTime, ScheduledTrip, StopSchedule, RealTimeStopSchedule, RouteSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop, get_nearest_stop
@@ -825,6 +826,7 @@ class TripDiagramViewer:
         self.compact_mode: int = stop_schedule.compact_mode  # 0 -> disabled | 1 -> shorter stop names | 2 -> mobile-friendly mode
         self.current_stop_page: int | None = None
         self.route = self.get_route()
+        self.is_train: bool = self.route.route_type == 2  # Whether we are dealing with a train
 
         # Attributes for the output generator
         self.skipped: set[int] = set()
@@ -926,127 +928,161 @@ class TripDiagramViewer:
             # Apparently they need to be sorted because they may somehow come out in the wrong order
             return sorted([SpecificStopTime(_stop_time, self.today + self.timedelta) for _stop_time in base_stop_times], key=lambda st: st.sequence)
 
-        if self.real_trip and not self.cancelled:
-            def extend_list(iterable: list, _repetitions: int):
-                if _repetitions > 0:
-                    iterable.extend([iterable[-1]] * _repetitions)
-
-            prev_sequence: int = 0
-            real_time_statuses: list[bool] = []  # True = stop served | False = stop skipped
-            arrival_delays: list[time.timedelta] = []
-            departure_delays: list[time.timedelta] = []
-            custom_arrival_times: dict[int, time.datetime] = {}
-            custom_departure_times: dict[int, time.datetime] = {}
-            for stop_time_update in self.real_trip.stop_times:
-                sequence: int = stop_time_update.stop_sequence
-                repetitions: int = sequence - prev_sequence - 1
-                is_skipped = stop_time_update.schedule_relationship == "SKIPPED"
-                if prev_sequence == 0:
-                    if sequence > 1:
-                        arrival_delays.extend([time.timedelta()] * repetitions)
-                        departure_delays.extend([time.timedelta()] * repetitions)
-                        real_time_statuses.extend([not is_skipped] * repetitions)
-                    repetitions = 0
-                extend_list(real_time_statuses, repetitions)
-                extend_list(departure_delays, repetitions)
-                real_time_statuses.append(not is_skipped)
-                if is_skipped:
-                    departure_delays.append(departure_delays[-1])
-                    if repetitions > 0:
-                        arrival_delays.append(departure_delays[prev_sequence - 1])
-                        extend_list(arrival_delays, repetitions - 1)
-                    arrival_delays.append(arrival_delays[-1])
-                else:
-                    departure_delays.append(stop_time_update.departure_delay)
-                    if repetitions > 0:
-                        arrival_delays.append(departure_delays[prev_sequence - 1])
-                        extend_list(arrival_delays, repetitions - 1)
-                    arrival_delays.append(stop_time_update.arrival_delay)
-                if stop_time_update.arrival_time is not None:
-                    custom_arrival_times[sequence] = stop_time_update.arrival_time
-                if stop_time_update.departure_time is not None:
-                    custom_departure_times[sequence] = stop_time_update.departure_time
-                prev_sequence = sequence
-            if self.static_trip:
-                self.total_stops = self.static_trip.total_stops
-                remaining = self.total_stops - len(real_time_statuses)
-                extend_list(real_time_statuses, remaining)
-                if remaining > 0:
-                    arrival_delays.append(departure_delays[-1])
-                    extend_list(arrival_delays, remaining - 1)
-                elif arrival_delays[-1] is None:
-                    arrival_delays[-1] = departure_delays[-1]
-                if departure_delays[-1] is None:
-                    if remaining > 0:
-                        departure_delays.append(arrival_delays[-1])
-                        extend_list(departure_delays, remaining - 1)
-                    else:
-                        departure_delays[-1] = arrival_delays[-1]
-                else:
-                    extend_list(departure_delays, remaining)
-                stop_times = get_stop_times()
-                for stop_time in stop_times:
-                    sequence = stop_time.sequence
-                    index = sequence - 1
-                    if sequence in custom_arrival_times:
-                        self.arrivals.append(custom_arrival_times[sequence])
-                    else:
-                        arrival_delay = arrival_delays[index]
-                        if arrival_delay is None:
-                            arrival_delay = time.timedelta()
-                        self.arrivals.append(stop_time.arrival_time + arrival_delay)
-                    if sequence in custom_departure_times:
-                        self.departures.append(custom_departure_times[sequence])
-                    else:
-                        departure_delay = departure_delays[index]
-                        if departure_delay is None:
-                            departure_delay = time.timedelta()
-                        self.departures.append(stop_time.departure_time + departure_delay)
-                    self.stops.append(stop_time.stop(self.static_data))
-                    if stop_time.pickup_type == 1:
-                        self.drop_off_only.add(sequence - 1)
-                    elif stop_time.drop_off_type == 1:
-                        self.pickup_only.add(sequence - 1)
-                for idx in range(len(real_time_statuses)):
-                    if not real_time_statuses[idx]:
-                        self.skipped.add(idx)
-            else:
-                self.total_stops = len(real_time_statuses)
-                for sequence in range(1, self.total_stops + 1):
-                    self.arrivals.append(custom_arrival_times.get(sequence, None))
-                    self.departures.append(custom_departure_times.get(sequence, None))
-                for stop_time in self.real_trip.stop_times:
-                    self.stops.append(load_value(self.static_data, Stop, stop_time.stop_id))
-        else:
+        if self.is_train:
+            # This assumes that added trips won't happen on Irish rail, which is hopefully the case.
             self.total_stops = self.static_trip.total_stops
             stop_times = get_stop_times()
-            for stop_time in stop_times:
-                self.arrivals.append(stop_time.arrival_time)
-                self.departures.append(stop_time.departure_time)
-                self.stops.append(stop_time.stop(self.static_data))
-                if stop_time.pickup_type == 1:
-                    self.drop_off_only.add(stop_time.sequence - 1)
-                elif stop_time.drop_off_type == 1:
-                    self.pickup_only.add(stop_time.sequence - 1)
+            movements: list[TrainMovement] = []
+            if self.is_real_time:
+                trip_code = self.static_trip.short_name
+                nest_asyncio.apply()
+                movements = asyncio.get_event_loop().run_until_complete(asyncio.create_task(fetch_train_movements(trip_code, self.today + self.timedelta)))
+            if movements:
+                stops = 0
+                for movement in movements:
+                    if movement.location_type == "T":  # Ignore transit stops
+                        continue
+                    stop_id = TRAIN_STATION_CODE_TO_ID.get(movement.location_code)
+                    if stop_id:
+                        self.arrivals.append(movement.actual_arrival or movement.expected_arrival)
+                        self.departures.append(movement.actual_departure or movement.expected_departure)
+                        self.stops.append(load_value(self.static_data, Stop, stop_id, None))
+                        if movement.location_type == "O":  # Origin is pick-up only
+                            self.pickup_only.add(stops)
+                        elif movement.location_type == "D":  # Destination is drop-off only
+                            self.drop_off_only.add(stops)
+                        stops += 1
+            else:
+                for stop_time in stop_times:
+                    self.arrivals.append(stop_time.arrival_time)
+                    self.departures.append(stop_time.departure_time)
+                    self.stops.append(stop_time.stop(self.static_data))
+                    if stop_time.pickup_type == 1:
+                        self.drop_off_only.add(stop_time.sequence - 1)
+                    elif stop_time.drop_off_type == 1:
+                        self.pickup_only.add(stop_time.sequence - 1)
+        else:
+            if self.real_trip and not self.cancelled:
+                def extend_list(iterable: list, _repetitions: int):
+                    if _repetitions > 0:
+                        iterable.extend([iterable[-1]] * _repetitions)
 
-        # Fix arrival and departure times: if the next stop is left before the previous one, mark all previous stops as already departed from
-        for idx in range(self.total_stops - 1, 1, -1):
-            arr_time, dep_time = self.arrivals[idx], self.departures[idx]
-            if arr_time is None:
-                arr_time = time.datetime().min
-            if dep_time is None:
-                dep_time = time.datetime().max
-            if dep_time < arr_time:
-                self.arrivals[idx] = arr_time = dep_time
+                prev_sequence: int = 0
+                real_time_statuses: list[bool] = []  # True = stop served | False = stop skipped
+                arrival_delays: list[time.timedelta] = []
+                departure_delays: list[time.timedelta] = []
+                custom_arrival_times: dict[int, time.datetime] = {}
+                custom_departure_times: dict[int, time.datetime] = {}
+                for stop_time_update in self.real_trip.stop_times:
+                    sequence: int = stop_time_update.stop_sequence
+                    repetitions: int = sequence - prev_sequence - 1
+                    is_skipped = stop_time_update.schedule_relationship == "SKIPPED"
+                    if prev_sequence == 0:
+                        if sequence > 1:
+                            arrival_delays.extend([time.timedelta()] * repetitions)
+                            departure_delays.extend([time.timedelta()] * repetitions)
+                            real_time_statuses.extend([not is_skipped] * repetitions)
+                        repetitions = 0
+                    extend_list(real_time_statuses, repetitions)
+                    extend_list(departure_delays, repetitions)
+                    real_time_statuses.append(not is_skipped)
+                    if is_skipped:
+                        departure_delays.append(departure_delays[-1])
+                        if repetitions > 0:
+                            arrival_delays.append(departure_delays[prev_sequence - 1])
+                            extend_list(arrival_delays, repetitions - 1)
+                        arrival_delays.append(arrival_delays[-1])
+                    else:
+                        departure_delays.append(stop_time_update.departure_delay)
+                        if repetitions > 0:
+                            arrival_delays.append(departure_delays[prev_sequence - 1])
+                            extend_list(arrival_delays, repetitions - 1)
+                        arrival_delays.append(stop_time_update.arrival_delay)
+                    if stop_time_update.arrival_time is not None:
+                        custom_arrival_times[sequence] = stop_time_update.arrival_time
+                    if stop_time_update.departure_time is not None:
+                        custom_departure_times[sequence] = stop_time_update.departure_time
+                    prev_sequence = sequence
+                if self.static_trip:
+                    self.total_stops = self.static_trip.total_stops
+                    remaining = self.total_stops - len(real_time_statuses)
+                    extend_list(real_time_statuses, remaining)
+                    if remaining > 0:
+                        arrival_delays.append(departure_delays[-1])
+                        extend_list(arrival_delays, remaining - 1)
+                    elif arrival_delays[-1] is None:
+                        arrival_delays[-1] = departure_delays[-1]
+                    if departure_delays[-1] is None:
+                        if remaining > 0:
+                            departure_delays.append(arrival_delays[-1])
+                            extend_list(departure_delays, remaining - 1)
+                        else:
+                            departure_delays[-1] = arrival_delays[-1]
+                    else:
+                        extend_list(departure_delays, remaining)
+                    stop_times = get_stop_times()
+                    for stop_time in stop_times:
+                        sequence = stop_time.sequence
+                        index = sequence - 1
+                        if sequence in custom_arrival_times:
+                            self.arrivals.append(custom_arrival_times[sequence])
+                        else:
+                            arrival_delay = arrival_delays[index]
+                            if arrival_delay is None:
+                                arrival_delay = time.timedelta()
+                            self.arrivals.append(stop_time.arrival_time + arrival_delay)
+                        if sequence in custom_departure_times:
+                            self.departures.append(custom_departure_times[sequence])
+                        else:
+                            departure_delay = departure_delays[index]
+                            if departure_delay is None:
+                                departure_delay = time.timedelta()
+                            self.departures.append(stop_time.departure_time + departure_delay)
+                        self.stops.append(stop_time.stop(self.static_data))
+                        if stop_time.pickup_type == 1:
+                            self.drop_off_only.add(sequence - 1)
+                        elif stop_time.drop_off_type == 1:
+                            self.pickup_only.add(sequence - 1)
+                    for idx in range(len(real_time_statuses)):
+                        if not real_time_statuses[idx]:
+                            self.skipped.add(idx)
+                else:
+                    self.total_stops = len(real_time_statuses)
+                    for sequence in range(1, self.total_stops + 1):
+                        self.arrivals.append(custom_arrival_times.get(sequence, None))
+                        self.departures.append(custom_departure_times.get(sequence, None))
+                    for stop_time in self.real_trip.stop_times:
+                        self.stops.append(load_value(self.static_data, Stop, stop_time.stop_id))
+            else:
+                self.total_stops = self.static_trip.total_stops
+                stop_times = get_stop_times()
+                for stop_time in stop_times:
+                    self.arrivals.append(stop_time.arrival_time)
+                    self.departures.append(stop_time.departure_time)
+                    self.stops.append(stop_time.stop(self.static_data))
+                    if stop_time.pickup_type == 1:
+                        self.drop_off_only.add(stop_time.sequence - 1)
+                    elif stop_time.drop_off_type == 1:
+                        self.pickup_only.add(stop_time.sequence - 1)
 
-            prev_arr_time = self.arrivals[idx - 1]
-            if prev_arr_time is None:
-                prev_arr_time = time.datetime().min
-            prev_dep_time = self.departures[idx - 1]
-            if prev_dep_time is None:
-                prev_dep_time = time.datetime().min
-            if prev_dep_time > arr_time or prev_arr_time > arr_time:
-                self.arrivals[idx - 1] = self.departures[idx - 1] = arr_time
+            # Fix arrival and departure times: if the next stop is left before the previous one, mark all previous stops as already departed from
+            for idx in range(self.total_stops - 1, 1, -1):
+                arr_time, dep_time = self.arrivals[idx], self.departures[idx]
+                if arr_time is None:
+                    arr_time = time.datetime().min
+                if dep_time is None:
+                    dep_time = time.datetime().max
+                if dep_time < arr_time:
+                    self.arrivals[idx] = arr_time = dep_time
+
+                prev_arr_time = self.arrivals[idx - 1]
+                if prev_arr_time is None:
+                    prev_arr_time = time.datetime().min
+                prev_dep_time = self.departures[idx - 1]
+                if prev_dep_time is None:
+                    prev_dep_time = time.datetime().min
+                if prev_dep_time > arr_time or prev_arr_time > arr_time:
+                    self.arrivals[idx - 1] = self.departures[idx - 1] = arr_time
 
     def create_output(self) -> paginators.LinePaginator:
         output_data: list[list[str]] = [["Seq", "Code", "Stop Name", "Arrival", "Departure"]]
