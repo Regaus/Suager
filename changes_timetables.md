@@ -597,3 +597,8 @@
 ## v1.1.0a4 - 24 October 2024
 - Fixed real-time train location data not getting updated inside the viewers
 - Fixed real-time train movement data crashing due to data showing the wrong trip
+
+## v1.1.0a5 - 24 October 2024
+- Fixed real-time data not properly updating on the TripMapViewer
+- TripDiagramViewer: Arrival and departure times for trains are now automatically adjusted if the train arrives to the first stop late but the departures haven't been updated yet
+- Stops that are marked as curtailed by the Irish Rail API will now be marked as skipped on the TripDiagramViewer

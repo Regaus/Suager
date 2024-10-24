@@ -335,7 +335,7 @@ class TrainMovement:
     location_order: int
     """ The sequence of the station/point """
     location_type: str
-    """ O = origin | D = destination | S = stop | T = timing point (non-stop) """
+    """ O = origin | D = destination | S = stop | T = timing point (non-stop) | C = curtailed (?) """
     origin: str
     """ Where the train departed from """
     destination: str

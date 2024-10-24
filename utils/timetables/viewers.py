@@ -956,7 +956,16 @@ class TripDiagramViewer:
                             self.pickup_only.add(stops)
                         elif movement.location_type == "D":  # Destination is drop-off only
                             self.drop_off_only.add(stops)
+                        elif movement.location_type == "C":
+                            self.skipped.add(stops)
                         stops += 1
+
+                if self.arrivals[0] > self.departures[0]:
+                    minimum_delay = self.departures[0] - self.arrivals[0]
+                    self.departures[0] = self.arrivals[0]
+                    for i in range(1, stops + 1):
+                        self.arrivals[i] += minimum_delay
+                        self.departures[i] += minimum_delay
                 # If the amount of total stops somehow differs from the expected amount, update it
                 self.total_stops = stops
             else:
@@ -1323,6 +1332,8 @@ class TripMapViewer:
         await self.original_viewer.refresh_real_time_data()
         self.real_time_data = self.original_viewer.real_time_data
         self.vehicle_data = self.original_viewer.vehicle_data
+        self.train_data = self.original_viewer.train_data
+        self.real_trip = self.original_viewer.real_trip
         if isinstance(self.trip, TripUpdate):
             self.trip = self.original_viewer.real_trip
         self.skipped: set[int] = self.original_viewer.skipped
