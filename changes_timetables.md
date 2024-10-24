@@ -593,3 +593,7 @@
 - TripDiagramViewer can now pull real-time arrival/departure times from the Irish Rail API
   - These seem to be stored historically, so you can view this information even after the trip has already ended and stopped tracking
 - Renamed functions in the Timetables cog that are about the bus fleet rather than just "vehicles"
+
+## v1.1.0a4 - 24 October 2024
+- Fixed real-time train location data not getting updated inside the viewers
+- Fixed real-time train movement data crashing due to data showing the wrong trip

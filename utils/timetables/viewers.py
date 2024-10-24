@@ -379,7 +379,7 @@ class StopScheduleViewer:
     async def refresh_real_schedule(self):
         """ Refresh the RealTimeStopSchedule """
         event_loop = asyncio.get_event_loop()
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        self.real_time_data, self.vehicle_data, self.train_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
         self.real_schedule, self.real_stop_times = await event_loop.run_in_executor(None, self.load_real_schedule, self.cog, self.base_schedule, self.base_stop_times)
         if not self.fixed:  # _time:
             prev_today = self.today
@@ -853,7 +853,7 @@ class TripDiagramViewer:
             return None
 
     async def refresh_real_time_data(self):
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)  # type: GTFSRData, VehicleData
+        self.real_time_data, self.vehicle_data, self.train_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)  # type: GTFSRData, VehicleData, dict[str, Train]
         if self.real_trip or self.is_real_time:
             # Find new real-time information about this trip
             real_trip = None
@@ -936,7 +936,12 @@ class TripDiagramViewer:
             if self.is_real_time:
                 trip_code = self.static_trip.short_name
                 nest_asyncio.apply()
+                # TODO: Implement some caching logic to only request this once per minute | Write this to a file for debug
                 movements = asyncio.get_event_loop().run_until_complete(asyncio.create_task(fetch_train_movements(trip_code, self.today + self.timedelta)))
+                # Sanity check: discard real-time trip data if we got the wrong information
+                # TODO: Discard real-time if we become aware that the data isn't real and don't look up again
+                if TRAIN_STATION_CODE_TO_ID.get(movements[0].location_code) != stop_times[0].stop_id or movements[0].scheduled_departure != stop_times[0].departure_time:
+                    movements = []
             if movements:
                 stops = 0
                 for movement in movements:
@@ -952,6 +957,8 @@ class TripDiagramViewer:
                         elif movement.location_type == "D":  # Destination is drop-off only
                             self.drop_off_only.add(stops)
                         stops += 1
+                # If the amount of total stops somehow differs from the expected amount, update it
+                self.total_stops = stops
             else:
                 for stop_time in stop_times:
                     self.arrivals.append(stop_time.arrival_time)
@@ -1366,8 +1373,8 @@ class MapViewer:
     def __init__(self, cog, image: io.BytesIO, stop: Stop, zoom: int = DEFAULT_ZOOM):
         self.cog = cog
         self.static_data: GTFSData = cog.static_data
-        self.vehicle_data: VehicleData = cog.vehicle_data
-        self.train_data: dict[str, Train] = cog.train_data
+        # self.vehicle_data: VehicleData = cog.vehicle_data
+        # self.train_data: dict[str, Train] = cog.train_data
         self.stop: Stop = stop
         self.lat: float = stop.latitude
         self.lon: float = stop.longitude
@@ -1387,7 +1394,8 @@ class MapViewer:
 
     async def refresh(self):
         """ Refresh the map with new data """
-        _, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        # _, self.vehicle_data =
+        await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
         await self.update_map()
         self.update_output()
 
@@ -1398,7 +1406,7 @@ class MapViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the vehicle data """
-        return format_timestamp(self.vehicle_data.header.timestamp)
+        return format_timestamp(self.cog.vehicle_data.header.timestamp)
 
     def create_output(self) -> str:
         """ Create the text part of the output """
@@ -1430,7 +1438,7 @@ class VehicleDataViewer:
 
     async def refresh(self):
         """ Refresh the map with new data """
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        self.real_time_data, self.vehicle_data, _ = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
         self.real_time_vehicle = self.vehicle_data.vehicles.get(self.fleet_vehicle.vehicle_id, self.real_time_vehicle)
         self.update_output()
 
@@ -1552,7 +1560,7 @@ class RouteVehiclesViewer:
 
     async def refresh(self):
         """ Refresh the map with new data """
-        self.real_time_data, self.vehicle_data = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
+        self.real_time_data, self.vehicle_data, _ = await self.cog.load_real_time_data(debug=self.cog.DEBUG, write=self.cog.WRITE)
         self.update_output()
 
     @property

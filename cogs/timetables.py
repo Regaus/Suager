@@ -19,7 +19,6 @@ from thefuzz import process
 
 from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser, cpu_burner
 from utils.time import time as print_current_time
-from utils.timetables import GTFSRData, VehicleData
 
 # def dcu_data_access(ctx):
 #     return ctx.guild is None or ctx.guild.id == 738425418637639775 or ctx.author.id == 302851022790066185
@@ -345,8 +344,8 @@ class Timetables(University, Luas, name="Timetables"):
             "Cache-Control": "no-cache",
             "x-api-key": self.bot.config["gtfsr_api_token"]
         }
-        self.real_time_data: timetables.GTFSRData = GTFSRData.empty()
-        self.vehicle_data: timetables.VehicleData = VehicleData.empty()
+        self.real_time_data: timetables.GTFSRData = timetables.GTFSRData.empty()
+        self.vehicle_data: timetables.VehicleData = timetables.VehicleData.empty()
         self.static_data: timetables.GTFSData | None = None
         self.fleet_data: dict[str, timetables.FleetVehicle] = {}  # fleet_data[vehicle_id] = FleetVehicle
         self.train_data: dict[str, timetables.Train] = {}         # train_data[trip_code] = Train
@@ -443,14 +442,14 @@ class Timetables(University, Luas, name="Timetables"):
     async def get_train_locations_from_api(self, *, write: bool = True) -> bytes:
         return await self.get_from_api(self.train_locations_url, timetables.trains_filename, None, write=write, is_json=False)
 
-    async def load_real_time_data(self, debug: bool = False, *, write: bool = True):
+    async def load_real_time_data(self, debug: bool = False, *, write: bool = True) -> tuple[timetables.GTFSRData, timetables.VehicleData, dict[str, timetables.Train]]:
         while self.updating_real_time:
             await asyncio.sleep(1)
         try:
             self.updating_real_time = True
             # Only refresh the data once in 60 seconds
             if self.last_updated is not None and (time.datetime.now() - self.last_updated).total_seconds() < 60:
-                return self.real_time_data, self.vehicle_data
+                return self.real_time_data, self.vehicle_data, self.train_data
             if self.last_updated is None:
                 prev_real_time_data_d, prev_vehicle_data_d, prev_train_data_d = await self.get_real_time_data(debug=True, write=False)
                 prev_real_time_data, prev_vehicle_data = timetables.load_gtfs_r_data(prev_real_time_data_d, prev_vehicle_data_d)
@@ -462,7 +461,7 @@ class Timetables(University, Luas, name="Timetables"):
                     self.train_data = prev_train_data_d
                     self.last_updated = time.datetime.from_timestamp(max(ts1, ts2))
                     logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Loaded GTFS-R data stored on disk (too recent to update)")
-                    return self.real_time_data, self.vehicle_data
+                    return self.real_time_data, self.vehicle_data, self.train_data
             data, vehicle_data, train_data = await self.get_real_time_data(debug=debug, write=write)
             try:
                 new_real_time_data, new_vehicle_data = timetables.load_gtfs_r_data(data, vehicle_data)
@@ -481,7 +480,7 @@ class Timetables(University, Luas, name="Timetables"):
             self.train_data = train_data
             logger.log(self.bot.name, "gtfs", f"{print_current_time()} > {self.bot.full_name} > Successfully loaded GTFS-R data")
             self.last_updated = time.datetime.now()
-            return self.real_time_data, self.vehicle_data  # just in case
+            return self.real_time_data, self.vehicle_data, self.train_data  # just in case
         finally:
             self.updating_real_time = False
 
