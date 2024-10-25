@@ -758,7 +758,7 @@ class Timetables(University, Luas, name="Timetables"):
 
     @placeholder.command(name="reloadmodule", aliases=["rm"])
     async def reload_modules(self, ctx: commands.Context, debug: bool = True, write: bool = False):
-        modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.static", "utils.timetables.schedules",
+        modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.trains", "utils.timetables.static", "utils.timetables.schedules",
                    "utils.timetables.maps", "utils.timetables.viewers", "utils.timetables.views", "utils.timetables", "cogs.timetables")
         for module_name in modules:
             module = importlib.import_module(module_name)

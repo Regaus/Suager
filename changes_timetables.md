@@ -602,3 +602,9 @@
 - Fixed real-time data not properly updating on the TripMapViewer
 - TripDiagramViewer: Arrival and departure times for trains are now automatically adjusted if the train arrives to the first stop late but the departures haven't been updated yet
 - Stops that are marked as curtailed by the Irish Rail API will now be marked as skipped on the TripDiagramViewer
+
+## v1.1.0a6 - 25 October 2024
+- Separated train-related dataclasses and functions into a separate module (`timetables.trains`)
+- Train movement data from the Irish Rail API is now cached in memory and written to disk, similar to how other real-time data works
+- TripDiagramViewer: Removed the "Stop Code" field from non-bus trips (as they show the long stop IDs and therefore take up a lot of space)
+- TripDiagramViewer: Train journeys that run over midnight will now correctly show up as entering the next day

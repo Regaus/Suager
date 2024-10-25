@@ -10,8 +10,9 @@ from regaus import time
 from utils import http, logger, conworlds
 from utils.general import print_error, make_dir
 from utils.timetables import ShapePoint
-from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate, Train
 from utils.timetables.shared import get_database, __version__
+from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate
+from utils.timetables.trains import Train
 from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, FleetVehicle, load_value
 
 __all__ = (

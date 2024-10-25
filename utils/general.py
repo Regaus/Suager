@@ -27,9 +27,11 @@ def create_dirs():
     config = get_config()
     for bot in config["bots"]:
         make_dir(f"data/logs/{bot['internal_name']}")
-    make_dir("data/gtfs")
-    make_dir("data/dcu")
-    make_dir("data/maps")
+    make_dir("data/gtfs")                  # Static and real-time GTFS data
+    make_dir("data/gtfs/train_movements")  # Train Movements data
+    make_dir("data/gtfs/train_stations")   # Real-time data per station
+    make_dir("data/dcu")                   # DCU data cache (courses, modules, rooms)
+    make_dir("data/maps")                  # Maps used by the GTFS map viewers
 
 
 def make_dir(dir_name):

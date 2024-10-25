@@ -9,8 +9,9 @@ import nest_asyncio
 from regaus import time
 
 from utils import paginators
-from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database, TRAIN_STATION_CODE_TO_ID
-from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle, Train, TrainMovement, fetch_train_movements
+from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database
+from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle
+from utils.timetables.trains import Train, TrainMovement, fetch_train_movements, invalid_trips, TRAIN_STATION_CODE_TO_ID
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route, FleetVehicle
 from utils.timetables.schedules import trip_validity, SpecificStopTime, RealStopTime, ScheduledTrip, StopSchedule, RealTimeStopSchedule, RouteSchedule
 from utils.timetables.maps import DEFAULT_ZOOM, get_map_with_buses, get_trip_diagram, distance_between_bus_and_stop, get_nearest_stop
@@ -226,7 +227,7 @@ def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
         vehicle = self.train_data.get(self.trip.short_name)
         if vehicle is not None and vehicle.latitude != 0 and vehicle.latitude != 0:
             nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
-            bus_data.append(f"The train is currently near the stop {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
+            bus_data.append(f"The train is currently near {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
             bus_data.append(f"Information provided by Irish Rail: {vehicle.public_message}")
     else:
         vehicle = self.vehicle_data.vehicles.get(self.vehicle_id)
@@ -928,6 +929,7 @@ class TripDiagramViewer:
             # Apparently they need to be sorted because they may somehow come out in the wrong order
             return sorted([SpecificStopTime(_stop_time, self.today + self.timedelta) for _stop_time in base_stop_times], key=lambda st: st.sequence)
 
+        use_gtfs_api: bool = True  # Whether we need to use data from the GTFS-R API (if we have a train but it has no real-time data or said data is invalid)
         if self.is_train:
             # This assumes that added trips won't happen on Irish rail, which is hopefully the case.
             self.total_stops = self.static_trip.total_stops
@@ -935,14 +937,16 @@ class TripDiagramViewer:
             movements: list[TrainMovement] = []
             if self.is_real_time:
                 trip_code = self.static_trip.short_name
+                # The function handles temporarily caching the data
                 nest_asyncio.apply()
-                # TODO: Implement some caching logic to only request this once per minute | Write this to a file for debug
-                movements = asyncio.get_event_loop().run_until_complete(asyncio.create_task(fetch_train_movements(trip_code, self.today + self.timedelta)))
-                # Sanity check: discard real-time trip data if we got the wrong information
-                # TODO: Discard real-time if we become aware that the data isn't real and don't look up again
-                if TRAIN_STATION_CODE_TO_ID.get(movements[0].location_code) != stop_times[0].stop_id or movements[0].scheduled_departure != stop_times[0].departure_time:
+                movements = asyncio.get_event_loop().run_until_complete(asyncio.create_task(fetch_train_movements(trip_code, self.today + self.timedelta, self.cog.DEBUG, self.cog.WRITE)))
+                # Sanity check: discard real-time trip data if we got the wrong information and never look it up again
+                if movements and (TRAIN_STATION_CODE_TO_ID.get(movements[0].location_code) != stop_times[0].stop_id or movements[0].scheduled_departure != stop_times[0].departure_time):
                     movements = []
+                    invalid_trips.add(trip_code)
             if movements:
+                # noinspection PyUnusedLocal
+                use_gtfs_api = False  # This variable is used, PyCharm is simply being stupid.
                 stops = 0
                 for movement in movements:
                     if movement.location_type == "T":  # Ignore transit stops
@@ -977,7 +981,7 @@ class TripDiagramViewer:
                         self.drop_off_only.add(stop_time.sequence - 1)
                     elif stop_time.drop_off_type == 1:
                         self.pickup_only.add(stop_time.sequence - 1)
-        else:
+        elif use_gtfs_api:
             if self.real_trip and not self.cancelled:
                 def extend_list(iterable: list, _repetitions: int):
                     if _repetitions > 0:
@@ -1116,6 +1120,11 @@ class TripDiagramViewer:
                 column_sizes.pop(idx)
                 alignments.pop(idx)
             stop_name_idx = 1
+        elif self.route.route_type != 3:  # Remove the "stop code" field from trains and trams, even outside compact mode
+            output_data[0].pop(1)
+            column_sizes.pop(1)
+            alignments.pop(1)
+            stop_name_idx = 1
 
         # This is used in the for loop below
         def add_letter(ltr: str):
@@ -1169,6 +1178,8 @@ class TripDiagramViewer:
 
             if self.compact_mode == 2:
                 output_line = [seq, emoji + name, departure]
+            elif self.route.route_type != 3:
+                output_line = [seq, emoji + name, arrival, departure]
             else:
                 output_line = [seq, code, emoji + name, arrival, departure]
 

@@ -11,8 +11,7 @@ from utils import views, emotes, commands
 from utils.general import alphanumeric_sort_string
 from utils.timetables.maps import DEFAULT_ZOOM
 from utils.timetables.shared import get_data_database, NUMBERS, TIMEZONE
-from utils.timetables.viewers import (INBOUND_DIRECTION_ID, StopScheduleViewer, HubScheduleViewer, TripDiagramViewer, TripMapViewer, MapViewer,
-                                      VehicleDataViewer, RouteVehiclesViewer, RouteScheduleViewer)
+from utils.timetables.viewers import *
 from utils.views import NumericInputModal, SelectMenu
 
 __all__ = ("StopScheduleView", "HubScheduleView", "TripDiagramView", "TripMapView", "MapView",
