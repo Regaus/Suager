@@ -224,7 +224,7 @@ class RealStopTime:
             # Check if the real_trips actually contains this Trip ID
             if real_trips is None:
                 raise TypeError("real_trips cannot be None for a SpecificStopTime")
-            if self.trip_code in station_data:
+            if station_data and self.trip_code in station_data:
                 if self.trip_code in invalid_trips:
                     self.remove = True
                 else:
@@ -727,13 +727,14 @@ class RealTimeStopSchedule:
 
         # nest_asyncio.apply()
         # loop = asyncio.new_event_loop()
-        for departure in self.station_data.values():  # Any trips that exist on the real-time but couldn't be matched to an existing trip (or had invalid static information)
-            if self.hide_terminating and departure.destination == departure.station_name:  # Skip trips that terminate here if that option is set
-                continue
-            day_modifier = (departure.date - time.date.today()).days
-            # real_trip = loop.run_until_complete(loop.create_task(_create_trip_update_from_train(departure)))
-            real_trip = _create_trip_update_from_train(departure)
-            output.append(RealStopTime(departure, None, None, None, day_modifier, real_trip))
+        if self.station_data:
+            for departure in self.station_data.values():  # Any trips that exist on the real-time but couldn't be matched to an existing trip (or had invalid static information)
+                if self.hide_terminating and departure.destination == departure.station_name:  # Skip trips that terminate here if that option is set
+                    continue
+                day_modifier = (departure.date - time.date.today()).days
+                # real_trip = loop.run_until_complete(loop.create_task(_create_trip_update_from_train(departure)))
+                real_trip = _create_trip_update_from_train(departure)
+                output.append(RealStopTime(departure, None, None, None, day_modifier, real_trip))
 
         for trip_id, added_trip in self.added_trips.items():
             for stop_time in added_trip.stop_times:

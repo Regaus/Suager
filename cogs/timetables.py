@@ -31,7 +31,7 @@ STOP_HUBS: dict[str, list[str]] = {
     "Aston Quay":         ["8220DB000325", "8220DB004720", "8220DB007392", "8220DB000328", "8220DB000329"],
     "Bachelors Walk":     ["8220B1021101", "8220DB000316", "8220DB000315", "8220DB007622"],
     "Bray Station":       ["8350IR0123",   "8350DB004167", "8350DB004168", "8350DB004169"],
-    "Broombridge":        ["8220IR0026",   "8220GA00459",  "8220DB007672"],
+    "Broombridge":        ["8220IR0026",   "8220GA00459",  "8220DB007672", "8220GD8340",   "8220GD8341"],
     "Busaras":            ["8220B135001",  "8220DB000496", "8220B134961",  "8220GA00421",  "8220GA00420"],
     "Clontarf":           ["8220IR0032",   "8220DB004794", "8220DB007863", "8220DB001738", "8220DB001740"],
     "College Green East": ["8220DB001358", "8220DB007582", "8220DB001359"],
@@ -329,8 +329,8 @@ class Timetables(University, Luas, name="Timetables"):
         super().__init__(bot)
         # self.db = timetables.db
         self.db = timetables.get_database()
-        self.DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
-        self.WRITE = True   # Write real-time data to disk
+        self.DEBUG = True  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
+        self.WRITE = False   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
         self.train_locations_url = "https://api.irishrail.ie/realtime/realtime.asmx/getCurrentTrainsXML"

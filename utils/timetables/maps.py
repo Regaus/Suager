@@ -9,11 +9,10 @@ from regaus import time
 
 from utils import http, logger, conworlds
 from utils.general import print_error, make_dir
-from utils.timetables import ShapePoint
 from utils.timetables.shared import get_database, __version__
 from utils.timetables.realtime import VehicleData, Vehicle, TripUpdate
 from utils.timetables.trains import Train
-from utils.timetables.static import GTFSData, Route, Trip, Stop, StopTime, Shape, FleetVehicle, load_value
+from utils.timetables.static import *
 
 __all__ = (
     "MAP_SIZE", "TILE_SIZE", "DEFAULT_ZOOM", "BASE_MAP_URL",
@@ -581,7 +580,7 @@ async def get_map_with_buses(lat: float, lon: float, zoom: int, vehicle_data: Ve
 
 async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_data: GTFSData, vehicle_data: VehicleData, fleet_data: dict[str, FleetVehicle], train_data: dict[str, Train],
                            departure_times: list[time.datetime], drop_off_only: set[int], pickup_only: set[int], skipped: set[int],
-                           is_cancelled: bool = False, custom_zoom: int = None) -> tuple[io.BytesIO, int]:
+                           is_cancelled: bool = False, custom_zoom: int = None, train_code: str = None) -> tuple[io.BytesIO, int]:
     """ Show the diagram of a trip, including stops along the trip and the vehicle's current location (if available).
 
     Returns a BytesIO instance with the image inside and the map's zoom level."""
@@ -626,7 +625,10 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
         #         bus = vehicle
         #         break
     else:
-        vehicle = vehicle_data.vehicles.get(trip.vehicle_id)
+        if train_code is not None and train_code in train_data:
+            vehicle = train_data.get(train_code)
+        else:
+            vehicle = vehicle_data.vehicles.get(trip.vehicle_id)
         # vehicle_id = trip.vehicle_id
         # for vehicle in vehicle_data.entities.values():
         #     if vehicle.vehicle_id == vehicle_id:

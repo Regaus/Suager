@@ -615,3 +615,9 @@
   - Trains marked with "No Information" on the Irish Rail API will be shown as not having real-time information
   - Less useful than GTFS-R which may have data for trains that have already departed or trains that will arrive much later, but better than nothing
   - Hopefully this will make it possible to avoid having trains that run over midnight show up as being 24 hours early
+
+## v1.1.0a8 - 26 October 2024
+- HubScheduleViewer can now also show data from the Irish Rail API
+- Fixed the schedule viewers crashing when loading a bus schedule
+- Trains now show up on the map again
+- Added N2 bus stops at Broombridge to the hub

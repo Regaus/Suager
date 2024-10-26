@@ -96,7 +96,7 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
                 #     if entity.trip.trip_id == prev_trip_id:
                 #         prev_real_time = entity
                 #         break
-                if prev_real_time:
+                if prev_real_time and prev_real_time.stop_times:
                     prev_arrival_time: time.datetime = time.datetime.zero
 
                     def _handle_trip(_delay: time.timedelta) -> time.datetime:
@@ -648,7 +648,7 @@ class HubScheduleViewer:
         real_schedules: list[RealTimeStopSchedule] = []
         real_stop_times: list[list[RealStopTime]] = []
         for schedule, stop_times in zip(base_schedules, base_stop_times):
-            real_schedule = RealTimeStopSchedule.from_existing_schedule(schedule, cog.real_time_data, cog.vehicle_data, stop_times)
+            real_schedule = RealTimeStopSchedule.from_existing_schedule(schedule, cog.real_time_data, cog.vehicle_data, stop_times, cog.DEBUG, cog.WRITE)
             real_schedules.append(real_schedule)
             real_stop_times.append(real_schedule.real_stop_times())
             # print(f"{time.datetime.now():%d %b %Y, %H:%M:%S} > Loaded real-time schedule for stop {schedule.stop.name} ({schedule.stop.code_or_id})")
@@ -916,7 +916,7 @@ class TripDiagramViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the real-time data """
-        if self.real_trip:
+        if self.real_trip and not self.is_real_time_train:
             return format_timestamp(self.real_trip.timestamp)
         if self.real_time_data:
             return format_timestamp(self.real_time_data.header.timestamp)
@@ -1330,6 +1330,7 @@ class TripMapViewer:
         self.original_viewer: TripDiagramViewer = viewer
         self.trip: Trip | TripUpdate = viewer.static_trip or viewer.real_trip
         self.real_trip: TripUpdate | None = viewer.real_trip
+        self.real_trip_id: str | None = viewer.real_trip_id
         self.is_real_time_train: bool = viewer.is_real_time_train
         self.trip_id: str = viewer.trip_identifier
         self.stop: Stop = viewer.stop
@@ -1355,7 +1356,7 @@ class TripMapViewer:
         if departures[-1] is None:
             departures[-1] = viewer.arrivals[-1]
         args = (viewer.stop, viewer.cog.static_data, viewer.cog.vehicle_data, viewer.cog.fleet_data, viewer.cog.train_data,
-                departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled)
+                departures, viewer.drop_off_only, viewer.pickup_only, viewer.skipped, viewer.cancelled, None, viewer.real_trip_id)
         if viewer.static_trip:
             image_bio, zoom = await get_trip_diagram(viewer.static_trip, *args)
         else:
@@ -1402,12 +1403,12 @@ class TripMapViewer:
     async def update_map(self):
         """ Update the map output without refreshing the vehicle data """
         self.image, _ = await get_trip_diagram(self.trip, self.stop, self.cog.static_data, self.cog.vehicle_data, self.cog.fleet_data, self.cog.train_data,
-                                               self.departures, self.drop_off_only, self.pickup_only, self.skipped, self.cancelled, self.custom_zoom)
+                                               self.departures, self.drop_off_only, self.pickup_only, self.skipped, self.cancelled, self.custom_zoom, self.real_trip_id)
 
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the vehicle data """
-        if self.real_trip:
+        if self.real_trip and not self.is_real_time_train:
             return format_timestamp(self.real_trip.timestamp)
         if self.real_time_data:
             return format_timestamp(self.real_time_data.header.timestamp)
