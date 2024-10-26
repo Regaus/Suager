@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import requests
 import xmltodict
 from regaus import time
 
@@ -10,17 +11,66 @@ from utils import http
 
 __all__ = (
     "Train", "parse_train_data",
-    "TrainMovement", "parse_train_movements", "fetch_train_movements", "invalid_trips",
-    "TRAIN_STATION_CODE_TO_ID", "TRAIN_STATION_ID_TO_CODE"
+    "StationDeparture", "parse_station_departures", "fetch_station_departures",
+    "TrainMovement", "parse_train_movements", "fetch_train_movements",
+    "invalid_trips", "TRAIN_STATION_CODE_TO_ID", "TRAIN_STATION_ID_TO_CODE"
 )
 
 
 invalid_trips: set[str] = set()
 """ Set of trip codes that point to incorrect trips on the Irish Rail API (i.e. we need to use the regular GTFS-R API) """
+station_departure_cache: dict[str, dict[str, StationDeparture]] = {}
+""" Cache of station departure data, in case the information was fetched recently """
+station_departure_timestamps: dict[str, float] = {}
+""" station_departure_timestamps[station_id] = last time we updated the information (as a timestamp) """
 train_movement_cache: dict[str, list[TrainMovement]] = {}
 """ Cache of movement updates, in case the information about the trip was already fetched recently """
 train_movement_timestamps: dict[str, float] = {}
 """ train_movement_timestamps[trip_code] = last time we updated the information inside (as a timestamp) """
+
+
+def _parse_date(date_str: str) -> time.date | None:
+    """ Parse a date in DD MMM YYYY (e.g. "25 Oct 2024") format """
+    if not date_str:
+        return None
+    d, m, y = date_str.split(" ", 2)
+    day = int(d)
+    year = int(y)
+    month = {
+        "Jan": 1,
+        "Feb": 2,
+        "Mar": 3,
+        "Apr": 4,
+        "May": 5,
+        "Jun": 6,
+        "Jul": 7,
+        "Aug": 8,
+        "Sep": 9,
+        "Oct": 10,
+        "Nov": 11,
+        "Dec": 12
+    }[m]
+    return time.date(year, month, day)
+
+
+def _parse_time(date: time.date, time_str: str | None) -> time.datetime | None:
+    """ Parse a time in HH:MM:SS format """
+    if not time_str:
+        return None
+    if time_str.count(":") == 2:
+        h, m, s = time_str.split(":", 2)
+    elif time_str.count(":") == 1:
+        h, m = time_str.split(":", 1)
+        s = "0"
+    else:
+        raise ValueError(f"Invalid time received: {time_str!r}")
+    _time = time.time(int(h), int(m), int(s))
+    # If the times run over midnight, they will be reported as if they were from yesterday (i.e. 25/10/2024 23:59 is followed by 25/10/2024 00:00).
+    # I manually fix this here to make the times show up properly.
+    # This may break some things if a train ever departs after midnight, but hopefully it won't happen.
+    if _time.hour < 4:
+        return time.datetime.combine(date + time.timedelta(days=1), _time, TIMEZONE)
+    return time.datetime.combine(date, _time, TIMEZONE)
 
 
 @dataclass()
@@ -32,11 +82,12 @@ class Train:
     """ Irish Rail's 4-letter trip code """
     latitude: float
     longitude: float
-    date: str
-    """ The date on which the trip started, as a string """
+    date: time.date
+    """ The date on which the trip started """
     public_message: str
     """ Irish Rail's "public message", which contains information about the current state of the trip """
     direction: str
+    """ Northbound, Southbound, or To Station Name """
     train_status: str
     """ N = not yet running | R = running | T = terminated """
 
@@ -50,7 +101,7 @@ def parse_train_data(xml: str | bytes | None) -> dict[str, Train]:
         trip_code: str = entry["TrainCode"]
         latitude: float = float(entry["TrainLatitude"])
         longitude: float = float(entry["TrainLongitude"])
-        date: str = entry["TrainDate"]
+        date: time.date = _parse_date(entry["TrainDate"])
         public_message: str = entry["PublicMessage"].replace("\\n", "\n")
         direction: str = entry["Direction"]
         status: str = entry["TrainStatus"]
@@ -59,7 +110,7 @@ def parse_train_data(xml: str | bytes | None) -> dict[str, Train]:
 
 
 @dataclass()
-class StationDataTrain:
+class StationDeparture:  # Not sure how exactly to call this
     """ Represents a real-time forecast for upcoming arrivals and departures from this station in the next 90 minutes
 
      By station name: https://api.irishrail.ie/realtime/realtime.asmx/getStationDataByNameXML?StationDesc=Dublin%20Connolly
@@ -67,15 +118,20 @@ class StationDataTrain:
     trip_code: str
     """ Irish Rail's 4-letter trip code """
     station_name: str
+    """ The full name of the station """
     station_code: str
-    date: str
+    """ Irish Rail's 4-5-letter code for the station """
+    date: time.date
+    """ The date on which the trip started """
+    query_time: time.datetime
+    """ Timestamp at which the query was received by the API """
     origin: str
     """ Name of the origin station """
     destination: str
     """ Name of the destination station """
-    origin_time: time.time
+    origin_time: time.datetime
     """ The time when the train left/will leave the origin """
-    destination_time: time.time
+    destination_time: time.datetime
     """ The time when the train will arrive at the destination """
     status: str
     """ Latest known information about this train """
@@ -85,20 +141,94 @@ class StationDataTrain:
     """ Time when the train is due to arrive, in minutes """
     delay: time.timedelta
     """ Current delay of the train, in minutes """
-    expected_arrival: time.time
-    """ Expected arrival time - 00:00 at origin station """
-    expected_departure: time.time
-    """ Expected departure time - 00:00 at destination """
-    scheduled_arrival: time.time
-    """ Scheduled arrival time - 00:00 at origin station """
-    scheduled_departure: time.time
-    """ Scheduled departure time - 00:00 at destination """
+    expected_arrival: time.datetime
+    """ Expected arrival time """
+    expected_departure: time.datetime
+    """ Expected departure time """
+    scheduled_arrival: time.datetime
+    """ Scheduled arrival time """
+    scheduled_departure: time.datetime
+    """ Scheduled departure time """
     direction: str
     """ Northbound, Southbound, or To Station Name """
     train_type: str
     """ DART or other train """
     location_type: str
     """ O = origin | D = destination | S = stop """
+
+
+def parse_station_departures(xml: str | bytes | None) -> dict[str, StationDeparture]:
+    """ Returns a dictionary of real-time data about arrivals and departure at the given station
+
+     Less useful than GTFS-R since it only provides info for departures between right now and in 90 minutes, but useful to have nonetheless """
+    if not xml:
+        return {}
+    station_data: list[dict[str, str]] = xmltodict.parse(xml)["ArrayOfObjStationData"].get("objStationData", [])
+    departures: dict[str, StationDeparture] = {}
+    for entry in station_data:
+        # For some reason, keys in this data only have the first letter capitalised.
+        trip_code: str = entry["Traincode"]
+        station_name: str = entry["Stationfullname"]
+        station_code: str = entry["Stationcode"]
+        date: time.date = _parse_date(entry["Traindate"])
+        query_time: time.datetime = _parse_time(date, entry["Querytime"])
+        origin: str = entry["Origin"]
+        destination: str = entry["Destination"]
+        origin_time: time.datetime = _parse_time(date, entry["Origintime"])
+        destination_time: time.datetime = _parse_time(date, entry["Destinationtime"])
+        status: str = entry["Status"]
+        last_location: str | None = entry["Lastlocation"]
+        due_in: time.timedelta = time.timedelta(minutes=int(entry["Duein"]))
+        delay: time.timedelta = time.timedelta(minutes=int(entry["Late"]))
+        expected_arrival: time.datetime = _parse_time(date, entry["Exparrival"])
+        expected_departure: time.datetime = _parse_time(date, entry["Expdepart"])
+        scheduled_arrival: time.datetime = _parse_time(date, entry["Scharrival"])
+        scheduled_departure: time.datetime = _parse_time(date, entry["Schdepart"])
+        # Fix the expected arrival/departure times showing up as "00:00" at the termini
+        if station_name == origin:
+            expected_arrival = expected_departure
+            scheduled_arrival = scheduled_departure
+        elif station_name == destination:
+            expected_departure = expected_arrival
+            scheduled_departure = scheduled_arrival
+        direction: str = entry["Direction"]
+        train_type: str = entry["Traintype"]
+        location_type: str = entry["Locationtype"]
+        departures[trip_code] = StationDeparture(trip_code, station_name, station_code, date, query_time, origin, destination, origin_time, destination_time, status, last_location, due_in, delay,
+                                                 expected_arrival, expected_departure, scheduled_arrival, scheduled_departure, direction, train_type, location_type)
+    return departures
+
+
+async def fetch_station_departures(station_id: str, debug: bool = False, write: bool = False) -> dict[str, StationDeparture]:
+    """ Fetch real-time departure data for a given station
+
+     Station ID refers to the GTFS Stop ID """
+    station_code = TRAIN_STATION_ID_TO_CODE[station_id]
+    # If we got details from this trip less than 60 seconds ago, just returned the cached data
+    now = time.datetime.now().timestamp
+    if station_departure_timestamps.get(station_code, 0) > now - 60:
+        if departures := station_departure_cache.get(station_code):
+            return departures
+    xml: bytes = b""
+    if debug:
+        try:
+            with open(f"data/gtfs/train_stations/{station_code}.xml", "rb") as file:
+                xml = file.read()
+        except FileNotFoundError:
+            pass
+    if not xml:  # not debug or file not found
+        try:
+            xml = await http.get(f"https://api.irishrail.ie/realtime/realtime.asmx/getStationDataByCodeXML?StationCode={station_code}", res_method="read")
+        except RuntimeError:  # asyncio is stupid
+            xml = requests.get(f"https://api.irishrail.ie/realtime/realtime.asmx/getStationDataByCodeXML?StationCode={station_code}").content
+    departures = parse_station_departures(xml)
+    if departures:
+        station_departure_cache[station_code] = departures
+        station_departure_timestamps[station_code] = now
+        if write:
+            with open(f"data/gtfs/train_stations/{station_code}.xml", "wb") as file:
+                file.write(xml)
+    return departures
 
 
 @dataclass()
@@ -140,22 +270,16 @@ class TrainMovement:
     """ C = current | N = next | - = other """
 
 
-def _parse_time(date: time.date, time_str: str | None) -> time.datetime | None:
-    """ Parse a time in HH:MM:SS format """
-    if not time_str:
-        return None
-    h, m, s = time_str.split(":", 2)
-    return time.datetime.combine(date, time.time(int(h), int(m), int(s)), TIMEZONE)
-
-
-def parse_train_movements(xml: str | bytes | None, date: time.date) -> list[TrainMovement]:
+def parse_train_movements(xml: str | bytes | None) -> list[TrainMovement]:
     """ Returns an ordered list of "train movements" - stations the train went/will go past on the given day """
     if not xml:
         return []
     movement_data: list[dict[str, str]] = xmltodict.parse(xml)["ArrayOfObjTrainMovements"].get("objTrainMovements", [])
     movements: list[TrainMovement] = []
-    for entry in movement_data:
+    last_stop = len(movement_data) - 1
+    for idx, entry in enumerate(movement_data):
         trip_code: str = entry["TrainCode"]
+        date: time.date = _parse_date(entry["TrainDate"])
         location_code: str = entry["LocationCode"]
         location_name: str = entry["LocationFullName"]
         location_order: int = int(entry["LocationOrder"])
@@ -167,37 +291,23 @@ def parse_train_movements(xml: str | bytes | None, date: time.date) -> list[Trai
         expected_arrival: time.datetime = _parse_time(date, entry["ExpectedArrival"])
         expected_departure: time.datetime = _parse_time(date, entry["ExpectedDeparture"])
         # The API sets these values to 00:00, here we can undo that.
-        if location_type == "O":
+        if idx == 0:  # location_type == "O":
             scheduled_arrival = scheduled_departure
             expected_arrival = expected_departure
-        elif location_type == "D":
+        elif idx == last_stop:  # location_type == "D":
             scheduled_departure = scheduled_arrival
             expected_departure = expected_arrival
         actual_arrival: time.datetime | None = _parse_time(date, entry["Arrival"])
         actual_departure: time.datetime | None = _parse_time(date, entry["Departure"])
-        # If the times run over midnight, they will be reported as if they were from yesterday (i.e. 25/10/2024 23:59 is followed by 25/10/2024 00:00)
-        # I manually fix this here to make the times show up properly
-        if scheduled_arrival.hour < 4:
-            scheduled_arrival += time.timedelta(days=1)
-        if scheduled_departure.hour < 4:
-            scheduled_departure += time.timedelta(days=1)
-        if expected_arrival.hour < 4:
-            expected_arrival += time.timedelta(days=1)
-        if expected_departure.hour < 4:
-            expected_departure += time.timedelta(days=1)
-        if actual_arrival and actual_arrival.hour < 4:
-            actual_arrival += time.timedelta(days=1)
-        if actual_departure and actual_departure.hour < 4:
-            actual_departure += time.timedelta(days=1)
         stop_type: str = entry["StopType"]
         movements.append(TrainMovement(trip_code, date, location_code, location_name, location_order, location_type, origin, destination,
                                        scheduled_arrival, scheduled_departure, expected_arrival, expected_departure, actual_arrival, actual_departure, stop_type))
     return movements
 
 
-async def fetch_train_movements(trip_code: str, date: time.date, debug: bool = False, write: bool = False) -> list[TrainMovement]:
+async def fetch_train_movements(trip_code: str, date: time.date, debug: bool = False, write: bool = False, *, _bypass_invalid_check: bool = False) -> list[TrainMovement]:
     # If the trip was marked as invalid, return no data
-    if trip_code in invalid_trips:
+    if trip_code in invalid_trips and not _bypass_invalid_check:
         return []
     # If we got details from this trip less than 60 seconds ago, just returned the cached data
     now = time.datetime.now().timestamp
@@ -213,8 +323,11 @@ async def fetch_train_movements(trip_code: str, date: time.date, debug: bool = F
         except FileNotFoundError:
             pass
     if not xml:  # not debug or file not found
-        xml = await http.get(f"https://api.irishrail.ie/realtime/realtime.asmx/getTrainMovementsXML?TrainId={trip_code}&TrainDate={date:%d %b %Y}", res_method="read")
-    movements = parse_train_movements(xml, date)
+        try:
+            xml = await http.get(f"https://api.irishrail.ie/realtime/realtime.asmx/getTrainMovementsXML?TrainId={trip_code}&TrainDate={date:%d %b %Y}", res_method="read")
+        except RuntimeError:  # asyncio is stupid
+            xml = requests.get(f"https://api.irishrail.ie/realtime/realtime.asmx/getTrainMovementsXML?TrainId={trip_code}&TrainDate={date:%d %b %Y}").content
+    movements = parse_train_movements(xml)
     if movements:
         train_movement_cache[trip_code] = movements
         train_movement_timestamps[trip_code] = now

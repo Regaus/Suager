@@ -382,10 +382,12 @@ class RouteLineSelector(SelectMenu):
         self.viewer = self.interface.viewer
         self.data = self.viewer.static_data
         self.real_time = self.viewer.real_time
+        self.train_departures: dict[str, bool] = {}
         self.set_options()
 
     def set_options(self):
         """ Set options to the currently shown trips """
+        self.train_departures = {}
         stop_times = self.viewer.iterable_stop_times[slice(*self.viewer.get_indexes(custom_lines=10))]
         for i, stop_time in enumerate(stop_times, start=1):
             if stop_time.actual_destination:
@@ -395,7 +397,7 @@ class RouteLineSelector(SelectMenu):
             name = f"{self.viewer.format_time(stop_time.available_departure_time)} to {destination}"
             if stop_time.is_added:
                 value = f"|{stop_time.trip_id}"
-            elif stop_time.real_time:
+            elif stop_time.real_time and hasattr(stop_time.real_trip, "entity_id"):
                 trip_id = stop_time.trip_id
                 real_trip_id = stop_time.real_trip.entity_id
                 value = f"{trip_id}|{real_trip_id}"
@@ -407,6 +409,7 @@ class RouteLineSelector(SelectMenu):
                 route = "Unknown route"
             else:
                 route = f"Route {_route.short_name}"
+            self.train_departures[value] = getattr(stop_time, "is_train_departure", False)
             self.add_option(value=value, label=name, description=route, emoji=NUMBERS[i])
 
     def update_options(self):
@@ -422,7 +425,7 @@ class RouteLineSelector(SelectMenu):
                 message: discord.Message = await message.fetch()
             except (discord.HTTPException, discord.Forbidden, discord.NotFound):  # Unable to load the message
                 pass
-        viewer = TripDiagramViewer(self.interface, self.values[0])
+        viewer = TripDiagramViewer(self.interface, self.values[0], self.train_departures[self.values[0]])
         view = TripDiagramView(interaction.user, message, viewer, try_full_fetch=False)
         return await view.update_message()
 

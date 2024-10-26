@@ -195,10 +195,10 @@ class StopTimeUpdate:
     stop_sequence: int
     stop_id: str
     schedule_relationship: str  # SCHEDULED, SKIPPED, NO_DATA, or UNSCHEDULED
-    arrival_delay: time.timedelta = None
-    departure_delay: time.timedelta = None
-    arrival_time: time.datetime = None
-    departure_time: time.datetime = None
+    arrival_delay: time.timedelta | None = None
+    departure_delay: time.timedelta | None = None
+    arrival_time: time.datetime | None = None
+    departure_time: time.datetime | None = None
 
     @classmethod
     def load(cls, data: dict):

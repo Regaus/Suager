@@ -1,12 +1,15 @@
 import json
 from typing import Optional
 
+import asyncio
+import nest_asyncio
 from regaus import time
 
 from utils import database
 from utils.timetables.shared import TIMEZONE, get_database, get_data_database
-from utils.timetables.static import *
 from utils.timetables.realtime import *
+from utils.timetables.trains import *
+from utils.timetables.static import *
 
 __all__ = (
     "trip_validity", "SpecificStopTime", "AddedStopTime", "RealStopTime", "ScheduledTrip",
@@ -53,6 +56,23 @@ def trip_validity(static_data: GTFSData, trip: Trip, date: time.date, db):
         valid = calendar.data[weekday]
 
     return valid
+
+
+def _create_trip_update_from_train(station_departure: StationDeparture) -> TripUpdate:
+    """ Create a real-time TripUpdate from an added station departure """
+    real_time_trip = RealTimeTrip("Unknown", "Unknown", station_departure.date, station_departure.origin_time, "ADDED", -1)
+    # train_movements: list[TrainMovement] = await fetch_train_movements(station_departure.trip_code, station_departure.date, debug, write, _bypass_invalid_check=True)
+    stop_time_updates: list[StopTimeUpdate] = [StopTimeUpdate(-1, TRAIN_STATION_CODE_TO_ID[station_departure.station_code], "ADDED", None, None,
+                                                              station_departure.expected_arrival, station_departure.expected_departure)]
+    # for movement in train_movements:
+    #     if movement.location_type == "T":
+    #         continue
+    #     stop_id = TRAIN_STATION_CODE_TO_ID[movement.location_code]
+    #     schedule_relationship = "SKIPPED" if movement.location_type == "C" else "ADDED"
+    #     arrival_time = movement.actual_arrival or movement.expected_arrival
+    #     departure_time = movement.actual_departure or movement.expected_departure
+    #     stop_time_updates.append(StopTimeUpdate(len(stop_time_updates) + 1, stop_id, schedule_relationship, None, None, arrival_time, departure_time))
+    return TripUpdate(station_departure.trip_code, real_time_trip, stop_time_updates, station_departure.trip_code, station_departure.query_time)
 
 
 class SpecificStopTime:
@@ -136,7 +156,6 @@ class AddedStopTime:
             self.vehicle_id = vehicle.vehicle_id
         else:
             self.vehicle = self.vehicle_id = None
-        self.day_modifier: int = 0
 
     def __repr__(self):
         # "AddedStopTime - 2023-10-14 02:00:00 (Stop D'Olier Street - #1, Trip ID T130)"
@@ -146,12 +165,12 @@ class AddedStopTime:
 class RealStopTime:
     """ A SpecificStopTime with real-time information applied """
     is_added: bool
-    stop_time: SpecificStopTime | AddedStopTime
+    stop_time: SpecificStopTime | AddedStopTime | StationDeparture
     trip: Trip | None
     trip_id: str
     route: Route
     stop: Stop
-    sequence: int
+    sequence: int | None
     stop_headsign: str | None
     pickup_type: int | None
     drop_off_type: int | None
@@ -168,10 +187,11 @@ class RealStopTime:
     vehicle_id: str | None
     day_modifier: int
 
-    def __init__(self, stop_time: SpecificStopTime | AddedStopTime, real_trips: dict[str, TripUpdate] | None, vehicles: VehicleData | None):
+    def __init__(self, stop_time: SpecificStopTime | AddedStopTime | StationDeparture, real_trips: dict[str, TripUpdate] | None, vehicles: VehicleData | None,
+                 station_data: dict[str, StationDeparture] | None, day_modifier: int = 0, station_trip_update: TripUpdate = None):
         self.actual_destination = None
         self.actual_start = None
-        self.day_modifier = stop_time.day_modifier
+        self.station_departure: StationDeparture | None = None
         if isinstance(stop_time, SpecificStopTime):
             self.is_added = False
             self.stop_time = stop_time
@@ -191,17 +211,42 @@ class RealStopTime:
             self.scheduled_departure_time = stop_time.departure_time
             # self.destination = stop_time.trip.headsign
             self._destination = None
+            self.day_modifier = stop_time.day_modifier
 
             self.real_time = False
             self.real_trip = None
             self.schedule_relationship = None
             self.arrival_time = None
             self.departure_time = None
+            self.trip_code = self.trip().short_name
+            self.is_train_departure: bool = False  # default value
 
             # Check if the real_trips actually contains this Trip ID
             if real_trips is None:
                 raise TypeError("real_trips cannot be None for a SpecificStopTime")
-            if self.trip_id in real_trips:
+            if self.trip_code in station_data:
+                if self.trip_code in invalid_trips:
+                    self.remove = True
+                else:
+                    self.station_departure = station_data.pop(self.trip_code)
+                    # If the trip is invalid (the scheduled arrival/departure time doesn't match our expected value), mark the trip as invalid and add it to the schedule
+                    if self.scheduled_arrival_time != self.station_departure.scheduled_arrival or self.scheduled_departure_time != self.station_departure.scheduled_departure:
+                        invalid_trips.add(self.trip_code)
+                        station_data[self.trip_code] = self.station_departure
+                        # self.remove = True
+                    elif self.station_departure.status != "No Information":
+                        self.real_time = True
+                        if self.trip_id in real_trips:
+                            self.real_trip = real_trips[self.trip_id]
+                        self.schedule_relationship = "SCHEDULED"
+                        self.arrival_time = self.station_departure.expected_arrival
+                        self.departure_time = self.station_departure.expected_departure
+                    else:
+                        self.real_time = False
+                        self.real_trip = None
+                    self.vehicle = self.vehicle_id = None
+                self.is_train_departure = True
+            elif self.trip_id in real_trips:
                 self.real_time = True
                 self.real_trip = real_trips[self.trip_id]
                 self.schedule_relationship = self.real_trip.trip.schedule_relationship
@@ -327,9 +372,11 @@ class RealStopTime:
                     self.vehicle = self.vehicle_id = None
             else:
                 self.vehicle = self.vehicle_id = None
+            self.is_train_departure: bool = getattr(self.route(), "route_type", None) == 2  # Trains use a different API for vehicle locations
         elif isinstance(stop_time, AddedStopTime):
             self.is_added = True
             self.stop_time = stop_time
+            self.day_modifier = 0
             self._trip = None
             # self.trip = None
             self.trip_id = stop_time.trip_id
@@ -351,9 +398,40 @@ class RealStopTime:
             self._destination = stop_time.destination
             self.vehicle = stop_time.vehicle
             self.vehicle_id = stop_time.vehicle_id
+            self.is_train_departure: bool = getattr(self.route(), "route_type", None) == 2  # Trains use a different API for vehicle locations
+        elif isinstance(stop_time, StationDeparture):
+            self.is_added = True
+            self.station_departure = stop_time
+            self.stop_time = stop_time
+            self.day_modifier = day_modifier
+            self._trip = None
+            self.trip_id = stop_time.trip_code
+            self._route = None
+            self.stop_id = TRAIN_STATION_CODE_TO_ID[stop_time.station_code]
+            self.sequence = None
+            self.stop_headsign = self._destination = stop_time.destination
+            self.pickup_type = stop_time.destination == stop_time.station_name
+            self.drop_off_type = stop_time.origin == stop_time.station_name
+            if stop_time.status == "No Information":
+                self.arrival_time = self.departure_time = None
+            else:
+                self.arrival_time = stop_time.expected_arrival
+                self.departure_time = stop_time.expected_departure
+            self.scheduled_arrival_time = stop_time.scheduled_arrival
+            self.scheduled_departure_time = stop_time.scheduled_departure
+            self.real_time = True
+            self.real_trip = station_trip_update
+            # nest_asyncio.apply()
+            # loop = asyncio.new_event_loop()  # asyncio is stupid
+            # # self.real_trip = asyncio.run(_create_trip_update_from_train(stop_time, debug, write))
+            # # self.real_trip = loop.run_until_complete(loop.create_task(_create_trip_update_from_train(stop_time, debug, write)))
+            # asyncio_is_stupid = asyncio.run_coroutine_threadsafe(_create_trip_update_from_train(stop_time, debug, write), loop)
+            # self.real_trip = asyncio_is_stupid.result(timeout=20)
+            self.schedule_relationship = "ADDED"
+            self.vehicle = self.vehicle_id = None
+            self.is_train_departure = True
         else:
             raise TypeError(f"Unexpected StopTime type {type(stop_time).__name__} received")
-        self.is_train_departure: bool = getattr(self.route(), "route_type", None) == 2  # Trains use a different API for vehicle locations
 
     def trip(self, data: GTFSData = None) -> Optional[Trip]:
         if self._trip:
@@ -598,7 +676,7 @@ def real_trip_updates(real_time_data: GTFSRData, trip_ids: set[str], stop_id: st
 # Stuff for real-time schedules
 class RealTimeStopSchedule:
     def __init__(self, data: GTFSData | None, stop_id: str | None, real_time_data: GTFSRData, vehicle_data: VehicleData,
-                 static_schedule: StopSchedule | None = None, stop_times: list[SpecificStopTime] | None = None, hide_terminating: bool = True):
+                 static_schedule: StopSchedule | None = None, stop_times: list[SpecificStopTime] | None = None, hide_terminating: bool = True, debug: bool = False, write: bool = True):
         self.db = get_database()
         if static_schedule is not None:
             self.stop_schedule = static_schedule
@@ -623,18 +701,39 @@ class RealTimeStopSchedule:
 
         self.real_time_data = real_time_data
         self.vehicle_data = vehicle_data
+        self.debug: bool = debug
+        self.write: bool = write
         self.has_trains = self.stop_schedule.has_trains
 
+        self.station_data: dict[str, StationDeparture] | None = None
+        if self.has_trains:
+            nest_asyncio.apply()
+            loop = asyncio.get_event_loop()  # asyncio is stupid
+            self.station_data: dict[str, StationDeparture] = loop.run_until_complete(loop.create_task(fetch_station_departures(self.stop_id, self.debug, self.write)))
+
     @classmethod
-    def from_existing_schedule(cls, existing_schedule: StopSchedule, real_time_data: GTFSRData, vehicle_data: VehicleData, stop_times: list[SpecificStopTime] | None = None):
+    def from_existing_schedule(cls, existing_schedule: StopSchedule, real_time_data: GTFSRData, vehicle_data: VehicleData,
+                               stop_times: list[SpecificStopTime] | None = None, debug: bool = False, write: bool = True):
         """ Load a RealTimeStopSchedule from an existing StopSchedule, so that the operation need not be repeated """
-        return cls(None, None, real_time_data, vehicle_data, existing_schedule, stop_times)
+        return cls(None, None, real_time_data, vehicle_data, existing_schedule, stop_times, debug=debug, write=write)
 
     def real_stop_times(self):
         """ Get the real-time stop times for this schedule """
         output = []
         for stop_time in self.stop_times:
-            output.append(RealStopTime(stop_time, self.real_trips, self.vehicle_data))
+            real_stop_time = RealStopTime(stop_time, self.real_trips, self.vehicle_data, self.station_data)
+            if not getattr(real_stop_time, "remove", False):
+                output.append(real_stop_time)
+
+        # nest_asyncio.apply()
+        # loop = asyncio.new_event_loop()
+        for departure in self.station_data.values():  # Any trips that exist on the real-time but couldn't be matched to an existing trip (or had invalid static information)
+            if self.hide_terminating and departure.destination == departure.station_name:  # Skip trips that terminate here if that option is set
+                continue
+            day_modifier = (departure.date - time.date.today()).days
+            # real_trip = loop.run_until_complete(loop.create_task(_create_trip_update_from_train(departure)))
+            real_trip = _create_trip_update_from_train(departure)
+            output.append(RealStopTime(departure, None, None, None, day_modifier, real_trip))
 
         for trip_id, added_trip in self.added_trips.items():
             for stop_time in added_trip.stop_times:
@@ -664,7 +763,7 @@ class RealTimeStopSchedule:
                         vehicle = None
                     trip_update = self.real_time_data.added[trip_id]
                     added_stop_time = AddedStopTime(stop_time, trip_update, route, self.stop_schedule.stop, destination, vehicle)
-                    output.append(RealStopTime(added_stop_time, None, None))
+                    output.append(RealStopTime(added_stop_time, None, None, None))
 
         output.sort(key=lambda st: st.available_departure_time)
         return output

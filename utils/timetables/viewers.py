@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import io
 import re
+from contextlib import suppress
 
 import discord
 import nest_asyncio
@@ -10,7 +11,7 @@ from regaus import time
 
 from utils import paginators
 from utils.timetables.shared import TIMEZONE, WEEKDAYS, WARNING, CANCELLED, get_database
-from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle
+from utils.timetables.realtime import GTFSRData, VehicleData, TripUpdate, Vehicle, RealTimeTrip, StopTimeUpdate
 from utils.timetables.trains import Train, TrainMovement, fetch_train_movements, invalid_trips, TRAIN_STATION_CODE_TO_ID
 from utils.timetables.static import GTFSData, Stop, load_value, Trip, StopTime, Route, FleetVehicle
 from utils.timetables.schedules import trip_validity, SpecificStopTime, RealStopTime, ScheduledTrip, StopSchedule, RealTimeStopSchedule, RouteSchedule
@@ -83,7 +84,7 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
             destination = WARNING + destination
         elif stop_time.departure_time is not None:
             real_departure_time = self.format_time(stop_time.departure_time)
-        elif stop_time.trip().block_id:  # Try to get real-time data from the previous trip to be able to tell what will happen with this one
+        elif getattr(stop_time.trip(), "block_id", None):  # Try to get real-time data from the previous trip to be able to tell what will happen with this one
             real_departure_time = "--:--"  # Default if no value is found
             prev_trips, _ = get_prev_next_trips(stop_time.trip(), self.today, self.static_data, self.cog.db)
             if prev_trips:
@@ -155,7 +156,20 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
         return f"{match.group(1)}{match.group(2):>3}" if match else fleet
 
     def _format_distance(_vehicle: Vehicle | Train) -> str:
-        trip = stop_time.real_trip if stop_time.is_added else stop_time.trip(self.static_data)
+        if isinstance(_vehicle, Train):
+            # Try to load the static trip if it isn't already loaded
+            # Since we are loading from the database, this may load an incorrect trip if the code is invalid, but better than nothing
+            trip: Trip | TripUpdate | None = None
+            with suppress(KeyError):
+                trip = stop_time.trip(self.static_data)
+            if not trip:
+                with suppress(KeyError):
+                    trip = Trip.from_short_name(_vehicle.trip_code, None)
+            if not trip:
+                trip = stop_time.real_trip
+            # trip = stop_time.trip(self.static_data) or Trip.from_short_name(_vehicle.trip_code, None) or stop_time.real_trip
+        else:
+            trip = stop_time.real_trip if stop_time.is_added else stop_time.trip(self.static_data)
         _distance_m, colour = distance_between_bus_and_stop(trip, self.stop, _vehicle, self.static_data)
         if _distance_m >= 1000:
             if self.compact_mode == 1:
@@ -170,8 +184,13 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
     if hub or not self.real_time or self.compact_mode >= 2:
         distance = vehicle = ""
     elif getattr(stop_time, "is_train_departure", False):
-        vehicle = trip_code = stop_time.trip().short_name  # The "Bus" column is used to show the trip code
-        train: Train | None = self.cog.train_data.get(trip_code)
+        if stop_time.schedule_relationship == "ADDED":
+            vehicle = stop_time.trip_id
+        else:
+            vehicle = stop_time.trip().short_name  # The "Bus" column is used to show the trip code
+        train: Train | None = None
+        if vehicle not in invalid_trips or stop_time.schedule_relationship == "ADDED":  # Only show the train location if the trip is valid or added
+            train = self.cog.train_data.get(vehicle)
         if train is None:
             distance = "-"
         elif train.latitude == 0 and train.longitude == 0:
@@ -223,8 +242,9 @@ def format_departure(self: StopScheduleViewer | HubScheduleViewer, stop_time: Re
 def get_vehicle_data(self: TripDiagramViewer | TripMapViewer) -> str:
     """ Get data about the bus that is serving this trip """
     bus_data = []
-    if getattr(self.trip, "short_name", None) in self.train_data:  # A real-time trip wouldn't have a "short_name", so this is fine
-        vehicle = self.train_data.get(self.trip.short_name)
+    trip_code = getattr(self.trip, "short_name", None) or getattr(self, "real_trip_id", None)
+    if trip_code in self.train_data:  # A real-time trip wouldn't have a "short_name", so this is fine
+        vehicle = self.train_data.get(trip_code)
         if vehicle is not None and vehicle.latitude != 0 and vehicle.latitude != 0:
             nearest_stop = get_nearest_stop(self.trip, vehicle, self.static_data)
             bus_data.append(f"The train is currently near {nearest_stop.name} (stop {nearest_stop.code_or_id}).")
@@ -373,7 +393,7 @@ class StopScheduleViewer:
     @staticmethod
     def load_real_schedule(cog, base_schedule: StopSchedule, base_stop_times: list[SpecificStopTime]):
         """ Load the RealTimeStopSchedule """
-        real_schedule = RealTimeStopSchedule.from_existing_schedule(base_schedule, cog.real_time_data, cog.vehicle_data, base_stop_times)
+        real_schedule = RealTimeStopSchedule.from_existing_schedule(base_schedule, cog.real_time_data, cog.vehicle_data, base_stop_times, cog.DEBUG, cog.WRITE)
         real_stop_times = real_schedule.real_stop_times()
         return real_schedule, real_stop_times
 
@@ -780,7 +800,7 @@ class HubScheduleViewer:
 class TripDiagramViewer:
     """ Viewer for a route diagram of an existing trip (called from a select menu in the StopScheduleView) """
 
-    def __init__(self, original_view, trip_id: str):
+    def __init__(self, original_view, trip_id: str, _is_train: bool | None = None):
         # I don't think the StopScheduleView and -Viewer should be stored as attrs
         # self.original_view = original_view  # views.StopScheduleView
         stop_schedule: StopScheduleViewer = original_view.viewer
@@ -806,10 +826,16 @@ class TripDiagramViewer:
             self.is_real_time_train = self.static_trip.short_name in self.train_data
             # _type += 1
         if real_trip_id:
-            self.real_trip: TripUpdate = self.real_time_data.entities[real_trip_id]
-            self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
-            self.vehicle_id = self.real_trip.vehicle_id
+            self.real_trip: TripUpdate | None = self.real_time_data.entities.get(real_trip_id)
+            if self.real_trip:
+                self.cancelled = self.real_trip.trip.schedule_relationship == "CANCELED"
+                self.vehicle_id = self.real_trip.vehicle_id
+            self.real_trip_id = real_trip_id
+            if not self.is_real_time_train:
+                self.is_real_time_train = real_trip_id in self.train_data
             # _type += 2
+        else:
+            self.real_trip_id = None
         # self.type: int = _type
         # self.type_name: str = ("static", "added", "real")[_type - 1]
 
@@ -827,7 +853,8 @@ class TripDiagramViewer:
         self.compact_mode: int = stop_schedule.compact_mode  # 0 -> disabled | 1 -> shorter stop names | 2 -> mobile-friendly mode
         self.current_stop_page: int | None = None
         self.route = self.get_route()
-        self.is_train: bool = self.route.route_type == 2  # Whether we are dealing with a train
+        self.is_train: bool = _is_train or getattr(self.route, "route_type", None) == 2  # Whether we are dealing with a train
+        self.has_train_movements: bool = False  # If the train no longer has real-time information, but there is still information about it provided by the Irish Rail API
 
         # Attributes for the output generator
         self.skipped: set[int] = set()
@@ -849,7 +876,9 @@ class TripDiagramViewer:
         try:
             if self.static_trip:
                 return self.static_trip.route(self.static_data)
-            return load_value(self.static_data, Route, self.real_trip.trip.route_id)
+            if self.real_trip:
+                return load_value(self.static_data, Route, self.real_trip.trip.route_id)
+            return None
         except KeyError:
             return None
 
@@ -912,6 +941,8 @@ class TripDiagramViewer:
         self.departures: list[time.datetime] = []
 
         def get_stop_times():
+            if not self.static_trip:
+                return []
             _total_stops = self.static_trip.total_stops
             _trip_id = self.static_trip.trip_id
             base_stop_times: list[StopTime] = []
@@ -929,24 +960,28 @@ class TripDiagramViewer:
             # Apparently they need to be sorted because they may somehow come out in the wrong order
             return sorted([SpecificStopTime(_stop_time, self.today + self.timedelta) for _stop_time in base_stop_times], key=lambda st: st.sequence)
 
-        use_gtfs_api: bool = True  # Whether we need to use data from the GTFS-R API (if we have a train but it has no real-time data or said data is invalid)
         if self.is_train:
             # This assumes that added trips won't happen on Irish rail, which is hopefully the case.
-            self.total_stops = self.static_trip.total_stops
             stop_times = get_stop_times()
             movements: list[TrainMovement] = []
             if self.is_real_time:
-                trip_code = self.static_trip.short_name
+                if self.static_trip:
+                    trip_code = self.static_trip.short_name
+                    bypass_invalid = False
+                else:
+                    trip_code = self.real_trip_id
+                    bypass_invalid = True
                 # The function handles temporarily caching the data
                 nest_asyncio.apply()
-                movements = asyncio.get_event_loop().run_until_complete(asyncio.create_task(fetch_train_movements(trip_code, self.today + self.timedelta, self.cog.DEBUG, self.cog.WRITE)))
+                loop = asyncio.get_event_loop()  # asyncio is stupid
+                movements = loop.run_until_complete(loop.create_task(fetch_train_movements(trip_code, self.today + self.timedelta, self.cog.DEBUG, self.cog.WRITE,
+                                                                                           _bypass_invalid_check=bypass_invalid)))
                 # Sanity check: discard real-time trip data if we got the wrong information and never look it up again
-                if movements and (TRAIN_STATION_CODE_TO_ID.get(movements[0].location_code) != stop_times[0].stop_id or movements[0].scheduled_departure != stop_times[0].departure_time):
+                if movements and stop_times and (TRAIN_STATION_CODE_TO_ID.get(movements[0].location_code) != stop_times[0].stop_id or movements[0].scheduled_departure != stop_times[0].departure_time):
                     movements = []
                     invalid_trips.add(trip_code)
             if movements:
-                # noinspection PyUnusedLocal
-                use_gtfs_api = False  # This variable is used, PyCharm is simply being stupid.
+                self.has_train_movements = True
                 stops = 0
                 for movement in movements:
                     if movement.location_type == "T":  # Ignore transit stops
@@ -963,7 +998,6 @@ class TripDiagramViewer:
                         elif movement.location_type == "C":
                             self.skipped.add(stops)
                         stops += 1
-
                 if self.arrivals[0] > self.departures[0]:
                     minimum_delay = self.departures[0] - self.arrivals[0]
                     self.departures[0] = self.arrivals[0]
@@ -972,6 +1006,12 @@ class TripDiagramViewer:
                         self.departures[i] += minimum_delay
                 # If the amount of total stops somehow differs from the expected amount, update it
                 self.total_stops = stops
+                if self.real_trip is None:
+                    real_time_trip = RealTimeTrip("Unknown", "Unknown", movements[0].date, movements[0].scheduled_departure, "ADDED", -1)
+                    stop_time_updates: list[StopTimeUpdate] = []
+                    for i in range(stops):
+                        stop_time_updates.append(StopTimeUpdate(i + 1, self.stops[i].id, "ADDED", None, None, self.arrivals[i], self.departures[i]))
+                    self.real_trip = TripUpdate(self.real_trip_id, real_time_trip, stop_time_updates, None, time.datetime.now())
             else:
                 for stop_time in stop_times:
                     self.arrivals.append(stop_time.arrival_time)
@@ -981,7 +1021,8 @@ class TripDiagramViewer:
                         self.drop_off_only.add(stop_time.sequence - 1)
                     elif stop_time.drop_off_type == 1:
                         self.pickup_only.add(stop_time.sequence - 1)
-        elif use_gtfs_api:
+                self.total_stops = self.static_trip.total_stops
+        elif not self.has_train_movements:
             if self.real_trip and not self.cancelled:
                 def extend_list(iterable: list, _repetitions: int):
                     if _repetitions > 0:
@@ -1120,7 +1161,7 @@ class TripDiagramViewer:
                 column_sizes.pop(idx)
                 alignments.pop(idx)
             stop_name_idx = 1
-        elif self.route.route_type != 3:  # Remove the "stop code" field from trains and trams, even outside compact mode
+        elif self.is_train or getattr(self.route, "route_type", 3) != 3:  # Remove the "stop code" field from trains and trams, even outside compact mode
             output_data[0].pop(1)
             column_sizes.pop(1)
             alignments.pop(1)
@@ -1169,7 +1210,8 @@ class TripDiagramViewer:
                 departure = "Skipped"
             elif not current_stop_marked and (self.now < _arrival or self.now < _departure):
                 route_types = {0: "🚈", 1: "🚇", 2: "🚄", 3: "🚌", 4: "🚢", 5: "🚠", 6: "🚟", 7: "🚟", 11: "🚎", 12: "🚝"}
-                emoji = f"{route_types.get(self.route.route_type, '🚌')}\u2060 "
+                route_type = 2 if self.is_train else getattr(self.route, "route_type", 3)
+                emoji = f"{route_types.get(route_type, '🚌')}\u2060 "
                 current_stop_marked = True
             elif self.stop.id == stop.id:
                 emoji = "➡️ "
@@ -1178,7 +1220,7 @@ class TripDiagramViewer:
 
             if self.compact_mode == 2:
                 output_line = [seq, emoji + name, departure]
-            elif self.route.route_type != 3:
+            elif self.is_train or getattr(self.route, "route_type", 3) != 3:
                 output_line = [seq, emoji + name, arrival, departure]
             else:
                 output_line = [seq, code, emoji + name, arrival, departure]
@@ -1190,7 +1232,7 @@ class TripDiagramViewer:
 
         if self.cancelled:
             note = f"\n{WARNING}Note: This trip was cancelled."
-        elif self.real_trip and not self.static_trip:  # Added trip
+        elif self.real_trip and not self.static_trip and not self.is_train:  # Added trip
             note = f"\n{WARNING}Note: This trip was not scheduled."
         elif self.static_trip and not (self.real_trip or self.is_real_time_train):  # Static trip
             note = "\nNote: This trip has no real-time information."

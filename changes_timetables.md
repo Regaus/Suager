@@ -608,3 +608,10 @@
 - Train movement data from the Irish Rail API is now cached in memory and written to disk, similar to how other real-time data works
 - TripDiagramViewer: Removed the "Stop Code" field from non-bus trips (as they show the long stop IDs and therefore take up a lot of space)
 - TripDiagramViewer: Train journeys that run over midnight will now correctly show up as entering the next day
+
+## v1.1.0a7 - 25-26 October 2024
+- StopScheduleViewer can now pull real-time data from Irish Rail about trains that will depart within the next 90 minutes
+  - This means that real-time information can be shown even if GTFS-R has no information on it
+  - Trains marked with "No Information" on the Irish Rail API will be shown as not having real-time information
+  - Less useful than GTFS-R which may have data for trains that have already departed or trains that will arrive much later, but better than nothing
+  - Hopefully this will make it possible to avoid having trains that run over midnight show up as being 24 hours early
