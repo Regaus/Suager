@@ -60,7 +60,13 @@ def trip_validity(static_data: GTFSData, trip: Trip, date: time.date, db):
 
 def _create_trip_update_from_train(station_departure: StationDeparture) -> TripUpdate:
     """ Create a real-time TripUpdate from an added station departure """
-    real_time_trip = RealTimeTrip("Unknown", "Unknown", station_departure.date, station_departure.origin_time, "ADDED", -1)
+    # The TripDiagramViewer will still report it as "Unknown route", but whatever
+    try:
+        static_trip: Trip = Trip.from_short_name(station_departure.trip_code, None)
+        route_id = static_trip.route_id
+    except KeyError:
+        route_id = "Unknown"
+    real_time_trip = RealTimeTrip(station_departure.trip_code, route_id, station_departure.date, station_departure.origin_time, "ADDED", -1)
     # train_movements: list[TrainMovement] = await fetch_train_movements(station_departure.trip_code, station_departure.date, debug, write, _bypass_invalid_check=True)
     stop_time_updates: list[StopTimeUpdate] = [StopTimeUpdate(-1, TRAIN_STATION_CODE_TO_ID[station_departure.station_code], "ADDED", None, None,
                                                               station_departure.expected_arrival, station_departure.expected_departure)]
@@ -406,7 +412,13 @@ class RealStopTime:
             self.day_modifier = day_modifier
             self._trip = None
             self.trip_id = stop_time.trip_code
-            self._route = None
+            if station_trip_update and station_trip_update.trip.route_id != "Unknown":
+                try:
+                    self._route = Route.from_sql(station_trip_update.trip.route_id)
+                except KeyError:
+                    self._route = None
+            else:
+                self._route = None
             self.stop_id = TRAIN_STATION_CODE_TO_ID[stop_time.station_code]
             self.sequence = None
             self.stop_headsign = self._destination = stop_time.destination

@@ -594,7 +594,16 @@ async def get_trip_diagram(trip: Trip | TripUpdate, current_stop: Stop, static_d
         except KeyError:
             shape = list(stop_time.stop(static_data, db) for stop_time in StopTime.from_sql(trip_id, db))
     else:
-        trip_id = shape = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
+        # Try to load a shape of the trip from the provided trip ID, even if it may not necessarily be correct.
+        if train_code is not None:
+            trip_id = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
+            try:
+                trip = Trip.from_short_name(train_code, db)
+                shape = trip.shape(static_data, db)
+            except (KeyError, AttributeError):
+                shape = trip_id
+        else:
+            trip_id = shape = list(load_value(static_data, Stop, stop_time_update.stop_id, db) for stop_time_update in trip.stop_times)
     if custom_zoom:
         x, y = deg_to_xy(current_stop.latitude, current_stop.longitude, custom_zoom)
         x, y, zoom = find_fitting_coords_and_zoom(shape, (x, y), custom_zoom)

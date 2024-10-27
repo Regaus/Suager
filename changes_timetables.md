@@ -621,3 +621,6 @@
 - Fixed the schedule viewers crashing when loading a bus schedule
 - Trains now show up on the map again
 - Added N2 bus stops at Broombridge to the hub
+
+## v1.1.0a9 - 26 October 2024
+- Train trips that got marked as invalid will still try to load the route and shape from the related static trip
