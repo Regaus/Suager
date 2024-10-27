@@ -96,6 +96,8 @@ def parse_train_data(xml: str | bytes | None) -> dict[str, Train]:
     if not xml:
         return {}
     train_data: list[dict[str, str]] = xmltodict.parse(xml)["ArrayOfObjTrainPositions"].get("objTrainPositions", [])
+    if isinstance(train_data, dict):  # Apparently the code breaks if there's exactly one entry
+        train_data = [train_data]
     trains: dict[str, Train] = {}
     for entry in train_data:
         trip_code: str = entry["TrainCode"]
@@ -164,6 +166,8 @@ def parse_station_departures(xml: str | bytes | None) -> dict[str, StationDepart
     if not xml:
         return {}
     station_data: list[dict[str, str]] = xmltodict.parse(xml)["ArrayOfObjStationData"].get("objStationData", [])
+    if isinstance(station_data, dict):
+        station_data = [station_data]
     departures: dict[str, StationDeparture] = {}
     for entry in station_data:
         # For some reason, keys in this data only have the first letter capitalised.
@@ -275,6 +279,8 @@ def parse_train_movements(xml: str | bytes | None) -> list[TrainMovement]:
     if not xml:
         return []
     movement_data: list[dict[str, str]] = xmltodict.parse(xml)["ArrayOfObjTrainMovements"].get("objTrainMovements", [])
+    if isinstance(movement_data, dict):
+        movement_data = [movement_data]
     movements: list[TrainMovement] = []
     last_stop = len(movement_data) - 1
     for idx, entry in enumerate(movement_data):

@@ -627,3 +627,6 @@
 
 ## v1.1.0 - 26 October 2024
 - Fixed real-time data timestamps showing up incorrectly for non-real-time trips
+
+## v1.1.0.1 - 26 October 2024
+- Fixed real-time Irish Rail data breaking when there's exactly one entry provided
