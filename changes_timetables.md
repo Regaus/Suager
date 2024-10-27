@@ -624,3 +624,6 @@
 
 ## v1.1.0a9 - 26 October 2024
 - Train trips that got marked as invalid will still try to load the route and shape from the related static trip
+
+## v1.1.0 - 26 October 2024
+- Fixed real-time data timestamps showing up incorrectly for non-real-time trips

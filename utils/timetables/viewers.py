@@ -916,7 +916,7 @@ class TripDiagramViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the real-time data """
-        if self.real_trip and not self.is_real_time_train:
+        if self.real_trip and not self.is_train:
             return format_timestamp(self.real_trip.timestamp)
         if self.real_time_data:
             return format_timestamp(self.real_time_data.header.timestamp)
@@ -1234,7 +1234,7 @@ class TripDiagramViewer:
             note = f"\n{WARNING}Note: This trip was cancelled."
         elif self.real_trip and not self.static_trip and not self.is_train:  # Added trip
             note = f"\n{WARNING}Note: This trip was not scheduled."
-        elif self.static_trip and not (self.real_trip or self.is_real_time_train):  # Static trip
+        elif self.static_trip and not self.real_trip:  # or self.is_real_time_train):  # Static trip
             note = "\nNote: This trip has no real-time information."
         else:
             note = ""
@@ -1331,6 +1331,7 @@ class TripMapViewer:
         self.trip: Trip | TripUpdate = viewer.static_trip or viewer.real_trip
         self.real_trip: TripUpdate | None = viewer.real_trip
         self.real_trip_id: str | None = viewer.real_trip_id
+        self.is_train: bool = viewer.is_train
         self.is_real_time_train: bool = viewer.is_real_time_train
         self.trip_id: str = viewer.trip_identifier
         self.stop: Stop = viewer.stop
@@ -1408,7 +1409,7 @@ class TripMapViewer:
     @property
     def data_timestamp(self) -> str:
         """ Returns the timestamp of the vehicle data """
-        if self.real_trip and not self.is_real_time_train:
+        if self.real_trip and not self.is_train:
             return format_timestamp(self.real_trip.timestamp)
         if self.real_time_data:
             return format_timestamp(self.real_time_data.header.timestamp)
