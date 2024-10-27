@@ -329,8 +329,8 @@ class Timetables(University, Luas, name="Timetables"):
         super().__init__(bot)
         # self.db = timetables.db
         self.db = timetables.get_database()
-        self.DEBUG = True  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
-        self.WRITE = False   # Write real-time data to disk
+        self.DEBUG = False  # Debug Mode: Disables sending API requests for GTFS-R and disables pickling the static data
+        self.WRITE = True   # Write real-time data to disk
         self.url = "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates?format=json"
         self.vehicle_url = "https://api.nationaltransport.ie/gtfsr/v2/Vehicles?format=json"
         self.train_locations_url = "https://api.irishrail.ie/realtime/realtime.asmx/getCurrentTrainsXML"
