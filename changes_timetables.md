@@ -630,3 +630,6 @@
 
 ## v1.1.0.1 - 26 October 2024
 - Fixed real-time Irish Rail data breaking when there's exactly one entry provided
+
+## v1.1.0.2 - 29 October 2024
+- TripDiagramViewer: Fixed expected times not updating correctly when a train is late arriving to the first stop

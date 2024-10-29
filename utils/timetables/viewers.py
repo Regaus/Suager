@@ -999,9 +999,9 @@ class TripDiagramViewer:
                             self.skipped.add(stops)
                         stops += 1
                 if self.arrivals[0] > self.departures[0]:
-                    minimum_delay = self.departures[0] - self.arrivals[0]
+                    minimum_delay = self.arrivals[0] - self.departures[0]  # since arrival is later than departure
                     self.departures[0] = self.arrivals[0]
-                    for i in range(1, stops + 1):
+                    for i in range(1, stops):
                         self.arrivals[i] += minimum_delay
                         self.departures[i] += minimum_delay
                 # If the amount of total stops somehow differs from the expected amount, update it
