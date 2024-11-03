@@ -286,6 +286,33 @@ class Moderation(commands.Cog):
                 except Exception as e:
                     general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Anti-ads > {type(e).__name__}: {str(e)}")
 
+            # Warn Aya if he mentions China or uses any Chinese characters
+            # if ctx.guild.id == 738425418637639775 and ctx.author.id == 577642516438843412:  # testing
+            if ctx.guild.id == 568148147457490954 and ctx.author.id == 527729196688998415:
+                async def warn_aya():
+                    response_ctx: commands.Context = await self.bot.get_context(ctx, cls=commands.Context)  # type: ignore
+                    language = response_ctx.language()
+                    warn_settings, _ = self.get_warn_settings(response_ctx, language)
+                    expiry = time.datetime.now() + time.relativedelta(months=1)
+                    duration = "1 month"
+                    reason = "[Automatic] Government's decisions"
+                    await self.warn_user(response_ctx, ctx.author, warn_settings, reason, language, expiry, duration)
+                    await ctx.reply(content="<:smack:765312065551728640>", mention_author=True)
+                    nonlocal warned
+                    warned = True
+
+                warned = False
+                if not warned:
+                    for word in ctx.content.lower().split():
+                        if word.startswith("chin") and word != "chin":
+                            await warn_aya()
+                            break
+                if not warned:
+                    for char in ctx.content:
+                        if 0x4e00 <= ord(char) <= 0x9fff:  # There are more Chinese characters in Unicode, but 4E00-9FFF maps the most common ones
+                            await warn_aya()
+                            break
+
     def kick_check(self, ctx: commands.Context, member: discord.Member, language: Language):
         if member == ctx.author:
             return language.string("mod_kick_self")
@@ -523,7 +550,7 @@ class Moderation(commands.Cog):
             output = language.string("mod_unban_mass", reason=reason, total=language.number(total))
         return await ctx.send(output)
 
-    def mute_role(self, ctx: commands.Context, language: Language):
+    def mute_role(self, ctx: commands.Context, language: Language) -> discord.Role | str:
         _data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not _data:
             return language.string("mod_mute_role2", p=ctx.prefix)
@@ -556,6 +583,8 @@ class Moderation(commands.Cog):
         return reason, delta, expiry, error
 
     async def mute_user_generic(self, ctx: commands.Context, member: discord.Member, mute_role: discord.Role, reason: str):
+        if not isinstance(mute_role, discord.Role):  # Ignore any errors from a non-existent mute role
+            return
         try:
             await member.add_roles(mute_role, reason=reason)
         except Exception as e:

@@ -1855,3 +1855,7 @@
 
 ## v7.8.1.4 - 6 September 2024
 - Fixed starboard statistics command breaking when the specified user does not have any starred messages
+
+## v7.8.1.5 - 3 November 2024
+- Automatically warn and mute Aya in Senko Lair, if he mentions China or speaks Chinese
+- Fixed the mute function breaking if no mute role is present
