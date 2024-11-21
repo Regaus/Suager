@@ -633,3 +633,6 @@
 
 ## v1.1.0.2 - 29 October 2024
 - TripDiagramViewer: Fixed expected times not updating correctly when a train is late arriving to the first stop
+
+## v1.1.0.3 - 21 November 2024
+- "Regaus Northbound" stop hub: Replaced Drumcondra with Abbey Street (Route 41 terminus)
