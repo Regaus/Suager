@@ -636,3 +636,6 @@
 
 ## v1.1.0.3 - 21 November 2024
 - "Regaus Northbound" stop hub: Replaced Drumcondra with Abbey Street (Route 41 terminus)
+
+## v1.1.0.4 - 6 December 2024
+- Set `self.WRITE` to only be enabled by default when testing (by matching the dev bot's name in the config file)
