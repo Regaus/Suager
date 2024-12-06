@@ -639,3 +639,7 @@
 
 ## v1.1.0.4 - 6 December 2024
 - Set `self.WRITE` to only be enabled by default when testing (by matching the dev bot's name in the config file)
+
+## v1.1.0.5 - 6 December 2024
+- Merged debug commands from `i.placeholder` into `i.tfi` as owner-only text-only commands
+- Fixed help for subcommands not showing the command name in a code block when it has no description

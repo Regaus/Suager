@@ -1859,3 +1859,6 @@
 ## v7.8.1.5 - 3 November 2024
 - Automatically warn and mute Aya in Senko Lair, if he mentions China or speaks Chinese
 - Fixed the mute function breaking if no mute role is present
+
+## v7.8.1.6 - 6 December 2024
+- Fixed help for subcommands not showing the command name in a code block when it has no description

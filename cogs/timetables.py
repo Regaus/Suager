@@ -696,96 +696,6 @@ class Timetables(University, Luas, name="Timetables"):
         finally:
             self.updating_vehicles = False
 
-    @commands.group(name="placeholder", case_insensitive=True)  # , invoke_without_command=True
-    # @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    @commands.is_owner()
-    async def placeholder(self, ctx: commands.Context):  # , action: str = None, force_redownload: str = None
-        """ Placeholder """
-        if ctx.invoked_subcommand is None:
-            return await ctx.send_help(ctx.command)
-            # if action == "write":
-            #     if force_redownload == "force-redownload":
-            #         debug = False
-            #     else:
-            #         debug = self._DEBUG
-            #     await self.get_real_time_data(debug=debug, write=self._WRITE)
-            # return await ctx.send("Placeholder")
-
-    @placeholder.command(name="debug", aliases=["toggledebug"])
-    async def toggle_debug_mode(self, ctx: commands.Context):
-        """ Toggle Debug Mode """
-        self.DEBUG ^= True
-        return await ctx.send(f"{self.DEBUG=}")
-
-    @placeholder.command(name="write", aliases=["togglewrite"])
-    async def toggle_write_mode(self, ctx: commands.Context):
-        """ Toggle Write Mode """
-        self.WRITE ^= True
-        return await ctx.send(f"{self.WRITE=}")
-
-    @placeholder.command(name="refresh")
-    async def refresh_real_time_data(self, ctx: commands.Context, force_redownload: bool = False):
-        """ Refresh real-time GTFS data """
-        debug = False if force_redownload else self.DEBUG
-        await self.get_real_time_data(debug=debug, write=self.WRITE)
-        return await ctx.send(f"Refreshed real-time data. {debug=}")
-
-    @placeholder.command(name="load")
-    async def load_gtfs(self, ctx: commands.Context):
-        """ Load GTFS data """
-        message = await self.wait_for_initialisation(ctx)
-        return await message.edit(content=f"{print_current_time()} > Data has been loaded")
-
-    @placeholder.command(name="reload")
-    async def reload_gtfs(self, ctx: commands.Context):
-        """ Reload static GTFS data without downloading updates from the server """
-        message = await self.wait_for_initialisation(ctx, force_redownload=False, force_reload=True)
-        return await message.edit(content=f"{print_current_time()} > Data has been reloaded")
-
-    @placeholder.command(name="redownload")
-    async def redownload_gtfs(self, ctx: commands.Context):
-        """ Download new static GTFS data and reload it """
-        message = await self.wait_for_initialisation(ctx, force_redownload=True)
-        return await message.edit(content=f"{print_current_time()} > Data has been re-downloaded")
-
-    @placeholder.command(name="reset")
-    async def reset_error(self, ctx: commands.Context):
-        """ Reset the cog's flags to initial state """
-        self.loader_error = None
-        self.initialised = False
-        self.updating = False
-        return await ctx.send(f"{print_current_time()} > Reset the loader error status and reset the initialised and updating values to False.")
-
-    @placeholder.command(name="reloadmodule", aliases=["rm"])
-    async def reload_modules(self, ctx: commands.Context, debug: bool = True, write: bool = False):
-        modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.trains", "utils.timetables.static", "utils.timetables.schedules",
-                   "utils.timetables.maps", "utils.timetables.viewers", "utils.timetables.views", "utils.timetables", "cogs.timetables")
-        for module_name in modules:
-            module = importlib.import_module(module_name)
-            importlib.reload(module)
-        self.initialised = True
-        self.updating = False
-        self.DEBUG = debug
-        self.WRITE = write
-        self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
-        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
-        return await ctx.send(f"Reloaded modules and data. {self.DEBUG=}, {self.WRITE=}")
-
-    @placeholder.command(name="check")
-    async def check_error(self, ctx: commands.Context):
-        """ Check error status """
-        flags_status = f"{self.DEBUG=}\n{self.WRITE=}\n{self.initialised=}\n{self.updating=}"
-        if self.loader_error is None:
-            return await ctx.send(f"{flags_status}\n{self.loader_error=}")
-        error = general.traceback_maker(self.loader_error)
-        return await ctx.send(f"{flags_status}\nself.loader_error has an error stored:\n{error[-1900:]}")
-
-    @placeholder.command(name="vehicles")
-    async def update_vehicle_data(self, ctx: commands.Context):
-        """ Update the vehicle data from bustimes """
-        await self.update_fleet(force_update=True)
-        return await ctx.send(f"{print_current_time()} > Fleet data has been successfully updated.")
-
     def find_stop(self, query: str) -> list[timetables.Stop]:
         """ Find a specific stop """
         query = query.lower()
@@ -1149,54 +1059,91 @@ class Timetables(University, Luas, name="Timetables"):
             raise
         return await message.edit(content=viewer.output, view=timetables.RouteVehiclesView(ctx.author, message, viewer, ctx))
 
-    # If this command is uncommented, it will still get synced to a slash command for whatever reason
-    # @tfi.command(name="debug", enabled=False)
-    # @commands.is_owner()
-    # async def tfi_debug_command(self, ctx: commands.Context):  # , trip: str = "155"
-    #     """ Debug certain commands """
-    #     import importlib
-    #     modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.static", "utils.timetables.schedules", "utils.timetables.maps",
-    #                "utils.timetables.viewers", "utils.timetables.views", "utils.timetables")
-    #     for module_name in modules:
-    #         module = importlib.import_module(module_name)
-    #         importlib.reload(module)
-    #     self.initialised = True
-    #     self.updating = False
-    #     self.DEBUG = True
-    #     self.WRITE = False
-    #     self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
-    #     await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
-    #     message = await ctx.send(f"{emotes.Loading} Debug: Initialisation bypassed and modules reloaded")
-    #     # trip_id = {
-    #     #     "16": "4159_5535||0",
-    #     #     "16B": "4159_70418||0",
-    #     #     "16D": "4159_5774||0",
-    #     #     "33N": "4175_21||0",
-    #     #     "44": "4159_10812|T1001|0",
-    #     #     "46A": "4159_11162||0",
-    #     #     "46B": "4159_10876||0",
-    #     #     "46U": "4159_10875||0",
-    #     #     "99": "4159_14592|T185|0",
-    #     #     "155": "4159_4567|T184|0",
-    #     #     "155B": "4159_4414||0",
-    #     #     "225": "4174_101560||0",
-    #     #     "225B": "4174_71091||0",
-    #     #     "N4": "4159_18353|T1002|0",
-    #     #     "N4B": "4159_18609|T186|0",
-    #     #     "DARTM": "4176_2046||0",
-    #     #     "DARTH": "4176_2047||0",
-    #     #     "CORK": "4176_5358||0",
-    #     #     "ADDED": "|T183|0"
-    #     # }.get(trip.upper(), "4159_4567||0")
-    #     stop = timetables.load_value(self.static_data, timetables.Stop, "8220DB001738", self.db)  # 8350DB004153
-    #     schedule_viewer = await timetables.StopScheduleViewer.load(self.static_data, stop, self.real_time_data, self.vehicle_data, self,
-    #                                                                time.datetime(2024, 8, 8, 7, 17, tz=timetables.TIMEZONE), user_id=ctx.author.id)
-    #     schedule_view = timetables.StopScheduleView(ctx.author, message, schedule_viewer, ctx)
-    #     return await message.edit(content=schedule_viewer.output, view=schedule_view)
-    #     # diagram_viewer = timetables.TripDiagramViewer(schedule_view, trip_id)
-    #     # # diagram_view = timetables.TripDiagramView(ctx.author, message, diagram_viewer, try_full_fetch=False)
-    #     # map_viewer = await timetables.TripMapViewer.load(diagram_viewer)
-    #     # return await message.edit(content=map_viewer.output, attachments=map_viewer.attachment, view=timetables.TripMapView(ctx.author, message, map_viewer, ctx))
+    @tfi.command(name="debug", aliases=["toggledebug"], with_app_command=False)
+    @commands.is_owner()
+    async def toggle_debug_mode(self, ctx: commands.Context):
+        """ Toggle debug mode """
+        self.DEBUG ^= True
+        return await ctx.send(f"{self.DEBUG=}")
+
+    @tfi.command(name="write", aliases=["togglewrite"], with_app_command=False)
+    @commands.is_owner()
+    async def toggle_write_mode(self, ctx: commands.Context):
+        """ Toggle write mode """
+        self.WRITE ^= True
+        return await ctx.send(f"{self.WRITE=}")
+
+    @tfi.command(name="refresh", with_app_command=False)
+    @commands.is_owner()
+    async def refresh_real_time_data(self, ctx: commands.Context, force_redownload: bool = False):
+        """ Refresh real-time GTFS data """
+        debug = False if force_redownload else self.DEBUG
+        await self.get_real_time_data(debug=debug, write=self.WRITE)
+        return await ctx.send(f"Refreshed real-time data. {debug=}")
+
+    @tfi.command(name="load", with_app_command=False)
+    @commands.is_owner()
+    async def load_gtfs(self, ctx: commands.Context):
+        """ Load GTFS data """
+        message = await self.wait_for_initialisation(ctx)
+        return await message.edit(content=f"{print_current_time()} > Data has been loaded")
+
+    @tfi.command(name="reload", with_app_command=False)
+    @commands.is_owner()
+    async def reload_gtfs(self, ctx: commands.Context):
+        """ Reload static GTFS data without downloading updates from the server """
+        message = await self.wait_for_initialisation(ctx, force_redownload=False, force_reload=True)
+        return await message.edit(content=f"{print_current_time()} > Data has been reloaded")
+
+    @tfi.command(name="redownload", with_app_command=False)
+    @commands.is_owner()
+    async def redownload_gtfs(self, ctx: commands.Context):
+        """ Download new static GTFS data and reload it """
+        message = await self.wait_for_initialisation(ctx, force_redownload=True)
+        return await message.edit(content=f"{print_current_time()} > Data has been re-downloaded")
+
+    @tfi.command(name="reset", with_app_command=False)
+    @commands.is_owner()
+    async def reset_error(self, ctx: commands.Context):
+        """ Reset the cog's flags to initial state """
+        self.loader_error = None
+        self.initialised = False
+        self.updating = False
+        return await ctx.send(f"{print_current_time()} > Reset the loader error status and reset the initialised and updating values to False.")
+
+    @tfi.command(name="reloadmodule", aliases=["rm"], with_app_command=False)
+    @commands.is_owner()
+    async def reload_modules(self, ctx: commands.Context, debug: bool = True, write: bool = False):
+        """ Reload the timetables module """
+        modules = ("utils.timetables.shared", "utils.timetables.realtime", "utils.timetables.trains", "utils.timetables.static", "utils.timetables.schedules",
+                   "utils.timetables.maps", "utils.timetables.viewers", "utils.timetables.views", "utils.timetables", "cogs.timetables")
+        for module_name in modules:
+            module = importlib.import_module(module_name)
+            importlib.reload(module)
+        self.initialised = True
+        self.updating = False
+        self.DEBUG = debug
+        self.WRITE = write
+        self.static_data = timetables.init_gtfs_data(ignore_expiry=True)
+        await self.load_real_time_data(debug=self.DEBUG, write=self.WRITE)
+        return await ctx.send(f"Reloaded modules and data. {self.DEBUG=}, {self.WRITE=}")
+
+    @tfi.command(name="check", with_app_command=False)
+    @commands.is_owner()
+    async def check_error(self, ctx: commands.Context):
+        """ Check error status """
+        flags_status = f"{self.DEBUG=}\n{self.WRITE=}\n{self.initialised=}\n{self.updating=}"
+        if self.loader_error is None:
+            return await ctx.send(f"{flags_status}\n{self.loader_error=}")
+        error = general.traceback_maker(self.loader_error)
+        return await ctx.send(f"{flags_status}\nself.loader_error has an error stored:\n{error[-1900:]}")
+
+    @tfi.command(name="fleet", with_app_command=False)
+    @commands.is_owner()
+    async def update_vehicle_data(self, ctx: commands.Context):
+        """ Update the vehicle data from bustimes """
+        await self.update_fleet(force_update=True)
+        return await ctx.send(f"{print_current_time()} > Fleet data has been successfully updated.")
 
 
 async def setup(bot: bot_data.Bot):

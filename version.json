@@ -1,10 +1,10 @@
 {
   "suager": {
     "short_version": "7.8",
-    "version": "7.8.1.5",
+    "version": "7.8.1.6",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1730650898
+    "last_update": 1733522672
   },
   "cobble": {
     "short_version": "1.9",
@@ -43,9 +43,9 @@
   },
   "timetables": {
     "short_version": "1.1",
-    "version": "1.1.0.4",
+    "version": "1.1.0.5",
     "first_version": 1668995199,
     "major_release": 1725408000,
-    "last_update": 1733519218
+    "last_update": 1733522669
   }
 }

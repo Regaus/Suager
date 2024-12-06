@@ -105,7 +105,7 @@ class HelpFormat(MinimalHelpCommand):
             nsfw = "⚠ " if command.nsfw else ""
         else:
             nsfw = ""
-        fmt = '`{0}{1}` \N{EN DASH} {2}' if command.short_doc else '{0}{1}'
+        fmt = '`{0}{1}` \N{EN DASH} {2}' if command.short_doc else '`{0}{1}`'
         self.paginator.add_line(nsfw + fmt.format(self.prefix, command.qualified_name, command.short_doc))
 
     async def filter_commands(self, command: Iterable[Command], *, sort=False, key: Any = lambda c: c.name):
