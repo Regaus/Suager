@@ -818,3 +818,6 @@
 
 ## v1.9.6.4 - 8 December 2024
 - Error logs will now be forwarded to the #error-logs channel
+
+## v2.0.0a1 - 8 December 2024
+- Removed `..achievements` from CobbleBot, as the reason for its creation will never be implemented

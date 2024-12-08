@@ -5,7 +5,6 @@ from utils import commands, languages, permissions
 # List of all cogs each bot needs to load
 load = {
     "cobble": [
-        "achievements",
         "admin",
         "conlangs",
         "conworlds",

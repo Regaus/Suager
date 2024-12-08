@@ -2,6 +2,7 @@ from io import BytesIO
 
 import discord
 from PIL import Image, ImageDraw, ImageFont
+from discord import app_commands
 
 from utils import bot_data, commands, emotes, images
 from utils.general import username
@@ -31,10 +32,14 @@ class Achievements(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
 
-    @commands.command(name="achievements", aliases=["accomplishments", "ah"])
+    @commands.hybrid_command(name="achievements", aliases=["accomplishments", "ah"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.rename(who="user")
+    @app_commands.describe(who="The user whose progress to check. Leave empty to check your own achievements.")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def achievements(self, ctx: commands.Context, who: discord.User = None):
-        """ See your progress within my bots """
+        """ Check a user's progress within this bot's leveling system """
         # locale = languages.gl(ctx)
         language = self.bot.language(ctx)
         user = who or ctx.author
@@ -158,7 +163,7 @@ class Achievements(commands.Cog):
         img.save(bio, "PNG")
         bio.seek(0)
         # f"This is what **{user}** has accomplished so far."
-        return await ctx.send(language.string("achievements_achievements", user=username(user)), file=discord.File(bio, filename="achievements.png"))
+        return await ctx.send(language.string("achievements_achievements", user=username(user)), file=discord.File(bio, filename="achievements.png"), ephemeral=True)
 
     @commands.command(name="tiers")
     @commands.is_owner()

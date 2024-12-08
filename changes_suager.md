@@ -1865,3 +1865,6 @@
 
 ## v7.8.1.7 - 8 December 2024
 - Error logs will now be forwarded to the #error-logs channel
+
+## v8.0.0a1 - 8 December 2024
+- Converted `//achievements` into a hybrid command and slightly updated its description
