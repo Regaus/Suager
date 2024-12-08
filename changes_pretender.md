@@ -98,3 +98,6 @@
 
 ## v1.3.1.1 - 24 May 2024
 - Changed the error re-raising statements to not modify error context when they don't need to
+
+## v1.3.1.2 - 8 December 2024
+- Error logs will now be forwarded to the #error-logs channel

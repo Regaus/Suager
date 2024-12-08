@@ -643,3 +643,6 @@
 ## v1.1.0.5 - 6 December 2024
 - Merged debug commands from `i.placeholder` into `i.tfi` as owner-only text-only commands
 - Fixed help for subcommands not showing the command name in a code block when it has no description
+
+## v1.1.0.6 - 8 December 2024
+- Error logs will now be forwarded to the #error-logs channel

@@ -815,3 +815,6 @@
 
 ## v1.9.6.3 - 25 August 2024
 - Temporaries: put the `asyncio.sleep()` calls into `finally:` blocks to make the functions sleep even if an error is raised
+
+## v1.9.6.4 - 8 December 2024
+- Error logs will now be forwarded to the #error-logs channel

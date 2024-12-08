@@ -1862,3 +1862,6 @@
 
 ## v7.8.1.6 - 6 December 2024
 - Fixed help for subcommands not showing the command name in a code block when it has no description
+
+## v7.8.1.7 - 8 December 2024
+- Error logs will now be forwarded to the #error-logs channel

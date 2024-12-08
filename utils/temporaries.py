@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import io
 import json
+import os
 import random
 import re
 from typing import Type
@@ -1154,6 +1156,50 @@ async def voice_channel_server_stats(bot: bot_data.Bot):
         except Exception as e:
             general.log_error(bot, f"{time.time()} > {bot.full_name} > VC Server Stats > {type(e).__name__}: {e}")
             general.log_error(bot, general.traceback_maker(e, code_block=False))
+        finally:
+            await asyncio.sleep(1)
+            await wait_until_next_iter(update_speed, 1)
+
+
+async def send_error_logs(bot: bot_data.Bot):
+    """ Forward the contents of errors.log to the #error-logs channel in the development server, if any errors occurred that day. """
+    update_speed = 86400
+    await wait_until_next_iter(update_speed, 1)
+    await bot.wait_until_ready()
+    logger.log(bot.name, "temporaries", f"{time.time()} > {bot.full_name} > Initialised Error Logs Sender")
+    channel: discord.TextChannel = bot.get_channel(738442483591151638)
+    if channel is None or not can_send(channel):
+        general.print_error(f"{time.time()} > {bot.full_name} > Error Logs > Channel {channel} cannot be accessed.")
+        logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Error Logs > Channel {channel} cannot be accessed.")
+        return  # Exit the function if the channel cannot be accessed
+
+    while True:
+        try:
+            yesterday: time2.date = time2.date.today() - time2.timedelta(days=1)
+            yesterday_fmt: str = yesterday.iso()
+            path: str = os.path.join("data", "logs", bot.name, yesterday_fmt, "errors.rsf")
+            # If there is an error log for the past day, send the contents of it to the channel
+            if os.path.isfile(path):
+                size: int = os.path.getsize(path)
+                limit: int = channel.guild.filesize_limit
+                # If the filesize is 1900 or lower, then send the contents as a message. Otherwise, send the file
+                if size < 1900:
+                    with open(path, "r", encoding="utf-8") as file:
+                        data: str = file.read()
+                    await channel.send(f"Error logs for {yesterday_fmt}: ```fix\n{data}\n```")
+                elif size < limit:
+                    await channel.send(f"Error logs for {yesterday_fmt}", file=discord.File(path, filename=f"{bot.name}_{yesterday_fmt}_errors.txt"))
+                else:
+                    bio = io.BytesIO()
+                    with open(path, "rb") as file:
+                        file.seek(-limit, os.SEEK_END)
+                        bio.write(file.read())
+                    bio.seek(0)
+                    await channel.send(f"Error logs for {yesterday_fmt} too long ({size:,} bytes) - Sending last {limit:,} bytes",
+                                       file=discord.File(bio, filename=f"{bot.name}_{yesterday_fmt}_errors.txt"))
+        except Exception as e:
+            general.print_error(f"{time.time()} > {bot.full_name} > Error Logs > {type(e).__name__}: {e}")
+            logger.log(bot.name, "errors", f"{time.time()} > {bot.full_name} > Error Logs > {type(e).__name__}: {e}")
         finally:
             await asyncio.sleep(1)
             await wait_until_next_iter(update_speed, 1)
