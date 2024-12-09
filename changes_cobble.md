@@ -821,3 +821,6 @@
 
 ## v2.0.0a1 - 8 December 2024
 - Removed `..achievements` from CobbleBot, as the reason for its creation will never be implemented
+
+## v2.0.0a2 - 9 December 2024
+- Renamed `..rsl1` to `..conlangs` and made the two subcommands hybrid
