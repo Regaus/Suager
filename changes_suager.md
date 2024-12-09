@@ -1868,3 +1868,8 @@
 
 ## v8.0.0a1 - 8 December 2024
 - Converted `//achievements` into a hybrid command and slightly updated its description
+
+## v8.0.0a2 - 8 December 2024
+- Converted birthday-related commands into hybrid commands
+- Added a user context menu to check someone's birthday
+- Implemented logging and error responses for context menus

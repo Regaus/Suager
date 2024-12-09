@@ -440,3 +440,7 @@
 
 ## v1.6.0.2 - 8 December 2024
 - Error logs will now be forwarded to the #error-logs channel
+
+## v2.0.0a1 - 8 December 2024
+- Converted birthday-related commands into hybrid commands
+- Added a user context menu to check someone's birthday
