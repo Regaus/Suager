@@ -824,3 +824,10 @@
 
 ## v2.0.0a2 - 9 December 2024
 - Renamed `..rsl1` to `..conlangs` and made the two subcommands hybrid
+
+## v2.0.0a3 - 9 December 2024
+- Made all conworlds commands hybrid
+- `..kaage` will now only show your Kargadian birthday (without the age part) if you specify a date equal to or later than today
+- Moved `..weather78 list` to `..locations list`
+- Changed the cooldown on `..birthday` to 2 seconds (from 5 seconds)
+- Fixed context menu CommandInvokeError traceback showing the traceback for the discord.py error handling rather than where the error actually occurred

@@ -1873,3 +1873,8 @@
 - Converted birthday-related commands into hybrid commands
 - Added a user context menu to check someone's birthday
 - Implemented logging and error responses for context menus
+
+## v8.0.0a3 - 9 December 2024
+- Slightly changed the command description for `//birthday`
+- Changed the cooldown on `//birthday` to 2 seconds (from 5 seconds)
+- Fixed context menu CommandInvokeError traceback showing the traceback for the discord.py error handling rather than where the error actually occurred

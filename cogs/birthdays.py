@@ -46,13 +46,13 @@ class Birthdays(commands.Cog):
         return await ctx.send(language.string(f"birthdays_birthday_general{today}", user=username(user), date=birthday, delta=delta), ephemeral=True)
 
     @commands.hybrid_group(name="birthday", aliases=['b', 'bd', 'birth', 'day'], invoke_without_command=True, fallback="check")
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
     @commands.max_concurrency(1, per=commands.BucketType.user)
-    @app_commands.describe(user="The user whose birthday you want to see")
+    @app_commands.describe(user="The user whose birthday you want to check")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.allowed_installs(guilds=True, users=True)
     async def birthday(self, ctx: commands.Context, *, user: discord.User = None):
-        """ Check someone's birthday"""
+        """ Check your or someone else's birthday """
         if ctx.invoked_subcommand is None:
             return await self.cmd_check_birthday(ctx, user)
 

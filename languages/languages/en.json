@@ -1245,6 +1245,9 @@
   "util_weather_weather": "Current weather",
   "util_weather_wind": "Wind speed",
 
+  "weather78_locations_list": "All places on {planet}:",
+  "weather78_place_not_found": "{emotes.Deny} Place \"{place}\" was not found.",
+
   "data_holidays_ka": {
     "01-01": "New Year",
     "01-06": "Affection Day",

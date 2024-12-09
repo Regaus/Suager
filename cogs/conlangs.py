@@ -66,7 +66,7 @@ class Conlangs(commands.Cog):
         app_commands.Choice(name="Kovanerran (Regaazdallian)", value="re_kv"),
         # app_commands.Choice(name="Navadelan", value="na"),
         # app_commands.Choice(name="Koutuan", value="kt"),
-        # app_commands.Choice(name="Vaivanvallian", value="vv"),
+        # app_commands.Choice(name="Vaidanvallian", value="vv"),
         # app_commands.Choice(name="Kaltanazdallian", value="kz"),
         app_commands.Choice(name="Ancient Larihalian", value="lh"),
     ])

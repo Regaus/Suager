@@ -6,7 +6,7 @@ from utils import time, logger, general, languages
 
 def get_command_str(interaction: discord.Interaction) -> str:
     if isinstance(interaction.command, app_commands.Command):
-        command = f"Slash command: {interaction.command.name}"
+        command = f"Slash command: /{interaction.command.name}"
         arguments: list[str] = []
         for key, value in interaction.namespace:  # type: ignore
             if value is not None:
@@ -45,14 +45,17 @@ async def on_error(interaction: discord.Interaction, error: app_commands.AppComm
     elif isinstance(error, app_commands.CommandInvokeError):
         error_msg = f"{type(error.original).__name__}: {str(error.original)}"
         message = language.string("events_error_error", err=error_msg)
+        error = error.original  # Overwrite the error to use in the traceback
     elif isinstance(error, app_commands.TransformerError):
         error_msg = (f"{type(error).__name__}: {type(error.transformer).__name__} converting {error.value} to type {error.type.name} - "  # type: ignore
                      f"{type(error.__cause__).__name__}: {str(error.__cause__)}")
         message = language.string("events_error_error", err=error_msg)
+        error = error.__cause__  # Overwrite the error to use in the traceback
     elif isinstance(error, app_commands.TranslationError):
         error_msg = (f"{type(error).__name__}: Translating {error.string} to {error.locale.name} ({error.context.location.name}) - "  # type: ignore
                      f"{type(error.__cause__).__name__}: {str(error.__cause__)}")
         message = language.string("events_error_error", err=error_msg)
+        error = error.__cause__  # Overwrite the error to use in the traceback
     elif isinstance(error, app_commands.NoPrivateMessage):
         ignore = True
         message = language.string("events_error_guild_only")
