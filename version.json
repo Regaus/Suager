@@ -8,10 +8,10 @@
   },
   "cobble": {
     "short_version": "1.9",
-    "version": "2.0.0a3",
+    "version": "2.0.0a4",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1733717059
+    "last_update": 1733781864
   },
   "kyomi": {
     "short_version": "1.6",
@@ -43,9 +43,9 @@
   },
   "timetables": {
     "short_version": "1.1",
-    "version": "1.1.0.6",
+    "version": "1.1.0.7",
     "first_version": 1668995199,
     "major_release": 1725408000,
-    "last_update": 1733680369
+    "last_update": 1733781864
   }
 }

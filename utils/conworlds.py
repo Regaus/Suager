@@ -142,26 +142,26 @@ def generate_citizen(language: str = None, name_only: bool = False) -> tuple[str
     return output
 
 
-def generate_citizen_names(language: str) -> str:
+def generate_citizen_names(language: str) -> tuple[str, bool]:
     """ Generate a string with some Kargadian names """
     try:
         names = []
         for i in range(10):
             name, gender = generate_citizen(language, name_only=True)
             names.append(f"`{name}` ({gender.title()})")
-        return "Here are some Kargadian names for you:\n" + "\n".join(names)
+        return "Here are some Kargadian names for you:\n" + "\n".join(names), False
     except KeyError:
-        return f"Invalid language specified: `{language}`."
+        return f"Invalid language specified: `{language}`.", True
 
 
-async def generate_citizen_embed(ctx, citizen_language: str) -> discord.Embed:
+def generate_citizen_embed(citizen_language: str) -> tuple[discord.Embed | str, bool]:
     """ Generate an Embed with a Kargadian citizen """
     try:
         citizen = generate_citizen(citizen_language, name_only=False)
     except KeyError:
         # Technically this can be called by the button Interaction and fail by AttError,
         # but I think we can just ignore this for now
-        return await ctx.send(f"Invalid language specified: `{citizen_language}`.")
+        return f"Invalid language specified: `{citizen_language}`.", True
 
     embed = discord.Embed(colour=random_colour())
 
@@ -180,7 +180,7 @@ async def generate_citizen_embed(ctx, citizen_language: str) -> discord.Embed:
     embed.add_field(name="Place of Birth", value=f"{birth.name_translation(language)}, {birth.state}", inline=True)
     residence = conworlds.Place(citizen["residence"])
     embed.add_field(name="Place of Residence", value=f"{residence.name_translation(language)}, {residence.state}", inline=True)
-    return embed
+    return embed, False
 
 
 def distance_between_places(lat1: float, long1: float, lat2: float, long2: float, planet: str = "Kargadia") -> float:

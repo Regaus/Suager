@@ -831,3 +831,8 @@
 - Moved `..weather78 list` to `..locations list`
 - Changed the cooldown on `..birthday` to 2 seconds (from 5 seconds)
 - Fixed context menu CommandInvokeError traceback showing the traceback for the discord.py error handling rather than where the error actually occurred
+
+## v2.0.0a4 - 9 December 2024
+- Improved the error handling for citizen generation views
+- Stopped views will no longer have the view reappear if a button cooldown ends after the view has finished
+- Added autocomplete for place names on `..time78`, `..weather78`, `..location`, and `..distance`

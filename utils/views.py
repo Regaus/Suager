@@ -44,10 +44,11 @@ class View(discord.ui.View):
         await message.edit(view=self)
 
         await asyncio.sleep(cooldown)
-        button.label = original_label
-        button.style = original_style
-        button.disabled = False
-        await message.edit(view=self)
+        if not self.is_finished():  # Only update the message if the view is still valid
+            button.label = original_label
+            button.style = original_style
+            button.disabled = False
+            await message.edit(view=self)
 
     async def disable_button_light(self, message: discord.Message, button: discord.Button, cooldown: int = 2):
         """ Disable the button for the specified amount of seconds, but don't do anything with the label """
@@ -57,9 +58,10 @@ class View(discord.ui.View):
         await message.edit(view=self)
 
         await asyncio.sleep(cooldown)
-        button.style = original_style
-        button.disabled = False
-        await message.edit(view=self)
+        if not self.is_finished():  # Only update the message if the view is still valid
+            button.style = original_style
+            button.disabled = False
+            await message.edit(view=self)
 
     async def disable_buttons_light(self, message: discord.Message, *buttons: discord.Button, cooldown: int = 2):
         """ Disable multiple buttons at once (without changing their names) """
@@ -70,10 +72,11 @@ class View(discord.ui.View):
         await message.edit(view=self)
 
         await asyncio.sleep(cooldown)
-        for i, button in enumerate(buttons):
-            button.style = original_styles[i]
-            button.disabled = False
-        await message.edit(view=self)
+        if not self.is_finished():
+            for i, button in enumerate(buttons):
+                button.style = original_styles[i]
+                button.disabled = False
+            await message.edit(view=self)
 
     def _child_from_custom_id(self, custom_id: str) -> discord.ui.Item:
         for item in self.children:
@@ -304,25 +307,51 @@ class GenerateNamesView(InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, language: str, ctx: commands.Context | discord.Interaction = None):
         super().__init__(sender=sender, message=message, timeout=900, ctx=ctx)
         self.language = language  # Language used for the citizen generation
+        # You don't need a "close" button on an ephemeral message
+        if isinstance(ctx, discord.Interaction) or (isinstance(ctx, commands.Context) and ctx.interaction is not None):
+            self.remove_item(self.close_view)
 
-    @discord.ui.button(label='Generate more names', style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Generate more names", emoji="🔄", style=discord.ButtonStyle.primary, row=0)
     async def generate(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Generate more names in the same language """
         await interaction.response.defer()  # type: ignore
-        await self.message.edit(content=conworlds.generate_citizen_names(self.language))
-        await self.disable_button(self.message, button, cooldown=6)
+        content, _error = conworlds.generate_citizen_names(self.language)  # Language error shouldn't occur at this stage
+        await self.message.edit(content=content)
+        await self.disable_button_light(self.message, button, cooldown=5)
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view but keep the message """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=None)
+        self.stop()
 
 
 class GenerateCitizenView(InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, language: str, ctx: commands.Context | discord.Interaction = None):
         super().__init__(sender=sender, message=message, timeout=900, ctx=ctx)
         self.language = language  # Language used for the citizen generation
+        # You don't need a "close" button on an ephemeral message
+        if isinstance(ctx, discord.Interaction) or (isinstance(ctx, commands.Context) and ctx.interaction is not None):
+            self.remove_item(self.close_view)
 
-    @discord.ui.button(label='Generate another citizen', style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Generate another citizen", emoji="🔄", style=discord.ButtonStyle.primary, row=0)
     async def generate(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """ Generate a new citizen """
         await interaction.response.defer()  # type: ignore
-        new_embed = await conworlds.generate_citizen_embed(interaction.response, self.language)
-        await self.message.edit(embed=new_embed)
-        await self.disable_button(self.message, button, cooldown=3)
+        new_embed, _error = conworlds.generate_citizen_embed(self.language)
+        if _error:
+            await self.message.edit(content=new_embed, embed=None)
+        else:
+            await self.message.edit(content=None, embed=new_embed)
+        await self.disable_button_light(self.message, button, cooldown=5)
+
+    @discord.ui.button(label="Close view", emoji="⏹️", style=discord.ButtonStyle.danger, row=0)
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view but keep the message """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(view=None)
+        self.stop()
 
 
 class Modal(discord.ui.Modal):

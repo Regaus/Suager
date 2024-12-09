@@ -6,6 +6,7 @@ import discord
 from discord import app_commands
 from pytz.tzinfo import DstTzInfo
 from regaus import conworlds, PlaceDoesNotExist, random_colour, time, version_info
+from thefuzz import process
 
 from utils import bot_data, commands, conlangs, conworlds as conworlds2, views, general, languages, interactions
 
@@ -26,13 +27,65 @@ CITIZEN_LANGUAGES: list[app_commands.Choice[str]] = [  # List of languages which
 ]
 
 
-# TODO: Implement an autocomplete for place names where relevant
 class Conworlds(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        self.places: list[conworlds.Place] = [conworlds.Place(place["id"]) for place in conworlds.places if place["priority"] < 2]  # Exclude hidden and generated places from showing up as suggestions
+        # Partial checks match just the first part of the coordinates, giving autocomplete suggestions for the second value
+        self.lat_long_check = re.compile(r"^(-?\d{1,2}\.?\d*),\s?(-?\d{1,3}\.?\d*)$")
+        self.partial_lat_long_check = re.compile(r"^(-?\d{1,2}\.?\d*),?\s?$")
+        self.coordinate_check = re.compile(r"^c(\d{1,4}\.?\d*),\s?(\d{1,4}\.?\d*)$")
+        self.partial_coordinate_check = re.compile(r"^c(\d{1,4}\.?\d*),?\s?$")
+
+    async def place_autocomplete(self, interaction: discord.Interaction, current: str, with_planets: bool, with_coords: bool) -> list[app_commands.Choice[str]]:
+        """ Generic autocomplete for place names """
+        language = languages.Language.get(interaction, personal=True)
+        if with_coords:  # Return some special choices if we match coordinates
+            if re.match(self.lat_long_check, current):
+                x, y = current.split(",")
+                return [app_commands.Choice(name="Coordinates: " + conworlds.format_location(float(x), float(y), indent=False, language=language.language), value=current)]
+            elif re.match(self.coordinate_check, current):
+                x, y = current[1:].split(",")
+                return [app_commands.Choice(name=f"Map coordinates: ({float(x):.2f}, {float(y):.2f})", value=current)]
+            elif re.match(self.partial_lat_long_check, current):
+                lat = float(current.rstrip().rstrip(","))
+                longs = list(range(-180, 181, 15))
+                return [app_commands.Choice(name="Coordinates: " + conworlds.format_location(lat, long, indent=False, language=language.language), value=f"{lat},{long}") for long in longs]
+            elif re.match(self.partial_coordinate_check, current):
+                x = float(current[1:].rstrip().rstrip(","))
+                ys = list(range(0, 1801, 100))
+                return [app_commands.Choice(name=f"Map coordinates: ({float(x):.2f}, {float(y):.2f})", value=f"c{x},{y}") for y in ys]
+        results: list[tuple[str, str, int]] = []
+        for place in self.places:
+            ratios = (process.default_scorer(current, place.id), process.default_scorer(current, place.names["en"]), process.default_scorer(current, place.names.get(language.language)))
+            place_name = place.names.get(language.language, place.names["en"])                               # Fall back to English place name
+            location = language.data("weather78_regions").get(place.state, {"_self": place.state})["_self"]  # Fall back to internal state name
+            results.append((f"{place_name} ({location})", place.id, max(ratios)))
+        if with_planets:
+            planets: dict[str, str] = language.data("weather78_planets")
+            for key, value in planets.items():  # key = internal name, value = localised name
+                if key == "Zeivela":  # Skip Zeivela for now, since there are no settlements on it, nor is there a calendar
+                    continue
+                ratios = (process.default_scorer(current, key), process.default_scorer(current, value))
+                results.append((value, key, max(ratios)))
+        results.sort(key=lambda r: r[2], reverse=True)
+        return [app_commands.Choice(name=name, value=value) for name, value, _ in results[:25]]
+
+    async def place_name_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for commands that use a place name """
+        return await self.place_autocomplete(interaction, current, False, False)
+
+    async def place_name_with_planets(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for commands that use a place name but can also take in a planet name """
+        return await self.place_autocomplete(interaction, current, True, False)
+
+    async def place_name_with_coords(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for commands that use a place name but can also take in coordinates """
+        return await self.place_autocomplete(interaction, current, False, True)
 
     @commands.hybrid_command(name="time78", aliases=["t78"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @app_commands.autocomplete(place_name=place_name_with_planets)
     @app_commands.rename(_date="date", _time="time")
     @app_commands.describe(
         place_name="The name of the place for which to look up time. Must be a valid name of a settlement or planet.",
@@ -128,6 +181,7 @@ class Conworlds(commands.Cog):
 
     @commands.hybrid_command(name="weather78", aliases=["data78", "w78", "d78", "place"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @app_commands.autocomplete(where=place_name_autocomplete)
     @app_commands.rename(where="place_name", lod="level_of_detail")
     @app_commands.describe(
         where="The name of the place for which to look up the weather. Must be a valid settlement name",
@@ -175,6 +229,7 @@ class Conworlds(commands.Cog):
 
     @commands.hybrid_group(name="locations", aliases=["location", "loc"], case_insensitive=True, invoke_without_command=True, fallback="get")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @app_commands.autocomplete(where=place_name_autocomplete)
     @app_commands.rename(where="place_name")
     @app_commands.describe(where="The name of the place for which to look up location details")
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -226,6 +281,7 @@ class Conworlds(commands.Cog):
 
     @commands.hybrid_command(name="distance", aliases=["dist"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @app_commands.autocomplete(origin=place_name_with_coords, destination=place_name_with_coords)
     @app_commands.describe(
         origin="Place name (\"Reggar\"), coordinates (\"60.00,-53.48\"), or map coordinates (\"c1265,300\").",
         destination="Place name (\"Reggar\"), coordinates (\"60.00,-53.48\"), or map coordinates (\"c1265,300\").",
@@ -249,17 +305,15 @@ class Conworlds(commands.Cog):
         Example using place name: `..distance Reggar "Rakkan Lintina"`
         Example using coordinates: `..distance "60.00,-53.48" "22.00,-77.48" Kargadia` """
         await ctx.defer(ephemeral=True)
-        lat_long_check = re.compile(r"^(-?\d{1,2}\.?\d*),(\s?)(-?\d{1,3}\.?\d*)$")
-        coordinate_check = re.compile(r"^c(\d{1,4}\.?\d*),(\s?)(\d{1,4}\.?\d*)$")
 
         # Check if the origin is a coordinate or a place name
         try:
-            if re.match(lat_long_check, origin):
+            if re.match(self.lat_long_check, origin):
                 x, y = origin.split(",")
                 lat1, long1 = float(x), float(y)
                 planet1 = planet
                 name1 = conworlds.format_location(lat1, long1)
-            elif re.match(coordinate_check, origin):
+            elif re.match(self.coordinate_check, origin):
                 x, y = origin[1:].split(",")
                 x1, y1 = float(x), float(y)
                 lat1, long1 = conworlds.calc_position(x1, y1, planet if planet else "Kargadia")
@@ -275,12 +329,12 @@ class Conworlds(commands.Cog):
 
         # Do the same for the destination
         try:
-            if re.match(lat_long_check, destination):
+            if re.match(self.lat_long_check, destination):
                 x, y = destination.split(",")
                 lat2, long2 = float(x), float(y)
                 planet2 = planet
                 name2 = conworlds.format_location(lat2, long2)
-            elif re.match(coordinate_check, destination):
+            elif re.match(self.coordinate_check, destination):
                 x, y = destination[1:].split(",")
                 x2, y2 = float(x), float(y)
                 lat2, long2 = conworlds.calc_position(x2, y2, planet if planet else "Kargadia")
@@ -660,10 +714,11 @@ class Conworlds(commands.Cog):
     async def generate_name(self, ctx: commands.Context, language: str = "re_nu"):
         """ Generate a few random Kargadian names """
         await ctx.defer(ephemeral=True)
-        message = await ctx.send(conworlds2.generate_citizen_names(language), ephemeral=True)
-        view = views.GenerateNamesView(sender=ctx.author, message=message, language=language, ctx=ctx)
-        await message.edit(view=view)
-        return message
+        content, error = conworlds2.generate_citizen_names(language)
+        message = await ctx.send(content, ephemeral=True)
+        if not error:
+            view = views.GenerateNamesView(sender=ctx.author, message=message, language=language, ctx=ctx)
+            return await message.edit(view=view)
 
     @generate.command(name="citizen")
     @app_commands.rename(citizen_language="language")
@@ -673,11 +728,13 @@ class Conworlds(commands.Cog):
         """ Generate a random Kargadian citizen
         If no language is specified, a random available language will be used """
         await ctx.defer(ephemeral=True)
-        embed = await conworlds2.generate_citizen_embed(ctx, citizen_language)
-        message = await ctx.send(embed=embed, ephemeral=True)
-        view = views.GenerateCitizenView(sender=ctx.author, message=message, language=citizen_language, ctx=ctx)
-        await message.edit(view=view)
-        return message
+        embed, error = conworlds2.generate_citizen_embed(citizen_language)
+        if error:
+            return await ctx.send(content=embed, ephemeral=True)
+        else:
+            message = await ctx.send(embed=embed, ephemeral=True)
+            view = views.GenerateCitizenView(sender=ctx.author, message=message, language=citizen_language, ctx=ctx)
+            return await message.edit(view=view)
 
 
 async def setup(bot: bot_data.Bot):
