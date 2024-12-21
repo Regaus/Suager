@@ -444,3 +444,7 @@
 ## v2.0.0a1 - 8 December 2024
 - Converted birthday-related commands into hybrid commands
 - Added a user context menu to check someone's birthday
+
+## v2.0.0a2 - 21 December 2024
+- Converted commands from the Fun category into hybrid commands with interactive views
+- Incorporated the Language into all Views, with the language being an optional argument (since many views don't need it)

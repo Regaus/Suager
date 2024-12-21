@@ -36,7 +36,7 @@ REACTION_STYLES = [
 ]
 
 
-class ReactionGroupView(views.TranslatedView):
+class ReactionGroupView(views.InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, ctx: commands.Context, language: languages.Language,
                  channel: discord.TextChannel, existing_message: discord.Message | None, bot: bot_data.Bot):
         super().__init__(sender=sender, message=message, ctx=ctx, language=language)
@@ -294,7 +294,7 @@ class ReactionGroupEditView(ReactionGroupView):
             await self.reaction_message.add_reaction(reaction_role.emoji)
 
 
-class ReactionGroupRemoveView(views.TranslatedView):
+class ReactionGroupRemoveView(views.InteractiveView):
     """ Represents the view for removing a reaction role """
     def __init__(self, sender: discord.Member, message: discord.Message, ctx: commands.Context, language: languages.Language, reaction_message: discord.Message, bot: bot_data.Bot):
         super().__init__(sender=sender, message=message, ctx=ctx, language=language)
@@ -327,7 +327,7 @@ class ReactionGroupRemoveView(views.TranslatedView):
         return await self.message.edit(content=self.language.string("reaction_roles_group_delete_success"), view=new_view)
 
 
-class DeleteMessageView(views.TranslatedView):
+class DeleteMessageView(views.InteractiveView):
     def __init__(self, sender: discord.Member, message: discord.Message, ctx: commands.Context, language: languages.Language, reaction_message: discord.Message):
         super().__init__(sender=sender, message=message, ctx=ctx, language=language)
         self.reaction_message: discord.Message = reaction_message
@@ -382,9 +382,9 @@ class ReactionRole:
         return self.emoji == other.emoji and self.role == other.role
 
 
-class EphemeralView(views.TranslatedView):
+class EphemeralView(views.InteractiveView):
     def __init__(self, original_view: ReactionGroupView):
-        super().__init__(original_view.sender, original_view.message, None, original_view.language)
+        super().__init__(sender=original_view.sender, message=original_view.message, ctx=None, language=original_view.language)
         self.original_view = original_view
         self.original_view.references.append(self)
         self.language = self.original_view.language
@@ -406,7 +406,7 @@ class EphemeralView(views.TranslatedView):
         return new_view
 
     @classmethod
-    async def send(cls, original_view: views.TranslatedView, interaction: discord.Interaction):
+    async def send(cls, original_view: views.InteractiveView, interaction: discord.Interaction):
         raise NotImplementedError("This method must be overridden by subclasses")
 
 

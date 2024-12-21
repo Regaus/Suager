@@ -16,12 +16,21 @@ class NotMessageAuthor(app_commands.CheckFailure):
         if language:
             message = language.string("events_error_author")
         else:
-            message = f"{emotes.Deny} Only the author of the command can use this interaction."
+            message = f"{emotes.Deny} Only the author of the command can interact with this message."
+        super().__init__(message)
+
+
+class NotTarget(app_commands.CheckFailure):
+    def __init__(self, language: languages.Language = None):
+        if language:
+            message = language.string("events_error_target")
+        else:
+            message = f"{emotes.Deny} Only the target of the command can interact with this message."
         super().__init__(message)
 
 
 class View(discord.ui.View):
-    def __init__(self, timeout: int | float = 300, ctx: commands.Context | discord.Interaction = None):  # , bot: bot_data.Bot
+    def __init__(self, timeout: int | float = 300, ctx: commands.Context | discord.Interaction = None, language: languages.Language = None):  # , bot: bot_data.Bot
         super().__init__(timeout=timeout)
         # self.context = ctx
         if ctx is None:
@@ -33,6 +42,16 @@ class View(discord.ui.View):
         else:
             self.command: str = ctx.message.clean_content  # type: ignore
         # self.bot = bot
+        self.language = language
+        if self.language:  # If a language is provided, automatically translate the item labels
+            self._translate_labels()
+
+    def _translate_labels(self):
+        """ Translate all button labels, if they are not empty """
+        for item in self.children:
+            if item.type == discord.ComponentType.button and item.label:
+                item: discord.ui.Button
+                item.label = self.language.string(item.label)
 
     async def disable_button(self, message: discord.Message, button: discord.Button, cooldown: int = 2):
         """ Disable the button for the specified amount of seconds, replace the label to state that the button is on cooldown """
@@ -138,9 +157,10 @@ class View(discord.ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
         """ Ensure the validity of the interaction """
-        if hasattr(self, "sender"):
-            if interaction.user.id != self.sender.id:
-                raise NotMessageAuthor(languages.Language.get(interaction, personal=True))
+        if hasattr(self, "target") and interaction.user.id != self.target.id:  # type: ignore
+            raise NotTarget(languages.Language.get(interaction, personal=True))
+        if hasattr(self, "sender") and interaction.user.id != self.sender.id:  # type: ignore
+            raise NotMessageAuthor(languages.Language.get(interaction, personal=True))
         self._log_interaction(interaction)
         return True
 
@@ -184,7 +204,7 @@ class View(discord.ui.View):
         ignore = False
         if isinstance(error, app_commands.CheckFailure):
             ignore = True  # Don't send this to error logs
-            if isinstance(error, NotMessageAuthor):
+            if isinstance(error, (NotMessageAuthor, NotTarget)):
                 message = f"{str(error)}"
                 ephemeral = True
             else:
@@ -256,8 +276,8 @@ class InteractiveView(View):
     message: discord.Message | discord.InteractionMessage | discord.WebhookMessage
 
     def __init__(self, sender: discord.Member, message: discord.Message | discord.InteractionMessage | discord.WebhookMessage,
-                 timeout: int = 300, ctx: commands.Context | discord.Interaction = None, *, try_full_fetch: bool = True):
-        super().__init__(timeout=timeout, ctx=ctx)
+                 timeout: int = 300, ctx: commands.Context | discord.Interaction = None, language: languages.Language = None, *, try_full_fetch: bool = True):
+        super().__init__(timeout=timeout, ctx=ctx, language=language)
         self.sender = sender
         self.temporary = False
 
@@ -288,19 +308,56 @@ class InteractiveView(View):
     #         return await interaction.response.send(f"{emotes.Deny} This interaction is not from you.", ephemeral=True)
 
 
-class TranslatedView(InteractiveView):
-    """ An InteractiveView that includes a Language instance for translations """
+class TargetView(View):
+    """ A View that represents an interaction that targets another user (such as `//beer` or `//hc`) """
+    message: discord.Message | discord.InteractionMessage | discord.WebhookMessage
 
-    def __init__(self, sender: discord.Member, message: discord.Message, ctx: commands.Context | discord.Interaction | None,
-                 language: languages.Language, timeout: int = 900):
-        super().__init__(sender=sender, message=message, timeout=timeout, ctx=ctx)
-        self.language = language
+    def __init__(self, target: discord.Member, message: discord.Message | discord.InteractionMessage | discord.WebhookMessage,
+                 timeout: int = 60, ctx: commands.Context | discord.Interaction = None, language: languages.Language = None):
+        super().__init__(timeout=timeout, ctx=ctx, language=language)
+        self.target = target
+        self.message = message  # It doesn't matter if it's a temporary message - These views will not last long
+        self.temporary = True
 
-        # Translate all button labels
-        for item in self.children:
-            if item.type == discord.ComponentType.button:
-                item: discord.ui.Button[TranslatedView]
-                item.label = self.language.string(item.label)
+
+class DrinkView(TargetView):
+    """ A view that represents the `//beer` and `//hc` commands """
+    def __init__(self, author: discord.Member, target: discord.Member, message: discord.Message | discord.InteractionMessage | discord.WebhookMessage,
+                 ctx: commands.Context | discord.Interaction = None, language: languages.Language = None, *,
+                 button_emoji: str, output_emoji: str, success_text: str, decline_text: str, timeout_text: str):
+        super().__init__(target=target, message=message, ctx=ctx, language=language)
+        self.author = author
+        self._author_name = general.username(self.author)
+        self._target_name = general.username(self.target)
+        self.agree.emoji = button_emoji
+        self.output_emoji = output_emoji
+        self.success_text = success_text
+        self.decline_text = decline_text
+        self.timeout_text = timeout_text
+
+    @discord.ui.button(label="fun_beer_agree", style=discord.ButtonStyle.primary, row=0)
+    async def agree(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Agree to drink with the user """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(content=self.language.string(self.success_text, target=self.language.case(self._target_name, "nominative"),
+                                                             author=self.language.case(self._author_name, "nominative"), emote=self.output_emoji), view=None)
+        self.stop()
+
+    @discord.ui.button(label="fun_beer_decline", style=discord.ButtonStyle.danger, row=0)
+    async def decline(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Decline to drink with the user """
+        await interaction.response.defer()  # type: ignore
+        await self.message.edit(content=self.language.string(self.decline_text, target=self.language.case(self._target_name, "nominative"),
+                                                             author=self.language.case(self._author_name, "genitive"), emote=self.output_emoji), view=None)
+        self.stop()
+
+    async def on_timeout(self):
+        try:
+            await self.message.edit(content=self.language.string(self.timeout_text, target=self.language.case(self._target_name, "nominative"),
+                                                                 author=self.language.case(self._author_name, "vocative")), view=None)
+        except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+            pass
+        self.stop()
 
 
 class GenerateNamesView(InteractiveView):

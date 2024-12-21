@@ -1878,3 +1878,7 @@
 - Slightly changed the command description for `//birthday`
 - Changed the cooldown on `//birthday` to 2 seconds (from 5 seconds)
 - Fixed context menu CommandInvokeError traceback showing the traceback for the discord.py error handling rather than where the error actually occurred
+
+## v8.0.0a4 - 21 December 2024
+- Converted commands from the Fun category into hybrid commands with interactive views
+- Incorporated the Language into all Views, with the language being an optional argument (since many views don't need it)
