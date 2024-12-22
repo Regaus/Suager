@@ -448,3 +448,8 @@
 ## v2.0.0a2 - 21 December 2024
 - Converted commands from the Fun category into hybrid commands with interactive views
 - Incorporated the Language into all Views, with the language being an optional argument (since many views don't need it)
+
+## v2.0.0a3 - 21-22 December 2024
+- Commands in the Images category will no longer use any API
+  - `m!colourify` and `m!filter` actually work now and use local code
+- Made Images commands hybrid

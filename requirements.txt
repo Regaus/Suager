@@ -21,3 +21,4 @@ pandas
 thefuzz
 beautifulsoup4
 xmltodict
+seam_carving
