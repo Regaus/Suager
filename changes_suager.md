@@ -1888,3 +1888,7 @@
   - `//colourify` and `//filter` actually work now and use local code
 - Made Images commands hybrid
 - Removed `//russia`
+
+## v8.0.0a6 - 22 December 2024
+- Made Bot Information commands hybrid
+  - The `//invite` command only has a slash equivalent on Suager, as the other bots are private.

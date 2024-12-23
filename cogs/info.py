@@ -2,7 +2,7 @@ import sys
 from io import BytesIO
 
 import discord
-from discord import Permissions
+from discord import Permissions, app_commands
 from discord.utils import oauth_url
 from regaus import __version__ as reg_version
 
@@ -12,11 +12,16 @@ from utils import bot_data, commands, general, time
 class BotInformation(commands.Cog, name="Bot Information"):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        if self.bot.name != "suager":
+            self.invite.app_command = None  # The "//invite" command should only be a slash command on Suager, as other bots are private.
 
-    @commands.command(name="stats", aliases=["info", "about", "status"])
+    @commands.hybrid_command(name="stats", aliases=["info", "about", "status"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=True)
     async def stats(self, ctx: commands.Context):
         """ Stats and information about the bot """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         config = self.bot.config
         version_data = general.get_version()[self.bot.name]
@@ -84,10 +89,13 @@ class BotInformation(commands.Cog, name="Bot Information"):
                 return await ctx.send(send, file=discord.File(data, filename=f"{time.file_ts('Servers')}"))
         return await ctx.send(f"{send}\n```fix\n{message}```")
 
-    @commands.command(name="invite")
+    @commands.hybrid_command(name="invite")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=True)
     async def invite(self, ctx: commands.Context):
         """ Invite me to your own server! """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         perms = 470150358  # Old: 470150231
         if self.bot.name == "pretender":
@@ -106,10 +114,13 @@ class BotInformation(commands.Cog, name="Bot Information"):
         # return await general.send(self.bot.language(ctx).string("info_invite_bot", ctx.author.name, link), ctx.channel)
         return await ctx.send(embed=embed)
 
-    @commands.command(name="ping")
+    @commands.hybrid_command(name="ping")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=True)
     async def ping(self, ctx: commands.Context):
         """ Check how slow Discord API is today """
+        await ctx.defer(ephemeral=True)
         import time as _time
         ws = int(self.bot.latency * 1000)
         t1 = _time.time()
@@ -124,6 +135,7 @@ class BotInformation(commands.Cog, name="Bot Information"):
         await msg.edit(content=r3)
 
 
+# These commands will remain text-only, as they are meant to be Easter eggs
 class SuagerInformation(BotInformation, name="Bot Information"):
     @commands.command(name="suager", hidden=True)
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)

@@ -649,3 +649,7 @@
 
 ## v1.1.0.7 - 9 December 2024
 - Stopped views will no longer have the view reappear if a button cooldown ends after the view has finished
+
+## v1.1.1 - 22 December 2024
+- Made Bot Information commands hybrid
+  - The `i.invite` command only has a slash equivalent on Suager, as the other bots are private.

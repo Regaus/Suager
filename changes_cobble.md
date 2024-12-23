@@ -836,3 +836,7 @@
 - Improved the error handling for citizen generation views
 - Stopped views will no longer have the view reappear if a button cooldown ends after the view has finished
 - Added autocomplete for place names on `..time78`, `..weather78`, `..location`, and `..distance`
+
+## v2.0.0a5 - 22 December 2024
+- Made Bot Information commands hybrid
+    - The `..invite` command only has a slash equivalent on Suager, as the other bots are private.

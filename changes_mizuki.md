@@ -453,3 +453,7 @@
 - Commands in the Images category will no longer use any API
   - `m!colourify` and `m!filter` actually work now and use local code
 - Made Images commands hybrid
+
+## v2.0.0a4 - 22 December 2024
+- Made Bot Information commands hybrid
+  - The `m!invite` command only has a slash equivalent on Suager, as the other bots are private.

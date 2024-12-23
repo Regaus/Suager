@@ -101,3 +101,7 @@
 
 ## v1.3.1.2 - 8 December 2024
 - Error logs will now be forwarded to the #error-logs channel
+
+## v1.4.0a1 - 22 December 2024
+- Made Bot Information commands hybrid
+  - The `a.invite` command only has a slash equivalent on Suager, as the other bots are private.
