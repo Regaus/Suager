@@ -1892,3 +1892,21 @@
 ## v8.0.0a6 - 22 December 2024
 - Made Bot Information commands hybrid
   - The `//invite` command only has a slash equivalent on Suager, as the other bots are private.
+
+## v8.0.0a7 - 24 December 2024
+- Made Leveling commands hybrid
+- Rewrote the code for the image-based `//rank` generation to be much more comprehensible and support both local and global ranks
+- Removed `//rankembed` (aka `//rank2`)
+- Turned `//rank` into a command group
+  - Global rank is now accessed via `//rank global`
+  - Rank customisation is now accessed via `//rank customise`
+  - Added context menu actions to check a user's local and global rank
+- There are now 24 fonts available to choose from for the rank card
+  - Made some of the existing fonts less bold
+- Rewrote the custom font picker to be easier to use
+  - `//rank customise font` is only responsible for setting the custom font
+  - `//rank customise font-sample` allows the user to see how the available fonts look, or to see how their rank card would show up in a certain font.
+- Renamed `//levels` into `//leaderboard` (though the alias is retained) and turned it into a command group
+  - Global leaderboard is now accessed via `//leaderboard global`
+- The leaderboard code has been rewritten to be able to generate both local and global leaderboards from one function
+  - The old `utils.leaderboards` module is, as a result, no longer needed

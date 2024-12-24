@@ -6,7 +6,7 @@ from typing import Tuple
 import discord
 from regaus import time as time2
 
-from cogs.leveling import max_level
+from cogs.leveling import MAX_LEVEL
 from utils import bot_data, commands, general, languages, permissions, settings, time, paginators
 
 
@@ -600,7 +600,7 @@ class Settings(commands.Cog):
             .replace("[NEXT_REWARD]", language.string(kwargs["next_reward"])) \
             .replace("[NEXT_REWARD_LEVEL]", language.number(kwargs["next_reward_level"])) \
             .replace("[NEXT_REWARD_PROGRESS]", language.number(kwargs["next_reward_progress"])) \
-            .replace("[MAX_LEVEL]", language.number(max_level))
+            .replace("[MAX_LEVEL]", language.number(MAX_LEVEL))
 
     async def level_up_message_general(self, ctx: commands.Context, value: str, **kwargs):
         """ For all level up message functions """
@@ -674,15 +674,15 @@ class Settings(commands.Cog):
             "level": 175,
             "current_reward_level": 150,
             "next_reward": "leveling_rewards_max",
-            "next_reward_level": max_level,
-            "next_reward_progress": max_level - 175,
+            "next_reward_level": MAX_LEVEL,
+            "next_reward_progress": MAX_LEVEL - 175,
             "output": "settings_leveling_message_set3",
             "output_current": "settings_leveling_message_current3",
             "output_none": "settings_leveling_message_none3",
             "output_reset": "settings_leveling_message_reset3"
         })
 
-    @lvl_message.command(name="highestlevel", aliases=["hl", "max", str(max_level)])
+    @lvl_message.command(name="highestlevel", aliases=["hl", "max", str(MAX_LEVEL)])
     async def level_up_message_highest_level(self, ctx: commands.Context, *, value: str = None):
         """ Add a custom level up message when the user has reached the max level
 
@@ -692,7 +692,7 @@ class Settings(commands.Cog):
             "level": 200,
             "current_reward_level": 150,
             "next_reward": "leveling_rewards_max",
-            "next_reward_level": max_level,
+            "next_reward_level": MAX_LEVEL,
             "next_reward_progress": 0,
             "output": "settings_leveling_message_set4",
             "output_current": "settings_leveling_message_current4",
@@ -783,8 +783,8 @@ class Settings(commands.Cog):
         """ Add a level reward """
         _settings, existent = await self.settings_start(ctx, "leveling")
         language = ctx.language()
-        if level > max_level or level <= -max_level:
-            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
+        if level > MAX_LEVEL or level <= -MAX_LEVEL:
+            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(MAX_LEVEL)))
         if role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
         try:
@@ -855,8 +855,8 @@ class Settings(commands.Cog):
         """ Change what role is awarded at a certain level """
         _settings, existent = await self.settings_start(ctx, "leveling")
         language = self.bot.language(ctx)
-        if level > max_level or level <= -max_level:
-            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
+        if level > MAX_LEVEL or level <= -MAX_LEVEL:
+            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(MAX_LEVEL)))
         if new_role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
         try:
@@ -883,8 +883,8 @@ class Settings(commands.Cog):
         """ Change at which level the role is awarded """
         _settings, existent = await self.settings_start(ctx, "leveling")
         language = self.bot.language(ctx)
-        if new_level > max_level or new_level <= -max_level:
-            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(max_level)))
+        if new_level > MAX_LEVEL or new_level <= -MAX_LEVEL:
+            return await ctx.send(language.string("settings_leveling_rewards_max", max_level=language.number(MAX_LEVEL)))
         if role.is_default():
             return await ctx.send(language.string("settings_leveling_rewards_default"))
         try:

@@ -2,46 +2,52 @@
 from io import BytesIO
 from typing import Callable, Concatenate
 
+from discord import app_commands
 import numpy as np
 import seam_carving
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps, ImageEnhance
+from PIL import Image, ImageFilter, ImageFont, ImageOps, ImageEnhance
 from PIL.Image import Palette, Resampling
 from PIL.ImageSequence import Iterator
 
 MAX_SIZE = 512 * 512
 MAX_FRAMES = 100
 
-font_files = {
-    "gg sans": "assets/fonts/gg_sans.ttf",
-    "jetbrains mono": "assets/fonts/mono.ttf",
-    "rajdhani": "assets/fonts/rajdhani.ttf",
-    "whitney": "assets/fonts/font.ttf",
-    "exo2": "assets/fonts/exo2.ttf",
-}
+FONTS: list[tuple[str, str, str]] = [
+    ("Brickshapers", "brickshapers", "brickshapers.otf"),
+    ("Comic Sans", "comic_sans", "comic_sans.ttf"),
+    ("Cormorant Unicase", "cormorant", "cormorant.ttf"),
+    ("DIN Next", "din_next", "din_next.otf"),
+    ("Exo 2", "exo2", "exo2.ttf"),
+    ("Fixedsys", "fixedsys", "fixedsys.ttf"),
+    ("gg sans", "gg_sans", "gg_sans.ttf"),
+    ("JetBrains Mono", "jetbrains_mono", "mono.ttf"),
+    ("Minecraftia", "minecraftia", "minecraftia.ttf"),
+    ("OCR A", "ocr", "ocr.ttf"),
+    ("TT Octosquares", "octosquares", "octosquares.ttf"),
+    ("Play", "play", "play.ttf"),
+    ("Rajdhani", "rajdhani", "rajdhani.ttf"),
+    ("Retro-86", "retro_86", "retro_86.ttf"),
+    ("Rubik Glitch", "rubik_glitch", "rubik_glitch.ttf"),
+    ("RuneScape", "runescape", "runescape.ttf"),
+    ("Shantell Sans", "shantell", "shantell.ttf"),
+    ("Tektur", "tektur", "tektur.ttf"),
+    ("TF2 Build", "tf2_build", "tf2build.ttf"),
+    ("Titillium Web", "titillium", "titillium.ttf"),
+    ("Ubuntu", "ubuntu", "ubuntu.ttf"),
+    ("Univers", "univers", "univers.ttf"),
+    ("VCR OSD", "vcr", "vcr.ttf"),
+    ("Whitney", "whitney", "font.ttf"),
+]
+""" List of fonts available for choice in Leveling. Format: (shown name, internal name, filename) """
+FONT_CHOICES: list[app_commands.Choice[str]] = [app_commands.Choice(name=shown_name, value=internal_name) for shown_name, internal_name, _ in FONTS]
 
-# String used to test various fonts - English pangram, Russian pangram, Numbers and special chars
-font_test_text = "The quick brown fox jumps over the lazy dog.\n" \
-                 "Разъяренный чтец эгоистично бьёт пятью жердями шустрого фехтовальщика.\n" \
-                 "0123456789 .:,; '\" (!?) +-*/= áéíóú àèìòù äöü ãõñ å æø ı šž şç đ þð ğ ħ œ ß"
 
-
-def font_tester() -> BytesIO:
-    """ Generates an image that displays currently available fonts """
-    width = 2560
-    height = 320 * len(font_files)
-    img = Image.new("RGB", (width, height), color=(0, 0, 0))
-    dr = ImageDraw.Draw(img)
-    text_colour = (255, 255, 255)
-    for i, (font_name, font_dir) in enumerate(font_files.items(), start=0):
-        y = 320 * i
-        font = ImageFont.truetype(font_dir, size=64)
-        text = f"Font Name: {font_name}\n" + font_test_text
-        dr.text((10, 160 + y), text, font=font, fill=text_colour, anchor="lm")
-        dr.rectangle((0, 315 + y, width, 320 + y), fill=text_colour)
-    bio = BytesIO()
-    img.save(bio, "PNG")
-    bio.seek(0)
-    return bio
+def load_font(font_name: str, size: int | float = 16) -> ImageFont.FreeTypeFont:
+    """ Find the specified font and load it, if it exists """
+    for shown, internal, filename in FONTS:
+        if font_name == shown or font_name.lower() == internal:
+            return ImageFont.truetype(f"assets/fonts/{filename}", size=size)
+    raise IndexError(f"Font {font_name!r} not found")
 
 
 def load_from_bytes(image: bytes) -> Image.Image:

@@ -209,6 +209,13 @@
   "leaderboards_levels_global": "Top users **globally** by **XP**\nYour place: **{place}** of **{total}**",  // Showing places **{start}** to **{end}** of **{total}**\n{data}```
   "leaderboards_place": "#{val}",
 
+  "leveling_custom_rank_background": "{emotes.Allow} Your rank's background colour is now #{colour}.",
+  "leveling_custom_rank_font": "{emotes.Allow} Your rank's font is now `{font}`.",
+  "leveling_custom_rank_font_invalid": "{emotes.Deny} The provided font `{font}` is not available. The fonts that are currently available are: `{valid}`.",
+  "leveling_custom_rank_font_list": "Here is an image that shows the name of the font and your username in each of them.",
+  "leveling_custom_rank_font_sample": "This is your rank card with the font `{font}`.",
+  "leveling_custom_rank_progress": "{emotes.Allow} Your rank's progress bar colour is now #{colour}.",
+  "leveling_custom_rank_text": "{emotes.Allow} Your rank's text colour is now #{colour}.",
   "leveling_next_level": "**{user}** - You have **{xp}/{next} XP**.\nYou need **{left}** more to reach **level {level}** (Progress: **{prog}**)\nNon-stop activity to level up: **{min} to {max}**",
   "leveling_next_level_none": "I have no data saved for you right now...",
   "leveling_next_level_max": "**{user}**, you have already reached the max level.",
@@ -219,8 +226,9 @@
   "leveling_rank_embed_rank": "Rank",
   "leveling_rank_embed_rate": "XP per minute",
   "leveling_rank_embed_progress": "Progress",
-  "leveling_rank_global": "**{user}** has **{xp} global XP**.\nThey are the **{place}** most active user.\nThat is enough XP to reach level **{level}**.",
+  "leveling_rank_global": "**{user}**'s **global** rank",
   "leveling_rank_level": "Level {level}",
+  "leveling_rank_level_global": "Global Level {level}",
   "leveling_rank_max_1": "Highest level reached!",
   "leveling_rank_max_2": [
     "Consider going outside.",

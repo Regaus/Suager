@@ -2,54 +2,24 @@ from __future__ import annotations
 
 import json
 import random
+from dataclasses import dataclass
 from io import BytesIO
-from typing import Literal
 
 import discord
-from PIL import Image, ImageDraw, ImageFont, UnidentifiedImageError
+from PIL import Image, ImageDraw, UnidentifiedImageError, ImageFont
+from discord import app_commands
 
-from utils import bot_data, commands, emotes, general, http, images, languages, logger, settings, time
-from utils.leaderboards import leaderboard, leaderboard2
-
-
-async def catch_colour(ctx: commands.Context, c: int):
-    if c == -1:
-        await ctx.send("Value must be either 3 or 6 digits long")
-    if c == -2:
-        await ctx.send("An error occurred. Are you sure the value is HEX (0-9 and A-F)?")
-    return c >= 0
-
-
-def get_colour(colour: int):
-    a = 256
-    r, g = divmod(colour, a ** 2)
-    g, b = divmod(g, a)
-    return r, g, b
-
-
-def int_colour(colour: str):
-    try:
-        if colour[0] == "#":
-            colour = colour[1:]
-        length = len(colour)
-        if length == 3:
-            a, b, c = colour
-            colour = f"{a}{a}{b}{b}{c}{c}"
-        elif length != 6:
-            return -1
-        return int(colour, base=16)
-    except ValueError:
-        return -2
+from utils import bot_data, commands, emotes, general, images, languages, logger, settings, time, interactions, paginators
 
 
 def _levels():
     req = 0
     xp = []
-    for x in range(max_level):
+    for x in range(MAX_LEVEL):
         # base = 1.25 * x ** 2 + x * 80 + 250
         base = x ** 2 + 99 * x + 175
         req += int(base)
-        if x not in bad:
+        if x not in DISALLOWED_LEVELS:
             xp.append(int(req))
         else:
             xp.append(xp[-1])
@@ -63,7 +33,7 @@ def _level_history():
     for key in keys:
         req[key] = 0
         xp[key] = []
-    for x in range(max_level):
+    for x in range(MAX_LEVEL):
         v3 = x ** 2 + x * 75 + 200
         req["v3"] += v3
         v4 = 1.5 * x ** 2 + 125 * x + 200
@@ -76,7 +46,7 @@ def _level_history():
         req["v6"] += v6 / 100
         v7 = x ** 2 + 99 * x + 175
         req["v7"] += v7
-        if x not in bad:
+        if x not in DISALLOWED_LEVELS:
             for key in keys:
                 xp[key].append(req[key])
         else:
@@ -85,30 +55,38 @@ def _level_history():
     return xp
 
 
-max_level = 200
-bad = [69, 420, 666, 1337]
-levels = _levels()
-level_history = _level_history()
-xp_amounts = [20, 27]
-# custom_rank_blacklist = [746173049174229142]
-# _year = time.now(None).year
+MAX_LEVEL = 200
+DISALLOWED_LEVELS = [69, 420, 666, 1337]
+LEVELS = _levels()
+LEVEL_HISTORY = _level_history()
+XP_AMOUNTS = [20, 27]
+LEADERBOARD_PAGE_SIZE = 10
 
-sql_server = "SELECT uid, name, disc, (xp*APRILMULT())xp FROM leveling WHERE gid=? AND bot=? ORDER BY xp DESC"
-sql_global = "SELECT uid, name, disc, (xp*APRILMULT())xp FROM leveling WHERE bot=?"
+# noinspection SqlResolve,SqlShadowingAlias
+SQL_SERVER = "SELECT uid, name, disc, (xp*APRILMULT())xp, level FROM leveling WHERE gid=? AND bot=? ORDER BY xp DESC"  # Level is used for rank
+# noinspection SqlResolve,SqlShadowingAlias
+SQL_GLOBAL = "SELECT uid, name, disc, (xp*APRILMULT())xp FROM leveling WHERE bot=?"
+
+
+@dataclass
+class LeaderboardEntry:
+    user_id: int
+    username: str
+    xp: int
+    xp_str: str
+    xp_len: int
 
 
 class Leveling(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
-
         # Default colours and font for custom ranks
         # Note: when saving to the database, the default values are null, in case they ever get changed
         self.default_text = 0x32ff32
         self.default_progress = 0x32ff32
         self.default_background = 0x000000
         self.default_font = "whitney"
-        # Blocked from custom rank: Caffey,
-        self.blocked = []  # 249141823778455552
+        self.blocked = []
 
     @commands.command(name="leveling")
     @commands.is_owner()
@@ -120,24 +98,28 @@ class Leveling(commands.Cog):
         outputs = []
         for level in __levels:
             _level = level - 1
-            lv1 = int(levels[_level])
-            diff = lv1 - int(levels[_level - 1]) if level > 1 else lv1
+            lv1 = int(LEVELS[_level])
+            diff = lv1 - int(LEVELS[_level - 1]) if level > 1 else lv1
             outputs.append(f"Level {level:>3} | Req {lv1:>9,} | Diff {diff:>6,}")
         output = "\n".join(outputs)
         return await ctx.send(f"```fix\n{output}```")
 
-    @commands.command(name="oldlevels", aliases=["levelhistory"])
+    @commands.hybrid_command(name="oldlevels", aliases=["levelhistory"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(level="The level to compare XP requirements for")
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def old_levels(self, ctx: commands.Context, level: int = None):
-        """ See Suager's previous leveling systems """
+        """ Information about Suager's previous leveling systems """
+        await ctx.defer(ephemeral=True)
         names = {"v3": "Suager v3", "v4": "Suager v4", "v5": "Suager v5", "v6": "Suager v6", "v7": "Suager v7"}
         if level is not None:
-            if level > max_level:
-                return await ctx.send(f"The max level is {max_level:,}")
+            if level > MAX_LEVEL:
+                return await ctx.send(f"The max level is {MAX_LEVEL:,}")
             output = ""
             for key, name in names.items():
-                output += f"\n`{name:<9} -> {level_history[key][level - 1]:>9,.0f} XP`"
+                output += f"\n`{name:<9} -> {LEVEL_HISTORY[key][level - 1]:>9,.0f} XP`"
             return await ctx.send(f"{general.username(ctx.author)}, for **level {level}** you would've needed:{output}")
         else:
             xp_ = self.bot.db.fetchrow(f"SELECT xp FROM leveling WHERE uid=? AND gid=? AND bot=?", (ctx.author.id, ctx.guild.id, self.bot.name))
@@ -145,7 +127,7 @@ class Leveling(commands.Cog):
             output = ""
             for key, name in names.items():
                 level = 0
-                for level_req in level_history[key]:
+                for level_req in LEVEL_HISTORY[key]:
                     if xp >= level_req:
                         level += 1
                     else:
@@ -215,10 +197,8 @@ class Leveling(commands.Cog):
         if ctx.guild.id == 568148147457490954:  # Senko Lair
             if 571034926107852801 in [role.id for role in ctx.author.roles]:  # if muted
                 extra *= 0.25
-        elif ctx.author.id == 592345932062916619:  # Egzorcysta
-            extra = 0
 
-        x1, x2 = xp_amounts
+        x1, x2 = XP_AMOUNTS
         new = int(random.uniform(x1, x2) * server_mult * mult * extra)
 
         xp += new
@@ -228,10 +208,10 @@ class Leveling(commands.Cog):
         # Level up/down
         lu, ld = False, False
         if level >= 0:
-            while level < max_level and xp >= levels[level]:
+            while level < MAX_LEVEL and xp >= LEVELS[level]:
                 level += 1
                 lu = True
-            while level > 0 and xp < levels[level - 1]:
+            while level > 0 and xp < LEVELS[level - 1]:
                 level -= 1
                 ld = True
             if level == 0 and xp < 0:
@@ -241,14 +221,14 @@ class Leveling(commands.Cog):
             if xp >= 0:
                 level = 0
                 lu = True
-            if xp < -levels[0]:
+            if xp < -LEVELS[0]:
                 level -= 1
                 ld = True
         else:
-            while -max_level <= level < -1 and xp >= -levels[(-level) - 2]:
+            while -MAX_LEVEL <= level < -1 and xp >= -LEVELS[(-level) - 2]:
                 level += 1
                 lu = True
-            while level >= -max_level and xp < -levels[(-level) - 1]:
+            while level >= -MAX_LEVEL and xp < -LEVELS[(-level) - 1]:
                 level -= 1
                 ld = True
 
@@ -289,7 +269,7 @@ class Leveling(commands.Cog):
                                     await ctx.author.remove_roles(role, reason=reason)
                         else:
                             current_reward = {"role": role.name, "level": reward["level"]}
-                            next_reward = {"role": language.string("leveling_rewards_max"), "level": max_level}
+                            next_reward = {"role": language.string("leveling_rewards_max"), "level": MAX_LEVEL}
                             top_role = True
                             if not has_role:
                                 await ctx.author.add_roles(role, reason=reason)
@@ -322,7 +302,7 @@ class Leveling(commands.Cog):
                     if "level_up_highest" in __settings["leveling"]:
                         if __settings["leveling"]["level_up_highest"]:
                             level_up_message = __settings["leveling"]["level_up_highest"]
-                if level == max_level:
+                if level == MAX_LEVEL:
                     if "level_up_max" in __settings["leveling"]:
                         if __settings["leveling"]["level_up_max"]:
                             level_up_message = __settings["leveling"]["level_up_max"]
@@ -336,7 +316,7 @@ class Leveling(commands.Cog):
                     .replace("[NEXT_REWARD]", next_reward["role"])\
                     .replace("[NEXT_REWARD_LEVEL]", language.number(next_reward["level"] * _af))\
                     .replace("[NEXT_REWARD_PROGRESS]", language.number(next_left * _af))\
-                    .replace("[MAX_LEVEL]", language.number(max_level))
+                    .replace("[MAX_LEVEL]", language.number(MAX_LEVEL))
             except KeyError:
                 send = f"{ctx.author.mention} has reached **level {level * _af:,}**! {emotes.ForsenDiscoSnake}"
             try:
@@ -369,11 +349,14 @@ class Leveling(commands.Cog):
                 self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                     (ctx.author.id, ctx.guild.id, level, xp, now, now, general.username(ctx.author), str(ctx.author), self.bot.name, None))
 
-    @commands.command(name="rewards")
+    @commands.hybrid_command(name="rewards")
     @commands.guild_only()
     @commands.cooldown(rate=1, per=15, type=commands.BucketType.user)
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def rewards(self, ctx: commands.Context):
-        """ Level rewards in a server """
+        """ Check out the level rewards available in a server """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         _af = -1 if time.april_fools() else 1
         _settings = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
@@ -399,17 +382,58 @@ class Leveling(commands.Cog):
         except KeyError:
             return await ctx.send(language.string("leveling_rewards_none"))
 
-    async def level(self, ctx: commands.Context, who: discord.Member | None, language: languages.Language):
+    def get_global_ranks(self) -> dict[int, int]:
+        """ Get the global leveling ranks and return a dictionary of the mapping to each user """
+        data = self.bot.db.fetch(SQL_GLOBAL, (self.bot.name,))
+        output: dict[int, int] = {}
+        for entry in data:
+            user_id = entry["uid"]
+            if user_id not in output:
+                output[user_id] = 0
+            output[user_id] += entry["xp"]
+        return dict(sorted(output.items(), key=lambda x: x[1], reverse=True))
+
+    async def generate_rank_card(self, ctx: commands.Context | discord.Interaction, member: discord.Member | None, *,
+                                 language: languages.Language = None, global_rank: bool = False, sample_font: str = None):
         """ Wrapper for image rank card commands """
-        user = who or ctx.author
+        if isinstance(ctx, discord.Interaction):
+            ctx = await commands.Context.from_interaction(ctx)
+        if language is None:
+            language = ctx.language()
+        user = member or ctx.author
         is_self = user.id == self.bot.user.id
         if user.bot and not is_self:
-            return await ctx.send(language.string("leveling_rank_bot"))
+            return await ctx.send(language.string("leveling_rank_bot"), ephemeral=True)
         _af = -1 if time.april_fools() else 1
 
-        async with ctx.typing():
-            data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
-            r = language.string("leveling_rank", user=general.username(user), server=ctx.guild.name)
+        async with ctx.typing(ephemeral=bool(sample_font)):  # Ranks are shown as regular messages, unless this is a sample from the font generation
+            # Calculate the user's current XP, level and rank
+            if global_rank:
+                data = self.get_global_ranks()
+                xp = 0
+                place_str = language.string("leveling_rank_unknown")
+                for place, (entry_uid, entry_xp) in enumerate(data.items(), start=1):
+                    if entry_uid == user.id:
+                        xp = entry_xp
+                        place_str = language.string("leveling_rank_rank", place=language.string("leaderboards_place", val=language.number(place * _af)), total=language.number(len(data)))
+                        break
+                level = 0
+                while level < MAX_LEVEL and xp >= LEVELS[level]:
+                    level += 1
+                rank_header = language.string("leveling_rank_global", user=general.username(user))
+            else:
+                xp = level = 0
+                place_str = language.string("leveling_rank_unknown")
+                data = self.bot.db.fetch(SQL_SERVER, (ctx.guild.id, self.bot.name))
+                for place, entry in enumerate(data, start=1):
+                    if entry["uid"] == user.id:
+                        xp = entry["xp"]
+                        level = entry["level"]
+                        place_str = language.string("leveling_rank_rank", place=language.string("leaderboards_place", val=language.number(place * _af)), total=language.number(len(data)))
+                        break
+                rank_header = language.string("leveling_rank", user=general.username(user), server=ctx.guild.name)
+            if sample_font:
+                rank_header = language.string("leveling_custom_rank_font_sample", font=sample_font)
             # Load custom rank data from database
             custom = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (user.id,))
             if not custom or user.id in self.blocked:
@@ -428,331 +452,249 @@ class Leveling(commands.Cog):
                 background = self.default_background
             if font_name is None:
                 font_name = self.default_font
+            # Override the font setting with the selected font if this is a sample
+            if sample_font is not None:
+                font_name = sample_font
             # Load font file and interpret colours into tuples
-            font_colour = get_colour(text)
-            progress_colour = get_colour(progress)
-            background_colour = get_colour(background)
-            font_dir = images.font_files.get(font_name, images.font_files[self.default_font])  # Back up by default font in case the custom font is ever deleted
-            # Load leveling data
-            if data:
-                xp = data["xp"]
-                level = data["level"]
-            else:
-                level, xp = 0, 0
+            font_colour = images.colour_int_to_tuple(text)
+            progress_colour = images.colour_int_to_tuple(progress)
+            background_colour = images.colour_int_to_tuple(background)
             # Image setup
-            width = 2048
-            img = Image.new("RGB", (width, 612), color=background_colour)
-            dr = ImageDraw.Draw(img)
+            width, height = 2048, 612
+            avatar_end = 512
+            image = Image.new("RGB", (width, height), color=background_colour)
+            draw = ImageDraw.Draw(image)
             # Get the user's avatar
             try:
-                avatar = BytesIO(await http.get(str(user.display_avatar.replace(size=512, format="png")), res_method="read"))
-                avatar_img = Image.open(avatar)
-                avatar_resized = avatar_img.resize((512, 512))
-                img.paste(avatar_resized)
+                avatar_bio = BytesIO()
+                await user.display_avatar.replace(size=512, format="png").save(avatar_bio)
+                avatar = Image.open(avatar_bio)
+                image.paste(avatar.resize((512, 512)), (0, 0))
             except UnidentifiedImageError:  # Failed to get image
-                avatar = Image.open("assets/error.png")
-                img.paste(avatar)
+                image.paste(Image.open("assets/error.png"), (0, 0))
             # Set up font
             try:
-                font = ImageFont.truetype(font_dir, size=128)
-                font_small = ImageFont.truetype(font_dir, size=64)
+                font = images.load_font(font_name, size=128)
+                font_small = font.font_variant(size=64)
             except ImportError:
                 await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
                 font, font_small = None, None
             # Write user's name to the top of the rank card
             text_x = 542
-            dr.text((text_x, -10), general.username(user), font=font, fill=font_colour)
+            draw.text((text_x, -10), general.username(user), font=font, fill=font_colour)
             # Calculate XP required to reach the next level
             try:
                 if level >= 0:
-                    req = int(levels[level])  # Requirement to next level
+                    req = int(LEVELS[level])  # Requirement to next level
                 elif level == -1:
                     req = 0
                 else:
-                    req = int(-levels[(-level) - 2])
-                r2 = language.number(req * _af, precision=0)
+                    req = int(-LEVELS[(-level) - 2])
+                next_str = language.number(req * _af, precision=0)
             except IndexError:
                 req = float("inf")
-                r2 = language.string("generic_max")
+                next_str = language.string("generic_max")
             # Calculate XP required to reach the current level
             try:
                 if level > 0:
-                    prev = int(levels[level-1])
+                    prev = int(LEVELS[level - 1])
                 elif level == 0:
                     prev = 0
                 else:
-                    prev = -int(levels[(-level) - 1])
+                    prev = -int(LEVELS[(-level) - 1])
             except IndexError:
                 prev = 0
-            # Get the user's rank within the current server
-            _data = self.bot.db.fetch(sql_server, (ctx.guild.id, self.bot.name))
-            place = language.string("leveling_rank_unknown")
-            for x in range(len(_data)):
-                if _data[x]['uid'] == user.id:
-                    place = language.string("leveling_rank_rank", place=language.string("leaderboards_place", val=language.number((x + 1) * _af)), total=language.number(len(_data)))
-                    break
             # Draw the details of the rank card (rank, level, XP amounts)
             text_y = 512  # 495
             if not is_self:
                 progress = (xp - prev) / (req - prev)
-                _level = language.string("leveling_rank_level", level=language.number(level * _af))
-                dr.text((text_x, 130), f"{place} | {_level}", font=font_small, fill=font_colour)
-                r1 = language.number(xp * _af, precision=0)
-                if level < max_level:
+                level_str = language.string("leveling_rank_level_global" if global_rank else "leveling_rank_level", level=language.number(level * _af))
+                draw.text((text_x, 130), f"{place_str} | {level_str}", font=font_small, fill=font_colour)
+                xp_str = language.number(xp * _af, precision=0)
+                if level < MAX_LEVEL:
                     # Remove the zero-width spaces from the progress text
-                    r3 = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True).replace("\u200c", ""))
-                    r4 = language.string("leveling_rank_xp_left", left=language.number((req - xp) * _af, precision=0))
+                    progress_str = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True).replace("\u200c", ""))
+                    xp_left_str = language.string("leveling_rank_xp_left", left=language.number((req - xp) * _af, precision=0))
                 else:
                     progress = 1
-                    r3, r4 = language.string("leveling_rank_max_1"), random.choice(language.data("leveling_rank_max_2"))
-                dr.text((text_x, text_y), language.string("leveling_rank_xp", xp=r1, next=r2, progress=r3, left=r4), font=font_small, fill=font_colour, anchor="ld")
+                    progress_str, xp_left_str = language.string("leveling_rank_max_1"), random.choice(language.data("leveling_rank_max_2"))
+                draw.text((text_x, text_y), language.string("leveling_rank_xp", xp=xp_str, next=next_str, progress=progress_str, left=xp_left_str), font=font_small, fill=font_colour, anchor="ld")
             else:
                 progress = 1  # 0.5
-                place = language.string("leaderboards_place", val=1)
-                _rank = language.string("leveling_rank_rank2", place=place)
-                _level = language.string("leveling_rank_level", level=language.number(69420))
-                dr.text((text_x, 130), f"{_rank} | {_level}", font=font_small, fill=font_colour)
-                dr.text((text_x, text_y), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour, anchor="ld")
+                rank = language.string("leveling_rank_rank2", place=language.string("leaderboards_place", val=1))
+                level_str = language.string("leveling_rank_level", level=language.number(69420))
+                draw.text((text_x, 130), f"{rank} | {level_str}", font=font_small, fill=font_colour)
+                draw.text((text_x, text_y), language.string("leveling_rank_xp_self"), font=font_small, fill=font_colour, anchor="ld")
             # Draw progress bar
             full = width - 20
             done = int(progress * full)
             if done < 0:
                 done = 0
-            i1 = Image.new("RGB", (width, 100), color=progress_colour)
-            i2 = Image.new("RGB", (width - 10, 90), color=(30, 30, 30))
-            i3 = Image.new("RGB", (done, 80), color=progress_colour)
-            box1, box2, box3 = (0, 512), (5, 517), (10, 522)
-            # box1 = (0, 512, width, 612)
-            # box2 = (5, 517, width - 5, 607)  # 2 px bigger
-            # box3 = (10, 522, done, 602)
-            img.paste(i1, box1)
-            img.paste(i2, box2)
-            img.paste(i3, box3)
+            draw.rectangle((0, avatar_end, width, height), fill=(30, 30, 30), outline=progress_colour, width=5)
+            draw.rectangle((10, avatar_end + 10, done + 10, height - 10), fill=progress_colour)
             # Save image and return it
-            bio = BytesIO()
-            img.save(bio, "PNG")
-            bio.seek(0)
-            return await ctx.send(r, file=discord.File(bio, filename="rank.png"))
+            bio = images.save_to_bio(image)
+            return await ctx.send(rank_header, file=discord.File(bio, filename="rank.png"))
 
-    @commands.command(name="rank", aliases=["level", "xp"])
+    # The grouping means that the global rank can only be checked inside a server, but that shouldn't be an issue.
+    @commands.hybrid_group(name="rank", aliases=["level", "xp"], fallback="local", invoke_without_command=True)
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_image(self, ctx: commands.Context, *, who: discord.Member = None):
-        """ Check your or someone's rank """
-        language = self.bot.language(ctx)
-        return await self.level(ctx, who, language)
+    @app_commands.describe(member="The user whose rank to check. Shows your own rank by default.")
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
+    async def rank_image(self, ctx: commands.Context, *, member: discord.Member = None):
+        """ Check your or someone's rank in this server """
+        if ctx.invoked_subcommand is None:
+            return await self.generate_rank_card(ctx, member, global_rank=False)
 
-    @commands.command(name="ranklang", aliases=["rank4"], hidden=True)
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_language(self, ctx: commands.Context, language: str, *, who: discord.Member = None):
-        """ Check your or someone's rank - In a different language """
+    @rank_image.command(name="lang", aliases=["language", "rank4"], hidden=True, with_app_command=False)
+    async def rank_language(self, ctx: commands.Context, language: str, *, member: discord.Member = None):
+        """ Check your or someone's rank in a different language """
         _language = self.bot.language2(language)
         if language not in languages.languages.languages.keys():
-            return await ctx.send(self.bot.language(ctx).string("settings_locale_invalid", language=language, p=ctx.prefix))
-        return await self.level(ctx, who, _language)
+            return await ctx.send(ctx.language().string("settings_locale_invalid", language=language, p=ctx.prefix))
+        return await self.generate_rank_card(ctx, member, language=_language, global_rank=False)
 
-    @commands.command(name="rankembed", aliases=["rank2", "ranke"])
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_embed(self, ctx: commands.Context, *, who: discord.Member = None):
-        """ Check your or someone's rank - as an embed """
-        language = self.bot.language(ctx)
-        user = who or ctx.author
-        is_self = user.id == self.bot.user.id
-        if user.bot and not is_self:
-            return await ctx.send(language.string("leveling_rank_bot"))
-        _af = -1 if time.april_fools() else 1
-        data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (user.id, ctx.guild.id, self.bot.name))
-        r = language.string("leveling_rank", user=general.username(user), server=ctx.guild.name)
-        if data:
-            level, xp = [data['level'], data['xp']]
-        else:
-            level, xp = [0, 0]
-        _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
-        if _settings:
-            __settings = json.loads(_settings['data'])
-            try:
-                sm = __settings['leveling']['xp_multiplier']
-            except KeyError:
-                sm = 1
-        else:
-            sm = 1
-        embed = discord.Embed(colour=general.random_colour(), title=r)
-        embed.set_thumbnail(url=str(user.display_avatar.replace(size=512, format="png")))
-        try:
-            if level >= 0:
-                req = int(levels[level])  # Requirement to next level
-            elif level == -1:
-                req = 0
-            else:
-                req = int(-levels[(-level) - 2])
-            r2 = language.number(req * _af, precision=0, zws_end=True)
-        except IndexError:
-            req = float("inf")
-            r2 = language.string("generic_max")
-        try:
-            if level > 0:
-                prev = int(levels[level - 1])
-            elif level == 0:
-                prev = 0
-            else:
-                prev = -int(levels[(-level) - 1])
-        except IndexError:
-            prev = 0
-        _data = self.bot.db.fetch(sql_server, (ctx.guild.id, self.bot.name))
-        place = language.string("leveling_rank_unknown")
-        for x in range(len(_data)):
-            if _data[x]['uid'] == user.id:
-                place = language.string("leveling_rank_rank", place=general.bold(language.string("leaderboards_place", val=language.number((x + 1) * _af))), total=language.number(len(_data)))
-                break
-        if not is_self:
-            progress = (xp - prev) / (req - prev)
-            _level = language.string("leveling_rank_level", level=general.bold(language.number(level * _af)))
-            r1 = language.number(xp * _af, precision=0, zws_end=True)
-            r3 = language.number(progress, precision=2, percentage=True)
-            r4 = language.string("leveling_rank_xp_left", left=language.number((req - xp) * _af))
-            embed.add_field(name=language.string("leveling_rank_embed_xp"), value=f"**{r1}**/{r2}", inline=False)
-            embed.add_field(name=language.string("leveling_rank_embed_level"), value=_level, inline=False)
-            embed.add_field(name=language.string("leveling_rank_embed_rank"), value=place, inline=False)
-            if level < max_level:
-                embed.add_field(name=language.string("leveling_rank_embed_progress"), value=f"**{r3}**\n{r4}", inline=False)
-        else:
-            _rank = language.string("leveling_rank_rank2", place=general.bold(language.string("leaderboards_place", val="1")))
-            _level = language.string("leveling_rank_level", level=language.number(69420))
-            embed.add_field(name=language.string("leveling_rank_embed_xp"), value=language.string("leveling_rank_xp_self"), inline=False)
-            embed.add_field(name=language.string("leveling_rank_embed_level"), value=_level, inline=False)
-            embed.add_field(name=language.string("leveling_rank_embed_rank"), value=_rank, inline=False)
-        x1, x2 = [val * sm for val in xp_amounts]
-        o1, o2 = int(x1), int(x2)
-        embed.add_field(name=language.string("leveling_rank_embed_rate"), value=f"{o1}-{o2}", inline=False)
-        return await ctx.send(embed=embed)
+    @rank_image.command(name="global", aliases=["g", "grank"])
+    @app_commands.describe(member="The user whose global rank to check. Shows your own rank by default.")
+    async def rank_global(self, ctx: commands.Context, *, member: discord.User = None):
+        """ Check your or someone's global rank """
+        return await self.generate_rank_card(ctx, member, global_rank=True)
 
-    @commands.command(name="rankglobal", aliases=["rankg", "grank"])
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def rank_global(self, ctx: commands.Context, *, who: discord.User = None):
-        """ Check your or someone's global XP """
-        language = self.bot.language(ctx)
-        user = who or ctx.author
-        if user.bot:
-            return await ctx.send(language.string("leveling_rank_bot"))
-        _af = -1 if time.april_fools() else 1
-        _data = self.bot.db.fetch(sql_global, (self.bot.name,))
-        coll = {}
-        for i in _data:
-            if i['uid'] not in coll:
-                coll[i['uid']] = 0
-            coll[i['uid']] += i['xp']
-        sl = sorted(coll.items(), key=lambda a: a[1], reverse=True)
-        place = language.string("generic_unknown")
-        xp = 0
-        for i, _user in enumerate(sl):
-            uid, _xp = _user
-            if uid == user.id:
-                place = language.string("leaderboards_place", val=language.number((i + 1) * _af))
-                xp = _xp
-                break
-        level = 0
-        for lvl in levels:
-            if xp * _af >= lvl:
-                level += 1
-            else:
-                break
-        return await ctx.send(language.string("leveling_rank_global", user=user, xp=language.number(xp, precision=0), place=place, level=language.number(level * _af)))
-
-    @commands.group(name="customrank", aliases=["crank"])
-    # @commands.check(lambda ctx: ctx.author.id not in custom_rank_blacklist)
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @rank_image.group(name="customise", aliases=["custom", "crank"])
     async def custom_rank(self, ctx: commands.Context):
         """ Customise your rank card
-        Change the colour of the text, the background, progress bar. You can also choose a font to use."""
+
+        You are able to customise the colour of the text, the colour of the background, and the colour of the progress bar.
+        You can also choose which font to use for your rank. """
         if ctx.invoked_subcommand is None:
             await ctx.send_help(str(ctx.command))
 
-    @custom_rank.command(name="text", aliases=["fontcolour", "font2"])
-    async def crank_font_colour(self, ctx: commands.Context, colour: str):
-        """ Font colour - Provide a hex colour (6-letter rgb code) """
-        c = int_colour(colour)
-        cc = await catch_colour(ctx, c)
-        if cc:
-            data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
-            if data:
-                self.bot.db.execute("UPDATE custom_rank SET font=? WHERE uid=?", (c, ctx.author.id))
-            else:
-                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, c, None, None, None))
-            return await ctx.send(f"Set your font colour to #{colour}")
-
-    @custom_rank.command(name="progress")
-    async def crank_progress(self, ctx: commands.Context, colour: str):
-        """ Progress bar colour - Provide a hex colour (6-letter rgb code) """
-        c = int_colour(colour)
-        cc = await catch_colour(ctx, c)
-        if cc:
-            data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
-            if data:
-                self.bot.db.execute("UPDATE custom_rank SET progress=? WHERE uid=?", (c, ctx.author.id))
-            else:
-                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, c, None, None))
-            return await ctx.send(f"Set your progress bar colour to #{colour}")
-
-    @custom_rank.command(name="background", aliases=["bg"])
-    async def crank_bg(self, ctx: commands.Context, colour: str):
-        """ Background colour - Provide a hex colour (6-letter rgb code) """
-        c = int_colour(colour)
-        cc = await catch_colour(ctx, c)
-        if cc:
-            data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
-            if data:
-                self.bot.db.execute("UPDATE custom_rank SET background=? WHERE uid=?", (c, ctx.author.id))
-            else:
-                self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, None, c, None))
-            return await ctx.send(f"Set your background colour to #{colour}")
-
-    @custom_rank.command(name="font", aliases=["customfont", "font1"])
-    async def crank_font(self, ctx: commands.Context, *, font: str = None):
-        """ Change the font used in your rank card
-        Leave empty to see list of valid fonts"""
-        if font is not None:
-            font = font.lower()  # Font names are not case-sensitive
-        valid_fonts = list(images.font_files.keys())
-        if font == "-i":
-            message = "This is how the currently available fonts look.\n" \
-                      "The first row is the font name.\nThe second row shows sample text in English.\n" \
-                      "The third row shows sample text in Russian.\nThe last row shows numbers and special characters."
-            bio = images.font_tester()
-            return await ctx.send(message, file=discord.File(bio, filename="fonts.png"))
-        if font not in valid_fonts:  # This includes if the font is not specified
-            message = f"No font was specified or an invalid font was passed.\n" \
-                      f"The currently available fonts are: `{'`, `'.join(list(images.font_files))}`\n" \
-                      f"Type the name of the font you want to use with this command to set it.\n" \
-                      f"The default font is `{self.default_font}`.\n" \
-                      f"Type `{ctx.prefix}crank font -i` to see how these fonts look."
-            return await ctx.send(message)
+    async def _customise_colour(self, ctx: commands.Context, colour: str, db_key: str, output_key: str):
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        try:
+            int_colour = images.colour_hex_to_int(colour)
+        except images.InvalidLength as e:
+            return await ctx.send(language.string("images_colour_invalid_value", value=e.value, length=e.length))
+        except images.InvalidColour as e:
+            return await ctx.send(language.string("images_colour_invalid", value=e.value, err=e.error))
         data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
         if data:
-            self.bot.db.execute("UPDATE custom_rank SET custom_font=? WHERE uid=?", (font, ctx.author.id))
+            self.bot.db.execute(f"UPDATE custom_rank SET {db_key}=? WHERE uid=?", (int_colour, ctx.author.id))
         else:
-            self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, None, None, font))
-        return await ctx.send(f"Set your rank card font to `{font}`.")
+            match db_key:
+                case "font":
+                    output_data = (int_colour, None, None)
+                case "progress":
+                    output_data = (None, int_colour, None)
+                case "background":
+                    output_data = (None, None, int_colour)
+                case _:
+                    raise ValueError(f"Invalid database key {db_key!r}")
+            self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, *output_data, None))
+        return await ctx.send(language.string(f"leveling_custom_rank_{output_key}", colour=colour))
 
-    @commands.command(name="xplevel")
+    @custom_rank.command(name="text")
+    @app_commands.describe(colour="New text colour. Provide a valid hexadecimal colour (6-letter RGB code)")
+    async def crank_font_colour(self, ctx: commands.Context, colour: str):
+        """ Change the colour of the text
+
+         Provide a valid hexadecimal colour (6-letter RGB code) """
+        return await self._customise_colour(ctx, colour, db_key="font", output_key="text")
+
+    @custom_rank.command(name="progressbar", aliases=["progress"])
+    @app_commands.describe(colour="New progress bar colour. Provide a valid hexadecimal colour (6-letter RGB code)")
+    async def crank_progress(self, ctx: commands.Context, colour: str):
+        """ Change the colour of the progress bar
+
+        Provide a valid hexadecimal colour (6-letter RGB code) """
+        return await self._customise_colour(ctx, colour, db_key="progress", output_key="progress")
+
+    @custom_rank.command(name="background", aliases=["bg"])
+    @app_commands.describe(colour="New background colour. Provide a valid hexadecimal colour (6-letter RGB code)")
+    async def crank_bg(self, ctx: commands.Context, colour: str):
+        """ Change the colour of the background
+
+        Provide a valid hexadecimal colour (6-letter RGB code) """
+        return await self._customise_colour(ctx, colour, db_key="background", output_key="background")
+
+    @custom_rank.command(name="font")
+    @app_commands.choices(font=images.FONT_CHOICES)
+    @app_commands.describe(font="The name of the font to use")
+    async def crank_font(self, ctx: commands.Context, *, font: str):
+        """ Change the font used in your rank card """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        chosen_font = None
+        for shown_name, internal_name, _ in images.FONTS:
+            if font == shown_name or font.lower() == internal_name:
+                chosen_font = (shown_name, internal_name)
+                break
+        if chosen_font is None:
+            return await ctx.send(language.string("leveling_custom_rank_font_invalid", font=font, valid="`, `".join(shown_name for shown_name, _, _ in images.FONTS)))
+        # The database stores the "internal name" of the font, while the user is shown the proper name
+        data = self.bot.db.fetchrow("SELECT * FROM custom_rank WHERE uid=?", (ctx.author.id,))
+        if data:
+            self.bot.db.execute("UPDATE custom_rank SET custom_font=? WHERE uid=?", (chosen_font[1], ctx.author.id))
+        else:
+            self.bot.db.execute("INSERT INTO custom_rank VALUES (?, ?, ?, ?, ?)", (ctx.author.id, None, None, None, chosen_font[1]))
+        return await ctx.send(language.string("leveling_custom_rank_font", font=chosen_font[0]))
+
+    @custom_rank.command(name="font-sample", aliases=["sample"])
+    @app_commands.choices(font=images.FONT_CHOICES)
+    @app_commands.describe(font="Specify a font to see your rank card using it. Leave empty to see all available fonts.")
+    async def crank_font_sample(self, ctx: commands.Context, *, font: str = None):
+        """ Generate a sample image that shows how a certain font looks """
+        language = ctx.language()
+        if font is None:
+            await ctx.defer(ephemeral=True)
+            width = 1024
+            mid_x = width // 2
+            height_per_font = 64
+            height = height_per_font * len(images.FONTS)
+            image = Image.new("RGBA", (width, height), color=(0, 0, 0))
+            draw = ImageDraw.Draw(image)
+            text_colour = (255, 255, 255)
+            draw.rectangle((mid_x - 2, 0, mid_x + 2, height), fill=text_colour)
+            for i, (font_name, _, filename) in enumerate(images.FONTS, start=0):
+                y = height_per_font * i
+                text_y = y + height_per_font // 2
+                font = ImageFont.truetype(f"assets/fonts/{filename}", size=height_per_font * 0.75)
+                draw.text((10, text_y), font_name, font=font, fill=text_colour, anchor="lm")
+                draw.text((mid_x + 10, text_y), general.username(ctx.author), font=font, fill=text_colour, anchor="lm")
+                if y + height_per_font < height:  # Draw the vertical line unless we are at the last value.
+                    draw.rectangle((0, y + height_per_font - 2, width, y + height_per_font), fill=text_colour)
+            bio = images.save_to_bio(image)
+            return await ctx.send(language.string("leveling_custom_rank_font_list"), file=discord.File(bio, filename=f"fonts.png"))
+        else:
+            for shown_name, internal_name, _ in images.FONTS:
+                if font == shown_name or font.lower() == internal_name:
+                    return await self.generate_rank_card(ctx, ctx.author, language=language, global_rank=False, sample_font=shown_name)
+            return await ctx.send(language.string("leveling_custom_rank_font_invalid", font=font, valid="`, `".join(shown_name for shown_name, _, _ in images.FONTS)), ephemeral=True)
+
+    @commands.hybrid_command(name="xplevel")
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
+    @app_commands.describe(level="The level for which to check XP requirements")
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)  # This command does not require being in a guild
+    @app_commands.allowed_installs(guilds=True, users=False)  # While the command is ephemeral, it wouldn't make sense to allow leveling commands on a user install
     async def xp_level(self, ctx: commands.Context, level: int):
-        """ XP required to achieve a level """
+        """ Check the amount of XP required to achieve a level """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         _af = -1 if time.april_fools() else 1
-        if level > max_level or level < max_level * -1 + 1:
-            return await ctx.send(language.string("leveling_xplevel_max", level=language.number(max_level)))
+        if level > MAX_LEVEL or level < MAX_LEVEL * -1 + 1:
+            return await ctx.send(language.string("leveling_xplevel_max", level=language.number(MAX_LEVEL)))
         try:
             if level > 0:
-                r = int(levels[level - 1])
+                r = int(LEVELS[level - 1])
             elif level == 0:
                 r = 0
             else:
-                r = -int(levels[(-level) - 1])
+                r = -int(LEVELS[(-level) - 1])
         except IndexError:
-            return await ctx.send(language.string("leveling_xplevel_max", level=language.number(max_level)))
+            return await ctx.send(language.string("leveling_xplevel_max", level=language.number(MAX_LEVEL)))
         if ctx.guild is not None:
             data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (ctx.author.id, ctx.guild.id, self.bot.name))
         else:
@@ -773,7 +715,7 @@ class Leveling(commands.Cog):
         base = language.string("leveling_xplevel_main", xp=language.number(r * _af, precision=0), level=language.number(level * _af))
         extra = ""
         if xp < r:
-            x1, x2 = [val * dm for val in xp_amounts]
+            x1, x2 = [val * dm for val in XP_AMOUNTS]
             a1, a2 = [(r - xp) / x2, (r - xp) / x1]
             try:
                 t1, t2 = [language.delta_int(x * 60, accuracy=3, brief=True, affix=False) for x in [a1, a2]]
@@ -783,11 +725,14 @@ class Leveling(commands.Cog):
             extra = language.string("leveling_xplevel_extra", left=language.number((r - xp) * _af, precision=0), min=t1, max=t2)
         return await ctx.send(f"{base}{extra}")
 
-    @commands.command(name="nextlevel", aliases=["nl"])
+    @commands.hybrid_command(name="nextlevel", aliases=["nl"])
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def next_level(self, ctx: commands.Context):
         """ XP required for next level """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         _af = -1 if time.april_fools() else 1
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=?", (ctx.author.id, ctx.guild.id))
@@ -803,25 +748,25 @@ class Leveling(commands.Cog):
             except KeyError:
                 dm = 1
         level, xp = [data['level'], data['xp']]
-        if level == max_level:
+        if level == MAX_LEVEL:
             return await ctx.send(language.string("leveling_next_level_max", user=general.username(ctx.author)))
         r1 = language.number(xp * _af, precision=0)
         try:
             if level >= 0:
-                r = int(levels[level])  # Requirement to next level
+                r = int(LEVELS[level])  # Requirement to next level
             elif level == -1:
                 r = 0
             else:
-                r = int(-levels[(-level) - 2])
+                r = int(-LEVELS[(-level) - 2])
         except IndexError:
             r = float("inf")
         try:
             if level > 0:
-                p = int(levels[level-1])
+                p = int(LEVELS[level - 1])
             elif level == 0:
                 p = 0
             else:
-                p = -int(levels[(-level) - 1])
+                p = -int(LEVELS[(-level) - 1])
         except IndexError:
             p = 0
         req = r - xp
@@ -829,7 +774,7 @@ class Leveling(commands.Cog):
         r2, r3, r4 = language.number(r * _af, zws_end=True), language.number(req * _af, zws_end=True), language.number(pr if pr < 1 else 1, precision=1, percentage=True)
         r5 = language.number((level + 1) * _af)
         normal = 1
-        x1, x2 = [val * normal * dm for val in xp_amounts]
+        x1, x2 = [val * normal * dm for val in XP_AMOUNTS]
         a1, a2 = [(r - xp) / x2, (r - xp) / x1]
         try:
             t1, t2 = [language.delta_int(x * 60, accuracy=3, brief=True, affix=False) for x in [a1, a2]]
@@ -838,21 +783,94 @@ class Leveling(commands.Cog):
             t1, t2 = [error, error]
         return await ctx.send(language.string("leveling_next_level", user=general.username(ctx.author), xp=r1, next=r2, left=r3, level=r5, prog=r4, min=t1, max=t2))
 
-    @commands.command(name="levels", aliases=["ranks", "lb"])
+    async def generate_leaderboard(self, ctx: commands.Context, *, is_global: bool, page: int | None):
+        """ Wrapper for the two leaderboard commands """
+        await ctx.defer(ephemeral=False)
+        language = ctx.language()
+        if is_global:
+            _data = self.bot.db.fetch(SQL_GLOBAL, (self.bot.name,))
+        else:
+            _data = self.bot.db.fetch(SQL_SERVER, (ctx.guild.id, self.bot.name))
+        if not _data:
+            return await ctx.send(language.string("leaderboards_no_data"))
+        data: dict[int, LeaderboardEntry] = {}
+        if is_global:
+            for entry in _data:
+                if entry["uid"] in data:
+                    data[entry["uid"]].xp += entry["xp"]
+                else:
+                    username = f"{entry["name"]} ({entry["disc"]})"
+                    data[entry["uid"]] = LeaderboardEntry(entry["uid"], username, entry["xp"], "", 0)
+            for entry in data.values():
+                entry.xp_str = language.number(entry.xp, precision=0)
+                entry.xp_len = len(entry.xp_str)
+        else:
+            for entry in _data:
+                username = f"{entry["name"]} ({entry["disc"]})"
+                xp_str = language.number(entry["xp"], precision=0)
+                data[entry["uid"]] = LeaderboardEntry(entry["uid"], username, entry["xp"], xp_str, len(xp_str))
+        _af = -1 if time.april_fools() else 1
+        sorted_data = sorted(data.values(), key=lambda x: x.xp, reverse=True)
+        total = len(sorted_data)
+        place = 0
+        place_str = language.string("generic_unknown")
+        for idx, entry in enumerate(sorted_data, start=1):
+            if entry.user_id == ctx.author.id:
+                place = idx
+                place_str = language.string("leaderboards_place", val=language.number(place * _af))
+                break
+        if page is None:
+            page = (place - 1) // LEADERBOARD_PAGE_SIZE
+        header = language.string("leaderboards_levels_global" if is_global else "leaderboards_levels",
+                                 server=str(ctx.guild), place=place_str, total=language.number(total))
+        paginator = paginators.LinePaginator(prefix=header + "\n```fix", suffix="```", max_lines=LEADERBOARD_PAGE_SIZE, max_size=1000)
+        for idx, entry in enumerate(sorted_data, start=1):
+            username = f"-> {entry.username}" if entry.user_id == ctx.author.id else entry.username
+            current_page = (idx - 1) // LEADERBOARD_PAGE_SIZE
+            page_start = current_page * LEADERBOARD_PAGE_SIZE
+            page_end = page_start + LEADERBOARD_PAGE_SIZE
+            spaces = max(e.xp_len for e in sorted_data[page_start:page_end])
+            padding = len(str((current_page + 1) * LEADERBOARD_PAGE_SIZE)) + (_af < 0)
+            # Place -> ZWNJ -> 2 spaces -> XP (aligned right) -> 4 spaces -> Name
+            paginator.add_line(f"{idx * _af:0{padding}d})\u200c  {entry.xp_str:>{spaces}}    {username}")
+        interface = paginators.PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
+        interface.display_page = page  # Set the page to the user's current or chosen page
+        return await interface.send_to(ctx)
+
+    @commands.hybrid_group(name="leaderboard", aliases=["levels"], fallback="local", invoke_without_command=True)
     @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def levels_lb(self, ctx: commands.Context, top: int | Literal["top"] = None):
-        """ Server's XP Leaderboard """
-        language = self.bot.language(ctx)
-        return await leaderboard(self, ctx, sql_server, (ctx.guild.id, self.bot.name), top, "leaderboards_levels", language, ctx.guild.name)
+    @app_commands.describe(page="Page number")
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
+    async def leaderboard(self, ctx: commands.Context, page: int = None):
+        """ Show the server's XP Leaderboard """
+        if ctx.invoked_subcommand is None:
+            return await self.generate_leaderboard(ctx, is_global=False, page=page)
 
-    @commands.command(name="levelsglobal", aliases=["levelsg", "glevels"])
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def global_levels(self, ctx: commands.Context, top: int | Literal["top"] = None):
-        """ Global XP Leaderboard """
-        language = self.bot.language(ctx)
-        return await leaderboard2(self, ctx, sql_global, (self.bot.name,), top, "leaderboards_levels_global", language)
+    @leaderboard.command(name="global")
+    @app_commands.describe(page="Page number")
+    async def global_leaderboard(self, ctx: commands.Context, page: int = None):
+        """ Show the global XP Leaderboard """
+        return await self.generate_leaderboard(ctx, is_global=True, page=page)
 
 
 async def setup(bot: bot_data.Bot):
-    await bot.add_cog(Leveling(bot))
+    cog = Leveling(bot)
+    await bot.add_cog(cog)
+
+    @bot.tree.context_menu(name="Check Server Rank")
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
+    async def ctx_check_local_rank(interaction: discord.Interaction, user: discord.Member):
+        """ Context menu to check a user's rank in the server """
+        interactions.log_interaction(interaction)
+        return await cog.generate_rank_card(interaction, user, global_rank=False)
+
+    @bot.tree.context_menu(name="Check Global Rank")
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    @app_commands.allowed_installs(guilds=True, users=False)
+    async def ctx_check_global_rank(interaction: discord.Interaction, user: discord.Member):
+        """ Context menu to check a user's global rank """
+        interactions.log_interaction(interaction)
+        return await cog.generate_rank_card(interaction, user, global_rank=True)
