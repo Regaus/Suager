@@ -148,13 +148,6 @@ async def handle_punishment(bot: bot_data.Bot, entry: dict, retry: bool = False)
         return
     try:
         await member.remove_roles(mute_role, reason="[Auto-Unmute] Punishment expired")
-        if guild.id == 869975256566210641:  # Nuriki's anarchy server
-            try:
-                role = guild.get_role(869975498799845406)
-                if role is not None:
-                    await member.add_roles(role, reason="Punishment expired")  # Give back the Anarchists role
-            except (discord.Forbidden, discord.NotFound):
-                pass
     except Exception as e:
         send_error(f"{time.time()} > {bot.full_name} > Punishments > Mute entry ID {entry_id} - Error: {type(e).__name__}: {e}", entry_id)
         return

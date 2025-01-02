@@ -1914,3 +1914,7 @@
 ## v8.0.0a8 - 2 January 2025
 - Removed the override for `Language.number()` to add zero-width spaces, as Discord seems to have fixed the issue with values showing up as a phone number
 - Updated variable names in some Leveling code to be more comprehensible
+
+## v8.0.0a9 - 2 January 2025
+- Removed code related to Nuriki's server, which no longer exists
+- Added a "Joined in 2025" role to Senko Lair

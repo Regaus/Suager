@@ -11,7 +11,6 @@ class Polls(commands.Cog):
 
     @commands.group(name="poll", aliases=["polls"], case_insensitive=True, invoke_without_command=True, enabled=False)
     @commands.guild_only()
-    # @commands.check(lambda ctx: ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def poll(self, ctx: commands.Context, duration: str, *, question: str):
         """ Start a new poll or interact with existing ones
@@ -26,11 +25,6 @@ class Polls(commands.Cog):
             expiry, error = time.add_time(delta)
             if time.rd_is_above_1w(delta):
                 return await ctx.send(language.string("polls_length_limit"))
-            if ctx.guild.id == 869975256566210641:  # Nuriki server
-                if time.rd_is_below_1h(delta):
-                    return await ctx.send(language.string("polls_length_limit2"))
-                # if 929035370623037500 not in [role.id for role in ctx.author.roles]:  # Anarchist
-                #     return await ctx.send("You need the Anarchist role to start new polls or vote in existing ones.")
             if error:
                 return await ctx.send(language.string("polls_length_error", err=expiry))
             _question = general.reason(ctx.author, question)
@@ -62,8 +56,7 @@ class Polls(commands.Cog):
                 embed.add_field(name=language.string("polls_votes_yes"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_neutral"), value=language.string("polls_votes_none"), inline=True)
                 embed.add_field(name=language.string("polls_votes_no"), value=language.string("polls_votes_none"), inline=True)
-            content = "<@&880091178559737946>" if ctx.guild.id == 869975256566210641 else None
-            message = await poll_channel.send(content, embed=embed)
+            message = await poll_channel.send(embed=embed)
             self.bot.db.execute("INSERT INTO polls VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                 (ctx.guild.id, poll_channel.id, message.id, poll_id, _question, "[]", "[]", "[]", expiry, poll_anonymity))
             return await ctx.send(language.string("polls_new_success", author=ctx.author.name))
@@ -76,9 +69,6 @@ class Polls(commands.Cog):
         if response not in ["yes", "neutral", "no"]:
             return await ctx.send(language.string("polls_vote_invalid"))
 
-        # Nuriki server - Anarchist role
-        # if ctx.guild.id == 869975256566210641 and 929035370623037500 not in [role.id for role in ctx.author.roles]:
-        #     return await ctx.send("You need the Anarchist role to vote in polls.")
         data = self.bot.db.fetchrow("SELECT * FROM polls WHERE poll_id=? OR message_id=?", (poll_id, poll_id))
         if not data:
             return await ctx.send(language.string("polls_not_found", id=poll_id))

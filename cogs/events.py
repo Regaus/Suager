@@ -417,34 +417,10 @@ class Events(commands.Cog):
                     2022:  922602168010309732,
                     2023: 1091828639940747274,
                     2024: 1221468869282107612,
+                    2025: 1324476674472935547,
                 }
                 role_id = role_ids[time.now().year]
                 await member.add_roles(member.guild.get_role(role_id))
-
-            if member.guild.id == 869975256566210641:  # Nuriki's anarchy server
-                if time2.datetime.now() - time2.datetime.from_datetime(member.created_at) < time.td(days=30):
-                    try:
-                        await member.send(f"Your account must be **at least 30 days old** to join **{member.guild}**.")
-                    except (discord.HTTPException, discord.Forbidden):
-                        pass
-                    await member.kick(reason="Users must be at least 30 days old to join the server.")
-                    await member.guild.get_channel(870015339142996079).send(f"{member} has been kicked - account less than 30 days old...")
-                # trials = self.bot.db.fetch("SELECT * FROM trials WHERE guild_id=? and user_id=?", (member.guild.id, member.id,))
-                # if trials:
-                #     for trial in trials:
-                #         if trial["type"] in ["mute", "kick", "ban"]:
-                #             voters_yes: list = json.loads(trial["voters_yes"])
-                #             voters_neutral: list = json.loads(trial["voters_neutral"])
-                #             voters_no: list = json.loads(trial["voters_no"])
-                #             yes, neutral, no = len(voters_yes), len(voters_neutral), len(voters_no)
-                #             try:
-                #                 upvotes = yes / (yes + no)
-                #             except ZeroDivisionError:
-                #                 upvotes = 0
-                #             if yes + neutral + no >= trial["required_score"] and upvotes >= 0.6:
-                #                 await member.add_roles(member.guild.get_role(870338399922446336), reason="Trial in progress")  # Give the On Trial role
-                #                 await member.remove_roles(member.guild.get_role(869975498799845406), reason="Trial in progress")  # Revoke the Anarchists role
-                #                 break
 
         if self.bot.name == "kyomi":
             if member.guild.id == 693948857939132478:  # Midnight Dessert

@@ -387,7 +387,6 @@
   "polls_not_found": "Poll with ID {id} not found.",
   "polls_length_error": "An error occurred while interpreting duration: {err}.",
   "polls_length_limit": "You can't have a poll that lasts more than 1 week.",
-  "polls_length_limit2": "The poll must last at least 1 hour.",
   "polls_list": "List of ongoing polls in {server}\n\n{data}",
   "polls_list_entry": "{i}) Poll ID {id}: {question}\nEnds {delta} ({time})",
   "polls_list_none": "There are no ongoing polls in this server.",

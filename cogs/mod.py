@@ -337,7 +337,6 @@ class Moderation(commands.Cog):
 
     @commands.command(name="kick")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(kick_members=True, owner_bypass=False)
     @commands.bot_has_permissions(kick_members=True)
     async def kick(self, ctx: commands.Context, member: discord.Member, *, reason: str = None):
@@ -355,7 +354,6 @@ class Moderation(commands.Cog):
 
     @commands.command(name="masskick")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_kick(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
@@ -422,7 +420,6 @@ class Moderation(commands.Cog):
 
     @commands.command(name="ban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def ban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
@@ -445,7 +442,6 @@ class Moderation(commands.Cog):
 
     @commands.command(name="massban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_ban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
@@ -496,7 +492,6 @@ class Moderation(commands.Cog):
 
     @commands.command(name="unban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def unban(self, ctx: commands.Context, member: commands.MemberID, *, reason: str = None):
@@ -516,7 +511,6 @@ class Moderation(commands.Cog):
 
     @commands.command(name="massunban")
     @commands.guild_only()
-    @commands.check(lambda ctx: ctx.guild.id != 869975256566210641)
     @permissions.has_permissions(ban_members=True, owner_bypass=False)
     @commands.bot_has_permissions(ban_members=True)
     async def mass_unban(self, ctx: commands.Context, members: commands.Greedy[commands.MemberID], *, reason: str = None):
