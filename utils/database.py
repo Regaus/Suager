@@ -223,16 +223,16 @@ tables = [
         Column("joined", "TEXT", False),       # When the user joined as an Earth date
     ]),
     Table("leveling", "database.db", [
-        Column("uid", "INTEGER", True),
-        Column("gid", "INTEGER", True),
-        Column("level", "INTEGER", True),
-        Column("xp", "INTEGER", True),
-        Column("last", "REAL", True),
-        Column("last_sent", "REAL", False),
-        Column("name", "TEXT", True),
-        Column("disc", "INTEGER", True),
-        Column("bot", "TEXT", True),
-        Column("remove", "DATE", False),  # The date on which to delete the database entry
+        Column("uid", "INTEGER", True),      # User ID
+        Column("gid", "INTEGER", True),      # Guild ID
+        Column("level", "INTEGER", True),    # Current Level
+        Column("xp", "INTEGER", True),       # Current XP
+        Column("last", "REAL", True),        # Last time XP was awarded to the user (as a float timestamp)
+        Column("last_sent", "REAL", False),  # Last time the user got full XP (as a float timestamp)
+        Column("name", "TEXT", True),        # User's global username (the one people normally see)
+        Column("disc", "INTEGER", True),     # User's unique username (the one with only lowercase values)
+        Column("bot", "TEXT", True),         # The bot keeping track of this entry
+        Column("remove", "DATE", False),     # The date on which to delete the database entry
     ]),
     Table("locales", "database.db", [    # Language settings for servers
         Column("id", "INTEGER", True),   # ID of the guild, channel, or user

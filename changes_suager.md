@@ -1910,3 +1910,7 @@
   - Global leaderboard is now accessed via `//leaderboard global`
 - The leaderboard code has been rewritten to be able to generate both local and global leaderboards from one function
   - The old `utils.leaderboards` module is, as a result, no longer needed
+
+## v8.0.0a8 - 2 January 2025
+- Removed the override for `Language.number()` to add zero-width spaces, as Discord seems to have fixed the issue with values showing up as a phone number
+- Updated variable names in some Leveling code to be more comprehensible

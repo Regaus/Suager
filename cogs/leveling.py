@@ -56,10 +56,10 @@ def _level_history():
 
 
 MAX_LEVEL = 200
-DISALLOWED_LEVELS = [69, 420, 666, 1337]
+DISALLOWED_LEVELS = (69, 420, 666, 1337)
 LEVELS = _levels()
 LEVEL_HISTORY = _level_history()
-XP_AMOUNTS = [20, 27]
+XP_AMOUNTS = (20, 27)
 LEADERBOARD_PAGE_SIZE = 10
 
 # noinspection SqlResolve,SqlShadowingAlias
@@ -94,7 +94,7 @@ class Leveling(commands.Cog):
         """ Levels data """
         # __levels = [1, 2, 3, 5, 10, 20, 36, 50, 60, 75, 85, 100, 125, 150, 200, 250, 300, 350, 400, 450, 500]
         # [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
-        __levels = [1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200]
+        __levels = (1, 2, 3, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 140, 160, 180, 200)
         outputs = []
         for level in __levels:
             _level = level - 1
@@ -166,26 +166,24 @@ class Leveling(commands.Cog):
         # Load current data, or set everything to zeros
         data = self.bot.db.fetchrow(f"SELECT * FROM leveling WHERE uid=? AND gid=? AND bot=?", (ctx.author.id, ctx.guild.id, self.bot.name))
         if data:
-            level, xp, last, ls = data['level'], data['xp'], data['last'], data['last_sent']
+            level, xp, last_xp, last_full = data['level'], data['xp'], data['last'], data['last_sent']
         else:
-            level, xp, last, ls = 0, 0, 0, 0
-        if ls is None:
-            ls = 0
+            level, xp, last_xp, last_full = 0, 0, 0, 0
+        if last_full is None:
+            last_full = 0
 
         # Determine time multiplier
         now = time.now_ts()
-        td = now - last
-        _td = now - ls
-        if td < 5:
-            mult = 0
-        elif 5 <= td < 60:
-            mult = (td - 5) / 55
+        delta_xp = now - last_xp
+        delta_full = now - last_full
+        if delta_xp < 5:
+            time_mult = 0
+        elif 5 <= delta_xp < 60:
+            time_mult = (delta_xp - 5) / 55
         else:
-            mult = 1
-        if _td > 60:
-            mult = 1
-        full = mult == 1
-        dc = mult == 0  # didn't count
+            time_mult = 1
+        if delta_full > 60:
+            time_mult = 1
 
         # Server multiplier
         try:
@@ -193,47 +191,47 @@ class Leveling(commands.Cog):
         except KeyError:
             server_mult = 1
         # Extra multipliers
-        extra = 1
+        extra_mult = 1
         if ctx.guild.id == 568148147457490954:  # Senko Lair
             if 571034926107852801 in [role.id for role in ctx.author.roles]:  # if muted
-                extra *= 0.25
+                extra_mult *= 0.25
 
-        x1, x2 = XP_AMOUNTS
-        new = int(random.uniform(x1, x2) * server_mult * mult * extra)
+        xp1, xp2 = XP_AMOUNTS
+        xp_gain = int(random.uniform(xp1, xp2) * server_mult * time_mult * extra_mult)
 
-        xp += new
+        xp += xp_gain
         # yearly += new
         # old_level = level
 
         # Level up/down
-        lu, ld = False, False
+        level_up, level_down = False, False
         if level >= 0:
             while level < MAX_LEVEL and xp >= LEVELS[level]:
                 level += 1
-                lu = True
+                level_up = True
             while level > 0 and xp < LEVELS[level - 1]:
                 level -= 1
-                ld = True
+                level_down = True
             if level == 0 and xp < 0:
                 level = -1
-                ld = True
+                level_down = True
         elif level == -1:
             if xp >= 0:
                 level = 0
-                lu = True
+                level_up = True
             if xp < -LEVELS[0]:
                 level -= 1
-                ld = True
+                level_down = True
         else:
             while -MAX_LEVEL <= level < -1 and xp >= -LEVELS[(-level) - 2]:
                 level += 1
-                lu = True
+                level_up = True
             while level >= -MAX_LEVEL and xp < -LEVELS[(-level) - 1]:
                 level -= 1
-                ld = True
+                level_down = True
 
         if ctx.author.id == 430891116318031872 and level >= 5:  # Alex five stays on level 5
-            lu, ld = False, False
+            level_up, level_down = False, False
             level = 5
 
         # Handle level rewards
@@ -289,7 +287,7 @@ class Leveling(commands.Cog):
             logger.log(self.bot.name, "errors", out)
 
         # Handle level ups
-        if lu or ld:
+        if level_up or level_down:
             _af = -1 if time.april_fools() else 1
             try:
                 next_left = next_reward["level"] - level
@@ -338,12 +336,12 @@ class Leveling(commands.Cog):
                 pass  # Well, if it can't send it there, too bad.
 
         # Save data
-        last_send = last if dc else now
-        minute = now if full else ls
+        last_xp = last_xp if time_mult == 0 else now      # If this message didn't count, don't update the "last counted" time
+        last_full = now if time_mult == 1 else last_full  # If this message got full XP, update the "last full" time
 
         if data:
             self.bot.db.execute("UPDATE leveling SET level=?, xp=?, last=?, last_sent=?, name=?, disc=? WHERE uid=? AND gid=? AND bot=?",
-                                (level, xp, last_send, minute, general.username(ctx.author), str(ctx.author), ctx.author.id, ctx.guild.id, self.bot.name))
+                                (level, xp, last_xp, last_full, general.username(ctx.author), str(ctx.author), ctx.author.id, ctx.guild.id, self.bot.name))
         else:
             if xp != 0:  # No point in saving data if XP is zero...
                 self.bot.db.execute(f"INSERT INTO leveling VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -371,11 +369,11 @@ class Leveling(commands.Cog):
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
             embed.title = language.string("leveling_rewards_title", server=ctx.guild.name)
-            d = ''
+            description = ''
             for role in rewards:
-                d += language.string("leveling_rewards_role", level=language.number(role["level"] * _af), role_id=role["role"])
-            if d:
-                embed.description = d
+                description += language.string("leveling_rewards_role", level=language.number(role["level"] * _af), role_id=role["role"])
+            if description:
+                embed.description = description
             else:
                 embed.description = language.string("leveling_rewards_none")
             return await ctx.send(embed=embed)
@@ -513,7 +511,7 @@ class Leveling(commands.Cog):
                 xp_str = language.number(xp * _af, precision=0)
                 if level < MAX_LEVEL:
                     # Remove the zero-width spaces from the progress text
-                    progress_str = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True).replace("\u200c", ""))
+                    progress_str = language.string("leveling_rank_progress", progress=language.number(progress, precision=2, percentage=True))
                     xp_left_str = language.string("leveling_rank_xp_left", left=language.number((req - xp) * _af, precision=0))
                 else:
                     progress = 1
@@ -688,11 +686,11 @@ class Leveling(commands.Cog):
             return await ctx.send(language.string("leveling_xplevel_max", level=language.number(MAX_LEVEL)))
         try:
             if level > 0:
-                r = int(LEVELS[level - 1])
+                req = int(LEVELS[level - 1])
             elif level == 0:
-                r = 0
+                req = 0
             else:
-                r = -int(LEVELS[(-level) - 1])
+                req = -int(LEVELS[(-level) - 1])
         except IndexError:
             return await ctx.send(language.string("leveling_xplevel_max", level=language.number(MAX_LEVEL)))
         if ctx.guild is not None:
@@ -705,24 +703,23 @@ class Leveling(commands.Cog):
             xp = data['xp']
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=? AND bot=?", (ctx.guild.id, self.bot.name))
         if not _settings:
-            dm = 1
+            server_mult = 1
         else:
             __settings = json.loads(_settings['data'])
             try:
-                dm = __settings['leveling']['xp_multiplier']
+                server_mult = __settings['leveling']['xp_multiplier']
             except KeyError:
-                dm = 1
-        base = language.string("leveling_xplevel_main", xp=language.number(r * _af, precision=0), level=language.number(level * _af))
+                server_mult = 1
+        base = language.string("leveling_xplevel_main", xp=language.number(req * _af, precision=0), level=language.number(level * _af))
         extra = ""
-        if xp < r:
-            x1, x2 = [val * dm for val in XP_AMOUNTS]
-            a1, a2 = [(r - xp) / x2, (r - xp) / x1]
+        if xp < req:
+            xp1, xp2 = (val * server_mult for val in XP_AMOUNTS)
+            delta_min, delta_max = (req - xp) / xp2, (req - xp) / xp1  # The min and max time to reach that level as number minutes
             try:
-                t1, t2 = [language.delta_int(x * 60, accuracy=3, brief=True, affix=False) for x in [a1, a2]]
+                time_min, time_max = (language.delta_int(x * 60, accuracy=3, brief=True, affix=False) for x in (delta_min, delta_max))  # The time to reach the level as a timedelta string
             except (OverflowError, OSError):
-                error = "Never"
-                t1, t2 = [error, error]
-            extra = language.string("leveling_xplevel_extra", left=language.number((r - xp) * _af, precision=0), min=t1, max=t2)
+                time_min = time_max = "Never"
+            extra = language.string("leveling_xplevel_extra", left=language.number((req - xp) * _af, precision=0), min=time_min, max=time_max)
         return await ctx.send(f"{base}{extra}")
 
     @commands.hybrid_command(name="nextlevel", aliases=["nl"])
@@ -740,48 +737,49 @@ class Leveling(commands.Cog):
             return await ctx.send(language.string("leveling_next_level_none"))
         _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (ctx.guild.id,))
         if not _settings:
-            dm = 1
+            server_mult = 1
         else:
             __settings = json.loads(_settings['data'])
             try:
-                dm = __settings['leveling']['xp_multiplier']
+                server_mult = __settings['leveling']['xp_multiplier']
             except KeyError:
-                dm = 1
+                server_mult = 1
         level, xp = [data['level'], data['xp']]
         if level == MAX_LEVEL:
             return await ctx.send(language.string("leveling_next_level_max", user=general.username(ctx.author)))
-        r1 = language.number(xp * _af, precision=0)
+        xp_str = language.number(xp * _af, precision=0)
         try:
             if level >= 0:
-                r = int(LEVELS[level])  # Requirement to next level
+                req = int(LEVELS[level])  # Requirement to next level
             elif level == -1:
-                r = 0
+                req = 0
             else:
-                r = int(-LEVELS[(-level) - 2])
+                req = int(-LEVELS[(-level) - 2])
         except IndexError:
-            r = float("inf")
+            req = float("inf")
         try:
             if level > 0:
-                p = int(LEVELS[level - 1])
+                prev = int(LEVELS[level - 1])
             elif level == 0:
-                p = 0
+                prev = 0
             else:
-                p = -int(LEVELS[(-level) - 1])
+                prev = -int(LEVELS[(-level) - 1])
         except IndexError:
-            p = 0
-        req = r - xp
-        pr = (xp - p) / (r - p)
-        r2, r3, r4 = language.number(r * _af, zws_end=True), language.number(req * _af, zws_end=True), language.number(pr if pr < 1 else 1, precision=1, percentage=True)
-        r5 = language.number((level + 1) * _af)
-        normal = 1
-        x1, x2 = [val * normal * dm for val in XP_AMOUNTS]
-        a1, a2 = [(r - xp) / x2, (r - xp) / x1]
+            prev = 0
+        xp_left = req - xp
+        progress = (xp - prev) / (req - prev)
+        next_str = language.number(req * _af)
+        left_str = language.number(xp_left * _af)
+        progress_str = language.number(progress if progress < 1 else 1, precision=1, percentage=True)
+        level_str = language.number((level + 1) * _af)
+        xp1, xp2 = (val * server_mult for val in XP_AMOUNTS)
+        delta_min, delta_max = (req - xp) / xp2, (req - xp) / xp1
         try:
-            t1, t2 = [language.delta_int(x * 60, accuracy=3, brief=True, affix=False) for x in [a1, a2]]
+            time_min, time_max = (language.delta_int(x * 60, accuracy=3, brief=True, affix=False) for x in (delta_min, delta_max))
         except (OverflowError, OSError):
-            error = "Never"
-            t1, t2 = [error, error]
-        return await ctx.send(language.string("leveling_next_level", user=general.username(ctx.author), xp=r1, next=r2, left=r3, level=r5, prog=r4, min=t1, max=t2))
+            time_min = time_max = "Never"
+        return await ctx.send(language.string("leveling_next_level", user=general.username(ctx.author), xp=xp_str, next=next_str, left=left_str,
+                                              level=level_str, prog=progress_str, min=time_min, max=time_max))
 
     async def generate_leaderboard(self, ctx: commands.Context, *, is_global: bool, page: int | None):
         """ Wrapper for the two leaderboard commands """

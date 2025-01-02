@@ -96,10 +96,10 @@ class Language(languages.Language):
             return time.KargadianTimezone(time.timedelta(), "Virsetgar", "VSG")
         return time.timezone.utc
 
-    def number(self, value: int | float, *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True, positives: bool = False, zws_end: bool = False) -> str:
-        # Surround the full stops and spaces by "zero width non-joiners" to prevent Android from treating the number outputs like links (Why does this even have to be a problem?)
-        return super().number(value, precision=precision, fill=fill, percentage=percentage, commas=commas, positives=positives)\
-            .replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c") + ("\u200c" if zws_end else "")
+    # def number(self, value: int | float, *, precision: int = 2, fill: int = 0, percentage: bool = False, commas: bool = True, positives: bool = False, zws_end: bool = False) -> str:
+    #     # Surround the full stops and spaces by "zero width non-joiners" to prevent Android from treating the number outputs like links (Why does this even have to be a problem?)
+    #     return super().number(value, precision=precision, fill=fill, percentage=percentage, commas=commas, positives=positives)\
+    #         .replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c") + ("\u200c" if zws_end else "")
 
     def string(self, string: str, *values, **kwargs) -> str:
         try:
