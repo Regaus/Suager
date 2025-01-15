@@ -45,7 +45,10 @@ def traceback_maker(err: BaseException, text: str = None, guild=None, author=Non
     _text = f"Command: {text}\n" if text is not None else ""
     _guild = f"Guild: {guild.name}\n" if guild is not None else ""
     _author = f"User: {username(author)} ({author.name})\n" if author is not None else ""
-    _traceback = ''.join(traceback.format_tb(err.__traceback__))
+    if hasattr(err, "__traceback__"):
+        _traceback = ''.join(traceback.format_tb(err.__traceback__))
+    else:
+        _traceback = "No traceback available"
     _main_error = f"{type(err).__name__}: {err}"
     if limit_text:
         length = 2000 - len(_text) - len(_guild) - len(_author) - len(_main_error) - (code_block * 10)  # code block = 10 extra chars

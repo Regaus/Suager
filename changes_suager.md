@@ -1918,3 +1918,18 @@
 ## v8.0.0a9 - 2 January 2025
 - Removed code related to Nuriki's server, which no longer exists
 - Added a "Joined in 2025" role to Senko Lair
+
+## v8.0.0a10 - 2-15 January 2025
+- Made Moderation commands hybrid
+  - These test for permissions as a regular check, even though slash commands allow server owners to set up a different system. That may be changed if it ever is necessary.
+  - Mass commands (`//masskick`, `//massban`) take the users as a string, as slash commands don't have an equivalent to `Greedy[]`
+  - The responses to moderation commands (`//kick`, `//ban`, etc.) are non-ephemeral
+  - Commands like `//mute` and `//warn` which allow for specifying a duration have the duration as a separate argument in the slash command form
+- The commands `//mute`, `//massmute`, `//unmute`, `//massunmute`, `//mutelist`, `//warn`, `//masswarn`, `//pardon`, and `//modlog` now require Moderate Members permission instead of Kick Members
+- `//mutelist` now uses a proper paginator, just like `//warnings` 
+- `//warnings` now requires the Moderate Members permission to see the warnings of other members
+- `//find` now requires the Moderate Members permission instead of Ban Members
+- Updated the "specified user ID matches this bot's user ID" check on Moderation commands to run before permissions checks (so that the appropriate response is actually shown)
+- Replaced "You've" with "You have" in the moderation DMs
+- Mass commands no longer terminate early if one of the specified users doesn't pass the check
+- Added an on_error handler to the Leveling context menus

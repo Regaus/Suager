@@ -457,3 +457,18 @@
 ## v2.0.0a4 - 22 December 2024
 - Made Bot Information commands hybrid
   - The `m!invite` command only has a slash equivalent on Suager, as the other bots are private.
+
+## v2.0.0a5 - 2-15 January 2025
+- Made Moderation commands hybrid
+  - These test for permissions as a regular check, even though slash commands allow server owners to set up a different system. That may be changed if it ever is necessary.
+  - Mass commands (`m!masskick`, `m!massban`) take the users as a string, as slash commands don't have an equivalent to `Greedy[]`
+  - The responses to moderation commands (`m!kick`, `m!ban`, etc.) are non-ephemeral
+  - Commands like `m!mute` and `m!warn` which allow for specifying a duration have the duration as a separate argument in the slash command form
+- The commands `m!mute`, `m!massmute`, `m!unmute`, `m!massunmute`, `m!mutelist`, `m!warn`, `m!masswarn`, `m!pardon`, and `m!modlog` now require Moderate Members permission instead of Kick Members
+- `m!mutelist` now uses a proper paginator, just like `m!warnings`
+- `m!warnings` now requires the Moderate Members permission to see the warnings of other members
+- `m!find` now requires the Moderate Members permission instead of Ban Members
+- Updated the "specified user ID matches this bot's user ID" check on Moderation commands to run before permissions checks (so that the appropriate response is actually shown)
+- Replaced "You've" with "You have" in the moderation DMs
+- Mass commands no longer terminate early if one of the specified users doesn't pass the check
+- Added an on_error handler to the Leveling context menus

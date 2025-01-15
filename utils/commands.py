@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
+from types import TracebackType
 from typing import Any, Type, TypeVar
 
+from discord import Interaction
+from discord.context_managers import Typing
 from discord.ext.commands import *
 from discord.utils import MISSING
 
@@ -71,6 +75,24 @@ class Context(Context):
     def language2(name: str):
         return languages.Language(name)
 
+    @classmethod
+    async def from_interaction(cls, interaction: Interaction, /) -> Context:
+        return await super().from_interaction(interaction)
+
+    # Prevent an error being raised if the interaction gets deferred twice
+    async def defer(self, *, ephemeral: bool = False) -> None:
+        if self.interaction:
+            # If the interaction has already been responded to, don't try to defer again but show a warning
+            if self.interaction.response.is_done():  # type: ignore
+                warnings.warn("Interaction already responded to", RuntimeWarning, stacklevel=2)
+            else:
+                await self.interaction.response.defer(ephemeral=ephemeral)  # type: ignore
+
+    def typing(self, *, ephemeral: bool = False) -> Typing | DeferTyping:
+        if self.interaction is None:
+            return Typing(self)
+        return DeferTyping(self, ephemeral=ephemeral)
+
 
 # The solution to the type warnings is just using "type: ignore"
 class MemberID(Converter):
@@ -105,3 +127,22 @@ class FakeContext:
     guild: Any
     bot: Bot
     author: Any = None
+
+
+class DeferTyping:
+    """ Typing context manager for interaction-based contexts which defers the interaction.
+     Copies the original discord.py implementation but does nothing if the interaction has already been responded. """
+    def __init__(self, ctx: Context, *, ephemeral: bool):
+        self.ctx: Context = ctx
+        self.ephemeral: bool = ephemeral
+
+    def __await__(self):
+        if not self.ctx.interaction.response.is_done():  # type: ignore
+            return self.ctx.defer(ephemeral=self.ephemeral).__await__()
+
+    async def __aenter__(self) -> None:
+        if not self.ctx.interaction.response.is_done():  # type: ignore
+            await self.ctx.defer(ephemeral=self.ephemeral)
+
+    async def __aexit__(self, exc_type: Type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+        pass

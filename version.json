@@ -1,10 +1,10 @@
 {
   "suager": {
     "short_version": "7.8",
-    "version": "8.0.0a8",
+    "version": "8.0.0a10",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1735849672
+    "last_update": 1736963504
   },
   "cobble": {
     "short_version": "1.9",
@@ -15,10 +15,10 @@
   },
   "kyomi": {
     "short_version": "1.6",
-    "version": "2.0.0a4",
+    "version": "2.0.0a5",
     "first_version": 1623891776,
     "major_release": 1642621994,
-    "last_update": 1734912384
+    "last_update": 1736963504
   },
   "kyomi2": {
     "short_version": "1.0",
