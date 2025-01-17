@@ -7,7 +7,7 @@ import nest_asyncio
 from discord import app_commands
 from typing_extensions import override
 
-from utils import conworlds, emotes, languages, general, time, logger, commands
+from utils import conworlds, emotes, languages, general, time, logger, commands, interactions
 
 
 class NotMessageAuthor(app_commands.CheckFailure):
@@ -36,9 +36,9 @@ class View(discord.ui.View):
         if ctx is None:
             self.command: str = "Unknown command"
         elif isinstance(ctx, discord.Interaction):
-            self.command: str = general.build_interaction_content(ctx)
+            self.command: str = interactions.get_command_str(ctx)
         elif ctx.interaction is not None:
-            self.command: str = general.build_interaction_content(ctx.interaction)
+            self.command: str = interactions.get_command_str(ctx.interaction)
         else:
             self.command: str = ctx.message.clean_content  # type: ignore
         # self.bot = bot
@@ -221,7 +221,7 @@ class View(discord.ui.View):
         else:
             await interaction.response.send_message(message, ephemeral=ephemeral)  # type: ignore
 
-        # content = f"{general.build_interaction_content(interaction)} > {origin}"
+        # content = f"{interactions.get_command_str(interaction)} > {origin}"
         content = f"{self.command[:750]} > {origin}"
         bot = interaction.client  # bot_data.Bot
         error_message = f"{time.time()} > {bot.full_name} > {interaction.guild or "Private Message"} > {interaction.user} ({interaction.user.id}) > {content} > {error_msg}"
@@ -452,7 +452,7 @@ class Modal(discord.ui.Modal):
             await interaction.followup.send(message, ephemeral=ephemeral)
         else:
             await interaction.response.send_message(message, ephemeral=ephemeral)  # type: ignore
-        # content = f"{general.build_interaction_content(interaction)} > {origin}"
+        # content = f"{interactions.get_command_str(interaction)} > {origin}"
         content = f"{self.interface.command[:750]} > {origin}"
         bot = interaction.client  # bot_data.Bot
         error_message = f"{time.time()} > {bot.full_name} > {interaction.guild or "Private Message"} > {interaction.user} ({interaction.user.id}) > {content} > {error_msg}"

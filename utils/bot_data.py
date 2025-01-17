@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from utils import commands, languages, permissions
+from discord import Interaction
+from discord.app_commands import AppCommandError
+
+from utils import commands, languages, permissions, errors
 
 # List of all cogs each bot needs to load
 load = {
@@ -78,6 +81,7 @@ class Bot(commands.AutoShardedBot):
         self.db = db
         # self.usages = usages
         self.uptime = None
+        self.tree.on_error = self.on_slash_command_error
 
     async def get_context(self, message, *, cls=commands.Context):
         return await super().get_context(message, cls=cls)
@@ -91,6 +95,11 @@ class Bot(commands.AutoShardedBot):
         if not self.is_ready() or msg.author.bot or not permissions.can_send(msg) or msg.author.id in self.blacklist:
             return
         await self.process_commands(msg)
+
+    @staticmethod
+    async def on_slash_command_error(interaction: Interaction, error: AppCommandError):
+        """ Handle all slash command errors """
+        return await errors.on_command_error(interaction, error)
 
     @staticmethod
     def language(ctx: commands.Context | commands.FakeContext):

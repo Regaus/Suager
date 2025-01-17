@@ -1933,3 +1933,9 @@
 - Replaced "You've" with "You have" in the moderation DMs
 - Mass commands no longer terminate early if one of the specified users doesn't pass the check
 - Added an on_error handler to the Leveling context menus
+
+## v8.0.0a11 - 17 January 2025
+- Unified the handling of text and slash command errors into one common function
+- Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually
+- Added an `interactions.log_interaction()` call to the slash versions of Moderation commands
+- Fixed `//colourify` not working due to a missing await

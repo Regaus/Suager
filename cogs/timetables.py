@@ -17,7 +17,7 @@ from discord import app_commands
 from regaus import time
 from thefuzz import process
 
-from utils import bot_data, commands, http, timetables, logger, emotes, dcu, paginators, general, arg_parser, cpu_burner
+from utils import arg_parser, bot_data, commands, cpu_burner, dcu, emotes, general, http, interactions, logger, paginators, timetables
 from utils.time import time as print_current_time
 
 # def dcu_data_access(ctx):
@@ -610,7 +610,7 @@ class Timetables(University, Luas, name="Timetables"):
         # Report soft errors loading data to the error logs channel instead of silently ignoring them
         if self.soft_loader_error is not None:
             prefix = "Non-critical error downloading GTFS data (existing static data loaded)"
-            command = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+            command = ctx.message.content if ctx.interaction is None else interactions.get_command_str(ctx.interaction)
             ec = self.bot.get_channel(self.bot.local_config["error_channel"])
             if ec is not None:
                 error = general.traceback_maker(self.soft_loader_error, command[:750], ctx.guild, ctx.author)

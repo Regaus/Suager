@@ -72,7 +72,7 @@ class Images(commands.Cog):
             return await ctx.send(language.string("images_colour_invalid_value", value=e.value, length=e.length), ephemeral=True)
         except images.InvalidColour as e:
             return await ctx.send(language.string("images_colour_invalid", value=e.value, err=e.error), ephemeral=True)
-        return self._process_image(ctx, language, asset, images.colourify, colour1, colour2, filename="colourify")
+        return await self._process_image(ctx, language, asset, images.colourify, colour1, colour2, filename="colourify")
 
     @commands.hybrid_group("colourify")
     @commands.cooldown(1, 5, commands.BucketType.user)

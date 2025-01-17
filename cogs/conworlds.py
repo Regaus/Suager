@@ -695,10 +695,6 @@ class Conworlds(commands.Cog):
             _user = citizen_id
         return await self.birthday_command(interaction, _user)
 
-    @birthday_slash.error
-    async def birthday_slash_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        return await interactions.on_error(interaction, error)
-
     @commands.hybrid_group(name="generate", aliases=["gen"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
@@ -756,8 +752,3 @@ async def setup(bot: bot_data.Bot):
         """ Context menu to check a user's birthday """
         interactions.log_interaction(interaction)
         return await cog.birthday_command(interaction, user.id)
-
-    @ctx_check_kargadian_profile.error
-    @ctx_check_birthday.error
-    async def ctx_menu_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-        return await interactions.on_error(interaction, error)

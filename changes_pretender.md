@@ -105,3 +105,7 @@
 ## v1.4.0a1 - 22 December 2024
 - Made Bot Information commands hybrid
   - The `a.invite` command only has a slash equivalent on Suager, as the other bots are private.
+
+## v1.4.0a2 - 17 January 2025
+- Unified the handling of text and slash command errors into one common function
+- Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually

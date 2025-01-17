@@ -6,10 +6,8 @@ from io import BytesIO
 from typing import List
 
 import discord
-from discord import app_commands
-from regaus import time as time2
 
-from utils import bot_data, commands, general, logger, time, cpu_burner
+from utils import bot_data, commands, cpu_burner, errors, general, interactions, logger, time
 
 
 class Events(commands.Cog):
@@ -97,150 +95,9 @@ class Events(commands.Cog):
                         general.print_error(f"{time.time()} > {self.bot.full_name} > Update announcement > Channel {channel_id} > {type(e).__name__}: {e}")
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, err: commands.CommandError):
+    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
         """ Triggered when a command fails for any reason """
-        if ctx.interaction is None:
-            content = ctx.message.clean_content
-        else:
-            content = general.build_interaction_content(ctx.interaction)
-        guild = getattr(ctx.guild, "name", "Private Message")
-        error_msg = f"{type(err).__name__}: {str(err)}"
-        error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
-        language = ctx.language()
-        if isinstance(err, commands.MissingRequiredArgument):
-            # A required argument is missing
-            helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            await ctx.send_help(helper, language.string("events_error_missing", param=err.param.name))
-
-        elif isinstance(err, commands.TooManyArguments):
-            # Too many arguments were specified
-            helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            await ctx.send_help(helper, language.string("events_error_extra_argument"))
-
-        elif isinstance(err, commands.MemberNotFound):
-            # The specified Member was not found
-            await ctx.send(language.string("events_error_not_found_member", value=err.argument))
-        elif isinstance(err, commands.UserNotFound):
-            # The specified User was not found
-            await ctx.send(language.string("events_error_not_found_user", value=err.argument))
-        elif isinstance(err, commands.GuildNotFound):
-            # The specified Guild was not found
-            await ctx.send(language.string("events_error_not_found_guild", value=err.argument))
-        elif isinstance(err, commands.ChannelNotFound):
-            # The specified Channel was not found
-            await ctx.send(language.string("events_error_not_found_channel", value=err.argument))
-        elif isinstance(err, commands.ThreadNotFound):
-            # The specified Thread was not found
-            await ctx.send(language.string("events_error_not_found_thread", value=err.argument))
-        elif isinstance(err, commands.MessageNotFound):
-            # The specified Message was not found
-            await ctx.send(language.string("events_error_not_found_message", value=err.argument))
-        elif isinstance(err, commands.RoleNotFound):
-            # The specified Role was not found
-            await ctx.send(language.string("events_error_not_found_role", value=err.argument))
-        elif isinstance(err, commands.ChannelNotReadable):
-            # The specified Channel or Thread cannot be read by the bot
-            await ctx.send(language.string("events_error_channel_access", value=err.argument))
-        elif isinstance(err, (commands.ConversionError, commands.UserInputError)):
-            # This is a generic condition for other bad argument and parsing/conversion errors
-            # We will handle all these errors the same, and just tell the user that an argument is invalid
-            helper = str(ctx.invoked_subcommand) if ctx.invoked_subcommand else str(ctx.command)
-            await ctx.send_help(helper, language.string("events_error_bad_argument"))
-
-        elif isinstance(err, commands.NoPrivateMessage):
-            # The command cannot be used in DMs
-            await ctx.send(language.string("events_error_guild_only"))
-        elif isinstance(err, commands.NotOwner):
-            # The command can only be used by the bot owner
-            await ctx.send(language.string("events_error_owner"))
-        elif isinstance(err, commands.MissingPermissions):
-            # The author does not have sufficient permissions to run the command
-            await ctx.send(language.string("events_error_permissions", perms=language.join([f"`{perm}`" for perm in err.missing_permissions])))
-        elif isinstance(err, commands.BotMissingPermissions):
-            # The bot does not have sufficient permissions to run the command
-            await ctx.send(language.string("events_error_permissions_bot", perms=language.join([f"`{perm}`" for perm in err.missing_permissions])))
-        elif isinstance(err, commands.NSFWChannelRequired):
-            # The command can only be used in NSFW channel
-            await ctx.send(language.string("events_error_nsfw"))
-        elif isinstance(err, commands.CheckFailure):
-            # This handles any other remaining check failure errors, if there are any...
-            await ctx.send(language.string("events_error_check"))
-
-        elif isinstance(err, commands.CommandOnCooldown):
-            # The command is currently on cooldown and cannot be used
-            await ctx.send(language.string("events_error_cooldown", time=language.number(err.retry_after, precision=2), rate=language.number(err.cooldown.rate),
-                                           per=language.number(err.cooldown.per, precision=1)), delete_after=5 if err.retry_after < 5 else err.retry_after)
-        elif isinstance(err, commands.MaxConcurrencyReached):
-            # I think this might show `per` as some funny value instead of the name, but this isn't going to matter for Suager so...
-            await ctx.send(language.string("events_error_concurrency", rate=language.number(err.number), per=err.per), delete_after=15)
-
-        elif isinstance(err, (commands.CommandNotFound, commands.DisabledCommand)):
-            # We will not respond at all if no such command exists, or it is disabled...
-            # Use `return` instead of `pass` here because this isn't worthy of getting logged at all
-            return
-
-        elif isinstance(err, commands.CommandInvokeError):
-            # An error occurred while invoking the command
-            if ("2000 or fewer" in str(err.original) or "4000 or fewer" in str(err.original)) and len(ctx.message.content) > 1900:
-                await ctx.send(language.string("events_error_message_length"))
-                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > Cheeky little bastard entered an unnecessarily long string"
-            else:
-                await ctx.send(language.string("events_error_error", err=f"{type(err.original).__name__}: {str(err.original)}"))
-                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
-                if ec is not None:
-                    full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
-                    error = general.traceback_maker(err.original, full_content[:750], ctx.guild, ctx.author, limit_text=True)
-                    await ec.send(error)
-                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > " \
-                                f"{type(err.original).__name__}: {str(err.original)}"
-                general.print_error(error_message)
-
-        elif isinstance(err, (app_commands.AppCommandError, commands.HybridCommandError)):
-            # An error occurred with a slash command
-            if isinstance(err, commands.HybridCommandError):
-                err = err.original  # Access the actual app command error
-                # print(type(err).__module__, type(err).__name__)
-
-            if isinstance(err, app_commands.CommandInvokeError):  # This includes InteractionResponded errors
-                # print("hi3", err)
-                err = err.original
-                error_msg = f"{type(err).__name__}: {str(err)}"
-                # await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
-                # await ctx.interaction.followup.send(language.string("events_error_error", err=error_msg))
-                # If the interaction had not yet been responded, respond. If it has, send to followup. If the interaction expired, send regular message.
-                await ctx.send(language.string("events_error_error", err=error_msg))
-                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
-                if ec is not None:
-                    full_content = general.build_interaction_content(ctx.interaction)
-                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author, limit_text=True)
-                    await ec.send(error)
-                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
-                general.print_error(error_message)
-
-            else:
-                # Catch-all error statement for other slash-command related errors
-                error_msg = f"{type(err).__name__}: {str(err)}"
-                error_message = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content} > {error_msg}"
-                general.print_error(error_message)
-                await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
-                ec = self.bot.get_channel(self.bot.local_config["error_channel"])
-                if ec is not None:
-                    full_content = general.build_interaction_content(ctx.interaction)
-                    error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author, limit_text=True)
-                    await ec.send(error)
-
-        else:
-            # Catch-all error statement. This shouldn't ever get called, but who knows...
-            general.print_error(error_message)
-            await ctx.send(language.string("events_error_error", err=f"{type(err).__name__}: {str(err)}"))
-            ec = self.bot.get_channel(self.bot.local_config["error_channel"])
-            if ec is not None:
-                full_content = ctx.message.content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
-                error = general.traceback_maker(err, full_content[:750], ctx.guild, ctx.author, limit_text=True)
-                await ec.send(error)
-
-        logger.log(self.bot.name, "commands", error_message)
-        logger.log(self.bot.name, "errors", error_message)
+        return await errors.on_command_error(ctx, error)
 
     @commands.Cog.listener()
     async def on_command(self, _ctx: commands.Context):
@@ -252,7 +109,7 @@ class Events(commands.Cog):
     async def on_command_completion(self, ctx: commands.Context):
         """ Triggered when a command successfully completes """
         guild = getattr(ctx.guild, "name", "Private Message")
-        content = ctx.message.clean_content if ctx.interaction is None else general.build_interaction_content(ctx.interaction)
+        content = ctx.message.clean_content if ctx.interaction is None else interactions.get_command_str(ctx.interaction)
         send = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content}"
         logger.log(self.bot.name, "commands", send)
         print(send)

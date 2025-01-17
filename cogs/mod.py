@@ -478,6 +478,7 @@ class Moderation(commands.Cog):
     @app_commands.guild_install()
     async def ban_slash(self, interaction: discord.Interaction, member: discord.User, reason: str = None):
         """ Ban a member from the server """
+        interactions.log_interaction(interaction)
         ctx = await commands.Context.from_interaction(interaction)
         await ctx.defer(ephemeral=False)
         return await self._ban_command(ctx, member.id, reason)  # type: ignore
@@ -568,6 +569,7 @@ class Moderation(commands.Cog):
     @app_commands.guild_install()
     async def unban_slash(self, interaction: discord.Interaction, member: discord.User, reason: str = None):
         """ Unban a member from the server """
+        interactions.log_interaction(interaction)
         ctx = await commands.Context.from_interaction(interaction)
         await ctx.defer(ephemeral=False)
         return await self._unban_command(ctx, member.id, reason)  # type: ignore
@@ -728,6 +730,7 @@ class Moderation(commands.Cog):
     @app_commands.guild_install()
     async def mute_slash(self, interaction: discord.Interaction, member: discord.Member, duration: str = None, reason: str = None):
         """ Mute a member (using a Muted role) """
+        interactions.log_interaction(interaction)
         ctx = await commands.Context.from_interaction(interaction)
         await ctx.defer(ephemeral=False)
         return await self._mute_command(ctx, member, duration, reason)
@@ -809,6 +812,7 @@ class Moderation(commands.Cog):
     @app_commands.guild_install()
     async def mass_mute_slash(self, interaction: discord.Interaction, members: str, duration: str | None, reason: str = None):
         """ Mass-mute multiple members """
+        interactions.log_interaction(interaction)
         ctx = await commands.Context.from_interaction(interaction)
         await ctx.defer(ephemeral=False)  # Not the best solution, but defer the interaction straight away, so that it doesn't break if parsing takes too long
         # Why couldn't they just bring Greedy into slash commands?
@@ -1055,6 +1059,7 @@ class Moderation(commands.Cog):
     @app_commands.guild_install()
     async def warn_slash(self, interaction: discord.Interaction, member: discord.Member, duration: str = None, reason: str = None):
         """ Warn a member """
+        interactions.log_interaction(interaction)
         ctx = await commands.Context.from_interaction(interaction)
         await ctx.defer(ephemeral=False)
         return await self._warn_command(ctx, member, duration, reason)
@@ -1129,6 +1134,7 @@ class Moderation(commands.Cog):
     @app_commands.guild_install()
     async def mass_warn_slash(self, interaction: discord.Interaction, members: str, duration: str | None, reason: str = None):
         """ Mass-warn multiple members """
+        interactions.log_interaction(interaction)
         ctx = await commands.Context.from_interaction(interaction)
         await ctx.defer(ephemeral=False)  # Not the best solution, but defer the interaction straight away, so that it doesn't break if parsing takes too long
         converter = commands.MemberID()
@@ -1476,15 +1482,6 @@ class Moderation(commands.Cog):
                 await message.clear_reactions()
         return await ctx.send(language.string("mod_purge_reactions", total=language.number(total_reactions)))
         # await general.send(f"🚮 Successfully removed {total_reactions:,} reactions.", ctx.channel)
-
-    @ban_slash.error
-    @unban_slash.error
-    @mute_slash.error
-    @mass_mute_slash.error
-    @warn_slash.error
-    @mass_warn_slash.error
-    async def slash_command_error(self, interaction: discord.Interaction, error: app_commands.AppCommandError):
-        return await interactions.on_error(interaction, error)
 
 
 class ModerationKyomi(Moderation, name="Moderation"):

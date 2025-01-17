@@ -872,8 +872,3 @@ async def setup(bot: bot_data.Bot):
         """ Context menu to check a user's global rank """
         interactions.log_interaction(interaction)
         return await cog.generate_rank_card(interaction, user, global_rank=True)
-
-    @ctx_check_local_rank.error
-    @ctx_check_global_rank.error
-    async def ctx_menu_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-        return await interactions.on_error(interaction, error)

@@ -127,7 +127,3 @@ async def setup(bot: bot_data.Bot):
         """ Context menu to check a user's birthday """
         interactions.log_interaction(interaction)
         return await cog.cmd_check_birthday(interaction, user)
-
-    @ctx_check_birthday.error
-    async def ctx_check_birthday_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-        return await interactions.on_error(interaction, error)
