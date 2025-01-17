@@ -126,10 +126,6 @@ template_suager = {
         "channel": 0,
         "message": "Happy birthday [MENTION]! 🎂🎉"
     },
-    "polls": {
-        "channel": 0,
-        "voter_anonymity": True
-    },
     "join_roles": {
         "members": [],
         "bots": []

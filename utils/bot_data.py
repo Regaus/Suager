@@ -55,13 +55,11 @@ load = {
         "info",
         "leveling",
         "mod",
-        "polls",
         "ratings",
         "reactions",
         "settings",
         "social",
         "starboard",
-        "tags",
         "util",
     ]
 }

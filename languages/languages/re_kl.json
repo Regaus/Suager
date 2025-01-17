@@ -120,11 +120,6 @@
   "starboard_stats_none2": "Den attat ad {user} eiken ahvak ein sunnon in edan salhan.",
   "starboard_stats_user_desc": "Ahvak ⭐ **{stars} sunnaan** senti {messages} attain\n\nIgjarat attat:",
 
-  "tags_all": "Külüssalvat in {server} - Shiramat inevar\nPekine {page} iad {max}\n{data}```",
-  "tags_search": "Külüssalvat in {server}, nen maikan jan en, ne te dannas - Shiraman inevar\nPekine {page} iad {max}\n{data}```",
-  "tags_top": "Külüssalvat in {server} - Shiramat nottartar\nPekine {page} iad {max}\n{data}```",
-  "tags_unclaimed": "Külüssalvat in {server}, nen te keilan maikas - Shiramat inevar\nPekine {page} iad {max}\n{data}```",
-
   "util_reminders_list": "**{author}**, zeide jan ten esaanat annepattat:",
   "util_reminders_none": "De ihvas dean annepattaan, {author}.",
   "util_weather_clouds": "Aivallankalve",

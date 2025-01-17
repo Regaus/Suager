@@ -1939,3 +1939,6 @@
 - Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually
 - Added an `interactions.log_interaction()` call to the slash versions of Moderation commands
 - Fixed `//colourify` not working due to a missing await
+
+## v8.0.0a12 - 17 January 2025
+- Removed Polls and Tags, as they are no longer used and not worth maintaining

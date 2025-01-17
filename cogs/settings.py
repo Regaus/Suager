@@ -29,7 +29,7 @@ class Settings(commands.Cog):
         # Get values that are valid to count for translation completion
         always_valid = ["_languages", "_language_alt", "generic", "frequency", "time", "discord", "events", "info", "settings"]
         valid_prefixes = {
-            "suager": ["achievements", "birthdays", "fun", "images", "leaderboards", "leveling", "mod", "polls", "ratings", "social", "starboard", "tags", "trials", "util"],
+            "suager": ["achievements", "birthdays", "fun", "images", "leaderboards", "leveling", "mod", "ratings", "social", "starboard", "util"],
             "cobble": ["weather78", "achievements", "birthdays", "kuastall", "leaderboards", "leveling", "placeholder", "util"],
             "kyomi":  ["birthdays", "fun", "images", "mod", "ratings", "social", "starboard", "util"]
         }
@@ -178,17 +178,6 @@ class Settings(commands.Cog):
         await interface.add_field(name=language.string("settings_current_birthdays"), value=bd, inline=False)
 
         if self.bot.name in ["kyomi", "suager"]:
-            # Polls
-            if self.bot.name in ["suager"] and ctx.guild.id in [869975256566210641, 738425418637639775]:
-                polls_channel, polls_anonymity = language.string("settings_current_polls_channel_none"), language.yes(True)  # Default settings
-                if "polls" in setting:
-                    polls = setting["polls"]
-                    if polls["channel"]:
-                        polls_channel = f"<#{polls['channel']}>"
-                    polls_anonymity = language.yes(polls["voter_anonymity"])
-                await interface.add_field(name=language.string("settings_current_polls"), inline=False,
-                                          value=language.string("settings_current_polls2", channel=polls_channel, anon=polls_anonymity))
-
             # Join roles
             members, bots = language.string("generic_none"), language.string("generic_none")
             if "join_roles" in setting:
@@ -1269,47 +1258,6 @@ class Settings(commands.Cog):
     async def messages_ignore_bots_disable(self, ctx: commands.Context):
         """ Disable ignoring bots' messages """
         return await self.messages_ignore_bots_toggle(ctx, False)
-
-    @settings.group(name="polls", case_insensitive=True)
-    @commands.check(lambda ctx: ctx.bot.name in ["suager"] and ctx.guild is not None and ctx.guild.id in [869975256566210641, 738425418637639775])
-    async def set_polls(self, ctx: commands.Context):
-        """ Polls settings """
-        if ctx.invoked_subcommand is None:
-            return await ctx.send_help(ctx.command)
-
-    @set_polls.group(name="channel", case_insensitive=True, invoke_without_command=True)
-    async def set_poll_channel(self, ctx: commands.Context, channel: discord.TextChannel = None):
-        """ Set the channel where poll updates and results will go """
-        if ctx.invoked_subcommand is None:
-            _settings, existent = await self.settings_start(ctx, "polls")
-            if channel is None:
-                _channel = _settings["polls"]["channel"]
-                if _channel == 0:
-                    return await ctx.send(ctx.language().string("settings_poll_channel_none2"))
-                return await ctx.send(ctx.language().string("settings_poll_channel_set2", channel=f"<#{_channel}>"))
-            else:
-                _settings["polls"]["channel"] = channel.id
-                return await self.settings_end(ctx, _settings, existent, "settings_poll_channel_set", channel=channel.mention)
-
-    @set_poll_channel.command(name="default", aliases=["reset"])
-    async def set_poll_channel_default(self, ctx: commands.Context):
-        """ Reset the poll channel """
-        _settings, existent = await self.settings_start(ctx, "polls")
-        _settings["polls"]["channel"] = 0
-        return await self.settings_end(ctx, _settings, existent, "settings_poll_channel_none")
-
-    @set_polls.command(name="anonymity", aliases=["anon"])
-    async def set_poll_anonymity(self, ctx: commands.Context, value: str):
-        """ Set whether voters will be shown at the end of the poll or not (yes = anonymous, no = log voters) """
-        _settings, existent = await self.settings_start(ctx, "polls")
-        if value.lower() == "yes":
-            _settings["polls"]["voter_anonymity"] = True
-        elif value.lower() == "no":
-            _settings["polls"]["voter_anonymity"] = False
-        else:
-            return await ctx.send(ctx.language().string("settings_poll_anonymity_invalid"))
-        output = "settings_poll_anonymity_yes" if _settings["polls"]["voter_anonymity"] else "settings_poll_anonymity_no"
-        return await self.settings_end(ctx, _settings, existent, output)
 
     @settings.group(name="joinrole", aliases=["autorole", "join", "jr"], case_insensitive=True)
     @commands.check(lambda ctx: ctx.bot.name in ["kyomi", "suager"])

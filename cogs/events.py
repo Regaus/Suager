@@ -124,7 +124,6 @@ class Events(commands.Cog):
         self.bot.db.execute("UPDATE punishments SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
         self.bot.db.execute("UPDATE settings    SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
         self.bot.db.execute("UPDATE starboard   SET remove=NULL WHERE guild=? AND bot=?", (guild.id, self.bot.name))
-        self.bot.db.execute("UPDATE tags        SET remove=NULL WHERE gid=?   AND bot=?", (guild.id, self.bot.name))
 
         if not self.local_config["join_message"]:
             return
@@ -147,7 +146,6 @@ class Events(commands.Cog):
         self.bot.db.execute("UPDATE punishments SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
         self.bot.db.execute("UPDATE settings    SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
         self.bot.db.execute("UPDATE starboard   SET remove=? WHERE guild=? AND bot=?", (removal_timestamp, guild.id, self.bot.name))
-        self.bot.db.execute("UPDATE tags        SET remove=? WHERE gid=?   AND bot=?", (removal_timestamp, guild.id, self.bot.name))
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):

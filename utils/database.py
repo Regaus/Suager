@@ -240,18 +240,6 @@ tables = [
         Column("bot", "TEXT", True),     # Name of the bot
         Column("type", "TEXT", True),    # Type: "guild", "channel", or "user"
     ]),
-    Table("polls", "database.db", [
-        Column("guild_id", "INTEGER", True),     # The Guild ID where the poll was started
-        Column("channel_id", "INTEGER", True),   # The Channel ID of the poll status message
-        Column("message_id", "INTEGER", True),   # The Message ID of the poll status message
-        Column("poll_id", "INTEGER", True),      # The Poll ID
-        Column("question", "TEXT", True),        # The question of the poll ([Author#1234] Question)
-        Column("voters_yes", "TEXT", True),      # List of users who voted Yes
-        Column("voters_neutral", "TEXT", True),  # List of users who voted Neutral
-        Column("voters_no", "TEXT", True),       # List of users who voted No
-        Column("expiry", "TIMESTAMP", True),     # When the poll ends
-        Column("anonymous", "BOOLEAN", True),    # Whether the poll is anonymous or not
-    ]),
     Table("punishments", "database.db", [
         Column("id", "INTEGER", True, True),   # Case ID
         Column("uid", "INTEGER", True),        # User ID, the punished
@@ -308,18 +296,6 @@ tables = [
         Column("star_message", "INTEGER", False),  # Starboard message ID
         Column("bot", "TEXT", True),               # The bot tracking the message
         Column("remove", "DATE", False),           # The date on which to delete the database entry
-    ]),
-    Table("tags", "database.db", [
-        Column("gid", "INTEGER", True),
-        Column("creator", "INTEGER", True),
-        Column("owner", "INTEGER", True),
-        Column("name", "TEXT", True),
-        Column("content", "TEXT", True),
-        Column("created", "INTEGER", True),
-        Column("edited", "INTEGER", True),
-        Column("usage", "INTEGER", True),
-        Column("bot", "TEXT", True),      # The bot for which the tag was created
-        Column("remove", "DATE", False),  # The date on which to delete the database entry
     ]),
     Table("timezones", "database.db", [
         Column("uid", "INTEGER", True),
