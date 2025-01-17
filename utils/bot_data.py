@@ -13,8 +13,6 @@ load = {
         "conworlds",
         "events",
         "info",
-        "kuastall",
-        "placeholder",
         "settings",
         "util",
     ],

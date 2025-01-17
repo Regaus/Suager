@@ -844,3 +844,7 @@
 ## v2.0.0a6 - 17 January 2025
 - Unified the handling of text and slash command errors into one common function
 - Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually
+
+## v2.0.0a7 - 17 January 2025
+- Made the `..placeholder` command hybrid, though the Placeholder extension will no longer be loaded by CobbleBot
+- Removed the Kuastall extension
