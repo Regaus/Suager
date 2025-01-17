@@ -754,6 +754,8 @@ class HubScheduleViewer:
             output_data_header[0] = "Rte"
         elif column_sizes[0] >= 5:
             output_data_header[0] = "Route"
+            if line_length_limit <= 36:
+                column_sizes[0] = 5  # Limit the Route to 5 characters for compact mode
 
         line_length = sum(column_sizes) + len(column_sizes) - 1 + data_end
         if line_length > line_length_limit:
@@ -771,7 +773,7 @@ class HubScheduleViewer:
                     size = column_sizes[i]
                     line_part = line[i]
                     # print(i, size, len(line_part))
-                    if i == 1 and len(line_part) > size:
+                    if i < 2 and len(line_part) > size:  # Make the Route and Destination fit
                         line_part = line_part[:size - 1] + "…"
                     alignment = "<" if i < 2 else ">"
                     line_data.append(f"{line_part:{alignment}{size}}")

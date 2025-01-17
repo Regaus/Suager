@@ -657,3 +657,8 @@
 ## v1.1.2 - 17 January 2025
 - Unified the handling of text and slash command errors into one common function
 - Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually
+
+## v1.1.3 - 17 January 2025
+- Added new L1/L2 and L15 stops to the Bray Station hub, as well as the Seymour Road stop (for L14 towards Southern Cross)
+- Added a new "Regaus Southbound" stop hub for bus stops that I regularly use on the commute home
+- Stop hubs in compact mode now force the route to be no longer than 5 characters, so that the destination can still fit in well
