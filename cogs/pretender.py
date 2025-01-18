@@ -1,6 +1,7 @@
 # Code adapted from: https://github.com/okbuddyhololive/polkabot
 import discord
 from aiohttp import ClientSession
+from discord import app_commands
 
 from utils import bot_data, commands, general, pretender, database
 
@@ -29,6 +30,7 @@ class Pretender(commands.Cog):
         self.webhooks = pretender.WebhookManager(self.db)
 
     def check_ignore(self, message: discord.Message) -> bool:
+        """ Returns True if the message should be ignored """
         if message.author.bot:
             return True
         if not message.content:
@@ -65,10 +67,14 @@ class Pretender(commands.Cog):
                 continue
             self.messages.delete_message(message.id)
 
-    @commands.command(name="count")
+    @commands.hybrid_command(name="count")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(content="The string to search for in messages")
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def count(self, ctx: commands.Context, *, content: str):
         """ Counts the amount of messages containing a keyword and shows the Top #10 people who said it. """
+        await ctx.defer(ephemeral=False)
         keyword = content.lower()
         occurrences = {}
         # Ignore the secret room messages for counting (For future self, maybe do the same behaviour as impersonate command?)
@@ -108,62 +114,66 @@ class Pretender(commands.Cog):
             if index == 10:  # 10th place
                 break
             index += 1
+        if ctx.interaction:
+            return await ctx.send(embed=embed)
         return await ctx.message.reply(embed=embed, mention_author=False)
 
-    @commands.command(name="optin")
+    @commands.hybrid_command(name="opt-in", aliases=["optin"])
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def opt_in(self, ctx: commands.Context):
-        """ Opts back into the message collection process, if you are in the blacklist. """
+        """ Opts back into the message collection process, if you have opted out. """
+        await ctx.defer(ephemeral=True)
         if not self.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (ctx.author.id,)):
             return await ctx.send("You're already opted in.")
 
         self.db.execute("DELETE FROM pretender_blacklist WHERE uid=?", (ctx.author.id,))
         return await ctx.send("You're now opted in.")
 
-    @commands.command(name="optout")
+    @commands.hybrid_command(name="opt-out", aliases=["optout"])
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def opt_out(self, ctx: commands.Context):
-        """ Opts out of the message collection process, which will all you to the blacklist for message logging. """
+        """ Opts out of the message collection process, so that your messages will no longer be stored. """
+        await ctx.defer(ephemeral=True)
         if self.db.fetchrow("SELECT * FROM pretender_blacklist WHERE uid=?", (ctx.author.id,)):
             return await ctx.send("You're already opted out.")
-
-        def check(reaction, user):
-            return user == ctx.author and str(reaction.emoji) == "✅"
 
         message = await ctx.send(f"{general.username(ctx.author)}, Are you sure you want to opt out?\n"
                                  f"All your saved messages will be deleted from the database. "
                                  f"You may opt back in at any time, but the messages cannot be restored.\n"
                                  f"The impersonate command can still be used on you, but it will only use others' messages.\n"
                                  f"React with ✅ to confirm.")
-        await message.add_reaction("✅")
+        view = pretender.OptOutConfirmation(ctx.author, message, ctx, message_manager=self.messages, db=self.db)
+        return await message.edit(view=view)
 
-        try:
-            await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
-        except TimeoutError:
-            return await message.edit(content="Didn't get a reaction in time, so you're still opted in.")
-
-        self.messages.remove(ctx.author)
-        self.db.execute("INSERT INTO pretender_blacklist VALUES (?)", (ctx.author.id,))
-        await message.delete()
-        return await ctx.send("Successfully deleted all message data from you and added you to the log blacklist.")
-
-    @commands.command(name="impersonate")
+    @commands.hybrid_command(name="impersonate")
     @commands.cooldown(rate=1, per=7.5, type=commands.BucketType.user)
     @commands.bot_has_permissions(manage_webhooks=True, manage_messages=True)
+    @app_commands.describe(victim="The user you want to impersonate")
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=False)
     async def impersonate(self, ctx: commands.Context, victim: discord.User = None):
-        """ Impersonates a user (or you), based on their messages that have been collected.
+        """ Try to impersonate a user based on their previous messages.
+
         If the user has opted out of message collecting, or there are not enough messages, it will be based on all messages in the database. """
+        await ctx.defer(ephemeral=True)
         victim = victim or ctx.author
         session = ClientSession()
         try:  # For secret rooms, generate message based on the messages already there
             message = self.messages.generate(victim, ctx.channel.id if pretender.separation_condition(ctx.channel) else None)
             webhook = await self.webhooks.get(ctx.channel, session)
-
-            try:
-                await ctx.message.delete()
-            except (discord.NotFound, discord.Forbidden):
-                # If we can't delete the ctx message, then so be it, just tell the user about it
-                await ctx.send("Failed to delete original message...", delete_after=5)
-
+            # Send the message first, so that we can handle the invocation context in a clean way afterwards
             await webhook.send(message, username=victim.display_name, avatar_url=str(victim.display_avatar), allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False))
+
+            if not ctx.interaction:
+                try:
+                    await ctx.message.delete()
+                except (discord.NotFound, discord.Forbidden):
+                    # If we can't delete the ctx message, then so be it, just tell the user about it
+                    await ctx.send("Failed to delete original message...", delete_after=5)
+            else:
+                await ctx.send("Success!", ephemeral=True, delete_after=5)
         except Exception:
             raise
         finally:

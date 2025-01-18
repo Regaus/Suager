@@ -8,6 +8,7 @@ import discord
 import markovify
 from aiohttp import ClientSession
 
+from utils import views, commands, database
 from utils.database import Database
 
 
@@ -122,3 +123,32 @@ class WebhookManager:
 
     def remove(self, channel: discord.TextChannel):
         return self.db.execute("DELETE FROM pretender_webhooks WHERE channel=?", (channel.id,))
+
+
+class OptOutConfirmation(views.InteractiveView):
+    def __init__(self, sender: discord.Member, message: discord.Message, ctx: commands.Context | discord.Interaction = None,
+                 *, message_manager: MessageManager, db: database.Database):
+        super().__init__(sender=sender, message=message, timeout=120, ctx=ctx)
+        self.messages = message_manager
+        self.db = db
+
+    async def on_timeout(self):
+        """ Notify the user that the view timed out before closing """
+        await self.message.edit(content="This view has timed out. Nothing has been changed.", view=None)
+        self.stop()
+
+    @discord.ui.button(label="Opt out", emoji="✅", style=discord.ButtonStyle.primary, row=0)
+    async def opt_out(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Confirm opting out """
+        await interaction.response.defer()  # type: ignore
+        self.messages.remove(self.sender)
+        self.db.execute("INSERT INTO pretender_blacklist VALUES (?)", (self.sender.id,))
+        await self.message.edit(content="Successfully deleted all your messages and added you to the logging blacklist.", view=None)
+        self.stop()
+
+    @discord.ui.button(label="Cancel", emoji="⏹️", style=discord.ButtonStyle.secondary, row=0)
+    async def close_view(self, interaction: discord.Interaction, _: discord.ui.Button):
+        """ Close the view but keep the message """
+        await interaction.response.defer()  # type: ignore
+        await self.message.delete()
+        self.stop()

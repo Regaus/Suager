@@ -109,3 +109,7 @@
 ## v1.4.0a2 - 17 January 2025
 - Unified the handling of text and slash command errors into one common function
 - Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually
+
+## v1.4.0 - 17 January 2025
+- Made Pretender commands hybrid
+  - `//optout` now uses a proper view to confirm opting out
