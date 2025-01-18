@@ -7,11 +7,14 @@ import re
 import traceback
 from io import BytesIO
 from sys import stderr
-from typing import Iterable
+from typing import Iterable, TYPE_CHECKING
 
 import discord
 
-from utils import bot_data, logger, time
+from utils import logger, time
+
+if TYPE_CHECKING:
+    from utils import bot_data
 
 
 def get_config() -> dict:

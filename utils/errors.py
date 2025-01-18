@@ -1,7 +1,14 @@
-import discord
-from discord import app_commands
+from __future__ import annotations
 
-from utils import commands, general, interactions, logger, time, languages
+from typing import TYPE_CHECKING
+
+import discord
+
+from utils import general, interactions, logger, time
+
+if TYPE_CHECKING:
+    from discord import app_commands
+    from utils import commands, languages
 
 
 def _get_role_name(ctx: commands.Context, role_arg: str | int) -> str:

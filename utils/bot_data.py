@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from discord import Interaction
-from discord.app_commands import AppCommandError
+from typing import TYPE_CHECKING
 
 from utils import commands, languages, permissions, errors
+
+if TYPE_CHECKING:
+    from discord import Interaction
+    from discord.app_commands import AppCommandError
 
 # List of all cogs each bot needs to load
 load = {
