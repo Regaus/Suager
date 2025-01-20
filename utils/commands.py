@@ -6,6 +6,7 @@ from types import TracebackType
 from typing import Any, Type, TypeVar
 
 from discord import Interaction
+from discord.app_commands import Group as SlashGroup
 from discord.context_managers import Typing
 from discord.ext.commands import *
 from discord.utils import MISSING
@@ -17,6 +18,7 @@ CogT = TypeVar("CogT", bound="Cog")
 CommandT = TypeVar("CommandT", bound="Command")
 ContextT = TypeVar("ContextT", bound="Context")
 GroupT = TypeVar("GroupT", bound="Group")
+SlashGroupT = TypeVar("SlashGroupT", bound="SlashGroup")
 HookT = TypeVar("HookT", bound="Hook")
 ErrorT = TypeVar("ErrorT", bound="Error")
 
@@ -61,6 +63,23 @@ class Group(Group):
     #         "description": self.short_doc or "no description",
     #         "options": [option for option in options if option is not None],
     #     }
+
+
+def slash_group(name: str = MISSING, description: str = MISSING, cls: Type[SlashGroupT] = MISSING, **attrs: Any):
+    """ Create a slash command group """
+    if cls is MISSING:
+        cls = SlashGroup
+
+    def decorator(_func) -> SlashGroupT:
+        if isinstance(_func, SlashGroup):
+            raise TypeError("Callback is already a slash command group.")
+
+        nonlocal description
+        if description is MISSING:
+            description = _func.__doc__
+        return cls(name=name, description=description, **attrs)
+
+    return decorator
 
 
 class Context(Context):

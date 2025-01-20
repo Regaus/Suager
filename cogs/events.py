@@ -108,7 +108,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_command_completion(self, ctx: commands.Context):
         """ Triggered when a command successfully completes """
-        guild = getattr(ctx.guild, "name", "Private Message")
+        guild = getattr(ctx.guild, "name", "Private Message") or "Private Server"  # Guilds where the bot isn't installed have an empty name
         content = ctx.message.clean_content if ctx.interaction is None else interactions.get_command_str(ctx.interaction)
         send = f"{time.time()} > {self.bot.full_name} > {guild} > {ctx.author} ({ctx.author.id}) > {content}"
         logger.log(self.bot.name, "commands", send)

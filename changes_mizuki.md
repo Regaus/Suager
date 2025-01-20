@@ -478,3 +478,10 @@
 - Added an `on_error` handler for all slash commands, so that I no longer have to add error handlers individually
 - Added an `interactions.log_interaction()` call to the slash versions of Moderation commands
 - Fixed `m!colourify` not working due to a missing await
+
+## v2.0.0a7 - 19 January 2025
+- Made Social commands hybrid
+  - These commands are now user-installable and available in DMs
+  - Made the text versions no longer guild-only too
+- Updated all Social commands' cooldowns to 5 seconds
+- Fixed the guild name showing up empty in user-install contexts

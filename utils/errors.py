@@ -3,12 +3,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import discord
+from discord import app_commands
 
-from utils import general, interactions, logger, time
+from utils import commands, general, interactions, logger, time
 
 if TYPE_CHECKING:
-    from discord import app_commands
-    from utils import commands, languages
+    from utils import languages
+
+
+class ExternalAppPermissionRequired(app_commands.MissingPermissions):
+    def __init__(self):
+        super().__init__(["use_external_apps"])
 
 
 def _get_role_name(ctx: commands.Context, role_arg: str | int) -> str:
@@ -33,7 +38,7 @@ async def on_command_error(ctx: commands.Context | discord.Interaction, error: c
         content = ctx.message.clean_content
     else:
         content = interactions.get_command_str(ctx.interaction)
-    guild = getattr(ctx.guild, "name", "Private Message")
+    guild = getattr(ctx.guild, "name", "Private Message") or "Private Server"
     error_msg = f"{type(error).__name__}: {str(error)}"
     language = ctx.language()
     ignore = True  # Ignore by default, aside from a few rare cases where it does actually matter
@@ -106,6 +111,8 @@ async def on_command_error(ctx: commands.Context | discord.Interaction, error: c
     elif isinstance(error, commands.BotMissingAnyRole):  # The bot needs to have at least one of some roles to access this command
         roles: list[str] = [_get_role_name(ctx, role) for role in error.missing_roles]
         message = language.string("events_error_role_bot_many", roles=language.join(roles, final="generic_or"))
+    elif isinstance(error, ExternalAppPermissionRequired):
+        message = language.string("events_error_user_install")
     elif isinstance(error, (commands.MissingPermissions, app_commands.MissingPermissions)):  # You do not have sufficient permissions to run this command
         permissions: str = _get_permissions(language, error.missing_permissions)
         message = language.string("events_error_permissions", perms=permissions)

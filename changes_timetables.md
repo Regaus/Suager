@@ -665,3 +665,6 @@
 
 ## v1.1.3.1 - 17 January 2025
 - Fixed certain utilities (including `utils.timetables`) not loading when being imported individually due to circular imports
+
+## v1.1.3.2 - 19 January 2025
+- Fixed the guild name showing up empty in user-install contexts

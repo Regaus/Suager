@@ -25,6 +25,7 @@ def log_interaction(interaction: discord.Interaction):
     """ Log the interaction from context menus """
     command = get_command_str(interaction)
     bot = interaction.client  # bot_data.Bot
-    message = f"{time.time()} > {bot.full_name} > {interaction.guild or "Private Message"} > {interaction.user} ({interaction.user.id}) > {command}"
+    guild = getattr(interaction.guild, "name", "Private Message") or "Private Server"  # Guilds where the bot isn't installed have an empty name
+    message = f"{time.time()} > {bot.full_name} > {guild} > {interaction.user} ({interaction.user.id}) > {command}"
     logger.log(bot.name, "commands", message)
     print(message)

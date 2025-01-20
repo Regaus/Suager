@@ -1,24 +1,24 @@
 {
   "suager": {
     "short_version": "7.8",
-    "version": "8.0.0a12",
+    "version": "8.0.0a13",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1737155409
+    "last_update": 1737331955
   },
   "cobble": {
     "short_version": "1.9",
-    "version": "2.0.0a7",
+    "version": "2.0.0a8",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1737144638
+    "last_update": 1737331955
   },
   "kyomi": {
     "short_version": "1.6",
-    "version": "2.0.0a6",
+    "version": "2.0.0a7",
     "first_version": 1623891776,
     "major_release": 1642621994,
-    "last_update": 1737077833
+    "last_update": 1737331955
   },
   "kyomi2": {
     "short_version": "1.0",
@@ -36,16 +36,16 @@
   },
   "pretender": {
     "short_version": "1.4",
-    "version": "1.4.0",
+    "version": "1.4.0.1",
     "first_version": 1658334660,
     "major_release": 1658357872,
-    "last_update": 1737158540
+    "last_update": 1737331955
   },
   "timetables": {
     "short_version": "1.1",
-    "version": "1.1.3",
+    "version": "1.1.3.2",
     "first_version": 1668995199,
     "major_release": 1725408000,
-    "last_update": 1737146682
+    "last_update": 1737331955
   }
 }

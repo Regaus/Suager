@@ -848,3 +848,6 @@
 ## v2.0.0a7 - 17 January 2025
 - Made the `..placeholder` command hybrid, though the Placeholder extension will no longer be loaded by CobbleBot
 - Removed the Kuastall extension
+
+## v2.0.0a8 - 19 January 2025
+- Fixed the guild name showing up empty in user-install contexts

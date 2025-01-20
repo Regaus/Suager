@@ -1942,3 +1942,10 @@
 
 ## v8.0.0a12 - 17 January 2025
 - Removed Polls and Tags, as they are no longer used and not worth maintaining
+
+## v8.0.0a13 - 19 January 2025
+- Made Social commands hybrid
+  - These commands are now user-installable and available in DMs
+  - Made the text versions no longer guild-only too
+- Updated all Social commands' cooldowns to 5 seconds
+- Fixed the guild name showing up empty in user-install contexts

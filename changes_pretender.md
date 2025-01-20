@@ -113,3 +113,6 @@
 ## v1.4.0 - 17 January 2025
 - Made Pretender commands hybrid
   - `//optout` now uses a proper view to confirm opting out
+
+## v1.4.0.1 - 19 January 2025
+- Fixed the guild name showing up empty in user-install contexts

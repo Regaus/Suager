@@ -202,6 +202,7 @@
   "events_error_owner": "{emotes.Deny} Only the bot owner can execute this command.",
   "events_error_target": "{emotes.Deny} Only the target of the command can interact with this message.",
   "events_error_temporary_view": "{emotes.Deny} Due to Discord's limitations, the message can no longer be edited. Please run the command again.",
+  "events_error_user_install": "You must have the Use External Apps permission to be able to use this command in a user install context.",
   "events_user_joined": "User joined the server",
   "events_user_left": "User left the server",
 
@@ -1151,6 +1152,7 @@
   "social_nsfw_suck_never2": "{author} has not sucked {target} off so far",
   "social_nsfw_suck_never5": "{author} has still never sucked {target} off so far",
   "social_nsfw_threesome": "**{author}** is now having a threesome with **{target1}** and **{target2}**...",
+  "social_nsfw_threesome_duplicate": "Cloning has not been invented yet, so you have to specify two different members.",
 
   "starboard_attachments": "Attachments and Embeds",
   "starboard_attachment_audio": "Attached audio",
