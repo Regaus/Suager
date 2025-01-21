@@ -1,5 +1,4 @@
 import random
-from typing import Any, Awaitable, Callable, Union
 
 import discord
 from discord import app_commands
@@ -128,17 +127,6 @@ class Social(commands.Cog):
                 # Default string: "Target has x'd Author back x times"
                 footer2 = language.string(f"social_{action}_frequency_back", author=a2, target=t2, frequency=language.frequency(received))
         return title, f"{footer1}\n{footer2}"
-
-    @staticmethod
-    async def _slash_command(command_callback: Union[Callable[[commands.Context], Awaitable[Any]],
-                                                     Callable[[commands.Context, discord.Member], Awaitable[Any]],
-                                                     Callable[[commands.Context, discord.Member, discord.Member], Awaitable[Any]]],
-                             interaction: discord.Interaction, *members: discord.Member):
-        """ Wrapper for a slash command invocation, taking in 0, 1, or 2 members """
-        ctx = await commands.Context.from_interaction(interaction)
-        await ctx.defer(ephemeral=False)
-        interactions.log_interaction(interaction)
-        return await command_callback(ctx, *members)
 
     # Command wrappers for text and slash commands
     async def pat_command(self, ctx: commands.Context, user: discord.Member):
@@ -909,121 +897,121 @@ class Social(commands.Cog):
     @app_commands.describe(member="The member you wish to headpat")
     async def slash_pat(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a headpat """
-        return await self._slash_command(self.pat_command, interaction, member)
+        return await interactions.slash_command(self.pat_command, interaction, member)
 
     @slash_social.command(name="hug")
     @app_commands.describe(member="The member you wish to hug")
     async def slash_hug(self, interaction: discord.Interaction, member: discord.Member):
         """ Hug someone """
-        return await self._slash_command(self.hug_command, interaction, member)
+        return await interactions.slash_command(self.hug_command, interaction, member)
 
     @slash_social.command(name="cuddle")
     @app_commands.describe(member="The member you wish to cuddle")
     async def slash_cuddle(self, interaction: discord.Interaction, member: discord.Member):
         """ Cuddle someone """
-        return await self._slash_command(self.cuddle_command, interaction, member)
+        return await interactions.slash_command(self.cuddle_command, interaction, member)
 
     @slash_social.command(name="lick")
     @app_commands.describe(member="The member you wish to lick")
     async def slash_lick(self, interaction: discord.Interaction, member: discord.Member):
         """ Lick someone """
-        return await self._slash_command(self.lick_command, interaction, member)
+        return await interactions.slash_command(self.lick_command, interaction, member)
 
     @slash_social.command(name="kiss")
     @app_commands.describe(member="The member you wish to kiss")
     async def slash_kiss(self, interaction: discord.Interaction, member: discord.Member):
         """ Kiss someone """
-        return await self._slash_command(self.kiss_command, interaction, member)
+        return await interactions.slash_command(self.kiss_command, interaction, member)
 
     @slash_social.command(name="handhold")
     @app_commands.describe(member="The member whose hand you wish to hold")
     async def slash_handhold(self, interaction: discord.Interaction, member: discord.Member):
         """ Hold someone's hand """
-        return await self._slash_command(self.handhold_command, interaction, member)
+        return await interactions.slash_command(self.handhold_command, interaction, member)
 
     @slash_social.command(name="bite")
     @app_commands.describe(member="The member you wish to bite")
     async def slash_bite(self, interaction: discord.Interaction, member: discord.Member):
         """ Bite someone """
-        return await self._slash_command(self.bite_command, interaction, member)
+        return await interactions.slash_command(self.bite_command, interaction, member)
 
     @slash_social.command(name="nibble")
     @app_commands.describe(member="The member you wish to nibble")
     async def slash_nibble(self, interaction: discord.Interaction, member: discord.Member):
         """ Nibble someone """
-        return await self._slash_command(self.nibble_command, interaction, member)
+        return await interactions.slash_command(self.nibble_command, interaction, member)
 
     @slash_social.command(name="slap")
     @app_commands.describe(member="The member you wish to slap")
     async def slash_slap(self, interaction: discord.Interaction, member: discord.Member):
         """ Slap someone """
-        return await self._slash_command(self.slap_command, interaction, member)
+        return await interactions.slash_command(self.slap_command, interaction, member)
 
     @slash_social.command(name="sniff")
     @app_commands.describe(member="The member you wish to sniff")
     async def slash_sniff(self, interaction: discord.Interaction, member: discord.Member):
         """ Sniff someone """
-        return await self._slash_command(self.sniff_command, interaction, member)
+        return await interactions.slash_command(self.sniff_command, interaction, member)
 
     @slash_social.command(name="highfive")
     @app_commands.describe(member="The member you wish to give a high five to")
     async def slash_highfive(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a high five """
-        return await self._slash_command(self.highfive_command, interaction, member)
+        return await interactions.slash_command(self.highfive_command, interaction, member)
 
     @slash_social.command(name="feed")
     @app_commands.describe(member="The member you wish to give food to")
     async def slash_feed(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone food """
-        return await self._slash_command(self.feed_command, interaction, member)
+        return await interactions.slash_command(self.feed_command, interaction, member)
 
     @slash_social.command(name="poke")
     @app_commands.describe(member="The member you wish to poke")
     async def slash_poke(self, interaction: discord.Interaction, member: discord.Member):
         """ Poke someone """
-        return await self._slash_command(self.poke_command, interaction, member)
+        return await interactions.slash_command(self.poke_command, interaction, member)
 
     @slash_social.command(name="boop")
     @app_commands.describe(member="The member you wish to boop")
     async def slash_boop(self, interaction: discord.Interaction, member: discord.Member):
         """ Boop someone """
-        return await self._slash_command(self.boop_command, interaction, member)
+        return await interactions.slash_command(self.boop_command, interaction, member)
 
     @slash_social.command(name="tickle")
     @app_commands.describe(member="The member you wish to tickle")
     async def slash_tickle(self, interaction: discord.Interaction, member: discord.Member):
         """ Tickle someone """
-        return await self._slash_command(self.tickle_command, interaction, member)
+        return await interactions.slash_command(self.tickle_command, interaction, member)
 
     @slash_social.command(name="punch")
     @app_commands.describe(member="The member you wish to punch")
     async def slash_punch(self, interaction: discord.Interaction, member: discord.Member):
         """ Punch someone """
-        return await self._slash_command(self.punch_command, interaction, member)
+        return await interactions.slash_command(self.punch_command, interaction, member)
 
     @slash_social.command(name="tuck")
     @app_commands.describe(member="The member you wish to tuck into bed")
     async def slash_tuck(self, interaction: discord.Interaction, member: discord.Member):
         """ Tuck someone into bed """
-        return await self._slash_command(self.sniff_command, interaction, member)
+        return await interactions.slash_command(self.sniff_command, interaction, member)
 
     @slash_social.command(name="wave")
     @app_commands.describe(member="The member you wish to wave at")
     async def slash_wave(self, interaction: discord.Interaction, member: discord.Member):
         """ Wave at someone """
-        return await self._slash_command(self.wave_command, interaction, member)
+        return await interactions.slash_command(self.wave_command, interaction, member)
 
     @slash_social.command(name="bean")
     @app_commands.describe(member="The member you wish to bean")
     async def slash_bean(self, interaction: discord.Interaction, member: discord.Member):
         """ Bean (fake-ban) someone """
-        return await self._slash_command(self.bean_command, interaction, member)
+        return await interactions.slash_command(self.bean_command, interaction, member)
 
     @slash_social.command(name="kill")
     @app_commands.describe(member="The member you wish to kill")
     async def slash_kill(self, interaction: discord.Interaction, member: discord.Member):
         """ Kill someone """
-        return await self._slash_command(self.kill_command, interaction, member)
+        return await interactions.slash_command(self.kill_command, interaction, member)
 
     @commands.slash_group(name="emotion")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -1037,38 +1025,38 @@ class Social(commands.Cog):
     @slash_emotion.command(name="sleepy")
     async def slash_sleepy(self, interaction: discord.Interaction):
         """ Show that you are sleepy """
-        return await self._slash_command(self.sleepy_command, interaction)
+        return await interactions.slash_command(self.sleepy_command, interaction)
 
     @slash_emotion.command(name="cry")
     async def slash_cry(self, interaction: discord.Interaction):
         """ Show that you are crying """
-        return await self._slash_command(self.cry_command, interaction)
+        return await interactions.slash_command(self.cry_command, interaction)
 
     @slash_emotion.command(name="blush")
     async def slash_blush(self, interaction: discord.Interaction):
         """ Show that you are blushing """
-        return await self._slash_command(self.blush_command, interaction)
+        return await interactions.slash_command(self.blush_command, interaction)
 
     @slash_emotion.command(name="smile")
     async def slash_smile(self, interaction: discord.Interaction):
         """ Show that you are smiling """
-        return await self._slash_command(self.smile_command, interaction)
+        return await interactions.slash_command(self.smile_command, interaction)
 
     @slash_emotion.command(name="laugh")
     @app_commands.describe(member="The member you wish to laugh at")
     async def slash_laugh(self, interaction: discord.Interaction, member: discord.Member = None):
         """ Laugh at something or someone """
-        return await self._slash_command(self.laugh_command, interaction, member)
+        return await interactions.slash_command(self.laugh_command, interaction, member)
 
     @slash_emotion.command(name="smug")
     async def slash_smug(self, interaction: discord.Interaction):
         """ What have you done? """
-        return await self._slash_command(self.smug_command, interaction)
+        return await interactions.slash_command(self.smug_command, interaction)
 
     @slash_emotion.command(name="dance")
     async def slash_dance(self, interaction: discord.Interaction):
         """ Show that you are dance """
-        return await self._slash_command(self.dance_command, interaction)
+        return await interactions.slash_command(self.dance_command, interaction)
 
     @commands.slash_group(name="give")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
@@ -1082,43 +1070,43 @@ class Social(commands.Cog):
     @app_commands.describe(member="The member you wish to give a cookie to")
     async def slash_cookie(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a cookie """
-        return await self._slash_command(self.cookie_command, interaction, member)
+        return await interactions.slash_command(self.cookie_command, interaction, member)
 
     @slash_give.command(name="lemon")
     @app_commands.describe(member="The member you wish to give a lemon to")
     async def slash_lemon(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a lemon """
-        return await self._slash_command(self.lemon_command, interaction, member)
+        return await interactions.slash_command(self.lemon_command, interaction, member)
 
     @slash_give.command(name="carrot")
     @app_commands.describe(member="The member you wish to give a carrot to")
     async def slash_carrot(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a carrot """
-        return await self._slash_command(self.carrot_command, interaction, member)
+        return await interactions.slash_command(self.carrot_command, interaction, member)
 
     @slash_give.command(name="fruit")
     @app_commands.describe(member="The member you wish to give a fruit to")
     async def slash_fruit(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a fruit """
-        return await self._slash_command(self.fruit_command, interaction, member)
+        return await interactions.slash_command(self.fruit_command, interaction, member)
 
     @slash_give.command(name="pineapple")
     @app_commands.describe(member="The member you wish to give a pineapple to")
     async def slash_pineapple(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a pineapple """
-        return await self._slash_command(self.pineapple_command, interaction, member)
+        return await interactions.slash_command(self.pineapple_command, interaction, member)
 
     @slash_give.command(name="cheese")
     @app_commands.describe(member="The member you wish to give a piece of cheese to")
     async def slash_cheese(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a piece of cheese """
-        return await self._slash_command(self.cheese_command, interaction, member)
+        return await interactions.slash_command(self.cheese_command, interaction, member)
 
     @slash_give.command(name="monke")
     @app_commands.describe(member="The member you wish to give a monke to")
     async def slash_monkey(self, interaction: discord.Interaction, member: discord.Member):
         """ Give someone a monke """
-        return await self._slash_command(self.monkey_command, interaction, member)
+        return await interactions.slash_command(self.monkey_command, interaction, member)
 
     async def load_images(self):
         """ Load all images, so we won't have to do it during runtime"""
@@ -1266,25 +1254,25 @@ class SocialSuager(Social, name="Social"):
     @app_commands.describe(member="The member you wish to fuck")
     async def slash_fuck(self, interaction: discord.Interaction, member: discord.Member):
         """ Have sexual intercourse with someone """
-        return await self._slash_command(self.fuck_command, interaction, member)
+        return await interactions.slash_command(self.fuck_command, interaction, member)
 
     @slash_nsfw.command(name="suck")
     @app_commands.describe(member="The member you wish to suck off")
     async def slash_suck(self, interaction: discord.Interaction, member: discord.Member):
         """ Suck someone off """
-        return await self._slash_command(self.suck_command, interaction, member)
+        return await interactions.slash_command(self.suck_command, interaction, member)
 
     @slash_nsfw.command(name="facefuck")
     @app_commands.describe(member="The member you wish to face-fuck")
     async def slash_face_fuck(self, interaction: discord.Interaction, member: discord.Member):
         """ Face-fuck someone """
-        return await self._slash_command(self.face_fuck_command, interaction, member)
+        return await interactions.slash_command(self.face_fuck_command, interaction, member)
 
     @slash_nsfw.command(name="threesome")
     @app_commands.describe(member1="The first member you wish to have a threesome with", member2="The second member you wish to have a threesome with")
     async def slash_threesome(self, interaction: discord.Interaction, member1: discord.Member, member2: discord.Member):
         """ Have a threesome with two other people """
-        return await self._slash_command(self.threesome_command, interaction, member1, member2)
+        return await interactions.slash_command(self.threesome_command, interaction, member1, member2)  # type: ignore
 
 
 async def setup(bot: bot_data.Bot):

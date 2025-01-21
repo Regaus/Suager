@@ -6,7 +6,7 @@ from types import TracebackType
 from typing import Any, Type, TypeVar
 
 from discord import Interaction
-from discord.app_commands import Group as SlashGroup
+from discord.app_commands import Group as AppCmdGroup
 from discord.context_managers import Typing
 from discord.ext.commands import *
 from discord.utils import MISSING
@@ -80,6 +80,12 @@ def slash_group(name: str = MISSING, description: str = MISSING, cls: Type[Slash
         return cls(name=name, description=description, **attrs)
 
     return decorator
+
+
+class SlashGroup(AppCmdGroup):
+    def group(self, *, name: str = MISSING, description: str = MISSING, cls: Type[SlashGroupT] = MISSING, **attrs: Any):
+        """ Create a subgroup in a slash command """
+        return slash_group(name=name, description=description, cls=cls, parent=self, **attrs)
 
 
 class Context(Context):

@@ -1,7 +1,9 @@
+from typing import Any, Awaitable, Callable
+
 import discord
 from discord import app_commands
 
-from utils import time, logger
+from utils import time, logger, commands
 
 
 def get_command_str(interaction: discord.Interaction) -> str:
@@ -29,3 +31,12 @@ def log_interaction(interaction: discord.Interaction):
     message = f"{time.time()} > {bot.full_name} > {guild} > {interaction.user} ({interaction.user.id}) > {command}"
     logger.log(bot.name, "commands", message)
     print(message)
+
+
+async def slash_command[**P](command_callback: Callable[[commands.Context, P], Awaitable[Any]] | Callable[[commands.Context], Awaitable[Any]],
+                             interaction: discord.Interaction, *args: P, ephemeral: bool = False):
+    """ Wrapper for a slash command invocation that executes the same code as the text command equivalent """
+    ctx = await commands.Context.from_interaction(interaction)
+    await ctx.defer(ephemeral=ephemeral)
+    log_interaction(interaction)
+    return await command_callback(ctx, *args)

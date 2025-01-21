@@ -485,3 +485,10 @@
   - Made the text versions no longer guild-only too
 - Updated all Social commands' cooldowns to 5 seconds
 - Fixed the guild name showing up empty in user-install contexts
+
+## v2.0.0a8 - 20 January 2025
+- Made a generic handler for slash command invocations that automatically defers the interaction
+- Made Ratings commands hybrid
+- Removed a lot of the custom values for Ratings commands
+- Changed the `//iq` command to use `random.gauss(100, 15)` instead of `random.uniform(50, 150)`
+- Added a way to create a subgroup inside a slash command
