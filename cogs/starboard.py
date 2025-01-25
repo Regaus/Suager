@@ -2,8 +2,9 @@ import json
 from typing import NamedTuple
 
 import discord
+from discord import app_commands
 
-from utils import bot_data, commands, general, logger, time
+from utils import bot_data, commands, general, logger, time, messages
 
 
 class Starboard(commands.Cog):
@@ -28,7 +29,7 @@ class Starboard(commands.Cog):
             if server is None:
                 return
             guild = self.bot.get_guild(server)
-            _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=?", (server,))
+            _settings = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=? AND bot=?", (server, self.bot.name))
             if _settings:
                 __settings = json.loads(_settings['data'])
                 try:
@@ -86,140 +87,40 @@ class Starboard(commands.Cog):
             else:
                 minimum = __settings["starboard"]["minimum"]
             if new and stars != 0:
-                self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None, self.bot.name, None))
+                self.bot.db.execute("INSERT INTO starboard VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (message, channel, _author, server, stars, None, False, self.bot.name, None))
             else:
                 self.bot.db.execute("UPDATE starboard SET stars=? WHERE message=? AND bot=?", (stars, message, self.bot.name))
-            logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {message} in #{_channel.name} ({guild.name}) now has {stars} stars.")
+            logger.log(self.bot.name, "starboard", f"{time.time()} > {self.bot.full_name} > {guild.name} ({payload.guild_id}) > #{_channel.name} > Message ID {message} now has {stars} stars.")
 
             async def send_starboard_message():
+                nonlocal _message
                 embed = discord.Embed(colour=0xffff00)
                 author = _message.author
                 author_name = general.username(author)
                 author_url = str(author.display_avatar.replace(size=64, format="png"))
                 embed.set_author(name=author_name, icon_url=author_url)
+                jump_url = _message.jump_url
+                if _message.message_snapshots:
+                    embed.title = language.string("starboard_message_forwarded")
+                    message_snapshot = _message.message_snapshots[0]  # Forwarded message
+                    if message_snapshot.cached_message:
+                        _message = message_snapshot.cached_message  # type: ignore
+                    else:
+                        _message = message_snapshot
                 embed.description = _message.content
+                embed.add_field(name=language.string("starboard_message_jump"), value=language.string("starboard_message_jump2", url=jump_url), inline=False)
 
-                # The first attachment has its content embedded, if possible
-                # Any other attachments are tagged along as links or included in extra embeds
-                # If there is an embed in the original message, it's also included after the main embed
-                if _message.attachments:
-                    count = len(_message.attachments)
-                    start = 1
-                    att = _message.attachments[0]
-                    content = str(att.content_type)
-                    if content.startswith("image/"):  # the attachment contains an image
-                        embed.set_image(url=att.url)
-                    # elif content.startswith("video/"):
-                    #     embed.set_video(url=att.url)
-                    else:
-                        start = 0
-                else:
-                    count, start = 0, 0
+                embeds_and_links = await messages.embed_or_link_attachments(_message, language, embed, salvage_mode=False)
+                embed = embeds_and_links.main_embed
 
-                # Set a few variables for the embedded and linked attachments
-                embed_limit = 9
-                embeds = []
-                links = []
-                embedded = 0   # Embedded attachments
-                embedded2 = 0  # Embedded embeds
-                linked = 0     # Linked attachments
-                linked2 = 0    # Linked embeds
-                ignored = 0    # Ignored embeds
-
-                # Texts for linked attachments
-                text_aa = language.string("starboard_attachment_audio")
-                text_ai = language.string("starboard_attachment_image")
-                text_av = language.string("starboard_attachment_video")
-                text_ao = language.string("starboard_attachment_other")
-                text_ei = language.string("starboard_embed_image")
-                text_ev = language.string("starboard_embed_video")
-
-                # Try to embed or link all remaining attachments
-                if count > start:
-                    for att in _message.attachments[start:]:
-                        content = str(att.content_type)
-                        if len(embeds) < embed_limit and content.startswith("image/"):
-                            _embed = discord.Embed()  # type="image", url=att.url)
-                            _embed._image = {"url": att.url, "proxy_url": att.proxy_url, "height": att.height, "width": att.width}
-                            # _embed.set_image(url=att.url)
-                            embeds.append(_embed)
-                            embedded += 1
-                        else:
-                            if content.startswith("image/"):
-                                text = text_ai
-                            elif content.startswith("video/"):
-                                text = text_av
-                            elif content.startswith("audio/"):
-                                text = text_aa
-                            else:
-                                text = text_ao
-                            links.append(f"[{text}]({att.url}) - {att.filename}")
-                            # links.append(att.url)
-                            linked += 1
-
-                # Add the message's embeds to the other ones (up to 9 total)
-                for __embed in _message.embeds:
-                    if len(embeds) < embed_limit:
-                        if __embed.type == "image":
-                            # Note: This assumes that all image embeds are from discord, where it uses thumbnail instead of image for whatever odd reason
-                            if not hasattr(embed, "_image"):  # if the image has not yet been set to the current embed
-                                embed._image = __embed._thumbnail  # set that embed's image as our image
-                            else:
-                                _embed = discord.Embed()
-                                _embed._image = __embed._thumbnail
-                                embeds.append(_embed)
-                                embedded2 += 1
-                        elif __embed.type == "video":
-                            links.append(f"[{text_ev}]({__embed.video.url}) - {__embed.video.url.split('/')[-1].split('?')[0]}")
-                            linked2 += 1
-                        else:
-                            embeds.append(__embed)
-                            embedded2 += 1
-                    else:
-                        if __embed.type == "image":
-                            # Note: This assumes that all image embeds are from discord, where it uses thumbnail instead of image for whatever odd reason
-                            link = str(__embed.thumbnail.url)
-                            filename = link.split('/')[-1].split("?")[0]
-                            links.append(f"[{text_ei}]({link}) - {filename}")
-                            linked2 += 1
-                        elif __embed.type == "video":
-                            link = str(__embed.video.url)
-                            filename = link.split('/')[-1].split("?")[0]
-                            links.append(f"[{text_ev}]({link}) - {filename}")
-                            linked2 += 1
-                        else:
-                            # Only image and video embeds will be linked, others are ignored.
-                            ignored += 1
-
-                embed.add_field(name=language.string("starboard_message_jump"), value=language.string("starboard_message_jump2", url=_message.jump_url), inline=False)
-                if any((embedded, embedded2, linked, linked2, ignored)):
-                    status = []
-                    if embedded:
-                        status.append(language.string("starboard_message_embedded", count=language.plural(embedded, "starboard_word_attachment")))
-                    if linked:
-                        status.append(language.string("starboard_message_linked", count=language.plural(linked, "starboard_word_attachment")))
-                    if embedded2:
-                        status.append(language.string("starboard_message_embedded", count=language.plural(embedded2, "starboard_word_embed")))
-                    if linked2:
-                        status.append(language.string("starboard_message_linked", count=language.plural(linked2, "starboard_word_embed")))
-                    if ignored:
-                        status.append(language.string("starboard_message_ignored", count=language.plural(ignored, "starboard_word_embed")))
-                    _status = "\n".join(status)
-
-                    if links:
-                        _links = "\n\n" + "\n".join(links)
-                    else:
-                        _links = ""
-
-                    embed.add_field(name=language.string("starboard_attachments"), value=_status + _links, inline=False)
                 # embed.add_field(name="Jump to message", value=f"[Click here]({_message.jump_url})", inline=False)
-                embed.set_footer(text=f"Message ID {message}")
+                embed.set_footer(text=language.string("events_message_id", id=message))
                 embed.timestamp = _message.created_at
 
                 try:
-                    _starboard_message = await starboard_channel.send(star_message, embeds=[embed] + embeds[:9])  # Only up to 10 embeds can be present
+                    _starboard_message = await starboard_channel.send(star_message, embeds=[embed] + embeds_and_links.embeds[:9])  # Only up to 10 embeds can be present
                     self.bot.db.execute("UPDATE starboard SET star_message=? WHERE message=? AND bot=?", (_starboard_message.id, message, self.bot.name))
-                    logger.log(self.bot.name, "starboard", f"{time.time()} > Saved Message ID {message} to starboard channel")
+                    logger.log(self.bot.name, "starboard", f"{time.time()} > {self.bot.full_name} > {guild.name} ({payload.guild_id}) > Saved Message ID {message} to starboard channel")
                 except discord.Forbidden:
                     try:
                         await _channel.send(language.string("starboard_error_message"))
@@ -235,7 +136,7 @@ class Starboard(commands.Cog):
                         try:
                             starboard_message: discord.Message = await starboard_channel.fetch_message(data["star_message"])
                         except discord.NotFound:
-                            logger.log(self.bot.name, "starboard", f"{time.time()} > Resending starboard message for Message ID {message}")
+                            logger.log(self.bot.name, "starboard", f"{time.time()} > {self.bot.full_name} > {guild.name} > Resending starboard message for Message ID {message}")
                             # await general.send(f"Starboard for message {message} could not be found - Resending message.",
                             #                    self.bot.get_channel(channel))
                             await send_starboard_message()
@@ -256,12 +157,13 @@ class Starboard(commands.Cog):
                         try:
                             starboard_message: discord.Message = await starboard_channel.fetch_message(data["star_message"])
                             await starboard_message.delete()
-                            logger.log(self.bot.name, "starboard", f"{time.time()} > Deleted starboard message for Message ID {message}, no longer enough stars.")
+                            logger.log(self.bot.name, "starboard", f"{time.time()} > {self.bot.full_name} > {guild.name} ({payload.guild_id}) > "
+                                                                   f"Deleted starboard message for Message ID {message}, no longer enough stars.")
                         except (discord.NotFound, discord.Forbidden):
                             pass  # If there is no message or I can't fetch it and delete it, ignore
             self.bot.db.execute("DELETE FROM starboard WHERE stars=0")
         except Exception as e:
-            out = f"{time.time()} > Starboard update > {guild.name} ({payload.guild_id}) > Message {payload.message_id} > {type(e).__name__}: {e}"
+            out = f"{time.time()} > {self.bot.full_name} > Starboard update > {guild.name} ({payload.guild_id}) > Message {payload.message_id} > {type(e).__name__}: {e}"
             general.print_error(out)
             # print(general.traceback_maker(e, code_block=False))
             logger.log(self.bot.name, "errors", out)
@@ -276,118 +178,166 @@ class Starboard(commands.Cog):
         """ Reaction was removed from a message """
         return await self.starboard_update(payload)
 
+    async def delete_message(self, payload: discord.RawReactionClearEvent | discord.RawReactionClearEmojiEvent | discord.RawMessageDeleteEvent | discord.RawBulkMessageDeleteEvent):
+        """ Handle a message being deleted or its star reactions getting cleared """
+        guild = self.bot.get_guild(payload.guild_id)
+        channel = guild.get_channel(payload.channel_id)
+        message_ids = payload.message_ids if isinstance(payload, discord.RawBulkMessageDeleteEvent) else [payload.message_id]
+        log_header = f"{time.time()} > {self.bot.full_name} > {guild.name} ({payload.guild_id}) > #{channel.name} > "
+        settings_data = self.bot.db.fetchrow(f"SELECT * FROM settings WHERE gid=? AND bot=?", (payload.guild_id, self.bot.name))
+        if not settings_data:
+            return
+        settings_dict = json.loads(settings_data["data"])
+        if "starboard" not in settings_dict or not settings_dict["starboard"]["enabled"]:
+            return
+        if "channel" not in settings_dict["starboard"] or not settings_dict["starboard"]["channel"]:
+            starboard_channel = None
+        else:
+            starboard_channel = guild.get_channel(settings_dict["starboard"]["channel"])
+        if isinstance(payload, (discord.RawReactionClearEvent, discord.RawReactionClearEmojiEvent)):
+            # Delete the database entry and remove from starboard
+            for message_id in message_ids:
+                data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=? AND bot=?", (message_id, self.bot.name))
+                output = self.bot.db.execute("DELETE FROM starboard WHERE message=? AND bot=?", (message_id, self.bot.name))
+                if output != "DELETE 0":
+                    logger.log(self.bot.name, "starboard", log_header + f"Star reactions of Message ID {message_id} were cleared.")
+                if starboard_channel and data is not None and data["star_message"]:
+                    try:
+                        starboard_message = await starboard_channel.fetch_message(data["star_message"])
+                        await starboard_message.delete()
+                    except (discord.NotFound, discord.Forbidden):
+                        logger.log(self.bot.name, "starboard", log_header + f"Starboard message for no longer valid Message ID {message_id} could not be deleted")
+        else:
+            # Notify that the message has been deleted, but keep it in the database
+            language = self.bot.language(commands.FakeContext(guild, self.bot))
+            for message_id in message_ids:
+                data = self.bot.db.fetchrow("SELECT * FROM starboard WHERE message=? AND bot=?", (message_id, self.bot.name))
+                output = self.bot.db.execute("UPDATE starboard SET deleted=1 WHERE message=? AND bot=?", (message_id, self.bot.name))
+                if output != "UPDATE 0":
+                    logger.log(self.bot.name, "starboard", log_header + f"Message ID {message_id} has been deleted.")
+                if starboard_channel and data is not None and data["star_message"]:
+                    try:
+                        star_text = f"⭐ {data["stars"]} - <#{data["channel"]}>\n{language.string("starboard_message_deleted")}"
+                        starboard_message = await starboard_channel.fetch_message(data["star_message"])
+                        await starboard_message.edit(content=star_text)
+                    except (discord.NotFound, discord.Forbidden):
+                        logger.log(self.bot.name, "starboard", log_header + f"Starboard message for deleted Message ID {message_id} could not be updated")
+
     @commands.Cog.listener()
     async def on_raw_reaction_clear(self, payload: discord.RawReactionClearEvent):
         """ All reactions were cleared from a message """
-        # Delete the message from the database, but keep it on the starboard channel
-        # I think we don't need to specify the bot name here. If the stars are no longer available on the message,
-        # then we might as well delete all relevant entries at once.
-        output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
-        if output != "DELETE 0":
-            logger.log(self.bot.name, "starboard", f"{time.time()} > Reactions of Message ID {payload.message_id} were cleared.")
+        return await self.delete_message(payload)
 
     @commands.Cog.listener()
     async def on_raw_reaction_clear_emoji(self, payload: discord.RawReactionClearEmojiEvent):
         """ An emote has been cleared from a message """
         if payload.emoji.name == "⭐":
-            # Delete the message from the database, but keep it on the starboard channel
-            output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
-            if output != "DELETE 0":
-                logger.log(self.bot.name, "starboard", f"{time.time()} > Star reactions of Message ID {payload.message_id} were cleared.")
+            return await self.delete_message(payload)
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
         """ Message was deleted """
-        # Delete the message from the database, but keep it on the starboard channel
-        output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (payload.message_id,))
-        if output != "DELETE 0":
-            logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {payload.message_id} has been deleted.")
+        return await self.delete_message(payload)
 
     @commands.Cog.listener()
     async def on_raw_bulk_message_delete(self, payload: discord.RawBulkMessageDeleteEvent):
         """ Several messages were deleted """
-        for message in payload.message_ids:
-            output = self.bot.db.execute("DELETE FROM starboard WHERE message=?", (message,))
-            if output != "DELETE 0":
-                logger.log(self.bot.name, "starboard", f"{time.time()} > Message ID {message} has been bulk-deleted.")
+        return await self.delete_message(payload)
 
     def find_user(self, user_id: int):
         user = self.bot.get_user(user_id)
         return user if user is not None else f"Unknown user {user_id}"
 
-    @commands.command(name="stars", aliases=["starboard", "sb"])
-    @commands.guild_only()
+    @commands.hybrid_group(name="starboard", aliases=["stars", "sb"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def star_data(self, ctx: commands.Context, user: discord.User = None):
-        """ Starboard stats for the server or a specific user """
+    @commands.guild_only()
+    async def starboard_data(self, ctx: commands.Context):
+        """ See starboard stats for the entire server or a specific member """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
+
+    @starboard_data.command(name="server", aliases=["guild"])
+    async def starboard_server(self, ctx: commands.Context):
+        """ See starboard stats for the current server """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
-        if user is None:
-            embed = discord.Embed(colour=general.random_colour())
-            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, self.bot.name))
-            if not data:
-                return await ctx.send(language.string("starboard_stats_none"))
-            stars = 0
-            authors = {}
-            top = []
-            for i, message in enumerate(data):
-                # message = data[i]
-                if i < 5:
-                    top.append(message)
-                stars += message["stars"]
-                if message["author"] in authors:
-                    authors[message["author"]] += message["stars"]
-                else:
-                    authors[message["author"]] = message["stars"]
-            authors_sorted = dict(sorted(authors.items(), key=lambda x: x[1], reverse=True))
-            # embed.title = f"Starboard stats for {ctx.guild.name}"
-            embed.title = language.string("starboard_stats", server=ctx.guild.name)
-            # embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
-            embed.description = language.string("starboard_stats_desc", stars=language.number(stars), messages=language.number(len(data)))
-            if ctx.guild.icon:
-                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-            top_messages = ""
-            authors_out = ""
-            # Top Starred Posts
-            for i, _message in enumerate(top, start=1):
-                # [<stars> by <author>](link)
-                # try:
-                #     message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
-                jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
-                _stars = language.number(_message["stars"])
-                top_messages += f"\n{i}) ⭐ {_stars} - {self.find_user(_message['author'])} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
-                # except (discord.NotFound, AttributeError):
-                #     embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
-            for i, _data in enumerate(authors_sorted.items(), start=1):
-                if i <= 5:
-                    _uid, _stars = _data
-                    authors_out += f"\n{i}) ⭐ {_stars} - <@{_uid}>"
-            if top_messages:
-                embed.add_field(name=language.string("starboard_stats_messages"), value=top_messages, inline=False)
-            if authors_out:
-                embed.add_field(name=language.string("starboard_stats_authors"), value=authors_out, inline=False)
-            return await ctx.send(embed=embed)
-        else:
-            embed = discord.Embed(colour=general.random_colour())
-            data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, user.id, self.bot.name))
-            if not data:
-                return await ctx.send(language.string("starboard_stats_none2", user=general.username(user)))
-            stars = 0
-            top = []
-            for i, message in enumerate(data):
-                # message = data[i]
-                if i < 10:
-                    top.append(message)
-                stars += message["stars"]
-            # embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
-            embed.title = language.string("starboard_stats_user", user=general.username(user), server=ctx.guild.name)
-            # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
-            embed.description = language.string("starboard_stats_user_desc", stars=language.number(stars), messages=language.number(len(data)))
-            embed.set_thumbnail(url=str(user.display_avatar))
-            for i, _message in enumerate(top, start=1):
-                jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
-                _stars = language.number(_message["stars"])
-                embed.description += f"\n{i}) ⭐ {_stars} - [#{self.bot.get_channel(_message['channel'])}]({jump_url})"
-            return await ctx.send(embed=embed)
+        embed = discord.Embed(colour=general.random_colour())
+        data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, self.bot.name))
+        if not data:
+            return await ctx.send(language.string("starboard_stats_none"))
+        stars = 0
+        authors = {}
+        top = []
+        for i, message in enumerate(data):
+            # message = data[i]
+            if i < 5:
+                top.append(message)
+            stars += message["stars"]
+            if message["author"] in authors:
+                authors[message["author"]] += message["stars"]
+            else:
+                authors[message["author"]] = message["stars"]
+        authors_sorted = dict(sorted(authors.items(), key=lambda x: x[1], reverse=True))
+        # embed.title = f"Starboard stats for {ctx.guild.name}"
+        embed.title = language.string("starboard_stats", server=ctx.guild.name)
+        # embed.description = f"⭐ **{stars:,} stars** across {len(data):,} messages"
+        embed.description = language.string("starboard_stats_desc", stars=language.number(stars), messages=language.number(len(data)))
+        if ctx.guild.icon:
+            embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+        top_messages = ""
+        authors_out = ""
+        # Top Starred Posts
+        for i, _message in enumerate(top, start=1):
+            # [<stars> by <author>](link)
+            # try:
+            #     message = await self.bot.get_channel(_message["channel"]).fetch_message(_message["message"])
+            jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
+            _stars = language.number(_message["stars"])
+            channel = self.bot.get_channel(_message['channel']) or language.string("starboard_stats_channel_unknown")
+            link = language.string("starboard_stats_deleted", channel=f"#{channel}") if _message["deleted"] else f"[#{channel}]({jump_url})"
+            top_messages += f"\n{i}) ⭐ {_stars} - {self.find_user(_message['author'])} - {link}"
+            # except (discord.NotFound, AttributeError):
+            #     embed.description += f"\n{i + 1}) ⭐ {_message['stars']} Deleted message"
+        for i, _data in enumerate(authors_sorted.items(), start=1):
+            if i <= 5:
+                _uid, _stars = _data
+                authors_out += f"\n{i}) ⭐ {_stars} - <@{_uid}>"
+        if top_messages:
+            embed.add_field(name=language.string("starboard_stats_messages"), value=top_messages, inline=False)
+        if authors_out:
+            embed.add_field(name=language.string("starboard_stats_authors"), value=authors_out, inline=False)
+        return await ctx.send(embed=embed)
+
+    @starboard_data.command(name="member", aliases=["user"])
+    @app_commands.describe(member="The member whose stats to look up. Shows your stats if not specified.")
+    async def starboard_member(self, ctx: commands.Context, member: discord.Member = None):
+        """ See starboard stats for a specific member within the server """
+        await ctx.defer(ephemeral=True)
+        language = self.bot.language(ctx)
+        member = member or ctx.author
+        embed = discord.Embed(colour=general.random_colour())
+        data = self.bot.db.fetch("SELECT * FROM starboard WHERE guild=? AND author=? AND bot=? ORDER BY stars DESC", (ctx.guild.id, member.id, self.bot.name))
+        if not data:
+            return await ctx.send(language.string("starboard_stats_none2", user=general.username(member)))
+        stars = 0
+        top = []
+        for i, message in enumerate(data):
+            # message = data[i]
+            if i < 10:
+                top.append(message)
+            stars += message["stars"]
+        # embed.title = f"Starboard stats for {user} in {ctx.guild.name}"
+        embed.title = language.string("starboard_stats_user", user=general.username(member), server=ctx.guild.name)
+        # embed.description = f"Received ⭐ **{stars:,} stars** across {len(data):,} messages\n\nTop messages:"
+        embed.description = language.string("starboard_stats_user_desc", stars=language.number(stars), messages=language.number(len(data)))
+        embed.set_thumbnail(url=str(member.display_avatar))
+        for i, _message in enumerate(top, start=1):
+            jump_url = f"https://discord.com/channels/{_message['guild']}/{_message['channel']}/{_message['message']}"
+            _stars = language.number(_message["stars"])
+            channel = self.bot.get_channel(_message['channel']) or language.string("starboard_stats_channel_unknown")
+            link = language.string("starboard_stats_deleted", channel=f"#{channel}") if _message["deleted"] else f"[#{channel}]({jump_url})"
+            embed.description += f"\n{i}) ⭐ {_stars} - {link}"
+        return await ctx.send(embed=embed)
 
 
 async def setup(bot: bot_data.Bot):

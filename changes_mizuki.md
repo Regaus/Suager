@@ -490,5 +490,16 @@
 - Made a generic handler for slash command invocations that automatically defers the interaction
 - Made Ratings commands hybrid
 - Removed a lot of the custom values for Ratings commands
-- Changed the `//iq` command to use `random.gauss(100, 15)` instead of `random.uniform(50, 150)`
+- Changed the `m!iq` command to use `random.gauss(100, 15)` instead of `random.uniform(50, 150)`
 - Added a way to create a subgroup inside a slash command
+
+## v2.0.0a9 - 22-24 January 2025
+- Made the `m!stars` command hybrid
+  - Changed the primary name to `m!starboard`
+  - Split the server and user stats into separate subcommands
+- Lowered the limit of embeds within one starboard entry to 5 (actual message + 4 more embeds)
+- Improved the way attachments, embeds, and stickers are handled in Starboard and message logs
+- Forwarded messages in Starboard and deleted message logs now show the forwarded contents
+- Improved handling of Starboard reaction clear and message deletion events
+  - If all or star emoji reactions are cleared from the message, it is deleted from the database and the starboard channel
+  - If a message from the starboard is deleted, it is retained on the starboard, however it is marked as having been deleted

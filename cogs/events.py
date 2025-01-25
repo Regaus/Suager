@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import json
 from datetime import date, timedelta
-from io import BytesIO
-from typing import List
+from typing import List, Literal
 
 import discord
 
-from utils import bot_data, commands, cpu_burner, errors, general, interactions, logger, time
+from utils import bot_data, commands, cpu_burner, errors, general, interactions, logger, time, languages, messages
 
 
 class Events(commands.Cog):
@@ -366,24 +365,82 @@ class Events(commands.Cog):
         await self.bot.change_presence(activity=discord.Game(name=playing), status=discord.Status.dnd)
         logger.log(self.bot.name, "uptime", f"{time.time()} > {self.bot.full_name} > Bot is online")
 
+    def get_language_from_message(self, message: discord.Message) -> languages.Language:
+        """ Gets a Language instance from a Message context """
+        return self.bot.language(commands.FakeContext(message.guild, self.bot, message.author))
+
+    @staticmethod
+    def message_header(message: discord.Message, language: languages.Language, context: Literal["edited", "deleted"]) -> discord.Embed:
+        """ Returns the header used for message edits and deletes """
+        if context == "edited":
+            embed = discord.Embed(title=language.string("events_message_edited"), colour=0xffff00)
+        elif context == "deleted":
+            embed = discord.Embed(title=language.string("events_message_deleted"), colour=0xff4000)
+        else:
+            raise ValueError(f"Unexpected message context {context} passed to Events.message_header")
+        embed.add_field(name=language.string("events_message_fields_channel"), value=f"{message.channel.mention} ({message.channel.name} - {message.channel.id})", inline=False)
+        embed.add_field(name=language.string("events_message_fields_author"), value=f"{message.author.mention} ({message.author.name} - {message.author.id})", inline=False)
+        embed.add_field(name=language.string("events_message_fields_sent"), value=language.time(message.created_at, short=0, dow=False, seconds=True, tz=False, at=True), inline=False)
+        if message.edited_at:
+            embed.add_field(name=language.string("events_message_fields_edited"), value=language.time(message.edited_at, short=0, dow=False, seconds=True, tz=False, at=True), inline=False)
+        embed.set_footer(text=language.string("events_message_id", id=message.id))
+        embed.timestamp = time.now(None)
+        return embed
+
+    async def handle_deleted_message(self, message: discord.Message, output_channel: discord.TextChannel):
+        """ Process a deleted message - shared for on_message_delete and on_bulk_message_delete """
+        language = self.get_language_from_message(message)
+        embed = self.message_header(message, language, "deleted")  # Fill in main details about the message
+        if message.message_snapshots:
+            embed.add_field(name=language.string("events_message_fields_forwarded"), value=language.string("events_message_fields_forwarded_details"), inline=False)
+            snapshot = message.message_snapshots[0]
+            if snapshot.cached_message:
+                message = snapshot.cached_message
+            else:
+                message = snapshot
+            embed.add_field(name=language.string("events_message_fields_content_forwarded"), value=message.content or language.string("generic_empty"), inline=False)
+        else:
+            embed.add_field(name=language.string("events_message_fields_content"), value=message.system_content or language.string("generic_empty"), inline=False)
+        embeds_and_links = await messages.embed_or_link_attachments(message, language, embed, salvage_mode=True)
+        embed = embeds_and_links.main_embed
+        output_message = await output_channel.send(embeds=[embed] + embeds_and_links.embeds)
+        for file in embeds_and_links.files:
+            await output_message.reply(content=file.filename, file=file)
+
+    async def handle_edited_message(self, before: discord.Message, after: discord.Message, output_channel: discord.TextChannel):
+        language = self.get_language_from_message(after)
+        embed = self.message_header(after, language, "edited")
+        if before.content != after.content:
+            embed.add_field(name=language.string("events_message_fields_content_before"), value=before.content[:1024] or language.string("generic_empty"), inline=False)
+            embed.add_field(name=language.string("events_message_fields_content_after"), value=after.content[:1024] or language.string("generic_empty"), inline=False)
+        else:
+            embed.description = language.string("events_message_fields_content_same")
+        new_attachments: list[str] = []
+        deleted_attachments: list[str] = []
+        files: list[discord.File] = []
+        # Check if new attachments have been added
+        for attachment in after.attachments:
+            if attachment not in before.attachments:
+                new_attachments.append(f"[{attachment.url}]({attachment.filename})")
+        if new_attachments:
+            embed.add_field(name=language.string("events_message_fields_attachments_new"), value="\n".join(new_attachments))
+        # Check if old attachments have been deleted
+        for attachment in before.attachments:
+            if attachment not in after.attachments:
+                file = await messages.save_file(attachment, after.guild.filesize_limit)
+                if file:
+                    files.append(file)
+                    deleted_attachments.append(language.string("events_message_fields_attachments_status_recovered", filename=attachment.filename))
+                else:
+                    deleted_attachments.append(language.string("events_message_fields_attachments_status_lost", filename=attachment.filename))
+        if deleted_attachments:
+            embed.add_field(name=language.string("events_message_fields_attachments_deleted"), value="\n".join(deleted_attachments))
+        output_message = await output_channel.send(embed=embed)
+        for file in files:
+            await output_message.reply(content=file.filename, file=file)
+
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
-        async def process_msg(cid: int):
-            output = f"Channel: {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
-                     f"Message sent: {message.created_at:%Y-%m-%d %H:%M:%S}\nMessage content: {message.content}"  # [:1850]
-            # It should be fine now, since Discord says the description can be up to 4096 characters long
-            embed = discord.Embed(title="Message Deleted", description=output)
-            files = []
-            for attachment in message.attachments:
-                file = BytesIO()
-                try:
-                    await attachment.save(file)
-                except (discord.NotFound, discord.HTTPException):
-                    pass
-                files.append(discord.File(file, filename=attachment.filename))
-            # embed = message.embeds[0] if message.embeds else None
-            await self.bot.get_channel(cid).send(embed=embed, files=files)
-
         if self.bot.name in ["suager", "kyomi"]:
             if message.guild is not None:
                 data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message.guild.id, self.bot.name))
@@ -405,89 +462,43 @@ class Events(commands.Cog):
                     ignored_channels: list = logs_settings.get("ignore_channels", [])
                     if message.channel.id in ignored_channels:
                         return
-                    return await process_msg(delete_id)
+                    try:
+                        return await self.handle_deleted_message(message, self.bot.get_channel(delete_id))
+                    except Exception as e:
+                        errors.print_error_with_traceback(e, f"{time.time()} > {self.bot.name} > Message Delete Error", self.bot)
 
     @commands.Cog.listener()
-    async def on_bulk_message_delete(self, messages: List[discord.Message]):
-        async def process_msg(cid: int):
-            output = f"Channel: {message.channel.mention} ({message.channel.id})\nAuthor: {message.author}\n" \
-                     f"Message sent: {message.created_at:%Y-%m-%d %H:%M:%S}\nMessage content: {message.content}"  # [:1850]
-            # It should be fine now, since Discord says the description can be up to 4096 characters long
-            embed = discord.Embed(title="Message Deleted", description=output)
-            files = []
-            for attachment in message.attachments:
-                file = BytesIO()
-                try:
-                    await attachment.save(file)
-                except (discord.NotFound, discord.HTTPException):
-                    pass
-                files.append(discord.File(file, filename=attachment.filename))
-            # embed = message.embeds[0] if message.embeds else None
-            await self.bot.get_channel(cid).send(embed=embed, files=files)
-
+    async def on_bulk_message_delete(self, message_list: List[discord.Message]):
         if self.bot.name in ["suager", "kyomi"]:
-            for message in messages:
-                if message.guild is not None:
-                    data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message.guild.id, self.bot.name))
-                    if not data:
+            if message_list[0].guild is not None:
+                data = self.bot.db.fetchrow("SELECT * FROM settings WHERE gid=? AND bot=?", (message_list[0].guild.id, self.bot.name))
+                if not data:
+                    return
+                settings: dict = json.loads(data["data"])
+                if "message_logs" in settings:
+                    logs_settings: dict = settings["message_logs"]
+                    enabled: bool = logs_settings.get("enabled", False)
+                    if not enabled:
                         return
-                    settings: dict = json.loads(data["data"])
-                    if "message_logs" in settings:
-                        logs_settings: dict = settings["message_logs"]
-                        enabled: bool = logs_settings.get("enabled", False)
-                        if not enabled:
-                            return
-                        delete_id: int = logs_settings.get("delete", 0)
-                        if delete_id == 0:
-                            return
-                        ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
+                    delete_id: int = logs_settings.get("delete", 0)
+                    if delete_id == 0:
+                        return
+                    ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
+
+                    ignored_channels: list = logs_settings.get("ignore_channels", [])
+                    deletes_channel = self.bot.get_channel(delete_id)
+                    for message in message_list:
                         if ignore_bots and message.author.bot:
-                            return
-                        ignored_channels: list = logs_settings.get("ignore_channels", [])
+                            continue
                         if message.channel.id in ignored_channels:
-                            return
-                        return await process_msg(delete_id)
+                            continue
+                        try:
+                            await self.handle_deleted_message(message, deletes_channel)
+                        except Exception as e:
+                            errors.print_error_with_traceback(e, f"{time.time()} > {self.bot.name} > Bulk Message Delete Error", self.bot)
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        async def process_msg(cid: int):
-            embed = discord.Embed(title="Message Edited",
-                                  description=f"Channel: {after.channel.mention} ({after.channel.id})\n"
-                                              f"Author: {after.author}\n"
-                                              f"Message sent: {after.created_at:%Y-%m-%d %H:%M:%S}\n"
-                                              f"Message edited: {after.edited_at:%Y-%m-%d %H:%M:%S}\n")
-            embed.add_field(name="Content Before", value=before.content[:1024] or "None", inline=False)
-            embed.add_field(name="Content After", value=after.content[:1024] or "None", inline=False)
-            files = []
-            att_removed = 0
-            att_added = 0
-
-            async def add_file(att: discord.Attachment):
-                file = BytesIO()
-                try:
-                    await att.save(file)
-                except (discord.NotFound, discord.HTTPException):
-                    pass
-                files.append(discord.File(file, filename=att.filename))
-
-            # This checks if any new attachments have been added
-            for attachment in after.attachments:
-                if attachment not in before.attachments:
-                    await add_file(attachment)
-                    att_added += 1
-
-            # This checks if any old attachments have been removed
-            for attachment in before.attachments:
-                if attachment not in after.attachments:
-                    await add_file(attachment)
-                    att_removed += 1
-
-            if att_added:
-                embed.description += f"\nAttachments added: {att_added}"
-            if att_removed:
-                embed.description += f"\nAttachments removed: {att_removed}"
-            await self.bot.get_channel(cid).send(embed=embed, files=files)
-
         if self.bot.name in ["suager", "kyomi"]:
             # We only do anything if either the content or attachments of the message were changed
             if after.guild is not None and (after.content != before.content or after.attachments != before.attachments):
@@ -500,8 +511,8 @@ class Events(commands.Cog):
                     enabled: bool = logs_settings.get("enabled", False)
                     if not enabled:
                         return
-                    delete_id: int = logs_settings.get("edit", 0)
-                    if delete_id == 0:
+                    edit_id: int = logs_settings.get("edit", 0)
+                    if edit_id == 0:
                         return
                     ignore_bots: bool = logs_settings.get("ignore_bots", True)  # Default value
                     if ignore_bots and after.author.bot:
@@ -509,7 +520,10 @@ class Events(commands.Cog):
                     ignored_channels: list = logs_settings.get("ignore_channels", [])
                     if after.channel.id in ignored_channels:
                         return
-                    return await process_msg(delete_id)
+                    try:
+                        return await self.handle_edited_message(before, after, self.bot.get_channel(edit_id))
+                    except Exception as e:
+                        errors.print_error_with_traceback(e, f"{time.time()} > {self.bot.name} > Message Edit Error", self.bot)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):

@@ -8,7 +8,7 @@ from discord import app_commands
 from utils import commands, general, interactions, logger, time
 
 if TYPE_CHECKING:
-    from utils import languages
+    from utils import bot_data, languages
 
 
 class ExternalAppPermissionRequired(app_commands.MissingPermissions):
@@ -28,6 +28,17 @@ def _get_role_name(ctx: commands.Context, role_arg: str | int) -> str:
 def _get_permissions(language: languages.Language, permissions: list[str]) -> str:
     permission_names = language.data("generic_permissions")
     return language.join([permission_names.get(permission, permission) for permission in permissions])
+
+
+def print_error_with_traceback(error: BaseException, context: str = None, bot: bot_data.Bot = None):
+    if context:
+        general.print_error(context)
+    traceback = general.traceback_maker(error, code_block=False)
+    general.print_error(traceback)
+    if bot is not None:
+        if context:
+            logger.log(bot.name, "errors", context)
+        logger.log(bot.name, "errors", traceback)
 
 
 async def on_command_error(ctx: commands.Context | discord.Interaction, error: commands.CommandError | app_commands.AppCommandError):

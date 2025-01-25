@@ -294,6 +294,7 @@ tables = [
         Column("guild", "INTEGER", True),          # Original message's guild ID
         Column("stars", "INTEGER", True),          # Star count
         Column("star_message", "INTEGER", False),  # Starboard message ID
+        Column("deleted", "BOOLEAN", True),        # Whether the original message has been deleted
         Column("bot", "TEXT", True),               # The bot tracking the message
         Column("remove", "DATE", False),           # The date on which to delete the database entry
     ]),
