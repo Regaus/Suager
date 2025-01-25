@@ -668,3 +668,10 @@
 
 ## v1.1.3.2 - 19 January 2025
 - Fixed the guild name showing up empty in user-install contexts
+
+## v1.1.4 - 25 January 2025
+- Made Timetables command responses be ephemeral for user-install contexts
+- Stop and Route selection will now find exact matches for the code or name, and return that if no other exact matches are found
+  - Exact matches will show up on the top for autocomplete and search commands
+  - If there is only one exact match, other commands will simply use that as the input (instead of showing an error about other possible inputs)
+- The `i.tfi search` commands now have autocomplete

@@ -63,7 +63,7 @@ STOP_HUBS: dict[str, list[str]] = {
 
 
 class GTFSSearchFunction(Protocol):
-    def __call__(self, query: str) -> list:
+    def __call__(self, query: str, look_for_exact: bool = True) -> list:
         ...
 
 
@@ -122,7 +122,8 @@ class University(commands.Cog, name="Timetables"):
 
         If no course code provided, defaults to COMSCI course for my current year (first year in 2023/2024) """
         if ctx.invoked_subcommand is None:
-            await ctx.defer()
+            if ctx.interaction:  # Defer the interaction, making it ephemeral for user installs
+                await ctx.defer(ephemeral=not ctx.interaction.is_guild_integration())  # If the user has the bot installed, is_user_integration() will return True too
             if not course_code:
                 course_code = "COMSCI"
                 # Push August 2023 to be "January 2024", so that we can start defaulting to COMSCI 2 in Aug 2024
@@ -151,7 +152,8 @@ class University(commands.Cog, name="Timetables"):
     # @app_commands.guilds(738425418637639775)
     async def dcu_timetable_regaus(self, ctx: commands.Context, custom_week: str = ""):
         """ Fetch DCU timetables for my course but include the first year labs I'm involved in """
-        await ctx.defer()
+        if ctx.interaction:
+            await ctx.defer(ephemeral=not ctx.interaction.is_guild_integration())
         date = time.datetime.now()
         if custom_week:
             date = time.date.from_iso(custom_week)
@@ -184,7 +186,8 @@ class University(commands.Cog, name="Timetables"):
     async def dcu_timetable_modules(self, ctx: commands.Context, *, module_codes: str, custom_week: str = ""):
         """ Fetch DCU timetables for specified modules for the current week"""
         try:
-            await ctx.defer()
+            if ctx.interaction:
+                await ctx.defer(ephemeral=not ctx.interaction.is_guild_integration())
             module_codes = module_codes.split()
             date = None
             if custom_week:
@@ -213,7 +216,8 @@ class University(commands.Cog, name="Timetables"):
     async def dcu_timetable_room(self, ctx: commands.Context, room_code: str, custom_week: str = ""):
         """ Fetch DCU timetables for a given room for the current week"""
         try:
-            await ctx.defer()
+            if ctx.interaction:
+                await ctx.defer(ephemeral=not ctx.interaction.is_guild_integration())
             date = None
             if custom_week:
                 date = time.date.from_iso(custom_week)
@@ -310,6 +314,8 @@ class Luas(commands.Cog, name="Timetables"):
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def luas(self, ctx: commands.Context, *, place: commands.clean_content):
         """ Fetch real-time data for a Luas stop """
+        if ctx.interaction:
+            await ctx.defer(ephemeral=not ctx.interaction.is_guild_integration())
         client = luas.api.LuasClient()
         _place = str(place).title() if len(str(place)) != 3 else str(place)
         data = client.stop_details(_place)
@@ -590,6 +596,8 @@ class Timetables(University, Luas, name="Timetables"):
 
     async def wait_for_initialisation(self, ctx: commands.Context, *, force_redownload: bool = False, force_reload: bool = False, ignore_real_time: bool = False) -> discord.Message:
         """ Initialise the data before letting the actual command execute """
+        if ctx.interaction:
+            await ctx.defer(ephemeral=not ctx.interaction.is_guild_integration())
         # If self.updating is True, then the data is already being loaded
         # If force_redownload is True, then we need to reload regardless of the status
         if force_redownload or force_reload or (not self.initialised and not self.updating):
@@ -697,7 +705,7 @@ class Timetables(University, Luas, name="Timetables"):
         finally:
             self.updating_vehicles = False
 
-    def find_stop(self, query: str) -> list[timetables.Stop]:
+    def find_stop(self, query: str, look_for_exact: bool = True) -> list[timetables.Stop]:
         """ Find a specific stop """
         query = query.lower()
         all_stops = self.db.fetch("SELECT id, code, name FROM stops")
@@ -708,9 +716,20 @@ class Timetables(University, Luas, name="Timetables"):
                 # stop = timetables.Stop.from_dict(stop_dict)
                 output.append(stop)
                 self.static_data.stops[stop.id] = stop
+        # Ignore other matches if there's a stop code or name that exactly matches the input string
+        exact_matches = []
+        for stop in output:
+            if stop.code_or_id.lower() == query or stop.name.lower() == query:
+                if look_for_exact:
+                    exact_matches.append(stop)
+                else:
+                    output.remove(stop)
+                    output.insert(0, stop)
+        if len(exact_matches) == 1:
+            return exact_matches
         return output
 
-    def find_route(self, query: str) -> list[timetables.Route]:
+    def find_route(self, query: str, look_for_exact: bool = True) -> list[timetables.Route]:
         """ Find a specific route """
         query = query.lower()
         all_routes = self.db.fetch("SELECT id, short_name, long_name FROM routes")
@@ -722,6 +741,18 @@ class Timetables(University, Luas, name="Timetables"):
                 # route = timetables.Route.from_dict(route_dict)
                 output.append(route)
                 self.static_data.routes[route.id] = route
+        # Ignore other matches if there's a route name that exactly matches the input string
+        exact_matches = []
+        for route in output:
+            if route.short_name.lower() == query:
+                if look_for_exact:
+                    exact_matches.append(route)
+                else:
+                    # If we are in search mode, simply move the value to the top of the output
+                    output.remove(route)
+                    output.insert(0, route)
+        if len(exact_matches) == 1:
+            return exact_matches
         return output
 
     def find_specific_vehicle(self, query: str) -> timetables.FleetVehicle | None:
@@ -729,6 +760,66 @@ class Timetables(University, Luas, name="Timetables"):
         if not vehicle:
             return None
         return timetables.FleetVehicle.from_dict(vehicle)
+
+    async def tfi_stop_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the stop search """
+        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
+        data = self.db.fetch("SELECT id, code, name FROM stops WHERE id LIKE ?1 ESCAPE '!' OR (code || ' ' || name) LIKE ?1 ESCAPE '!'", (search,))
+        # results: [(code, name, similarity), ...]
+        results: list[tuple[str, str, int]] = []
+        for entry in data:
+            # Match the ID, Code, and Code + Name
+            ratios = (process.default_scorer(current, entry["id"]),
+                      process.default_scorer(current, entry["code"]),
+                      process.default_scorer(current, f"{entry['code']} {entry['name']}"))
+            if entry["code"]:
+                stop_name = f"{entry['name']} (stop code {entry['code']})"
+            else:
+                stop_name = f"{entry['name']} (stop ID {entry['id']})"
+            results.append((entry["id"], stop_name, max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=stop_name, value=stop_id) for stop_id, stop_name, _ in results[:25]]
+
+    async def tfi_route_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for route search """
+        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
+        data = self.db.fetch("SELECT id, short_name, long_name FROM routes WHERE id LIKE ?1 ESCAPE '!' OR (short_name || ' ' || long_name) LIKE ?1 ESCAPE '!'", (search,))
+        # results: [(code, name, similarity), ...]
+        results: list[tuple[str, str, int]] = []
+        for entry in data:
+            # Match the ID, Name, and Name + Destinations
+            ratios = (process.default_scorer(current, entry["id"]),
+                      process.default_scorer(current, entry["short_name"]),
+                      process.default_scorer(current, f"{entry['short_name']} {entry['long_name']}"))
+            route_name = f"Route {entry['short_name']} ({entry['long_name']})"
+            results.append((entry["id"], route_name, max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=route_name, value=route_id) for route_id, route_name, _ in results[:25]]
+
+    @staticmethod
+    def get_hub_suggestions(current: str) -> list[tuple[str, int]]:
+        current = current.replace("á", "a")  # Busáras key
+        results: list[tuple[str, int]] = []
+        for key in STOP_HUBS.keys():
+            results.append((key, process.default_scorer(current, key)))
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results
+
+    async def tfi_hub_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the stop hub search """
+        results = self.get_hub_suggestions(current)
+        return [app_commands.Choice(name=result, value=result) for result, _ in results[:25]]
+
+    async def tfi_vehicle_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the specific vehicle search """
+        if not self.fleet_data:
+            await self.update_fleet(force_update=False)
+        results: list[tuple[str, str, int]] = []
+        for vehicle in self.fleet_data.values():
+            ratios = (process.default_scorer(current, vehicle.vehicle_id), process.default_scorer(current, vehicle.fleet_number))
+            results.append((vehicle.vehicle_id, f"{vehicle.fleet_number} ({vehicle.agency}, API ID {vehicle.vehicle_id})", max(ratios)))  # f"{vehicle.fleet_number} ({vehicle.reg_plates})"
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=fleet_and_reg, value=vehicle_id) for vehicle_id, fleet_and_reg, _ in results[:25]]
 
     async def _soft_limit_warning(self, ctx: commands.Context):
         """ Show the warning about the soft expiry of static data """
@@ -761,7 +852,7 @@ class Timetables(University, Luas, name="Timetables"):
     async def tfi_search_function(self, ctx: commands.Context, query: str, search_function: GTFSSearchFunction, iteration_handler: Callable[[Any], str], title: str, footer: str):
         """ Wrapper function for search commands """
         message = await self.wait_for_initialisation(ctx)
-        iterable = search_function(query=query)  # (str) -> list[Stop | Route]
+        iterable = search_function(query=query, look_for_exact=False)  # (str) -> list[Stop | Route]
         if not iterable:
             return await message.edit(content=f"{emotes.Deny} No data was found for your query.")
         paginator = paginators.LinePaginator(prefix=None, suffix=None, max_lines=20, max_size=1000)
@@ -773,6 +864,7 @@ class Timetables(University, Luas, name="Timetables"):
         return await interface.set_message(message, clear_content=True)
 
     @tfi_search.command(name="stop")
+    @app_commands.autocomplete(query=tfi_stop_autocomplete)
     @app_commands.describe(query="The ID, code, or name of the stop you want to look for")
     async def tfi_search_stop(self, ctx: commands.Context, *, query: str):
         """ Search for a specific stop """
@@ -786,6 +878,7 @@ class Timetables(University, Luas, name="Timetables"):
                                               "Try using both the stop code and stop name in your query, for example `17 Drumcondra`.")
 
     @tfi_search.command(name="route")
+    @app_commands.autocomplete(query=tfi_route_autocomplete)
     @app_commands.describe(query="The ID, name, or end points of the route you want to look for")
     async def tfi_search_route(self, ctx: commands.Context, *, query: str):
         """ Search for a specific route """
@@ -795,72 +888,14 @@ class Timetables(University, Luas, name="Timetables"):
             return f"`{route.id}` - Route {route.short_name} - {route.long_name} ({route_types[route.route_type]})"
 
         return await self.tfi_search_function(ctx, query, search_function=self.find_route, iteration_handler=add_route, title="Routes found for your query",
-                                              footer="Note: If more than our route is found for your search, the schedule command will need a more precise query to function."
+                                              footer="Note: If more than our route is found for your search, the schedule command will need a more precise query to function.\n"
                                                      "Try using the route ID or combining the route number with the origin point (e.g. `155 Bray` or `4 Monkstown`).")
-        # output_content = ("Here are the routes found for your query:\n\n" + "\n".join(output) +
-        #                   "\n\n*Note that if more than one route is found for your search, then the schedule command will need a more precise query to function.*\n"
-        #                   "*You can use both the route number and route destinations in your query, e.g. `155 Bray` or `4 Monkstown`. "
-        #                   "However, the words have to match the beginning of the route's description (i.e. if it says \"Bray - IKEA Ballymun\", you cannot use `155 IKEA`).*")
 
     @tfi.group(name="schedule", aliases=["schedules", "timetable", "timetables", "data", "info", "rtpi", "tt"], case_insensitive=True)
     async def tfi_schedules(self, ctx: commands.Context):
         """ Commands that deal with schedules and real-time information """
         if ctx.invoked_subcommand is None:
             return await ctx.send_help(ctx.command)
-
-    async def tfi_stop_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        """ Autocomplete for the stop search """
-        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
-        data = self.db.fetch("SELECT id, code, name FROM stops WHERE id LIKE ?1 ESCAPE '!' OR (code || ' ' || name) LIKE ?1 ESCAPE '!'", (search,))
-        # results: [(code, name, similarity), ...]
-        results: list[tuple[str, str, int]] = []
-        for entry in data:
-            ratios = (process.default_scorer(current, entry["id"]), process.default_scorer(current, f"{entry['code']} {entry['name']}"))
-            if entry["code"]:
-                stop_name = f"{entry['name']} (stop code {entry['code']})"
-            else:
-                stop_name = f"{entry['name']} (stop ID {entry['id']})"
-            results.append((entry["id"], stop_name, max(ratios)))
-        results.sort(key=lambda x: x[2], reverse=True)
-        return [app_commands.Choice(name=stop_name, value=stop_id) for stop_id, stop_name, _ in results[:25]]
-
-    @staticmethod
-    def get_hub_suggestions(current: str) -> list[tuple[str, int]]:
-        current = current.replace("á", "a")  # Busáras key
-        results: list[tuple[str, int]] = []
-        for key in STOP_HUBS.keys():
-            results.append((key, process.default_scorer(current, key)))
-        results.sort(key=lambda x: x[1], reverse=True)
-        return results
-
-    async def tfi_hub_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        """ Autocomplete for the stop hub search """
-        results = self.get_hub_suggestions(current)
-        return [app_commands.Choice(name=result, value=result) for result, _ in results[:25]]
-
-    async def tfi_vehicle_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        """ Autocomplete for the specific vehicle search """
-        if not self.fleet_data:
-            await self.update_fleet(force_update=False)
-        results: list[tuple[str, str, int]] = []
-        for vehicle in self.fleet_data.values():
-            ratios = (process.default_scorer(current, vehicle.vehicle_id), process.default_scorer(current, vehicle.fleet_number))
-            results.append((vehicle.vehicle_id, f"{vehicle.fleet_number} ({vehicle.agency}, API ID {vehicle.vehicle_id})", max(ratios)))  # f"{vehicle.fleet_number} ({vehicle.reg_plates})"
-        results.sort(key=lambda x: x[2], reverse=True)
-        return [app_commands.Choice(name=fleet_and_reg, value=vehicle_id) for vehicle_id, fleet_and_reg, _ in results[:25]]
-
-    async def tfi_route_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-        """ Autocomplete for route search """
-        search = "%" + current.replace("!", "!!").replace("%", "!%").replace("_", "!_").replace("[", "![") + "%"
-        data = self.db.fetch("SELECT id, short_name, long_name FROM routes WHERE id LIKE ?1 ESCAPE '!' OR (short_name || ' ' || long_name) LIKE ?1 ESCAPE '!'", (search,))
-        # results: [(code, name, similarity), ...]
-        results: list[tuple[str, str, int]] = []
-        for entry in data:
-            ratios = (process.default_scorer(current, entry["id"]), process.default_scorer(current, f"{entry['short_name']} {entry['long_name']}"))
-            route_name = f"Route {entry['short_name']} ({entry['long_name']})"
-            results.append((entry["id"], route_name, max(ratios)))
-        results.sort(key=lambda x: x[2], reverse=True)
-        return [app_commands.Choice(name=route_name, value=route_id) for route_id, route_name, _ in results[:25]]
 
     @tfi_schedules.command(name="stop")
     @app_commands.rename(stop_query="stop")

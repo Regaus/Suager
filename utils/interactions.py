@@ -8,13 +8,13 @@ from utils import time, logger, commands
 
 def get_command_str(interaction: discord.Interaction) -> str:
     if isinstance(interaction.command, app_commands.Command):
-        command = f"Slash command: /{interaction.command.name}"
+        command = f"Slash command: /{interaction.command.qualified_name}"
         arguments: list[str] = []
         for key, value in interaction.namespace:  # type: ignore
             if value is not None:
                 arguments.append(f"{key}={value}")
     else:
-        command = f"Context Menu: {interaction.command.name}"
+        command = f"Context Menu: {interaction.command.qualified_name}"
         if interaction.command.type == discord.AppCommandType.user:  # User context menu
             arguments = [f"user={interaction.data["target_id"]}"]
         else:  # Message context menu
