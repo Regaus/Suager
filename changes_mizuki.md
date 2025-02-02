@@ -525,3 +525,6 @@
 - Moved `m!reminders` to `m!reminders list` to have the same signature on text and slash commands
 - Fixed type hint on `interactions.slash_command()` causing issues on commands with more than one argument
 - Created `interactions.init_slash_command()` which simply logs and defers the interaction, returning the context
+
+## v2.0.0a11 - 2 February 2025
+- Improved the logging for errors, so that unimportant errors only show up in local logs rather than `errors.rsf`

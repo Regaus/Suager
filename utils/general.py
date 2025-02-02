@@ -66,9 +66,12 @@ def print_error(*values):
     return print(*values, file=stderr)
 
 
-def log_error(bot: bot_data.Bot, text: str):
+def log_error(bot: bot_data.Bot, log_name: str | None, text: str, *, ignore_error: bool = False):
     print_error(text)
-    logger.log(bot.name, "errors", text)
+    if log_name is not None:
+        logger.log(bot.name, log_name, text)
+    if not ignore_error:
+        logger.log(bot.name, "errors", text)
 
 
 def random_colour() -> int:

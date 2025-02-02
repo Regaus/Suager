@@ -162,11 +162,12 @@ class Starboard(commands.Cog):
                         except (discord.NotFound, discord.Forbidden):
                             pass  # If there is no message or I can't fetch it and delete it, ignore
             self.bot.db.execute("DELETE FROM starboard WHERE stars=0")
+        except (discord.Forbidden, discord.NotFound) as e:
+            general.log_error(self.bot, "starboard", ignore_error=True,
+                              text=f"{time.time()} > {self.bot.full_name} > Starboard update > {guild.name} ({payload.guild_id}) > Message {payload.message_id} > {type(e).__name__}: {e}")
         except Exception as e:
-            out = f"{time.time()} > {self.bot.full_name} > Starboard update > {guild.name} ({payload.guild_id}) > Message {payload.message_id} > {type(e).__name__}: {e}"
-            general.print_error(out)
-            # print(general.traceback_maker(e, code_block=False))
-            logger.log(self.bot.name, "errors", out)
+            general.log_error(self.bot, "starboard", ignore_error=False,
+                              text=f"{time.time()} > {self.bot.full_name} > Starboard update > {guild.name} ({payload.guild_id}) > Message {payload.message_id} > {type(e).__name__}: {e}")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

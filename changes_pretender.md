@@ -116,3 +116,6 @@
 
 ## v1.4.0.1 - 19 January 2025
 - Fixed the guild name showing up empty in user-install contexts
+
+## v1.4.0.2 - 2 February 2025
+- Improved the logging for errors, so that unimportant errors only show up in local logs rather than `errors.rsf`

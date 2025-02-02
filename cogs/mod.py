@@ -93,11 +93,10 @@ async def send_mod_dm(bot: bot_data.Bot, ctx: commands.Context | commands.FakeCo
         text = language.string(string, server=ctx.guild, reason=reason)
     try:
         return await user.send(text)
+    except (discord.Forbidden, discord.HTTPException) as e:
+        general.log_error(bot, "moderation", f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}", ignore_error=True)
     except Exception as e:
-        message = f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}"
-        general.print_error(message)
-        logger.log(bot.name, "moderation", message)
-        logger.log(bot.name, "errors", message)
+        general.log_error(bot, "moderation", f"{time.time()} > {bot.full_name} > Mod DMs > Failed to send DM to {user} - {type(e).__name__}: {e}")
 
 
 async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | commands.FakeContext, user: discord.User | discord.Member, author: discord.User | discord.Member | discord.ClientUser,
@@ -156,11 +155,10 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | commands.FakeC
     embed.timestamp = time.now()
     try:
         return await channel.send(embed=embed)
+    except (discord.Forbidden, discord.HTTPException) as e:
+        general.log_error(bot, "moderation", f"{time.time()} > {bot.full_name} > Mod Logs > Case ID {entry_id} > Failed to send message to log channel - {type(e).__name__}: {e}", ignore_error=True)
     except Exception as e:
-        message = f"{time.time()} > {bot.full_name} > Mod Logs > Case ID {entry_id} - Failed to send message to log channel - {type(e).__name__}: {e}"
-        general.print_error(message)
-        logger.log(bot.name, "moderation", message)
-        logger.log(bot.name, "errors", message)
+        general.log_error(bot, "moderation", f"{time.time()} > {bot.full_name} > Mod Logs > Case ID {entry_id} > Failed to send message to log channel - {type(e).__name__}: {e}")
 
 
 async def duration_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
@@ -239,7 +237,7 @@ class Moderation(commands.Cog):
                 try:
                     await do_image_only()
                 except Exception as e:
-                    general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Image-only channels > {type(e).__name__}: {str(e)}")
+                    general.log_error(self.bot, "moderation", f"{time.time()} > {self.bot.full_name} > Moderation > Image-only channels > {type(e).__name__}: {str(e)}")
                     # print(general.traceback_maker(e, code_block=False))
 
             # Anti-ads
@@ -288,7 +286,7 @@ class Moderation(commands.Cog):
                 try:
                     await do_anti_ads()
                 except Exception as e:
-                    general.log_error(self.bot, f"{time.time()} > {self.bot.full_name} > Moderation > Anti-ads > {type(e).__name__}: {str(e)}")
+                    general.log_error(self.bot, "moderation", f"{time.time()} > {self.bot.full_name} > Moderation > Anti-ads > {type(e).__name__}: {str(e)}")
 
             # Warn Aya if he mentions China or uses any Chinese characters
             # if ctx.guild.id == 738425418637639775 and ctx.author.id == 577642516438843412:  # testing

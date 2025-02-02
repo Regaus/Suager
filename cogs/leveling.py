@@ -281,10 +281,9 @@ class Leveling(commands.Cog):
             pass
         except discord.Forbidden:
             await ctx.channel.send(f"{general.username(ctx.author)} should receive a level reward right now, but I don't have permissions required to give it.")
+            logger.log(self.bot.name, "leveling", f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > Forbidden to give {ctx.author} their level reward")
         except Exception as e:
-            out = f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}"
-            general.print_error(out)
-            logger.log(self.bot.name, "errors", out)
+            general.log_error(self.bot, "leveling", f"{time.time()} > Levels on_message > {ctx.guild.name} ({ctx.guild.id}) > {type(e).__name__}: {e}")
 
         # Handle level ups
         if level_up or level_down:

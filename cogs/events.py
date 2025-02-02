@@ -174,16 +174,14 @@ class Events(commands.Cog):
                         try:
                             await member.add_roles(mute_role, reason="Rejoining while muted")
                             logger.log(self.bot.name, "moderation", f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Re-muted {member} upon rejoining")
+                        except discord.Forbidden as e:
+                            general.log_error(self.bot, "moderation", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Forbidden to re-mute {member}: {type(e).__name__}: {e}")
                         except Exception as e:
-                            out = f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Failed to re-mute {member}: {type(e).__name__}: {e}"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "moderation", out)
-                            logger.log(self.bot.name, "errors", out)
+                            general.log_error(self.bot, "moderation", f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Failed to re-mute {member}: {type(e).__name__}: {e}")
                     else:
-                        out = f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Failed to re-mute {member}: Mute role not found"
-                        general.print_error(out)
-                        logger.log(self.bot.name, "moderation", out)
-                        logger.log(self.bot.name, "errors", out)
+                        general.log_error(self.bot, "moderation", ignore_error=True,
+                                          text=f"{time.time()} > {self.bot.name} > Member Join > {member.guild} > Failed to re-mute {member}: Mute role not found")
 
         if member.guild.id in [568148147457490954, 738425418637639775] and member.id not in [302851022790066185]:
             if member.display_name[0] < "A":
@@ -203,9 +201,7 @@ class Events(commands.Cog):
                         try:
                             await member.add_roles(*roles, reason=f"[Auto-Roles] Joining the server")
                         except discord.Forbidden:
-                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Failed to give {member} join role"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
+                            general.log_error(self.bot, "members", f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Forbidden to give {member} join role", ignore_error=True)
                 except KeyError:
                     pass
 
@@ -225,10 +221,12 @@ class Events(commands.Cog):
                             .replace("[MEMBERS]", language.number(member.guild.member_count))
                         try:
                             await channel.send(message, allowed_mentions=discord.AllowedMentions(users=[member]))
-                        except (discord.Forbidden, discord.NotFound):
-                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send message for {member} - Forbidden"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
+                        except discord.Forbidden:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Forbidden to send welcome message for {member}")
+                        except discord.NotFound:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Unable to send welcome message for {member}: Channel not found")
 
             if "user_logs" in settings:
                 user_logs = settings["user_logs"]
@@ -245,9 +243,11 @@ class Events(commands.Cog):
                         try:
                             await channel.send(embed=embed)
                         except discord.Forbidden:
-                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Failed to send user log message for {member} - Forbidden"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Forbidden to send user log message for {member}")
+                        except discord.NotFound:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild.name} > Unable to send user log message for {member}: Channel not found")
 
                 if user_logs["preserve_roles"]:
                     data = self.bot.db.fetchrow("SELECT * FROM user_roles WHERE gid=? AND uid=?", (member.guild.id, member.id))
@@ -257,10 +257,12 @@ class Events(commands.Cog):
                         roles = [role for role in roles if role is not None]  # Remove any roles that don't exist anymore
                         try:
                             await member.add_roles(*roles, reason=f"[Saved Roles] Coming back to the server")
-                        except (discord.Forbidden, discord.NotFound):
-                            out = f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Failed to give {member} preserved roles"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
+                        except discord.Forbidden:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Forbidden to give {member} preserved roles")
+                        except discord.NotFound:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Joined > {member.guild} > Unable to give {member} preserved roles: Role not found")
                         # Remove the entry as their roles have now been handled
                         self.bot.db.execute("DELETE FROM user_roles WHERE gid=? AND uid=?", (member.guild.id, member.id))
 
@@ -322,9 +324,11 @@ class Events(commands.Cog):
                         try:
                             await channel.send(message, allowed_mentions=discord.AllowedMentions(users=[member]))
                         except discord.Forbidden:
-                            out = f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send message for {member} - Forbidden"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Forbidden to send farewell message for {member}")
+                        except discord.NotFound:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Unable to send farewell message for {member}: Channel not found")
 
             if "user_logs" in settings:
                 user_logs = settings["user_logs"]
@@ -345,9 +349,11 @@ class Events(commands.Cog):
                         try:
                             await channel.send(embed=embed)
                         except discord.Forbidden:
-                            out = f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Failed to send user log message for {member} - Forbidden"
-                            general.print_error(out)
-                            logger.log(self.bot.name, "errors", out)
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Forbidden to send user log message for {member}")
+                        except discord.NotFound:
+                            general.log_error(self.bot, "members", ignore_error=True,
+                                              text=f"{time.time()} > {self.bot.full_name} > Member Left > {member.guild.name} > Unable to send user log message for {member}: Channel not found")
 
                 if user_logs["preserve_roles"]:
                     self.bot.db.execute("INSERT INTO user_roles VALUES (?, ?, ?)", (member.guild.id, member.id, json.dumps([r.id for r in member.roles if not r.is_default()])))

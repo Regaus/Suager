@@ -675,3 +675,6 @@
   - Exact matches will show up on the top for autocomplete and search commands
   - If there is only one exact match, other commands will simply use that as the input (instead of showing an error about other possible inputs)
 - The `i.tfi search` commands now have autocomplete
+
+## v1.1.4.1 - 2 February 2025
+- Improved the logging for errors, so that unimportant errors only show up in local logs rather than `errors.rsf`
