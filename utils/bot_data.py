@@ -101,7 +101,7 @@ class Bot(commands.AutoShardedBot):
         return await errors.on_command_error(interaction, error)
 
     @staticmethod
-    def language(ctx: commands.Context | commands.FakeContext):
+    def language(ctx: commands.Context | commands.FakeContext | Interaction):
         return languages.Language.get(ctx)
 
     @staticmethod

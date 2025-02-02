@@ -2,43 +2,129 @@ from __future__ import annotations
 
 import json
 import random
-from datetime import timedelta
+import re
+import urllib.parse
+from dataclasses import dataclass
+from functools import wraps
 from io import BytesIO
+from typing import Any, Callable, Coroutine
 
 import discord
 import pytz
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
+from discord import app_commands
 from regaus import conworlds, time as time2
+from thefuzz import process
 
-from utils import arg_parser, bases, bot_data, commands, emotes, general, http, images, permissions, time
+from utils import arg_parser, bases, bot_data, commands, emotes, general, http, interactions, images, languages, paginators, permissions, time
+
+
+EMOJI_NAME_REGEX = re.compile(r"^:?\w+:?$")
+TIME_CLASSES: list[app_commands.Choice[str]] = [
+    app_commands.Choice(name="Earth", value="Earth"),
+    app_commands.Choice(name="Kargadia (Kargadian calendar)", value="Kargadia"),
+    app_commands.Choice(name="Kargadia (Arnattian calendar)", value="Arnattia"),
+    app_commands.Choice(name="Kargadia (Larihalian calendar)", value="Larihalia"),
+    app_commands.Choice(name="Zhevenerus (Kargadian calendar)", value="QevenerusKa"),
+    app_commands.Choice(name="Zhevenerus (Usturian calendar)", value="QevenerusUs"),
+    app_commands.Choice(name="Virkada", value="Virkada")
+]
 
 
 def custom_role_enabled(ctx):
     return ctx.guild is not None and ctx.guild.id in [568148147457490954, 430945139142426634, 738425418637639775, 784357864482537473, 759095477979054081]
 
 
+async def duration_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    """ Autocomplete for durations """
+    return await interactions.duration_autocomplete(interaction, current, moderation_limit=False)
+
+
+async def reminder_duration_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    """ Autocomplete for reminder durations - includes the 5-year limit """
+    return await interactions.duration_autocomplete(interaction, current, moderation_limit=True)
+
+
+@dataclass
+class Location:
+    name: str
+    localised_name: str
+    state: str | None
+    country_code: str
+    lat: float
+    lon: float
+
+
+_ratelimit: dict[int, tuple[float, list[Location]]] = {}
+_cache: dict[str, list[Location]] = {}
+
+
+def _cache_geolocation_values(func: Callable[[bot_data.Bot, commands.Context | discord.Interaction, str, bool], Coroutine[Any, Any, list[Location]]]) \
+        -> Callable[[bot_data.Bot, commands.Context | discord.Interaction, str, bool], Coroutine[Any, Any, list[Location]]]:
+    """ Cache geolocation responses and ratelimit users to one API request per second """
+    @wraps(func)
+    async def wrapper(bot: bot_data.Bot, ctx: commands.Context | discord.Interaction, value: str, final: bool = False) -> list[Location]:
+        if value in _cache:
+            return _cache[value]
+        if isinstance(ctx, commands.Context):
+            user = ctx.author.id
+        elif isinstance(ctx, discord.Interaction):
+            user = ctx.user.id
+        else:
+            raise TypeError(f"Invalid context type {type(ctx).__name__}")
+        now = time2.datetime.now().timestamp
+        if not final and user in _ratelimit and now < _ratelimit[user][0]:  # Only ratelimit API calls if this is not the final response
+            return _ratelimit[user][1]
+        ret: list[Location] = await func(bot, ctx, value, final)
+        _cache[value] = ret
+        _ratelimit[user] = (now + 1, ret)
+        return ret
+    return wrapper
+
+
+# TODO: Try to parse the values locally using https://bulk.openweathermap.org/sample/city.list.json.gz
+@_cache_geolocation_values
+async def _get_location_suggestions(bot: bot_data.Bot, ctx: commands.Context | discord.Interaction, current: str, _final: bool = False) -> list[Location]:
+    """ Find places that have the given name """
+    language = bot.language(ctx)
+    lang = "en" if language.data("_conlang") else language.string("_short")
+    token = bot.config["weather_api_token"]
+    params = {"q": current, "limit": 5, "appid": token}
+    locations_res: str = await http.get(f"https://api.openweathermap.org/geo/1.0/direct?" + urllib.parse.urlencode(params), res_method="text")
+    locations = json.loads(locations_res)
+    results: list[Location] = []
+    for location in locations:
+        value = location["name"]
+        if "local_names" in location:
+            name = location["local_names"].get(lang, value)
+        else:
+            name = value
+        state = location.get("state")
+        country_code = location.get("country")
+        lat, lon = location["lat"], location["lon"]
+        results.append(Location(value, name, state, country_code, lat, lon))
+    return results
+
+
 class Utility(commands.Cog):
     def __init__(self, bot: bot_data.Bot):
         self.bot = bot
+        self.sticker_packs: list[discord.StickerPack] | None = None
 
-    @commands.command(name="time")
+    @commands.hybrid_command(name="time")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(user="(Optional) The user whose time to check")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def current_time(self, ctx: commands.Context, *, user: discord.User = None):
-        """ Current time - input another user to see their local time """
+        """ Look up your or someone else's local time """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         user = user or ctx.author
         if self.bot.name == "cobble":
             place = conworlds.Place("Virsetgar")
             now = time2.datetime.now(place.tz, time2.Kargadia)
-            # Try to get the local language name for Virsetgar
-            start = None
-            for _lang in language.fallbacks(place.languages):
-                start = place.names.get(_lang)
-                if start is not None:
-                    break
-            if start is None:
-                start = "Virsetgar"
-            utc_name = f"Current time in {start}"
+            utc_name = language.string("util_time_utc_kargadia")
         else:
             now = time2.datetime.now()
             utc_name = language.string("util_time_utc")
@@ -50,22 +136,33 @@ class Utility(commands.Cog):
         embed.add_field(name=language.string("util_time_your"), value=own_time, inline=False)
         if user.id != ctx.author.id:
             embed.add_field(name=language.string("util_time_user", user=general.username(user)), value=user_time, inline=False)
-        # send = f"{start}: **{language.time(now, short=0, dow=True, seconds=True, tz=True)}**"
-        # if user.id == ctx.author.id:
-        #     send += language.string("util_time_custom", time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id))
-        # else:
-        #     send += language.string("util_time_custom2", user=general.username(user), time=language.time(now, short=0, dow=True, seconds=True, tz=True, uid=user.id))
         return await ctx.send(embed=embed)
 
-    @commands.command(name="base", aliases=["bases", "bc"])
+    @commands.hybrid_command(name="base", aliases=["bases", "bc"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.choices(caps=[
+        app_commands.Choice(name="Capitalise letters", value="caps"),
+        app_commands.Choice(name="Don't capitalise letters", value=""),
+    ])
+    @app_commands.describe(
+        base_from="The base from which to convert the number",
+        base_to="The base to which to convert the number",
+        number="The number to convert between bases",
+        float_precision="For non-whole numbers, the precision after the dot. Defaults to 5",
+        caps="Whether or not to capitalise letters for bases higher than 10 (e.g. \"1AA\" instead of \"1aa\")"
+    )
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     # async def base_conversions(self, ctx: commands.Context, number: str, conversion: str, base: int, caps: bool = False):
     async def base_conversions(self, ctx: commands.Context, base_from: int, base_to: int, number: str, float_precision: int = 5, caps: str = ""):
-        """ Convert numbers between bases
+        """ Convert numbers between different number bases
 
         The float precision argument controls how many places after the dot will be shown
         Write `"caps"` after the number if you want letters outputted in uppercase (ie. "1AA" instead of "1aa" for bases 11 and up)
-        Usage example: `//base 10 16 420.69 5 caps` will convert 420.69 from decimal to hexadecimal with precision of 5 places (420.69 -> 1A4.B0A3D)"""
+        Usage example: `//base 10 16 420.69 5 caps` will convert 420.69 from decimal to hexadecimal with precision of 5 places (420.69 -> 1A4.B0A3D)
+
+        Note: The conversions may not always be precise, and numbers closer to the end may get lost """
+        await ctx.defer(ephemeral=True)
         if not (2 <= base_from <= 36):
             return await ctx.send("The base value must be between 2 and 36...")
         if not (2 <= base_to <= 36):
@@ -86,83 +183,161 @@ class Utility(commands.Cog):
         except OverflowError:
             return await ctx.send(f"{general.username(ctx.author)}, the number specified is too large to convert to a proper value.")
 
-    @commands.command(name="settz", aliases=["tz", "settimezone", "timezone"])
-    @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def set_timezone(self, ctx: commands.Context, tz: str = None):
-        """ Set your timezone - Use "reset" to reset your timezone """
-        language = self.bot.language(ctx)
-        if tz is None or tz.lower() == "help":
-            return await ctx.send(language.string("util_time_tz_help", command=ctx.clean_prefix + ctx.invoked_with))
-        elif tz.lower() == "reset":
-            self.bot.db.execute("DELETE FROM timezones WHERE uid=?", (ctx.author.id,))
-            return await ctx.send(language.string("util_time_tz_reset"))
-        elif tz.lower() == "list":
-            file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
-            return await ctx.send(language.string("util_time_tz_list"), file=file)
-        elif len(tz) == 2:
-            def human_offset(_zone):
-                return time2.format_offset(offset(_zone))
+    @commands.hybrid_group(name="timezones", aliases=["timezone", "settimezone", "settz", "tz"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def timezones(self, ctx: commands.Context):
+        """ Manage timezones """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
 
-            def offset(_zone):
-                return pytz.timezone(_zone).utcoffset(now)
+    @timezones.command(name="list")
+    async def timezones_list(self, ctx: commands.Context):
+        """ See the list of all available timezones """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        paginator = paginators.LinePaginator(max_lines=20, max_size=1000)
+        paginator.add_lines(pytz.all_timezones)
+        embed = discord.Embed(title=language.string("util_time_tz_list"), colour=general.random_colour())
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.send_to(ctx)
 
-            try:
-                country = language.string(f"country_{tz}")
-                now = time.now2()
-                timezones = "\n".join([f"`{human_offset(zone)} {zone}`" for zone in sorted(pytz.country_timezones[tz.upper()], key=offset, reverse=True)])
-                return await ctx.send(language.string("util_time_tz_country", country=country, timezones=timezones, command=ctx.clean_prefix + ctx.invoked_with))
-            except KeyError:
-                return await ctx.send(language.string("util_time_tz_country_none", country=tz))
+    async def country_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the timezone country """
+        language = self.bot.language(interaction)
+        results: list[tuple[str, str, int]] = []
+        countries = pytz.country_timezones.keys()
+        current = current.lower()
+        for country in countries:
+            country_name = language.string(f"country_{country.lower()}")
+            ratios = (process.default_scorer(current, country.lower()), process.default_scorer(current, country_name.lower()))
+            results.append((country, country_name, max(ratios)))
+        results.sort(key=lambda x: x[2], reverse=True)
+        return [app_commands.Choice(name=full_name, value=code) for code, full_name, _ in results[:25]]
+
+    @timezones.command(name="country")
+    @app_commands.autocomplete(country=country_autocomplete)
+    @app_commands.describe(country="The name of the country for which to list timezones")
+    async def timezones_country(self, ctx: commands.Context, country: str):
+        """ List all timezones that exist in the specified country """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+
+        def human_offset(_zone):
+            return time2.format_offset(offset(_zone))
+
+        def offset(_zone):
+            return pytz.timezone(_zone).utcoffset(now)
+
+        actual_country = None
+        _country = country.lower()
+        for country_key in pytz.country_timezones.keys():
+            country_name = language.string(f"country_{country_key.lower()}").lower()
+            if country_name == _country or country_key.lower() == _country:
+                actual_country = country_key.lower()
+                break
+        if actual_country is None:
+            return await ctx.send(language.string("util_time_tz_country_none", country=country))
+
+        try:
+            country_name = language.string(f"country_{actual_country}")
+            now = time.now2()
+            timezones = "\n".join([f"`{human_offset(zone)} {zone}`" for zone in sorted(pytz.country_timezones[actual_country.upper()], key=offset, reverse=True)])
+            return await ctx.send(language.string("util_time_tz_country", country=country_name, timezones=timezones))
+        except KeyError:
+            return await ctx.send(language.string("util_time_tz_country_none", country=country))
+
+    # There's no reason for this to be outside. It is just there to stop discord.py from thinking that the autocomplete is "not a coroutine" (even though it is)
+    @staticmethod
+    def timezone_suggestions(current: str) -> list[tuple[str, int]]:
+        results: list[tuple[str, int]] = []
+        for timezone in pytz.all_timezones:
+            results.append((timezone, process.default_scorer(current, timezone)))
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results
+
+    async def timezone_autocomplete(self, _interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for the timezone name """
+        results = self.timezone_suggestions(current)
+        return [app_commands.Choice(name=result, value=result) for result, _ in results[:25]]
+
+    @timezones.command(name="set")
+    @app_commands.autocomplete(timezone=timezone_autocomplete)
+    @app_commands.describe(timezone="The name of your timezone")
+    async def timezones_set(self, ctx: commands.Context, timezone: str):
+        """ Set your timezone """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
         try:
             data = self.bot.db.fetchrow("SELECT * FROM timezones WHERE uid=?", (ctx.author.id,))
-            _tz = pytz.timezone(tz)
+            _tz = pytz.timezone(timezone)
             if data:
-                self.bot.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (tz, ctx.author.id))
+                self.bot.db.execute("UPDATE timezones SET tz=? WHERE uid=?", (str(_tz), ctx.author.id))
             else:
-                self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, tz))
-            return await ctx.send(language.string("util_time_tz", tz=str(_tz), command=ctx.clean_prefix + ctx.invoked_with))
-            # return await general.send(f"Your timezone has been set to {_tz}", ctx.channel)
+                self.bot.db.execute("INSERT INTO timezones VALUES (?, ?)", (ctx.author.id, str(_tz)))
+            return await ctx.send(language.string("util_time_tz", tz=str(_tz)))
         except pytz.UnknownTimeZoneError:
-            return await ctx.send(language.string("util_time_tz_error", tz=tz, command=ctx.clean_prefix + ctx.invoked_with))
-            # file = discord.File(BytesIO("\n".join(pytz.all_timezones).encode("utf-8")), filename="timezones.txt")
-            # return await ctx.send(language.string("util_time_tz_error", tz=tz), file=file)
-            # return await general.send(f"Timezone `{tz}` was not found. Attached is the list of all pytz timezones", ctx.channel, file=file)
+            return await ctx.send(language.string("util_time_tz_error", tz=timezone))
 
-    @commands.command(name="timesince", aliases=["timeuntil"])
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None):
-        """ Time difference
-        If you don't specify any time, it will simply default to an arbitrary date within the near future"""
-        language = self.bot.language(ctx)
+    @timezones.command(name="reset", aliases=["unset"])
+    async def timezones_reset(self, ctx: commands.Context):
+        """ Reset your timezone """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        self.bot.db.execute("DELETE FROM timezones WHERE uid=?", (ctx.author.id,))
+        return await ctx.send(language.string("util_time_tz_reset"))
+
+    def _parse_time(self, ctx: commands.Context, _date: str, _time: str | None, _time_class: str = "Earth"):
+        tz = self.bot.timezone(ctx.author.id, _time_class)
+        _y, _m, _d = _date.split("-")
+        y, m, d = int(_y), int(_m), int(_d)
+        date_part = time2.date(y, m, d, getattr(time2, _time_class))  # The time class should be validated by the command
+        if _time is not None:
+            _h, _m, *_s = _time.split(":")
+            h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
+            time_part = time2.time(h, m, s, 0, time2.utc)
+        else:
+            time_part = time2.time()
+        datetime = time2.datetime.combine(date_part, time_part, time2.utc)
+        datetime2 = datetime.as_timezone(tz)
+        return datetime.replace(tz=datetime2.tzinfo)
+
+    async def time_since_command(self, ctx: commands.Context, _date: str | None, _time: str | None, _time_class: str | None):
+        """ Wrapper for the timesince command for Suager and CobbleBot """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
         try:
-            now = time2.datetime.now()
-            date = time2.datetime(now.year, 1, 1)
-            tz = self.bot.timezone(ctx.author.id, "Earth")
-            if _date is None:
+            time_class = getattr(time2, _time_class)
+        except AttributeError:
+            return await ctx.send(language.string("util_time_class_not_found"))
+        else:
+            if not issubclass(time_class, time2.Earth):
+                return await ctx.send(language.string("util_time_class_invalid"))
+        try:
+            now = time2.datetime.now(time_class=time_class)
+            date = time2.datetime(now.year, 1, 1, time_class=time_class)
+            tz = self.bot.timezone(ctx.author.id, _time_class)
+            if _date is None and _time_class in ("Earth", "Kargadia"):
                 def dt(_month, _day):
-                    return time2.datetime(now.year, _month, _day, tz=tz)
-                dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
-                         time2.datetime(now.year + 1, 1, 1, tz=tz)]
+                    return time2.datetime(now.year, _month, _day, tz=tz, time_class=time_class)
+                if _time_class == "Earth":
+                    dates = [dt(1, 27), dt(3, 17), dt(4, 1), dt(4, 17), dt(5, 13), dt(8, 8), dt(10, 31), dt(11, 19), dt(12, 5),
+                             time2.datetime(now.year + 1, 1, 1, tz=tz, time_class=time_class)]
+                elif _time_class == "Kargadia":
+                    dates = [dt(1, 6), dt(3, 12), dt(4, 8), dt(7, 9), dt(8, 11), dt(11, 2), dt(14, 1), dt(16, 5),
+                             time2.datetime(now.year + 1, 1, 1, tz=tz, time_class=time_class)]
+                else:
+                    raise ValueError(f"No predefined dates are available for time class {_time_class}")
                 for _date in dates:
                     if now < _date:
                         date = _date
                         break
             else:
                 try:
-                    if not _time:
-                        time_part = time2.time()  # 0:00:00
-                    else:
-                        _h, _m, *_s = _time.split(":")
-                        h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
-                        time_part = time2.time(h, m, s, 0, time2.utc)
-                    _y, _m, _d = _date.split("-")
-                    y, m, d = int(_y), int(_m), int(_d)
-                    date_part = time2.date(y, m, d, time2.Earth)
-                    date = time2.datetime.combine(date_part, time_part, time2.utc)
-                    date2 = date.as_timezone(tz)
-                    date = date.replace(tz=date2.tzinfo)
+                    date = self._parse_time(ctx, _date, _time, _time_class)
                 except ValueError:
-                    return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
+                    return await ctx.send(language.string("util_timesince_format"))
             difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
             current_time = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
             specified_time = language.time(date, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
@@ -170,15 +345,35 @@ class Utility(commands.Cog):
         except Exception as e:
             return await ctx.send(language.string("util_timesince_error", err=f"{type(e).__name__}: {str(e)}"))
 
+    @commands.hybrid_command(name="timesince", aliases=["timeuntil"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.rename(_date="date", _time="time")
+    @app_commands.describe(_date="The date to compare (Format: YYYY-MM-DD)", _time="The time to compare (Format: HH:MM:SS)")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None):
+        """ Calculate how long it has been since a given time
+
+        If you don't specify any time, it will simply default to an arbitrary date within the near future """
+        return await self.time_since_command(ctx, _date, _time, "Earth")
+
     @staticmethod
-    async def time_diff(ctx: commands.Context, string: str, multiplier: int):
+    async def time_diff(ctx: commands.Context, string: str, multiplier: int, _time_class: str = "Earth"):
+        await ctx.defer(ephemeral=True)
         language = ctx.language()
+        try:
+            time_class = getattr(time2, _time_class)
+        except AttributeError:
+            return await ctx.send(language.string("util_time_class_not_found"))
+        else:
+            if not issubclass(time_class, time2.Earth):
+                return await ctx.send(language.string("util_time_class_invalid"))
         try:
             # _delta = time.interpret_time(string) * multiplier
             # delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds)
-            delta = time.interpret_time(string, time2.relativedelta, time2.Earth) * multiplier
-            now = time2.datetime.now()
-            then = now + delta
+            delta = time.interpret_time(string, time2.relativedelta, time_class) * multiplier
+            now = time2.datetime.now(time_class=time_class)
+            then = now + delta  # type: ignore
         except (ValueError, OverflowError) as e:
             return await ctx.send(language.string("util_timediff_error", err=f"{type(e).__name__}: {str(e)}"))
         difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
@@ -186,214 +381,237 @@ class Utility(commands.Cog):
         time_then = language.time(then, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
         return await ctx.send(language.string("util_timediff", now=time_now, delta=difference, then=time_then))
 
-    @commands.command(name="timein")
+    @commands.hybrid_command(name="timein")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.autocomplete(time_period=duration_autocomplete)
+    @app_commands.describe(time_period="The duration of time to look in the future (Format: 1y1mo1d1h1m1s)")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def time_in(self, ctx: commands.Context, time_period: str):
-        """ Check what time it'll be in a specified period """
+        """ Check what time it will be in a specified period """
         return await self.time_diff(ctx, time_period, 1)
 
-    @commands.command(name="timeago")
+    @commands.hybrid_command(name="timeago")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_ago(self, ctx: commands.Context, time_period: str, time_class: str = None):
+    @app_commands.autocomplete(time_period=duration_autocomplete)
+    @app_commands.describe(time_period="The duration of time to look in the past (Format: 1y1mo1d1h1m1s)")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def time_ago(self, ctx: commands.Context, time_period: str):
         """ Check what time it was a specified period ago """
         return await self.time_diff(ctx, time_period, -1)
 
-    @commands.command(name="weather")
+    async def _parse_place_name(self, ctx: commands.Context, place_name: str) -> tuple[float, float] | None:
+        """ Parse place name and return a tuple of (lat, long) coordinates """
+        if "\u2060" in place_name:  # Zero-width no-break space - Sentinel character for autocomplete results (which already return a position)
+            lat, lon = place_name.split("\u2060,")
+            return float(lat), float(lon)
+        locations = await _get_location_suggestions(self.bot, ctx, place_name, True)
+        if locations:
+            location = locations[0]
+            return location.lat, location.lon
+        return None
+
+    async def place_name_autocomplete(self, interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+        """ Autocomplete for weather place names """
+        if not current:
+            return []  # Don't send API requests for an empty place name
+        language = self.bot.language(interaction)
+        locations = await _get_location_suggestions(self.bot, interaction, current, False)
+        results: list[app_commands.Choice[str]] = []
+        for location in locations:
+            country = language.string(f"country_{location.country_code.lower()}")
+            state = f", {location.state}" if location.state else ""
+            name = f"{location.localised_name}{state}, {country}"
+            value = f"{location.lat}\u2060,{location.lon}"
+            results.append(app_commands.Choice(name=name, value=value))
+        return results
+
+    @staticmethod
+    def _flag_emoji(country_code: str) -> str:
+        out = ""
+        for char in country_code:
+            out += chr(ord(char) + 127397)
+        return out
+
+    @commands.hybrid_command(name="weather")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.autocomplete(place=place_name_autocomplete)
+    @app_commands.describe(place="The name of the place for which to check the weather")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def weather(self, ctx: commands.Context, *, place: str):
-        """ Check weather in a place """
+        """ Check the current weather in a place """
         language = self.bot.language(ctx)
         lang = "en" if language.data("_conlang") else language.string("_short")
-        a = await ctx.send(f"{emotes.Loading} Loading weather for {place}...")
-        try:
+        async with ctx.typing(ephemeral=True):
+            coords = await self._parse_place_name(ctx, place)
+            if not coords:
+                return await ctx.send(language.string("util_weather_error_not_found", place=place))
+            lat, lon = coords
             token = self.bot.config["weather_api_token"]
-            bio = await http.get(f"http://api.openweathermap.org/data/2.5/weather?appid={token}&lang={lang}&q={place}", res_method="read")
-            await a.delete()
-            data = json.loads(str(bio.decode("utf-8")))
-            code = data["cod"]
-            if code == 200:
-                embed = discord.Embed(colour=random.randint(0, 0xffffff))
-                try:
-                    country = data["sys"]["country"].lower()
-                except KeyError:
-                    country = ""
-                try:
-                    tz = data["timezone"]
-                except KeyError:
-                    tz = 0
-                # _time_locale = locale if locale not in ["rsl-1d", "rsl-5"] else "english"
-                # local_time = languages.gts(time.now(None) + timedelta(seconds=tz), _time_locale)
-                local_time = language.time(time.now(None) + timedelta(seconds=tz), short=1, dow=False, seconds=False, tz=False)
-                if country:
-                    country_name = language.string(f"country_{country}")
-                    emote = f":flag_{country}: "
-                else:
-                    country_name = "Unknown country"
-                    emote = ""
-                embed.title = language.string("util_weather_title", place=data["name"], country=country_name, emote=emote)
-                embed.description = language.string("util_weather_desc", time=local_time)
-                weather_icon = data["weather"][0]["icon"]
-                embed.set_thumbnail(url=f"http://openweathermap.org/img/wn/{weather_icon}@2x.png")
-                embed.add_field(name=language.string("util_weather_weather"), value=data['weather'][0]['description'].capitalize(), inline=False)
-                # _tk = data['main']['temp']
-                # _tc = _tk - 273.15
-                # _tf = _tc * 1.8 + 32
-                # tk, tc, tf = language.number(_tk, precision=1), language.number(_tc, precision=1), language.number(_tf, precision=1)
-                # embed.add_field(name=language.string("util_weather_temperature"), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=False)
-                embed.add_field(name=language.string("util_weather_temperature"), value=general.bold(language.temperature(data["main"]["temp"] - 273.15, precision=1)), inline=False)
-                try:
-                    # _tk = data["main"]["feels_like"]
-                    # _tc = _tk - 273.15
-                    # _tf = _tc * 1.8 + 32
-                    # tk, tc, tf = language.number(_tk, precision=1), language.number(_tc, precision=1), language.number(_tf, precision=1)
-                    # embed.add_field(name=language.string("util_weather_temperature2"), value=f"**{tc}°C** | {tk} K | {tf}°F", inline=False)
-                    embed.add_field(name=language.string("util_weather_temperature2"), value=language.temperature(data["main"]["feels_like"] - 273.15, precision=1), inline=False)
-                except KeyError:
-                    pass
-                try:
-                    pressure = data["main"]["grnd_level"]
-                except KeyError:
-                    pressure = data["main"]["pressure"]
-                embed.add_field(name=language.string("util_weather_pressure"), value=general.bold(f"{language.number(pressure)} hPa"), inline=False)
-                embed.add_field(name=language.string("util_weather_humidity"), value=general.bold(language.number(data["main"]["humidity"] / 100, precision=0, percentage=True)), inline=False)
-                # _sm = data["wind"]["speed"]
-                # _sk = _sm * 3.6
-                # _sb = _sk / 1.609  # imperial system bad
-                # sm, sk, sb = language.number(_sm, precision=2), language.number(_sk, precision=2), language.number(_sb, precision=2)
-                # embed.add_field(name=language.string("util_weather_wind"), value=language.string("util_weather_wind_data", sm, sk, sb), inline=False)
-                embed.add_field(name=language.string("util_weather_wind"), value=general.bold(language.speed(data["wind"]["speed"] * 3.6, precision=2)), inline=False)
-                embed.add_field(name=language.string("util_weather_clouds"), value=general.bold(language.number(data["clouds"]["all"] / 100, precision=0, percentage=True)), inline=False)
-                sr = data["sys"]["sunrise"]
-                ss = data["sys"]["sunset"]
-                now = time.now(None)
-                now_l = now + timedelta(seconds=tz)
-                if sr != 0 and ss != 0:
-                    srt = time.from_ts(sr + tz, None)
-                    sst = time.from_ts(ss + tz, None)
-                    sr, tr = language.time2(srt, seconds=False, tz=False), language.delta_dt(srt, source=now_l, accuracy=2, brief=True, affix=True)
-                    ss, ts = language.time2(sst, seconds=False, tz=False), language.delta_dt(sst, source=now_l, accuracy=2, brief=True, affix=True)
-                    embed.add_field(name=language.string("util_weather_sunrise"), value=f"**{sr}** | {tr}", inline=False)
-                    embed.add_field(name=language.string("util_weather_sunset"), value=f"**{ss}** | {ts}", inline=False)
-                try:
-                    lat, long = data["coord"]["lat"], data["coord"]["lon"]
-                    n, e = "N" if lat >= 0 else "S", "E" if long >= 0 else "W"
-                    if lat < 0:
-                        lat *= -1
-                    if long < 0:
-                        long *= -1
-                    embed.add_field(name=language.string("util_weather_location"), value=f"{language.number(lat, precision=2)}°{n}, {language.number(long, precision=2)}°{e}", inline=False)
-                except KeyError:
-                    pass
-                embed.timestamp = now
+            params = {"lat": lat, "lon": lon, "appid": token, "units": "metric", "lang": lang}
+            res = await http.get(f"https://api.openweathermap.org/data/2.5/weather?" + urllib.parse.urlencode(params), res_method="text")
+            data = json.loads(res)
+            if data["cod"] != 200:
+                return await ctx.send(language.string("util_weather_error", place=place, err=f"{data["cod"]}: {data["message"]}"))
+            embed = discord.Embed(colour=general.random_colour())
+            place_name = data.get("name", language.string("generic_unknown"))
+            country_code = data["sys"].get("country", "")
+            if country_code:
+                country_name = language.string(f"country_{country_code.lower()}")
+                flag_emoji = self._flag_emoji(country_code) + " "
             else:
-                return await ctx.send(language.string("util_weather_error", place=place, err=f"{code}: {data['message']}"))
-        except Exception as e:
-            return await ctx.send(language.string("util_weather_error", place=place, err=f"{type(e).__name__}: {str(e)}"))
-        return await ctx.send(embed=embed)
+                country_name = language.string("util_weather_unknown_country")
+                flag_emoji = ""
+            embed.title = language.string("util_weather_title", place=place_name, country=country_name, emote=flag_emoji)
+            tz_offset = data.get("timezone", 0)
+            timezone = time2.timezone(time2.datetime_timedelta(seconds=tz_offset))
+            local_time = time2.datetime.now(timezone)
+            local_time_str = language.time(local_time, short=1, dow=False, seconds=False, tz=False)
+            embed.description = language.string("util_weather_desc", time=local_time_str)
+            weather = data["weather"][0]
+            weather_icon = weather["icon"]
+            embed.set_thumbnail(url=f"https://openweathermap.org/img/wn/{weather_icon}@2x.png")
+            embed.add_field(name=language.string("util_weather_weather"), value=weather["description"].capitalize(), inline=False)
+            main_data = data["main"]
+            embed.add_field(name=language.string("util_weather_temperature"), value=general.bold(language.temperature(main_data["temp"], precision=1)), inline=True)
+            if "feels_like" in main_data:
+                embed.add_field(name=language.string("util_weather_temperature2"), value=language.temperature(main_data["feels_like"], precision=1), inline=True)
+            pressure = main_data.get("grnd_level", main_data["pressure"])
+            embed.add_field(name=language.string("util_weather_pressure"), value=general.bold(f"{language.number(pressure)} hPa"), inline=False)
+            embed.add_field(name=language.string("util_weather_humidity"), value=general.bold(language.number(main_data["humidity"] / 100, precision=0, percentage=True)), inline=False)
+            if "visibility" in data:
+                embed.add_field(name=language.string("util_weather_visibility"), value=general.bold(language.length(data["visibility"], precision=1)), inline=False)
+            wind_data = data["wind"]
+            wind_speed = language.speed(wind_data["speed"] * 3.6, precision=2)
+            wind_direction = wind_data["deg"] if "deg" in wind_data else language.string("generic_unknown")
+            wind_gusts = language.speed(wind_data["gust"] * 3.6, precision=2) if "gust" in wind_data else language.string("generic_unknown")
+            embed.add_field(name=language.string("util_weather_wind"), inline=False,
+                            value=language.string("util_weather_wind_data", wind_speed=wind_speed, wind_gusts=wind_gusts, wind_direction=wind_direction))
+            embed.add_field(name=language.string("util_weather_clouds"), value=general.bold(language.number(data["clouds"]["all"] / 100, precision=0, percentage=True)), inline=False)
+            if "rain" in data:
+                embed.add_field(name=language.string("util_weather_rainfall"), value=language.string("util_weather_precipitation_unit", value=data["rain"]["1h"]), inline=False)
+            if "snow" in data:
+                embed.add_field(name=language.string("util_weather_snowfall"), value=language.string("util_weather_precipitation_unit", value=data["snow"]["1h"]), inline=False)
+            sunrise = data["sys"]["sunrise"]
+            if sunrise != 0:
+                sunrise_time = time2.datetime.from_timestamp(sunrise, timezone)
+                sunrise_time_str = language.time2(sunrise_time, seconds=False, tz=False)
+                sunrise_delta_str = language.delta_dt(sunrise_time, source=local_time, accuracy=2, brief=True, affix=True)
+                embed.add_field(name=language.string("util_weather_sunrise"), value=f"**{sunrise_time_str}**\n{sunrise_delta_str}", inline=True)
+            sunset = data["sys"]["sunset"]
+            if sunset != 0:
+                sunset_time = time2.datetime.from_timestamp(sunset, timezone)
+                sunset_time_str = language.time2(sunset_time, seconds=False, tz=False)
+                sunset_delta_str = language.delta_dt(sunset_time, source=local_time, accuracy=2, brief=True, affix=True)
+                embed.add_field(name=language.string("util_weather_sunset"), value=f"**{sunset_time_str}**\n{sunset_delta_str}", inline=True)
+            if "coord" in data:
+                lat, long = data["coord"]["lat"], data["coord"]["lon"]
+                n, e = "N" if lat >= 0 else "S", "E" if long >= 0 else "W"
+                if lat < 0:
+                    lat *= -1
+                if long < 0:
+                    long *= -1
+                embed.add_field(name=language.string("util_weather_location"), value=f"{language.number(lat, precision=3)}°{n}, {language.number(long, precision=3)}°{e}", inline=False)
+            embed.timestamp = local_time.to_datetime()
+            return await ctx.send(embed=embed)
 
-    @commands.command(name="colour", aliases=["color"])
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.hybrid_command(name="colour", aliases=["color"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(colour="The hex code of the colour. Type \"random\" for a random colour.")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def colour(self, ctx: commands.Context, *, colour: str = "random"):
         """ Information on a colour """
-        language = self.bot.language(ctx)
-        if colour.endswith(" -i"):
-            colour = colour[:-3]
-            image_only = True
-        else:
-            image_only = False
+        async with ctx.typing(ephemeral=True):
+            language = self.bot.language(ctx)
+            if colour.endswith(" -i"):
+                colour = colour[:-3]
+                image_only = True
+            else:
+                image_only = False
 
-        if colour.lower() == "random":
-            _colour = f"{random.randint(0, 0xffffff):06x}"
-        else:
-            try:
-                if colour[0] == "#":
-                    colour = colour[1:]
-                a = len(colour)
-                if a == 3:
-                    d, e, f = colour
-                    colour = f"{d}{d}{e}{e}{f}{f}"
-                    a = 6
-                if a != 6:
-                    return await ctx.send(language.string("images_colour_invalid_value"))
-                _colour = f"{int(colour, 16):06x}"
-            except Exception as e:
-                return await ctx.send(language.string("images_colour_invalid", err=f"{type(e).__name__}: {str(e)}"))
+            if colour.lower() == "random":
+                int_6 = random.randint(0, 0xffffff)
+                hex_6 = hex(int_6)[2:]  # Remove the 0x prefix
+                rgb_255 = images.colour_int_to_tuple(int_6)
+            else:
+                try:
+                    hex_6 = colour
+                    int_6 = images.colour_hex_to_int(colour)
+                    rgb_255 = images.colour_int_to_tuple(int_6)
+                except images.InvalidLength as e:
+                    return await ctx.send(language.string("images_colour_invalid_value", value=e.value, length=e.length), ephemeral=True)
+                except images.InvalidColour as e:
+                    return await ctx.send(language.string("images_colour_invalid", value=e.value, err=e.error), ephemeral=True)
 
-        if image_only:
-            rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16))
-            image1 = Image.new(mode="RGBA", size=(512, 512), color=rgba_255)
+            if image_only:
+                image1 = Image.new(mode="RGBA", size=(512, 512), color=rgb_255)
+                bio1 = BytesIO()
+                image1.save(bio1, "PNG")
+                bio1.seek(0)
+                return await ctx.send(file=discord.File(bio1, "colour.png"))
+
+            embed = discord.Embed(colour=int_6)
+            rgb_1 = tuple(round(value / 255, 4) for value in rgb_255)
+            red, green, blue = rgb_255
+            brightness = images.calculate_brightness(red, green, blue)
+            embed.add_field(name=language.string("images_colour_hex"), value="#" + hex_6, inline=False)
+            embed.add_field(name=language.string("images_colour_int"), value=str(int_6), inline=False)
+            embed.add_field(name=language.string("images_colour_rgb") + " (0-255)", value=str(rgb_255), inline=False)
+            embed.add_field(name=language.string("images_colour_rgb") + " (0-1)", value=str(rgb_1), inline=False)
+            embed.add_field(name=language.string("images_colour_brightness"), value=language.number(brightness, precision=4), inline=False)
+            embed.add_field(name=language.string("images_colour_font"), inline=False, value="#000000" if brightness >= 128 else "#ffffff")
+            image1 = Image.new(mode="RGBA", size=(512, 512), color=rgb_255)
             bio1 = BytesIO()
             image1.save(bio1, "PNG")
             bio1.seek(0)
-            return await ctx.send(file=discord.File(bio1, "colour.png"))
+            embed.set_thumbnail(url="attachment://colour.png")
+            rows = 2  # 4
+            size = 256
+            font = images.load_font("jetbrains_mono", size=48)
+            image2 = Image.new(mode="RGBA", size=(size * 11, size * rows), color=(0, 0, 0, 1))
+            up_red, up_green, up_blue = (255 - red) / 10, (255 - green) / 10, (255 - blue) / 10
+            down_red, down_green, down_blue = red / 10, green / 10, blue / 10
 
-        hex_6 = _colour[:6]
-        int_6 = int(_colour[:6], 16)
-        embed = discord.Embed(colour=int_6)
-        rgba_255 = (int(_colour[0:2], 16), int(_colour[2:4], 16), int(_colour[4:6], 16))
-        rgba_1 = tuple(f"{value / 255:.4f}" for value in rgba_255)
-        brightness = sum(rgba_255) // 3
-        red, green, blue = rgba_255
-        embed.add_field(name=language.string("images_colour_hex"), value=f'#{hex_6}', inline=False)
-        embed.add_field(name=language.string("images_colour_int"), value=str(int_6), inline=False)
-        embed.add_field(name=language.string("images_colour_rgb") + " (0-255)", value=str(rgba_255), inline=False)
-        embed.add_field(name=language.string("images_colour_rgb") + " (0-1)", value=str(rgba_1).replace("'", ""), inline=False)
-        embed.add_field(name=language.string("images_colour_brightness"), value=str(brightness), inline=False)
-        embed.add_field(name=language.string("images_colour_font"), inline=False, value="#000000" if brightness >= 128 or green >= 224 else "#ffffff")
-        image1 = Image.new(mode="RGBA", size=(512, 512), color=rgba_255)
-        bio1 = BytesIO()
-        image1.save(bio1, "PNG")
-        bio1.seek(0)
-        embed.set_thumbnail(url="attachment://colour.png")
-        rows = 2  # 4
-        font_size = 48
-        size = 256
-        try:
-            font = ImageFont.truetype(images.font_files["jetbrains mono"], size=font_size)
-        except ImportError:
-            await ctx.send(f"{emotes.Deny} It seems that image generation does not work properly here...")
-            font = None
-        image2 = Image.new(mode="RGBA", size=(size * 11, size * rows), color=(0, 0, 0, 1))
-        up_red, up_green, up_blue = (255 - red) / 10, (255 - green) / 10, (255 - blue) / 10
-        down_red, down_green, down_blue = red / 10, green / 10, blue / 10
+            def _hex(value: int):
+                return f"{value:02X}"
 
-        def _hex(value: int):
-            return f"{value:02X}"
+            for i in range(11):
+                start2a = (size * i, 0)
+                start2b = (size * i, size)
+                red2a, green2a, blue2a = int(red + up_red * i), int(green + up_green * i), int(blue + up_blue * i)
+                red2b, green2b, blue2b = int(red - down_red * i), int(green - down_green * i), int(blue - down_blue * i)
+                image2a = Image.new(mode="RGBA", size=(size, size), color=(red2a, green2a, blue2a, 255))
+                image2b = Image.new(mode="RGBA", size=(size, size), color=(red2b, green2b, blue2b, 255))
+                draw2a = ImageDraw.Draw(image2a)
+                draw2b = ImageDraw.Draw(image2b)
+                hex2a = "#" + _hex(red2a) + _hex(green2a) + _hex(blue2a)
+                hex2b = "#" + _hex(red2b) + _hex(green2b) + _hex(blue2b)
+                sum2a = images.calculate_brightness(red2a, green2a, blue2a)
+                sum2b = images.calculate_brightness(red2b, green2b, blue2b)
+                fill2a = (0, 0, 0, 255) if sum2a >= 128 else (255, 255, 255, 255)
+                fill2b = (0, 0, 0, 255) if sum2b >= 128 else (255, 255, 255, 255)
+                draw2a.text((size // 2, size), hex2a, font=font, fill=fill2a, anchor="md")
+                draw2b.text((size // 2, size), hex2b, font=font, fill=fill2b, anchor="md")
+                image2.paste(image2a, start2a)
+                image2.paste(image2b, start2b)
 
-        for i in range(11):
-            start2a = (size * i, 0)
-            start2b = (size * i, size)
-            red2a, green2a, blue2a = int(red + up_red * i), int(green + up_green * i), int(blue + up_blue * i)
-            red2b, green2b, blue2b = int(red - down_red * i), int(green - down_green * i), int(blue - down_blue * i)
-            image2a = Image.new(mode="RGBA", size=(size, size), color=(red2a, green2a, blue2a, 255))
-            image2b = Image.new(mode="RGBA", size=(size, size), color=(red2b, green2b, blue2b, 255))
-            draw2a = ImageDraw.Draw(image2a)
-            draw2b = ImageDraw.Draw(image2b)
-            hex2a = "#" + _hex(red2a) + _hex(green2a) + _hex(blue2a)
-            hex2b = "#" + _hex(red2b) + _hex(green2b) + _hex(blue2b)
-            # width2a, height2a = draw2a.textsize(hex2a, font)
-            # width2b, height2b = draw2b.textsize(hex2b, font)
-            sum2a = (red2a + green2a + blue2a) // 3
-            sum2b = (red2b + green2b + blue2b) // 3
-            fill2a = (0, 0, 0, 255) if sum2a >= 128 or green2a >= 224 else (255, 255, 255, 255)
-            fill2b = (0, 0, 0, 255) if sum2b >= 128 or green2b >= 224 else (255, 255, 255, 255)
-            draw2a.text((size // 2, size), hex2a, font=font, fill=fill2a, anchor="md")
-            draw2b.text((size // 2, size), hex2b, font=font, fill=fill2b, anchor="md")
-            # draw2a.text(((size - width2a) // 2, size - height2a - 5), hex2a, fill=fill2a, font=font)
-            # draw2b.text(((size - width2b) // 2, size - height2b - 5), hex2b, fill=fill2b, font=font)
-            image2.paste(image2a, start2a)
-            image2.paste(image2b, start2b)
+            bio2 = BytesIO()
+            image2.save(bio2, "PNG")
+            bio2.seek(0)
+            embed.set_image(url="attachment://gradient.png")
+            return await ctx.send(embed=embed, files=[discord.File(bio1, "colour.png"), discord.File(bio2, "gradient.png")])
 
-        bio2 = BytesIO()
-        image2.save(bio2, "PNG")
-        bio2.seek(0)
-        embed.set_image(url="attachment://gradient.png")
-        return await ctx.send(embed=embed, files=[discord.File(bio1, "colour.png"), discord.File(bio2, "gradient.png")])
-
-    @commands.command(name="roll")
+    @commands.hybrid_command(name="roll")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(num1="The lower number", num2="The higher number")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def roll(self, ctx: commands.Context, num1: int = 6, num2: int = 1):
         """ Rolls a number between given range """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
         if num1 > num2:
             v1, v2 = [num2, num1]
@@ -403,10 +621,14 @@ class Utility(commands.Cog):
         n1, n2, no = language.number(v1), language.number(v2), language.number(r)
         return await ctx.send(language.string("fun_roll", name=general.username(ctx.author), num1=n1, num2=n2, output=no))
 
-    @commands.command(name="reverse")
+    @commands.hybrid_command(name="reverse")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(text="The text you want to reverse")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def reverse_text(self, ctx: commands.Context, *, text: str):
         """ Reverses text """
+        await ctx.defer(ephemeral=True)  # If the user wants a permanent message, they can copy the reversed text themselves
         reverse = text[::-1].replace("@", "@\u200B").replace("&", "&\u200B")
         return await ctx.send(f"🔁 {general.username(ctx.author)}:\n{reverse}")
 
@@ -427,17 +649,22 @@ class Utility(commands.Cog):
         except discord.Forbidden:
             return await ctx.send(f"Failed to send DM - the user might have blocked DMs, or be a bot.")
 
-    @commands.command(name="tell")
-    @commands.guild_only()
+    @commands.hybrid_command(name="tell")
     @permissions.has_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(channel="The channel to send the message in", message="The message to send")
+    @app_commands.allowed_installs(guilds=True, users=False)
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
     async def tell(self, ctx: commands.Context, channel: discord.TextChannel, *, message: str):
         """ Say something to a channel """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
-        try:
-            await ctx.message.delete()
-        except Exception as e:
-            await ctx.send(language.string("fun_say_delete_fail", err=f"{type(e).__name__}: {str(e)}"), delete_after=5)
+        if not ctx.interaction:  # Slash commands wouldn't have a message to delete
+            try:
+                await ctx.message.delete()
+            except Exception as e:
+                await ctx.send(language.string("fun_say_delete_fail", err=f"{type(e).__name__}: {str(e)}"), delete_after=5)
         if channel.guild != ctx.guild:
             return await ctx.send(language.string("fun_tell_guilds"))
         try:
@@ -461,21 +688,29 @@ class Utility(commands.Cog):
             return await ctx.send(f"{emotes.Deny} Failed to send the message: `{type(e).__name__}: {e}`")
         return await ctx.send(f"{emotes.Allow} Successfully sent the message to {channel.mention}", delete_after=5)
 
-    @commands.command(name="vote")
+    @commands.hybrid_command(name="vote")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(text="What you want to vote on")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def vote(self, ctx: commands.Context, *, text: str):
-        """ Start a vote """
+        """ Start a simple vote """
+        await ctx.defer(ephemeral=False)
         language = self.bot.language(ctx)
         message = await ctx.send(language.string("fun_vote", name=general.username(ctx.author), text=text))
         await message.add_reaction(emotes.Allow)
         await message.add_reaction(emotes.Meh)
         await message.add_reaction(emotes.Deny)
 
-    @commands.command(name="avatar", aliases=["av"])
+    @commands.hybrid_command(name="avatar", aliases=["av"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def avatar(self, ctx: commands.Context, *, who: discord.User = None):
+    @app_commands.describe(user="The user whose avatar you want to see")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def avatar(self, ctx: commands.Context, *, user: discord.User = None):
         """ Get someone's avatar """
-        user: discord.User | discord.Member = who or ctx.author
+        await ctx.defer(ephemeral=True)
+        user: discord.User | discord.Member = user or ctx.author
         return await ctx.send(self.bot.language(ctx).string("discord_avatar", user=general.username(user), avatar=str(user.display_avatar.replace(size=4096, static_format='png'))))
 
     @commands.command(name="avatar2", aliases=["av2", "a2", "ay"])
@@ -503,174 +738,374 @@ class Utility(commands.Cog):
             return await ctx.send(f"{member} does not have a guild avatar in {guild.name}...")
         return await ctx.send(f"**{member}**'s avatar in **{guild.name}**:\n{avatar.replace(size=4096, static_format='png')}")
 
-    @commands.group(name="role", invoke_without_command=True)
-    @commands.guild_only()
+    @commands.hybrid_group(name="role", invoke_without_command=True, fallback="info")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def role(self, ctx: commands.Context, *, role: discord.Role = None):
+    @app_commands.describe(role="The role for which to show details")
+    @app_commands.allowed_installs(guilds=True, users=False)
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    async def role_info(self, ctx: commands.Context, *, role: discord.Role):
         """ Information on roles in the current server """
         if ctx.invoked_subcommand is None:
+            await ctx.defer(ephemeral=True)
             language = self.bot.language(ctx)
-            if role is None:
-                all_roles = ""
-                for num, role in enumerate(sorted(ctx.guild.roles, reverse=True), start=1):
-                    all_roles += language.string("discord_role_list_item", i=f"{num:02d}", members=language.number(len(role.members)), role=role)
-                data = BytesIO(all_roles.encode('utf-8'))
-                return await ctx.send(language.string("discord_role_list", server=ctx.guild.name), file=discord.File(data, filename=f"{time.file_ts('Roles')}"))
-            else:
-                embed = discord.Embed(colour=role.colour)
-                embed.title = language.string("discord_role_about", role=role.name)
-                if ctx.guild.icon:
-                    embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
-                embed.add_field(name=language.string("discord_role_name"), value=role.name, inline=True)
-                embed.add_field(name=language.string("discord_role_id"), value=str(role.id), inline=True)
-                embed.add_field(name=language.string("discord_members"), value=language.number(len(role.members)), inline=True)
-                embed.add_field(name=language.string("discord_role_colour"), value=str(role.colour), inline=True)
-                embed.add_field(name=language.string("discord_role_mentionable"), value=language.yes(role.mentionable), inline=True)
-                embed.add_field(name=language.string("discord_role_hoisted"), value=language.yes(role.hoist), inline=True)
-                embed.add_field(name=language.string("discord_role_position"), value=language.number(role.position), inline=True)
-                embed.add_field(name=language.string("discord_created_at"), value=language.time(role.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=True)
-                embed.add_field(name=language.string("discord_role_default"), value=language.yes(role.is_default()), inline=True)
-                return await ctx.send(embed=embed)
+            embed = discord.Embed(colour=role.colour)
+            embed.title = language.string("discord_role_about", role=role.name)
+            if role.icon:
+                embed.set_thumbnail(url=str(role.icon.replace(size=1024, static_format="png")))
+            elif ctx.guild.icon:
+                embed.set_thumbnail(url=str(ctx.guild.icon.replace(size=1024, static_format="png")))
+            embed.add_field(name=language.string("discord_role_name"), value=role.name, inline=True)
+            embed.add_field(name=language.string("discord_role_id"), value=str(role.id), inline=True)
+            embed.add_field(name=language.string("discord_members"), value=language.number(len(role.members)), inline=True)
+            if role.unicode_emoji:
+                embed.add_field(name=language.string("discord_role_emoji"), value=role.unicode_emoji, inline=True)
+            embed.add_field(name=language.string("discord_role_colour"), value=str(role.colour), inline=True)
+            embed.add_field(name=language.string("discord_role_mentionable"), value=language.yes(role.mentionable), inline=True)
+            embed.add_field(name=language.string("discord_role_hoisted"), value=language.yes(role.hoist), inline=True)
+            embed.add_field(name=language.string("discord_role_position"), value=language.number(role.position), inline=True)
+            created_time = language.time(role.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+            created_delta = language.delta_dt(role.created_at, accuracy=2, brief=False, affix=True)
+            embed.add_field(name=language.string("discord_created_at"), value=f"{created_time}\n{created_delta}", inline=True)
+            embed.add_field(name=language.string("discord_role_default"), value=language.yes(role.is_default()), inline=True)
+            embed.add_field(name=language.string("discord_role_managed"), value=language.yes(role.managed), inline=True)
+            perms = []
+            for permission, value in role.permissions:
+                if value:
+                    perms.append(language.data2("generic_permissions", permission, permission))
+            embed.add_field(name=language.string("discord_role_permissions"), value="\n".join(perms), inline=False)
+            return await ctx.send(embed=embed)
 
-    @role.command(name="members")
+    @role_info.command(name="list")
+    async def role_list(self, ctx: commands.Context):
+        """ List the roles in the current server """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        paginator = paginators.LinePaginator(max_lines=20, max_size=1000)
+        for i, role in enumerate(ctx.guild.roles[::-1], start=1):
+            paginator.add_line(f"{i:02d}) {role.mention} ({role.id}) - {language.plural(len(role.members), "discord_word_member")}")
+        embed = discord.Embed(title=language.string("discord_role_list", server=ctx.guild.name), colour=general.random_colour())
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.send_to(ctx)
+
+    @role_info.command(name="members")
+    @app_commands.describe(role="The role whose members to list")
     async def role_members(self, ctx: commands.Context, *, role: discord.Role):
-        """ List of members who have a certain role """
-        members = [a for a in ctx.guild.members if role in a.roles]
-        members.sort(key=lambda a: a.name.lower())
+        """ List members who have a certain role """
+        await ctx.defer(ephemeral=True)
         language = self.bot.language(ctx)
-        m = ''
-        for i in range(len(members)):
-            m += f"[{i + 1:02d}] {members[i]}\n"
-        rl = len(m)
-        send = language.string("discord_role_members", role=role.name)
-        if rl > 1900:
-            async with ctx.typing():
-                data = BytesIO(str(m).encode('utf-8'))
-                return await ctx.send(send, file=discord.File(data, filename=f"{time.file_ts('Role_Members')}"))
-        return await ctx.send(f"{send}\n```ini\n{m}```")
+        if not role.members:
+            return await ctx.send(language.string("discord_role_members_none", role=role.name))
+        members = sorted(role.members, key=lambda m: m.display_name.lower())  # Sort members by name
+        paginator = paginators.LinePaginator(max_lines=20, max_size=1000)
+        for i, member in enumerate(members, start=1):
+            paginator.add_line(f"**{i:02d})** {member.mention} ({member})")
+        embed = discord.Embed(title=language.string("discord_role_members", role=role.name), colour=general.random_colour())
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.send_to(ctx)
 
-    @commands.command(name="joinedat", aliases=["joindate", "jointime"])
-    @commands.guild_only()
+    @commands.hybrid_command(name="joinedat", aliases=["joindate", "jointime"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def joined_at(self, ctx: commands.Context, *, who: discord.Member = None):
-        """ Check when someone joined server """
-        user = who or ctx.author
+    @app_commands.describe(user="The member whose join time to check")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=False, private_channels=False)
+    async def joined_time(self, ctx: commands.Context, *, user: discord.Member = None):
+        """ Check when someone joined the server """
+        await ctx.defer(ephemeral=True)
+        user = user or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_command_joined_at", user=user, server=ctx.guild.name,
-                                              time=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)))
+        joined_time = language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        return await ctx.send(language.string("discord_command_joined_at", user=general.username(user), server=ctx.guild.name, time=joined_time))
 
-    @commands.command(name="createdat")
+    @commands.hybrid_command(name="createdat")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def created_at(self, ctx: commands.Context, *, who: discord.User = None):
+    @app_commands.describe(user="The user whose account creation date to check")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def created_time(self, ctx: commands.Context, *, user: discord.User = None):
         """ Check when someone created their account """
-        user = who or ctx.author
+        await ctx.defer(ephemeral=True)
+        user = user or ctx.author
         language = self.bot.language(ctx)
-        return await ctx.send(language.string("discord_command_created_at", user=user, time=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)))
+        created_time = language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        return await ctx.send(language.string("discord_command_created_at", user=general.username(user), time=created_time))
+
+    @staticmethod
+    async def _user_command(ctx: commands.Context, user: discord.Member | discord.User = None):
+        """ General command for checking user data """
+        user = user or ctx.author
+        member: discord.Member | None = ctx.guild.get_member(user.id)  # Try to find the user in the current guild
+        language = ctx.language()
+        embed = discord.Embed(title=language.string("discord_user_about", name=general.username(user)), colour=general.random_colour())
+        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
+        embed.add_field(name=language.string("discord_user_username"), value=user.name, inline=True)
+        if user.global_name:
+            embed.add_field(name=language.string("discord_user_username_global"), value=user.global_name, inline=True)
+        if member is not None:
+            embed.add_field(name=language.string("discord_user_nickname"), value=member.nick, inline=True)
+        embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
+        created_time = language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        created_delta = language.delta_dt(user.created_at, accuracy=2, brief=False, affix=True)
+        embed.add_field(name=language.string("discord_created_at"), value=f"{created_time}\n{created_delta}", inline=True)
+        if member is not None:
+            joined_time = language.time(member.joined_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+            joined_delta = language.delta_dt(member.joined_at, accuracy=2, brief=False, affix=True)
+            embed.add_field(name=language.string("discord_user_joined_at"), value=f"{joined_time}\n{joined_delta}", inline=True)
+        embed.add_field(name=language.string("discord_user_bot"), value=language.yes(user.bot), inline=True)
+        embed.add_field(name=language.string("discord_user_mutual"), value=language.plural(len(user.mutual_guilds), "discord_word_server"), inline=True)
+        if member is not None:
+            if member.premium_since is not None:
+                boost_time = language.time(member.premium_since, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+                boost_delta = language.delta_dt(member.premium_since, accuracy=2, brief=False, affix=True, case="for")
+                boost_str = language.string("discord_user_boost_since", time=boost_time, delta=boost_delta)
+            else:
+                boost_str = language.string("discord_user_boost_none")
+            embed.add_field(name=language.string("discord_user_boost"), value=boost_str, inline=True)
+            if member.is_timed_out():
+                timeout_time = language.time(member.timed_out_until, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+                timeout_delta = language.delta_dt(member.timed_out_until, accuracy=2, brief=False, affix=False)
+                timeout_str = language.string("discord_user_timed_out_details", time=timeout_time, delta=timeout_delta)
+                embed.add_field(name=language.string("discord_user_timed_out"), value=timeout_str, inline=True)
+            if not member.roles:
+                roles_str = language.string("generic_none")
+            elif len(member.roles) > 15:
+                roles_str = language.string("discord_user_roles_many", count=language.plural(len(member.roles), "discord_word_role"))
+            else:
+                roles = [role.mention for role in member.roles[::-1] if not role.is_default()]
+                roles_str = language.string("discord_user_roles_list", roles="\n".join(roles), count=language.plural(len(roles), "discord_word_role"))
+            embed.add_field(name=language.string("discord_user_roles"), value=roles_str, inline=False)
+        return await ctx.send(embed=embed)
 
     @commands.command(name="user")
-    @commands.guild_only()
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def user(self, ctx: commands.Context, *, who: discord.Member = None):
-        """ Get info about user """
-        user: discord.Member = who or ctx.author
-        language = self.bot.language(ctx)
-        embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("discord_user_about", name=general.username(user))
-        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
-        embed.add_field(name=language.string("discord_user_username"), value=user.name, inline=True)
-        embed.add_field(name=language.string("discord_user_display_name"), value=user.global_name, inline=True)
-        embed.add_field(name=language.string("discord_user_nickname"), value=user.nick, inline=True)
-        embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=False)
-        embed.add_field(name=language.string("discord_user_joined_at"), value=language.time(user.joined_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=False)
-        if len(user.roles) < 15:
-            r = user.roles
-            r.sort(key=lambda x: x.position, reverse=True)
-            ar = [f"<@&{x.id}>" for x in r if x.id != ctx.guild.default_role.id]
-            roles = ', '.join(ar) if ar else language.string("generic_none")
-            b = len(user.roles) - 1
-            roles += language.string("discord_user_roles_overall", total=language.number(b))
+    async def user(self, ctx: commands.Context, *, user: commands.UserID = None):
+        """ Get details about a certain user """
+        _user = self.bot.get_user(user or ctx.author.id)  # type: ignore
+        if _user is None:
+            try:
+                _user = await self.bot.fetch_user(user)  # type: ignore
+            except discord.NotFound:
+                return await ctx.send(ctx.language().string("events_error_not_found_user", value=user))
+        return await self._user_command(ctx, _user)
+
+    @app_commands.command(name="user")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(user="The user whose details to check")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def slash_user(self, interaction: discord.Interaction, user: discord.User = None):
+        """ Get details about a certain user """
+        return await interactions.slash_command(self._user_command, interaction, user, ephemeral=True)
+
+    @commands.hybrid_command(name="emoji", aliases=["emote"])
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(emoji="The emoji for which to show details")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def emoji(self, ctx: commands.Context, emoji: str):
+        """ See details about an emoji """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        partial_emoji: discord.PartialEmoji | discord.Emoji | None = None
+        full_emoji: discord.Emoji | None = None
+        if emoji.isnumeric():  # If just the ID is provided, load that but leave the name blank
+            partial_emoji = discord.PartialEmoji(name=None, id=int(emoji))  # type: ignore
+        elif re.match(EMOJI_NAME_REGEX, emoji):
+            emoji_name = emoji.replace(":", "")  # type: ignore
+            for emote in self.bot.emojis:
+                if emote.name == emoji_name:
+                    full_emoji = emote
+                    partial_emoji = emote  # type: ignore
+                    break
+        if partial_emoji is None:  # If the emoji hasn't been found yet
+            partial_emoji: discord.PartialEmoji = discord.PartialEmoji.from_str(emoji)
+        if partial_emoji is None or getattr(partial_emoji, "is_unicode_emoji", lambda: False)():  # In case we get an emoji from name
+            return await ctx.send(language.string("discord_emoji_error", emoji=emoji))
+        if partial_emoji.id is not None:  # Try to fetch the whole emoji
+            full_emoji: discord.Emoji | None = self.bot.get_emoji(partial_emoji.id)
+        name = full_emoji.name if full_emoji is not None else (partial_emoji.name or language.string("generic_unknown"))
+        embed = discord.Embed(title=language.string("discord_emoji_about", emoji=name), colour=general.random_colour())
+        embed.add_field(name=language.string("discord_emoji_name"), value=name, inline=True)
+        embed.add_field(name=language.string("discord_emoji_id"), value=partial_emoji.id, inline=True)
+        embed.add_field(name=language.string("discord_emoji_animated"), value=language.yes(partial_emoji.animated), inline=True)
+        created_time = language.time(partial_emoji.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        created_delta = language.delta_dt(partial_emoji.created_at, accuracy=2, brief=False, affix=True)
+        embed.add_field(name=language.string("discord_created_at"), value=f"{created_time}\n{created_delta}", inline=True)
+        if full_emoji is not None:
+            embed.add_field(name=language.string("discord_origin_server"), value=full_emoji.guild.name, inline=True)
+        embed.add_field(name=language.string("discord_emoji_link"), value=language.string("generic_link_mask", url=partial_emoji.url), inline=True)
+        embed.set_image(url=partial_emoji.url)
+        return await ctx.send(embed=embed)
+
+    async def _find_sticker(self, sticker: str) -> discord.Sticker | None:
+        """ Find a sticker with the provided name or ID """
+        # Try to find a custom sticker with the given name
+        for sticker_item in self.bot.stickers:
+            if sticker_item.name == sticker or str(sticker_item.id) == sticker:
+                return sticker_item
+        # Try to find a standard sticker with the given name
+        if not self.sticker_packs:
+            self.sticker_packs = await self.bot.fetch_premium_sticker_packs()
+        for sticker_pack in self.sticker_packs:
+            for sticker_item in sticker_pack.stickers:
+                if sticker_item.name == sticker or str(sticker_item.id) == sticker:
+                    return sticker_item
+
+    @staticmethod
+    async def _sticker_command(ctx: commands.Context, sticker: discord.Sticker):
+        """ Wrapper around the sticker command """
+        language = ctx.language()
+        embed = discord.Embed(title=language.string("discord_sticker_about", sticker=sticker.name), colour=general.random_colour())
+        embed.add_field(name=language.string("discord_sticker_name"), value=sticker.name, inline=True)
+        embed.add_field(name=language.string("discord_sticker_id"), value=sticker.id, inline=True)
+        embed.add_field(name=language.string("discord_sticker_format"), value=sticker.format.name, inline=True)  # type: ignore
+        created_time = language.time(sticker.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+        created_delta = language.delta_dt(sticker.created_at, accuracy=2, brief=False, affix=True)
+        embed.add_field(name=language.string("discord_created_at"), value=f"{created_time}\n{created_delta}", inline=True)
+        embed.add_field(name=language.string("discord_sticker_link"), value=language.string("generic_link_mask", url=sticker.url), inline=True)
+        if isinstance(sticker, discord.GuildSticker):
+            embed.add_field(name=language.string("discord_sticker_emoji"), value=sticker.emoji, inline=True)
+            if sticker.guild is not None:
+                embed.add_field(name=language.string("discord_origin_server"), value=sticker.guild, inline=True)
+        if sticker.description:
+            embed.add_field(name=language.string("discord_sticker_description"), value=sticker.description, inline=False)
+        if isinstance(sticker, discord.StandardSticker):
+            embed.add_field(name=language.string("discord_sticker_tags"), value=", ".join(sticker.tags), inline=False)
+        embed.set_image(url=sticker.url)
+        return await ctx.send(embed=embed)
+
+    @commands.command(name="sticker")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    async def sticker(self, ctx: commands.Context, sticker: str = None):
+        """ See details about a sticker
+
+         You can either specify the name or ID of the sticker, or attach the sticker with the command """
+        language = ctx.language()
+        if sticker is None:
+            if ctx.message.stickers:
+                sticker_item = await ctx.message.stickers[0].fetch()
+            else:
+                return await ctx.send(language.string("discord_sticker_none"))
         else:
-            roles = language.string("discord_user_roles_many", total=language.number(len(user.roles) - 1))
-        embed.add_field(name=language.string("discord_user_roles"), value=roles, inline=False)
-        return await ctx.send(embed=embed)
+            sticker_item = await self._find_sticker(sticker)
+            if not sticker_item:
+                return await ctx.send(language.string("discord_sticker_not_found", name=sticker))
+        return await self._sticker_command(ctx, sticker_item)
 
-    @commands.command(name="whois")
-    @commands.guild_only()
+    @app_commands.command(name="sticker")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def who_is(self, ctx: commands.Context, *, user_id: int):
-        """ Get info about a user """
-        language = self.bot.language(ctx)
-        try:
-            user = await self.bot.fetch_user(user_id)
-        except discord.NotFound:
-            return await ctx.send(language.string("events_error_not_found_user", value=user_id))
-        embed = discord.Embed(colour=general.random_colour())
-        embed.title = language.string("discord_user_about", name=user.name)
-        embed.set_thumbnail(url=str(user.display_avatar.replace(size=1024, static_format="png")))
-        embed.add_field(name=language.string("discord_user_username"), value=user.name, inline=True)
-        embed.add_field(name=language.string("discord_user_display_name"), value=user.global_name, inline=True)
-        embed.add_field(name=language.string("discord_user_id"), value=str(user.id), inline=True)
-        embed.add_field(name=language.string("discord_created_at"), value=language.time(user.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), inline=True)
-        return await ctx.send(embed=embed)
+    @app_commands.describe(sticker="The name of the sticker for which to show details")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def slash_sticker(self, interaction: discord.Interaction, sticker: str):
+        """ See details about a sticker """
+        ctx = await interactions.init_slash_command(interaction, ephemeral=True)
+        sticker_item = await self._find_sticker(sticker)
+        if not sticker_item:
+            return await ctx.send(ctx.language().string("discord_sticker_not_found", name=sticker))
+        return await self._sticker_command(ctx, sticker_item)
 
-    @commands.command(name="emoji", aliases=["emote"])
+    @commands.hybrid_group(name="server", aliases=["guild"], invoke_without_command=True, fallback="info")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def emoji(self, ctx: commands.Context, emoji: discord.Emoji):
-        """ Information on an emoji """
-        language = self.bot.language(ctx)
-        embed = discord.Embed(colour=general.random_colour())
-        server = f"{emoji.guild.name} ({emoji.guild.id})"
-        embed.description = language.string("discord_emoji", name=emoji.name, id=emoji.id, animated=language.yes(emoji.animated), server=server,
-                                            created_at=language.time(emoji.created_at, short=0, dow=False, seconds=False, tz=True, uid=ctx.author.id), url=emoji.url)
-        embed.set_image(url=emoji.url)
-        return await ctx.send(f"{general.username(ctx.author)}:", embed=embed)
-
-    @commands.group(name="server", aliases=["guild"], invoke_without_command=True)
-    @commands.guild_only()
-    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def server(self, ctx: commands.Context, guild: discord.Guild = None):
+    @app_commands.describe(server="The server for which to show information")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def server(self, ctx: commands.Context, server: discord.Guild = None):
         """ Information about the current server """
         if ctx.invoked_subcommand is None:
-            guild: discord.Guild = guild or ctx.guild
+            await ctx.defer(ephemeral=True)
+            guild: discord.Guild = server or ctx.guild
             language = self.bot.language(ctx)
             bots = sum(1 for member in guild.members if member.bot)
-            bots_amt = bots / guild.member_count
-            embed = discord.Embed(colour=general.random_colour())
+            bots_ratio = bots / guild.member_count
+            embed = discord.Embed(title=language.string("discord_server_about", server=guild.name), colour=general.random_colour())
             if ctx.guild.icon:
                 embed.set_thumbnail(url=str(guild.icon.replace(size=1024, static_format="png")))
-            embed.title = language.string("discord_server_about", server=guild.name)
             embed.add_field(name=language.string("discord_server_name"), value=guild.name, inline=True)
             embed.add_field(name=language.string("discord_server_id"), value=guild.id, inline=True)
-            embed.add_field(name=language.string("discord_server_owner"), inline=True, value=f"{guild.owner}\n({guild.owner.display_name})")
+            embed.add_field(name=language.string("discord_server_owner"), inline=True, value=f"{guild.owner.mention} ({str(guild.owner)})")
             embed.add_field(name=language.string("discord_members"), value=language.number(guild.member_count), inline=True)
-            embed.add_field(name=language.string("discord_server_bots"), value=f"{language.number(bots)} ({language.number(bots_amt, percentage=True)})", inline=True)
-            embed.add_field(name=language.string("discord_server_region"), value="Deprecated", inline=True)
+            embed.add_field(name=language.string("discord_server_bots"), value=f"{language.number(bots)} ({language.number(bots_ratio, percentage=True)})", inline=True)
             embed.add_field(name=language.string("discord_server_roles"), value=language.number(len(guild.roles)), inline=True)
-            try:
-                embed.add_field(name=language.string("discord_server_bans"), value=language.number(len([_ async for _ in ctx.guild.bans(limit=None)])), inline=True)
-            except discord.Forbidden:
-                embed.add_field(name=language.string("discord_server_bans"), value=language.string("discord_server_bans_denied"), inline=True)
-            embed.add_field(name=language.string("discord_server_verification"), inline=True, value=str(guild.verification_level).capitalize())
-            t, c, v = len(guild.text_channels), len(guild.categories), len(guild.voice_channels)
-            tc, cc, vc = language.number(t), language.number(c), language.number(v)
-            embed.add_field(name=language.string("discord_server_channels"), value=language.string("discord_server_channels_data", text=tc, cats=cc, voice=vc), inline=True)
-            b, bl, bc = language.number(guild.premium_subscription_count), language.number(guild.premium_tier), language.number(len(guild.premium_subscribers))
-            embed.add_field(name=language.string("discord_server_boosts"), value=language.string("discord_server_boosts_data", boosts=b, level=bl, users=bc), inline=True)
-            ani = len([emote for emote in guild.emojis if emote.animated])
+            if ctx.channel.permissions_for(guild.me).ban_members:  # This has the side effect of not showing ban counts if a different server was requested, but I don't think that's a problem.
+                embed.add_field(name=language.string("discord_server_bans"), value=language.number(sum([1 async for _ in ctx.guild.bans(limit=None)])), inline=True)
+            preferred_locale = language.data2("generic_locales", guild.preferred_locale.name, guild.preferred_locale.name)  # type: ignore
+            embed.add_field(name=language.string("discord_server_locale"), value=preferred_locale, inline=True)
+            boost_level = language.number(guild.premium_tier)
+            boosts = language.number(guild.premium_subscription_count)
+            boosters = language.number(len(guild.premium_subscribers))
+            embed.add_field(name=language.string("discord_server_boosts"), value=language.string("discord_server_boosts_data", boosts=boosts, level=boost_level, users=boosters), inline=True)
+            if guild.premium_subscriber_role:
+                embed.add_field(name=language.string("discord_server_boost_role"), value=guild.premium_subscriber_role.mention, inline=True)
+            embed.add_field(name=language.string("discord_server_boost_progress_bar"), value=language.enabled(guild.premium_progress_bar_enabled), inline=True)
+            embed.add_field(name=language.string("discord_server_filesize_limit"), value=language.bytes(guild.filesize_limit), inline=True)
+            embed.add_field(name=language.string("discord_server_bitrate_limit"), value=language.bitrate(guild.bitrate_limit), inline=True)
+            embed.add_field(name=language.string("discord_server_stage_users"), value=language.number(guild.max_stage_video_users), inline=True)
+            notification_level = language.data2("discord_server_notifications_values", guild.default_notifications.name, guild.default_notifications.name)  # type: ignore
+            embed.add_field(name=language.string("discord_server_notifications"), value=notification_level, inline=True)
+            verification_level = language.data2("discord_server_verification_levels", guild.verification_level.name, guild.verification_level.name)  # type: ignore
+            embed.add_field(name=language.string("discord_server_verification"), value=verification_level, inline=True)
+            content_filter = language.data2("discord_server_content_filter_values", guild.explicit_content_filter.name, guild.explicit_content_filter.name)  # type: ignore
+            embed.add_field(name=language.string("discord_server_content_filter"), value=content_filter, inline=True)
+            mfa_level = language.data2("discord_server_mfa_values", guild.mfa_level.name, guild.mfa_level.name)  # type: ignore
+            embed.add_field(name=language.string("discord_server_mfa"), value=mfa_level, inline=True)
+            nsfw_level = language.data2("discord_server_nsfw_level_values", guild.nsfw_level.name, guild.nsfw_level.name)  # type: ignore
+            embed.add_field(name=language.string("discord_server_nsfw_level"), value=nsfw_level, inline=True)
+            embed.add_field(name=language.string("discord_server_widget"), value=language.enabled(guild.widget_enabled), inline=True)
+            if guild.afk_channel:
+                embed.add_field(name=language.string("discord_server_afk_channel"), value=guild.afk_channel.mention, inline=True)
+            if guild.system_channel:
+                embed.add_field(name=language.string("discord_server_system_channel"), value=guild.system_channel.mention, inline=True)
+            if guild.vanity_url:
+                embed.add_field(name=language.string("discord_server_vanity_url"), value=guild.vanity_url, inline=True)
+            if guild.rules_channel:
+                embed.add_field(name=language.string("discord_server_rules_channel"), value=guild.rules_channel.mention, inline=True)
+            if guild.public_updates_channel:
+                embed.add_field(name=language.string("discord_server_announcements_channel"), value=guild.public_updates_channel.mention, inline=True)
+            if guild.safety_alerts_channel:
+                embed.add_field(name=language.string("discord_server_alerts_channel"), value=guild.safety_alerts_channel.mention, inline=True)
+            embed.add_field(name=language.string("discord_server_events"), value=language.number(len(guild.scheduled_events)), inline=True)
+            created_time = language.time(guild.created_at, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id)
+            created_delta = language.delta_dt(guild.created_at, accuracy=2, brief=False, affix=True)
+            embed.add_field(name=language.string("discord_created_at"), value=f"{created_time}\n{created_delta}", inline=False)
+            channel_types = {
+                "text": 0,
+                "voice": 0,
+                "category": 0,
+                "news": 0,
+                "stage_voice": 0,
+                "forum": 0,
+                "media": 0,
+            }
+            for channel in guild.channels:
+                channel_types[channel.type.name] += 1  # type: ignore
+            channel_types["thread"] = len(guild.threads)
+            for channel_type, value in channel_types.items():
+                channel_types[channel_type] = language.number(value)
+            embed.add_field(name=language.string("discord_server_channels"), value=language.string("discord_server_channels_data", **channel_types), inline=False)
             total_emotes = len(guild.emojis)
-            el = guild.emoji_limit
-            na = total_emotes - ani
-            n, a, e, t = language.number(na), language.number(ani), language.number(el), language.number(total_emotes)
-            embed.add_field(name=language.string("discord_server_emotes"), value=language.string("discord_server_emotes_data", static=n, ani=a, limit=e, total=t), inline=True)
-            ca = guild.created_at
-            ct, cd = language.time(ca, short=0, dow=False, seconds=False, tz=True, at=True, uid=ctx.author.id), language.delta_dt(ca, accuracy=3, brief=False, affix=True)
-            embed.add_field(name=language.string("discord_created_at"), value=f"{ct}\n{cd}", inline=False)
-            return await ctx.send(embed=embed)
+            emote_limit = guild.emoji_limit
+            animated = sum(1 for emote in guild.emojis if emote.animated)
+            static = total_emotes - animated
+            total_emotes_str = language.number(total_emotes)
+            emote_limit_str = language.number(emote_limit)
+            animated_str = language.number(animated)
+            static_str = language.number(static)
+            embed.add_field(name=language.string("discord_server_emotes"), inline=False,
+                            value=language.string("discord_server_emotes_data", static=static_str, ani=animated_str, limit=emote_limit_str, total=total_emotes_str))
+            total_stickers = language.number(len(guild.stickers))
+            sticker_limit = language.number(guild.sticker_limit)
+            embed.add_field(name=language.string("discord_server_stickers"), value=f"{total_stickers}/{sticker_limit}", inline=False)
+            embed.add_field(name=language.string("discord_server_sounds"), value=language.number(len(guild.soundboard_sounds)), inline=False)
+            if guild.description:
+                embed.add_field(name=language.string("discord_server_description"), value=guild.description, inline=False)
+            interface = paginators.EmbedFieldPaginatorInterface(paginator=paginators.EmbedFieldPaginator(max_fields=12, max_size=3000), bot=ctx.bot, owner=ctx.author, embed=embed)
+            interface.display_page = 0  # Start from first page
+            return await interface.send_to(ctx)
 
     @server.command(name="icon", aliases=["avatar"])
     async def server_icon(self, ctx: commands.Context):
-        """ Get server icon """
+        """ Get server's icon """
+        await ctx.defer(ephemeral=True)
         language = ctx.language()
         if ctx.guild.icon:
             return await ctx.send(language.string("discord_server_icon", server=ctx.guild.name, url=str(ctx.guild.icon.replace(size=4096, static_format='png'))))
@@ -679,40 +1114,81 @@ class Utility(commands.Cog):
 
     @server.command(name="banner")
     async def server_banner(self, ctx: commands.Context):
-        """ Get server banner """
-        language = self.bot.language(ctx)
+        """ Get server's banner """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
         if ctx.guild.banner:
             return await ctx.send(language.string("discord_server_banner", server=ctx.guild.name, url=str(ctx.guild.banner.replace(size=4096, static_format="png"))))
         else:
             return await ctx.send(language.string("discord_server_banner_none", server=ctx.guild.name))
 
-    @server.command(name="invitebg", aliases=["invite", "splash"])
+    @server.command(name="splash", aliases=["invitebg", "invite"])
     async def server_invite(self, ctx: commands.Context):
-        """ Get server invite splash """
-        language = self.bot.language(ctx)
+        """ Get server's invite splash """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
         if ctx.guild.splash:
             return await ctx.send(language.string("discord_server_inv_bg", server=ctx.guild.name, url=str(ctx.guild.splash.replace(size=4096, static_format="png"))))
         else:
             return await ctx.send(language.string("discord_server_inv_bg_none", server=ctx.guild.name))
 
+    @server.command(name="discovery")
+    async def server_discovery(self, ctx: commands.Context):
+        """ Get server's discovery splash """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        if ctx.guild.discovery_splash:
+            return await ctx.send(language.string("discord_server_discovery", server=ctx.guild.name, url=str(ctx.guild.discovery_splash.replace(size=4096, static_format="png"))))
+        else:
+            return await ctx.send(language.string("discord_server_discovery_none", server=ctx.guild.name))
+
     @server.command(name="bots")
     async def server_bots(self, ctx: commands.Context):
         """ Bots in the server """
-        bots = [a for a in ctx.guild.members if a.bot]
-        language = self.bot.language(ctx)
-        m = ''
-        for i in range(len(bots)):
-            m += f"[{i + 1:02d}] {bots[i]}\n"
-        rl = len(m)
-        send = language.string("discord_server_bots_data", server=ctx.guild.name)
-        if rl > 1900:
-            async with ctx.typing():
-                data = BytesIO(str(m).encode('utf-8'))
-                return await ctx.send(send, file=discord.File(data, filename=f"{time.file_ts('Bots')}"))
-        return await ctx.send(f"{send}\n```ini\n{m}```")
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        members = sorted(filter(lambda m: m.bot, ctx.guild.members), key=lambda m: m.display_name.lower())  # Sort all bots by name
+        paginator = paginators.LinePaginator(max_lines=20, max_size=1000)
+        for i, member in enumerate(members, start=1):
+            paginator.add_line(f"**{i:02d})** {member.mention} ({member})")
+        embed = discord.Embed(title=language.string("discord_server_bots_command", server=ctx.guild.name), colour=general.random_colour())
+        interface = paginators.PaginatorEmbedInterface(self.bot, paginator, owner=ctx.author, embed=embed)
+        return await interface.send_to(ctx)
+
+    @staticmethod
+    async def _embed_command(ctx: commands.Context, title: str | None, description: str | None, footer: str | None,
+                             thumbnail: str | None, image: str | None, colour: str | None, include_author: bool):
+        """ Wrapper for the embed command """
+        language = ctx.language()
+        embed = discord.Embed()
+        if title:
+            embed.title = title.replace("\\n", "\n")
+            if len(embed.title) > 256:
+                return await ctx.send(language.string("util_embed_title_length"))
+        if description:
+            embed.description = description.replace("\\n", "\n")
+        if footer:
+            embed.set_footer(text=footer.replace("\\n", "\n"))
+        if thumbnail:
+            embed.set_thumbnail(url=thumbnail)
+        if image:
+            embed.set_image(url=image)
+        if colour:
+            try:
+                int_colour = images.colour_hex_to_int(colour)
+            except images.InvalidLength as e:
+                return await ctx.send(language.string("images_colour_invalid_value", value=e.value, length=e.length))
+            except images.InvalidColour as e:
+                return await ctx.send(language.string("images_colour_invalid", value=e.value, err=e.error))
+            embed.colour = int_colour
+        if include_author:
+            embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
+        if ctx.interaction:
+            await ctx.send(language.string("util_embed_success"), ephemeral=True, delete_after=5)
+        return await ctx.channel.send(embed=embed)
 
     @commands.command(name="embed")
-    @permissions.has_permissions(embed_links=True)
+    @permissions.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(embed_links=True)
     async def embed_creator(self, ctx: commands.Context, *, args: str):
         """ Create a custom embed
@@ -722,11 +1198,11 @@ class Utility(commands.Cog):
         -th/--thumbnail: URL to embed's thumbnail
         -i/--image: URL to embed's image
         -c/--colour: A hex code for embed's colour
+        -a/--author: Whether to set the author of the command as the embed author
 
-        All of the arguments are optional, so if you don't fill them they will simply be empty.
+        All the arguments are optional, so if you don't fill them they will simply be empty.
         Use "\n" to add newlines - The current implementation of the code doesn't insert them otherwise
         Example: //embed --title Good evening --description Some very interesting text --colour ff0057"""
-        embed = discord.Embed()
         parser = arg_parser.Arguments()
         parser.add_argument('-t', '--title', nargs="+")
         parser.add_argument('-d', '--description', nargs="+")
@@ -734,101 +1210,167 @@ class Utility(commands.Cog):
         parser.add_argument('-th', '--thumbnail', nargs=1)
         parser.add_argument('-i', '--image', nargs=1)
         parser.add_argument('-c', '--colour', nargs=1)
-        if self.bot.name == "kyomi":
-            parser.add_argument('-a', '--author', action='store_true')
-        else:
-            embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
+        parser.add_argument('-a', '--author', action='store_true')
 
         args, valid_check = parser.parse_args(args)
         if not valid_check:
             return await ctx.send(args)
-        if self.bot.name == "kyomi":
-            if args.author:
-                embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar.url)
-        if args.title:
-            embed.title = " ".join(args.title).replace("\\n", "\n")
-            if len(embed.title) > 256:
-                return await ctx.send("Embed title cannot be longer than 256 characters. Blame discord.")
-        if args.description:
-            embed.description = " ".join(args.description).replace("\\n", "\n")
-        if args.footer:
-            embed.set_footer(text=" ".join(args.footer).replace("\\n", "\n"))
-        if args.thumbnail:
-            embed.set_thumbnail(url=args.thumbnail[0])
-        if args.image:
-            embed.set_image(url=args.image[0])
-        if args.colour:
-            colour = args.colour[0]
-            a = len(colour)
-            if colour.startswith("#"):
-                colour = colour[1:]
-                a = len(colour)
-            if a == 6 or a == 3:
-                try:
-                    col = int(colour, base=16)
-                except Exception as e:
-                    return await ctx.send(f"Invalid colour - {type(e).__name__}: {e}")
-            else:
-                return await ctx.send("Colour must be either 3 or 6 HEX digits long.")
-            embed.colour = col
-        return await ctx.send(embed=embed)
+        title = " ".join(args.title) if args.title else None
+        description = " ".join(args.description) if args.description else None
+        footer = " ".join(args.footer) if args.footer else None
+        thumbnail = args.thumbnail[0] if args.thumbnail else None
+        image = args.image[0] if args.image else None
+        colour = args.colour[0] if args.colour else None
+        author = args.author
+        return await self._embed_command(ctx, title, description, footer, thumbnail, image, colour, author)
+
+    @app_commands.command(name="embed")
+    @permissions.has_permissions(manage_messages=True)
+    @app_commands.default_permissions(manage_messages=True)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.describe(
+        title="The title text of the embed",
+        description="The description text of the embed",
+        footer="The text at the bottom of the embed",
+        thumbnail="The URL to the thumbnail of the embed",
+        image="The URL to the big image of the embed",
+        colour="The colour of the embed",
+        include_author="Whether to set the author of the command as the embed author",
+    )
+    @app_commands.allowed_installs(guilds=True, users=False)  # Disable for user installs in case of permission issues
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def slash_embed(self, interaction: discord.Interaction, title: str = None, description: str = None, footer: str = None,
+                          thumbnail: str = None, image: str = None, colour: str = None, include_author: bool = False):
+        """ Create a custom embed
+
+         All the arguments are optional, and will be empty if not filled. Use "\n" to add newlines. """
+        return await interactions.slash_command(self._embed_command, interaction, title, description, footer, thumbnail, image, colour, include_author, ephemeral=True)
 
 
 class Reminders(Utility, name="Utility"):
-    @commands.command(name="remind", aliases=["remindme"])
+    @commands.hybrid_group(name="remind", aliases=["remindme"])
     @commands.cooldown(rate=1, per=2, type=commands.BucketType.user)
-    async def remind_me(self, ctx: commands.Context, duration: str, *, reminder: str):
-        """ Set yourself a reminder.
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def remind_me(self, ctx: commands.Context):
+        """ Set yourself a reminder """
+        if ctx.invoked_subcommand is None:
+            return await ctx.send_help(ctx.command)
 
-        Example: //remind 2d12h Insert something interesting here"""
-        language = self.bot.language(ctx)
+    async def _set_reminder(self, ctx: commands.Context, language: languages.Language, time_dt: time2.datetime, reminder: str):
+        """ Wrapper for the two reminder types """
+        delta_str = language.delta_dt(time_dt, accuracy=7, brief=False, affix=True)
+        time_str = language.time(time_dt, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id, at=True)
+        # noinspection SqlInsertValues
+        self.bot.db.execute("INSERT INTO reminders(uid, expiry, message, handled, bot) VALUES (?, ?, ?, ?, ?)", (ctx.author.id, time_dt, reminder, 0, self.bot.name))
+        return await ctx.send(language.string("util_reminders_success", author=general.username(ctx.author), delta=delta_str, time=time_str, p=ctx.prefix))
+
+    @remind_me.command(name="in", aliases=["duration"])
+    @app_commands.autocomplete(duration=reminder_duration_autocomplete)
+    @app_commands.describe(duration="How long from now to set the reminder for (Format: 1y1mo1d1h1m1s)", message="The text of the reminder to send you")
+    async def remind_in(self, ctx: commands.Context, duration: str, *, message: str):
+        """ Set yourself a reminder for a given time period
+
+         Example: //remind 2d12h Do something fun """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
         delta = time.interpret_time(duration)
         if time.rd_is_above_5y(delta):
             return await ctx.send(language.string("util_reminders_limit"))
-            # return await general.send("You can't specify a time range above 5 years.", ctx.channel)
         expiry, error = time.add_time(delta)
         if error:
             return await ctx.send(language.string("util_reminders_error", err=expiry))
-            # return await general.send(f"Failed to convert duration: {expiry}", ctx.channel)
-        diff = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
-        when = language.time(expiry, short=1, dow=False, seconds=True, tz=True, uid=ctx.author.id, at=True)
-        # random_id = general.random_id()
-        # while self.bot.db.fetch("SELECT entry_id FROM temporary WHERE entry_id=?", (random_id,)):
-        #     random_id = general.random_id()
-        # self.bot.db.execute("INSERT INTO temporary VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (ctx.author.id, "reminder", expiry, None, reminder, random_id, False, self.bot.name))
-        self.bot.db.execute("INSERT INTO reminders(uid, expiry, message, handled, bot) VALUES (?, ?, ?, ?, ?)", (ctx.author.id, expiry, reminder, 0, self.bot.name))
-        return await ctx.send(language.string("util_reminders_success", author=general.username(ctx.author), delta=diff, time=when, p=ctx.prefix))
-        # return await general.send(f"Okay **{ctx.author.name}**, I will remind you about this **{diff}** ({when} UTC)", ctx.channel)
+        return await self._set_reminder(ctx, language, expiry, message)
+
+    @remind_me.command(name="on", aliases=["time"])
+    @app_commands.rename(_date="date", _time="time")
+    @app_commands.describe(_date="The date on which to send the reminder", _time="The time at which to send the reminder", reminder="The text of the reminder to send you")
+    async def remind_on(self, ctx: commands.Context, _date: str, _time: str, *, reminder: str):
+        """ Set yourself a reminder for a given time and date
+
+         Example: //reminder 2025-01-27 23:00 Do something fun """
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
+        try:
+            datetime = self._parse_time(ctx, _date, _time)
+        except ValueError:
+            return await ctx.send(language.string("util_reminders_format_time"))
+        now = time2.datetime.now()
+        if datetime < now:
+            return await ctx.send(language.string("util_reminders_past"))
+        elif (datetime - now).days > 5 * 365 + 2:  # 5 years
+            return await ctx.send(language.string("util_reminders_limit"))
+        time_dt = datetime.to_timezone(time2.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
+        return await self._set_reminder(ctx, language, time_dt, reminder)
+
+    async def _reminders_list_command(self, ctx: commands.Context):
+        """ Wrapper for the reminders list command """
+        language = ctx.language()
+        reminders = self.bot.db.fetch("SELECT * FROM reminders WHERE uid=? AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
+        if not reminders:
+            return await ctx.send(language.string("util_reminders_none", author=general.username(ctx.author)))
+        header = language.string("util_reminders_list", author=general.username(ctx.author))
+        footer = language.string("util_reminders_list_end", p=ctx.prefix) if not ctx.interaction else None
+        paginator = paginators.LinePaginator(prefix=header, suffix=footer, max_lines=5, max_size=2000, linesep="\n\n")
+        for i, reminder in enumerate(reminders, start=1):
+            expiry = reminder["expiry"]
+            expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
+            expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
+            paginator.add_line(language.string("util_reminders_item", i=i, message=reminder["message"], id=reminder["id"], time=expires_on, delta=expires_in))
+        interface = paginators.PaginatorInterface(ctx.bot, paginator, owner=ctx.author)
+        return await interface.send_to(ctx)
+
+    async def _reminders_edit_command(self, ctx: commands.Context, reminder_id: int, new_message: str | None, new_time: str | None):
+        """ Wrapper for the reminders edit command """
+        language = ctx.language()
+        reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
+        if not reminder:
+            return await ctx.send(language.string("util_reminders_edit_none", id=reminder_id))
+        message = new_message or reminder["message"]
+        time_dt = reminder["expiry"]
+        if new_time is not None:
+            try:
+                time_tuple = new_time.split(" ")
+                if len(time_tuple) == 1:
+                    _date = time_tuple[0]
+                    _time = None
+                elif len(time_tuple) == 2:
+                    _date, _time = time_tuple
+                else:
+                    return await ctx.send(language.string("util_reminders_edit_time2"))
+                datetime = self._parse_time(ctx, _date, _time)
+            except ValueError:
+                return await ctx.send(language.string("util_reminders_format_time"))
+            now = time2.datetime.now()
+            if datetime < now:
+                return await ctx.send(language.string("util_reminders_past"))
+            elif (datetime - now).days > 5 * 365 + 2:  # 5 years
+                return await ctx.send(language.string("util_reminders_limit"))
+            time_dt = datetime.to_timezone(time2.timezone.utc).to_datetime().replace(tzinfo=None)
+        time_str = language.time(time_dt, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
+        self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (message, time_dt, reminder_id))
+        return await ctx.send(language.string("util_reminders_edit", id=reminder_id, message=message, time=time_str))
+
+    async def _reminders_delete_command(self, ctx: commands.Context, reminder_id: int):
+        """ Wrapper for the reminders delete command """
+        language = ctx.language()
+        reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
+        if not reminder:
+            return await ctx.send(language.string("util_reminders_edit_none", id=reminder_id))
+        self.bot.db.execute("DELETE FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
+        return await ctx.send(language.string("util_reminders_delete", id=reminder_id))
 
     @commands.group(name="reminders", aliases=["reminder"])
-    @commands.cooldown(rate=1, per=3, type=commands.BucketType.user)
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
     async def reminders(self, ctx: commands.Context):
-        """ See a list of your currently active reminders, and modify them """
+        """ Interact with your existing reminders """
         if ctx.invoked_subcommand is None:
-            language = self.bot.language(ctx)
-            # reminders = self.bot.db.fetch("SELECT * FROM temporary WHERE uid=? AND type='reminder' AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
-            reminders = self.bot.db.fetch("SELECT * FROM reminders WHERE uid=? AND bot=? ORDER BY expiry", (ctx.author.id, self.bot.name))
-            if not reminders:
-                return await ctx.send(language.string("util_reminders_none", author=general.username(ctx.author)))
-                # return await general.send(f"You have no reminders active at the moment, {ctx.author.name}.", ctx.channel)
-            output = language.string("util_reminders_list", author=general.username(ctx.author))
-            # output = f"**{ctx.author}**, here is the list of your currently active reminders"
-            outputs = []
-            _reminder = 0
-            for reminder in reminders:
-                _reminder += 1
-                expiry = reminder["expiry"]
-                expires_on = language.time(expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
-                expires_in = language.delta_dt(expiry, accuracy=3, brief=False, affix=True)
-                outputs.append(language.string("util_reminders_item", i=_reminder, message=reminder["message"], id=reminder["id"], time=expires_on, delta=expires_in))
-                # outputs.append(f"**{_reminder})** {reminder['message']}\nActive for {expires_on}\nReminds {expires_in}")
-            output2 = "\n\n".join(outputs)
-            output3 = language.string("util_reminders_list_end", p=ctx.prefix)
-            if len(output2) > 1900:
-                _data = BytesIO(str(output2).encode('utf-8'))
-                return await ctx.send(output + output3, file=discord.File(_data, filename=f"{time.file_ts('Reminders')}"))
-            else:
-                return await ctx.send(f"{output}\n\n{output2}{output3}")
+            return await ctx.send_help(ctx.command)
+
+    @reminders.command(name="list")
+    async def reminders_list(self, ctx: commands.Context):
+        """ See the list of your currently active reminders """
+        return await self._reminders_list_command(ctx)
 
     @reminders.command(name="edit")
     async def reminders_edit(self, ctx: commands.Context, reminder_id: int, *, args: str):
@@ -838,62 +1380,61 @@ class Reminders(Utility, name="Utility"):
         Time part optional, and may be just `hh:mm`. Time must be in 24-hour format.
 
         Example: //reminders edit 1048576 --time 2021-06-08 17:00:00 --message Insert something interesting here"""
-        language = self.bot.language(ctx)
-        reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
-        if not reminder:
-            return await ctx.send(language.string("util_reminders_edit_none", id=reminder_id))
         parser = arg_parser.Arguments()
         parser.add_argument('-m', '--message', '--text', nargs="+")
         parser.add_argument('-t', '--time', '--expiry', nargs="+")
         args, valid_check = parser.parse_args(args)
         if not valid_check:
             return await ctx.send(args)
-        message = args.message
-        _message = " ".join(message) if message else reminder["message"]
-        _expiry = reminder["expiry"]
-        if args.time is not None:
-            _datetime = args.time
-            try:
-                if len(_datetime) == 1:
-                    _date, time_part = _datetime[0], time2.time()  # 0:00:00
-                elif len(_datetime) == 2:
-                    _date, _time = _datetime
-                    _time = _time.replace(".", ":")
-                    # c = _time.count(":")
-                    # if c == 1:
-                    #     _time = f"{_time}:00"
-                    _h, _m, *_s = _time.split(":")
-                    h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
-                    time_part = time2.time(h, m, s, 0, time2.utc)
-                else:
-                    return await ctx.send(language.string("util_reminders_edit_time2"))
-
-                _date = _date.replace(".", "-").replace("/", "-")
-                _y, _m, _d = _date.split("-")
-                y, m, d = int(_y), int(_m), int(_d)
-                date_part = time2.date(y, m, d, time2.Earth)
-
-                _expiry = time2.datetime.combine(date_part, time_part, time2.utc)
-                _expiry2 = _expiry.as_timezone(self.bot.timezone(ctx.author.id))
-                _expiry.replace_self(tz=_expiry2.tzinfo)
-                _expiry = _expiry.to_timezone(time2.timezone.utc).to_datetime().replace(tzinfo=None)  # convert into a datetime object with null tzinfo
-                # _expiry = datetime.strptime(f"{_date} {_time}", "%Y-%m-%d %H:%M:%S")
-                # _expiry = _expiry.replace(tzinfo=self.bot.timezone(ctx.author.id)).astimezone(time2.timezone.utc).replace(tzinfo=None)
-            except ValueError:
-                return await ctx.send(language.string("util_reminders_edit_time"))
-        expiry = language.time(_expiry, short=1, dow=False, seconds=True, tz=True, at=True, uid=ctx.author.id)
-        self.bot.db.execute("UPDATE reminders SET message=?, expiry=? WHERE id=?", (_message, _expiry, reminder_id))
-        return await ctx.send(language.string("util_reminders_edit", id=reminder_id, message=_message, time=expiry))
+        message = " ".join(args.message) if args.message else None
+        time_str = " ".join(args.time) if args.time else None
+        return await self._reminders_edit_command(ctx, reminder_id, message, time_str)
 
     @reminders.command(name="delete", aliases=["del", "remove", "cancel"])
     async def reminders_delete(self, ctx: commands.Context, reminder_id: int):
         """ Delete a reminder """
-        language = self.bot.language(ctx)
-        reminder = self.bot.db.fetchrow("SELECT * FROM reminders WHERE id=? AND uid=? AND bot=?", (reminder_id, ctx.author.id, self.bot.name))
-        if not reminder:
-            return await ctx.send(language.string("util_reminders_edit_none", id=reminder_id))
-        self.bot.db.execute("DELETE FROM reminders WHERE id=? AND uid=?", (reminder_id, ctx.author.id))
-        return await ctx.send(language.string("util_reminders_delete", id=reminder_id))
+        return await self._reminders_delete_command(ctx, reminder_id)
+
+    async def reminder_autocomplete(self, interaction: discord.Interaction, current: int) -> list[app_commands.Choice[int]]:
+        """ Autocomplete for reminder IDs """
+        language = self.bot.language(interaction)
+        reminders = self.bot.db.fetch("SELECT * FROM reminders WHERE uid=? AND bot=?", (interaction.user.id, self.bot.name))
+        results: list[app_commands.Choice[int]] = []
+        for reminder in reminders:
+            if not current or str(current) in str(reminder["id"]):
+                reminder_id = reminder["id"]
+                expiry = language.time(reminder["expiry"], short=1, dow=False, seconds=False, tz=interaction.user.id, at=True)
+                message = reminder["message"]
+                reminder_value = f"[{reminder_id}] {message} ({expiry})"
+                results.append(app_commands.Choice(name=reminder_value[:100], value=reminder_id))
+        return results
+
+    @commands.slash_group(name="reminders")
+    @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.allowed_installs(guilds=True, users=True)
+    async def slash_reminders(self):
+        """ Interact with your existing reminders """
+        pass
+
+    @slash_reminders.command(name="list")
+    async def slash_reminders_list(self, interaction: discord.Interaction):
+        """ See the list of your currently active reminders """
+        return await interactions.slash_command(self._reminders_list_command, interaction, ephemeral=True)
+
+    @slash_reminders.command(name="edit")
+    @app_commands.autocomplete(reminder_id=reminder_autocomplete)
+    @app_commands.describe(reminder_id="The ID of the reminder to edit", new_time="The new time at which to send the reminder", new_message="The new message for the reminder")
+    async def slash_reminders_edit(self, interaction: discord.Interaction, reminder_id: int, new_time: str = None, new_message: str = None):
+        """ Edit an existing reminder """
+        return await interactions.slash_command(self._reminders_edit_command, interaction, reminder_id, new_message, new_time, ephemeral=True)
+
+    @slash_reminders.command(name="delete")
+    @app_commands.autocomplete(reminder_id=reminder_autocomplete)
+    @app_commands.describe(reminder_id="The ID of the reminder to delete")
+    async def slash_reminders_delete(self, interaction: discord.Interaction, reminder_id: int):
+        """ Delete a reminder """
+        return await interactions.slash_command(self._reminders_delete_command, interaction, reminder_id, ephemeral=True)
 
 
 class UtilitySuager(Reminders, name="Utility"):
@@ -966,143 +1507,86 @@ class UtilitySuager(Reminders, name="Utility"):
 
 
 class UtilityCobble(Utility, name="Utility"):
-    @commands.command(name="timesince", aliases=["timeuntil"])
+    @commands.hybrid_command(name="timesince", aliases=["timeuntil"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.choices(_time_class=TIME_CLASSES)
+    @app_commands.rename(_date="date", _time="time", _time_class="time_class")
+    @app_commands.describe(
+        _date="The date to compare (Format: YYYY-MM-DD)",
+        _time="The time to compare (Format: HH:MM:SS)",
+        _time_class="The calendar in which to compare times"
+    )
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def time_since(self, ctx: commands.Context, _date: str = None, _time: str = None, _time_class: str = "Kargadia"):
-        """ Time difference
-        If you don't specify any time, it will simply default to an arbitrary date within the near future"""
-        language = self.bot.language(ctx)
-        try:
-            # if not _time_class:
-            #     time_class = time2.Earth
-            # else:
-            try:
-                time_class = getattr(time2, _time_class)
-            except AttributeError:
-                return await ctx.send("Time class not found...")
-            else:
-                if not issubclass(time_class, time2.Earth):
-                    return await ctx.send("Invalid time class specified...")
-            now = time2.datetime.now(time_class=time_class)
-            date = time2.datetime(now.year, 1, 1, time_class=time_class)
-            tz = self.bot.timezone(ctx.author.id, _time_class)
-            if _date is None and _time_class == "Kargadia":
-                def dt(_month, _day):
-                    return time2.datetime(now.year, _month, _day, tz=tz, time_class=time_class)
-                dates = [dt(1, 6), dt(3, 12), dt(4, 8), dt(7, 9), dt(8, 11), dt(11, 2), dt(14, 1), dt(16, 5),
-                         time2.datetime(now.year + 1, 1, 1, tz=tz, time_class=time_class)]
-                for _date in dates:
-                    if now < _date:
-                        date = _date
-                        break
-            else:
-                try:
-                    if not _time:
-                        time_part = time2.time()  # 0:00:00
-                    else:
-                        _h, _m, *_s = _time.split(":")
-                        h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
-                        time_part = time2.time(h, m, s, 0, time2.utc)
-                    _y, _m, _d = _date.split("-")
-                    y, m, d = int(_y), int(_m), int(_d)
-                    date_part = time2.date(y, m, d, time_class)
-                    # The funky timezone behaviour isn't needed here because this won't interact with pytz timezones
-                    date = time2.datetime.combine(date_part, time_part, tz)
-                except ValueError:
-                    return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
-            difference = language.delta_dt(date, accuracy=7, brief=False, affix=True)
-            current_time = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
-            specified_time = language.time(date, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
-            return await ctx.send(language.string("util_timesince", now=current_time, then=specified_time, delta=difference))
-        except Exception as e:
-            # await ctx.send(general.traceback_maker(e))
-            return await ctx.send(language.string("util_timesince_error", err=f"{type(e).__name__}: {str(e)}"))
+        """ Calculate how long it has been since a given time
 
-    @staticmethod
-    async def time_diff(ctx: commands.Context, string: str, multiplier: int, _time_class: str = None):
-        language = ctx.language()
-        if not _time_class:
-            time_class = time2.Kargadia
-        else:
-            try:
-                time_class = getattr(time2, _time_class)
-            except AttributeError:
-                return await ctx.send("Time class not found")
-            else:
-                if not issubclass(time_class, time2.Earth):
-                    return await ctx.send("Invalid time class specified")
-        try:
-            delta = time.interpret_time(string, time2.relativedelta, time_class) * multiplier
-            # delta = time2.relativedelta(years=_delta.years, months=_delta.months, days=_delta.days, hours=_delta.hours, minutes=_delta.minutes, seconds=_delta.seconds, time_class=time_class)
-            now = time2.datetime.now(time_class=time_class)
-            then = now + delta
-        except (ValueError, OverflowError) as e:
-            return await ctx.send(language.string("util_timediff_error", err=f"{type(e).__name__}: {str(e)}"))
-        difference = language.delta_rd(delta, accuracy=7, brief=False, affix=True)
-        time_now = language.time(now, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
-        time_then = language.time(then, short=0, dow=False, seconds=True, tz=True, uid=ctx.author.id)
-        return await ctx.send(language.string("util_timediff", now=time_now, delta=difference, then=time_then))
+        If you don't specify any time, it will simply default to an arbitrary date within the near future """
+        return await self.time_since_command(ctx, _date, _time, _time_class)
 
-    @commands.command(name="timein")
+    @commands.hybrid_command(name="timein")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.autocomplete(time_period=duration_autocomplete)
+    @app_commands.choices(time_class=TIME_CLASSES)
+    @app_commands.describe(time_period="The duration of time to look in the future (Format: 1y1mo1d1h1m1s)", time_class="The calendar in which to compare times")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def time_in(self, ctx: commands.Context, time_period: str, time_class: str = "Kargadia"):
-        """ Check what time it'll be in a specified period """
+        """ Check what time it will be in a specified period """
         return await self.time_diff(ctx, time_period, 1, time_class)
 
-    @commands.command(name="timeago")
+    @commands.hybrid_command(name="timeago")
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
+    @app_commands.autocomplete(time_period=duration_autocomplete)
+    @app_commands.choices(time_class=TIME_CLASSES)
+    @app_commands.describe(time_period="The duration of time to look in the past (Format: 1y1mo1d1h1m1s)", time_class="The calendar in which to compare times")
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     async def time_ago(self, ctx: commands.Context, time_period: str, time_class: str = "Kargadia"):
         """ Check what time it was a specified period ago """
         return await self.time_diff(ctx, time_period, -1, time_class)
 
-    @commands.command(name="times", aliases=["time2", "timeconvert", "convert"])
+    @commands.hybrid_command(name="converttimes", aliases=["time2", "times", "timeconvert", "convert"])
     @commands.cooldown(rate=1, per=5, type=commands.BucketType.user)
-    async def time_convert(self, ctx: commands.Context, _time_class1: str = "Earth", _time_class2: str = "Kargadia", _date: str = None, _time: str = None):
+    @app_commands.choices(source_time_class=TIME_CLASSES)
+    @app_commands.rename(_date="date", _time="time", source_time_class="time_class")
+    @app_commands.describe(
+        source_time_class="The source calendar to convert from",
+        _date="The date to convert (Format: YYYY-MM-DD)",
+        _time="The time to convert (Format: HH:MM:SS)"
+    )
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    async def time_convert(self, ctx: commands.Context, source_time_class: str = "Earth", _date: str = None, _time: str = None):
         """ Convert times between different calendars
 
         Example: `..times Kargadia Earth 2152-08-11 12:00:00` would output 10 August 2022 18:59:58
         Leave the command empty to convert to the current time on Kargadia
         Only specify the two calendars if you want to see the current time in a specific time class """
-        language = ctx.language2("en")
+        await ctx.defer(ephemeral=True)
+        language = ctx.language()
         try:
-            time_class1 = getattr(time2, _time_class1)
+            time_class1 = getattr(time2, source_time_class)
         except AttributeError:
-            return await ctx.send("Time class 1 not found")
+            return await ctx.send(language.string("util_time_class_not_found"))
         else:
             if not issubclass(time_class1, time2.Earth):
-                return await ctx.send("Invalid time class 1 specified")
-
-        try:
-            time_class2 = getattr(time2, _time_class2)
-        except AttributeError:
-            return await ctx.send("Time class 2 not found")
-        else:
-            if not issubclass(time_class2, time2.Earth):
-                return await ctx.send("Invalid time class 2 specified")
+                return await ctx.send(language.string("util_time_class_invalid"))
 
         if not _date:
-            date1 = time2.datetime.now(time2.timezone.utc, time_class1)
+            source_date = time2.datetime.now(time2.timezone.utc, time_class1)
         else:
             try:
-                if not _time:
-                    time_part = time2.time()  # 0:00:00
-                else:
-                    _h, _m, *_s = _time.split(":")
-                    h, m, s = int(_h), int(_m), int(_s[0]) if _s else 0
-                    time_part = time2.time(h, m, s, 0, time2.utc)
-                _y, _m, _d = _date.split("-")
-                y, m, d = int(_y), int(_m), int(_d)
-                date_part = time2.date(y, m, d, time_class1)
-                date1 = time2.datetime.combine(date_part, time_part, time2.utc)
-                date1b = date1.as_timezone(self.bot.timezone(ctx.author.id, _time_class1))
-                date1.replace_self(tz=date1b.tzinfo)
-                # date1 = time2.datetime.combine(date_part, time_part, language.get_timezone(ctx.author.id, _time_class1)).to_timezone(time2.timezone.utc)
+                source_date = self._parse_time(ctx, _date, _time, source_time_class)
             except ValueError:
-                return await ctx.send("Failed to convert date. Make sure it is in the format `YYYY-MM-DD hh:mm:ss` (time part optional)")
-        date2 = date1.convert_time_class(time_class2, False)
-        out1 = language.time(date1, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id)
-        out2 = language.time(date2, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id)
-        return await ctx.send(f"{_time_class1}: **{out1}**\n{_time_class2}: **{out2}**")
+                return await ctx.send(language.string("util_timesince_format"))
+        embed = discord.Embed(title=language.string("util_time_convert"), colour=general.random_colour())
+        for time_class in time2.time_classes.values():
+            output_date = source_date.convert_time_class(time_class, False)
+            class_name = language.data2("generic_time_classes", time_class.__name__, time_class.__name__)
+            output_str = language.time(output_date, short=0, dow=True, seconds=True, tz=True, uid=ctx.author.id)
+            embed.add_field(name=class_name, value=output_str, inline=False)
+        return await ctx.send(embed=embed)
 
 
 async def setup(bot: bot_data.Bot):

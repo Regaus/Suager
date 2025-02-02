@@ -1967,3 +1967,25 @@
 - Improved handling of Starboard reaction clear and message deletion events
   - If all or star emoji reactions are cleared from the message, it is deleted from the database and the starboard channel
   - If a message from the starboard is deleted, it is retained on the starboard, however it is marked as having been deleted
+
+## v8.0.0a16 - 25 Jan - 2 Feb 2025
+- Made Utility commands hybrid
+- `//base` will now remove trailing zeros from floating-point conversions
+- Split `//settz` into several subcommands and added autocomplete for country and timezone names
+- Improved the outputs of `//weather`
+  - The command now looks up the inputted place name and returns the weather at the first result's lat/long coordinates
+  - The autocomplete function returns the places based on the API's geolocation data
+- Improved brightness calculation in `//colour`
+- Split the roles list into a `//role list` subcommand
+- Merged `//user` and `//whois` into one command, simply having a different level of detail for members vs users
+- Added new details to the `//role`, `//user`, and `//server` commands
+- `//role members` and `//server bots` now have a proper paginator for the outputs
+- `//joinedat` and `//createdat` now show the user's global name rather than their unique username
+- `//emoji` can now handle emojis that aren't properly available to the bot
+- Added a `//sticker` command
+  - The text version allows for a sticker to be attached with the command message
+- `//embed` now requires Manage Messages permission to run
+- Split `//remind` into `//remind in` and `//remind on`, thereby making it possible to specify a date and time when to send the reminder
+- Moved `//reminders` to `//reminders list` to have the same signature on text and slash commands
+- Fixed type hint on `interactions.slash_command()` causing issues on commands with more than one argument
+- Created `interactions.init_slash_command()` which simply logs and defers the interaction, returning the context

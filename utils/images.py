@@ -119,6 +119,12 @@ def colour_int_to_tuple(colour: int) -> tuple[int, int, int]:
     return r, g, b
 
 
+def calculate_brightness(red: int | float, green: int | float, blue: int | float) -> float:
+    """ Calculate the perceived brightness of a colour """
+    # Source: https://stackoverflow.com/a/596243
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
 # These functions are used by the Images cog
 def _resize_image(image: Image.Image) -> Image.Image:
     """ Resize the image to have no more than 512x512 pixels and return the new image"""
@@ -179,13 +185,12 @@ def _colourify(image: Image.Image, colour1: tuple[int, int, int], colour2: tuple
     # This iterates over the image twice, which I guess might not be ideal, but whatever. it works.
     brightnesses = []
     for r, g, b, _ in pixels:
-        # https://stackoverflow.com/a/596243
-        brightnesses.append(0.2126 * r + 0.7152 * g + 0.0722 * b)
+        brightnesses.append(calculate_brightness(r, g, b))
     middle = sum(brightnesses) / len(brightnesses)
     # middle = sum(px[0] for px in pixels) / len(pixels)
     output_pixels = []
     for r, g, b, alpha in pixels:
-        brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        brightness = calculate_brightness(r, g, b)
         if brightness > middle:
             output_pixels.append((*colour1, alpha))
         else:

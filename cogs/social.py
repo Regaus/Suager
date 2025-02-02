@@ -1272,7 +1272,7 @@ class SocialSuager(Social, name="Social"):
     @app_commands.describe(member1="The first member you wish to have a threesome with", member2="The second member you wish to have a threesome with")
     async def slash_threesome(self, interaction: discord.Interaction, member1: discord.Member, member2: discord.Member):
         """ Have a threesome with two other people """
-        return await interactions.slash_command(self.threesome_command, interaction, member1, member2)  # type: ignore
+        return await interactions.slash_command(self.threesome_command, interaction, member1, member2)
 
 
 async def setup(bot: bot_data.Bot):

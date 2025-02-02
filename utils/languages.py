@@ -101,6 +101,28 @@ class Language(languages.Language):
     #     return super().number(value, precision=precision, fill=fill, percentage=percentage, commas=commas, positives=positives)\
     #         .replace(".", "\u200c.\u200c").replace(" ", "\u200c \u200c") + ("\u200c" if zws_end else "")
 
+    def bitrate(self, value: int, *, precision: int = 2) -> str:
+        """ Turn bit/s amount to localised string """
+        step = 1000  # Default value unless one of the languages uses something else
+        if self.is_in_family("ka"):
+            names = ["u/u", "Ku/u", "Uu/u", "Du/u", "Tu/u", "Cu/u", "Pu/u", "Su/u", "Eu/u", "Ou/u", "Zu/u"]
+        elif self.language == "ru":
+            names = ["бит/с", "Кбит/с", "Мбит/с", "Гбит/с", "Тбит/с", "Пбит/с", "Эбит/с", "Збит/с", "Йбит/с"]
+        else:
+            names = ["bit/s", "kbit/s", "Mbit/s", "Gbit/s", "Tbit/s", "Pbit/s", "Ebit/s", "Zbit/s", "Ybit/s"]
+        range_val = len(names)
+        for i in range(range_val):
+            req = step ** (i + 1)
+            if value < req or i == range_val - 1:
+                val = value / (step ** i)
+                number = self.number(val, precision=precision, commas=val > step)
+                return f"{number} {names[i]}"
+        return f"{self.number(value, precision=precision, commas=True)} {names[0]}"
+
+    def enabled(self, value: bool) -> str:
+        """ Return either "enabled" or "disabled" depending on the value of the boolean """
+        return self.string("generic_enabled" if value else "generic_disabled")
+
     def string(self, string: str, *values, **kwargs) -> str:
         try:
             return super().string(string, *values, **kwargs, emotes=emotes)

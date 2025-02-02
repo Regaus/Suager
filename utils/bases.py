@@ -33,14 +33,15 @@ def to_base_float(value: float, base: int, precision: int = 2, caps: bool = Fals
         return to_base(int(value), base, caps)
     else:
         out = f"{to_base(int(value), base, caps)}."
+        end = ""
         value %= 1
         values = string.digits + (string.ascii_uppercase if caps else string.ascii_lowercase)
         for i in range(1, precision + 1):
             part = (value * base ** i) % base
             # print(part)
-            out += values[int(part)]
+            end += values[int(part)]
             # out += str(int(value * base ** i) % base * 10 ** (-i))
-        return out
+        return out + end.rstrip("0")  # Remove redundant zeros at the end
 
 
 def from_base_float(value: str, base: int, precision: int = 2):

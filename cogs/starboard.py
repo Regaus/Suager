@@ -108,7 +108,7 @@ class Starboard(commands.Cog):
                     else:
                         _message = message_snapshot
                 embed.description = _message.content
-                embed.add_field(name=language.string("starboard_message_jump"), value=language.string("starboard_message_jump2", url=jump_url), inline=False)
+                embed.add_field(name=language.string("starboard_message_jump"), value=language.string("generic_link_mask", url=jump_url), inline=False)
 
                 embeds_and_links = await messages.embed_or_link_attachments(_message, language, embed, salvage_mode=False)
                 embed = embeds_and_links.main_embed

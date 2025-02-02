@@ -58,6 +58,11 @@ class LinePaginator(commands.Paginator):
         if self._line_count() + empty >= self.max_lines:
             self.close_page()
 
+    def add_lines(self, lines: list[str]) -> None:
+        """ Add multiple lines to the current page """
+        for line in lines:
+            self.add_line(line)
+
     def _line_count(self):
         """ Amount of lines in the current page """
         # Don't subtract anything if prefix is None or empty, else subtract 1
@@ -615,9 +620,13 @@ class EmbedFieldPaginatorInterface(PaginatorEmbedInterface):
         super().__init__(paginator=commands.Paginator(), *args, **kwargs)
 
         self._embed = kwargs.pop('embed', discord.Embed())
-        self._embed.clear_fields()
         self.max_page_size -= len(self._embed)  # This won't account for the embed being updated afterwards, but that shouldn't happen
         self.paginator = paginator
+        # Clear the original embed fields and add in all existing fields to the paginator
+        fields = self._embed.fields
+        self._embed.clear_fields()
+        for field in fields:
+            self.paginator.add_field(name=field.name, value=field.value, inline=field.inline)
 
         if self.page_size > self.max_page_size:
             raise ValueError(f"Paginator passed has too large of a page size for this embed. "

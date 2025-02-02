@@ -226,19 +226,19 @@ class Ratings(commands.Cog):
     @app_commands.describe(user1="The first user to check the chances for", user2="The second user to checking the chances for")
     async def slash_baby_rate(self, interaction: discord.Interaction, user1: discord.User, user2: discord.User):
         """ Rate the chance of two users having a baby """
-        return await interactions.slash_command(self.baby_rate_command, interaction, user1, user2)  # type: ignore
+        return await interactions.slash_command(self.baby_rate_command, interaction, user1, user2)
 
     @slash_ratings.command(name="love")
     @app_commands.describe(user1="The first user to check the love rate for", user2="The second user to check the love rate for")
     async def slash_love_calc(self, interaction: discord.Interaction, user1: discord.User, user2: discord.User):
         """ Calculate the level of love between two users """
-        return await interactions.slash_command(self.love_calc_command, interaction, user1, user2)  # type: ignore
+        return await interactions.slash_command(self.love_calc_command, interaction, user1, user2)
 
     @slash_ratings.command(name="friends")
     @app_commands.describe(user1="The first user to check the love rate for", user2="The second user to check the love rate for")
     async def slash_friend_calc(self, interaction: discord.Interaction, user1: discord.User, user2: discord.User):
         """ Calculate the level of friendship between two users """
-        return await interactions.slash_command(self.friend_calc_command, interaction, user1, user2)  # type: ignore
+        return await interactions.slash_command(self.friend_calc_command, interaction, user1, user2)
 
     @slash_ratings.command(name="hotness")
     @app_commands.describe(user="The user whose hotness you want to check")

@@ -1,24 +1,24 @@
 {
   "suager": {
     "short_version": "7.8",
-    "version": "8.0.0a15",
+    "version": "8.0.0a16",
     "first_version": 1557781320,
     "major_release": 1608495933,
-    "last_update": 1737767391
+    "last_update": 1738511237
   },
   "cobble": {
     "short_version": "1.9",
-    "version": "2.0.0a8",
+    "version": "2.0.0a9",
     "first_version": 1607190007,
     "major_release": 1608495933,
-    "last_update": 1737331955
+    "last_update": 1738511237
   },
   "kyomi": {
     "short_version": "1.6",
-    "version": "2.0.0a9",
+    "version": "2.0.0a10",
     "first_version": 1623891776,
     "major_release": 1642621994,
-    "last_update": 1737767391
+    "last_update": 1738511237
   },
   "kyomi2": {
     "short_version": "1.0",

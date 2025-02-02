@@ -164,17 +164,8 @@ async def send_mod_log(bot: bot_data.Bot, ctx: commands.Context | commands.FakeC
 
 
 async def duration_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
-    """ Autocomplete for punishment duration """
-    language = languages.Language.get(interaction, personal=True)
-    if not current:
-        suggestions = ["15m", "30m", "1h", "4h", "8h", "12h", "1d", "3d", "7d", "28d"]
-        return [app_commands.Choice(name=language.delta_rd(time.interpret_time(suggestion), accuracy=7, brief=False, affix=False), value=suggestion) for suggestion in suggestions]
-    delta = time.interpret_time(current)
-    if time.rd_is_above_5y(delta):
-        return [app_commands.Choice(name=language.string("mod_duration_limit_5y"), value=current)]
-    if time.rd_is_zero(delta):
-        return [app_commands.Choice(name=language.string("generic_zero"), value=current)]
-    return [app_commands.Choice(name=language.delta_rd(delta, accuracy=7, brief=False, affix=False), value=current)]
+    """ Autocomplete for punishment durations """
+    return await interactions.duration_autocomplete(interaction, current, moderation_limit=True)
 
 
 class Moderation(commands.Cog):
