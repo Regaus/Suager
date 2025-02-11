@@ -20,6 +20,16 @@ __all__ = (
 )
 
 
+def _null(value) -> str:
+    """ Return the value or NULL if None """
+    return repr(value) if value is not None else "NULL"
+
+
+def _null2(value) -> str:
+    """ Return the value or "Unknown" if None """
+    return repr(value) if value is not None else repr("Unknown")
+
+
 def _weekdays_to_int(weekdays: tuple[bool, bool, bool, bool, bool, bool, bool]) -> int:
     """ For Calendars - converts the weekdays list to a single integer """
     return sum(map(lambda x: x[1] << x[0], enumerate(weekdays)))
@@ -536,9 +546,8 @@ class FleetVehicle:
         return {vehicle.vehicle_id: vehicle for vehicle in vehicles}
 
     def save_to_sql(self) -> str:
-        trivia = "NULL" if self.trivia is None else repr(self.trivia)
         return (f"INSERT INTO vehicles(vehicle_id, fleet_number, reg_plates, model, trivia, agency) VALUES "
-                f"({self.vehicle_id!r}, {self.fleet_number!r}, {self.reg_plates!r}, {self.model!r}, {trivia}, {self.agency!r})")
+                f"({_null2(self.vehicle_id)}, {_null2(self.fleet_number)}, {_null2(self.reg_plates)}, {_null2(self.model)}, {_null(self.trivia)}, {_null2(self.agency)})")
 
 
 # # Mapping of files to corresponding dataclasses

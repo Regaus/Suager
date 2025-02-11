@@ -635,6 +635,7 @@ class Timetables(University, Luas, name="Timetables"):
 
         all_vehicles: list[timetables.FleetVehicle] = []
         for agency, url in self.fleet_list_urls:
+            # TODO: Try to use bustimes API instead of HTML parsing
             # This depends on the layout of the website not changing. Oh well.
             data = await http.get(url, res_method="text")
             soup = BeautifulSoup(data, "html.parser")
@@ -648,7 +649,7 @@ class Timetables(University, Luas, name="Timetables"):
                     reg_plates = strip(columns[1].a.string)
                 except AttributeError:
                     reg_plates = "Unknown"
-                model = strip(columns[4].string)
+                model = strip(columns[5].string)  # This is now the 6th column rather than 5th
                 trivia = strip(columns[-3].string)  # Always third last column
                 all_vehicles.append(timetables.FleetVehicle(vehicle_id, fleet_number, reg_plates, model, trivia, agency))
                 # all_vehicles.append({"vehicle_id": vehicle_id, "fleet_number": fleet_number, "reg_plates": reg_plates, "model": model, "trivia": trivia})

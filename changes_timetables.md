@@ -646,3 +646,6 @@
 
 ## v1.1.0.6 - 8 December 2024
 - Error logs will now be forwarded to the #error-logs channel
+
+## v1.1.0.7 - 11 February 2024
+- Fixed fleet updates breaking the bot due to the layout of the website changing and the bot encountering None values
